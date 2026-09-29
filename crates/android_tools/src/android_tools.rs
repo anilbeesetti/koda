@@ -319,7 +319,8 @@ pub fn parse_targets(output: &str) -> Result<Vec<AndroidTarget>> {
                 !value.is_empty()
                     && value
                         .chars()
-                        .all(|character| character.is_ascii_alphanumeric() || character == '_'),
+                        .all(|character| character.is_ascii_alphanumeric()
+                            || matches!(character, '_' | '-')),
                 "Android CLI returned an invalid variant name"
             );
             variant = Some(value.to_owned());
@@ -464,6 +465,16 @@ mod tests {
         );
         assert!(parse_targets("Output Listing File: /tmp/metadata.json").is_err());
         assert!(parse_targets("No variants").is_err());
+        let hyphenated = parse_targets(&format!(
+            "Task: :app\n Variant: debug-non-debuggable\n Output Listing File: {}\n",
+            output_listing.display()
+        ))?;
+        assert_eq!(
+            hyphenated
+                .first()
+                .map(|target| target.gradle_task("assemble", "")),
+            Some(":app:assembleDebug-non-debuggable".into())
+        );
         assert!(parse_targets(&format!("{description}{description}")).is_err());
         assert!(target.apk_paths().is_err());
 
