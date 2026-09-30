@@ -1,5 +1,5 @@
 use editor::{Editor, MultiBuffer};
-use gpui::{AnyElement, Entity, Modifiers};
+use gpui::{AnyElement, Entity, Focusable, Modifiers};
 use markdown_preview::markdown_preview_view::MarkdownPreviewView;
 use svg_preview::svg_preview_view::SvgPreviewView;
 use tabular_data_preview::TabularDataPreviewPane;
@@ -20,6 +20,33 @@ impl QuickActionBar {
         // targets the content of the pane it belongs to.
         let active_item = self.active_item.as_ref()?;
         let editor = active_item.act_as::<Editor>(cx);
+
+        if let Some(editor) = &editor
+            && active_item
+                .project_path(cx)
+                .is_some_and(|path| path.path.extension() == Some("kt"))
+            && self
+                .workspace
+                .upgrade()
+                .is_some_and(|workspace| android_ui::can_preview_compose(workspace.read(cx), cx))
+        {
+            let editor = editor.clone();
+            return Some(
+                IconButton::new("toggle-compose-preview", IconName::Eye)
+                    .icon_size(IconSize::Small)
+                    .style(ButtonStyle::Subtle)
+                    .tooltip(Tooltip::for_action_title(
+                        "Show/Hide Compose Preview",
+                        &android_ui::ToggleComposePreview,
+                    ))
+                    .on_click(move |_, window, cx| {
+                        let focus = editor.focus_handle(cx);
+                        window.focus(&focus, cx);
+                        focus.dispatch_action(&android_ui::ToggleComposePreview, window, cx);
+                    })
+                    .into_any_element(),
+            );
+        }
 
         let preview_target = if let Some(editor) = &editor
             && MarkdownPreviewView::is_markdown_file(editor, cx)

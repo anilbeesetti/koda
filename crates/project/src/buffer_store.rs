@@ -174,7 +174,7 @@ impl RemoteBufferStore {
             proto::create_buffer_for_peer::Variant::State(mut state) => {
                 let buffer_id = BufferId::new(state.id)?;
 
-                let buffer_file_result = maybe!({
+                let buffer_result = maybe!({
                     let mut buffer_file = None;
                     if let Some(file) = state.file.take() {
                         let worktree_id = worktree::WorktreeId::from_proto(file.worktree_id);
@@ -188,15 +188,18 @@ impl RemoteBufferStore {
                         buffer_file = Some(Arc::new(File::from_proto(file, worktree, cx)?)
                             as Arc<dyn language::File>);
                     }
-                    anyhow::Ok(buffer_file)
+                    // Entity construction cannot return an error, but decoding shared state can.
+                    let buffer = cx.new(|cx| Buffer::local("", cx));
+                    buffer.update(cx, |buffer, cx| {
+                        *buffer =
+                            Buffer::from_proto(replica_id, capability, state, buffer_file, cx)?;
+                        anyhow::Ok(())
+                    })?;
+                    anyhow::Ok(buffer)
                 });
 
-                match buffer_file_result {
-                    Ok(buffer_file) => {
-                        let buffer = cx.new(|cx| {
-                            Buffer::from_proto(replica_id, capability, state, buffer_file, cx)
-                                .expect("buffer_id was validated above")
-                        });
+                match buffer_result {
+                    Ok(buffer) => {
                         self.loading_remote_buffers_by_id.insert(buffer_id, buffer);
                     }
                     Err(error) => {
@@ -1241,11 +1244,21 @@ impl BufferStore {
             .map(language::proto::deserialize_operation)
             .collect::<Result<Vec<_>, _>>()?;
         this.update(&mut cx, |this, cx| {
+            let reject_server_document_edits = matches!(&this.state, BufferStoreState::Local(_));
             match this.opened_buffers.entry(buffer_id) {
                 hash_map::Entry::Occupied(mut e) => match e.get_mut() {
                     OpenBuffer::Operations(operations) => operations.extend_from_slice(&ops),
                     OpenBuffer::Complete { buffer, .. } => {
                         if let Some(buffer) = buffer.upgrade() {
+                            anyhow::ensure!(
+                                !reject_server_document_edits
+                                    || buffer.read(cx).language_server_document().is_none()
+                                    || !ops.iter().any(|operation| matches!(
+                                        operation,
+                                        Operation::Buffer(_) | Operation::UpdateLineEnding { .. }
+                                    )),
+                                "Cannot edit a read-only language server document"
+                            );
                             buffer.update(cx, |buffer, cx| buffer.apply_ops(ops, cx));
                         }
                     }

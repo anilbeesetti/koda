@@ -1472,3 +1472,93 @@ async fn restore_can_be_retried_after_collision(cx: &mut TestAppContext) {
         TrashRestoreError::AlreadyRestored
     ));
 }
+
+#[gpui::test]
+async fn test_realfs_archive_sources(executor: BackgroundExecutor, cx: &mut TestAppContext) {
+    cx.executor().allow_parking();
+    use async_zip::{Compression, ZipEntryBuilder, base::write::ZipFileWriter};
+    use std::io::Read;
+
+    let directory = TempDir::new().unwrap();
+    let archive = directory.path().join("library sources.jar");
+    let entry = "commonMain/example/Typography.android.kt";
+    let source = b"class Typography(val headlineSmall: String)";
+    let mut writer = ZipFileWriter::new(futures::io::Cursor::new(Vec::new()));
+    writer
+        .write_entry_whole(
+            ZipEntryBuilder::new(entry.into(), Compression::Deflate),
+            source,
+        )
+        .await
+        .unwrap();
+    let bytes = writer.close().await.unwrap().into_inner();
+    std::fs::write(&archive, &bytes).unwrap();
+    let path = directory.path().join("library sources.jar!").join(entry);
+    let fs: Arc<dyn Fs> = RealFs::new(None, executor.clone());
+    let metadata = fs.metadata(&path).await.unwrap().unwrap();
+    let parent = path.parent().unwrap();
+    assert!(fs.is_dir(parent).await);
+    assert_eq!(
+        fs.read_dir(parent)
+            .await
+            .unwrap()
+            .collect::<Vec<_>>()
+            .await
+            .into_iter()
+            .map(Result::unwrap)
+            .collect::<Vec<_>>(),
+        vec![path.clone()]
+    );
+    assert!(!metadata.is_writable && !metadata.is_dir);
+    assert_eq!(metadata.len, source.len() as u64);
+    assert!(fs.is_file(&path).await);
+    assert_eq!(fs.load_bytes(&path).await.unwrap(), source);
+    let mut content = String::new();
+    fs.open_sync(&path)
+        .await
+        .unwrap()
+        .read_to_string(&mut content)
+        .unwrap();
+    assert_eq!(content.as_bytes(), source);
+    let canonical = fs.canonicalize(&path).await.unwrap();
+    assert_eq!(
+        fs.open_handle(&path)
+            .await
+            .unwrap()
+            .current_path(&fs)
+            .unwrap(),
+        canonical
+    );
+    assert!(!path.exists());
+    assert!(fs.write(&path, b"overwrite").await.is_err());
+    assert!(
+        fs.atomic_write(path.clone(), "overwrite".into())
+            .await
+            .is_err()
+    );
+    assert!(fs.create_dir(path.parent().unwrap()).await.is_err());
+    assert!(
+        fs.remove_file(&path, RemoveOptions::default())
+            .await
+            .is_err()
+    );
+    assert!(
+        fs.rename(
+            &path,
+            &directory.path().join("moved.kt"),
+            RenameOptions::default()
+        )
+        .await
+        .is_err()
+    );
+    assert!(fs.load(&path.with_file_name("missing.kt")).await.is_err());
+    assert!(
+        fs.load(&directory.path().join("library sources.jar!/../outside.kt"))
+            .await
+            .is_err()
+    );
+    assert_eq!(std::fs::read(&archive).unwrap(), bytes);
+    drop(fs);
+    let reopened = RealFs::new(None, executor);
+    assert_eq!(reopened.load_bytes(&canonical).await.unwrap(), source);
+}

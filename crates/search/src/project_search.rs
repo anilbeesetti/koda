@@ -22,10 +22,10 @@ use editor::{
 };
 use futures::{StreamExt, stream::FuturesOrdered};
 use gpui::{
-    Action, AnyElement, App, AsyncApp, Context, Entity, EntityId, EventEmitter, FocusHandle,
-    Focusable, Global, Hsla, InteractiveElement, IntoElement, KeyContext, ParentElement, Point,
-    Render, SharedString, Styled, Subscription, Task, TaskExt, UpdateGlobal, WeakEntity, Window,
-    actions, div,
+    Action, AnyElement, App, AsyncApp, Context, DismissEvent, Entity, EntityId, EventEmitter,
+    FocusHandle, Focusable, Global, Hsla, InteractiveElement, IntoElement, KeyContext,
+    ParentElement, Point, Render, SharedString, Styled, Subscription, Task, TaskExt, UpdateGlobal,
+    WeakEntity, Window, actions, div,
 };
 use itertools::Itertools;
 use language::{Buffer, Language};
@@ -56,8 +56,8 @@ use ui::{
 };
 use util::{ResultExt as _, paths::PathMatcher};
 use workspace::{
-    DeploySearch, ItemNavHistory, NewSearch, ToolbarItemEvent, ToolbarItemLocation,
-    ToolbarItemView, Workspace, WorkspaceId,
+    DeploySearch, DismissDecision, ItemNavHistory, ModalView, NewSearch, ToolbarItemEvent,
+    ToolbarItemLocation, ToolbarItemView, Workspace, WorkspaceId,
     item::{Item, ItemBufferKind, ItemEvent, ItemHandle, SaveOptions},
     searchable::{Direction, SearchEvent, SearchToken, SearchableItem, SearchableItemHandle},
 };
@@ -215,7 +215,10 @@ pub fn init(cx: &mut App) {
 
         // Both on present and dismissed search, we need to unconditionally handle those actions to focus from the editor.
         workspace.register_action(move |workspace, action: &DeploySearch, window, cx| {
-            if workspace.has_active_modal(window, cx) && !workspace.hide_modal(window, cx) {
+            if !(action.modal && workspace.active_modal::<ProjectSearchModal>(cx).is_some())
+                && workspace.has_active_modal(window, cx)
+                && !workspace.hide_modal(window, cx)
+            {
                 cx.propagate();
                 return;
             }
@@ -232,9 +235,14 @@ pub fn init(cx: &mut App) {
         });
         workspace.register_action(
             move |workspace, action: &zed_actions::search::NewSearchInDirectory, window, cx| {
-                ProjectSearchView::new_search_with_filter(
+                ProjectSearchView::existing_or_new_search(
                     workspace,
-                    action.directory.clone(),
+                    None,
+                    &DeploySearch {
+                        included_files: Some(action.directory.clone()),
+                        modal: action.modal,
+                        ..Default::default()
+                    },
                     window,
                     cx,
                 );
@@ -1673,19 +1681,16 @@ impl ProjectSearchView {
         window: &mut Window,
         cx: &mut Context<Workspace>,
     ) {
-        let weak_workspace = cx.entity().downgrade();
-
-        let entity = cx
-            .new(|cx| ProjectSearch::new(workspace.project().clone(), weak_workspace.clone(), cx));
-        let search = cx.new(|cx| ProjectSearchView::new(weak_workspace, entity, window, cx, None));
-        workspace.add_item_to_active_pane(Box::new(search.clone()), None, true, window, cx);
-        search.update(cx, |search, cx| {
-            search
-                .included_files_editor
-                .update(cx, |editor, cx| editor.set_text(filter_str, window, cx));
-            search.filters_enabled = true;
-            search.focus_query_editor(window, cx)
-        });
+        Self::existing_or_new_search(
+            workspace,
+            None,
+            &DeploySearch {
+                included_files: Some(filter_str),
+                ..Default::default()
+            },
+            window,
+            cx,
+        );
     }
 
     /// Re-activate the most recently activated search in this pane or the most recent if it has been closed.
@@ -1696,11 +1701,17 @@ impl ProjectSearchView {
         window: &mut Window,
         cx: &mut Context<Workspace>,
     ) {
-        let existing = workspace
-            .active_pane()
-            .read(cx)
-            .items()
-            .find_map(|item| item.downcast::<ProjectSearchView>());
+        let existing = if action.modal {
+            workspace
+                .active_modal::<ProjectSearchModal>(cx)
+                .map(|modal| modal.read(cx).search.clone())
+        } else {
+            workspace
+                .active_pane()
+                .read(cx)
+                .items()
+                .find_map(|item| item.downcast::<ProjectSearchView>())
+        };
 
         Self::existing_or_new_search(workspace, existing, action, window, cx);
     }
@@ -1797,7 +1808,9 @@ impl ProjectSearchView {
         });
 
         let search = if let Some(existing) = existing {
-            workspace.activate_item(&existing, true, true, window, cx);
+            if !action.modal {
+                workspace.activate_item(&existing, true, true, window, cx);
+            }
             existing
         } else {
             let settings = cx
@@ -1816,13 +1829,20 @@ impl ProjectSearchView {
                 ProjectSearchView::new(weak_workspace, project_search, window, cx, settings)
             });
 
-            workspace.add_item_to_active_pane(
-                Box::new(project_search_view.clone()),
-                None,
-                true,
-                window,
-                cx,
-            );
+            if action.modal {
+                let search = project_search_view.clone();
+                workspace.toggle_modal(window, cx, |window, cx| {
+                    ProjectSearchModal::new(search, window, cx)
+                });
+            } else {
+                workspace.add_item_to_active_pane(
+                    Box::new(project_search_view.clone()),
+                    None,
+                    true,
+                    window,
+                    cx,
+                );
+            }
             project_search_view
         };
 
@@ -3383,6 +3403,156 @@ impl Render for ProjectSearchBar {
     }
 }
 
+struct ProjectSearchModal {
+    search: Entity<ProjectSearchView>,
+    bar: Entity<ProjectSearchBar>,
+    closing: bool,
+}
+
+impl ProjectSearchModal {
+    fn new(search: Entity<ProjectSearchView>, window: &mut Window, cx: &mut Context<Self>) -> Self {
+        cx.observe(&search, |_, _, cx| cx.notify()).detach();
+        let bar = cx.new(|cx| {
+            let mut bar = ProjectSearchBar::new();
+            bar.set_active_pane_item(Some(&search), window, cx);
+            bar
+        });
+        Self {
+            search,
+            bar,
+            closing: false,
+        }
+    }
+    fn save(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let project = self.search.read(cx).entity.read(cx).project.clone();
+        let workspace = self.search.read(cx).workspace.clone();
+        let save = self.search.update(cx, |search, cx| {
+            search.save(SaveOptions::default(), project, window, cx)
+        });
+        cx.spawn(async move |_, cx| {
+            if let Err(error) = save.await {
+                log::error!("Could not save search results: {error:#}");
+                workspace
+                    .update(cx, |workspace, cx| workspace.show_error(error, cx))
+                    .log_err();
+            }
+        })
+        .detach();
+    }
+}
+
+impl EventEmitter<DismissEvent> for ProjectSearchModal {}
+impl Focusable for ProjectSearchModal {
+    fn focus_handle(&self, cx: &App) -> FocusHandle {
+        self.search.read(cx).query_editor.focus_handle(cx)
+    }
+}
+impl ModalView for ProjectSearchModal {
+    fn on_before_dismiss(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> DismissDecision {
+        if !self.search.read(cx).is_dirty(cx) {
+            return DismissDecision::Dismiss(true);
+        }
+        if self.closing {
+            return DismissDecision::Pending;
+        }
+        self.closing = true;
+        let response = window.prompt(
+            gpui::PromptLevel::Warning,
+            "Search results contain unsaved edits. Save before closing?",
+            None,
+            &["Save", "Discard", "Cancel"],
+            cx,
+        );
+        let search = self.search.clone();
+        let project = search.read(cx).entity.read(cx).project.clone();
+        cx.spawn_in(window, async move |modal, cx| {
+            let result = async {
+                match response.await? {
+                    0 => {
+                        search
+                            .update_in(cx, |search, window, cx| {
+                                search.save(
+                                    SaveOptions {
+                                        format: true,
+                                        force_format: false,
+                                        autosave: false,
+                                    },
+                                    project,
+                                    window,
+                                    cx,
+                                )
+                            })?
+                            .await?
+                    }
+                    1 => {
+                        search
+                            .update_in(cx, |search, window, cx| search.reload(project, window, cx))?
+                            .await?
+                    }
+                    _ => return anyhow::Ok(false),
+                }
+                Ok(true)
+            }
+            .await;
+            modal
+                .update(cx, |modal, cx| {
+                    modal.closing = false;
+                    match result {
+                        Ok(true) => cx.emit(DismissEvent),
+                        Ok(false) => {}
+                        Err(error) => {
+                            log::error!("Could not close search results: {error:#}");
+                            let workspace = modal.search.read(cx).workspace.clone();
+                            workspace
+                                .update(cx, |workspace, cx| workspace.show_error(error, cx))
+                                .log_err();
+                        }
+                    }
+                })
+                .log_err();
+        })
+        .detach();
+        DismissDecision::Pending
+    }
+}
+impl Render for ProjectSearchModal {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        v_flex()
+            .key_context("ProjectSearchModal")
+            .w(window.viewport_size().width.min(px(1050.0)) * 0.9)
+            .h(window.viewport_size().height * 0.8)
+            .elevation_3(cx)
+            .overflow_hidden()
+            .on_action(cx.listener(|_, _: &menu::Cancel, _, cx| cx.emit(DismissEvent)))
+            .on_action(cx.listener(|modal, _: &workspace::Save, window, cx| modal.save(window, cx)))
+            .on_action(
+                cx.listener(|modal, _: &workspace::SaveAll, window, cx| modal.save(window, cx)),
+            )
+            .child(
+                h_flex()
+                    .justify_between()
+                    .p_2()
+                    .child(Label::new(if self.search.read(cx).replace_enabled {
+                        "Replace in Files"
+                    } else {
+                        "Find in Files"
+                    }))
+                    .child(
+                        IconButton::new("close-project-search", IconName::Close)
+                            .tab_index(0isize)
+                            .aria_label("Close search")
+                            .on_click(cx.listener(|_, _, _, cx| cx.emit(DismissEvent))),
+                    ),
+            )
+            .child(div().p_2().flex_shrink_0().child(self.bar.clone()))
+            .child(div().flex_1().min_h_0().child(self.search.clone()))
+    }
+}
+
 impl EventEmitter<ToolbarItemEvent> for ProjectSearchBar {}
 
 impl ToolbarItemView for ProjectSearchBar {
@@ -3410,6 +3580,14 @@ fn register_workspace_action<A: Action>(
     callback: fn(&mut ProjectSearchBar, &A, &mut Window, &mut Context<ProjectSearchBar>),
 ) {
     workspace.register_action(move |workspace, action: &A, window, cx| {
+        if let Some(modal) = workspace.active_modal::<ProjectSearchModal>(cx) {
+            let bar = modal.read(cx).bar.clone();
+            bar.update(cx, |bar, cx| {
+                callback(bar, action, window, cx);
+                cx.notify();
+            });
+            return;
+        }
         if workspace.has_active_modal(window, cx) && !workspace.hide_modal(window, cx) {
             cx.propagate();
             return;
@@ -5035,7 +5213,10 @@ pub mod tests {
         window
             .update(cx, |_, window, cx| {
                 window.dispatch_action(
-                    Box::new(zed_actions::search::NewSearchInDirectory { directory }),
+                    Box::new(zed_actions::search::NewSearchInDirectory {
+                        directory,
+                        ..Default::default()
+                    }),
                     cx,
                 );
             })
@@ -6842,6 +7023,139 @@ pub mod tests {
             let query_text = search_view.query_editor.read(cx).text(cx);
             assert_eq!(query_text, "Uppercase_Query");
         });
+    }
+
+    #[gpui::test]
+    async fn test_find_replace_modal_preserves_tabs_and_unsaved_changes(cx: &mut TestAppContext) {
+        init_test(cx);
+        let filesystem = FakeFs::new(cx.background_executor.clone());
+        filesystem
+            .insert_tree(
+                path!("/dir"),
+                json!({"one.txt": "before before", "other.txt": "before"}),
+            )
+            .await;
+        let project = Project::test(filesystem.clone(), [path!("/dir").as_ref()], cx).await;
+        let window =
+            cx.add_window(|window, cx| MultiWorkspace::test_new(project.clone(), window, cx));
+        let workspace = window
+            .read_with(cx, |workspace, _| workspace.workspace().clone())
+            .expect("Workspace");
+        let cx = &mut gpui::VisualTestContext::from_window(window.into(), cx);
+        let worktree_id = project.read_with(cx, |project, cx| {
+            project
+                .worktrees(cx)
+                .next()
+                .expect("Test worktree")
+                .read(cx)
+                .id()
+        });
+        workspace
+            .update_in(cx, |workspace, window, cx| {
+                workspace.open_path((worktree_id, rel_path("one.txt")), None, true, window, cx)
+            })
+            .await
+            .expect("Open the existing editor tab");
+        cx.run_until_parked();
+        for (platform, shortcuts) in [
+            (
+                "macos",
+                &[("cmd-shift-f", false), ("cmd-shift-r", true)][..],
+            ),
+            (
+                "linux",
+                &[("ctrl-shift-f", false), ("ctrl-shift-r", true)][..],
+            ),
+        ] {
+            cx.update(|_, cx| {
+                cx.clear_key_bindings();
+                for asset in [
+                    format!("keymaps/default-{platform}.json"),
+                    format!("keymaps/{platform}/jetbrains.json"),
+                ] {
+                    cx.bind_keys(
+                        settings::KeymapFile::load_asset_allow_partial_failure(&asset, cx)
+                            .expect("Keymap asset"),
+                    );
+                }
+            });
+            for &(shortcut, replace_enabled) in shortcuts {
+                cx.simulate_keystrokes(shortcut);
+                cx.run_until_parked();
+                workspace.read_with(cx, |workspace, cx| {
+                    let modal = workspace
+                        .active_modal::<ProjectSearchModal>(cx)
+                        .unwrap_or_else(|| panic!("{shortcut} must open a popup from the editor"));
+                    assert_eq!(
+                        modal.read(cx).search.read(cx).replace_enabled,
+                        replace_enabled
+                    );
+                    assert_eq!(workspace.active_pane().read(cx).items().count(), 1);
+                });
+                cx.simulate_keystrokes("escape");
+                cx.run_until_parked();
+                assert!(workspace.read_with(cx, |workspace, cx| {
+                    workspace.active_modal::<ProjectSearchModal>(cx).is_none()
+                }));
+            }
+        }
+        workspace.update_in(cx, |workspace, window, cx| {
+            ProjectSearchView::deploy_search(
+                workspace,
+                &DeploySearch {
+                    modal: true,
+                    replace_enabled: true,
+                    query: Some("before".into()),
+                    ..Default::default()
+                },
+                window,
+                cx,
+            );
+        });
+        cx.run_until_parked();
+        let modal = workspace.read_with(cx, |workspace, cx| {
+            assert_eq!(workspace.active_pane().read(cx).items().count(), 1);
+            workspace
+                .active_modal::<ProjectSearchModal>(cx)
+                .expect("Floating search")
+        });
+        let search = modal.read_with(cx, |modal, _| modal.search.clone());
+        search.update(cx, |search, cx| search.search(SearchMode::Manual, cx));
+        cx.run_until_parked();
+        search.update_in(cx, |search, window, cx| {
+            assert_eq!(search.entity.read(cx).match_ranges.len(), 3);
+            search
+                .replacement_editor
+                .update(cx, |editor, cx| editor.set_text("after", window, cx));
+            search.replace_all(&ReplaceAll, window, cx);
+            assert!(search.is_dirty(cx));
+        });
+        cx.simulate_keystrokes("escape");
+        cx.simulate_prompt_answer("Cancel");
+        cx.run_until_parked();
+        assert!(workspace.read_with(cx, |workspace, cx| {
+            workspace.active_modal::<ProjectSearchModal>(cx).is_some()
+        }));
+        cx.simulate_keystrokes("escape");
+        cx.simulate_prompt_answer("Save");
+        cx.run_until_parked();
+        assert!(workspace.read_with(cx, |workspace, cx| {
+            workspace.active_modal::<ProjectSearchModal>(cx).is_none()
+        }));
+        assert_eq!(
+            filesystem
+                .load(std::path::Path::new(path!("/dir/one.txt")))
+                .await
+                .expect("Saved file"),
+            "after after\n"
+        );
+        assert_eq!(
+            filesystem
+                .load(std::path::Path::new(path!("/dir/other.txt")))
+                .await
+                .expect("Saved file"),
+            "after\n"
+        );
     }
 
     fn init_test(cx: &mut TestAppContext) {

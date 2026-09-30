@@ -226,14 +226,18 @@ impl ImageItem {
 
         let content = local_file.load_bytes(cx);
         self.reload_task = Some(cx.spawn(async move |this, cx| {
-            if let Some(image) = content
+            if let Some((image, image_metadata)) = content
                 .await
                 .context("Failed to load image content")
-                .and_then(create_gpui_image)
+                .and_then(|content| {
+                    let metadata = Self::compute_metadata_from_bytes(&content)?;
+                    Ok((create_gpui_image(content)?, metadata))
+                })
                 .log_err()
             {
                 this.update(cx, |this, cx| {
                     this.image = image;
+                    this.image_metadata = Some(image_metadata);
                     cx.emit(ImageItemEvent::Reloaded);
                 })
                 .log_err();

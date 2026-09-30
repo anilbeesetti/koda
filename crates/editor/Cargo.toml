@@ -12,6 +12,11 @@ workspace = true
 path = "src/editor.rs"
 doctest = false
 
+[[test]]
+name = "kotlin_latency"
+path = "tests/kotlin_latency.rs"
+required-features = ["test-support"]
+
 [features]
 test-support = [
     "text/test-support",

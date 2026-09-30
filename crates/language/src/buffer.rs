@@ -98,6 +98,13 @@ impl Capability {
 
 pub type BufferRow = u32;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LanguageServerDocument {
+    pub uri: lsp::Uri,
+    pub server_id: LanguageServerId,
+    pub language: String,
+}
+
 /// An in-memory representation of a source code file, including its text,
 /// syntax trees, git status, and diagnostics.
 pub struct Buffer {
@@ -105,6 +112,7 @@ pub struct Buffer {
     branch_state: Option<BufferBranchState>,
     /// Filesystem state, `None` when there is no path.
     file: Option<Arc<dyn File>>,
+    language_server_document: Option<LanguageServerDocument>,
     /// The mtime of the file when this buffer was last loaded from
     /// or saved to disk.
     saved_mtime: Option<MTime>,
@@ -1052,6 +1060,28 @@ impl Buffer {
         ));
         this.saved_version = proto::deserialize_version(&message.saved_version);
         this.saved_mtime = message.saved_mtime.map(|time| time.into());
+        if let Some(document) = message.language_server_document {
+            let uri: lsp::Uri = document
+                .uri
+                .parse()
+                .context("Invalid language server document URI")?;
+            anyhow::ensure!(
+                matches!(uri.scheme(), "jar" | "jrt"),
+                "Unsupported language server document URI scheme"
+            );
+            anyhow::ensure!(
+                !document.language.is_empty(),
+                "Missing language server document language"
+            );
+            this.set_language_server_document(
+                LanguageServerDocument {
+                    uri,
+                    server_id: LanguageServerId::from_proto(document.server_id),
+                    language: document.language,
+                },
+                cx,
+            );
+        }
         Ok(this)
     }
 
@@ -1064,6 +1094,13 @@ impl Buffer {
             line_ending: proto::serialize_line_ending(self.line_ending()) as i32,
             saved_version: proto::serialize_version(&self.saved_version),
             saved_mtime: self.saved_mtime.map(|time| time.into()),
+            language_server_document: self.language_server_document.as_ref().map(|document| {
+                rpc::proto::LanguageServerDocument {
+                    uri: document.uri.to_string(),
+                    server_id: document.server_id.to_proto(),
+                    language: document.language.clone(),
+                }
+            }),
         }
     }
 
@@ -1163,6 +1200,7 @@ impl Buffer {
             text: buffer,
             branch_state: None,
             file,
+            language_server_document: None,
             capability,
             syntax_map,
             reparse: None,
@@ -1357,6 +1395,7 @@ impl Buffer {
                     merged_operations: Default::default(),
                 }),
                 language: self.language.clone(),
+                language_server_document: self.language_server_document.clone(),
                 content_language_detection_enabled: self.content_language_detection_enabled,
                 has_conflict: self.has_conflict,
                 has_unsaved_edits: Cell::new(self.has_unsaved_edits.get_mut().clone()),
@@ -1630,10 +1669,28 @@ impl Buffer {
 
     /// Assign the buffer a new [`Capability`].
     pub fn set_capability(&mut self, capability: Capability, cx: &mut Context<Self>) {
+        let capability = if self.language_server_document.is_some() {
+            Capability::ReadOnly
+        } else {
+            capability
+        };
         if self.capability != capability {
             self.capability = capability;
             cx.emit(BufferEvent::CapabilityChanged)
         }
+    }
+
+    pub fn language_server_document(&self) -> Option<&LanguageServerDocument> {
+        self.language_server_document.as_ref()
+    }
+
+    pub fn set_language_server_document(
+        &mut self,
+        document: LanguageServerDocument,
+        cx: &mut Context<Self>,
+    ) {
+        self.language_server_document = Some(document);
+        self.set_capability(Capability::ReadOnly, cx);
     }
 
     /// This method is called to signal that the buffer has been saved.

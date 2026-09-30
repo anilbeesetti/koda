@@ -114,10 +114,6 @@ impl InnerTreeNode {
             }),
         }
     }
-
-    pub(crate) fn id(&self) -> Option<LanguageServerId> {
-        self.id.get().copied()
-    }
 }
 
 impl LanguageServerTree {
@@ -143,9 +139,27 @@ impl LanguageServerTree {
         delegate: &Arc<dyn ManifestDelegate>,
         cx: &mut App,
     ) -> impl Iterator<Item = LanguageServerId> + 'a {
+        // External buffers inherit the project's server, including its local settings.
+        let reused = self
+            .instances
+            .get(&path.worktree_id)
+            .and_then(|servers| servers.roots.get(RelPath::empty()))
+            .into_iter()
+            .flat_map(|servers| servers.values())
+            .filter(|(node, languages)| {
+                node.disposition.path.worktree_id != path.worktree_id
+                    && languages.contains(&language_name)
+            })
+            .filter_map(|(node, _)| node.id.get().copied())
+            .collect::<Vec<_>>();
+        if !reused.is_empty() {
+            return reused.into_iter();
+        }
         let manifest_location = self.manifest_location_for_path(&path, manifest_name, delegate, cx);
         let adapters = self.adapters_for_language(&manifest_location, &language_name, cx);
         self.get_with_adapters(manifest_location, adapters)
+            .collect::<Vec<_>>()
+            .into_iter()
     }
 
     /// Get all language server root points for a given path and language; the language servers might already be initialized at a given path.
@@ -273,7 +287,7 @@ impl LanguageServerTree {
                         .register_lsp_adapter(language_name.clone(), adapter.adapter.clone());
                     Some(adapter)
                 } else {
-                    None
+                    self.languages.adapter_for_name(&desired_adapter)
                 }?;
                 let adapter_settings = crate::lsp_store::language_server_settings_for(
                     settings_location,
@@ -291,11 +305,17 @@ impl LanguageServerTree {
         // This is done, in part, to ensure that language servers loaded at different points
         // (e.g., native vs extension) still end up in the right order at the end, rather than
         // it being based on which language server happened to be loaded in first.
+        let registered_adapters = self.languages.lsp_adapters(language_name);
         self.languages.reorder_language_servers(
             language_name,
             adapters_with_settings
                 .values()
                 .map(|(_, adapter)| adapter.clone())
+                .filter(|adapter| {
+                    registered_adapters
+                        .iter()
+                        .any(|registered| registered.name == adapter.name)
+                })
                 .collect(),
         );
 

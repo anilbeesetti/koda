@@ -1324,6 +1324,7 @@ async fn test_navigation_history(cx: &mut TestAppContext) {
             let invalid_point = Point::new(9999, 0);
             editor.navigate(
                 Arc::new(NavigationData {
+                    language_server_document: None,
                     cursor_anchor: invalid_anchor,
                     cursor_position: invalid_point,
                     scroll_anchor: ScrollAnchor {
@@ -24896,6 +24897,819 @@ async fn test_completion_can_run_commands(cx: &mut TestAppContext) {
 }
 
 #[gpui::test]
+async fn test_kotlin_preparation_follows_editor_focus(cx: &mut TestAppContext) {
+    init_test(cx, |_| {});
+    let fs = FakeFs::new(cx.executor());
+    fs.insert_tree(path!("/project"), json!({"Main.kt": "fun main() {}"}))
+        .await;
+    let project = Project::test(fs, [path!("/project").as_ref()], cx).await;
+    let languages = project.read_with(cx, |project, _| project.languages().clone());
+    languages.add(Arc::new(language::Language::new(
+        LanguageConfig {
+            name: "Kotlin".into(),
+            matcher: LanguageMatcher {
+                path_suffixes: vec!["kt".into()],
+                ..Default::default()
+            }
+            .into(),
+            ..Default::default()
+        },
+        None,
+    )));
+    let commands = Arc::new(Mutex::new(Vec::new()));
+    let mut servers = languages.register_fake_lsp(
+        "Kotlin",
+        FakeLspAdapter {
+            name: "kotlin-lsp",
+            capabilities: lsp::ServerCapabilities {
+                text_document_sync: Some(lsp::TextDocumentSyncCapability::Kind(
+                    lsp::TextDocumentSyncKind::INCREMENTAL,
+                )),
+                execute_command_provider: Some(lsp::ExecuteCommandOptions {
+                    commands: vec!["zed.prepareKotlinFile".into()],
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+            initializer: Some(Box::new({
+                let commands = commands.clone();
+                move |server| {
+                    let commands = commands.clone();
+                    server.set_request_handler::<lsp::request::ExecuteCommand, _, _>(
+                        move |params, _| {
+                            commands.lock().push(params);
+                            async { Ok(None) }
+                        },
+                    );
+                }
+            })),
+            ..Default::default()
+        },
+    );
+    let (buffer, _registration) = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer_with_lsp(path!("/project/Main.kt"), cx)
+        })
+        .await
+        .expect("Kotlin buffer");
+    let buffer = cx.new(|cx| MultiBuffer::singleton(buffer, cx));
+    let (editor, cx) = cx.add_window_view(|window, cx| {
+        build_editor_with_project(project.clone(), buffer, window, cx)
+    });
+    let _server = servers.next().await.expect("Kotlin server");
+    cx.run_until_parked();
+    editor.update_in(cx, |editor, window, cx| {
+        window.activate_window();
+        window.focus(&editor.focus_handle, cx)
+    });
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    cx.run_until_parked();
+    let first = commands
+        .lock()
+        .last()
+        .cloned()
+        .expect("focused file preparation");
+    assert_eq!(first.command, "zed.prepareKotlinFile");
+    assert_eq!(
+        first.arguments.last(),
+        Some(&json!(
+            lsp::Uri::from_file_path(path!("/project/Main.kt")).expect("file URI")
+        ))
+    );
+    let generation = first
+        .arguments
+        .first()
+        .and_then(|value| value.as_u64())
+        .expect("generation");
+    let count = commands.lock().len();
+    editor.update_in(cx, |editor, window, cx| {
+        editor.update_lsp_data(None, window, cx);
+        editor.update_lsp_data(None, window, cx);
+    });
+    cx.run_until_parked();
+    assert_eq!(
+        commands.lock().len(),
+        count,
+        "unchanged focus must not restart preparation"
+    );
+    let other_focus = cx.update(|window, cx| {
+        let focus = cx.focus_handle();
+        window.focus(&focus, cx);
+        focus
+    });
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    cx.run_until_parked();
+    assert_eq!(
+        commands.lock().last().expect("stop command").arguments,
+        vec![json!(generation), json!(null)]
+    );
+    editor.update_in(cx, |editor, window, cx| {
+        window.focus(&editor.focus_handle, cx)
+    });
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    cx.run_until_parked();
+    assert!(
+        commands
+            .lock()
+            .last()
+            .expect("refocus command")
+            .arguments
+            .first()
+            .and_then(|value| value.as_u64())
+            .is_some_and(|next| next > generation)
+    );
+    cx.deactivate_window();
+    cx.update(|window, cx| window.draw(cx).clear(cx));
+    cx.run_until_parked();
+    let count = commands.lock().len();
+    assert_eq!(
+        commands
+            .lock()
+            .last()
+            .expect("inactive stop")
+            .arguments
+            .last(),
+        Some(&json!(null))
+    );
+    editor.update_in(cx, |editor, window, cx| {
+        editor.update_lsp_data(None, window, cx)
+    });
+    cx.run_until_parked();
+    assert_eq!(
+        commands.lock().len(),
+        count,
+        "background updates must not restart preparation"
+    );
+    drop(other_focus);
+}
+
+#[gpui::test]
+async fn test_kotlin_command_completions_refresh_after_typing_and_backspace(
+    cx: &mut TestAppContext,
+) {
+    init_test(cx, |settings| {
+        settings.defaults.show_completions_on_input = Some(false);
+    });
+    let mut cx = kotlin_command_completion_context(false, cx).await;
+    cx.set_state("Buˇ");
+    let requests = Arc::new(Mutex::new(Vec::new()));
+    let (release_first, first_released) = futures::channel::oneshot::channel();
+    cx.set_request_handler::<lsp::request::Completion, _, _>({
+        let requests = requests.clone();
+        let mut first_released = Some(first_released);
+        move |_, params, _| {
+            let position = params.text_document_position.position;
+            let key = {
+                let mut requests = requests.lock();
+                requests.push(position);
+                requests.len()
+            };
+            let release = first_released.take();
+            async move {
+                if let Some(release) = release {
+                    release.await.expect("first request released");
+                }
+                Ok(Some(lsp::CompletionResponse::Array(vec![
+                    kotlin_command_item(position, key),
+                ])))
+            }
+        }
+    });
+    let executed = Arc::new(Mutex::new(Vec::new()));
+    cx.set_request_handler::<lsp::request::ExecuteCommand, _, _>({
+        let server = cx.lsp.server.clone();
+        let executed = executed.clone();
+        let requests = requests.clone();
+        move |uri, params, _| {
+            let key = params
+                .arguments
+                .first()
+                .and_then(|key| key.as_u64())
+                .expect("completion key") as usize;
+            let position = *requests.lock().get(key - 1).expect("request position");
+            executed.lock().push(key);
+            let server = server.clone();
+            async move {
+                let response = server
+                    .request::<lsp::request::ApplyWorkspaceEdit>(
+                        lsp::ApplyWorkspaceEditParams {
+                            label: None,
+                            edit: lsp::WorkspaceEdit::new(
+                                [(
+                                    uri,
+                                    vec![lsp::TextEdit::new(
+                                        lsp::Range::new(lsp::Position::default(), position),
+                                        "Button()".into(),
+                                    )],
+                                )]
+                                .into_iter()
+                                .collect(),
+                            ),
+                        },
+                        DEFAULT_LSP_REQUEST_TIMEOUT,
+                    )
+                    .await
+                    .into_response()?;
+                assert!(response.applied);
+                Ok(None)
+            }
+        }
+    });
+    cx.update_editor(|editor, window, cx| editor.show_completions(&ShowCompletions, window, cx));
+    cx.run_until_parked();
+    assert_eq!(requests.lock().len(), 1);
+    cx.update_editor(|editor, window, cx| {
+        editor.handle_input("t", window, cx);
+        editor.show_completions(&ShowCompletions, window, cx);
+    });
+    cx.run_until_parked();
+    assert_eq!(
+        requests.lock().len(),
+        1,
+        "the superseding request waits for the server's old session to finish"
+    );
+    release_first.send(()).expect("first request still pending");
+    cx.run_until_parked();
+    assert_eq!(requests.lock().len(), 2);
+    cx.update_editor(|editor, window, cx| {
+        editor.backspace(&Backspace, window, cx);
+        editor
+            .confirm_completion(&ConfirmCompletion::default(), window, cx)
+            .expect("stale menu should defer acceptance")
+    })
+    .await
+    .expect("stale acceptance is quiet");
+    assert!(executed.lock().is_empty());
+    cx.run_until_parked();
+    assert_eq!(
+        requests
+            .lock()
+            .iter()
+            .map(|position| position.character)
+            .collect::<Vec<_>>(),
+        vec![2, 3, 2]
+    );
+    cx.update_editor(|editor, window, cx| {
+        editor
+            .confirm_completion(&ConfirmCompletion::default(), window, cx)
+            .expect("refreshed menu")
+    })
+    .await
+    .expect("fresh completion applies");
+    cx.run_until_parked();
+    assert_eq!(*executed.lock(), vec![3]);
+    cx.assert_editor_state("Button()ˇ");
+}
+
+#[gpui::test]
+async fn test_kotlin_completion_resolve_cannot_accept_a_replaced_session(cx: &mut TestAppContext) {
+    init_test(cx, |settings| {
+        settings.defaults.show_completions_on_input = Some(false);
+    });
+    let mut cx = kotlin_command_completion_context(true, cx).await;
+    cx.set_state("Butˇ");
+    let keys = Arc::new(Mutex::new(0));
+    cx.set_request_handler::<lsp::request::Completion, _, _>({
+        let keys = keys.clone();
+        move |_, params, _| {
+            let key = {
+                let mut keys = keys.lock();
+                *keys += 1;
+                *keys
+            };
+            async move {
+                Ok(Some(lsp::CompletionResponse::Array(vec![
+                    kotlin_command_item(params.text_document_position.position, key),
+                ])))
+            }
+        }
+    });
+    let (release_resolve, resolve_released) = futures::channel::oneshot::channel();
+    let resolve_released = resolve_released.shared();
+    let resolves = Arc::new(Mutex::new(0));
+    cx.set_request_handler::<lsp::request::ResolveCompletionItem, _, _>({
+        let resolves = resolves.clone();
+        move |_, item, _| {
+            *resolves.lock() += 1;
+            let released = resolve_released.clone();
+            async move {
+                released.await.expect("resolve released");
+                Ok(lsp::CompletionItem {
+                    label: item.label,
+                    documentation: Some(lsp::Documentation::String(
+                        "resolved documentation".into(),
+                    )),
+                    ..Default::default()
+                })
+            }
+        }
+    });
+    let executed = Arc::new(Mutex::new(Vec::new()));
+    cx.set_request_handler::<lsp::request::ExecuteCommand, _, _>({
+        let executed = executed.clone();
+        move |_, params, _| {
+            executed.lock().push(params.arguments);
+            async { Ok(None) }
+        }
+    });
+    cx.update_editor(|editor, window, cx| editor.show_completions(&ShowCompletions, window, cx));
+    cx.run_until_parked();
+    let acceptance = cx.update_editor(|editor, window, cx| {
+        editor
+            .confirm_completion(&ConfirmCompletion::default(), window, cx)
+            .expect("completion menu")
+    });
+    cx.run_until_parked();
+    assert!(*resolves.lock() > 0);
+    cx.update_editor(|editor, window, cx| editor.show_completions(&ShowCompletions, window, cx));
+    cx.run_until_parked();
+    assert_eq!(*keys.lock(), 2);
+    release_resolve.send(()).expect("resolution pending");
+    acceptance
+        .await
+        .expect("replaced session quietly stops acceptance");
+    cx.run_until_parked();
+    assert!(executed.lock().is_empty());
+    cx.assert_editor_state("Butˇ");
+    cx.update_editor(|editor, _, _| {
+        let completions = editor.current_completions().expect("current completion menu");
+        let item = completions.first().expect("current item").source.lsp_completion(false).expect("LSP item");
+        assert_eq!(item.data, Some(json!({"KotlinCompletionItemKey": 2, "configurationEntryId": "KotlinCompletionProvider"})));
+    });
+    cx.update_editor(|editor, window, cx| {
+        editor
+            .confirm_completion(&ConfirmCompletion::default(), window, cx)
+            .expect("replacement menu")
+    })
+    .await
+    .expect("current command remains available after partial resolve");
+    assert_eq!(*executed.lock(), vec![vec![json!(2)]]);
+}
+
+#[gpui::test]
+async fn test_kotlin_completion_command_rejects_late_edits_and_caret(cx: &mut TestAppContext) {
+    init_test(cx, |settings| {
+        settings.defaults.show_completions_on_input = Some(false);
+    });
+    let mut cx = kotlin_command_completion_context(false, cx).await;
+    cx.set_request_handler::<lsp::request::Completion, _, _>(|_, params, _| async move {
+        Ok(Some(lsp::CompletionResponse::Array(vec![
+            kotlin_command_item(params.text_document_position.position, 1),
+        ])))
+    });
+    for replace_session in [false, true] {
+        cx.set_state("Butˇ");
+        let (release_command, command_released) = futures::channel::oneshot::channel();
+        let (command_started, started) = futures::channel::oneshot::channel();
+        cx.set_request_handler::<lsp::request::ExecuteCommand, _, _>({
+            let server = cx.lsp.server.clone();
+            let mut command_released = Some(command_released);
+            let mut command_started = Some(command_started);
+            move |uri, _, _| {
+                command_started
+                    .take()
+                    .expect("one command")
+                    .send(())
+                    .expect("observe command");
+                let command_released = command_released.take().expect("one command response");
+                let server = server.clone();
+                async move {
+                    command_released.await.expect("release command");
+                    let response = server
+                        .request::<lsp::request::ApplyWorkspaceEdit>(
+                            lsp::ApplyWorkspaceEditParams {
+                                label: None,
+                                edit: lsp::WorkspaceEdit::new(
+                                    [(
+                                        uri.clone(),
+                                        vec![lsp::TextEdit::new(
+                                            lsp::Range::new(
+                                                lsp::Position::default(),
+                                                lsp::Position::new(0, 3),
+                                            ),
+                                            "Button()".into(),
+                                        )],
+                                    )]
+                                    .into_iter()
+                                    .collect(),
+                                ),
+                            },
+                            DEFAULT_LSP_REQUEST_TIMEOUT,
+                        )
+                        .await
+                        .into_response()?;
+                    assert!(!response.applied);
+                    assert!(
+                        response
+                            .failure_reason
+                            .is_some_and(|reason| reason.contains("Completion expired"))
+                    );
+                    let response = server
+                        .request::<lsp::request::ShowDocument>(
+                            lsp::ShowDocumentParams {
+                                uri,
+                                external: None,
+                                take_focus: Some(true),
+                                selection: Some(lsp::Range::default()),
+                            },
+                            DEFAULT_LSP_REQUEST_TIMEOUT,
+                        )
+                        .await
+                        .into_response()?;
+                    assert!(
+                        !response.success,
+                        "a rejected insertion must not move the caret"
+                    );
+                    Ok(None)
+                }
+            }
+        });
+        cx.update_editor(|editor, window, cx| {
+            editor.show_completions(&ShowCompletions, window, cx)
+        });
+        cx.run_until_parked();
+        let acceptance = cx.update_editor(|editor, window, cx| {
+            editor
+                .confirm_completion(&ConfirmCompletion::default(), window, cx)
+                .expect("completion menu")
+        });
+        cx.run_until_parked();
+        started
+            .now_or_never()
+            .expect("command is in flight")
+            .expect("command started");
+        cx.update_editor(|editor, window, cx| {
+            if replace_session {
+                editor.show_completions(&ShowCompletions, window, cx);
+            } else {
+                editor.handle_input("t", window, cx);
+            }
+        });
+        cx.run_until_parked();
+        release_command.send(()).expect("command pending");
+        acceptance
+            .await
+            .expect("rejected edit does not fail transport");
+        cx.run_until_parked();
+        cx.assert_editor_state(if replace_session { "Butˇ" } else { "Buttˇ" });
+    }
+}
+
+#[gpui::test]
+async fn test_kotlin_completion_cannot_navigate_after_opening_document(cx: &mut TestAppContext) {
+    init_test(cx, |settings| {
+        settings.defaults.show_completions_on_input = Some(false);
+    });
+    let mut cx = kotlin_command_completion_context(false, cx).await;
+    cx.set_state("Butˇ");
+    let target_path = EditorLspTestContext::root_path().join("target.kt");
+    let project = cx.update_workspace(|workspace, _, _| workspace.project().clone());
+    let fs = cx.update_workspace(|workspace, _, cx| workspace.project().read(cx).fs().clone());
+    fs.as_fake()
+        .insert_file(&target_path, b"target".to_vec())
+        .await;
+    let source = cx.update_editor(|editor, _, cx| {
+        editor
+            .buffer()
+            .read(cx)
+            .as_singleton()
+            .expect("source buffer")
+    });
+    let navigated = Arc::new(AtomicBool::new(false));
+    let _subscription = cx.update_workspace(|_, _, cx| {
+        cx.subscribe(&project, {
+            let source = source.clone();
+            let navigated = navigated.clone();
+            move |_, project, event, cx| {
+                if let project::Event::LanguageServerShowDocument(request) = event {
+                    assert!(request.is_current(project.read(cx).lsp_store().read(cx), cx));
+                    // The workspace's earlier subscriber has started loading the target, but
+                    // its task cannot navigate until this event finishes dispatching.
+                    source.update(cx, |buffer, cx| buffer.edit([(0..0, "//")], None, cx));
+                    navigated.store(true, atomic::Ordering::SeqCst);
+                }
+            }
+        })
+    });
+    cx.set_request_handler::<lsp::request::Completion, _, _>(|_, params, _| async move {
+        Ok(Some(lsp::CompletionResponse::Array(vec![
+            kotlin_command_item(params.text_document_position.position, 1),
+        ])))
+    });
+    cx.set_request_handler::<lsp::request::ExecuteCommand, _, _>({
+        let server = cx.lsp.server.clone();
+        move |_, _, _| {
+            let server = server.clone();
+            let uri = lsp::Uri::from_file_path(&target_path).expect("target URI");
+            async move {
+                let response = server
+                    .request::<lsp::request::ShowDocument>(
+                        lsp::ShowDocumentParams {
+                            uri,
+                            external: None,
+                            take_focus: Some(true),
+                            selection: Some(lsp::Range::default()),
+                        },
+                        DEFAULT_LSP_REQUEST_TIMEOUT,
+                    )
+                    .await
+                    .into_response()?;
+                assert!(
+                    !response.success,
+                    "typing during target loading cancels navigation"
+                );
+                Ok(None)
+            }
+        }
+    });
+    cx.update_editor(|editor, window, cx| editor.show_completions(&ShowCompletions, window, cx));
+    cx.run_until_parked();
+    cx.update_editor(|editor, window, cx| {
+        editor
+            .confirm_completion(&ConfirmCompletion::default(), window, cx)
+            .expect("completion")
+    })
+    .await
+    .expect("command response");
+    cx.run_until_parked();
+    assert!(navigated.load(atomic::Ordering::SeqCst));
+    cx.assert_editor_state("//Butˇ");
+    cx.update_workspace(|workspace, _, cx| {
+        let active = workspace
+            .active_item_as::<Editor>(cx)
+            .expect("active editor");
+        assert_eq!(
+            active.read(cx).buffer().read(cx).as_singleton(),
+            Some(source)
+        );
+    });
+}
+
+fn kotlin_command_item(position: lsp::Position, key: usize) -> lsp::CompletionItem {
+    let range = lsp::Range::new(position, position);
+    lsp::CompletionItem {
+        label: "Button".into(),
+        text_edit: Some(lsp::CompletionTextEdit::InsertAndReplace(
+            lsp::InsertReplaceEdit {
+                new_text: String::new(),
+                insert: range,
+                replace: range,
+            },
+        )),
+        command: Some(lsp::Command {
+            title: "Apply Completion".into(),
+            command: "jetbrains.kotlin.completion.apply".into(),
+            arguments: Some(vec![json!(key)]),
+        }),
+        data: Some(
+            json!({"KotlinCompletionItemKey": key, "configurationEntryId": "KotlinCompletionProvider"}),
+        ),
+        ..Default::default()
+    }
+}
+
+#[gpui::test]
+#[ignore = "Requires ZED_KOTLIN_CLIENT_PROBE_CONFIG and a real Kotlin LSP installation"]
+async fn test_real_kotlin_editor_completion_and_navigation(cx: &mut TestAppContext) {
+    init_test(cx, |_| {});
+    test::run_real_kotlin_editor_probe(cx).await;
+}
+
+async fn kotlin_command_completion_context(
+    resolve: bool,
+    cx: &mut TestAppContext,
+) -> EditorLspTestContext {
+    let mut context = EditorLspTestContext::new(
+        language::Language::new(
+            LanguageConfig {
+                name: "Kotlin".into(),
+                matcher: LanguageMatcher {
+                    path_suffixes: vec!["kt".into()],
+                    ..Default::default()
+                }
+                .into(),
+                ..Default::default()
+            },
+            None,
+        ),
+        lsp::ServerCapabilities {
+            text_document_sync: Some(lsp::TextDocumentSyncCapability::Kind(
+                lsp::TextDocumentSyncKind::INCREMENTAL,
+            )),
+            completion_provider: Some(lsp::CompletionOptions {
+                resolve_provider: Some(resolve),
+                ..Default::default()
+            }),
+            execute_command_provider: Some(lsp::ExecuteCommandOptions {
+                commands: vec!["jetbrains.kotlin.completion.apply".into()],
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        cx,
+    )
+    .await;
+    context.update_editor(|editor, _, _| editor.disable_word_completions());
+    context
+}
+
+#[gpui::test]
+async fn test_kotlin_command_completion_with_incremental_edits(cx: &mut TestAppContext) {
+    init_test(cx, |settings| {
+        settings.defaults.show_completions_on_input = Some(false);
+    });
+    let command_name = "jetbrains.kotlin.completion.apply";
+    let mut cx = EditorLspTestContext::new(
+        language::Language::new(
+            LanguageConfig {
+                name: "Kotlin".into(),
+                matcher: LanguageMatcher {
+                    path_suffixes: vec!["kt".into()],
+                    ..Default::default()
+                }
+                .into(),
+                ..Default::default()
+            },
+            None,
+        ),
+        lsp::ServerCapabilities {
+            text_document_sync: Some(lsp::TextDocumentSyncCapability::Kind(
+                lsp::TextDocumentSyncKind::INCREMENTAL,
+            )),
+            completion_provider: Some(lsp::CompletionOptions {
+                resolve_provider: Some(true),
+                ..Default::default()
+            }),
+            execute_command_provider: Some(lsp::ExecuteCommandOptions {
+                commands: vec![command_name.into()],
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        cx,
+    )
+    .await;
+    cx.set_state("@Composable\nfun Screen() {\n    ˇ\n}");
+    let initial_change = cx
+        .lsp
+        .receive_notification::<lsp::notification::DidChangeTextDocument>()
+        .await;
+    let changes = Arc::new(Mutex::new(Vec::new()));
+    cx.lsp
+        .handle_notification::<lsp::notification::DidChangeTextDocument, _>({
+            let changes = changes.clone();
+            move |params, _| changes.lock().push(params)
+        });
+    let position = lsp::Position::new(2, 7);
+    let empty_range = lsp::Range::new(position, position);
+    let item = lsp::CompletionItem {
+        label: "Button".into(),
+        text_edit: Some(lsp::CompletionTextEdit::InsertAndReplace(
+            lsp::InsertReplaceEdit {
+                new_text: String::new(),
+                insert: empty_range,
+                replace: empty_range,
+            },
+        )),
+        command: Some(lsp::Command {
+            title: "Apply Completion".into(),
+            command: command_name.into(),
+            arguments: Some(vec![json!(1)]),
+        }),
+        data: Some(json!({
+            "KotlinCompletionItemKey": 1,
+            "configurationEntryId": "KotlinCompletionProvider",
+        })),
+        ..Default::default()
+    };
+    cx.set_request_handler::<lsp::request::Completion, _, _>({
+        let changes = changes.clone();
+        let item = item.clone();
+        move |uri, params, _| {
+            assert_eq!(params.text_document_position.text_document.uri, uri);
+            assert_eq!(params.text_document_position.position, position);
+            assert_eq!(
+                *changes.lock(),
+                vec![lsp::DidChangeTextDocumentParams {
+                    text_document: lsp::VersionedTextDocumentIdentifier::new(
+                        uri,
+                        initial_change.text_document.version + 1,
+                    ),
+                    content_changes: vec![lsp::TextDocumentContentChangeEvent {
+                        range: Some(lsp::Range::new(
+                            lsp::Position::new(2, 4),
+                            lsp::Position::new(2, 4)
+                        )),
+                        range_length: None,
+                        text: "But".into(),
+                    }],
+                }],
+                "the unsaved incremental change must arrive before completion",
+            );
+            let item = item.clone();
+            async move { Ok(Some(lsp::CompletionResponse::Array(vec![item]))) }
+        }
+    });
+    let mut resolved = cx.set_request_handler::<lsp::request::ResolveCompletionItem, _, _>(
+        move |_, mut received, _| {
+            assert_eq!(received, item, "resolve must preserve the command and data");
+            received.documentation = Some(lsp::Documentation::String("A Compose button".into()));
+            async move { Ok(received) }
+        },
+    );
+    let mut executed = cx.set_request_handler::<lsp::request::ExecuteCommand, _, _>({
+        let server = cx.lsp.server.clone();
+        let editor = cx.editor.downgrade();
+        move |uri, params, cx| {
+            assert_eq!(params.command, command_name);
+            assert_eq!(params.arguments, vec![json!(1)]);
+            editor
+                .read_with(&cx, |editor, cx| {
+                    assert_eq!(editor.text(cx), "@Composable\nfun Screen() {\n    But\n}");
+                })
+                .expect("editor should remain open during completion");
+            let server = server.clone();
+            async move {
+                let result = server
+                    .request::<lsp::request::ApplyWorkspaceEdit>(
+                        lsp::ApplyWorkspaceEditParams {
+                            label: Some("Apply Completion".into()),
+                            edit: lsp::WorkspaceEdit::new(
+                                [(
+                                    uri.clone(),
+                                    vec![
+                                        lsp::TextEdit::new(
+                                            lsp::Range::default(),
+                                            "import androidx.compose.material3.Button\n\n".into(),
+                                        ),
+                                        lsp::TextEdit::new(
+                                            lsp::Range::new(lsp::Position::new(2, 4), position),
+                                            "Button()".into(),
+                                        ),
+                                    ],
+                                )]
+                                .into_iter()
+                                .collect(),
+                            ),
+                        },
+                        DEFAULT_LSP_REQUEST_TIMEOUT,
+                    )
+                    .await
+                    .into_response()?;
+                assert!(result.applied);
+                let caret = lsp::Position::new(4, 11);
+                let result = server
+                    .request::<lsp::request::ShowDocument>(
+                        lsp::ShowDocumentParams {
+                            uri,
+                            external: None,
+                            take_focus: Some(true),
+                            selection: Some(lsp::Range::new(caret, caret)),
+                        },
+                        DEFAULT_LSP_REQUEST_TIMEOUT,
+                    )
+                    .await
+                    .into_response()?;
+                assert!(result.success);
+                Ok(None)
+            }
+        }
+    });
+
+    cx.update_editor(|editor, window, cx| {
+        editor.handle_input("But", window, cx);
+        editor.show_completions(&ShowCompletions, window, cx);
+    });
+    resolved
+        .next()
+        .await
+        .expect("completion should be resolved");
+    cx.run_until_parked();
+    cx.assert_editor_state("@Composable\nfun Screen() {\n    Butˇ\n}");
+    cx.update_editor(|editor, window, cx| {
+        editor
+            .confirm_completion(&ConfirmCompletion::default(), window, cx)
+            .expect("completion menu should be open")
+    })
+    .await
+    .expect("completion command should succeed");
+    executed
+        .next()
+        .await
+        .expect("completion command should execute");
+    cx.run_until_parked();
+    cx.assert_editor_state(
+        "import androidx.compose.material3.Button\n\n@Composable\nfun Screen() {\n    Button(ˇ)\n}",
+    );
+    cx.update_editor(|editor, window, cx| editor.undo(&Undo, window, cx));
+    cx.assert_editor_state("@Composable\nfun Screen() {\n    Butˇ\n}");
+    cx.update_editor(|editor, window, cx| editor.redo(&Redo, window, cx));
+    cx.assert_editor_state(
+        "import androidx.compose.material3.Button\n\n@Composable\nfun Screen() {\n    Button(ˇ)\n}",
+    );
+}
+
+#[gpui::test]
 async fn test_completion_reuse(cx: &mut TestAppContext) {
     init_test(cx, |_| {});
 
@@ -29629,6 +30443,70 @@ async fn test_context_menus_hide_hover_popover(cx: &mut gpui::TestAppContext) {
             "Hover popover should be hidden when completion menu is shown"
         );
     });
+}
+
+#[gpui::test]
+async fn test_completion_menu_stops_resolving_hidden_items(cx: &mut TestAppContext) {
+    init_test(cx, |settings| {
+        settings.defaults.show_completions_on_input = Some(false);
+    });
+    let mut cx = EditorLspTestContext::new_rust(
+        lsp::ServerCapabilities {
+            completion_provider: Some(lsp::CompletionOptions {
+                resolve_provider: Some(true),
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+        cx,
+    )
+    .await;
+    cx.set_state("let value = ˇ");
+    cx.set_request_handler::<lsp::request::Completion, _, _>(|_, _, _| async {
+        Ok(Some(lsp::CompletionResponse::Array(
+            ["first", "second", "third"]
+                .into_iter()
+                .map(|label| lsp::CompletionItem {
+                    label: label.into(),
+                    ..Default::default()
+                })
+                .collect(),
+        )))
+    });
+    let (release_resolve, resolve_released) = futures::channel::oneshot::channel();
+    let resolve_released = resolve_released.shared();
+    let resolved_labels = Arc::new(Mutex::new(Vec::new()));
+    cx.set_request_handler::<lsp::request::ResolveCompletionItem, _, _>({
+        let resolved_labels = resolved_labels.clone();
+        move |_, item, _| {
+            resolved_labels.lock().push(item.label.clone());
+            let resolve_released = resolve_released.clone();
+            async move {
+                resolve_released.await.expect("release documentation");
+                Ok(lsp::CompletionItem {
+                    documentation: Some(lsp::Documentation::String("documentation".into())),
+                    ..item
+                })
+            }
+        }
+    });
+    cx.update_editor(|editor, window, cx| editor.show_completions(&ShowCompletions, window, cx));
+    cx.run_until_parked();
+    assert_eq!(*resolved_labels.lock(), ["first"]);
+    cx.update_editor(|editor, window, cx| {
+        editor.hide_context_menu(window, cx);
+    });
+    cx.run_until_parked();
+    release_resolve.send(()).expect("documentation handler");
+    cx.run_until_parked();
+    assert_eq!(*resolved_labels.lock(), ["first"]);
+
+    cx.update_editor(|editor, window, cx| editor.show_completions(&ShowCompletions, window, cx));
+    cx.run_until_parked();
+    assert_eq!(
+        *resolved_labels.lock(),
+        ["first", "first", "second", "third"]
+    );
 }
 
 #[gpui::test]

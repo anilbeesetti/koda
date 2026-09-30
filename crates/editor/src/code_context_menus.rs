@@ -259,6 +259,7 @@ pub struct CompletionsMenu {
     pub entries: Rc<RefCell<Box<[CompletionMenuEntry]>>>,
     pub selected_item: usize,
     filter_task: Task<()>,
+    resolve_task: Task<()>,
     cancel_filter: Arc<AtomicBool>,
     scroll_handle: UniformListScrollHandle,
     // The `ScrollHandle` used on the Markdown documentation rendered on the
@@ -390,6 +391,7 @@ impl CompletionsMenu {
             entries: Rc::new(RefCell::new(Box::new([]))),
             selected_item: 0,
             filter_task: Task::ready(()),
+            resolve_task: Task::ready(()),
             cancel_filter: Arc::new(AtomicBool::new(false)),
             scroll_handle: scroll_handle.unwrap_or_else(UniformListScrollHandle::new),
             scroll_handle_aside: ScrollHandle::new(),
@@ -470,6 +472,7 @@ impl CompletionsMenu {
             entries: RefCell::new(entries).into(),
             selected_item: 0,
             filter_task: Task::ready(()),
+            resolve_task: Task::ready(()),
             cancel_filter: Arc::new(AtomicBool::new(false)),
             scroll_handle: scroll_handle.unwrap_or_else(UniformListScrollHandle::new),
             scroll_handle_aside: ScrollHandle::new(),
@@ -748,7 +751,7 @@ impl CompletionsMenu {
         );
 
         let completion_id = self.id;
-        cx.spawn(async move |editor, cx| {
+        self.resolve_task = cx.spawn(async move |editor, cx| {
             if let Some(true) = resolve_task.await.log_err() {
                 editor
                     .update(cx, |editor, cx| {
@@ -762,8 +765,7 @@ impl CompletionsMenu {
                     })
                     .ok();
             }
-        })
-        .detach();
+        });
     }
 
     fn start_markdown_parse_for_nearby_entries(&self, cx: &mut Context<Editor>) {

@@ -712,7 +712,12 @@ async fn test_extension_store(cx: &mut TestAppContext) {
         );
         assert_eq!(
             language_registry.grammar_names(),
-            ["embedded_template".into(), "ruby".into()]
+            [
+                "embedded_template".into(),
+                "ruby".into(),
+                "zed-ruby/embedded_template".into(),
+                "zed-ruby/ruby".into(),
+            ]
         );
         assert_eq!(
             theme_registry.list_names(),
@@ -3556,6 +3561,82 @@ async fn test_uninstalling_extension_restores_surviving_extensions_language(
         language_registry.language_name_for_extension("shared-b"),
         None,
         "the uninstalled extension's language config should be gone"
+    );
+}
+
+#[gpui::test]
+async fn test_extensions_keep_their_own_grammar_versions(cx: &mut TestAppContext) {
+    init_test(cx);
+    let fs = FakeFs::new(cx.executor());
+    let language_registry = Arc::new(LanguageRegistry::test(cx.executor()));
+    let proxy = Arc::new(ExtensionHostProxy::new());
+    language_extension::init(LspAccess::Noop, proxy.clone(), language_registry.clone());
+    for (extension, language) in [("java", "Gradle KTS"), ("kotlin", "Kotlin")] {
+        fs.insert_tree(
+            format!("/extensions/installed/{extension}"),
+            json!({
+                "extension.toml": format!(
+                    "id = '{extension}'\nname = '{extension}'\nversion = '1.0.0'\nschema_version = 1\nlanguages = ['languages/lang']\n[grammars.kotlin]\nrepository = 'https://example.com/grammar'\nrev = '{extension}'\n"
+                ),
+                "grammars": {"kotlin.wasm": ""},
+                "languages": {"lang": {"config.toml": format!(
+                    "name = '{language}'\ngrammar = 'kotlin'\npath_suffixes = ['{extension}']\n"
+                )}}
+            }),
+        ).await;
+    }
+    let store = create_extension_store_with(fs.clone(), proxy, cx);
+    language_registry.register_native_grammars([(
+        "java/kotlin",
+        language::rust_lang()
+            .grammar()
+            .expect("Test grammar")
+            .ts_language
+            .clone(),
+    )]);
+    language_registry
+        .language_for_name("Gradle KTS")
+        .await
+        .expect("Loading must use the owning extension grammar, not the global alias");
+    for (language, grammar) in [("Gradle KTS", "java/kotlin"), ("Kotlin", "kotlin/kotlin")] {
+        assert_eq!(
+            language_registry
+                .available_language_for_modeline_name(grammar)
+                .expect("Registered grammar")
+                .name(),
+            LanguageName::new(language)
+        );
+    }
+    fs.remove_dir(
+        Path::new("/extensions/installed/kotlin"),
+        RemoveOptions {
+            recursive: true,
+            ignore_if_not_exists: false,
+        },
+    )
+    .await
+    .expect("Remove Kotlin extension");
+    store.update(cx, |store, cx| drop(store.reload(None, cx)));
+    cx.executor().advance_clock(RELOAD_DEBOUNCE_DURATION);
+    cx.run_until_parked();
+    assert!(
+        language_registry
+            .grammar_names()
+            .iter()
+            .any(|name| name.as_ref() == "java/kotlin")
+    );
+    assert!(
+        !language_registry
+            .grammar_names()
+            .iter()
+            .any(|name| name.as_ref() == "kotlin/kotlin")
+    );
+    assert_eq!(
+        language_registry
+            .available_language_for_modeline_name("java/kotlin")
+            .expect("Surviving language")
+            .name(),
+        LanguageName::new("Gradle KTS")
     );
 }
 

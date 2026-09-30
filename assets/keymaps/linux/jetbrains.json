@@ -35,6 +35,7 @@
       "alt-shift-g": "editor::SplitSelectionIntoLines",
       "alt-j": ["editor::SelectNext", { "replace_newest": false }],
       "alt-shift-j": ["editor::SelectPrevious", { "replace_newest": false }],
+      "ctrl-shift-/": "editor::ToggleBlockComments",
       "ctrl-/": ["editor::ToggleComments", { "advance_downwards": true, "comment_empty_lines": true }],
       "ctrl-w": "editor::SelectLargerSyntaxNode",
       "ctrl-shift-w": "editor::SelectSmallerSyntaxNode",
@@ -42,11 +43,12 @@
       "shift-alt-down": "editor::MoveLineDown",
       "ctrl-alt-l": "editor::Format",
       "ctrl-alt-o": "editor::OrganizeImports",
+      "ctrl-alt-i": "editor::AutoIndent",
       "shift-f6": "editor::Rename",
       "ctrl-alt-left": "pane::GoBack",
       "ctrl-alt-right": "pane::GoForward",
-      "alt-f7": "editor::FindAllReferences",
-      "ctrl-alt-f7": "editor::FindAllReferences",
+      "alt-f7": ["editor::FindAllReferences", { "open_results_in": "multi_buffer" }],
+      "ctrl-alt-f7": ["editor::FindAllReferences", { "open_results_in": "picker" }],
       "ctrl-b": "editor::GoToDefinition", // Conflicts with workspace::ToggleLeftDock
       "ctrl-alt-b": "editor::GoToImplementation", // Conflicts with workspace::ToggleRightDock
       "ctrl-shift-b": "editor::GoToTypeDefinition",
@@ -60,13 +62,17 @@
       "ctrl-end": "editor::MoveToEnd",
       "ctrl-shift-home": "editor::SelectToBeginning",
       "ctrl-shift-end": "editor::SelectToEnd",
-      "alt-left": "editor::MoveToPreviousSubwordStart",
-      "alt-right": "editor::MoveToNextSubwordEnd",
+      "alt-left": "pane::ActivatePreviousItem",
+      "alt-right": "pane::ActivateNextItem",
       "shift-alt-left": "editor::SelectToPreviousSubwordStart",
       "shift-alt-right": "editor::SelectToNextSubwordEnd",
       "ctrl-f8": "editor::ToggleBreakpoint",
-      "ctrl-shift-f8": "editor::EditLogBreakpoint",
+      "ctrl-shift-f8": "debugger::FocusBreakpointList",
+      "alt-f9": "debugger::RunToCursor",
+      "alt-f8": "debugger::EvaluateSelectedText",
       "ctrl-shift-u": "editor::ToggleCase",
+      "ctrl-shift--": "editor::FoldAll",
+      "ctrl-shift-+": "editor::UnfoldAll",
     },
   },
   {
@@ -118,7 +124,6 @@
     "context": "Workspace",
     "bindings": {
       "ctrl-shift-f12": "workspace::ToggleAllDocks",
-      "ctrl-shift-r": ["pane::DeploySearch", { "replace_enabled": true }],
       "alt-shift-f10": "task::Spawn",
       "shift-f10": "task::Spawn",
       "ctrl-f5": "task::Rerun",
@@ -126,11 +131,12 @@
       "ctrl-k": "git_panel::ToggleFocus", // bug: This should also focus commit editor
       "ctrl-shift-n": "file_finder::Toggle",
       "ctrl-alt-n": "file_finder::Toggle",
-      "ctrl-n": "project_symbols::Toggle",
+      "ctrl-n": ["search_everywhere::Toggle", {"category": "classes"}],
       "ctrl-shift-a": "command_palette::Toggle",
-      "shift shift": "command_palette::Toggle",
+      "shift shift": "search_everywhere::Toggle",
       "ctrl-alt-shift-n": "project_symbols::Toggle",
       "alt-0": "git_panel::ToggleFocus",
+      "alt-9": "git_panel::ToggleFocus",
       "alt-1": "project_panel::ToggleFocus",
       "alt-5": "debug_panel::ToggleFocus",
       "alt-6": "diagnostics::Deploy",
@@ -148,13 +154,15 @@
       "alt-6": "diagnostics::Deploy",
       "alt-7": "outline_panel::ToggleFocus",
       "alt-8": null, // Services (bottom dock)
-      "alt-9": null, // Git History (bottom dock)
+      "alt-9": "git_panel::ToggleFocus",
       "alt-0": "git_panel::ToggleFocus",
     },
   },
   {
-    "context": "Workspace || Editor",
+    "context": "Workspace || Pane || Editor",
     "bindings": {
+      "ctrl-shift-f": ["pane::DeploySearch", { "modal": true }],
+      "ctrl-shift-r": ["pane::DeploySearch", { "replace_enabled": true, "modal": true }],
       "alt-f12": "terminal_panel::Toggle",
       "ctrl-shift-k": "git::Push",
     },
@@ -172,7 +180,7 @@
     "context": "ProjectPanel",
     "bindings": {
       "enter": "project_panel::Open",
-      "ctrl-shift-f": "project_panel::NewSearchInDirectory",
+      "ctrl-shift-f": ["project_panel::NewSearchInDirectory", { "modal": true }],
       "backspace": ["project_panel::Trash", { "skip_prompt": false }],
       "delete": ["project_panel::Trash", { "skip_prompt": false }],
       "shift-delete": ["project_panel::Delete", { "skip_prompt": false }],
@@ -190,7 +198,7 @@
       "shift-pagedown": "terminal::ScrollPageDown",
     },
   },
-  { "context": "GitPanel", "bindings": { "alt-0": "workspace::CloseActiveDock" } },
+  { "context": "GitPanel", "bindings": { "alt-0": "workspace::CloseActiveDock", "alt-9": "workspace::CloseActiveDock" } },
   { "context": "ProjectPanel", "bindings": { "alt-1": "workspace::CloseActiveDock" } },
   { "context": "DebugPanel", "bindings": { "alt-5": "workspace::CloseActiveDock" } },
   { "context": "Diagnostics > Editor", "bindings": { "alt-6": "pane::CloseActiveItem" } },
@@ -226,4 +234,28 @@
       "ctrl-k": null,
     },
   },
+  {
+    "context": "Workspace || (Editor && mode == full)",
+    "use_key_equivalents": true,
+    "bindings": {
+      "ctrl-f9": "android::Build",
+      "shift-f10": "android::Run",
+      "shift-f9": "android::Debug",
+      "alt-6": "android::Logcat",
+      "ctrl-alt-y": "android::SyncProject",
+    },
+  },
+  {
+    "context": "SearchEverywhere > Editor",
+    "bindings": {
+      "tab": "search_everywhere::NextCategory",
+      "shift-tab": "search_everywhere::PreviousCategory",
+    },
+  },
+  {
+    "context": "ProjectSearchModal > Editor",
+    "bindings": {
+      "escape": "menu::Cancel"
+    }
+  }
 ]

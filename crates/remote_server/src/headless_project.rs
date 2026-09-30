@@ -215,6 +215,7 @@ impl HeadlessProject {
 
         let lsp_store = cx.new(|cx| {
             let mut lsp_store = LspStore::new_local(
+                settings_observer.clone(),
                 buffer_store.clone(),
                 worktree_store.clone(),
                 prettier_store.clone(),
@@ -489,6 +490,11 @@ impl HeadlessProject {
                 let request = self
                     .session
                     .request(proto::LanguageServerShowDocumentRequest {
+                        language_server_id: show_document_request.language_server_id.to_proto(),
+                        completion_session: show_document_request
+                            .completion_session
+                            .as_ref()
+                            .map(LspStore::serialize_completion_session),
                         project_id: REMOTE_SERVER_PROJECT_ID,
                         uri: show_document_request.uri.as_str().to_owned(),
                         external: show_document_request.external,

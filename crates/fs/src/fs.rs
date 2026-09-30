@@ -1,5 +1,8 @@
+mod archive;
 pub mod fs_watcher;
 mod git_clone_progress;
+
+use archive::{ArchiveHandle, ArchivePath, ArchiveWatcher};
 
 use parking_lot::Mutex;
 use slotmap::{KeyData, SlotMap};
@@ -70,6 +73,10 @@ use path::normalize_path;
 use smol::io::AsyncReadExt;
 #[cfg(feature = "test-support")]
 use std::ffi::OsStr;
+
+pub fn is_archive_path(path: &Path) -> bool {
+    ArchivePath::parse(path).is_some()
+}
 
 pub trait Watcher: Send + Sync {
     fn add(&self, path: &Path) -> Result<()>;
@@ -735,10 +742,12 @@ fn read_dir_entries(path: PathBuf) -> Result<impl Send + Iterator<Item = Result<
 #[async_trait::async_trait]
 impl Fs for RealFs {
     async fn create_dir(&self, path: &Path) -> Result<()> {
+        archive::ensure_writable(path)?;
         Ok(smol::fs::create_dir_all(path).await?)
     }
 
     async fn create_symlink(&self, path: &Path, target: PathBuf) -> Result<()> {
+        archive::ensure_writable(path)?;
         #[cfg(unix)]
         smol::fs::unix::symlink(target, path).await?;
 
@@ -765,6 +774,7 @@ impl Fs for RealFs {
     }
 
     async fn create_file(&self, path: &Path, options: CreateOptions) -> Result<()> {
+        archive::ensure_writable(path)?;
         let mut open_options = smol::fs::OpenOptions::new();
         open_options.write(true).create(true);
         if options.overwrite {
@@ -784,6 +794,7 @@ impl Fs for RealFs {
         path: &Path,
         content: Pin<&mut (dyn AsyncRead + Send)>,
     ) -> Result<()> {
+        archive::ensure_writable(path)?;
         let mut file = smol::fs::File::create(&path)
             .await
             .with_context(|| format!("Failed to create file at {:?}", path))?;
@@ -796,11 +807,13 @@ impl Fs for RealFs {
         path: &Path,
         content: Archive<Pin<&mut (dyn AsyncRead + Send)>>,
     ) -> Result<()> {
+        archive::ensure_writable(path)?;
         content.unpack(path).await?;
         Ok(())
     }
 
     async fn copy_file(&self, source: &Path, target: &Path, options: CopyOptions) -> Result<()> {
+        archive::ensure_writable(target)?;
         if !options.overwrite && smol::fs::metadata(target).await.is_ok() {
             if options.ignore_if_exists {
                 return Ok(());
@@ -809,11 +822,16 @@ impl Fs for RealFs {
             }
         }
 
+        if let Some(archive) = ArchivePath::parse(source) {
+            return self.write(target, &archive.read().await?).await;
+        }
         smol::fs::copy(source, target).await?;
         Ok(())
     }
 
     async fn rename(&self, source: &Path, target: &Path, options: RenameOptions) -> Result<()> {
+        archive::ensure_writable(source)?;
+        archive::ensure_writable(target)?;
         if options.create_parents {
             if let Some(parent) = target.parent() {
                 self.create_dir(parent).await?;
@@ -879,6 +897,7 @@ impl Fs for RealFs {
     }
 
     async fn remove_dir(&self, path: &Path, options: RemoveOptions) -> Result<()> {
+        archive::ensure_writable(path)?;
         let result = if options.recursive {
             smol::fs::remove_dir_all(path).await
         } else {
@@ -894,6 +913,7 @@ impl Fs for RealFs {
     }
 
     async fn remove_file(&self, path: &Path, options: RemoveOptions) -> Result<()> {
+        archive::ensure_writable(path)?;
         #[cfg(windows)]
         if let Ok(Some(metadata)) = self.metadata(path).await
             && metadata.is_symlink
@@ -920,6 +940,7 @@ impl Fs for RealFs {
     }
 
     async fn trash(&self, path: &Path, _options: RemoveOptions) -> Result<TrashId> {
+        archive::ensure_writable(path)?;
         // We must make the path absolute or trash will make a weird abomination
         // of the zed working directory (not usually the worktree) and whatever
         // the path variable holds.
@@ -937,10 +958,19 @@ impl Fs for RealFs {
     }
 
     async fn open_sync(&self, path: &Path) -> Result<Box<dyn io::Read + Send + Sync>> {
+        if let Some(archive) = ArchivePath::parse(path) {
+            return Ok(Box::new(io::Cursor::new(archive.read().await?)));
+        }
         Ok(Box::new(std::fs::File::open(path)?))
     }
 
     async fn open_handle(&self, path: &Path) -> Result<Arc<dyn FileHandle>> {
+        if let Some(archive) = ArchivePath::parse(path) {
+            return Ok(Arc::new(ArchiveHandle {
+                file: self.open_handle(&archive.archive).await?,
+                entry: archive.entry,
+            }));
+        }
         let mut options = std::fs::OpenOptions::new();
         options.read(true);
         #[cfg(windows)]
@@ -952,6 +982,9 @@ impl Fs for RealFs {
     }
 
     async fn load(&self, path: &Path) -> Result<String> {
+        if let Some(archive) = ArchivePath::parse(path) {
+            return Ok(String::from_utf8(archive.read().await?)?);
+        }
         let path = path.to_path_buf();
         self.executor
             .spawn(async move {
@@ -962,6 +995,9 @@ impl Fs for RealFs {
     }
 
     async fn load_bytes(&self, path: &Path) -> Result<Vec<u8>> {
+        if let Some(archive) = ArchivePath::parse(path) {
+            return archive.read().await;
+        }
         let path = path.to_path_buf();
         let bytes = self
             .executor
@@ -972,6 +1008,7 @@ impl Fs for RealFs {
 
     #[cfg(not(target_os = "windows"))]
     async fn atomic_write(&self, path: PathBuf, data: String) -> Result<()> {
+        archive::ensure_writable(&path)?;
         smol::unblock(move || {
             // Use the directory of the destination as temp dir to avoid
             // invalid cross-device link error, and XDG_CACHE_DIR for fallback.
@@ -989,6 +1026,7 @@ impl Fs for RealFs {
 
     #[cfg(target_os = "windows")]
     async fn atomic_write(&self, path: PathBuf, data: String) -> Result<()> {
+        archive::ensure_writable(&path)?;
         smol::unblock(move || {
             // If temp dir is set to a different drive than the destination,
             // we receive error:
@@ -1017,6 +1055,7 @@ impl Fs for RealFs {
     }
 
     async fn save(&self, path: &Path, text: &Rope, line_ending: LineEnding) -> Result<()> {
+        archive::ensure_writable(path)?;
         let buffer_size = text.summary().len.min(10 * 1024);
         if let Some(path) = path.parent() {
             self.create_dir(path)
@@ -1035,6 +1074,7 @@ impl Fs for RealFs {
     }
 
     async fn write(&self, path: &Path, content: &[u8]) -> Result<()> {
+        archive::ensure_writable(path)?;
         if let Some(path) = path.parent() {
             self.create_dir(path)
                 .await
@@ -1051,6 +1091,14 @@ impl Fs for RealFs {
     }
 
     async fn canonicalize(&self, path: &Path) -> Result<PathBuf> {
+        if let Some(archive) = ArchivePath::parse(path) {
+            anyhow::ensure!(
+                archive.metadata().await?.is_some(),
+                "Archive entry does not exist: {}",
+                path.display()
+            );
+            return Ok(archive.path_in(&self.canonicalize(&archive.archive).await?));
+        }
         let path = path.to_owned();
         self.executor
             .spawn(async move {
@@ -1066,6 +1114,12 @@ impl Fs for RealFs {
     }
 
     async fn is_file(&self, path: &Path) -> bool {
+        if let Some(archive) = ArchivePath::parse(path) {
+            return archive
+                .metadata()
+                .await
+                .is_ok_and(|metadata| metadata.is_some_and(|(is_dir, _)| !is_dir));
+        }
         let path = path.to_owned();
         self.executor
             .spawn(async move { std::fs::metadata(path).is_ok_and(|metadata| metadata.is_file()) })
@@ -1073,6 +1127,12 @@ impl Fs for RealFs {
     }
 
     async fn is_dir(&self, path: &Path) -> bool {
+        if let Some(archive) = ArchivePath::parse(path) {
+            return archive
+                .metadata()
+                .await
+                .is_ok_and(|metadata| metadata.is_some_and(|(is_dir, _)| is_dir));
+        }
         let path = path.to_owned();
         self.executor
             .spawn(async move { std::fs::metadata(path).is_ok_and(|metadata| metadata.is_dir()) })
@@ -1080,6 +1140,24 @@ impl Fs for RealFs {
     }
 
     async fn metadata(&self, path: &Path) -> Result<Option<Metadata>> {
+        if let Some(archive) = ArchivePath::parse(path) {
+            let Some(mut metadata) = self.metadata(&archive.archive).await? else {
+                return Ok(None);
+            };
+            let Some((is_dir, len)) = archive.metadata().await? else {
+                return Ok(None);
+            };
+            metadata.len = len;
+            metadata.is_dir = is_dir;
+            metadata.is_writable = false;
+            metadata.is_executable = false;
+            metadata.is_symlink = false;
+            use std::hash::{Hash, Hasher};
+            let mut hasher = std::hash::DefaultHasher::new();
+            (metadata.inode, &archive.entry).hash(&mut hasher);
+            metadata.inode = hasher.finish();
+            return Ok(Some(metadata));
+        }
         let path_buf = path.to_owned();
         let symlink_metadata = match self
             .executor
@@ -1170,6 +1248,11 @@ impl Fs for RealFs {
         &self,
         path: &Path,
     ) -> Result<Pin<Box<dyn Send + Stream<Item = Result<PathBuf>>>>> {
+        if let Some(archive) = ArchivePath::parse(path) {
+            return Ok(Box::pin(iter(
+                archive.read_dir().await?.into_iter().map(Ok),
+            )));
+        }
         let path = path.to_owned();
         let entries = self
             .executor
@@ -1190,15 +1273,20 @@ impl Fs for RealFs {
     }
 
     fn path_exists(&self, path: &Path) -> bool {
-        std::fs::symlink_metadata(path).is_ok()
+        std::fs::symlink_metadata(
+            ArchivePath::parse(path).map_or_else(|| path.to_path_buf(), |path| path.archive),
+        )
+        .is_ok()
     }
 
     fn is_path_case_sensitive(&self, path: &Path) -> bool {
-        !fs_watcher::case_insensitive_path(path)
+        ArchivePath::parse(path).is_some() || !fs_watcher::case_insensitive_path(path)
     }
 
     fn requires_poll_watcher(&self, path: &Path) -> bool {
-        fs_watcher::requires_poll_watcher(path)
+        fs_watcher::requires_poll_watcher(
+            &ArchivePath::parse(path).map_or_else(|| path.to_path_buf(), |path| path.archive),
+        )
     }
 
     async fn watch(
@@ -1209,6 +1297,22 @@ impl Fs for RealFs {
         Pin<Box<dyn Send + Stream<Item = Vec<PathEvent>>>>,
         Arc<dyn Watcher>,
     ) {
+        if let Some(archive) = ArchivePath::parse(path) {
+            let (events, watcher) = self.watch(&archive.archive, latency).await;
+            let path = path.to_path_buf();
+            return (
+                Box::pin(events.map(move |events| {
+                    events
+                        .into_iter()
+                        .map(|event| PathEvent {
+                            path: path.clone(),
+                            kind: event.kind,
+                        })
+                        .collect()
+                })),
+                Arc::new(ArchiveWatcher(watcher)),
+            );
+        }
         let this = self
             .this
             .upgrade()

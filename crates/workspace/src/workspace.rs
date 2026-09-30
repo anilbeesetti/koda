@@ -1588,6 +1588,9 @@ pub struct Workspace {
     left_dock: Entity<Dock>,
     bottom_dock: Entity<Dock>,
     right_dock: Entity<Dock>,
+    left_dock_buttons: Entity<PanelButtons>,
+    bottom_dock_buttons: Entity<PanelButtons>,
+    right_dock_buttons: Entity<PanelButtons>,
     panes: Vec<Entity<Pane>>,
     panes_by_item: HashMap<EntityId, WeakEntity<Pane>>,
     active_pane: Entity<Pane>,
@@ -1978,14 +1981,8 @@ impl Workspace {
             .root::<MultiWorkspace>()
             .flatten()
             .map(|mw| mw.downgrade());
-        let status_bar = cx.new(|cx| {
-            let mut status_bar =
-                StatusBar::new(&center_pane.clone(), multi_workspace.clone(), window, cx);
-            status_bar.add_left_item(left_dock_buttons, window, cx);
-            status_bar.add_right_item(right_dock_buttons, window, cx);
-            status_bar.add_right_item(bottom_dock_buttons, window, cx);
-            status_bar
-        });
+        let status_bar =
+            cx.new(|cx| StatusBar::new(&center_pane.clone(), multi_workspace.clone(), window, cx));
 
         let session_id = app_state.session.read(cx).id().to_owned();
 
@@ -2109,6 +2106,9 @@ impl Workspace {
             left_dock,
             bottom_dock,
             right_dock,
+            left_dock_buttons,
+            bottom_dock_buttons,
+            right_dock_buttons,
             _panels_task: None,
             project: project.clone(),
             follower_states: Default::default(),
@@ -3167,6 +3167,7 @@ impl Workspace {
         cb: &mut dyn FnMut(&mut NavHistory, &mut App) -> Option<NavigationEntry>,
         cx: &mut Context<Workspace>,
     ) -> Task<Result<()>> {
+        let mut restore = None;
         let to_load = if let Some(pane) = pane.upgrade() {
             pane.update(cx, |pane, cx| {
                 window.focus(&pane.focus_handle(cx), cx);
@@ -3194,6 +3195,17 @@ impl Workspace {
                             break None;
                         }
                     } else {
+                        if let Some(data) = entry.data.clone()
+                            && let Some(task) = entry.item.restore_navigation(
+                                self.project.clone(),
+                                data,
+                                window,
+                                cx,
+                            )
+                        {
+                            restore = Some((task, entry));
+                            break None;
+                        }
                         // If the item is no longer present in this pane, then retrieve its
                         // path info in order to reopen it.
                         if let Some((project_path, abs_path)) =
@@ -3207,6 +3219,59 @@ impl Workspace {
         } else {
             None
         };
+
+        if let Some((restore, entry)) = restore {
+            return cx.spawn_in(window, async move |workspace, cx| {
+                let item = match restore.await {
+                    Ok(item) => item,
+                    Err(error) => {
+                        workspace.update(cx, |workspace, cx| {
+                            workspace.show_error(
+                                format!("Unable to reopen library document: {error}"),
+                                cx,
+                            )
+                        })?;
+                        return Err(error);
+                    }
+                };
+                pane.update_in(cx, |pane, window, cx| {
+                    let model_ids = item.project_item_model_ids(cx);
+                    let existing = (item.buffer_kind(cx) == ItemBufferKind::Singleton
+                        && !model_ids.is_empty())
+                    .then(|| {
+                        pane.items().enumerate().find_map(|(index, existing)| {
+                            (existing.buffer_kind(cx) == ItemBufferKind::Singleton
+                                && existing.to_any_view().entity_type()
+                                    == item.to_any_view().entity_type()
+                                && existing.project_item_model_ids(cx) == model_ids)
+                                .then(|| (index, existing.boxed_clone()))
+                        })
+                    })
+                    .flatten();
+                    pane.nav_history_mut().set_mode(mode);
+                    let item = if let Some((index, existing)) = existing {
+                        if !entry.is_preview {
+                            pane.unpreview_item_if_preview(existing.item_id());
+                        }
+                        pane.activate_item(index, true, true, window, cx);
+                        existing
+                    } else {
+                        let destination_index = if entry.is_preview {
+                            pane.replace_preview_item_id(item.item_id(), window, cx)
+                        } else {
+                            None
+                        };
+                        pane.add_item(item.clone(), true, true, destination_index, window, cx);
+                        item
+                    };
+                    pane.nav_history_mut().set_mode(NavigationMode::Normal);
+                    if let Some(data) = entry.data {
+                        item.navigate(data, window, cx);
+                    }
+                })?;
+                Ok(())
+            });
+        }
 
         if let Some((project_path, abs_path, entry)) = to_load {
             // If the item was no longer present, then load it again from its previous path, first try the local path
@@ -5335,6 +5400,7 @@ impl Workspace {
         T: ProjectItem,
     {
         use project::ProjectItem as _;
+        let project_item_entity_id = project_item.entity_id();
         let project_item = project_item.read(cx);
         let entry_id = project_item.entry_id(cx);
         let project_path = project_item.project_path(cx);
@@ -5349,7 +5415,17 @@ impl Workspace {
             item = pane.read(cx).item_for_path(project_path, cx);
         }
 
-        item.and_then(|item| item.downcast::<T>())
+        item.and_then(|item| item.downcast::<T>()).or_else(|| {
+            pane.read(cx).items().find_map(|item| {
+                if item.buffer_kind(cx) == ItemBufferKind::Singleton
+                    && item.project_item_model_ids(cx).as_slice() == [project_item_entity_id]
+                {
+                    item.downcast::<T>()
+                } else {
+                    None
+                }
+            })
+        })
     }
 
     pub fn is_project_item_open<T>(
@@ -10051,7 +10127,40 @@ impl Render for Workspace {
                                     }
                                 })
                             }))
-                            .children(self.render_notifications(window, cx)),
+                            .children(self.render_notifications(window, cx))
+                            .map(|content| {
+                                h_flex()
+                                    .flex_1()
+                                    .w_full()
+                                    .overflow_hidden()
+                                    .child(
+                                        v_flex()
+                                            .id("left-tool-window-rail")
+                                            .w(px(40.))
+                                            .h_full()
+                                            .flex_none()
+                                            .py_2()
+                                            .justify_between()
+                                            .bg(colors.title_bar_background)
+                                            .border_r_1()
+                                            .border_color(colors.border)
+                                            .child(self.left_dock_buttons.clone())
+                                            .child(self.bottom_dock_buttons.clone()),
+                                    )
+                                    .child(content.h_full())
+                                    .child(
+                                        v_flex()
+                                            .id("right-tool-window-rail")
+                                            .w(px(40.))
+                                            .h_full()
+                                            .flex_none()
+                                            .py_2()
+                                            .bg(colors.title_bar_background)
+                                            .border_l_1()
+                                            .border_color(colors.border)
+                                            .child(self.right_dock_buttons.clone()),
+                                    )
+                            }),
                     )
                     .when(self.status_bar_visible(cx), |parent| {
                         parent.child(self.status_bar.clone())
@@ -14644,6 +14753,12 @@ mod tests {
             pane.add_item(Box::new(item), true, true, None, window, cx);
         });
 
+        cx.run_until_parked();
+        workspace.update_in(cx, |workspace, window, _| {
+            assert!(workspace.bounds.size.height > window.viewport_size().height / 2.);
+            assert!(workspace.bounds.size.width > window.viewport_size().width / 2.);
+        });
+
         // Transfer focus from center to panel
         workspace.update_in(cx, |workspace, window, cx| {
             workspace.toggle_panel_focus::<TestPanel>(window, cx);
@@ -15852,7 +15967,8 @@ mod tests {
             assert_eq!(center_column_count, 2);
 
             let dock = workspace.right_dock().read(cx);
-            assert_eq!(workspace.dock_size(&dock, window, cx).unwrap(), px(640.));
+            let width = workspace.dock_size(&dock, window, cx).unwrap();
+            assert!((width.as_f32() - workspace.bounds.size.width.as_f32() / 3.0).abs() < 0.01);
 
             workspace.bounds.size.width = px(2400.);
 
@@ -16394,9 +16510,8 @@ mod tests {
                 .dock_size(&left_dock, window, cx)
                 .expect("left dock should still have an active panel after horizontal split");
 
-            assert_eq!(
-                left_width,
-                workspace.bounds.size.width / 3.,
+            assert!(
+                (left_width.as_f32() - (workspace.bounds.size.width / 3.).as_f32()).abs() < 0.01,
                 "flexible left panel width should match the average center column width"
             );
         });
@@ -16416,9 +16531,8 @@ mod tests {
                 .dock_size(&left_dock, window, cx)
                 .expect("left dock should still have an active panel after vertical split");
 
-            assert_eq!(
-                left_width,
-                workspace.bounds.size.width / 3.,
+            assert!(
+                (left_width.as_f32() - (workspace.bounds.size.width / 3.).as_f32()).abs() < 0.01,
                 "flexible left panel width should still match the average center column width"
             );
         });
@@ -16442,9 +16556,8 @@ mod tests {
                 .expect("left dock should still have an active panel");
 
             let available_width = workspace.bounds.size.width - right_width;
-            assert_eq!(
-                left_width,
-                available_width / 3.,
+            assert!(
+                (left_width.as_f32() - (available_width / 3.).as_f32()).abs() < 0.01,
                 "flexible left panel should keep matching one average center column"
             );
         });

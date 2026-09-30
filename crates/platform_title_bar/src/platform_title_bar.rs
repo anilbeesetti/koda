@@ -209,6 +209,8 @@ impl Render for PlatformTitleBar {
         let decorations = window.window_decorations();
         let height = platform_title_bar_height(window);
         let titlebar_color = self.title_bar_color(window, cx);
+        #[cfg(target_os = "macos")]
+        window.center_traffic_lights(height);
         let close_action = Box::new(workspace::CloseWindow);
         let children = mem::take(&mut self.children);
 

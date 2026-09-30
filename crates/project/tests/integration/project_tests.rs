@@ -5151,28 +5151,54 @@ async fn test_workspace_diagnostics_long_poll_is_kept_open(cx: &mut gpui::TestAp
         .lock()
         .clone()
         .expect("the workspace diagnostics pull should carry a partial result token");
+    let nonfile_uri = Uri::from_file_path(path!("/dir/a.rs"))
+        .unwrap()
+        .as_str()
+        .replacen("file:", "jar:", 1)
+        .parse::<Uri>()
+        .unwrap();
     fake_server.notify::<lsp::notification::Progress>(lsp::ProgressParams {
         token,
         value: lsp::ProgressParamsValue::WorkspaceDiagnostic(
             lsp::WorkspaceDiagnosticReportResult::Report(lsp::WorkspaceDiagnosticReport {
-                items: vec![lsp::WorkspaceDocumentDiagnosticReport::Full(
-                    lsp::WorkspaceFullDocumentDiagnosticReport {
-                        uri: lsp::Uri::from_file_path(path!("/dir/b.rs")).unwrap(),
-                        version: None,
-                        full_document_diagnostic_report: lsp::FullDocumentDiagnosticReport {
-                            result_id: Some("ws-1".to_string()),
-                            items: vec![lsp::Diagnostic {
-                                range: lsp::Range::new(
-                                    lsp::Position::new(0, 0),
-                                    lsp::Position::new(0, 3),
-                                ),
-                                severity: Some(lsp::DiagnosticSeverity::ERROR),
-                                message: lsp::DiagnosticMessage::from("streamed error"),
-                                ..lsp::Diagnostic::default()
-                            }],
+                items: vec![
+                    lsp::WorkspaceDocumentDiagnosticReport::Full(
+                        lsp::WorkspaceFullDocumentDiagnosticReport {
+                            uri: lsp::Uri::from_file_path(path!("/dir/b.rs")).unwrap(),
+                            version: None,
+                            full_document_diagnostic_report: lsp::FullDocumentDiagnosticReport {
+                                result_id: Some("ws-1".to_string()),
+                                items: vec![lsp::Diagnostic {
+                                    range: lsp::Range::new(
+                                        lsp::Position::new(0, 0),
+                                        lsp::Position::new(0, 3),
+                                    ),
+                                    severity: Some(lsp::DiagnosticSeverity::ERROR),
+                                    message: lsp::DiagnosticMessage::from("streamed error"),
+                                    ..lsp::Diagnostic::default()
+                                }],
+                            },
                         },
-                    },
-                )],
+                    ),
+                    lsp::WorkspaceDocumentDiagnosticReport::Full(
+                        lsp::WorkspaceFullDocumentDiagnosticReport {
+                            uri: nonfile_uri,
+                            version: None,
+                            full_document_diagnostic_report: lsp::FullDocumentDiagnosticReport {
+                                result_id: Some("must-not-attach-to-a".into()),
+                                items: vec![lsp::Diagnostic {
+                                    range: lsp::Range::new(
+                                        lsp::Position::new(0, 0),
+                                        lsp::Position::new(0, 3),
+                                    ),
+                                    severity: Some(lsp::DiagnosticSeverity::ERROR),
+                                    message: "nonfile error".into(),
+                                    ..lsp::Diagnostic::default()
+                                }],
+                            },
+                        },
+                    ),
+                ],
             }),
         ),
     });
@@ -5185,6 +5211,14 @@ async fn test_workspace_diagnostics_long_poll_is_kept_open(cx: &mut gpui::TestAp
                 warning_count: 0,
             },
             "partial results streamed over the open request must still be applied"
+        );
+        assert_eq!(
+            project
+                .lsp_store()
+                .read(cx)
+                .result_ids_for_workspace_refresh(fake_server.server.server_id(), &None,),
+            HashMap::from_iter([(PathBuf::from(path!("/dir/b.rs")), "ws-1".into())]),
+            "nonfile result IDs must not be attached to a filesystem buffer"
         );
     });
 
@@ -21423,4 +21457,119 @@ async fn code_action_project(
     cx.executor().run_until_parked();
 
     (project, buffer, handle, fake_servers)
+}
+
+#[gpui::test]
+async fn test_android_resource_definitions_without_language_server(cx: &mut TestAppContext) {
+    init_test(cx);
+    // Resource files are deeper than the shared test fixture's scan depth.
+    cx.update_global::<SettingsStore, _>(|store, cx| {
+        store.update_user_settings(cx, |settings| {
+            settings.project.worktree.file_scan_depth = Some(0);
+        });
+    });
+    let filesystem = FakeFs::new(cx.executor());
+    filesystem.insert_tree(path!("/android"), json!({
+        "app": {
+            "build.gradle.kts": "android { namespace = \"example.app\" }",
+            "src": {
+                "main": {
+                    "java": {"Activity.kt": "package example.app\nval title = R.string.app_name\nval other = foreign.app.R.string.app_name\nval system = android.R.string.ok\nval planets = R.array.planets\nval counts = R.array.counts"},
+                    "AndroidManifest.xml": "<manifest><application android:label=\"@string/app_name\"/></manifest>",
+                    "res": {"values": {"strings.xml": "<resources><!-- <string name=\"app_name\">Ignored</string> --><string name=\"app_name\">App</string></resources>",
+                                       "arrays.xml": "<resources><string-array name=\"planets\"><item>Earth</item></string-array><integer-array name=\"counts\"><item>1</item></integer-array><item type=\"array\" name=\"planets_alias\">@array/planets</item><item type=\"array\" name=\"counts_alias\">@array/counts</item></resources>"},
+                            "values-fr": {"strings.xml": "<resources><item type=\"string\" name=\"app_name\">Appli</item></resources>"}}
+                },
+                "debug": {"res": {"values": {"broken.xml": "<resources><string name=\"app_name\">Broken"}}}
+            }
+        },
+        "other": {"build.gradle.kts": "", "src": {"main": {"res": {"values": {"strings.xml": "<resources><string name=\"app_name\">Wrong module</string></resources>"}}}}}
+    })).await;
+    let project = Project::test(filesystem, [path!("/android").as_ref()], cx).await;
+    let buffer = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer(path!("/android/app/src/main/java/Activity.kt"), cx)
+        })
+        .await
+        .expect("Open Kotlin source");
+    let definitions = project
+        .update(cx, |project, cx| {
+            project.definitions(&buffer, Point::new(1, 25), cx)
+        })
+        .await
+        .expect("Resolve resource")
+        .expect("Resource locations");
+    assert_eq!(definitions.len(), 2);
+    for definition in &definitions {
+        definition.target.buffer.read_with(cx, |buffer, cx| {
+            assert!(
+                buffer
+                    .file()
+                    .expect("Resource file")
+                    .full_path(cx)
+                    .to_string_lossy()
+                    .contains("app/src/main/res/values")
+            );
+            assert!(
+                buffer
+                    .text_for_range(definition.target.range.clone())
+                    .collect::<String>()
+                    .contains("name=\"app_name\"")
+            );
+        });
+    }
+    for position in [Point::new(2, 38), Point::new(3, 32)] {
+        let definitions = project
+            .update(cx, |project, cx| project.definitions(&buffer, position, cx))
+            .await
+            .expect("Fallback lookup");
+        assert!(definitions.is_none_or(|locations| locations.is_empty()));
+    }
+    let manifest = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer(path!("/android/app/src/main/AndroidManifest.xml"), cx)
+        })
+        .await
+        .expect("Open manifest");
+    let definitions = project
+        .update(cx, |project, cx| {
+            project.definitions(&manifest, Point::new(0, 50), cx)
+        })
+        .await
+        .expect("Resolve manifest resource")
+        .expect("Resource locations");
+    assert_eq!(definitions.len(), 2);
+
+    let arrays = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer(path!("/android/app/src/main/res/values/arrays.xml"), cx)
+        })
+        .await
+        .expect("Open array resources");
+    for (name, tag) in [("planets", "string-array"), ("counts", "integer-array")] {
+        for (source, reference) in [
+            (&buffer, format!("R.array.{name}")),
+            (&arrays, format!("@array/{name}")),
+        ] {
+            let offset = source.read_with(cx, |buffer, _| {
+                buffer.text().find(&reference).expect("Array reference")
+            });
+            let definitions = project
+                .update(cx, |project, cx| project.definitions(source, offset, cx))
+                .await
+                .expect("Resolve array resource")
+                .expect("Array resource locations");
+            assert_eq!(definitions.len(), 1, "{reference}");
+            let target = &definitions[0].target;
+            assert_eq!(target.buffer, arrays);
+            target.buffer.read_with(cx, |buffer, _| {
+                assert_eq!(
+                    buffer
+                        .text_for_range(target.range.clone())
+                        .collect::<String>(),
+                    format!("<{tag} name=\"{name}\">"),
+                );
+            });
+        }
+    }
 }

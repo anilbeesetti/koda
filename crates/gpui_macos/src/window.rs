@@ -1626,6 +1626,22 @@ impl PlatformWindow for MacWindow {
         state.move_traffic_light();
     }
 
+    fn center_traffic_lights(&self, titlebar_height: Pixels) {
+        let mut state = self.0.lock();
+        let Some(buttons) = state.traffic_light_buttons() else {
+            return;
+        };
+        let button_height = Pixels::from(buttons.close.frame().size.height);
+        let Some(position) = state.traffic_light_position.as_mut() else {
+            return;
+        };
+        let padding = ((titlebar_height - button_height) / 2.).max(Pixels::ZERO);
+        if position.y != padding {
+            position.y = padding;
+            state.move_traffic_light();
+        }
+    }
+
     fn scale_factor(&self) -> f32 {
         self.0.as_ref().lock().scale_factor()
     }

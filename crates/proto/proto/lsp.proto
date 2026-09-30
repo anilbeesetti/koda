@@ -390,6 +390,7 @@ message Completion {
   Anchor old_insert_start = 11;
   Anchor old_insert_end = 12;
   optional string sort_text = 13;
+  optional CompletionSession completion_session = 14;
 
   enum Source {
     Lsp = 0;
@@ -397,6 +398,13 @@ message Completion {
     BufferWord = 2;
     Dap = 3;
   }
+}
+
+message CompletionSession {
+  uint64 id = 1;
+  uint64 buffer_id = 2;
+  repeated VectorClockEntry buffer_version = 3;
+  uint64 model_version = 4;
 }
 
 message GetCodeActions {
@@ -479,6 +487,7 @@ message ApplyCodeAction {
   uint64 project_id = 1;
   uint64 buffer_id = 2;
   CodeAction action = 3;
+  optional CompletionSession completion_session = 4;
 }
 
 message ResolveCodeAction {
@@ -973,6 +982,8 @@ message LanguageServerShowDocumentRequest {
   bool take_focus = 4;
   optional PointUtf16 selection_start = 5;
   optional PointUtf16 selection_end = 6;
+  uint64 language_server_id = 7;
+  optional CompletionSession completion_session = 8;
 }
 
 message ExecuteLspCommand {

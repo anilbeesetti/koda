@@ -1373,7 +1373,13 @@ impl ExtensionStore {
             let Some(extension) = old_index.extensions.get(extension_id) else {
                 continue;
             };
-            grammars_to_remove.extend(extension.manifest.grammars.keys().cloned());
+            grammars_to_remove.extend(
+                extension
+                    .manifest
+                    .grammars
+                    .keys()
+                    .flat_map(|name| [name.clone(), format!("{extension_id}/{name}").into()]),
+            );
             for (language_server_name, config) in &extension.manifest.language_servers {
                 for language in config.languages() {
                     server_removal_tasks.push(self.proxy.remove_language_server(
@@ -1425,12 +1431,19 @@ impl ExtensionStore {
                 continue;
             };
 
-            grammars_to_add.extend(extension.manifest.grammars.keys().map(|grammar_name| {
+            grammars_to_add.extend(extension.manifest.grammars.keys().flat_map(|grammar_name| {
                 let mut grammar_path = self.installed_dir.clone();
                 grammar_path.extend([extension_id.as_ref(), "grammars"]);
                 grammar_path.push(grammar_name.as_ref());
                 grammar_path.set_extension("wasm");
-                (grammar_name.clone(), grammar_path)
+                // Keep the unqualified alias for languages using a grammar from another extension.
+                [
+                    (grammar_name.clone(), grammar_path.clone()),
+                    (
+                        format!("{extension_id}/{grammar_name}").into(),
+                        grammar_path,
+                    ),
+                ]
             }));
             themes_to_add.extend(extension.manifest.themes.iter().map(|theme_path| {
                 let mut path = self.installed_dir.clone();
@@ -1507,9 +1520,20 @@ impl ExtensionStore {
             ]);
             let rules_path = language_path.join(SemanticTokenRules::FILE_NAME);
 
+            let grammar = language.grammar.as_ref().map(|grammar| {
+                if new_index
+                    .extensions
+                    .get(&language.extension)
+                    .is_some_and(|entry| entry.manifest.grammars.contains_key(grammar))
+                {
+                    format!("{}/{grammar}", language.extension).into()
+                } else {
+                    grammar.clone()
+                }
+            });
             let registered = self.proxy.register_language(
                 language_name.clone(),
-                language.grammar.clone(),
+                grammar.clone(),
                 language.matcher.clone(),
                 language.hidden,
                 Arc::new({
@@ -1518,8 +1542,14 @@ impl ExtensionStore {
                     move || {
                         let fs = fs.clone();
                         let language_path = language_path.clone();
-                        async move { load_plugin_language(fs, &language_path, query_files).await }
-                            .boxed()
+                        let grammar = grammar.clone();
+                        async move {
+                            let mut language =
+                                load_plugin_language(fs, &language_path, query_files).await?;
+                            language.config.grammar = grammar;
+                            Ok(language)
+                        }
+                        .boxed()
                     }
                 }),
             );

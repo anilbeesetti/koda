@@ -193,6 +193,9 @@ pub struct RevealInProjectPanel {
 #[action(namespace = pane)]
 #[serde(deny_unknown_fields)]
 pub struct DeploySearch {
+    /// Show the search and replacement controls in a floating window.
+    #[serde(default)]
+    pub modal: bool,
     #[serde(default)]
     pub replace_enabled: bool,
     #[serde(default)]

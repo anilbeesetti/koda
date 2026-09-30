@@ -1196,6 +1196,36 @@ mod tests {
     }
 
     #[gpui::test]
+    async fn test_file_reload_updates_image_dimensions(cx: &mut TestAppContext) {
+        init_test(cx);
+        let (project, image_item) = open_test_image(cx).await;
+        let fs = cx.read(|cx| project.read(cx).fs().clone());
+        let (image_view, cx) = cx.add_window_view(|window, cx| {
+            ImageView::new(image_item.clone(), project.clone(), window, cx)
+        });
+        let replacement = "P3\n2 1\n255\n255 0 0 0 255 0\n";
+        fs.atomic_write("/root/image.ppm".into(), replacement.into())
+            .await
+            .expect("replacement image should be written");
+        project
+            .update(cx, |project, cx| {
+                project.reload_images([image_item.clone()].into_iter().collect(), cx)
+            })
+            .await
+            .expect("replacement image should reload");
+        cx.read(|cx| {
+            assert_eq!(image_view.read(cx).image_size, Some((2, 1)));
+            assert_eq!(
+                image_item
+                    .read(cx)
+                    .image_metadata
+                    .map(|metadata| metadata.file_size),
+                Some(replacement.len() as u64)
+            );
+        });
+    }
+
+    #[gpui::test]
     async fn test_reloading_removes_replaced_image_from_asset_cache(cx: &mut TestAppContext) {
         init_test(cx);
         let (project, image_item) = open_test_image(cx).await;

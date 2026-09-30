@@ -1,6 +1,7 @@
 use std::any::TypeId;
 use std::ops::Range;
 use std::sync::Arc;
+use std::time::Instant;
 
 use collections::HashMap;
 use editor::actions::{
@@ -25,9 +26,8 @@ use ui::{Divider, FluentBuilder};
 use ui::{ListItem, ListItemSpacing, prelude::*};
 use util::ResultExt as _;
 use workspace::item::ItemSettings;
-use workspace::notifications::NotificationId;
 use workspace::pane::NavigationEntry;
-use workspace::{ModalView, Toast, Workspace};
+use workspace::{ModalView, Workspace};
 
 pub fn init(cx: &mut App) {
     cx.observe_new(register).detach();
@@ -209,7 +209,7 @@ fn handle_definition_locations(
 
 /// Runs the LSP query for `kind` and returns the raw locations. Returns `None`
 /// (and reports any error) when there is nothing to query, so the caller stops
-/// without an empty-results toast. Deduplication and dropping fileless results
+/// without an empty-results popup. Deduplication and dropping fileless results
 /// happen later in [`build_location_matches`].
 async fn run_picker_query(
     kind: LspPickerKind,
@@ -248,26 +248,6 @@ async fn run_picker_matches(
         .ok()
 }
 
-fn show_no_results_toast(
-    workspace: &WeakEntity<Workspace>,
-    kind: LspPickerKind,
-    cx: &mut AsyncWindowContext,
-) {
-    workspace
-        .update(cx, |workspace, cx| {
-            struct NoLspResults;
-            workspace.show_toast(
-                Toast::new(
-                    NotificationId::unique::<NoLspResults>(),
-                    kind.empty_message(),
-                )
-                .autohide(),
-                cx,
-            );
-        })
-        .log_err();
-}
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LspPickerKind {
     References,
@@ -285,18 +265,6 @@ impl LspPickerKind {
             LspPickerKind::Declaration => "Filter declarations…",
             LspPickerKind::Implementation => "Filter implementations…",
             LspPickerKind::TypeDefinition => "Filter type definitions…",
-        }
-    }
-
-    /// Message shown when the query produces no results, so the command does not
-    /// appear to silently do nothing.
-    fn empty_message(self) -> &'static str {
-        match self {
-            LspPickerKind::References => "No references found",
-            LspPickerKind::Definition => "No definitions found",
-            LspPickerKind::Declaration => "No declarations found",
-            LspPickerKind::Implementation => "No implementations found",
-            LspPickerKind::TypeDefinition => "No type definitions found",
         }
     }
 
@@ -360,13 +328,11 @@ impl LspLocationsPicker {
         window: &mut Window,
         cx: &mut Context<Workspace>,
     ) {
+        let started = Instant::now();
         let project = workspace.project().clone();
         let fallback = EditorSettings::get_global(cx).go_to_definition_fallback;
         let editor = editor.downgrade();
         cx.spawn_in(window, async move |workspace, cx| {
-            // The kind the user invoked, kept for user-facing messages even if
-            // the query below falls back to references.
-            let invoked_kind = kind;
             let mut kind = kind;
 
             // Count on the built matches (not raw locations): they are deduped by
@@ -393,20 +359,32 @@ impl LspLocationsPicker {
             }
 
             if matches.is_empty() {
-                show_no_results_toast(&workspace, invoked_kind, cx);
+                editor
+                    .update_in(cx, |editor, window, cx| {
+                        editor.show_no_navigation_results(window, cx);
+                    })
+                    .log_err();
                 return;
             }
 
-            if matches.len() == 1 {
+            if matches.len() == 1 && kind != LspPickerKind::References {
                 if let Some(location_match) = matches.into_iter().next() {
                     let location = Location {
                         buffer: location_match.buffer,
                         range: location_match.anchor_range,
                     };
-                    if let Ok(task) = editor.update_in(cx, |editor, window, cx| {
-                        editor.open_location(location, false, window, cx)
-                    }) {
-                        task.await.log_err();
+                    if let Some(task) = editor
+                        .update_in(cx, |editor, window, cx| {
+                            editor.open_location(location, false, window, cx)
+                        })
+                        .log_err()
+                        && task.await.log_err().is_some()
+                        && kind == LspPickerKind::Definition
+                    {
+                        cx.update(|window, _| {
+                            Editor::trace_interaction_latency("definition", started, window)
+                        })
+                        .log_err();
                     }
                 }
                 return;
@@ -414,6 +392,13 @@ impl LspLocationsPicker {
 
             workspace
                 .update_in(cx, |workspace, window, cx| {
+                    // A second completed query should replace the results, not toggle
+                    // away the popup opened by the first click.
+                    if workspace.active_modal::<Self>(cx).is_some()
+                        && !workspace.hide_modal(window, cx)
+                    {
+                        return;
+                    }
                     workspace.toggle_modal(window, cx, |window, cx| {
                         Self::new(kind, matches, project, editor, None, window, cx)
                     });
@@ -992,7 +977,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_single_result_jumps_without_picker(cx: &mut TestAppContext) {
+    async fn test_single_reference_stays_in_picker_after_repeated_query(cx: &mut TestAppContext) {
         let mut cx = rust_cx(
             lsp::ServerCapabilities {
                 references_provider: Some(lsp::OneOf::Left(true)),
@@ -1010,22 +995,14 @@ mod tests {
 
         open(&mut cx, LspPickerKind::References);
 
-        assert!(
-            active_picker(&mut cx).is_none(),
-            "a single result should jump directly instead of opening the picker"
-        );
-        // The lone result at row 2 should be selected directly, moving the
-        // cursor off its starting position on row 1.
-        cx.assert_editor_state(indoc! {r#"
-            fn main() {
-                let abc = 123;
-                let xyz = «abcˇ»;
-            }
-        "#});
+        assert!(active_picker(&mut cx).is_some());
+        open(&mut cx, LspPickerKind::References);
+        assert!(active_picker(&mut cx).is_some());
+        cx.assert_editor_state(SOURCE);
     }
 
     #[gpui::test]
-    async fn test_no_results_does_not_open_picker(cx: &mut TestAppContext) {
+    async fn test_no_results_opens_caret_popup(cx: &mut TestAppContext) {
         let mut cx = rust_cx(
             lsp::ServerCapabilities {
                 references_provider: Some(lsp::OneOf::Left(true)),
@@ -1046,6 +1023,12 @@ mod tests {
             active_picker(&mut cx).is_none(),
             "an empty result should not open the picker"
         );
+        assert!(cx.editor(|editor, _, _| editor.has_mouse_context_menu()));
+        cx.update_editor(|editor, window, cx| {
+            editor.move_right(&editor::actions::MoveRight, window, cx);
+        });
+        cx.run_until_parked();
+        assert!(!cx.editor(|editor, _, _| editor.has_mouse_context_menu()));
     }
 
     #[gpui::test]
@@ -1154,6 +1137,17 @@ mod tests {
             active_picker(&mut cx).is_some(),
             "the cmd-click go-to-definition fallback should open the references picker when lsp_results_location is picker"
         );
+        cx.update_workspace(|workspace, window, cx| {
+            workspace.hide_modal(window, cx);
+        });
+        cx.lsp
+            .set_request_handler::<lsp::request::References, _, _>(async move |_, _| {
+                Ok(Some(Vec::new()))
+            });
+        cx.simulate_click(screen_coord, gpui::Modifiers::secondary_key());
+        cx.run_until_parked();
+        assert!(active_picker(&mut cx).is_none());
+        assert!(cx.editor(|editor, _, _| editor.has_mouse_context_menu()));
     }
 
     #[gpui::test]

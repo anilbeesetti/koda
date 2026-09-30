@@ -1,0 +1,72 @@
+#!/usr/bin/env python3
+"""Build the pinned Kotlin/Java Android debug adapter into the local IDE profile."""
+
+import os
+from pathlib import Path
+import runpy
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+
+REVISION = "7f05669b642d21afa46ac7b75307fa5d523a7263"
+SHA256 = "69ae1dc3d97b372bfe326c25a32469adf3bead1a254b0371c2e0ead93fceb6bd"
+VERSION = REVISION + "+android-1"
+SHARED_REVISION = "6d9e61b79d4631e75516def7ab7ff0d8b9310467"
+SHARED_SHA256 = "c82e551b82db7066a8f4c0cc83ce6ef58efb14489882fdf5560af6594bc06ce2"
+JDK_SHA256 = "c487a1c3a56588b3a32d0d07cdd526bf3d401c4b8422be772ca178bfcd647f3f"
+
+
+def main():
+    if sys.version_info < (3, 12):
+        raise RuntimeError("Android tool installers require Python 3.12 or newer. Put a supported python3 on PATH and retry.")
+    bootstrap = runpy.run_path(str(Path(__file__).with_name("install-android-kotlin")))
+    bootstrap["main"]()
+    dependencies = bootstrap["DEPENDENCIES"]
+    installation = dependencies / "kotlin-debug-adapter"
+    if installation.exists():
+        if installation.is_symlink() or (installation / ".revision").read_text().strip() != VERSION:
+            raise RuntimeError(f"Preserving {installation}; move it aside before installing")
+        if not (installation / "bin/kotlin-debug-adapter").is_file():
+            raise RuntimeError("The debugger installation is incomplete; move it aside and rerun")
+        print(f"Already installed: {installation}")
+        return
+    archive = bootstrap["download"]("kotlin-debug-adapter-source.tar.gz", f"https://codeload.github.com/fwcd/kotlin-debug-adapter/tar.gz/{REVISION}", SHA256)
+    shared_archive = bootstrap["download"]("fwcd-kls-6d9e61b.tar.gz", f"https://codeload.github.com/fwcd/kotlin-language-server/tar.gz/{SHARED_REVISION}", SHARED_SHA256)
+    java11 = Path(os.environ.get("JAVA11_HOME", dependencies / "temurin11/jdk-11.0.32.1+1/Contents/Home"))
+    if not (java11 / "bin/java").is_file():
+        if "JAVA11_HOME" in os.environ:
+            raise RuntimeError("JAVA11_HOME must contain bin/java")
+        archive_java = bootstrap["download"](
+            "temurin11.tar.gz",
+            "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.32.1%2B1/OpenJDK11U-jdk_aarch64_mac_hotspot_11.0.32.1_1.tar.gz",
+            JDK_SHA256,
+        )
+        with tarfile.open(archive_java) as source_java:
+            source_java.extractall(dependencies / "temurin11", filter="data")
+    with tempfile.TemporaryDirectory(prefix="android-debug-build-", dir=dependencies) as temporary:
+        temporary = Path(temporary)
+        for path in [archive, shared_archive]:
+            with tarfile.open(path) as source:
+                source.extractall(temporary, filter="data")
+        source = temporary / f"kotlin-debug-adapter-{REVISION}"
+        shared = temporary / f"kotlin-language-server-{SHARED_REVISION}"
+        patch = Path(__file__).with_name("android-kotlin-debugger.patch").resolve()
+        subprocess.run(["patch", "--batch", "-p1", "-i", str(patch)], cwd=source, check=True)
+        subprocess.run([str(source / "gradlew"), "-p", str(source), "--include-build", str(shared),
+                        "-PkotlinVersion=2.1.0", ":adapter:test", ":adapter:installDist",
+                        "--console=plain", "--max-workers=2"],
+                       env=dict(os.environ, JAVA_HOME=str(java11)), check=True)
+        distribution = source / "adapter/build/install/adapter"
+        shutil.copy2(source / "LICENSE", distribution / "LICENSE.txt")
+        shutil.copy2(shared / "LICENSE.txt", distribution / "KOTLIN-SERVER-LICENSE.txt")
+        (distribution / ".revision").write_text(VERSION + "\n")
+        (distribution / "SOURCE.txt").write_text(f"https://github.com/fwcd/kotlin-debug-adapter/tree/{REVISION}\nShared dependency: {SHARED_REVISION}\nPatch: script/android-kotlin-debugger.patch\n")
+        distribution.rename(installation)
+    print(f"Installed: {installation}")
+    print("Relaunch script/android-ide to enable Android Kotlin debugging.")
+
+
+if __name__ == "__main__":
+    main()
