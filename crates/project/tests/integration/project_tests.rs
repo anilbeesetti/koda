@@ -21474,9 +21474,10 @@ async fn test_android_resource_definitions_without_language_server(cx: &mut Test
             "build.gradle.kts": "android { namespace = \"example.app\" }",
             "src": {
                 "main": {
-                    "java": {"Activity.kt": "package example.app\nval title = R.string.app_name\nval other = foreign.app.R.string.app_name\nval system = android.R.string.ok"},
+                    "java": {"Activity.kt": "package example.app\nval title = R.string.app_name\nval other = foreign.app.R.string.app_name\nval system = android.R.string.ok\nval planets = R.array.planets\nval counts = R.array.counts"},
                     "AndroidManifest.xml": "<manifest><application android:label=\"@string/app_name\"/></manifest>",
-                    "res": {"values": {"strings.xml": "<resources><!-- <string name=\"app_name\">Ignored</string> --><string name=\"app_name\">App</string></resources>"},
+                    "res": {"values": {"strings.xml": "<resources><!-- <string name=\"app_name\">Ignored</string> --><string name=\"app_name\">App</string></resources>",
+                                       "arrays.xml": "<resources><string-array name=\"planets\"><item>Earth</item></string-array><integer-array name=\"counts\"><item>1</item></integer-array><item type=\"array\" name=\"planets_alias\">@array/planets</item><item type=\"array\" name=\"counts_alias\">@array/counts</item></resources>"},
                             "values-fr": {"strings.xml": "<resources><item type=\"string\" name=\"app_name\">Appli</item></resources>"}}
                 },
                 "debug": {"res": {"values": {"broken.xml": "<resources><string name=\"app_name\">Broken"}}}
@@ -21538,4 +21539,37 @@ async fn test_android_resource_definitions_without_language_server(cx: &mut Test
         .expect("Resolve manifest resource")
         .expect("Resource locations");
     assert_eq!(definitions.len(), 2);
+
+    let arrays = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer(path!("/android/app/src/main/res/values/arrays.xml"), cx)
+        })
+        .await
+        .expect("Open array resources");
+    for (name, tag) in [("planets", "string-array"), ("counts", "integer-array")] {
+        for (source, reference) in [
+            (&buffer, format!("R.array.{name}")),
+            (&arrays, format!("@array/{name}")),
+        ] {
+            let offset = source.read_with(cx, |buffer, _| {
+                buffer.text().find(&reference).expect("Array reference")
+            });
+            let definitions = project
+                .update(cx, |project, cx| project.definitions(source, offset, cx))
+                .await
+                .expect("Resolve array resource")
+                .expect("Array resource locations");
+            assert_eq!(definitions.len(), 1, "{reference}");
+            let target = &definitions[0].target;
+            assert_eq!(target.buffer, arrays);
+            target.buffer.read_with(cx, |buffer, _| {
+                assert_eq!(
+                    buffer
+                        .text_for_range(target.range.clone())
+                        .collect::<String>(),
+                    format!("<{tag} name=\"{name}\">"),
+                );
+            });
+        }
+    }
 }

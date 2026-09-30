@@ -200,7 +200,13 @@ pub(crate) fn atomic_write(path: &Path, text: &str, executable: bool) -> Result<
 }
 
 pub fn java_home() -> Result<PathBuf> {
-    if let Some(path) = env::var_os("ANDROID_IDE_KOTLIN_JAVA_HOME") {
+    java_home_from_environment(|variable| env::var_os(variable))
+}
+
+fn java_home_from_environment(
+    mut environment: impl FnMut(&str) -> Option<std::ffi::OsString>,
+) -> Result<PathBuf> {
+    if let Some(path) = environment("ANDROID_IDE_KOTLIN_JAVA_HOME") {
         let path = PathBuf::from(path);
         ensure!(
             is_java_21(&path),
@@ -208,7 +214,12 @@ pub fn java_home() -> Result<PathBuf> {
         );
         return Ok(path);
     }
-    if let Some(path) = env::var_os("JAVA_HOME").map(PathBuf::from)
+    if let Some(path) = environment("JAVA21_HOME") {
+        let path = PathBuf::from(path);
+        ensure!(is_java_21(&path), "JAVA21_HOME must point to JDK 21");
+        return Ok(path);
+    }
+    if let Some(path) = environment("JAVA_HOME").map(PathBuf::from)
         && is_java_21(&path)
     {
         return Ok(path);
@@ -276,6 +287,54 @@ fn is_java_21(path: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn java_home_honors_the_installer_override_and_validates_explicit_jdks() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let java21 = temporary.path().join("custom jdk 21");
+        let android21 = temporary.path().join("android jdk 21");
+        let java25 = temporary.path().join("gradle jdk 25");
+        for (path, version) in [(&java21, "21.0.9"), (&android21, "21.0.8"), (&java25, "25")] {
+            fs::create_dir_all(path.join("bin"))?;
+            fs::write(
+                path.join(if cfg!(windows) {
+                    "bin/java.exe"
+                } else {
+                    "bin/java"
+                }),
+                "",
+            )?;
+            fs::write(
+                path.join("release"),
+                format!("JAVA_VERSION=\"{version}\"\n"),
+            )?;
+        }
+        let resolve = |android: Option<&Path>, installer: Option<&Path>, gradle: Option<&Path>| {
+            java_home_from_environment(|variable| {
+                match variable {
+                    "ANDROID_IDE_KOTLIN_JAVA_HOME" => android,
+                    "JAVA21_HOME" => installer,
+                    "JAVA_HOME" => gradle,
+                    _ => None,
+                }
+                .map(|path| path.as_os_str().to_owned())
+            })
+        };
+        assert_eq!(resolve(None, Some(&java21), Some(&java25))?, java21);
+        assert_eq!(
+            resolve(Some(&android21), Some(&java21), Some(&java25))?,
+            android21
+        );
+        assert_eq!(resolve(None, None, Some(&java21))?, java21);
+        assert!(
+            resolve(None, Some(&java25), Some(&java21))
+                .expect_err("Invalid explicit JAVA21_HOME must not fall back")
+                .to_string()
+                .contains("JAVA21_HOME must point to JDK 21")
+        );
+        assert!(resolve(Some(&java25), Some(&java21), Some(&java21)).is_err());
+        Ok(())
+    }
 
     #[test]
     fn official_server_requires_the_tested_importer() -> Result<()> {

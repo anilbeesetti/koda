@@ -198,7 +198,10 @@ fn value_ranges(text: &str, kind: &str, name: &str) -> Result<Vec<Range<usize>>>
                 }
                 if resources && depth == 1 {
                     let mut matches_name = false;
-                    let mut matches_type = element.name().as_ref() == kind.as_bytes();
+                    let mut matches_type = match element.name().as_ref() {
+                        b"string-array" | b"integer-array" => kind == "array",
+                        tag => tag == kind.as_bytes(),
+                    };
                     for attribute in element.attributes() {
                         let attribute = attribute?;
                         let value =

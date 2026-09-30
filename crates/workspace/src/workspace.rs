@@ -3235,8 +3235,35 @@ impl Workspace {
                     }
                 };
                 pane.update_in(cx, |pane, window, cx| {
+                    let model_ids = item.project_item_model_ids(cx);
+                    let existing = (item.buffer_kind(cx) == ItemBufferKind::Singleton
+                        && !model_ids.is_empty())
+                    .then(|| {
+                        pane.items().enumerate().find_map(|(index, existing)| {
+                            (existing.buffer_kind(cx) == ItemBufferKind::Singleton
+                                && existing.to_any_view().entity_type()
+                                    == item.to_any_view().entity_type()
+                                && existing.project_item_model_ids(cx) == model_ids)
+                                .then(|| (index, existing.boxed_clone()))
+                        })
+                    })
+                    .flatten();
                     pane.nav_history_mut().set_mode(mode);
-                    pane.add_item(item.clone(), true, true, None, window, cx);
+                    let item = if let Some((index, existing)) = existing {
+                        if !entry.is_preview {
+                            pane.unpreview_item_if_preview(existing.item_id());
+                        }
+                        pane.activate_item(index, true, true, window, cx);
+                        existing
+                    } else {
+                        let destination_index = if entry.is_preview {
+                            pane.replace_preview_item_id(item.item_id(), window, cx)
+                        } else {
+                            None
+                        };
+                        pane.add_item(item.clone(), true, true, destination_index, window, cx);
+                        item
+                    };
                     pane.nav_history_mut().set_mode(NavigationMode::Normal);
                     if let Some(data) = entry.data {
                         item.navigate(data, window, cx);

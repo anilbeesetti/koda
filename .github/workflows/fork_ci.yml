@@ -125,7 +125,7 @@ jobs:
           cargo build --locked --manifest-path extensions/test-extension/Cargo.toml
           --target wasm32-wasip2 --target-dir extensions/test-extension/target
       - name: Build workspace tests
-        run: cargo test --locked --workspace --no-run --keep-going
+        run: cargo build --locked --workspace --tests --profile test --keep-going
       - name: Run workspace tests
         run: >-
           cargo nextest run --locked --workspace --no-fail-fast --no-tests=warn

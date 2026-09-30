@@ -3201,6 +3201,71 @@ mod tests {
             assert_eq!(buffer.read(cx).language_server_document().unwrap().uri, uri);
         });
 
+        // Every saved position still refers to the original weak editor after
+        // closing it. Restoring another position must reuse the first reopened tab.
+        let closed_library = pane.read_with(cx, |pane, _| {
+            pane.active_item().unwrap().downcast::<Editor>().unwrap()
+        });
+        pane.update_in(cx, |pane, window, cx| {
+            pane.replace_preview_item_id(closed_library.item_id(), window, cx);
+        });
+        for position in [Point::new(0, 3), Point::new(1, 8)] {
+            closed_library.update_in(cx, |editor, window, cx| {
+                editor.change_selections(
+                    SelectionEffects::no_scroll().nav_history(false),
+                    window,
+                    cx,
+                    |selections| selections.select_ranges([position..position]),
+                );
+                editor.create_nav_history_entry(cx);
+            });
+        }
+        workspace.update_in(cx, |workspace, window, cx| {
+            workspace.activate_item(&source_editor, true, true, window, cx)
+        });
+        pane.update_in(cx, |pane, window, cx| {
+            pane.close_item_by_id(
+                closed_library.item_id(),
+                workspace::SaveIntent::Skip,
+                window,
+                cx,
+            )
+        })
+        .await
+        .unwrap();
+        cx.update(|_, _| drop(closed_library));
+        cx.run_until_parked();
+
+        let mut restored_item_id = None;
+        for expected_position in [Point::new(1, 8), Point::new(0, 3)] {
+            workspace
+                .update_in(cx, |workspace, window, cx| {
+                    workspace.go_back(pane.downgrade(), window, cx)
+                })
+                .await
+                .unwrap();
+            pane.read_with(cx, |pane, cx| {
+                assert_eq!(pane.items_len(), 2, "Library history must reuse one tab");
+                let editor = pane.active_item().unwrap().downcast::<Editor>().unwrap();
+                assert_eq!(pane.preview_item_id(), Some(editor.item_id()));
+                if let Some(restored_item_id) = restored_item_id {
+                    assert_eq!(editor.item_id(), restored_item_id);
+                } else {
+                    restored_item_id = Some(editor.item_id());
+                }
+                assert_eq!(
+                    editor
+                        .read(cx)
+                        .selections
+                        .newest_anchor()
+                        .head()
+                        .to_point(&editor.read(cx).buffer.read(cx).read(cx)),
+                    expected_position,
+                    "Each restored history entry must navigate the reused editor"
+                );
+            });
+        }
+
         let editor_db = cx.update(|_, cx| EditorDb::global(cx));
         let workspace_id = cx
             .update(|_, cx| workspace::WorkspaceDb::global(cx))

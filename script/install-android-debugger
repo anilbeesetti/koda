@@ -6,6 +6,7 @@ from pathlib import Path
 import runpy
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 
@@ -18,6 +19,8 @@ JDK_SHA256 = "c487a1c3a56588b3a32d0d07cdd526bf3d401c4b8422be772ca178bfcd647f3f"
 
 
 def main():
+    if sys.version_info < (3, 12):
+        raise RuntimeError("Android tool installers require Python 3.12 or newer. Put a supported python3 on PATH and retry.")
     bootstrap = runpy.run_path(str(Path(__file__).with_name("install-android-kotlin")))
     bootstrap["main"]()
     dependencies = bootstrap["DEPENDENCIES"]
@@ -67,4 +70,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

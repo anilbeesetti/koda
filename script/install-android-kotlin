@@ -9,6 +9,7 @@ from pathlib import Path
 import platform
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import urllib.request
@@ -262,6 +263,8 @@ def install_official():
 
 
 def main():
+    if sys.version_info < (3, 12):
+        raise RuntimeError("Android tool installers require Python 3.12 or newer. Put a supported python3 on PATH and retry.")
     if platform.system() != "Darwin" or platform.machine() != "arm64":
         raise RuntimeError("This bootstrap currently supports Apple Silicon macOS")
     DEPENDENCIES.mkdir(parents=True, exist_ok=True)
@@ -274,4 +277,3 @@ if __name__ == "__main__":
                         help="Compatibility option; the official Kotlin server is always installed")
     parser.parse_args()
     main()
-

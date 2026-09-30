@@ -16,7 +16,7 @@ use gpui::{
     Action, App, BackgroundExecutor, Context, Entity, EventEmitter, FocusHandle, Focusable,
     Subscription, Task, WeakEntity, actions,
 };
-use project::{Project, TaskSourceKind, trusted_worktrees::TrustedWorktrees};
+use project::{Project, TaskSourceKind, WorktreeId, trusted_worktrees::TrustedWorktrees};
 use settings::{IntoGpui, RegisterSetting, Settings};
 use std::{
     collections::HashMap,
@@ -825,6 +825,13 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Result<()> {
+        let worktree_id = self
+            .project
+            .read(cx)
+            .visible_worktrees(cx)
+            .find(|worktree| worktree.read(cx).abs_path().as_ref() == root.as_path())
+            .map(|worktree| worktree.read(cx).id())
+            .context("The Android project is no longer open.")?;
         let template = TaskTemplate {
             label: label.clone(),
             command: program.to_string_lossy().into_owned(),
@@ -835,39 +842,115 @@ impl AndroidPanel {
             show_command: true,
             ..Default::default()
         };
-        let task = resolve_android_task(template, "android", root)?;
+        let task = resolve_android_task(template, "android", root.clone())?;
         let panel = cx.weak_entity();
         self.workspace.update(cx, |workspace, cx| {
-            workspace.schedule_resolved_task_with_completion(TaskSourceKind::UserInput, task, false, move |result, cx| {
-                panel.update_in(cx, |panel, window, cx| {
-                    panel.running = false;
-                    match result {
-                        ScheduledTaskResult::Success => {
-                            panel.status = "Task completed successfully".into();
-                            match after_task {
-                                Some(AfterTask::Deploy(target, serial, debug)) => panel.deploy(target, serial, debug, window, cx),
-                                Some(AfterTask::AttachDebugger(root, serial, application_id)) => panel.attach_debugger(root, serial, application_id, window, cx),
-                                Some(AfterTask::Java(target)) => panel.configure_java(target, window, cx),
-                                Some(AfterTask::Preview(target)) => panel.generate_preview(target, window, cx),
-                                Some(AfterTask::RefreshDevices) => panel.refresh_devices(cx),
-                                Some(AfterTask::EmulatorReady(name, operation, root)) => panel.run_on_emulator(name, operation, root, window, cx),
-                                None => {}
-                            }
-                        }
-                        ScheduledTaskResult::Cancelled => panel.status = "Task cancelled".into(),
-                        ScheduledTaskResult::Failure | ScheduledTaskResult::SpawnFailed => {
-                            panel.fail(anyhow::anyhow!("Android command failed. See the task terminal for the error and retry after fixing it."), window, cx);
-                        }
-                    }
-                    cx.notify();
-                }).log_err();
-            }, window, cx);
+            workspace.schedule_resolved_task_with_completion(
+                TaskSourceKind::UserInput,
+                task,
+                false,
+                move |result, cx| {
+                    panel
+                        .update_in(cx, |panel, window, cx| {
+                            panel.complete_scheduled_task(
+                                &root,
+                                worktree_id,
+                                after_task,
+                                result,
+                                window,
+                                cx,
+                            );
+                        })
+                        .log_err();
+                },
+                window,
+                cx,
+            );
         })?;
         self.running = true;
         self.error = None;
         self.status = label.into();
         cx.notify();
         Ok(())
+    }
+
+    fn complete_scheduled_task(
+        &mut self,
+        root: &Path,
+        worktree_id: WorktreeId,
+        after_task: Option<AfterTask>,
+        result: ScheduledTaskResult,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.running = false;
+        match result {
+            ScheduledTaskResult::Success => {
+                // A removed root can leave another workspace as trusted_root's
+                // fallback. Never continue the original operation in that root.
+                let context = (|| {
+                    ensure!(
+                        self.trusted_root(cx)? == root,
+                        "The selected Android project changed during the task."
+                    );
+                    ensure!(
+                        self.project
+                            .read(cx)
+                            .worktree_for_id(worktree_id, cx)
+                            .is_some_and(|worktree| {
+                                worktree.read(cx).is_visible()
+                                    && worktree.read(cx).abs_path().as_ref() == root
+                            }),
+                        "The original Android project is no longer open."
+                    );
+                    let target = match &after_task {
+                        Some(AfterTask::Deploy(target, _, _))
+                        | Some(AfterTask::Java(target))
+                        | Some(AfterTask::Preview(target)) => Some(target),
+                        _ => None,
+                    };
+                    if let Some(target) = target {
+                        ensure!(
+                            self.selected_target.as_ref() == Some(target)
+                                && self.targets.contains(target),
+                            "The selected Android variant changed during the task."
+                        );
+                    }
+                    Ok::<_, anyhow::Error>(())
+                })();
+                if let Err(error) = context {
+                    self.fail(error, window, cx);
+                    return;
+                }
+                self.status = "Task completed successfully".into();
+                match after_task {
+                    Some(AfterTask::Deploy(target, serial, debug)) => {
+                        self.deploy(target, serial, debug, window, cx)
+                    }
+                    Some(AfterTask::AttachDebugger(root, serial, application_id)) => {
+                        self.attach_debugger(root, serial, application_id, window, cx)
+                    }
+                    Some(AfterTask::Java(target)) => self.configure_java(target, window, cx),
+                    Some(AfterTask::Preview(target)) => self.generate_preview(target, window, cx),
+                    Some(AfterTask::RefreshDevices) => self.refresh_devices(cx),
+                    Some(AfterTask::EmulatorReady(name, operation, root)) => {
+                        self.run_on_emulator(name, operation, root, window, cx)
+                    }
+                    None => {}
+                }
+            }
+            ScheduledTaskResult::Cancelled => self.status = "Task cancelled".into(),
+            ScheduledTaskResult::Failure | ScheduledTaskResult::SpawnFailed => {
+                self.fail(
+                    anyhow::anyhow!(
+                        "Android command failed. See the task terminal for the error and retry after fixing it."
+                    ),
+                    window,
+                    cx,
+                );
+            }
+        }
+        cx.notify();
     }
 
     fn deploy(
@@ -2555,6 +2638,78 @@ mod tests {
                 "{path}"
             );
         }
+    }
+
+    #[gpui::test]
+    async fn completed_build_does_not_continue_in_a_different_project(cx: &mut TestAppContext) {
+        let _app_state = cx.update(AppState::test);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree(
+            "/android-a",
+            json!({"settings.gradle.kts": "", "gradlew": ""}),
+        )
+        .await;
+        fs.insert_tree(
+            "/android-b",
+            json!({"settings.gradle.kts": "", "gradlew": ""}),
+        )
+        .await;
+        let project =
+            Project::test(fs, [Path::new("/android-a"), Path::new("/android-b")], cx).await;
+        let root = PathBuf::from("/android-a");
+        let worktree_id = project.read_with(cx, |project, cx| {
+            project
+                .visible_worktrees(cx)
+                .find(|worktree| worktree.read(cx).abs_path().as_ref() == root.as_path())
+                .unwrap()
+                .read(cx)
+                .id()
+        });
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let target = AndroidTarget {
+            module: ":mobile".into(),
+            variant: "debug".into(),
+            output_listing: root.join("output.json"),
+        };
+        panel.update(cx, |panel, _| {
+            panel.root = Some(root.clone());
+            panel.targets = vec![target.clone()];
+            panel.selected_target = Some(target.clone());
+            panel.startup_settings_ready = true;
+            panel.running = true;
+        });
+        project.update(cx, |project, cx| project.remove_worktree(worktree_id, cx));
+        panel.update_in(cx, |panel, window, cx| {
+            panel.auto_sync_project(window, cx);
+            assert!(panel.running, "the original Gradle task is still pending");
+            assert!(panel.root.is_none());
+            assert_eq!(panel.trusted_root(cx).unwrap(), PathBuf::from("/android-b"));
+            for after_task in [AfterTask::Java(target.clone()), AfterTask::Preview(target)] {
+                panel.running = true;
+                panel.complete_scheduled_task(
+                    &root,
+                    worktree_id,
+                    Some(after_task),
+                    ScheduledTaskResult::Success,
+                    window,
+                    cx,
+                );
+                assert!(!panel.running);
+                assert!(
+                    panel.java_task.is_none(),
+                    "must not start B's Gradle export"
+                );
+                assert!(panel.preview_task.is_none(), "must not start B's renderer");
+                assert!(
+                    panel
+                        .error
+                        .as_ref()
+                        .is_some_and(|error| { error.contains("project changed during the task") })
+                );
+            }
+        });
     }
 
     #[gpui::test]

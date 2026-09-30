@@ -4,6 +4,9 @@ This small Compose app tests a module named `mobile`, two product flavors,
 generated `R` and `BuildConfig` symbols, a Kotlin call into Java, and an Android
 library dependency named `greeting`.
 
+The Android tool installers require Python 3.12 or newer. Ensure `python3` on
+your `PATH` meets that requirement (`python3 --version`) before running setup.
+
 From the repository root, run:
 
 ```sh
@@ -221,4 +224,3 @@ annotations. Rendering uses downloaded Google tooling, JDK 21, and the selected
 variant's resources; Android Studio and a running device are unnecessary. Refresh
 after code changes. Interactive previews and multi-value preview parameter
 galleries are not implemented.
-

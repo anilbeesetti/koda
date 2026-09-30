@@ -156,6 +156,21 @@ enum Target {
     Symbol(Symbol),
 }
 
+impl Target {
+    fn same_target(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Action(left), Self::Action(right)) => left == right,
+            (Self::File(left), Self::File(right)) => left == right,
+            (Self::Symbol(left), Self::Symbol(right)) => {
+                left.source_language_server_id == right.source_language_server_id
+                    && left.path == right.path
+                    && left.range == right.range
+            }
+            _ => false,
+        }
+    }
+}
+
 struct SearchMatch {
     target: Target,
     label: String,
@@ -174,6 +189,33 @@ struct EverywhereDelegate {
     loading_symbols: bool,
     symbol_error: Option<String>,
     cancel: Arc<AtomicBool>,
+}
+
+impl EverywhereDelegate {
+    fn append_matches(&mut self, matches: impl IntoIterator<Item = SearchMatch>) {
+        let selected_target = self
+            .matches
+            .get(self.selected)
+            .map(|result| result.target.clone());
+        self.matches.extend(matches);
+        self.matches
+            .sort_by(|left, right| right.score.total_cmp(&left.score));
+        self.selected = selected_target
+            .and_then(|target| {
+                self.matches
+                    .iter()
+                    .position(|result| target.same_target(&result.target))
+            })
+            .unwrap_or(0);
+        // Keep the user's selection even when late symbols displace it from the
+        // top results. Picker also uses this selection for an Enter queued while
+        // the symbol request was pending.
+        if self.selected >= 100 {
+            self.matches.swap(self.selected, 99);
+            self.selected = 99;
+        }
+        self.matches.truncate(100);
+    }
 }
 
 fn is_class(kind: SymbolKind) -> bool {
@@ -432,9 +474,10 @@ impl PickerDelegate for EverywhereDelegate {
             .await;
             picker
                 .update_in(cx, |picker, _, cx| {
-                    for result in symbol_matches {
-                        if let Some(symbol) = symbols.get(result.candidate_id) {
-                            picker.delegate.matches.push(SearchMatch {
+                    picker
+                        .delegate
+                        .append_matches(symbol_matches.into_iter().filter_map(|result| {
+                            symbols.get(result.candidate_id).map(|symbol| SearchMatch {
                                 label: symbol.name.clone(),
                                 detail: format!(
                                     "{:?} · {}",
@@ -443,14 +486,8 @@ impl PickerDelegate for EverywhereDelegate {
                                 ),
                                 score: result.score,
                                 target: Target::Symbol(symbol.clone()),
-                            });
-                        }
-                    }
-                    picker
-                        .delegate
-                        .matches
-                        .sort_by(|left, right| right.score.total_cmp(&left.score));
-                    picker.delegate.matches.truncate(100);
+                            })
+                        }));
                     picker.delegate.loading_symbols = false;
                     picker.delegate.symbol_error = symbol_error;
                     cx.notify();
@@ -523,6 +560,107 @@ mod tests {
     use editor::test::editor_lsp_test_context::EditorLspTestContext;
     use gpui::{Modifiers, TestAppContext};
     use settings::KeymapFile;
+
+    #[gpui::test]
+    async fn delayed_symbols_preserve_the_target_of_queued_confirmation(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            let settings = settings::SettingsStore::test(cx);
+            cx.set_global(settings);
+            theme_settings::init(theme::LoadThemes::JustBase, cx);
+            menu::init();
+            crate::init(cx);
+            for asset in ["keymaps/default-macos.json", "keymaps/macos/jetbrains.json"] {
+                cx.bind_keys(
+                    KeymapFile::load_asset_allow_partial_failure(asset, cx).expect("Keymap asset"),
+                );
+            }
+        });
+        let mut cx = EditorLspTestContext::new_rust(
+            lsp::ServerCapabilities {
+                workspace_symbol_provider: Some(lsp::OneOf::Left(true)),
+                ..Default::default()
+            },
+            cx,
+        )
+        .await;
+        cx.set_state("struct FileType;\nfn file_function() {}ˇ\n");
+        let uri = cx.buffer_lsp_url.clone();
+        let (sender, receiver) = futures::channel::oneshot::channel();
+        let mut receiver = Some(receiver);
+        cx.lsp
+            .set_request_handler::<lsp::WorkspaceSymbolRequest, _, _>(move |_, _| {
+                let receiver = receiver.take().expect("One symbol search");
+                async move { Ok(receiver.await.expect("Release delayed symbols")) }
+            });
+        for _ in 0..2 {
+            cx.simulate_modifiers_change(Modifiers::shift());
+            cx.simulate_modifiers_change(Modifiers::none());
+        }
+        cx.run_until_parked();
+        let workspace = cx.workspace.clone();
+        let picker = workspace.read_with(&cx.cx.cx, |workspace, cx| {
+            workspace
+                .active_modal::<SearchEverywhere>(cx)
+                .expect("Search Everywhere")
+                .read(cx)
+                .picker
+                .clone()
+        });
+        picker.update_in(&mut cx.cx.cx, |picker, window, cx| {
+            picker.set_query("dir", window, cx)
+        });
+        cx.run_until_parked();
+        picker.update_in(&mut cx.cx.cx, |picker, window, cx| {
+            assert!(picker.delegate.loading_symbols);
+            let index = picker
+                .delegate
+                .matches
+                .iter()
+                .position(|result| matches!(result.target, Target::File(_)))
+                .expect("File results are available before symbols");
+            picker.set_selected_index(index, None, false, window, cx);
+        });
+        cx.simulate_keystrokes("enter");
+        cx.run_until_parked();
+        assert!(workspace.read_with(&cx.cx.cx, |workspace, cx| {
+            workspace.active_modal::<SearchEverywhere>(cx).is_some()
+        }));
+        #[expect(deprecated)]
+        let symbols = (0..100)
+            .map(|index| lsp::SymbolInformation {
+                // Exact matches rank ahead of dir/file.rs and would push the
+                // selected file outside the result limit.
+                name: "dir".into(),
+                kind: lsp::SymbolKind::STRUCT,
+                tags: None,
+                deprecated: None,
+                container_name: None,
+                location: lsp::Location {
+                    uri: uri.clone(),
+                    range: lsp::Range::new(
+                        lsp::Position::new(index, 7),
+                        lsp::Position::new(index, 15),
+                    ),
+                },
+            })
+            .collect();
+        sender
+            .send(Some(lsp::WorkspaceSymbolResponse::Flat(symbols)))
+            .expect("Symbol search is pending");
+        cx.run_until_parked();
+        picker.read_with(&cx.cx.cx, |picker, _| {
+            assert_eq!(picker.delegate.matches.len(), 100);
+            assert_eq!(picker.delegate.selected, 99);
+            assert!(matches!(
+                picker.delegate.matches[picker.delegate.selected].target,
+                Target::File(_)
+            ));
+        });
+        assert!(workspace.read_with(&cx.cx.cx, |workspace, cx| {
+            workspace.active_modal::<SearchEverywhere>(cx).is_none()
+        }));
+        cx.assert_editor_state("struct FileType;\nfn file_function() {}ˇ\n");
+    }
 
     #[gpui::test]
     async fn double_shift_searches_files_actions_and_filters_classes(cx: &mut TestAppContext) {
