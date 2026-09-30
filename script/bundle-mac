@@ -110,6 +110,13 @@ mv Cargo.toml.backup Cargo.toml
 popd
 echo "Bundled ${app_path}"
 
+# Cargo requires semver, while fork release tags use a five-part timestamp.
+# Apply the public bundle version after cargo-bundle and before code signing.
+if [[ -n "${ZED_BUNDLE_VERSION:-}" ]]; then
+    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${ZED_BUNDLE_VERSION}" "${app_path}/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${ZED_BUNDLE_VERSION}" "${app_path}/Contents/Info.plist"
+fi
+
 # DocumentTypes.plist references CFBundleTypeIconFile "Document", so the bundle must contain Document.icns.
 # We use the app icon as a placeholder document icon for now.
 document_icon_source="crates/zed/resources/Document.icns"

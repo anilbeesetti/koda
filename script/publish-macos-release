@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${RELEASE_VERSION:?}"
+: "${GITHUB_SHA:?}"
+: "${GITHUB_REPOSITORY:?}"
+
+test "$(git rev-parse "refs/tags/$RELEASE_VERSION^{commit}")" = "$GITHUB_SHA"
+for architecture in aarch64; do
+    test -s "release-assets/Zed-$RELEASE_VERSION-macos-$architecture.dmg"
+    test -s "release-assets/zed-remote-server-$RELEASE_VERSION-macos-$architecture.gz"
+    (cd release-assets && sha256sum --check "SHA256SUMS-macos-$architecture.txt")
+done
+
+notes=$(mktemp)
+trap 'rm -f "$notes"' EXIT
+cat > "$notes" <<EOF
+Optimized macOS production build of commit $GITHUB_SHA.
+
+Version and tag: $RELEASE_VERSION (Asia/Calcutta).
+
+Download the aarch64 DMG for Apple Silicon Macs.
+The apps are ad-hoc signed and are not Apple notarized. macOS may require
+allowing the application in System Settings > Privacy & Security on first launch.
+
+The macOS bundle uses this timestamp version. Cargo and the application's
+internal About version retain the source's semantic version because Cargo
+does not accept five-part versions. Upstream automatic updates are disabled.
+EOF
+
+# Publish a draft only after every asset is uploaded. A failed upload can be
+# retried with the same run and tag without exposing a partial new release.
+release_tags=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq '.[].tag_name')
+if ! grep -Fxq "$RELEASE_VERSION" <<< "$release_tags"; then
+    gh release create "$RELEASE_VERSION" --repo "$GITHUB_REPOSITORY" \
+        --verify-tag --target "$GITHUB_SHA" --title "$RELEASE_VERSION" \
+        --notes-file "$notes" --draft
+fi
+gh release upload "$RELEASE_VERSION" release-assets/* \
+    --repo "$GITHUB_REPOSITORY" --clobber
+gh release edit "$RELEASE_VERSION" --repo "$GITHUB_REPOSITORY" \
+    --title "$RELEASE_VERSION" --notes-file "$notes" --draft=false
