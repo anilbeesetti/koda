@@ -2,6 +2,10 @@
 
 Research date: 15 September 2026.
 
+Current backend policy: Android IDE uses only the official JetBrains Kotlin
+language server. The community backend and its setup action have been removed.
+Rollout decisions and measurements below describe their original validation dates.
+
 ## Decision
 
 **Use the official JetBrains Kotlin LSP as the preferred engine for the next implementation milestone. Keep the existing community server as a temporary, explicit fallback until the integration passes its tests.** We have now demonstrated the official engine resolving the Android sample, providing unsaved completion, opening original Compose sources, and navigating between libraries. This is a stronger basis than continuing to expand the custom compiler patch.
@@ -1221,3 +1225,4 @@ Each navigation row is one fresh editor/server process, with its first action fo
 All original-source selections pass. Both completion orders pass native acceptance, import, caret, Undo and stale-session checks. The explicit-first run also passes two library restorations through fresh server processes, including restart during import. Wire logs confirm that navigation preparation was acknowledged in every run (62 requests per navigation run; 125 preparation and 156 completion requests per completion run).
 
 **Performance limits remain open:** fresh nav3 first navigation is 543.25 ms against 500 ms. Explicit-first String warm p95 is 245.84 ms against 200 ms; the combined check does not establish the earlier android-4 String budget for this order. Automatic-first triggered String p95 is 157.92 ms, while first String requests take 972.79/944.35 ms. Named-argument p95 is 428.55/539.28 ms. All repeats, including maxima, are retained in `summary.json`. The historical startup gap remains unresolved; no startup or project-open budget pass is claimed.
+

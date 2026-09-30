@@ -7120,7 +7120,8 @@ async fn test_right_click_menu_behind_collab_panel(cx: &mut TestAppContext) {
     let client_a = server.create_client(cx, "user_a").await;
     let (_workspace_a, cx) = client_a.build_test_workspace(cx).await;
 
-    cx.simulate_resize(size(px(300.), px(300.)));
+    // Keep the clicked tab visible alongside the navigation and new-tab buttons.
+    cx.simulate_resize(size(px(600.), px(300.)));
 
     cx.simulate_keystrokes("cmd-n cmd-n cmd-n");
     cx.update(|window, _cx| window.refresh());

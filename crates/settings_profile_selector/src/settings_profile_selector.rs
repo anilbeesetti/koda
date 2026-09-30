@@ -634,6 +634,11 @@ mod tests {
 
     #[gpui::test]
     async fn test_settings_profile_with_default_base(cx: &mut TestAppContext) {
+        let factory_defaults = settings::parse_json_with_comments::<serde_json::Value>(
+            settings::default_settings().as_ref(),
+        )
+        .unwrap();
+        let factory_font_size = px(factory_defaults["buffer_font_size"].as_f64().unwrap() as f32);
         let user_settings_json = json!({
             "buffer_font_size": 10.0,
             "profiles": {
@@ -650,13 +655,13 @@ mod tests {
         });
         let (workspace, cx) = init_test(user_settings_json, cx).await;
 
-        // User has buffer_font_size: 10, factory default is 15.
+        // User has buffer_font_size: 10, overriding the factory default.
         cx.update(|_, cx| {
             assert_eq!(ThemeSettings::get_global(cx).buffer_font_size(cx), px(10.0));
         });
 
         // "Clean Slate" has base: "default" with no settings overrides,
-        // so we get the factory default (15), not the user's value (10).
+        // so we get the factory default instead of the user's value (10).
         cx.dispatch_action(settings_profile_selector::Toggle);
         let picker = active_settings_profile_picker(&workspace, cx);
         cx.dispatch_action(SelectNext);
@@ -666,7 +671,10 @@ mod tests {
                 picker.delegate.selected_profile_name.as_deref(),
                 Some("Clean Slate")
             );
-            assert_eq!(ThemeSettings::get_global(cx).buffer_font_size(cx), px(15.0));
+            assert_eq!(
+                ThemeSettings::get_global(cx).buffer_font_size(cx),
+                factory_font_size
+            );
         });
 
         // "Custom on Defaults" has base: "default" with buffer_font_size: 30,

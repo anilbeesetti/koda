@@ -14,13 +14,8 @@ import tempfile
 import urllib.request
 import zipfile
 
-REVISION = "6d9e61b79d4631e75516def7ab7ff0d8b9310467"
-VERSION = REVISION + "+android-sources-8"
-SOURCE_SHA256 = "c82e551b82db7066a8f4c0cc83ce6ef58efb14489882fdf5560af6594bc06ce2"
-JDK_SHA256 = "c487a1c3a56588b3a32d0d07cdd526bf3d401c4b8422be772ca178bfcd647f3f"
 REPOSITORY = Path(__file__).resolve().parent.parent
 DEPENDENCIES = REPOSITORY / "target/android-ide/dependencies"
-INSTALLATION = DEPENDENCIES / "kotlin-language-server"
 OFFICIAL_VERSION = "263.4702.0"
 OFFICIAL_REVISION = OFFICIAL_VERSION + "+android-5"
 OFFICIAL_SHA256 = "95da3fc6d3b9092c7616345044a05edb85e5408dc648d081e4e433595c892bec"
@@ -262,81 +257,21 @@ def install_official():
         (distribution / "SOURCE.txt").write_text(OFFICIAL_URL + "\nSHA-256: " + OFFICIAL_SHA256 + "\nPatch: script/android-kotlin-official.patch\nCompose: script/android-kotlin-compose.kt\nNavigation: script/android-kotlin-navigation.kt\nRevision: " + OFFICIAL_REVISION + "\n")
         distribution.rename(OFFICIAL_INSTALLATION)
     print(f"Installed official Kotlin LSP {OFFICIAL_REVISION}: {OFFICIAL_INSTALLATION}")
-    print("Relaunch script/android-ide --kotlin-backend official, then run Android: Configure Kotlin.")
+    print("Relaunch script/android-ide, then run Android: Configure Kotlin.")
     print("The server uses its bundled Java 25 runtime; Android Gradle setup still uses project JDK 21.")
 
 
-def main(backend="community"):
+def main():
     if platform.system() != "Darwin" or platform.machine() != "arm64":
         raise RuntimeError("This bootstrap currently supports Apple Silicon macOS")
     DEPENDENCIES.mkdir(parents=True, exist_ok=True)
-    if backend == "official":
-        install_official()
-        return
-    if backend != "community":
-        raise RuntimeError(f"Unknown Kotlin backend: {backend}")
-    if INSTALLATION.exists():
-        if INSTALLATION.is_symlink() or not (INSTALLATION / ".revision").is_file() or (INSTALLATION / ".revision").read_text().strip() not in (REVISION, REVISION + "+android-sources-1", REVISION + "+android-sources-2", REVISION + "+android-sources-3", REVISION + "+android-sources-4", REVISION + "+android-sources-5", REVISION + "+android-sources-6", REVISION + "+android-sources-7", VERSION):
-            raise RuntimeError(f"Preserving the existing installation at {INSTALLATION}; move it aside first")
-        if not (INSTALLATION / "bin/kotlin-language-server").is_file():
-            raise RuntimeError("The Kotlin installation is incomplete; move it aside and rerun")
-        if (INSTALLATION / ".revision").read_text().strip() == VERSION:
-            print(f"Already installed: {INSTALLATION}")
-            return
-    java_home = os.environ.get("JAVA21_HOME") or subprocess.check_output(
-        ["/usr/libexec/java_home", "-v", "21"], text=True
-    ).strip()
-    java11 = Path(os.environ.get("JAVA11_HOME", DEPENDENCIES / "temurin11/jdk-11.0.32.1+1/Contents/Home"))
-    if not (java11 / "bin/java").is_file():
-        if "JAVA11_HOME" in os.environ:
-            raise RuntimeError("JAVA11_HOME must contain bin/java")
-        archive = download(
-            "temurin11.tar.gz",
-            "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.32.1%2B1/OpenJDK11U-jdk_aarch64_mac_hotspot_11.0.32.1_1.tar.gz",
-            JDK_SHA256,
-        )
-        with tarfile.open(archive) as source:
-            source.extractall(DEPENDENCIES / "temurin11", filter="data")
-    archive = download(
-        "fwcd-kls-6d9e61b.tar.gz",
-        f"https://codeload.github.com/fwcd/kotlin-language-server/tar.gz/{REVISION}",
-        SOURCE_SHA256,
-    )
-    with tempfile.TemporaryDirectory(prefix="kotlin-build-", dir=DEPENDENCIES) as temporary:
-        temporary = Path(temporary)
-        with tarfile.open(archive) as source:
-            source.extractall(temporary, filter="data")
-        source = temporary / f"kotlin-language-server-{REVISION}"
-        patch = Path(__file__).with_name("android-kotlin-sources.patch").resolve()
-        subprocess.run(["patch", "--batch", "-p1", "-i", str(patch)], cwd=source, check=True)
-        environment = dict(os.environ, JAVA_HOME=java_home)
-        subprocess.run(
-            [str(source / "gradlew"), "-p", str(source),
-             f"-Porg.gradle.java.installations.paths={java11}",
-             ":server:test", "--tests", "org.javacs.kt.Rename*",
-             "--tests", "org.javacs.kt.*Definition*", "--tests", "org.javacs.kt.WorkspaceSymbolsTest", "--tests", "org.javacs.kt.ExplicitClassPathTest", "--tests", "org.javacs.kt.externalsources.AttachedSourcesTest",
-             ":server:installDist", "--console=plain", "--max-workers=2"],
-            env=environment, check=True,
-        )
-        distribution = source / "server/build/install/server"
-        shutil.copy2(source / "LICENSE.txt", distribution / "LICENSE.txt")
-        (distribution / ".revision").write_text(VERSION + "\n")
-        (distribution / "SOURCE.txt").write_text(f"https://github.com/fwcd/kotlin-language-server/tree/{REVISION}\nPatch: script/android-kotlin-sources.patch\n")
-        backup = temporary / "previous-installation"
-        if INSTALLATION.exists():
-            INSTALLATION.rename(backup)
-        try:
-            distribution.rename(INSTALLATION)
-        except BaseException:
-            if backup.exists():
-                backup.rename(INSTALLATION)
-            raise
-    print(f"Installed: {INSTALLATION}")
-    print("Relaunch script/android-ide, then run Android: Configure Kotlin in your project.")
-    print("Kotlin rename updates Kotlin callers; Java callers still require manual review.")
+    install_official()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--backend", choices=("community", "official"), default="community")
-    main(parser.parse_args().backend)
+    parser.add_argument("--backend", choices=("official",), default="official",
+                        help="Compatibility option; the official Kotlin server is always installed")
+    parser.parse_args()
+    main()
+

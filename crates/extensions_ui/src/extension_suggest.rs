@@ -925,14 +925,27 @@ mod tests {
         cx.update(|cx| {
             let app_state = AppState::test(cx);
             AppState::set_global(app_state.clone(), cx);
+            let auto_install_extensions = ExtensionSettings::get_global(cx)
+                .auto_install_extensions
+                .keys()
+                .cloned()
+                .collect::<Vec<_>>();
             cx.update_global::<SettingsStore, _>(|store, cx| {
                 store.update_user_settings(cx, |content| {
-                    content
-                        .extension
-                        .auto_install_extensions
-                        .insert(Arc::from("html"), false);
+                    for extension_id in auto_install_extensions {
+                        content
+                            .extension
+                            .auto_install_extensions
+                            .insert(extension_id, false);
+                    }
                 });
             });
+            assert!(
+                ExtensionSettings::get_global(cx)
+                    .auto_install_extensions
+                    .values()
+                    .all(|enabled| !*enabled)
+            );
             cx.set_global(db::AppDatabase::test_new());
             release_channel::init(semver::Version::new(0, 0, 0), cx);
             extension::init(cx);

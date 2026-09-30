@@ -21314,6 +21314,12 @@ async fn code_action_project(
 #[gpui::test]
 async fn test_android_resource_definitions_without_language_server(cx: &mut TestAppContext) {
     init_test(cx);
+    // Resource files are deeper than the shared test fixture's scan depth.
+    cx.update_global::<SettingsStore, _>(|store, cx| {
+        store.update_user_settings(cx, |settings| {
+            settings.project.worktree.file_scan_depth = Some(0);
+        });
+    });
     let filesystem = FakeFs::new(cx.executor());
     filesystem.insert_tree(path!("/android"), json!({
         "app": {
