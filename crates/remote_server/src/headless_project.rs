@@ -214,6 +214,7 @@ impl HeadlessProject {
 
         let lsp_store = cx.new(|cx| {
             let mut lsp_store = LspStore::new_local(
+                settings_observer.clone(),
                 buffer_store.clone(),
                 worktree_store.clone(),
                 prettier_store.clone(),
