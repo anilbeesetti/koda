@@ -1794,6 +1794,8 @@ mod tests {
             (200, github_release_json("2026.09.30.14.04", b"update")),
             (200, github_release_json("not-a-timestamp", b"update")),
         ] {
+            let expected_idle = status == 404
+                || (status == 200 && !body.contains("not-a-timestamp") && body != "invalid JSON");
             let requests = Arc::new(parking_lot::Mutex::new(0));
             let fake_http = FakeHttpClient::create({
                 let requests = requests.clone();
@@ -1822,9 +1824,7 @@ mod tests {
             poll_github_update(&updater, cx).await;
             assert_eq!(*requests.lock(), 1);
             let actual = updater.read_with(cx, |updater, _| updater.status());
-            if status == 404
-                || (status == 200 && !body.contains("not-a-timestamp") && body != "invalid JSON")
-            {
+            if expected_idle {
                 assert_eq!(actual, AutoUpdateStatus::Idle);
             } else {
                 assert!(
