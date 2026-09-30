@@ -2224,6 +2224,7 @@ mod tests {
                     position,
                     origin,
                     false,
+                    Instant::now(),
                     window,
                     cx,
                 );
