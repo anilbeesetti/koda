@@ -25,7 +25,7 @@ allowing the application in System Settings > Privacy & Security on first launch
 
 The macOS bundle uses this timestamp version. Cargo and the application's
 internal About version retain the source's semantic version because Cargo
-does not accept five-part versions. Upstream automatic updates are disabled.
+does not accept five-part versions.
 EOF
 
 # Publish a draft only after every asset is uploaded. A failed upload can be

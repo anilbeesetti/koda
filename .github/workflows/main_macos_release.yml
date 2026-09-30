@@ -52,11 +52,12 @@ jobs:
       CARGO_TERM_COLOR: always
       ZED_BUNDLE_VERSION: ${{ needs.version.outputs.version }}
       RELEASE_VERSION: ${{ needs.version.outputs.version }}
+      ZED_RELEASE_VERSION: ${{ needs.version.outputs.version }}
+      ZED_GITHUB_REPOSITORY: ${{ github.repository }}
       ZED_COMMIT_SHA: ${{ github.sha }}
       TARGET_TRIPLE: aarch64-apple-darwin
       ARCHITECTURE: aarch64
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
-      ZED_UPDATE_EXPLANATION: Download updates from this repository's GitHub Releases page.
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
         with:
@@ -77,6 +78,7 @@ jobs:
           if [[ -z "$ZED_BUNDLE_VERSION" ]]; then
             ZED_BUNDLE_VERSION=$(TZ=Asia/Calcutta date +%Y.%m.%d.%H.%M)
             export ZED_BUNDLE_VERSION RELEASE_VERSION="$ZED_BUNDLE_VERSION"
+            export ZED_RELEASE_VERSION="$ZED_BUNDLE_VERSION"
             echo "ZED_BUNDLE_VERSION=$ZED_BUNDLE_VERSION" >> "$GITHUB_ENV"
           fi
           printf 'stable\n' > crates/zed/RELEASE_CHANNEL
