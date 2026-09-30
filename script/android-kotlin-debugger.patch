@@ -1,0 +1,55 @@
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/adapter/DAPConverter.kt b/adapter/src/main/kotlin/org/javacs/ktda/adapter/DAPConverter.kt
+index f477977..675eec0 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/adapter/DAPConverter.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/adapter/DAPConverter.kt
+@@ -42,7 +42,7 @@ class DAPConverter(
+ 	val variablesPool = ObjectPool<Unit, VariableTreeNode>() // Contains unowned variable trees (the ids are used as 'variables references')
+ 	
+ 	fun toInternalSource(dapSource: DAPSource) = InternalSource(
+-		name = dapSource.name,
++		name = dapSource.name ?: Paths.get(dapSource.path).fileName.toString(),
+ 		filePath = Paths.get(dapSource.path)
+ 	)
+ 	
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/adapter/KotlinDebugAdapter.kt b/adapter/src/main/kotlin/org/javacs/ktda/adapter/KotlinDebugAdapter.kt
+index f70f836..ec15ec8 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/adapter/KotlinDebugAdapter.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/adapter/KotlinDebugAdapter.kt
+@@ -127,6 +127,7 @@ class KotlinDebugAdapter(
+ 		LOG.trace("Waiting for configurationDoneResponse")
+ 		waitFor("configuration done response") { (configurationDoneResponse?.numberOfDependents ?: 0) != 0 }
+ 		LOG.trace("Done waiting for configurationDoneResponse")
++		configurationDoneResponse?.complete(null)
+ 	}
+ 	
+ 	private fun setupDebuggeeListeners(debuggee: Debuggee) {
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIDebuggee.kt b/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIDebuggee.kt
+index b3c3623..afb6630 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIDebuggee.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIDebuggee.kt
+@@ -72,6 +72,7 @@ class JDIDebuggee(
+ 	private fun setAllBreakpoints(breakpoints: List<Breakpoint>) {
+ 		breakpointSubscriptions.unsubscribe()
+ 		vm.eventRequestManager().deleteAllBreakpoints()
++		vm.eventRequestManager().deleteEventRequests(vm.eventRequestManager().classPrepareRequests())
+ 		breakpoints.forEach { bp ->
+ 			bp.position.let { setBreakpoint(
+ 				it.source.filePath.toAbsolutePath().toString(),
+@@ -106,7 +107,7 @@ class JDIDebuggee(
+ 				for (name in listOf(className, "$className$*")) { // For local types
+ 					val request = eventRequestManager
+ 						.createClassPrepareRequest()
+-						.apply { addClassFilter(className) }
++						.apply { addClassFilter(name) }
+ 
+ 					breakpointSubscriptions.add(eventBus.subscribe(ClassPrepareEvent::class) {
+ 						if (it.jdiEvent.request() == request) {
+@@ -158,6 +159,8 @@ class JDIDebuggee(
+ 		try {
+ 			if (vm.process()?.isAlive() ?: false) {
+ 				vm.exit(0)
++			} else {
++				vm.dispose()
+ 			}
+ 		} catch (e: VMDisconnectedException) {
+ 			// Ignore since we wanted to stop the VM anyway

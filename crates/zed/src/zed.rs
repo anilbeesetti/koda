@@ -5508,6 +5508,21 @@ mod tests {
         })
     }
 
+    #[gpui::test]
+    fn test_jetbrains_keymaps_resolve_registered_actions(cx: &mut TestAppContext) {
+        init_keymap_test(cx);
+        cx.update(|cx| {
+            for platform in ["macos", "linux"] {
+                KeymapFile::load_asset(
+                    &format!("keymaps/{platform}/jetbrains.json"),
+                    Some(KeybindSource::Base),
+                    cx,
+                )
+                .expect("Every built-in JetBrains binding must resolve");
+            }
+        });
+    }
+
     actions!(test_only, [ActionA, ActionB]);
 
     /// The actions the emacs keymap resolves for `keystroke` in `context`.
@@ -5753,14 +5768,14 @@ mod tests {
         // From the Atom keymap
         use workspace::ActivatePreviousPane;
         // From the JetBrains keymap
-        use diagnostics::Deploy;
+        use zed_actions::project_panel::ToggleFocus;
 
         window
             .update(cx, |_, _, cx| {
                 workspace.update(cx, |workspace, cx| {
                     workspace.register_action(|_, _: &ActionA, _window, _cx| {});
                     workspace.register_action(|_, _: &ActionB, _window, _cx| {});
-                    workspace.register_action(|_, _: &Deploy, _window, _cx| {});
+                    workspace.register_action(|_, _: &ToggleFocus, _window, _cx| {});
                     cx.notify();
                 });
             })
@@ -5839,7 +5854,7 @@ mod tests {
 
         cx.background_executor.run_until_parked();
 
-        assert_key_bindings_for(window.into(), cx, vec![("6", &Deploy)], line!());
+        assert_key_bindings_for(window.into(), cx, vec![("1", &ToggleFocus)], line!());
     }
 
     #[gpui::test]
@@ -5894,6 +5909,7 @@ mod tests {
                 "activity_indicator",
                 "agent",
                 "agents_sidebar",
+                "android",
                 "app_menu",
                 "assistant",
                 "assistant2",
@@ -5958,6 +5974,7 @@ mod tests {
                 "remote_debug",
                 "repl",
                 "search",
+                "search_everywhere",
                 "settings_editor",
                 "settings_profile_selector",
                 "skill_creator",

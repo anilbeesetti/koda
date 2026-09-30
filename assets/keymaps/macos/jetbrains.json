@@ -1,12 +1,15 @@
 [
   {
     "bindings": {
+      // Match the inherited global Open binding's scope so it cannot win in editors.
+      "cmd-o": ["search_everywhere::Toggle", {"category": "classes"}],
       "cmd-{": "pane::ActivatePreviousItem",
       "cmd-}": "pane::ActivateNextItem",
       "cmd-0": "git_panel::ToggleFocus", // overrides `cmd-0` zoom reset
       "shift-escape": null, // Unmap workspace::zoom
       "cmd-~": "git::Branch",
-      "ctrl-f2": "debugger::Stop",
+      "cmd-f2": "debugger::Stop",
+      "cmd-alt-r": "debugger::Continue",
       "f6": "debugger::Pause",
       "f7": "debugger::StepInto",
       "f8": "debugger::StepOver",
@@ -35,6 +38,7 @@
       "ctrl-g": ["editor::SelectNext", { "replace_newest": false }],
       "ctrl-shift-g": "editor::UndoSelection",
       "ctrl-cmd-g": ["editor::SelectPrevious", { "replace_newest": false }],
+      "cmd-shift-/": "editor::ToggleBlockComments",
       "cmd-/": ["editor::ToggleComments", { "advance_downwards": true, "comment_empty_lines": true }],
       "alt-up": "editor::SelectLargerSyntaxNode",
       "alt-down": "editor::SelectSmallerSyntaxNode",
@@ -42,11 +46,12 @@
       "shift-alt-down": "editor::MoveLineDown",
       "cmd-alt-l": "editor::Format",
       "ctrl-alt-o": "editor::OrganizeImports",
+      "ctrl-alt-i": "editor::AutoIndent",
       "shift-f6": "editor::Rename",
       "cmd-[": "pane::GoBack",
       "cmd-]": "pane::GoForward",
-      "alt-f7": "editor::FindAllReferences",
-      "cmd-alt-f7": "editor::FindAllReferences",
+      "alt-f7": ["editor::FindAllReferences", { "open_results_in": "multi_buffer" }],
+      "cmd-alt-f7": ["editor::FindAllReferences", { "open_results_in": "picker" }],
       "cmd-b": "editor::GoToDefinition", // Conflicts with workspace::ToggleLeftDock
       "cmd-alt-b": "editor::GoToImplementation",
       "cmd-shift-b": "editor::GoToTypeDefinition",
@@ -63,9 +68,13 @@
       "alt-right": "editor::MoveToNextSubwordEnd",
       "shift-alt-left": "editor::SelectToPreviousSubwordStart",
       "shift-alt-right": "editor::SelectToNextSubwordEnd",
-      "ctrl-f8": "editor::ToggleBreakpoint",
-      "ctrl-shift-f8": "editor::EditLogBreakpoint",
+      "cmd-f8": "editor::ToggleBreakpoint",
+      "cmd-shift-f8": "debugger::FocusBreakpointList",
+      "alt-f9": "debugger::RunToCursor",
+      "alt-f8": "debugger::EvaluateSelectedText",
       "cmd-shift-u": "editor::ToggleCase",
+      "cmd-shift--": "editor::FoldAll",
+      "cmd-shift-+": "editor::UnfoldAll",
     },
   },
   {
@@ -76,10 +85,10 @@
       "cmd-l": "go_to_line::Toggle",
       "cmd-e": "file_finder::Toggle",
       "cmd-shift-o": "file_finder::Toggle",
-      "cmd-shift-n": "file_finder::Toggle",
+      "cmd-shift-n": "workspace::NewFile",
       "alt-enter": "editor::ToggleCodeActions",
       "ctrl-space": "editor::ShowCompletions",
-      "cmd-j": "editor::Hover",
+      "ctrl-j": "editor::Hover",
       "cmd-p": "editor::ShowSignatureHelp",
       "cmd-\\": "assistant::InlineAssist",
       "ctrl-alt-h": "call_hierarchy::ShowIncomingCalls",
@@ -121,20 +130,19 @@
     "context": "Workspace",
     "bindings": {
       "cmd-shift-f12": "workspace::ToggleAllDocks",
-      "cmd-shift-r": ["pane::DeploySearch", { "replace_enabled": true }],
       "ctrl-alt-r": "task::Spawn",
       "shift-f10": "task::Spawn",
       "cmd-f5": "task::Rerun",
       "cmd-e": "file_finder::Toggle",
       "cmd-k": "git_panel::ToggleFocus", // bug: This should also focus commit editor
       "cmd-shift-o": "file_finder::Toggle",
-      "cmd-shift-n": "file_finder::Toggle",
-      "cmd-n": "project_symbols::Toggle",
+      "cmd-shift-n": "workspace::NewFile",
+      "cmd-n": "workspace::NewFile",
       "cmd-shift-a": "command_palette::Toggle",
-      "shift shift": "command_palette::Toggle",
+      "shift shift": "search_everywhere::Toggle",
       "cmd-alt-o": "project_symbols::Toggle", // JetBrains: Go to Symbol
-      "cmd-o": "project_symbols::Toggle", // JetBrains: Go to Class
       "cmd-1": "project_panel::ToggleFocus",
+      "cmd-9": "git_panel::ToggleFocus",
       "cmd-5": "debug_panel::ToggleFocus",
       "cmd-6": "diagnostics::Deploy",
       "cmd-7": "outline_panel::ToggleFocus",
@@ -151,13 +159,15 @@
       "cmd-6": "diagnostics::Deploy",
       "cmd-7": "outline_panel::ToggleFocus",
       "cmd-8": null, // Services (bottom dock)
-      "cmd-9": null, // Git History (bottom dock)
+      "cmd-9": "git_panel::ToggleFocus",
       "cmd-0": "git_panel::ToggleFocus",
     },
   },
   {
-    "context": "Workspace || Editor",
+    "context": "Workspace || Pane || Editor",
     "bindings": {
+      "cmd-shift-f": ["pane::DeploySearch", { "modal": true }],
+      "cmd-shift-r": ["pane::DeploySearch", { "replace_enabled": true, "modal": true }],
       "alt-f12": "terminal_panel::Toggle",
       "cmd-shift-k": "git::Push",
     },
@@ -167,15 +177,15 @@
     "bindings": {
       "cmd-alt-left": "pane::GoBack",
       "cmd-alt-right": "pane::GoForward",
-      "alt-left": "pane::ActivatePreviousItem",
-      "alt-right": "pane::ActivateNextItem",
+      "ctrl-left": "pane::ActivatePreviousItem",
+      "ctrl-right": "pane::ActivateNextItem",
     },
   },
   {
     "context": "ProjectPanel",
     "bindings": {
       "enter": "project_panel::Open",
-      "cmd-shift-f": "project_panel::NewSearchInDirectory",
+      "cmd-shift-f": ["project_panel::NewSearchInDirectory", { "modal": true }],
       "cmd-backspace": ["project_panel::Trash", { "skip_prompt": false }],
       "backspace": ["project_panel::Trash", { "skip_prompt": false }],
       "delete": ["project_panel::Trash", { "skip_prompt": false }],
@@ -194,7 +204,7 @@
       "shift-pagedown": "terminal::ScrollPageDown",
     },
   },
-  { "context": "GitPanel", "bindings": { "cmd-0": "workspace::CloseActiveDock" } },
+  { "context": "GitPanel", "bindings": { "cmd-0": "workspace::CloseActiveDock", "cmd-9": "workspace::CloseActiveDock" } },
   { "context": "ProjectPanel", "bindings": { "cmd-1": "workspace::CloseActiveDock" } },
   { "context": "DebugPanel", "bindings": { "cmd-5": "workspace::CloseActiveDock" } },
   { "context": "Diagnostics > Editor", "bindings": { "cmd-6": "pane::CloseActiveItem" } },
@@ -230,4 +240,28 @@
       "cmd-k": null,
     },
   },
+  {
+    "context": "Workspace || (Editor && mode == full)",
+    "use_key_equivalents": true,
+    "bindings": {
+      "cmd-f9": "android::Build",
+      "ctrl-r": "android::Run",
+      "ctrl-d": "android::Debug",
+      "cmd-6": "android::Logcat",
+      "cmd-alt-y": "android::SyncProject",
+    },
+  },
+  {
+    "context": "SearchEverywhere > Editor",
+    "bindings": {
+      "tab": "search_everywhere::NextCategory",
+      "shift-tab": "search_everywhere::PreviousCategory",
+    },
+  },
+  {
+    "context": "ProjectSearchModal > Editor",
+    "bindings": {
+      "escape": "menu::Cancel"
+    }
+  }
 ]

@@ -17,6 +17,7 @@ use std::{
     ops::Range,
     str::FromStr as _,
     sync::{Arc, LazyLock},
+    time::Instant,
 };
 use text::OffsetRangeExt;
 use theme::ActiveTheme as _;
@@ -35,6 +36,7 @@ pub struct DefinitionLocations {
     pub kind: GotoDefinitionKind,
     pub locations: Vec<Location>,
     pub origin: Option<NavigationEntry>,
+    pub started: Instant,
 }
 
 impl PartialEq for OpenDefinitionLocations {
@@ -229,6 +231,7 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Editor>,
     ) {
+        let started = Instant::now();
         let kind = if modifiers.shift {
             GotoDefinitionKind::Type
         } else {
@@ -255,7 +258,9 @@ impl Editor {
                     || (self.lsp_data_enabled() && matches!(link, HoverLink::LspLocation(..)))
             });
         }
-        if refresh && point.as_valid().is_some() {
+        if point.as_valid().is_some() {
+            // References fallback must query the clicked declaration, including
+            // when its cached definition points back to that declaration.
             self.select(
                 SelectPhase::Begin {
                     position: point.next_valid,
@@ -307,14 +312,15 @@ impl Editor {
                                 matches!(link, HoverLink::Url(_) | HoverLink::File(_))
                             });
                         }
-                        editor
-                            .reveal_clicked_links(kind, links, position, origin, split, window, cx);
+                        editor.reveal_clicked_links(
+                            kind, links, position, origin, split, started, window, cx,
+                        );
                     })
                     .ok();
             })
             .detach();
         } else {
-            self.reveal_clicked_links(kind, links, position, origin, split, window, cx);
+            self.reveal_clicked_links(kind, links, position, origin, split, started, window, cx);
         }
     }
 
@@ -349,7 +355,15 @@ impl Editor {
                 })
             })
             .collect::<Vec<_>>();
-        self.open_clicked_links(action.kind, links, action.origin.clone(), false, window, cx);
+        self.open_clicked_links(
+            action.kind,
+            links,
+            action.origin.clone(),
+            false,
+            action.started,
+            window,
+            cx,
+        );
     }
 
     pub fn scroll_hover(
@@ -383,6 +397,7 @@ impl Editor {
         position: Anchor,
         origin: Option<NavigationEntry>,
         split: bool,
+        started: Instant,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -404,6 +419,7 @@ impl Editor {
                     })
                     .collect(),
                 origin,
+                started,
             }));
             let focus_handle = self.focus_handle(cx);
             window.defer(cx, move |window, cx| {
@@ -420,7 +436,7 @@ impl Editor {
                 }
             });
         } else {
-            self.open_clicked_links(kind, links, origin, split, window, cx);
+            self.open_clicked_links(kind, links, origin, split, started, window, cx);
         }
     }
 
@@ -430,12 +446,17 @@ impl Editor {
         links: Vec<HoverLink>,
         origin: Option<NavigationEntry>,
         split: bool,
+        started: Instant,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         let navigation = self.navigate_to_hover_links(Some(kind), links, origin, split, window, cx);
         cx.spawn_in(window, async move |editor, cx| {
             if navigation.await.log_err().unwrap_or(Navigated::No) == Navigated::Yes {
+                cx.update(|window, _| {
+                    Editor::trace_interaction_latency("cmd_click", started, window)
+                })
+                .log_err();
                 return;
             }
             let focus_handle = editor
@@ -446,10 +467,17 @@ impl Editor {
                 .flatten();
             if let Some(focus_handle) = focus_handle {
                 cx.update(|window, cx| {
-                    if EditorSettings::get_global(cx).go_to_definition_fallback
-                        == GoToDefinitionFallback::FindAllReferences
-                    {
-                        focus_handle.dispatch_action(&FindAllReferences::default(), window, cx);
+                    match EditorSettings::get_global(cx).go_to_definition_fallback {
+                        GoToDefinitionFallback::None => {
+                            editor
+                                .update(cx, |editor, cx| {
+                                    editor.show_no_navigation_results(window, cx)
+                                })
+                                .log_err();
+                        }
+                        GoToDefinitionFallback::FindAllReferences => {
+                            focus_handle.dispatch_action(&FindAllReferences::default(), window, cx);
+                        }
                     }
                 })
                 .ok();
@@ -1517,6 +1545,41 @@ mod tests {
             2,
             "expected one definition request per distinct position"
         );
+    }
+
+    #[gpui::test]
+    async fn test_cached_declaration_click_moves_caret_before_usages(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        init_test(cx, |_| {});
+        let mut cx = EditorLspTestContext::new_rust(
+            lsp::ServerCapabilities {
+                definition_provider: Some(lsp::OneOf::Left(true)),
+                ..Default::default()
+            },
+            cx,
+        )
+        .await;
+        cx.set_state("fn first() {}ˇ\nfn second() {}\n");
+        let range = cx.lsp_range("fn first() {}\nfn «second»() {}\n");
+        let mut requests =
+            cx.set_request_handler::<GotoDefinition, _, _>(move |url, _, _| async move {
+                Ok(Some(lsp::GotoDefinitionResponse::Link(vec![
+                    lsp::LocationLink {
+                        origin_selection_range: Some(range),
+                        target_uri: url,
+                        target_range: range,
+                        target_selection_range: range,
+                    },
+                ])))
+            });
+        let point = cx.pixel_position("fn first() {}\nfn secˇond() {}\n");
+        cx.simulate_mouse_move(point, None, Modifiers::secondary_key());
+        requests.next().await;
+        cx.run_until_parked();
+        cx.simulate_click(point, Modifiers::secondary_key());
+        cx.run_until_parked();
+        cx.assert_editor_state("fn first() {}\nfn secˇond() {}\n");
     }
 
     #[gpui::test]

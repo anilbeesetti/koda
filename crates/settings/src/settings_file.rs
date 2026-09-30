@@ -162,6 +162,21 @@ pub fn test_settings() -> &'static str {
             }),
             &mut value,
         );
+        // Keep UI and repository tests independent of the Android product preset.
+        util::merge_non_null_json_value_into(
+            serde_json::json!({
+                "base_keymap": "Zed",
+                "buffer_line_height": "comfortable",
+                "bottom_dock_layout": "contained",
+                "file_scan_depth": 5,
+                "agent": { "dock": "left" },
+                "project_panel": { "dock": "right" },
+                "outline_panel": { "dock": "right" },
+                "collaboration_panel": { "dock": "right" },
+                "git_panel": { "dock": "right" },
+            }),
+            &mut value,
+        );
         value.as_object_mut().unwrap().remove("languages");
         serde_json::to_string(&value).unwrap()
     });

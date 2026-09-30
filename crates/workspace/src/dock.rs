@@ -1,8 +1,8 @@
+use crate::Workspace;
 use crate::focus_follows_mouse::FocusFollowsMouse as _;
 use crate::persistence::model::DockData;
 use crate::status_bar::HideStatusItem;
 use crate::{DraggedDock, Event, FocusFollowsMouse, ModalLayer, Pane, WorkspaceSettings};
-use crate::{Workspace, status_bar::StatusItemView};
 use anyhow::Context as _;
 use client::proto;
 use db::kvp::KeyValueStore;
@@ -16,10 +16,7 @@ use gpui::{
 use serde::{Deserialize, Serialize};
 use settings::{Settings, SettingsStore, TerminalDockPosition};
 use std::sync::Arc;
-use ui::{
-    ContextMenu, CountBadge, Divider, DividerColor, IconButton, Tooltip, prelude::*,
-    right_click_menu,
-};
+use ui::{ContextMenu, CountBadge, IconButton, Tooltip, prelude::*, right_click_menu};
 use util::ResultExt as _;
 
 pub(crate) const RESIZE_HANDLE_SIZE: Pixels = px(6.);
@@ -1395,13 +1392,14 @@ impl Render for PanelButtons {
         let dock_position = dock.position;
 
         let (menu_anchor, menu_attach) = match dock.position {
-            DockPosition::Left => (Anchor::BottomLeft, Anchor::TopLeft),
-            DockPosition::Bottom | DockPosition::Right => (Anchor::BottomRight, Anchor::TopRight),
+            DockPosition::Left => (Anchor::TopLeft, Anchor::TopRight),
+            DockPosition::Bottom => (Anchor::BottomLeft, Anchor::BottomRight),
+            DockPosition::Right => (Anchor::TopRight, Anchor::TopLeft),
         };
 
         let dock_entity = self.dock.clone();
         let workspace = dock.workspace.clone();
-        let mut buttons: Vec<_> = dock
+        let buttons: Vec<_> = dock
             .panel_entries
             .iter()
             .enumerate()
@@ -1425,8 +1423,7 @@ impl Render for PanelButtons {
                 let (action, tooltip) = if is_active_button {
                     let action = dock.toggle_action();
 
-                    let tooltip: SharedString =
-                        format!("Close {} Dock", dock.position.label()).into();
+                    let tooltip: SharedString = format!("Hide {icon_tooltip}").into();
 
                     (action, tooltip)
                 } else {
@@ -1534,7 +1531,7 @@ impl Render for PanelButtons {
                             // Include active state in element ID to invalidate the cached
                             // tooltip when panel state changes (e.g., via keyboard shortcut)
                             let button = IconButton::new((name, is_active_button as u64), icon)
-                                .icon_size(IconSize::Small)
+                                .icon_size(IconSize::Medium)
                                 .toggle_state(is_active_button)
                                 .tab_index(0isize)
                                 .aria_label(icon_tooltip)
@@ -1563,41 +1560,31 @@ impl Render for PanelButtons {
             })
             .collect();
 
-        if dock_position == DockPosition::Right {
-            buttons.reverse();
-        }
-
-        let has_buttons = !buttons.is_empty();
-
-        h_flex()
-            .gap_1()
-            .when(
-                has_buttons
-                    && (dock.position == DockPosition::Bottom
-                        || dock.position == DockPosition::Right),
-                |this| this.child(Divider::vertical().color(DividerColor::Border)),
-            )
-            .children(buttons)
-            .when(has_buttons && dock.position == DockPosition::Left, |this| {
-                this.child(Divider::vertical().color(DividerColor::Border))
+        v_flex()
+            .id(match dock.position {
+                DockPosition::Left => "left-tool-window-buttons",
+                DockPosition::Bottom => "bottom-tool-window-buttons",
+                DockPosition::Right => "right-tool-window-buttons",
             })
-    }
-}
-
-impl StatusItemView for PanelButtons {
-    fn set_active_pane_item(
-        &mut self,
-        _active_pane_item: Option<&dyn crate::ItemHandle>,
-        _window: &mut Window,
-        _cx: &mut Context<Self>,
-    ) {
-        // Nothing to do, panel buttons don't depend on the active center item
-    }
-
-    fn hide_setting(&self, _: &App) -> Option<HideStatusItem> {
-        // Panel buttons are hidden on a per-panel basis through each panel
-        // button's own context menu.
-        None
+            .role(gpui::Role::Toolbar)
+            .aria_label(format!("{} tool windows", dock.position.label()))
+            .w_full()
+            .items_center()
+            .gap_2()
+            .children(buttons)
+            .when(dock_position == DockPosition::Bottom, |rail| {
+                rail.child(
+                    IconButton::new("android-logcat", IconName::TerminalAlt)
+                        .icon_size(IconSize::Small)
+                        .tab_index(0isize)
+                        .tooltip(|_, cx| {
+                            Tooltip::for_action("Logcat", &zed_actions::android::Logcat, cx)
+                        })
+                        .on_click(|_, window, cx| {
+                            window.dispatch_action(zed_actions::android::Logcat.boxed_clone(), cx);
+                        }),
+                )
+            })
     }
 }
 

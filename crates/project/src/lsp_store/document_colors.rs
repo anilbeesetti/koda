@@ -8,7 +8,7 @@ use futures::{
 };
 use gpui::{AppContext as _, AsyncApp, Context, Entity, SharedString, Task};
 use language::{
-    Buffer, LocalFile as _, PointUtf16, point_to_lsp,
+    Buffer, PointUtf16, point_to_lsp,
     proto::{deserialize_lsp_edit, serialize_lsp_edit},
 };
 use lsp::LanguageServerId;
@@ -16,7 +16,6 @@ use rpc::{TypedEnvelope, proto};
 use settings::Settings as _;
 use text::BufferId;
 use util::ResultExt as _;
-use worktree::File;
 
 use crate::{
     ColorPresentation, DocumentColor, LspStore,
@@ -291,13 +290,11 @@ impl LspStore {
                 Ok(color)
             })
         } else {
-            let path = match buffer
-                .update(cx, |buffer, cx| {
-                    Some(File::from_dyn(buffer.file())?.abs_path(cx))
-                })
-                .context("buffer with the missing path")
+            let uri = match self
+                .buffer_lsp_uri(buffer.read(cx), cx)
+                .and_then(|uri| uri.context("buffer with the missing URI"))
             {
-                Ok(path) => path,
+                Ok(uri) => uri,
                 Err(e) => return Task::ready(Err(e)),
             };
             let Some(lang_server) = buffer.update(cx, |buffer, cx| {
@@ -313,7 +310,7 @@ impl LspStore {
             cx.background_spawn(async move {
                 let resolve_task = lang_server.request::<lsp::request::ColorPresentationRequest>(
                     lsp::ColorPresentationParams {
-                        text_document: make_text_document_identifier(&path)?,
+                        text_document: make_text_document_identifier(&uri)?,
                         color: color.color,
                         range: color.lsp_range,
                         work_done_progress_params: Default::default(),

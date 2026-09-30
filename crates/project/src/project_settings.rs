@@ -3,7 +3,7 @@ use collections::HashMap;
 use context_server::ContextServerCommand;
 use dap::adapters::DebugAdapterName;
 use fs::Fs;
-use futures::StreamExt as _;
+use futures::{FutureExt as _, StreamExt as _, future::Shared};
 use git::repository::DEFAULT_WORKTREE_DIRECTORY;
 use gpui::{AsyncApp, BorrowAppContext, Context, Entity, EventEmitter, Subscription, Task};
 use lsp::{DEFAULT_LSP_REQUEST_TIMEOUT_SECS, LanguageServerName};
@@ -826,6 +826,7 @@ pub struct SettingsObserver {
     worktree_store: Entity<WorktreeStore>,
     project_id: u64,
     task_store: Entity<TaskStore>,
+    local_settings_tasks: HashMap<WorktreeId, Shared<Task<()>>>,
     pending_local_settings:
         HashMap<PathTrust, BTreeMap<(WorktreeId, Arc<RelPath>), Option<String>>>,
     _trusted_worktrees_watcher: Option<Subscription>,
@@ -944,6 +945,7 @@ impl SettingsObserver {
             downstream_client: None,
             _trusted_worktrees_watcher,
             pending_local_settings: HashMap::default(),
+            local_settings_tasks: HashMap::default(),
             _user_settings_watcher: None,
             _editorconfig_watcher: Some(_editorconfig_watcher),
             project_id: REMOTE_SERVER_PROJECT_ID,
@@ -1008,6 +1010,7 @@ impl SettingsObserver {
             project_id: REMOTE_SERVER_PROJECT_ID,
             _trusted_worktrees_watcher: None,
             pending_local_settings: HashMap::default(),
+            local_settings_tasks: HashMap::default(),
             _user_settings_watcher: user_settings_watcher,
             _editorconfig_watcher: None,
             _global_task_config_watcher: Self::subscribe_to_global_task_file_changes(
@@ -1150,6 +1153,7 @@ impl SettingsObserver {
                 })
                 .detach(),
             WorktreeStoreEvent::WorktreeRemoved(_, worktree_id) => {
+                self.local_settings_tasks.remove(worktree_id);
                 cx.update_global::<SettingsStore, _>(|store, cx| {
                     store.clear_local_settings(*worktree_id, cx).log_err();
                 });
@@ -1314,27 +1318,65 @@ impl SettingsObserver {
         }
 
         let worktree = worktree.clone();
-        cx.spawn(async move |this, cx| {
-            let settings_contents: Vec<(Arc<RelPath>, _, _)> =
-                futures::future::join_all(settings_contents).await;
-            cx.update(|cx| {
-                this.update(cx, |this, cx| {
-                    this.update_settings(
-                        worktree,
-                        settings_contents.into_iter().map(|(path, kind, content)| {
-                            (
-                                LocalSettingsPath::InWorktree(path),
-                                kind,
-                                content.and_then(|c| c.log_err()),
-                            )
-                        }),
-                        false,
-                        cx,
-                    )
+        let worktree_id = worktree.read(cx).id();
+        let previous = self.local_settings_tasks.remove(&worktree_id);
+        let task = cx
+            .spawn(async move |this, cx| {
+                // Publish file updates in scan order, including when a previous read is still pending.
+                if let Some(previous) = previous {
+                    previous.await;
+                }
+                let settings_contents: Vec<(Arc<RelPath>, _, _)> =
+                    futures::future::join_all(settings_contents).await;
+                cx.update(|cx| {
+                    this.update(cx, |this, cx| {
+                        if this
+                            .worktree_store
+                            .read(cx)
+                            .worktree_for_id(worktree_id, cx)
+                            .is_none()
+                        {
+                            return;
+                        }
+                        this.update_settings(
+                            worktree,
+                            settings_contents.into_iter().map(|(path, kind, content)| {
+                                (
+                                    LocalSettingsPath::InWorktree(path),
+                                    kind,
+                                    content.and_then(|c| c.log_err()),
+                                )
+                            }),
+                            false,
+                            cx,
+                        )
+                    })
                 })
+                .log_err();
             })
+            .shared();
+        self.local_settings_tasks.insert(worktree_id, task.clone());
+        cx.spawn(async move |_, _| task.await).detach();
+    }
+
+    pub fn wait_for_local_settings(&self, cx: &mut Context<Self>) -> Task<anyhow::Result<()>> {
+        let scan = self.worktree_store.read(cx).wait_for_initial_scan();
+        cx.spawn(async move |this, cx| {
+            scan.await;
+            loop {
+                let tasks = this.read_with(cx, |this, _| {
+                    this.local_settings_tasks
+                        .values()
+                        .filter(|task| task.peek().is_none())
+                        .cloned()
+                        .collect::<Vec<_>>()
+                })?;
+                if tasks.is_empty() {
+                    return Ok(());
+                }
+                futures::future::join_all(tasks).await;
+            }
         })
-        .detach();
     }
 
     fn update_settings(

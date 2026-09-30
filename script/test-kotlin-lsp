@@ -1,0 +1,1102 @@
+#!/usr/bin/env python3
+"""Probe the official Kotlin LSP against examples/android-ide, without an editor."""
+
+import argparse
+import hashlib
+import io
+import json
+import math
+import os
+from pathlib import Path
+import platform
+import queue
+import resource
+import statistics
+import subprocess
+import threading
+import time
+import zipfile
+from urllib.parse import unquote, urlparse
+
+
+class ProbeError(Exception):
+    def __init__(self, outcome, message):
+        super().__init__(message)
+        self.outcome = outcome
+
+
+def position(text, offset):
+    before = text[:offset]
+    return {"line": before.count("\n"), "character": len(before.rsplit("\n", 1)[-1].encode("utf-16-le")) // 2}
+
+
+def offset(text, location):
+    lines = text.split("\n")
+    line, character = location["line"], location["character"]
+    if line < 0 or line >= len(lines) or character < 0:
+        raise ValueError("Invalid LSP position")
+    encoded = lines[line].encode("utf-16-le")
+    if character * 2 > len(encoded):
+        raise ValueError("LSP position exceeds line")
+    return sum(len(value) + 1 for value in lines[:line]) + len(encoded[:character * 2].decode("utf-16-le"))
+
+
+def incremental_change(before, after):
+    start = 0
+    while start < min(len(before), len(after)) and before[start] == after[start]:
+        start += 1
+    end, replacement_end = len(before), len(after)
+    while end > start and replacement_end > start and before[end - 1] == after[replacement_end - 1]:
+        end -= 1
+        replacement_end -= 1
+    return {"range": {"start": position(before, start), "end": position(before, end)}, "text": after[start:replacement_end]}
+
+
+def apply_edits(text, edits):
+    replacements = sorted((offset(text, edit["range"]["start"]), offset(text, edit["range"]["end"]), edit["newText"]) for edit in edits)
+    boundary = len(text)
+    for start, end, replacement in reversed(replacements):
+        if start > end or end > boundary:
+            raise ValueError("Overlapping or reversed text edits")
+        text = text[:start] + replacement + text[end:]
+        boundary = start
+    return text
+
+
+def outcome(response):
+    error = response.get("error")
+    if error:
+        return {-32800: "cancelled", -32802: "cancelled", -32801: "stale_content"}.get(error.get("code"), "server_error")
+    result = response.get("result")
+    if result is None or result == [] or (isinstance(result, dict) and result.get("items") == []):
+        return "empty"
+    return "success"
+
+
+def read_message(stream):
+    headers = {}
+    while True:
+        line = stream.readline()
+        if not line:
+            raise EOFError("Language server closed stdout")
+        if line == b"\r\n":
+            break
+        key, value = line.decode().split(":", 1)
+        headers[key.lower()] = value.strip()
+    remaining = int(headers["content-length"])
+    chunks = []
+    while remaining:
+        chunk = stream.read(remaining)
+        if not chunk:
+            raise EOFError("Truncated language server response")
+        chunks.append(chunk)
+        remaining -= len(chunk)
+    return json.loads(b"".join(chunks))
+
+
+class Probe:
+    def __init__(self, process, wire, results, root, source_file, source):
+        self.process, self.wire, self.results, self.root = process, wire, results, root
+        self.uri, self.text, self.version = source_file.as_uri() if source_file else None, source, 1
+        self.documents = {}
+        self.original_sources = {self.uri: source} if self.uri else {}
+        self.messages, self.identifier = queue.Queue(), 0
+        self.started = time.monotonic()
+        self.results["started_at_unix_seconds"] = time.time()
+        self.progress, self.index_finished, self.import_finished = {}, False, False
+        self.wire_seconds = 0
+        self.preparation_request_id = None
+
+        def reader():
+            try:
+                while True:
+                    self.messages.put(read_message(process.stdout))
+            except Exception as error:
+                self.messages.put(error)
+
+        threading.Thread(target=reader, daemon=True).start()
+
+    def record(self, direction, message):
+        started = time.monotonic()
+        self.wire.write(json.dumps({"seconds": round(time.monotonic() - self.started, 3), "direction": direction, "message": message}) + "\n")
+        self.wire.flush()
+        self.wire_seconds += time.monotonic() - started
+
+    def send(self, **message):
+        message["jsonrpc"] = "2.0"
+        self.record("client", message)
+        data = json.dumps(message).encode()
+        self.process.stdin.write(f"Content-Length: {len(data)}\r\n\r\n".encode() + data)
+        self.process.stdin.flush()
+
+    def notify(self, method, params):
+        self.send(method=method, params=params)
+
+    def document_text(self, uri):
+        return self.text if uri == self.uri else self.documents[uri]["text"]
+
+    def document_version(self, uri):
+        return self.version if uri == self.uri else self.documents[uri]["version"]
+
+    def open_document(self, uri):
+        if uri == self.uri or uri in self.documents:
+            return uri
+        parsed = urlparse(uri)
+        path = Path(unquote(parsed.path)).resolve()
+        if parsed.scheme != "file" or not path.is_relative_to(self.root) or path.suffix not in (".kt", ".java"):
+            raise ValueError("Probe only edits Kotlin/Java files in its isolated fixture")
+        text = path.read_text()
+        language = "kotlin" if path.suffix == ".kt" else "java"
+        self.documents[uri] = {"text": text, "version": 1}
+        self.original_sources[uri] = text
+        self.notify("textDocument/didOpen", {"textDocument": {"uri": uri, "languageId": language, "version": 1, "text": text}})
+        return uri
+
+    def change(self, text, uri=None):
+        uri = uri or self.uri
+        before = self.document_text(uri)
+        if text == before:
+            return
+        edit = incremental_change(before, text)
+        version = self.document_version(uri) + 1
+        if uri == self.uri:
+            self.text, self.version = text, version
+        else:
+            self.documents[uri] = {"text": text, "version": version}
+        self.notify("textDocument/didChange", {"textDocument": {"uri": uri, "version": version}, "contentChanges": [edit]})
+
+    def workspace_edit(self, edit):
+        changes = {uri: list(edits) for uri, edits in edit.get("changes", {}).items()}
+        for change in edit.get("documentChanges", []):
+            document = change.get("textDocument", {})
+            uri = document.get("uri")
+            if not uri:
+                raise ValueError("Resource operations are outside this in-memory probe")
+            self.open_document(uri)
+            if document.get("version") not in (None, self.document_version(uri)):
+                raise ValueError("Stale workspace edit version")
+            changes.setdefault(uri, []).extend(change["edits"])
+        updated = {}
+        for uri, edits in changes.items():
+            self.open_document(uri)
+            updated[uri] = apply_edits(self.document_text(uri), edits)
+        for uri, text in updated.items():
+            self.change(text, uri)
+        return updated
+
+    def receive(self, deadline):
+        try:
+            message = self.messages.get(timeout=max(0, deadline - time.monotonic()))
+        except queue.Empty:
+            raise ProbeError("timeout", "Timed out waiting for the language server") from None
+        if isinstance(message, Exception):
+            raise ProbeError("transport_error", str(message))
+        self.record("server", message)
+        method, params = message.get("method"), message.get("params", {})
+        if method is None and message.get("id") is not None and message.get("id") == getattr(self, "preparation_request_id", None):
+            self.results["preparation_response"] = message
+        if method in ("$/progress", "intellij/importLog", "intellij/workspaceImportStatus", "window/showMessage", "window/logMessage"):
+            self.results["events"].append({"seconds": round(time.monotonic() - self.started, 3), "method": method, "params": params})
+        if method == "$/progress":
+            token, value = params["token"], params["value"]
+            if value["kind"] == "begin":
+                self.progress[token] = value.get("title")
+            elif value["kind"] == "end" and self.progress.pop(token, None) == "Indexing":
+                self.index_finished = True
+                self.results["last_index_finished_seconds"] = round(time.monotonic() - self.started, 3)
+        if method == "intellij/importLog":
+            if params.get("failed"):
+                raise ProbeError("import_failure", params.get("message", "Project import failed"))
+            if params.get("started"):
+                self.index_finished, self.import_finished = False, False
+            if params.get("succeeded"):
+                self.import_finished = True
+                self.results["import_finished_seconds"] = round(time.monotonic() - self.started, 3)
+        if method == "intellij/workspaceImportStatus" and params.get("blockedFolders"):
+            raise ProbeError("import_failure", "Import blocked: " + json.dumps(params))
+        if method and "id" in message:
+            self.respond(message)
+        return message
+
+    def respond(self, message):
+        method, params = message["method"], message.get("params", {})
+        self.results.setdefault("server_requests", []).append({"method": method, "version": self.version, "seconds": round(time.monotonic() - self.started, 3)})
+        result = None
+        if method == "workspace/configuration":
+            result = [None for item in params["items"]]
+        elif method == "workspace/workspaceFolders":
+            result = [{"uri": self.root.as_uri(), "name": self.root.name}]
+        elif method == "workspace/applyEdit":
+            try:
+                self.workspace_edit(params["edit"])
+                result = {"applied": True}
+            except (KeyError, ValueError, OSError) as error:
+                result = {"applied": False, "failureReason": str(error)}
+            self.results["applied_edits"].append({"version": self.version, "params": params, "result": result})
+        elif method == "window/showDocument":
+            uri = params.get("uri")
+            result = {"success": uri == self.uri or uri in self.documents}
+            if result["success"] and params.get("selection"):
+                offset(self.document_text(uri), params["selection"]["start"])
+                offset(self.document_text(uri), params["selection"]["end"])
+            self.results["show_documents"].append(params)
+        elif method not in ("window/workDoneProgress/create", "client/registerCapability", "workspace/diagnostic/refresh", "workspace/semanticTokens/refresh", "workspace/inlayHint/refresh", "workspace/codeLens/refresh", "window/showMessageRequest"):
+            self.results.setdefault("unhandled_requests", []).append(message)
+            self.send(id=message["id"], error={"code": -32601, "message": "Probe does not implement " + method})
+            return
+        self.send(id=message["id"], result=result)
+
+    def request(self, method, params, timeout=90):
+        self.identifier += 1
+        uri = (params or {}).get("textDocument", {}).get("uri", self.uri)
+        version = self.document_version(uri) if uri is not None and (uri == self.uri or uri in self.documents) else None
+        identifier, started = self.identifier, time.monotonic()
+        self.send(id=identifier, method=method, params=params)
+        try:
+            while True:
+                response = self.receive(started + timeout)
+                if response.get("id") == identifier and "method" not in response:
+                    break
+        except ProbeError as error:
+            self.results["requests"].append({"id": identifier, "method": method, "version": version, "milliseconds": round((time.monotonic() - started) * 1000, 2), "outcome": error.outcome, "error": str(error)})
+            if error.outcome == "timeout":
+                self.notify("$/cancelRequest", {"id": identifier})
+            raise
+        self.results["requests"].append({"id": identifier, "method": method, "uri": uri, "version": version, "milliseconds": round((time.monotonic() - started) * 1000, 2), "outcome": outcome(response), "error": response.get("error")})
+        return response
+
+    def check(self, name, passed, detail=None, required=True):
+        self.results["checks"].append({"name": name, "passed": bool(passed), "required": required, "detail": detail})
+        print(f"{'PASS' if passed else 'FAIL'} {name}", flush=True)
+
+    def ready(self, timeout):
+        deadline = time.monotonic() + timeout
+        while not (self.import_finished and self.index_finished and "Indexing" not in self.progress.values()):
+            try:
+                self.receive(deadline)
+            except ProbeError as error:
+                if error.outcome == "timeout":
+                    raise ProbeError("readiness_timeout", "Import and indexing did not complete") from error
+                raise
+        self.results["ready_seconds"] = round(time.monotonic() - self.started, 3)
+
+
+def first_navigation(probe, symbol, samples, require_original_sources):
+    params = {"textDocument": {"uri": probe.uri}, "position": position(probe.text, probe.text.rindex(symbol) + 1)}
+    started, wire_started = time.monotonic(), probe.wire_seconds
+    measurement = {"symbol": symbol, "dispatch_seconds": started - probe.started}
+    probe.results["first_navigation"] = measurement
+    response = probe.request("textDocument/definition", params)
+    measurement["definition"] = probe.results["requests"][-1]
+    measurement["result_seconds"] = time.monotonic() - probe.started
+    measurement["wire_milliseconds"] = (probe.wire_seconds - wire_started) * 1000
+    targets = response.get("result") or []
+    targets = [targets] if isinstance(targets, dict) else targets
+    measurement["targets"] = targets
+    documents = []
+    for target in targets:
+        uri = target.get("uri", target.get("targetUri"))
+        if uri.startswith(("jar:", "jrt:")):
+            content = probe.request("workspace/executeCommand", {"command": "decompile", "arguments": [uri]})
+            code = (content.get("result") or {}).get("code", "")
+            selection = target.get("targetSelectionRange", target.get("range"))
+            selected = code[offset(code, selection["start"]):offset(code, selection["end"])] if code else ""
+            documents.append((uri, code, selected))
+    measurement["content_finished_seconds"] = time.monotonic() - probe.started
+    measurement["definition_and_content_milliseconds"] = (time.monotonic() - started) * 1000
+    probe.check("first_navigation_has_target", bool(targets) and not response.get("error"), response)
+    for uri, code, selected in documents:
+        probe.check("first_navigation_source_range", symbol in selected, {"uri": uri, "selection": selected})
+        original = False
+        if uri.startswith("jar:") and uri.endswith(".kt"):
+            archive, entry = unquote(urlparse(uri).path).split("!/", 1)
+            with zipfile.ZipFile(archive) as sources:
+                original = sources.read(entry).decode("utf-8") == code
+        probe.check("first_navigation_original_source", original, uri, required=require_original_sources)
+    probe.check("first_navigation_protocol_budget", measurement["definition"]["milliseconds"] < 500, measurement, required=False)
+    timings, failures = [], []
+    for sample in range(samples):
+        response = probe.request("textDocument/definition", params)
+        timings.append(probe.results["requests"][-1]["milliseconds"])
+        repeated_targets = response.get("result") or []
+        repeated_targets = [repeated_targets] if isinstance(repeated_targets, dict) else repeated_targets
+        if response.get("error") or repeated_targets != targets:
+            failures.append({"sample": sample, "response": response})
+    if timings:
+        measurement["warm"] = {"milliseconds": timings, "failures": failures, "p50_ms": statistics.median(timings), "p95_ms": sorted(timings)[math.ceil(len(timings) * .95) - 1], "maximum_ms": max(timings)}
+        probe.check("warm_navigation_targets", not failures, failures)
+        probe.check("warm_navigation_protocol_budget", measurement["warm"]["p95_ms"] < 150, measurement["warm"], required=False)
+
+
+def completion_items(response):
+    result = response.get("result") or {}
+    return result if isinstance(result, list) else result.get("items", [])
+
+
+def completion(probe, marked, context=None):
+    caret = marked.index("|")
+    probe.change(marked.replace("|", ""))
+    response = probe.request("textDocument/completion", {"textDocument": {"uri": probe.uri}, "position": position(probe.text, caret), "context": context or {"triggerKind": 1}})
+    return response, completion_items(response)
+
+
+def accept_completion(probe, item):
+    resolved = probe.request("completionItem/resolve", item)
+    if resolved.get("error"):
+        return resolved
+    item = resolved.get("result") or item
+    edits = list(item.get("additionalTextEdits", []))
+    if edit := item.get("textEdit"):
+        edits.append({"range": edit.get("range", edit.get("insert")), "newText": edit["newText"]})
+    if edits:
+        probe.change(apply_edits(probe.text, edits))
+    if command := item.get("command"):
+        return probe.request("workspace/executeCommand", command)
+    return {"result": None}
+
+
+def diagnostic_items(response):
+    return (response.get("result") or {}).get("items", [])
+
+
+def language_features(probe, source):
+    library_uri = (probe.root / "greeting/src/main/kotlin/dev/zed/greeting/LibraryGreeting.kt").as_uri()
+    java_uri = (probe.root / "mobile/src/main/java/dev/zed/androidsample/Greeting.java").as_uri()
+    probe.open_document(library_uri)
+    probe.open_document(java_uri)
+    for name, uri, original, dependency_version in [("application", probe.uri, source, "23.0.0"), ("library", library_uri, probe.document_text(library_uri), "13.0")]:
+        annotated = original + "\nprivate val annotationVersionProbe = org.jetbrains.annotations.NotNull::class\n"
+        probe.change(annotated, uri)
+        response = probe.request("textDocument/definition", {"textDocument": {"uri": uri}, "position": position(annotated, annotated.rindex("NotNull") + 1)})
+        targets = response.get("result") or []
+        target_uris = [target.get("uri", target.get("targetUri")) for target in targets]
+        probe.check("module_scoped_source_version_" + name, any(f"annotations-{dependency_version}-sources.jar" in uri and uri.endswith("/NotNull.java") for uri in target_uris), {"expected_dependency_version": dependency_version, "response": response}, required=probe.results["require_original_sources"])
+        probe.change(original, uri)
+    library = probe.document_text(library_uri).replace("\n}", '\n    fun message(count: Int): String = count.toString()\n}')
+    java = probe.document_text(java_uri).replace("\n}", '\n    public static String kotlinMessage() { return dev.zed.greeting.LibraryGreeting.INSTANCE.message(); }\n    public static Class<?> kotlinActivity() { return MainActivity.class; }\n}')
+    main = source + "\nprivate val overloadProbe = LibraryGreeting.message(3)\n"
+    probe.change(library, library_uri)
+    probe.change(java, java_uri)
+    probe.change(main)
+    for name, needle, declaration_uri in [("method", "INSTANCE.message()", library_uri), ("class", "MainActivity.class", probe.uri)]:
+        location = java.index(needle) + (len("INSTANCE.") if name == "method" else 0) + 1
+        definition = probe.request("textDocument/definition", {"textDocument": {"uri": java_uri}, "position": position(java, location)})
+        targets = definition.get("result") or []
+        probe.check("java_origin_definition_" + name, any(target.get("uri", target.get("targetUri")) == declaration_uri for target in targets), definition)
+    for name, source_uri, needle, new_name, declaration_uri in [
+        ("library_overload", probe.uri, "LibraryGreeting.message()", "renamedGreeting", library_uri),
+        ("kotlin_to_java", probe.uri, "Greeting.message(BuildConfig", "renamedJavaGreeting", java_uri),
+        ("java_to_kotlin", java_uri, "INSTANCE.message()", "renamedFromJava", library_uri),
+    ]:
+        text = probe.document_text(source_uri)
+        location = text.index(needle) + needle.index("message") + 1
+        params = {"textDocument": {"uri": source_uri}, "position": position(text, location)}
+        references = probe.request("textDocument/references", {**params, "context": {"includeDeclaration": True}})
+        targets = references.get("result") or []
+        probe.check("references_" + name, {probe.uri, declaration_uri}.issubset({target["uri"] for target in targets}), references)
+        for target in targets:
+            probe.open_document(target["uri"])
+        prepared = probe.request("textDocument/prepareRename", params)
+        rename_capability = probe.results["initialize"]["capabilities"].get("renameProvider")
+        prepare_supported = isinstance(rename_capability, dict) and rename_capability.get("prepareProvider")
+        probe.check("prepare_rename_" + name, bool(prepared.get("result")) and not prepared.get("error"), prepared, required=bool(prepare_supported))
+        renamed = probe.request("textDocument/rename", {**params, "newName": new_name})
+        edit = renamed.get("result") or {}
+        application_error = None
+        try:
+            changed = probe.workspace_edit(edit) if not renamed.get("error") else {}
+        except (KeyError, ValueError, OSError) as error:
+            changed, application_error = {}, str(error)
+        probe.check("rename_" + name, {probe.uri, declaration_uri}.issubset(changed) and new_name in probe.text and new_name in probe.document_text(declaration_uri), {"response": renamed, "texts": changed, "application_error": application_error})
+        if name == "library_overload":
+            probe.check("rename_preserves_other_overload", "LibraryGreeting.message(3)" in probe.text and "fun message(count: Int)" in probe.document_text(library_uri), probe.document_text(library_uri))
+            probe.check("rename_library_updates_java_usage", new_name in probe.document_text(java_uri), probe.document_text(java_uri))
+        probe.change(main)
+        for uri in probe.documents:
+            probe.change(library if uri == library_uri else java if uri == java_uri else probe.original_sources[uri], uri)
+
+    fixture = source + '\nprivate interface ProbeContract { fun speak(): String }\nprivate class ProbeImplementation : ProbeContract { override fun speak() = "hi" }\nprivate val probeTyped: ProbeContract = ProbeImplementation()\nprivate fun useProbe() = probeTyped.speak()\n'
+    probe.change(fixture)
+    for method, needle, expected in [("implementation", "interface ProbeContract", "ProbeImplementation"), ("typeDefinition", "probeTyped.speak", "ProbeContract")]:
+        location = fixture.index(needle) + (len("interface ") if method == "implementation" else 0) + 1
+        response = probe.request("textDocument/" + method, {"textDocument": {"uri": probe.uri}, "position": position(fixture, location)})
+        targets = response.get("result") or []
+        targets = [targets] if isinstance(targets, dict) else targets
+        selected = []
+        for target in targets:
+            if target.get("uri", target.get("targetUri")) == probe.uri:
+                selection = target.get("targetSelectionRange", target.get("range"))
+                selected.append(fixture[offset(fixture, selection["start"]):offset(fixture, selection["end"])])
+        probe.check(method + "_correct_target", any(expected in text for text in selected), response)
+
+    marked = source + '\nprivate fun signatureProbe(first: String, second: Int) = first + second\nprivate val signatureResult = signatureProbe("hello", |)\n'
+    caret = marked.index("|")
+    probe.change(marked.replace("|", ""))
+    signature = probe.request("textDocument/signatureHelp", {"textDocument": {"uri": probe.uri}, "position": position(probe.text, caret)})
+    signatures = (signature.get("result") or {}).get("signatures", [])
+    probe.check("signature_help_parameters", any("first" in item["label"] and "second" in item["label"] for item in signatures), signature)
+
+    probe.change(source + '\nprivate fun formatProbe( ) {val result=1+2;println(result)}\n')
+    formatting = probe.request("textDocument/formatting", {"textDocument": {"uri": probe.uri}, "options": {"tabSize": 4, "insertSpaces": True}})
+    formatted = apply_edits(probe.text, formatting.get("result") or [])
+    probe.check("formatting_edits", bool(formatting.get("result")) and "result = 1 + 2" in formatted and "fun SampleScreen" in formatted, {"response": formatting, "text": formatted})
+
+    broken = source + '\nprivate fun OrdinaryFunction() {\n    val mismatch: String = 123\n    println(mismatch)\n}\n'
+    refresh_before = sum(item["method"] == "workspace/diagnostic/refresh" for item in probe.results.get("server_requests", []))
+    probe.change(broken)
+    diagnostics = probe.request("textDocument/diagnostic", {"textDocument": {"uri": probe.uri}})
+    items = diagnostic_items(diagnostics)
+    errors = [item for item in items if item.get("severity") == 1 and item["range"]["start"]["line"] >= source.count("\n")]
+    probe.check("unsaved_compiler_error", bool(errors), diagnostics)
+    names = [item for item in items if item.get("code") == "FunctionName"]
+    probe.check("ordinary_uppercase_warning_retained", any("OrdinaryFunction" in item["message"] for item in names), names)
+    probe.check("composable_name_warning_suppressed", not any("SampleScreen" in item["message"] for item in names), names, required=probe.results["require_compose"])
+    if errors:
+        actions = probe.request("textDocument/codeAction", {"textDocument": {"uri": probe.uri}, "range": errors[0]["range"], "context": {"diagnostics": errors, "only": ["quickfix"]}})
+        candidates = actions.get("result") or []
+        probe.check("compiler_quickfix_available", bool(candidates) and not actions.get("error"), actions)
+        action = next((action for action in candidates if "Change type" in action.get("title", "") and not action.get("disabled")), None)
+        if action:
+            if "edit" in action:
+                probe.workspace_edit(action["edit"])
+            if command := action.get("command"):
+                probe.request("workspace/executeCommand", command if isinstance(command, dict) else {"command": command, "arguments": action.get("arguments", [])})
+            fixed = probe.request("textDocument/diagnostic", {"textDocument": {"uri": probe.uri}})
+            probe.check("quickfix_clears_compiler_error", not any(item.get("severity") == 1 for item in diagnostic_items(fixed)), fixed)
+    probe.change(source)
+    cleared = probe.request("textDocument/diagnostic", {"textDocument": {"uri": probe.uri}})
+    probe.check("stale_diagnostics_clear_after_edit", not any(item.get("severity") == 1 or item["range"]["start"]["line"] >= source.count("\n") for item in diagnostic_items(cleared)), cleared)
+    refresh_after = sum(item["method"] == "workspace/diagnostic/refresh" for item in probe.results.get("server_requests", []))
+    probe.results["diagnostic_refresh"] = {"before_local_error": refresh_before, "after_local_error_cleared": refresh_after, "scope": "The client pulls diagnostics after local edits; the server can request refresh for external changes. No refresh is required for each didChange."}
+    probe.check("diagnostic_refresh_request_handled", refresh_after > 0, probe.results["diagnostic_refresh"])
+    alias_source = source.replace("import androidx.compose.runtime.Composable", "import androidx.compose.runtime.Composable as ScreenComposable").replace("@Composable", "@ScreenComposable")
+    probe.change(alias_source)
+    alias_diagnostics = probe.request("textDocument/diagnostic", {"textDocument": {"uri": probe.uri}})
+    probe.check("aliased_composable_name_suppressed", not any(item.get("code") == "FunctionName" and "SampleScreen" in item["message"] for item in diagnostic_items(alias_diagnostics)), alias_diagnostics, required=probe.results["require_compose"])
+    shadow_source = source.replace("import androidx.compose.runtime.Composable\n", "").replace("@Composable", "@androidx.compose.runtime.Composable") + "\nprivate annotation class Composable\n@Composable\nprivate fun FakeComposable() {}\n"
+    probe.change(shadow_source)
+    shadow_diagnostics = probe.request("textDocument/diagnostic", {"textDocument": {"uri": probe.uri}})
+    probe.check("same_named_unrelated_annotation_warning_retained", any(item.get("code") == "FunctionName" and "FakeComposable" in item["message"] for item in diagnostic_items(shadow_diagnostics)), shadow_diagnostics)
+    probe.change(source.replace("import android.os.Bundle", "import java.util.ArrayList\nimport android.os.Bundle"))
+    start = position(probe.text, 0)
+    organized = probe.request("textDocument/codeAction", {"textDocument": {"uri": probe.uri}, "range": {"start": start, "end": position(probe.text, len(probe.text))}, "context": {"diagnostics": [], "only": ["source.organizeImports"]}})
+    actions = organized.get("result") or []
+    probe.check("organize_imports_action", bool(actions), organized)
+    if actions:
+        action = actions[0]
+        if "edit" in action:
+            probe.workspace_edit(action["edit"])
+        if command := action.get("command"):
+            probe.request("workspace/executeCommand", command if isinstance(command, dict) else {"command": command, "arguments": action.get("arguments", [])})
+        probe.check("organize_imports_removes_unused", "import java.util.ArrayList" not in probe.text and "import android.os.Bundle" in probe.text, probe.text)
+    probe.change(source)
+    for uri in probe.documents:
+        probe.change(probe.original_sources[uri], uri)
+    for symbol in ("headlineSmall", "BuildConfig"):
+        definition = next(check for check in probe.results["checks"] if check["name"] == "definition_" + symbol)
+        targets = definition["detail"]["targets"]
+        if not targets:
+            continue
+        target = targets[0]
+        uri = target.get("uri", target.get("targetUri"))
+        selection = target.get("targetSelectionRange", target.get("range"))
+        params = {"textDocument": {"uri": uri}, "position": selection["start"]}
+        renamed = probe.request("textDocument/rename", {**params, "newName": "probeMustNotRename"})
+        edit = renamed.get("result") or {}
+        probe.check("rename_protected_" + symbol, not edit.get("changes") and not edit.get("documentChanges"), renamed)
+
+
+def compose_features(probe, source):
+    receiver_declarations = '''
+private fun CharSequence.probeText() = length
+private fun String?.probeNullable() = this
+private fun <T> List<T>.probeList() = size
+private fun <T : CharSequence> T.probeBounded() = length
+private fun <T : Number> T.probeNumeric() = toInt()
+private fun Int.probeInt() = this
+private fun UInt.probeUnsigned() = this
+private fun probeNumber(): Number = 42
+private typealias ProbeAlias = String
+private fun ProbeAlias.probeAlias() = length
+private object ProbeReceiver
+private fun ProbeReceiver.probeObject() = Unit
+'''
+    string_extensions = {"probeText", "probeNullable", "probeBounded", "probeAlias"}
+    receiver_cases = [
+        ("string", 'val value = "hello"; value.probe|', string_extensions),
+        ("list", 'val value = listOf("hello"); value.probe|', {"probeList"}),
+        ("numeric", "val value = 42; value.probe|", {"probeNumeric", "probeInt"}),
+        ("unsigned", "val value = 42u; value.probe|", {"probeUnsigned"}),
+        ("number", "val value = probeNumber(); value.probe|", {"probeNumeric"}),
+        ("safe", "val value: String? = null; value?.probe|", string_extensions),
+        ("nullable", "val value: String? = null; value.probe|", string_extensions),
+        ("smart_cast", 'val value: Any = "hello"; if (value is String) value.probe|', string_extensions),
+        ("alias", 'val value: ProbeAlias = "hello"; value.probe|', string_extensions),
+        ("object", "ProbeReceiver.probe|", {"probeObject"}),
+        ("callable_reference", 'val value = "hello"; value::probe|', string_extensions),
+        ("implicit", 'with("hello") { probe| }', string_extensions),
+    ]
+    receiver_names = string_extensions | {"probeList", "probeNumeric", "probeInt", "probeUnsigned", "probeObject"}
+    for name, snippet, expected in receiver_cases:
+        marked = source + receiver_declarations + f"\nprivate fun receiverContract() {{ {snippet} }}\n"
+        response, items = completion(probe, marked)
+        actual = {item["label"].strip() for item in items} & receiver_names
+        probe.check("completion_receiver_" + name, actual == expected,
+                    {"outcome": outcome(response), "expected": sorted(expected), "actual": sorted(actual)})
+    for index, (value, expected, absent) in enumerate([
+        ('"hello"', "length", "inc"), ("42", "inc", "length"), ('"changed"', "length", "inc"),
+    ]):
+        response, items = completion(probe, source + f"\nprivate fun receiverFreshness() {{ val value = {value}; value.| }}\n")
+        labels = {item["label"].strip() for item in items}
+        probe.check(f"completion_receiver_freshness_{index}", expected in labels and absent not in labels,
+                    {"outcome": outcome(response), "expected": expected, "absent": absent, "labels": sorted(labels)})
+    for index, (declared, absent) in enumerate([
+        ("cacheFirst", "cacheSecond"), ("cacheSecond", "cacheFirst"), ("cacheFirst", "cacheSecond"),
+    ]):
+        marked = source + f'\nprivate fun String.{declared}() = this\nprivate fun nameFreshness() {{ "hello".cache| }}\n'
+        response, items = completion(probe, marked)
+        labels = {item["label"].strip() for item in items}
+        probe.check(f"completion_declaration_freshness_{index}", declared in labels and absent not in labels,
+                    {"outcome": outcome(response), "declared": declared, "absent": absent, "labels": sorted(labels)})
+    cases = [
+        ("button", "@Composable", "Button|", "Button", True),
+        ("row", "@Composable", "Row|", "Row", True),
+        ("column", "@Composable", "Column|", "Column", True),
+        ("column_scope_weight", "@Composable", "Column { Modifier.we| }", "weight", False),
+        ("row_scope_align", "@Composable", "androidx.compose.foundation.layout.Row { Modifier.al| }", "align", False),
+        ("ordinary_scope_weight", "", "Modifier.we|", "weight", False),
+        ("noncomposable_button", "", "Button|", "Button", False),
+        ("receiver_lambda", "", 'val receiver: String.() -> Unit = { this.len| }', "length", False),
+        ("composable_argument", "@Composable", 'Text(text = stringRes|)', "stringResource", False),
+    ]
+    for name, annotation, snippet, expected, accept in cases:
+        marked = source + f"\n{annotation}\nprivate fun composeContract() {{\n {snippet}\n}}\n"
+        response, items = completion(probe, marked)
+        item = next((item for item in items if item["label"].strip() == expected), None)
+        detail = {"outcome": outcome(response), "rank": items.index(item) + 1 if item else None, "count": len(items), "item": item}
+        if name == "ordinary_scope_weight":
+            probe.check(name + "_not_visible", item is None, detail)
+        else:
+            probe.check("completion_context_" + name, item is not None, detail)
+        if accept and item:
+            before = probe.text
+            accepted = accept_completion(probe, item)
+            probe.check("accept_" + name, "error" not in accepted and probe.text != before and bool(probe.results["applied_edits"]) and probe.results["applied_edits"][-1]["result"]["applied"], {"response": accepted, "text": probe.text})
+            inserted = probe.text.split("private fun composeContract()", 1)[-1]
+            probe.check("required_lambda_" + name, inserted.count("{") >= 2, inserted, required=probe.results["require_compose"])
+    response, items = completion(probe, source + '\n@Composable\nprivate fun existingLambda() { Button|(onClick = {}) { Text("existing content") } }\n')
+    item = next((item for item in items if item["label"].strip() == "Button"), None)
+    probe.check("completion_existing_lambda", item is not None, {"outcome": outcome(response), "item": item})
+    if item:
+        accepted = accept_completion(probe, item)
+        declaration = probe.text.split("private fun existingLambda()", 1)[-1]
+        probe.check("existing_lambda_not_duplicated", "error" not in accepted and declaration.count("{") == 3 and declaration.count('Text("existing content")') == 1, declaration, required=probe.results["require_compose"])
+    response, items = completion(probe, source.replace("import androidx.compose.material3.Text\n", "import androidx.compose.material3.Text\nimport androidx.compose.material3.But|\n"))
+    item = next((item for item in items if item["label"].strip() == "Button"), None)
+    probe.check("completion_import_directive", item is not None, {"outcome": outcome(response), "item": item})
+    if item:
+        accepted = accept_completion(probe, item)
+        line = next((line for line in probe.text.splitlines() if line.startswith("import androidx.compose.material3.Button")), "")
+        probe.check("import_directive_has_no_call_or_lambda", "error" not in accepted and line == "import androidx.compose.material3.Button", line, required=probe.results["require_compose"])
+    lambda_fixture = source + "\nprivate fun hostCompose(content: @Composable () -> Unit) {}\nprivate fun ordinaryHost() { hostCompose { Text(te|) } }\n"
+    response, items = completion(probe, lambda_fixture)
+    item = next((item for item in items if item["label"].strip() == "text ="), None)
+    probe.check("composable_lambda_named_argument_priority", item is not None and items.index(item) < 5, {"outcome": outcome(response), "rank": items.index(item) + 1 if item else None}, required=probe.results["require_compose"])
+    alias_source = source.replace("import androidx.compose.material3.Text\n", "import androidx.compose.material3.Text\nimport androidx.compose.material3.Button as ActionButton\n")
+    response, items = completion(probe, alias_source + "\n@Composable\nprivate fun aliasProbe() { ActionBut| }\n")
+    item = next((item for item in items if item["label"].strip() == "ActionButton"), None)
+    probe.check("completion_import_alias", item is not None, {"response_outcome": outcome(response), "item": item})
+    if item:
+        accepted = accept_completion(probe, item)
+        probe.check("accept_import_alias", "error" not in accepted and "ActionButton()" in probe.text and probe.text.count("import androidx.compose.material3.Button as ActionButton") == 1, probe.text)
+    response, items = completion(probe, alias_source + "\nprivate val callableProbe = ::ActionBut|\n")
+    item = next((item for item in items if item["label"].strip() == "ActionButton"), None)
+    probe.check("completion_callable_reference", item is not None, {"outcome": outcome(response), "item": item})
+    if item:
+        accepted = accept_completion(probe, item)
+        declaration = probe.text.split("private val callableProbe", 1)[-1]
+        probe.check("callable_reference_has_no_call_or_lambda", "error" not in accepted and "::ActionButton" in declaration and "(" not in declaration and "{" not in declaration, declaration)
+    correction_cases = [("inferred_type_arguments", "", "private fun typedList(): List<String> = emptyList().also|")]
+    if probe.results["require_context_sensitive_resolution"]:
+        correction_cases.append(("context_sensitive_enum", "private enum class CsrMode { FIRST }", "private fun contextMode(): CsrMode = FIRST.also|"))
+    for name, declarations, snippet in correction_cases:
+        response, items = completion(probe, source + "\n" + declarations + "\n" + snippet + "\n")
+        item = next((item for item in items if item["label"].strip() == "also"), None)
+        probe.check(name + "_completion", item is not None, {"outcome": outcome(response)})
+        if item:
+            accepted = accept_completion(probe, item)
+            probe.check(name + "_acceptance", "error" not in accepted, {"response": accepted, "text": probe.text})
+            diagnostics = probe.request("textDocument/diagnostic", {"textDocument": {"uri": probe.uri}})
+            errors = [item for item in diagnostic_items(diagnostics) if item.get("severity") == 1]
+            probe.check(name + "_type_checks", not errors, {"errors": errors, "text": probe.text})
+    probe.change(source)
+
+
+def process_memory(probe, label):
+    rows = subprocess.run(["ps", "-axo", "pid=,ppid=,rss=,command="], check=True, capture_output=True, text=True).stdout.splitlines()
+    processes = []
+    for row in rows:
+        fields = row.strip().split(None, 3)
+        if len(fields) != 4:
+            continue
+        identifier, parent, resident, command = fields
+        role = None
+        if int(identifier) == probe.process.pid:
+            role = "probe_kotlin_lsp"
+        elif "org.gradle.launcher.daemon" in command:
+            role = "machine_gradle_daemon"
+        elif "org.eclipse.equinox.launcher" in command and "jdt" in command.lower():
+            role = "machine_jdt_lsp"
+        elif "PreviewBridge" in command and "java" in command:
+            role = "machine_compose_preview"
+        elif Path(command.split()[0]).name == "zed":
+            role = "machine_zed"
+        if role:
+            processes.append({"pid": int(identifier), "parent_pid": int(parent), "rss_kib": int(resident), "role": role})
+    probe.results.setdefault("memory", []).append({"label": label, "seconds": round(time.monotonic() - probe.started, 3), "processes": processes, "scope": "Instant RSS; other matching processes may belong to other workspaces; not a peak or total IDE budget"})
+
+
+def performance(probe, source, samples):
+    if not samples:
+        return
+    process_memory(probe, "before_performance")
+    scenarios = [("warm_definition", None, "headlineSmall", 150), ("unsaved_modifier_completion", "Modifier.pa|", "padding", 200), ("unsaved_string_completion", 'val greeting = "hello"\n greeting.|', "length", 200), ("triggered_string_completion", 'val greeting = "hello"\n greeting.|', "length", 200), ("unsaved_named_argument", "Text(te|)", "text =", 200)]
+    records = probe.results.setdefault("performance", [])
+    for name, snippet, expected, budget in scenarios:
+        started = round(time.monotonic() - probe.started, 3)
+        timings, failures = [], []
+        counts, payload_bytes = [], []
+        for index in range(samples):
+            if snippet:
+                marked = source + f"\n@Composable\nprivate fun performanceProbe() {{\n // sample {index}\n {snippet}\n}}\n"
+                context = {"triggerKind": 2, "triggerCharacter": "."} if name == "triggered_string_completion" else {"triggerKind": 1}
+                response, items = completion(probe, marked, context)
+                success = any(item["label"].strip() == expected for item in items)
+            else:
+                probe.change(source)
+                response = probe.request("textDocument/definition", {"textDocument": {"uri": probe.uri}, "position": position(source, source.rindex(expected) + 1)})
+                success = bool(response.get("result"))
+            timings.append(probe.results["requests"][-1]["milliseconds"])
+            counts.append(len(items) if snippet else len(response.get("result") or []))
+            payload_bytes.append(len(json.dumps(response, separators=(",", ":")).encode()))
+            if not success or response.get("error"):
+                failures.append({"sample": index, "outcome": outcome(response), "error": response.get("error")})
+        ordered = sorted(timings)
+        record = {"scenario": name, "samples": samples, "started_seconds": started, "finished_seconds": round(time.monotonic() - probe.started, 3), "milliseconds": timings, "result_counts": counts, "response_bytes": payload_bytes, "p50_ms": statistics.median(timings), "p95_ms": ordered[math.ceil(samples * .95) - 1], "minimum_ms": min(timings), "maximum_ms": max(timings), "failures": failures, "scope": "Headless request/response only; excludes Zed input, dispatch, buffer creation and rendering"}
+        records.append(record)
+        probe.check(name + "_all_responses", not failures, record)
+        probe.check(name + "_protocol_budget", record["p95_ms"] < budget, {"p95_ms": record["p95_ms"], "budget_ms": budget}, required=False)
+        process_memory(probe, name)
+    first_definition = next((request for request in probe.results["requests"] if request["method"] == "textDocument/definition"), None)
+    probe.check("first_definition_protocol_budget", first_definition and first_definition["milliseconds"] < 500, first_definition, required=False)
+    probe.change(source)
+
+
+def run(probe, args, source):
+    response = probe.request("initialize", {
+        "processId": os.getpid(), "clientInfo": {"name": "Zed Kotlin compatibility probe", "version": "1"},
+        "rootUri": probe.root.as_uri(), "workspaceFolders": [{"uri": probe.root.as_uri(), "name": probe.root.name}],
+        "initializationOptions": {"defaultSdk": str(args.java_home), "projects": [{"type": "gradle", "path": probe.root.as_uri(), "java-home": str(args.java_home)}]},
+        "capabilities": {
+            "general": {"positionEncodings": ["utf-16"]},
+            "window": {"workDoneProgress": True, "showDocument": {"support": True}},
+            "workspace": {"applyEdit": True, "workspaceEdit": {"documentChanges": True}, "configuration": True, "workspaceFolders": True, "executeCommand": {"dynamicRegistration": True}, "diagnostics": {"refreshSupport": True}},
+            "textDocument": {"synchronization": {"dynamicRegistration": False}, "completion": {"completionItem": {"snippetSupport": True, "insertReplaceSupport": True, "resolveSupport": {"properties": ["documentation", "detail", "additionalTextEdits"]}}}, "definition": {"linkSupport": True}, "diagnostic": {"relatedDocumentSupport": True}},
+        },
+    })
+    if response.get("error"):
+        raise ProbeError("server_error", json.dumps(response["error"]))
+    initialization = response["result"]
+    probe.results["initialize"] = initialization
+    probe.check("tested_server_release", initialization.get("serverInfo", {}).get("version") == "ILS-" + args.expected_release, initialization.get("serverInfo"))
+    capabilities = initialization["capabilities"]
+    synchronization = capabilities.get("textDocumentSync", {})
+    synchronization = synchronization.get("change") if isinstance(synchronization, dict) else synchronization
+    probe.check("negotiated_incremental_sync", synchronization == 2, synchronization)
+    if synchronization != 2 or capabilities.get("positionEncoding", "utf-16") != "utf-16":
+        raise ProbeError("unsupported_protocol", "This regression probe requires incremental UTF-16 synchronization")
+    probe.notify("initialized", {})
+    if not args.model_only:
+        probe.notify("textDocument/didOpen", {"textDocument": {"uri": probe.uri, "languageId": "kotlin", "version": probe.version, "text": source}})
+    if getattr(args, "prepare_active_file", False):
+        command = "zed.prepareKotlinFile"
+        if command not in capabilities.get("executeCommandProvider", {}).get("commands", []):
+            raise ProbeError("unsupported_protocol", "The server does not advertise active-file preparation")
+        probe.identifier += 1
+        probe.preparation_request_id = probe.identifier
+        probe.results["preparation_dispatch_seconds"] = time.monotonic() - probe.started
+        probe.send(id=probe.identifier, method="workspace/executeCommand", params={"command": command, "arguments": [1, probe.uri]})
+    probe.ready(args.timeout)
+    if args.navigation_only:
+        first_navigation(probe, args.navigation_symbol, args.navigation_samples, args.require_original_sources)
+    if getattr(args, "prepare_active_file", False):
+        response = probe.results.get("preparation_response", {})
+        probe.check("active_file_preparation_accepted", "result" in response and "error" not in response, response)
+    if args.navigation_only:
+        probe.check("import_and_indexing_completed", True)
+        return
+    probe.check("import_and_indexing_completed", True)
+    if getattr(args, "prepare_active_file", False):
+        for name, arguments in (("arity", []), ("generation", [0, None]), ("string_generation", ["1", probe.uri]),
+                                ("closed_document", [2, probe.uri + ".closed"]), ("document_type", [2, {}])):
+            response = probe.request("workspace/executeCommand", {"command": "zed.prepareKotlinFile", "arguments": arguments})
+            probe.check("preparation_rejects_" + name, response.get("error", {}).get("code") == -32602, response)
+        for name, arguments in (("stop", [1, None]), ("refocus", [2, probe.uri]), ("stale_stop", [1, None])):
+            response = probe.request("workspace/executeCommand", {"command": "zed.prepareKotlinFile", "arguments": arguments})
+            probe.check("preparation_accepts_" + name, "result" in response and "error" not in response, response)
+    if args.performance_samples:
+        process_memory(probe, "after_readiness")
+    probe.results["import_status"] = probe.request("intellij/workspaceImportStatus", {})
+    model_path = probe.root / "workspace.json"
+    if model_path.exists():
+        raise ProbeError("fixture_error", "Use an isolated native Gradle fixture without workspace.json")
+    try:
+        exported = probe.request("workspace/executeCommand", {"command": "exportWorkspace", "arguments": [str(probe.root)]})
+        if exported.get("error") or not model_path.exists():
+            raise ProbeError("server_error", "Could not export the imported model: " + json.dumps(exported))
+        model = json.loads(model_path.read_text())
+        (args.output / "workspace-model.json").write_text(json.dumps(model, indent=2) + "\n")
+        modules = [module["name"] for module in model["modules"]]
+        probe.results["model_schema"] = {"top_level_keys": sorted(model), "module_keys": sorted({key for module in model["modules"] for key in module}), "library_keys": sorted({key for library in model["libraries"] for key in library})}
+        probe.results["selected_module_roots"] = [{key: value for key, value in module.items() if key == "name" or "root" in key.lower()} for module in model["modules"]]
+        probe.results["active_modules"] = modules
+        probe.results["libraries"] = [{"name": library["name"], "has_sources": any(root.get("type") == "SOURCES" for root in library.get("roots", []))} for library in model["libraries"]]
+        resource_libraries = [library for library in model["libraries"] if library["name"].startswith("Gradle: android:r:")]
+        probe.check("resource_libraries_scoped_to_modules", bool(resource_libraries) and all(len([root for root in library["roots"] if root.get("type", "CLASSES") == "CLASSES"]) == 1 for library in resource_libraries), resource_libraries)
+        missing_project_libraries = [root["path"] for library in model["libraries"] for root in library.get("roots", [])
+            if root.get("type", "CLASSES") == "CLASSES" and root["path"].startswith("<WORKSPACE>/")
+            and not (probe.root / root["path"].removeprefix("<WORKSPACE>/")).exists()]
+        probe.check("project_library_artifacts_exist", not missing_project_libraries, missing_project_libraries)
+        application_suffix = args.module.replace(":", ".") + "." + args.variant
+        probe.check("selected_application_variant", any(name.endswith(application_suffix) for name in modules), modules)
+        for expected in args.expected_module:
+            probe.check("expected_module_" + expected, expected in modules, {"expected": expected, "active_modules": modules})
+        if not args.model_only:
+            library_variant = args.expected_library_variant or ("debug" if args.variant.endswith("Debug") else "release")
+            probe.check("selected_library_variant", any(name.endswith(".greeting." + library_variant) for name in modules), modules)
+    finally:
+        model_path.unlink(missing_ok=True)
+    if args.model_only:
+        return
+    if args.warmup != "none":
+        method = {"diagnostics": "textDocument/diagnostic", "document-symbols": "textDocument/documentSymbol", "hover": "textDocument/hover"}[args.warmup]
+        params = {"textDocument": {"uri": probe.uri}}
+        if args.warmup == "hover":
+            params["position"] = position(source, source.index("fun SampleScreen") + 5)
+        response = probe.request(method, params, timeout=30)
+        probe.results["active_file_warmup"] = {"method": method, "request": probe.results["requests"][-1], "finished_seconds": round(time.monotonic() - probe.started, 3), "scope": "One active-file request after indexing; its full cost remains reported, and it is not part of readiness"}
+        probe.check("active_file_warmup_succeeded", not response.get("error"), probe.results["active_file_warmup"])
+    contents = {}
+    for symbol in ("headlineSmall", "Text", "padding", "dp", "Modifier", "Column", "stringResource", "LibraryGreeting", "Greeting", "BuildConfig", "Bundle", "headlineSmall"):
+        location = source.index("Greeting.message") if symbol == "Greeting" else source.rindex(symbol)
+        response = probe.request("textDocument/definition", {"textDocument": {"uri": probe.uri}, "position": position(source, location + 1)})
+        targets = response.get("result") or []
+        if isinstance(targets, dict):
+            targets = [targets]
+        probe.check("definition_" + symbol, bool(targets) and not response.get("error"), {"outcome": outcome(response), "targets": targets})
+        for target in targets:
+            uri = target.get("uri", target.get("targetUri"))
+            if not uri.startswith(("jar:", "jrt:")):
+                continue
+            if uri not in contents:
+                content = probe.request("workspace/executeCommand", {"command": "decompile", "arguments": [uri]})
+                contents[uri] = content.get("result") or {}
+                probe.check("readable_virtual_document", bool(contents[uri].get("code")) and bool(contents[uri].get("language")), uri)
+            code = contents[uri].get("code", "")
+            selection = target.get("targetSelectionRange", target.get("range"))
+            selected = code[offset(code, selection["start"]):offset(code, selection["end"])] if code else ""
+            probe.check("target_range_" + symbol, symbol in selected, {"uri": uri, "selection": selected})
+            if symbol in ("headlineSmall", "Text", "padding", "dp", "Modifier", "Column", "stringResource"):
+                probe.check("original_source_" + symbol, uri.endswith(".kt"), uri, required=args.require_original_sources)
+    probe.results["virtual_documents"] = contents
+    source_document = next(((uri, content) for uri, content in contents.items() if uri.endswith("Typography.kt")), None)
+    if source_document:
+        uri, content = source_document
+        probe.notify("textDocument/didOpen", {"textDocument": {"uri": uri, "languageId": content["language"], "version": 1, "text": content["code"]}})
+        nested = probe.request("textDocument/definition", {"textDocument": {"uri": uri}, "position": position(content["code"], content["code"].rindex("TextStyle") + 1)})
+        probe.check("nested_library_definition", bool(nested.get("result")), nested)
+        probe.notify("textDocument/didClose", {"textDocument": {"uri": uri}})
+    else:
+        probe.check("nested_library_definition", False, "Original Typography.kt is unavailable", required=args.require_original_sources)
+    cases = [
+        ("local", 'val localGreeting = "hello"\n loc|', "localGreeting"),
+        ("string_member", 'val localGreeting = "hello"\n localGreeting.|', "length"),
+        ("compose_modifier", "Modifier.pa|", "padding"),
+        ("compose_theme", "MaterialTheme.ty|", "typography"),
+        ("compose_imported", "Tex|", "Text"),
+        ("compose_named_argument", "Text(te|)", "text ="),
+        ("android_resource", "R.string.|", "app_name"),
+        ("compose_autoimport", "Button|", "Button"),
+    ]
+    for name, snippet, expected in cases:
+        marked = source + "\n@Composable\nprivate fun compatibilityProbe() {\n " + snippet + "\n}\n"
+        caret = marked.index("|")
+        probe.change(marked.replace("|", ""))
+        response = probe.request("textDocument/completion", {"textDocument": {"uri": probe.uri}, "position": position(probe.text, caret), "context": {"triggerKind": 1}})
+        result = response.get("result") or {}
+        items = result if isinstance(result, list) else result.get("items", [])
+        item = next((item for item in items if item["label"].strip() == expected), None)
+        probe.check("unsaved_completion_" + name, item is not None, {"outcome": outcome(response), "version": probe.version, "count": len(items), "rank": items.index(item) + 1 if item else None})
+        if name == "compose_named_argument":
+            probe.check("compose_named_argument_priority", item is not None and items.index(item) < 5, {"rank": items.index(item) + 1 if item else None, "expected_maximum_rank": 5}, required=args.require_compose)
+        if name == "compose_autoimport" and item:
+            resolved = probe.request("completionItem/resolve", item)
+            probe.check("completion_resolve_succeeded", "error" not in resolved, resolved.get("error"))
+            item = resolved.get("result") or item
+            command = item.get("command")
+            probe.check("completion_command_retained", bool(command), item)
+            if command:
+                edit = item.get("textEdit")
+                if edit:
+                    probe.change(apply_edits(probe.text, [{"range": edit.get("range", edit.get("insert")), "newText": edit["newText"]}, *item.get("additionalTextEdits", [])]))
+                executed = probe.request("workspace/executeCommand", command)
+                probe.check("completion_command_succeeded", "error" not in executed, executed)
+                probe.check("completion_import_and_call", probe.text.count("import androidx.compose.material3.Button\n") == 1 and "Button()" in probe.text, probe.text)
+                probe.check("completion_workspace_edits", bool(probe.results["applied_edits"]) and all(edit["result"]["applied"] for edit in probe.results["applied_edits"]))
+                probe.check("completion_caret", any(document.get("selection") and document["uri"] == probe.uri for document in probe.results["show_documents"]))
+                probe.check("compose_trailing_lambda", "Button() {" in probe.text, probe.text, required=args.require_compose)
+    probe.change(source)
+    diagnostics = probe.request("textDocument/diagnostic", {"textDocument": {"uri": probe.uri}})
+    probe.check("pull_diagnostics", "error" not in diagnostics and isinstance(diagnostics.get("result"), dict), diagnostics)
+    if args.extended:
+        language_features(probe, source)
+        compose_features(probe, source)
+    performance(probe, source, args.performance_samples)
+    for uri in probe.documents:
+        probe.notify("textDocument/didClose", {"textDocument": {"uri": uri}})
+    probe.notify("textDocument/didClose", {"textDocument": {"uri": probe.uri}})
+
+
+def self_test():
+    for before, after in [("", "hello"), ("a😀b\n", "a😀c\n"), ("hello", ""), ("same", "same"), ("a\nb", "a\n😀b")]:
+        change = incremental_change(before, after)
+        assert apply_edits(before, [{"range": change["range"], "newText": change["text"]}]) == after
+        for index in range(len(after) + 1):
+            assert offset(after, position(after, index)) == index
+    assert outcome({"result": []}) == "empty"
+    assert outcome({"error": {"code": -32800}}) == "cancelled"
+    assert outcome({"error": {"code": -32801}}) == "stale_content"
+    assert outcome({"error": {"code": -32603}}) == "server_error"
+    probe = object.__new__(Probe)
+    probe.uri = "file:///self-test.kt"
+    probe.text, probe.version = "unchanged", 1
+    probe.change("unchanged")
+    assert probe.version == 1
+    other_uri = "file:///other.kt"
+    probe.documents = {other_uri: {"text": "fun oldName() = 1", "version": 4}}
+    notifications = []
+    probe.notify = lambda method, params: notifications.append((method, params))
+    edit = {"documentChanges": [{"textDocument": {"uri": other_uri, "version": 4}, "edits": [{"range": {"start": {"line": 0, "character": 4}, "end": {"line": 0, "character": 11}}, "newText": "newName"}]}]}
+    probe.workspace_edit(edit)
+    assert probe.document_text(other_uri) == "fun newName() = 1"
+    assert probe.document_version(other_uri) == 5 and len(notifications) == 1
+    try:
+        probe.workspace_edit(edit)
+    except ValueError as error:
+        assert str(error) == "Stale workspace edit version"
+    else:
+        raise AssertionError("Stale refactoring edit was accepted")
+    assert len(notifications) == 1
+    probe.messages, probe.progress = queue.Queue(), {}
+    probe.import_finished, probe.index_finished = True, False
+    try:
+        probe.ready(0)
+    except ProbeError as error:
+        assert error.outcome == "readiness_timeout"
+    else:
+        raise AssertionError("Import success without indexing was accepted")
+    assert read_message(io.BytesIO(b'Content-Length: 13\r\n\r\n{"result":[]}')) == {"result": []}
+    for message, expected in [
+        ({"method": "intellij/importLog", "params": {"failed": True}}, "import_failure"),
+        ({"method": "intellij/workspaceImportStatus", "params": {"blockedFolders": ["file:///sample"]}}, "import_failure"),
+    ]:
+        probe = object.__new__(Probe)
+        probe.messages, probe.wire, probe.started, probe.results = queue.Queue(), io.StringIO(), time.monotonic(), {"events": []}
+        probe.wire_seconds = 0
+        probe.messages.put(message)
+        try:
+            probe.receive(time.monotonic() + 1)
+        except ProbeError as error:
+            assert error.outcome == expected
+        else:
+            raise AssertionError("Import failure was accepted")
+    from types import SimpleNamespace
+    probe = object.__new__(Probe)
+    probe.uri, probe.text, probe.version = "file:///sample.kt", "val target = 1\ntarget", 1
+    probe.root, probe.started, probe.wire_seconds = Path("/sample"), time.monotonic(), 0
+    probe.results = {"requests": [], "checks": []}
+    operations = []
+    probe.notify = lambda method, params: operations.append(method)
+    probe.ready = lambda timeout: operations.append("ready")
+    probe.check = lambda name, passed, detail=None, required=True: probe.results["checks"].append((name, passed))
+    def request(method, params):
+        operations.append(method)
+        probe.results["requests"].append({"method": method, "milliseconds": 1})
+        if method == "initialize":
+            return {"result": {"serverInfo": {"version": "ILS-test"}, "capabilities": {"textDocumentSync": 2, "executeCommandProvider": {"commands": ["zed.prepareKotlinFile"]}}}}
+        assert method == "textDocument/definition"
+        return {"result": [{"uri": "file:///target.kt"}]}
+    probe.request = request
+    run(probe, SimpleNamespace(java_home="/jdk", expected_release="test", model_only=False, timeout=1,
+                              navigation_only=True, navigation_symbol="target", navigation_samples=30,
+                              require_original_sources=False), probe.text)
+    assert operations[:5] == ["initialize", "initialized", "textDocument/didOpen", "ready", "textDocument/definition"]
+    assert len(probe.results["first_navigation"]["warm"]["milliseconds"]) == 30
+    assert all(passed for _, passed in probe.results["checks"])
+    operations.clear()
+    probe.identifier = 0
+    def send(**message):
+        operations.append(message["method"])
+        assert message["params"] == {"command": "zed.prepareKotlinFile", "arguments": [1, probe.uri]}
+        probe.results["preparation_response"] = {"id": message["id"], "result": None}
+    probe.send = send
+    run(probe, SimpleNamespace(java_home="/jdk", expected_release="test", model_only=False, timeout=1,
+                              navigation_only=True, navigation_symbol="target", navigation_samples=30,
+                              require_original_sources=False, prepare_active_file=True), probe.text)
+    assert operations[:6] == ["initialize", "initialized", "textDocument/didOpen", "workspace/executeCommand", "ready", "textDocument/definition"]
+    assert all(passed for _, passed in probe.results["checks"])
+    print("PASS protocol self-test")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--self-test", action="store_true", help="Run deterministic protocol checks without a server")
+    parser.add_argument("--project", type=Path, help="An isolated Gradle project; document checks require examples/android-ide")
+    parser.add_argument("--server", type=Path, help="Official intellij-server executable")
+    parser.add_argument("--output", type=Path, help="Report directory; also contains persistent server indexes")
+    parser.add_argument("--java-home", type=Path, default=os.environ.get("JAVA_HOME"), help="Project JDK, separate from the bundled server runtime")
+    parser.add_argument("--variant", default="demoDebug", help="Selected application variant")
+    parser.add_argument("--module", default=":mobile", help="Selected Gradle application module; full suite requires :mobile")
+    parser.add_argument("--model-only", action="store_true", help="Check import/index readiness and native exported model for any isolated Gradle project")
+    parser.add_argument("--expected-module", action="append", default=[], help="Require this exact exported module name; repeat for each expected module")
+    parser.add_argument("--expected-library-variant", help="Expected greeting variant for a custom application build type; default derives debug/release")
+    parser.add_argument("--expected-release", default="263.4702.0")
+    parser.add_argument("--timeout", type=int, default=240, help="Maximum import/indexing time in seconds")
+    parser.add_argument("--require-original-sources", action="store_true", help="Fail the run if original Compose sources or nested navigation are unavailable")
+    parser.add_argument("--require-compose", action="store_true", help="Require Compose naming and required-lambda checks; implies --extended")
+    parser.add_argument("--require-context-sensitive-resolution", action="store_true", help="Check enum completion in a fixture that enables -Xcontext-sensitive-resolution; implies --extended")
+    parser.add_argument("--extended", action="store_true", help="Check references, multi-file rename, diagnostics, formatting, code actions and Compose contexts")
+    parser.add_argument("--performance-samples", type=int, default=0, help="Run at least 30 samples per warm protocol scenario (0 disables)")
+    parser.add_argument("--navigation-only", action="store_true", help="Measure the first definition immediately after readiness, fetch its source, then exit; supports arbitrary isolated Kotlin projects")
+    parser.add_argument("--navigation-source", type=Path, default=Path("mobile/src/main/java/dev/zed/androidsample/MainActivity.kt"), help="Project-relative active Kotlin file for --navigation-only")
+    parser.add_argument("--navigation-symbol", default="headlineSmall", help="Symbol at its last occurrence in the active source; requested immediately after readiness")
+    parser.add_argument("--navigation-samples", type=int, default=0, help="Additional warm definitions (0 or at least 30), separate from the first request")
+    parser.add_argument("--system-path", type=Path, help="Reuse these indexes across fresh server processes, keeping a separate --output for every lifecycle")
+    parser.add_argument("--buffer-wire", action="store_true", help="Keep wire logs in memory until process exit; report serialization overhead separately")
+    parser.add_argument("--prepare-active-file", action="store_true", help="Request the editor's bounded active-file preparation immediately after didOpen, without waiting before first navigation")
+    parser.add_argument("--plugins", type=Path, help="Isolated IntelliJ plugin directory for engine compatibility experiments")
+    parser.add_argument("--warmup", choices=("none", "diagnostics", "document-symbols", "hover"), default="none", help="One bounded active-file request after indexing, before navigation; measured separately")
+    parser.add_argument("--jfr", action="store_true", help="Capture a bounded server Java Flight Recorder profile; adds profiling overhead")
+    parser.add_argument("--generate-resources", action="store_true", help="Run the app's exact resource-only setup on the isolated fixture before starting the server")
+    args = parser.parse_args()
+    args.extended = args.extended or args.require_compose or args.require_context_sensitive_resolution
+    if args.self_test:
+        self_test()
+        return 0
+    if not all((args.project, args.server, args.output, args.java_home)):
+        parser.error("--project, --server, --output and --java-home (or JAVA_HOME) are required")
+    if not args.server.is_file() or not args.java_home.is_dir() or args.timeout <= 0:
+        parser.error("The server and JDK must exist, and --timeout must be positive")
+    if args.performance_samples and args.performance_samples < 30:
+        parser.error("--performance-samples must be 0 or at least 30")
+    if args.navigation_samples and args.navigation_samples < 30:
+        parser.error("--navigation-samples must be 0 or at least 30")
+    if args.navigation_samples and not args.navigation_only:
+        parser.error("--navigation-samples requires --navigation-only")
+    if args.prepare_active_file and args.model_only:
+        parser.error("--prepare-active-file requires an open source document")
+    if args.navigation_only and (args.model_only or args.extended or args.performance_samples or args.warmup != "none"):
+        parser.error("--navigation-only cannot run model, completion or warmup checks")
+    if not args.model_only and not args.navigation_only and not args.variant.endswith(("Debug", "Release")) and not args.expected_library_variant:
+        parser.error("Custom build types require --expected-library-variant")
+    if not args.module.startswith(":") or args.module == ":" or (not args.model_only and not args.navigation_only and args.module != ":mobile"):
+        parser.error("--module requires a Gradle module path; the full fixture suite requires :mobile")
+    if args.model_only and (args.extended or args.performance_samples or args.warmup != "none" or args.require_original_sources):
+        parser.error("--model-only cannot run document, source or performance checks")
+    root, output = args.project.resolve(), args.output.resolve()
+    output.mkdir(parents=True, exist_ok=True)
+    source_file = None if args.model_only else (root / args.navigation_source).resolve()
+    if source_file and (not source_file.is_relative_to(root) or source_file.suffix != ".kt"):
+        parser.error("--navigation-source must be a Kotlin file inside the isolated project")
+    if source_file and not source_file.is_file():
+        parser.error("The active Kotlin source file must exist")
+    source = source_file.read_text() if source_file else ""
+    if source_file and (not args.navigation_symbol or args.navigation_symbol not in source):
+        parser.error("--navigation-symbol must occur in the active source")
+    results = {"project": str(root), "server": str(args.server.resolve()), "expected_release": args.expected_release, "requested_variant": args.variant, "project_jdk": str(args.java_home), "source_sha256": hashlib.sha256(source.encode()).hexdigest(), "checks": [], "requests": [], "events": [], "applied_edits": [], "show_documents": []}
+    results["fixture_sources"] = {str(path.relative_to(root)): hashlib.sha256(path.read_bytes()).hexdigest() for module in ("mobile", "greeting") for path in sorted((root / module / "src").rglob("*")) if path.suffix in (".kt", ".java")}
+    results["hardware"] = {"platform": platform.platform(), "architecture": platform.machine(), "logical_cpus": os.cpu_count(), "load_average_1_5_15": os.getloadavg()}
+    results["probe_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    distribution = args.server.resolve().parent.parent
+    manifest = distribution / "zed-native-importer.json"
+    if manifest.is_file():
+        results["runtime_patch_manifest"] = json.loads(manifest.read_text())
+    results["runtime_module_sha256"] = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name in ("language-server.workspace-import.gradle-plugin.jar", "language-server.api.features.impl.kotlin.jar") if (path := distribution / "plugins/kotlin.lsp/lib/modules" / name).is_file()}
+    results["runtime_additional_module_sha256"] = {name: hashlib.sha256((distribution / name).read_bytes()).hexdigest() for name in results.get("runtime_patch_manifest", {}).get("additional_modules", {})}
+    results["requested_module"] = args.module
+    results["expected_modules"] = args.expected_module
+    results["model_only"] = args.model_only
+    results["require_compose"] = args.require_compose
+    results["require_context_sensitive_resolution"] = args.require_context_sensitive_resolution
+    results["require_original_sources"] = args.require_original_sources
+    results["wire_logging"] = "memory until process exit" if args.buffer_wire else "synchronous file writes"
+    system_path = (args.system_path or output / "system").resolve()
+    results["system_path"] = str(system_path)
+    environment = dict(os.environ, JAVA_HOME=str(args.java_home), LSP_ANDROID_MODULE=args.module, LSP_ANDROID_VARIANT=args.variant, IJ_JAVA_OPTIONS=f"-Didea.config.path={output / 'config'} -Didea.log.path={output / 'logs'} -Dintellij.server.eula.persistence=false")
+    if args.generate_resources:
+        setup = (Path(__file__).resolve().parent.parent / "crates/android_tools/src/kotlin.rs").read_text()
+        guard = setup.split('const RESOURCE_GENERATION_GUARD: &str = r#"', 1)[1].split('"#;', 1)[0]
+        init = output / "resource-generation.gradle"
+        init.write_text(guard)
+        with (output / "resource-generation.log").open("w") as log:
+            generation = subprocess.run(["/bin/sh", "./gradlew", "--init-script", str(init),
+                f"-Dzed.android.kotlinServer={distribution}", "zedAndroidKotlinGenerateSources",
+                "--no-configuration-cache", "--console=plain"], cwd=root, env=environment,
+                stdout=log, stderr=subprocess.STDOUT, timeout=120)
+        results["resource_generation"] = {"exit_code": generation.returncode, "script_sha256": hashlib.sha256(guard.encode()).hexdigest()}
+        if generation.returncode:
+            (output / "results.json").write_text(json.dumps(results, indent=2) + "\n")
+            raise ProbeError("resource_generation_failed", f"See {output / 'resource-generation.log'}")
+    if args.plugins:
+        environment["IJ_JAVA_OPTIONS"] += f" -Didea.plugins.path={args.plugins.resolve()}"
+        results["plugins"] = str(args.plugins.resolve())
+    if args.jfr:
+        environment["IJ_JAVA_OPTIONS"] += f" -Xlog:jfr*=warning:stderr -XX:StartFlightRecording=filename={output / 'server.jfr'},settings=profile,dumponexit=true,maxsize=32m"
+        results["profile"] = {"path": str(output / "server.jfr"), "kind": "JFR profile", "maximum_mib": 32, "scope": "Profiling overhead is included in reported timings"}
+    with (output / "stderr.log").open("w") as log, (io.StringIO() if args.buffer_wire else (output / "wire.jsonl").open("w")) as wire:
+        started = time.monotonic()
+        cpu_before = resource.getrusage(resource.RUSAGE_CHILDREN)
+        process = subprocess.Popen([str(args.server.resolve()), "--stdio", "--system-path=" + str(system_path), "--data-sharing=none"], cwd=root, env=environment, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log)
+        probe = Probe(process, wire, results, root, source_file, source)
+        results["process_spawn_seconds"] = probe.started - started
+        try:
+            run(probe, args, source)
+            probe.request("shutdown", None, timeout=10)
+            probe.notify("exit", None)
+        except Exception as error:
+            results["failure"] = {"outcome": getattr(error, "outcome", "probe_error"), "message": str(error)}
+            print(json.dumps(results["failure"]), flush=True)
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+            if source_file:
+                probe.check("source_unchanged_on_disk", source_file.read_text() == source)
+            probe.check("refactoring_sources_unchanged_on_disk", all(Path(unquote(urlparse(uri).path)).read_text() == text for uri, text in probe.original_sources.items()))
+            results["duration_seconds"] = round(time.monotonic() - probe.started, 3)
+            cpu_after = resource.getrusage(resource.RUSAGE_CHILDREN)
+            results["server_lifecycle_cpu_seconds"] = cpu_after.ru_utime + cpu_after.ru_stime - cpu_before.ru_utime - cpu_before.ru_stime
+            results["wire_milliseconds"] = probe.wire_seconds * 1000
+            results["passed"] = "failure" not in results and all(check["passed"] for check in results["checks"] if check["required"])
+            if args.buffer_wire:
+                (output / "wire.jsonl").write_text(wire.getvalue())
+            (output / "results.json").write_text(json.dumps(results, indent=2) + "\n")
+    print(f"Report: {output / 'results.json'}", flush=True)
+    return 0 if results["passed"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

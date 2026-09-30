@@ -112,6 +112,7 @@ impl DebugAdapterClient {
         self.transport_delegate
             .pending_requests
             .lock()
+            .lock()
             .insert(sequence_id, callback_tx)?;
 
         log::debug!(
@@ -173,7 +174,11 @@ impl DebugAdapterClient {
     pub fn kill(&self) {
         log::debug!("Killing DAP process");
         self.transport_delegate.transport.lock().kill();
-        self.transport_delegate.pending_requests.lock().shutdown();
+        self.transport_delegate
+            .pending_requests
+            .lock()
+            .lock()
+            .shutdown();
     }
 
     pub fn has_adapter_logs(&self) -> bool {
@@ -347,6 +352,91 @@ mod tests {
             },
             response
         );
+    }
+
+    #[gpui::test]
+    async fn test_adapter_disconnect_rejects_pending_and_later_requests(cx: &mut TestAppContext) {
+        #![expect(clippy::result_large_err)]
+        use futures::FutureExt as _;
+        use gpui::AppContext as _;
+        init_test(cx);
+        for connection in [
+            None,
+            Some(crate::adapters::TcpArguments {
+                host: std::net::Ipv4Addr::LOCALHOST.into(),
+                port: 12345,
+                timeout: None,
+            }),
+        ] {
+            let arguments: InitializeRequestArguments =
+                serde_json::from_value(json!({"adapterID":"fake-adapter"}))
+                    .expect("Valid initialize arguments");
+            let reconnectable = connection.is_some();
+            let client = Arc::new(
+                DebugAdapterClient::start(
+                    SessionId(1),
+                    DebugAdapterBinary {
+                        command: Some("command".into()),
+                        arguments: Vec::new(),
+                        envs: Default::default(),
+                        connection,
+                        cwd: None,
+                        request_args: StartDebuggingRequestArguments {
+                            configuration: serde_json::Value::Null,
+                            request: dap_types::StartDebuggingRequestArgumentsRequest::Launch,
+                        },
+                    },
+                    Box::new(|_| {}),
+                    &mut cx.to_async(),
+                )
+                .await
+                .expect("Fake adapter should start"),
+            );
+            client.on_request_ext::<Initialize, _>(|_, _| crate::transport::RequestHandling::Exit);
+            let pending = cx.background_spawn({
+                let client = client.clone();
+                let arguments = arguments.clone();
+                async move { client.request::<Initialize>(arguments).await }
+            });
+            cx.run_until_parked();
+            assert!(
+                pending
+                    .now_or_never()
+                    .expect("Disconnect should resolve pending requests")
+                    .is_err()
+            );
+            let (sender, _receiver) = oneshot::channel();
+            assert!(
+                client
+                    .transport_delegate
+                    .pending_requests
+                    .lock()
+                    .lock()
+                    .insert(u64::MAX, sender)
+                    .is_err(),
+                "A connection that reached EOF must reject new requests"
+            );
+            let later = cx.background_spawn({
+                let client = client.clone();
+                let arguments = arguments.clone();
+                async move { client.request::<Initialize>(arguments).await }
+            });
+            cx.run_until_parked();
+            assert!(
+                later
+                    .now_or_never()
+                    .expect("Requests after EOF must fail without waiting")
+                    .is_err()
+            );
+            if reconnectable {
+                client
+                    .connect(Box::new(|_| {}), &mut cx.to_async())
+                    .await
+                    .expect("TCP adapter should reconnect");
+                client.on_request::<Initialize, _>(|_, _| Ok(Capabilities::default()));
+                assert!(client.request::<Initialize>(arguments).await.is_ok());
+            }
+        }
     }
 
     #[gpui::test]

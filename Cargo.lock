@@ -723,6 +723,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "android_tools"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dirs",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "which",
+]
+
+[[package]]
+name = "android_ui"
+version = "0.1.0"
+dependencies = [
+ "android_tools",
+ "anyhow",
+ "async-trait",
+ "collections",
+ "dap",
+ "db",
+ "futures 0.3.34",
+ "gpui",
+ "language",
+ "lsp",
+ "project",
+ "serde_json",
+ "settings",
+ "task",
+ "tempfile",
+ "ui",
+ "util",
+ "workspace",
+ "zed_actions",
+]
+
+[[package]]
 name = "anes"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3542,15 +3579,19 @@ dependencies = [
  "command_palette_hooks",
  "db",
  "editor",
+ "futures 0.3.34",
  "fuzzy_nucleo",
  "go_to_line",
  "gpui",
  "language",
  "log",
+ "lsp",
  "menu",
  "picker",
+ "picker_preview",
  "postage",
  "project",
+ "schemars 1.0.4",
  "serde",
  "settings",
  "telemetry",
@@ -6707,6 +6748,7 @@ dependencies = [
  "async-std",
  "async-tar",
  "async-trait",
+ "async_zip",
  "collections",
  "dunce",
  "fs",
@@ -14140,6 +14182,7 @@ dependencies = [
  "prettier",
  "pretty_assertions",
  "project",
+ "quick-xml 0.41.0",
  "rand 0.9.4",
  "regex",
  "release_channel",
@@ -18680,6 +18723,7 @@ name = "title_bar"
 version = "0.1.0"
 dependencies = [
  "agent_settings",
+ "android_ui",
  "anyhow",
  "arrayvec",
  "auto_update",
@@ -22792,6 +22836,7 @@ dependencies = [
  "agent_settings",
  "agent_skills",
  "agent_ui",
+ "android_ui",
  "anyhow",
  "ashpd",
  "askpass",

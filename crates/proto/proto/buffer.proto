@@ -103,9 +103,16 @@ message BufferState {
   LineEnding line_ending = 5;
   repeated VectorClockEntry saved_version = 6;
   Timestamp saved_mtime = 8;
+  optional LanguageServerDocument language_server_document = 9;
 
   reserved 7;
   reserved 4;
+}
+
+message LanguageServerDocument {
+  string uri = 1;
+  uint64 server_id = 2;
+  string language = 3;
 }
 
 message BufferChunk {

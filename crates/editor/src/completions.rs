@@ -326,6 +326,7 @@ impl Editor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        let started = Instant::now();
         if self.pending_rename.is_some() {
             return;
         }
@@ -796,6 +797,7 @@ impl Editor {
                         }
 
                         cx.notify();
+                        Editor::trace_interaction_latency("completion", started, window);
                         return;
                     }
 
@@ -854,6 +856,39 @@ impl Editor {
     ) -> Option<Task<Result<()>>> {
         use language::ToOffset as _;
 
+        let expired_command = {
+            let menu = self.context_menu.borrow();
+            let Some(CodeContextMenu::Completions(menu)) = menu.as_ref() else {
+                return None;
+            };
+            let entries = menu.entries.borrow();
+            let candidate = entries
+                .get(item_ix.unwrap_or(menu.selected_item))?
+                .as_match()?
+                .candidate_id;
+            let completions = menu.completions.borrow();
+            let completion = completions.get(candidate)?;
+            completion.source.command_requires_current_session()
+                && (menu.id + 1 != self.next_completion_id
+                    || self.project().is_none_or(|project| {
+                        !project.read(cx).lsp_store().read(cx).completion_is_current(
+                            &menu.buffer,
+                            completion,
+                            cx,
+                        )
+                    }))
+        };
+        if expired_command {
+            cx.stop_propagation();
+            let newer_request_pending = self.context_menu.borrow().as_ref().is_some_and(|menu| {
+                matches!(menu, CodeContextMenu::Completions(menu) if menu.id + 1 != self.next_completion_id)
+            });
+            if !newer_request_pending {
+                self.open_or_update_completions_menu(None, None, false, window, cx);
+            }
+            return Some(Task::ready(Ok(())));
+        }
+
         let CodeContextMenu::Completions(completions_menu) = self.hide_context_menu(window, cx)?
         else {
             return None;
@@ -875,6 +910,7 @@ impl Editor {
             .get(candidate_id)?
             .clone();
         cx.stop_propagation();
+        let completion_id = completions_menu.id;
 
         let buffer_handle = completions_menu.buffer.clone();
         let multibuffer_snapshot = self.buffer.read(cx).snapshot(cx);
@@ -979,6 +1015,7 @@ impl Editor {
             text: new_text[common_prefix_len..].into(),
         });
 
+        let selections_before = self.selections.disjoint_anchors_arc();
         let tx_id = self.transact(window, cx, |editor, window, cx| {
             if let Some(mut snippet) = snippet {
                 snippet.text = new_text.to_string();
@@ -1028,6 +1065,7 @@ impl Editor {
             let CompletionSource::Lsp {
                 lsp_completion,
                 server_id,
+                completion_session,
                 ..
             } = &completion.source
             else {
@@ -1045,18 +1083,20 @@ impl Editor {
                         .map(|options| options.commands.as_slice())
                 })?;
             if available_commands.contains(&lsp_command.command) {
-                Some(CodeAction {
-                    server_id: *server_id,
-                    range: language::Anchor::min_min_range_for_buffer(buffer.remote_id()),
-                    lsp_action: LspAction::Command(lsp_command.clone()),
-                    resolved: false,
-                })
+                Some((
+                    CodeAction {
+                        server_id: *server_id,
+                        range: language::Anchor::min_min_range_for_buffer(buffer.remote_id()),
+                        lsp_action: LspAction::Command(lsp_command.clone()),
+                        resolved: false,
+                    },
+                    completion_session.clone(),
+                ))
             } else {
                 None
             }
         });
 
-        drop(completion);
         let apply_edits = provider.apply_additional_edits_for_completion(
             buffer_handle.clone(),
             completions_menu.completions.clone(),
@@ -1079,16 +1119,81 @@ impl Editor {
             .update(cx, |buffer, cx| buffer.finalize_last_transaction(cx));
 
         Some(cx.spawn_in(window, async move |editor, cx| {
-            let additional_edits_tx = apply_edits.await?;
+            let cancelled = |error: &anyhow::Error| {
+                error
+                    .downcast_ref::<lsp::ResponseError>()
+                    .is_some_and(|error| error.is_request_denied())
+            };
+            let additional_edits_tx = match apply_edits.await {
+                Ok(transaction) => transaction,
+                Err(error) if cancelled(&error) => return Ok(()),
+                Err(error) => return Err(error),
+            };
 
-            if let Some((lsp_store, command)) = lsp_store.zip(command) {
+            if let Some((lsp_store, (command, completion_session))) = lsp_store.zip(command) {
+                if completion.source.command_requires_current_session()
+                    && !editor.read_with(cx, |editor, cx| {
+                        editor.next_completion_id == completion_id + 1
+                            && lsp_store.read(cx).completion_is_current(
+                                &buffer_handle,
+                                &completion,
+                                cx,
+                            )
+                    })?
+                {
+                    return Ok(());
+                }
                 let title = command.lsp_action.title().to_owned();
                 let project_transaction = lsp_store
                     .update(cx, |lsp_store, cx| {
-                        lsp_store.apply_code_action(buffer_handle, command, false, cx)
+                        lsp_store.apply_completion_command(
+                            buffer_handle.clone(),
+                            command,
+                            completion_session,
+                            cx,
+                        )
                     })
                     .await
-                    .context("applying post-completion command")?;
+                    .context("applying post-completion command");
+                let project_transaction = match project_transaction {
+                    Ok(transaction) => transaction,
+                    Err(error) if cancelled(&error) => return Ok(()),
+                    Err(error) => return Err(error),
+                };
+                if let Some(command_transaction) = project_transaction.0.get(&buffer_handle) {
+                    editor.update(cx, |editor, cx| {
+                        let transaction_id = editor.buffer.update(cx, |buffer, cx| {
+                            let command_transaction_id = if buffer.is_singleton() {
+                                Some(command_transaction.id)
+                            } else {
+                                buffer.push_transaction(&project_transaction.0, cx);
+                                buffer.last_transaction_id(cx)
+                            }?;
+                            if let Some(transaction_id) = tx_id {
+                                buffer.merge_transactions(
+                                    command_transaction_id,
+                                    transaction_id,
+                                    cx,
+                                );
+                                Some(transaction_id)
+                            } else {
+                                Some(command_transaction_id)
+                            }
+                        });
+                        if let Some(transaction_id) = transaction_id {
+                            let selections_after = editor.selections.disjoint_anchors_arc();
+                            editor
+                                .selection_history
+                                .selections_by_transaction
+                                .entry(transaction_id)
+                                .or_insert(TransactionSelections {
+                                    undo: selections_before,
+                                    redo: None,
+                                })
+                                .redo = Some(selections_after);
+                        }
+                    })?;
+                }
                 if let Some(workspace) = editor.read_with(cx, |editor, _| editor.workspace())? {
                     Self::open_project_transaction(
                         &editor,
@@ -1405,6 +1510,7 @@ fn snippet_completions(
                         insert_range: None,
                         server_id: LanguageServerId(usize::MAX),
                         resolved: true,
+                        completion_session: None,
                         lsp_completion: Box::new(lsp::CompletionItem {
                             label: matching_prefix.clone(),
                             kind: Some(CompletionItemKind::SNIPPET),

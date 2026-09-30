@@ -11,6 +11,8 @@ members = [
     "crates/agent_skills",
     "crates/agent_ui",
     "crates/ai_onboarding",
+    "crates/android_tools",
+    "crates/android_ui",
     "crates/anthropic",
     "crates/askpass",
     "crates/assets",
@@ -274,6 +276,8 @@ publish = false
 edition = "2024"
 
 [workspace.dependencies]
+android_tools = { path = "crates/android_tools" }
+android_ui = { path = "crates/android_ui" }
 
 #
 # Workspace member crates

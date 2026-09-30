@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""Install checksum-pinned Google Compose rendering tools for the macOS ARM64 IDE."""
+
+import hashlib
+import os
+from pathlib import Path
+import platform
+import runpy
+import shutil
+import subprocess
+import tempfile
+import zipfile
+
+ARTIFACTS = [
+    ("compose-preview-renderer-alpha15.jar", "com/android/tools/compose/compose-preview-renderer/0.0.1-alpha15/compose-preview-renderer-0.0.1-alpha15.jar", "0f5ebdac5c0b4fa2bfe1528fcf8cf1aa86921311f30c67e183921551aaed93ba"),
+    ("layoutlib-16.2.4.jar", "com/android/tools/layoutlib/layoutlib/16.2.4/layoutlib-16.2.4.jar", "7ba5541db4c9e9c1104ce7e5d22bb3e738818e88d9bba86796bf16ff30a3b3eb"),
+    ("layoutlib-runtime-16.2.4-mac-arm.jar", "com/android/tools/layoutlib/layoutlib-runtime/16.2.4/layoutlib-runtime-16.2.4-mac-arm.jar", "0119fc087f58e363dd0a6df5b1c585f4d7bf0bbb1e5dd5129c2e3f324e244492"),
+    ("layoutlib-resources-16.2.4.jar", "com/android/tools/layoutlib/layoutlib-resources/16.2.4/layoutlib-resources-16.2.4.jar", "6cd14a88b4b00bca9b342a07d9be80c6c13399c31dd54c43ee2974aac4106d8d"),
+]
+
+
+def main():
+    if platform.system() != "Darwin" or platform.machine() != "arm64":
+        raise RuntimeError("This bootstrap currently supports Apple Silicon macOS")
+    bootstrap = runpy.run_path(str(Path(__file__).with_name("install-android-kotlin")))
+    dependencies = bootstrap["DEPENDENCIES"]
+    dependencies.mkdir(parents=True, exist_ok=True)
+    installation = dependencies / "compose-preview"
+    bridge = bootstrap["REPOSITORY"] / "crates/android_tools/src/PreviewBridge.java"
+    version = "alpha15-layoutlib16.2.4-" + hashlib.sha256(bridge.read_bytes()).hexdigest()
+    if installation.exists():
+        if installation.is_symlink() or (installation / ".revision").read_text().strip() != version:
+            raise RuntimeError(f"Preserving {installation}; move it aside before reinstalling")
+        if not (installation / "PreviewBridge.class").is_file():
+            raise RuntimeError("Incomplete preview installation; move it aside and retry")
+        print(f"Already installed: {installation}")
+        return
+    java_home = Path(os.environ.get("JAVA21_HOME", "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home"))
+    if not (java_home / "bin/javac").is_file():
+        raise RuntimeError("Install JDK 21 or set JAVA21_HOME before installing preview tools")
+    archives = [bootstrap["download"](name, "https://dl.google.com/dl/android/maven2/" + path, checksum)
+                for name, path, checksum in ARTIFACTS]
+    with tempfile.TemporaryDirectory(prefix="compose-preview-install-", dir=dependencies) as temporary:
+        distribution = Path(temporary) / "compose-preview"
+        distribution.mkdir()
+        shutil.copy2(archives[0], distribution / "renderer.jar")
+        shutil.copy2(archives[1], distribution / "layoutlib.jar")
+        with zipfile.ZipFile(archives[2]) as runtime:
+            runtime.extractall(distribution / "layoutlib")
+        shutil.copy2(archives[3], distribution / "layoutlib/data/framework_res.jar")
+        subprocess.run([str(java_home / "bin/javac"), "-cp", str(distribution / "renderer.jar"),
+                        "-d", str(distribution), str(bridge)], check=True)
+        (distribution / ".revision").write_text(version + "\n")
+        (distribution / "SOURCE.txt").write_text("Google Android tooling (Apache-2.0); preserve bundled notices.\n" +
+            "\n".join("https://dl.google.com/dl/android/maven2/" + path for _, path, _ in ARTIFACTS) + "\n")
+        distribution.rename(installation)
+    print(f"Installed: {installation}")
+    print("Relaunch script/android-ide to enable Compose preview")
+
+
+if __name__ == "__main__":
+    main()

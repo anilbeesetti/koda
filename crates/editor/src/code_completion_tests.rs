@@ -480,6 +480,7 @@ impl CompletionBuilder {
                 }),
                 lsp_defaults: None,
                 resolved: false,
+                completion_session: None,
             },
             icon_path: None,
             icon_color: None,

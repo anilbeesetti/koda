@@ -158,10 +158,13 @@ impl AvailableLanguages {
             })
             .or_else(|| {
                 self.0.iter().find(|language| {
-                    language
-                        .grammar
-                        .as_ref()
-                        .is_some_and(|grammar| grammar.to_lowercase() == modeline_name)
+                    language.grammar.as_ref().is_some_and(|grammar| {
+                        grammar.to_lowercase() == modeline_name
+                            || grammar
+                                .rsplit('/')
+                                .next()
+                                .is_some_and(|name| name.to_lowercase() == modeline_name)
+                    })
                 })
             })
             .or_else(|| {

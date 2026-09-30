@@ -1,0 +1,277 @@
+#!/usr/bin/env python3
+"""Install a pinned Kotlin server for the macOS Android IDE launcher."""
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import shutil
+import subprocess
+import tarfile
+import tempfile
+import urllib.request
+import zipfile
+
+REPOSITORY = Path(__file__).resolve().parent.parent
+DEPENDENCIES = REPOSITORY / "target/android-ide/dependencies"
+OFFICIAL_VERSION = "263.4702.0"
+OFFICIAL_REVISION = OFFICIAL_VERSION + "+android-5"
+OFFICIAL_SHA256 = "95da3fc6d3b9092c7616345044a05edb85e5408dc648d081e4e433595c892bec"
+OFFICIAL_ARCHIVE = f"kotlin-server-{OFFICIAL_VERSION}-aarch64.sit"
+OFFICIAL_URL = f"https://download.jetbrains.com/language-server/kotlin-server/{OFFICIAL_VERSION}/{OFFICIAL_ARCHIVE}"
+OFFICIAL_INSTALLATION = DEPENDENCIES / f"kotlin-lsp-{OFFICIAL_REVISION}"
+OFFICIAL_MODEL_MODULE = "plugins/kotlin.lsp/lib/modules/language-server.workspace-import.jar"
+OFFICIAL_JAVA_MODULE = "plugins/java-base.lsp/lib/modules/language-server.api.features.impl.java-base.jar"
+OFFICIAL_COMMON_MODULE = "lib/language-server.api.features.impl.common.jar"
+OFFICIAL_KOTLIN_MODULE = "plugins/kotlin.lsp/lib/modules/language-server.api.features.impl.kotlin.jar"
+OFFICIAL_FIR_MODULE = "plugins/kotlin/lib/intellij.libraries.kotlinc.low.level.api.fir.jar"
+OFFICIAL_FIR_PROVIDERS_MODULE = "plugins/kotlin/lib/intellij.libraries.kotlinc.kotlin.compiler.fir.jar"
+OFFICIAL_COMPLETION_API_MODULE = "plugins/kotlin/lib/intellij.libraries.kotlinc.analysis.api.k2.jar"
+OFFICIAL_COMPLETION_MODULE = "plugins/kotlin/lib/modules/intellij.kotlin.completion.impl.jar"
+OFFICIAL_PROTOCOL_MODULE = "lib/fleet.lsp.protocol.jar"
+
+
+def download(name, url, expected):
+    archive = DEPENDENCIES / name
+    if not archive.exists():
+        with tempfile.NamedTemporaryFile(dir=DEPENDENCIES, delete=False) as output:
+            temporary = Path(output.name)
+            try:
+                print(f"Downloading {name}", flush=True)
+                with urllib.request.urlopen(url, timeout=60) as response:
+                    shutil.copyfileobj(response, output)
+                output.flush()
+                with temporary.open("rb") as downloaded:
+                    if hashlib.file_digest(downloaded, "sha256").hexdigest() != expected:
+                        raise RuntimeError(f"Checksum mismatch for {name}")
+                temporary.replace(archive)
+            finally:
+                temporary.unlink(missing_ok=True)
+    with archive.open("rb") as source:
+        if hashlib.file_digest(source, "sha256").hexdigest() != expected:
+            raise RuntimeError(f"Checksum mismatch for {archive}; preserve it and retry with a clean download")
+    return archive
+
+
+def validate_official(installation):
+    distribution = installation / f"kotlin-server-{OFFICIAL_VERSION}"
+    product = json.loads((distribution / "product-info.json").read_text())
+    if product["buildNumber"] != OFFICIAL_VERSION or product["minRequiredJavaVersion"] != 25:
+        raise RuntimeError(f"Unexpected Kotlin LSP distribution in {installation}")
+    for executable in ("bin/intellij-server", "jbr/Contents/Home/bin/java"):
+        if not (distribution / executable).is_file() or not os.access(distribution / executable, os.X_OK):
+            raise RuntimeError(f"The Kotlin LSP installation is incomplete: {distribution / executable}")
+
+
+def validate_official_patch(installation):
+    server = installation / f"kotlin-server-{OFFICIAL_VERSION}"
+    manifest = json.loads((server / "zed-native-importer.json").read_text())
+    patch = Path(__file__).with_name("android-kotlin-official.patch")
+    compose = Path(__file__).with_name("android-kotlin-compose.kt")
+    navigation = Path(__file__).with_name("android-kotlin-navigation.kt")
+    module = server / "plugins/kotlin.lsp/lib/modules/language-server.workspace-import.gradle-plugin.jar"
+    feature = server / "plugins/kotlin.lsp/lib/modules/language-server.api.features.impl.kotlin.jar"
+    if (manifest["revision"] != OFFICIAL_REVISION or manifest["base_sha256"] != OFFICIAL_SHA256
+            or manifest["patch_sha256"] != hashlib.sha256(patch.read_bytes()).hexdigest()
+            or manifest["module_sha256"] != hashlib.sha256(module.read_bytes()).hexdigest()
+            or manifest.get("navigation_sha256") != hashlib.sha256(navigation.read_bytes()).hexdigest()
+            or manifest.get("compose_sha256") != hashlib.sha256(compose.read_bytes()).hexdigest()
+            or manifest.get("feature_sha256") != hashlib.sha256(feature.read_bytes()).hexdigest()):
+        raise RuntimeError(f"The native Kotlin importer or Compose patch has changed in {server}; preserve it and reinstall")
+    expected_modules = {name: hashlib.sha256((server / name).read_bytes()).hexdigest()
+                        for name in (OFFICIAL_MODEL_MODULE, OFFICIAL_JAVA_MODULE, OFFICIAL_COMMON_MODULE,
+                                     OFFICIAL_FIR_MODULE, OFFICIAL_FIR_PROVIDERS_MODULE,
+                                     OFFICIAL_COMPLETION_API_MODULE, OFFICIAL_COMPLETION_MODULE,
+                                     OFFICIAL_PROTOCOL_MODULE)}
+    if manifest.get("additional_modules") != expected_modules:
+        raise RuntimeError(f"The Kotlin project model or Java refactoring patch has changed in {server}; preserve it and reinstall")
+
+
+def replace_jar_entries(module, replacements):
+    patched = module.with_suffix(".jar.tmp")
+    with zipfile.ZipFile(module) as original, zipfile.ZipFile(patched, "w") as output:
+        for entry in original.infolist():
+            output.writestr(entry, replacements.pop(entry.filename, None) or original.read(entry.filename))
+        for name, content in sorted(replacements.items()):
+            output.writestr(name, content)
+    patched.replace(module)
+
+
+def patch_official(distribution, temporary):
+    archive = download(
+        f"kotlin-lsp-{OFFICIAL_VERSION}-source.tar.gz",
+        f"https://codeload.github.com/Kotlin/kotlin-lsp/tar.gz/refs/tags/kotlin-lsp/v{OFFICIAL_VERSION}",
+        "d44788a0649ca0ee68a7c37a1fc1225b690020670ce20d84cc999b0855539060",
+    )
+    source_parent = temporary / "source"
+    with tarfile.open(archive) as source_archive:
+        source_archive.extractall(source_parent, filter="data")
+    source, = source_parent.iterdir()
+    (source / "zed-completion").mkdir()
+    for repository, revision, path, checksum in (
+        ("JetBrains/kotlin", "7835533005e2359b3a9d5bb767337082e6f6bcbc",
+         "analysis/analysis-api-fir/src/org/jetbrains/kotlin/analysis/api/fir/components/KaFirCompletionCandidateChecker.kt",
+         "7518e9de59e4e8ffce0f1544034f6ff1a1fbb6255de380083a03480c7041d055"),
+        ("JetBrains/intellij-community", "f21a5eeb8c857a3cb23ba35e0cacf44769c86e16",
+         "plugins/kotlin/completion/impl-k2/src/org/jetbrains/kotlin/idea/completion/impl/k2/KotlinFirCompletionParameters.kt",
+         "913ca2f84f09b313851e209a784b692ecb139ffaf8c55cd4bee789df420d6267"),
+        ("JetBrains/intellij-community", "f21a5eeb8c857a3cb23ba35e0cacf44769c86e16",
+         "plugins/kotlin/completion/impl-k2/src/org/jetbrains/kotlin/idea/completion/impl/k2/K2CompletionRunner.kt",
+         "3554a0255e02bdcb7cde32d5e12f5c47aa1a1e4ebfef7f5312452abcdb567cbc"),
+    ):
+        name = Path(path).name
+        upstream = download(f"{revision}-{name}", f"https://raw.githubusercontent.com/{repository}/{revision}/{path}", checksum)
+        shutil.copy2(upstream, source / "zed-completion" / name)
+    patch = Path(__file__).with_name("android-kotlin-official.patch")
+    subprocess.run(["patch", "--batch", "-p1", "-i", str(patch.resolve())], cwd=source, check=True)
+    gradle_archive = download(
+        "gradle-9.6.1-bin.zip", "https://services.gradle.org/distributions/gradle-9.6.1-bin.zip",
+        "9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14",
+    )
+    with zipfile.ZipFile(gradle_archive) as archive:
+        archive.extractall(temporary)
+    gradle = temporary / "gradle-9.6.1"
+    compiler = []
+    for group, name, version, checksum in (
+        ("org.jetbrains.kotlin", "kotlin-compiler-embeddable", "2.4.20", "cf97161430683fb9af96dc6a7017ffae1fe8737b80d12eee11f2fe3e76f8ded8"),
+        ("org.jetbrains.kotlin", "kotlin-build-tools-api", "2.4.20", "47a622dce7231b1916334b69a00bc1094adf6577e6492f9f06b3d9c2450fe459"),
+        ("org.jetbrains.kotlin", "kotlin-stdlib", "2.4.20", "2226de463d309d4a5500a481320b3dea515a6981dcae1def531fbc158884e25f"),
+        ("org.jetbrains.kotlin", "kotlin-script-runtime", "2.4.20", "fc5a19df78be445d84e8352e0d01098a6a8181324aa50c6f7bf850338e81e1b4"),
+        ("org.jetbrains.kotlin", "kotlin-reflect", "1.6.10", "3277ac102ae17aad10a55abec75ff5696c8d109790396434b496e75087854203"),
+        ("org.jetbrains.kotlin", "kotlin-daemon-embeddable", "2.4.20", "eef72cf8f17e6d98d33e5b7c7e1cab31a1cf5fc34084dd5e563e7b1f3ef53435"),
+        ("org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm", "1.8.0", "9860906a1937490bf5f3b06d2f0e10ef451e65b95b269f22daf68a3d1f5065c5"),
+    ):
+        name_with_version = f"{name}-{version}.jar"
+        compiler.append(download(name_with_version,
+            f"https://repo.maven.apache.org/maven2/{group.replace('.', '/')}/{name}/{version}/{name_with_version}", checksum))
+    compiler.append(gradle / "lib/annotations-24.0.1.jar")
+    java_home = Path(os.environ.get("JAVA21_HOME") or subprocess.check_output(
+        ["/usr/libexec/java_home", "-v", "21"], text=True).strip())
+    module_path = "plugins/kotlin.lsp/lib/modules/language-server.workspace-import.gradle-plugin.jar"
+    server = distribution / f"kotlin-server-{OFFICIAL_VERSION}"
+    module = server / module_path
+    classes = temporary / "classes"
+    classes.mkdir()
+    classpath = os.pathsep.join(map(str, [classes, module, server / "plugins/kotlin/lib/intellij.libraries.kotlin.tooling.core.jar", *sorted(gradle.rglob("*.jar"))]))
+    builder = source / "workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder"
+    subprocess.run([
+        str(java_home / "bin/java"), "-cp", os.pathsep.join(map(str, compiler)),
+        "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler", "-no-stdlib", "-no-reflect", "-jvm-target", "1.8",
+        "-module-name", "language-server.workspace-import.gradle-plugin", f"-Xfriend-paths={module}",
+        "-classpath", classpath, "-d", str(classes), str(builder / "android/androidUtils.kt"),
+        str(builder / "android/collectAndroidVariants.kt"), str(builder / "android/resolveRJar.kt"),
+    ], check=True)
+    subprocess.run([str(java_home / "bin/javac"), "--release", "8", "-classpath", classpath,
+                    "-d", str(classes), str(builder / "ExternalModuleDependencySetModuleBuilder.java")], check=True)
+    replacements = {path.relative_to(classes).as_posix(): path.read_bytes() for path in classes.rglob("*.class")}
+    # Keep the original Kotlin module metadata; the patch replaces only selected source files.
+    replace_jar_entries(module, replacements)
+    navigation = Path(__file__).with_name("android-kotlin-navigation.kt")
+    additional_modules = {}
+    for module_name, source_names in (
+        (OFFICIAL_MODEL_MODULE, ["workspace-import/src/com/jetbrains/ls/imports/gradle/SourceSetDependencyResolver.kt",
+                                 "workspace-import/src/com/jetbrains/ls/imports/gradle/GradleWorkspaceImporter.kt"]),
+        (OFFICIAL_JAVA_MODULE, ["features-impl/java-base/src/com/jetbrains/ls/api/features/impl/javaBase/LSJavaBaseLanguageConfiguration.kt"]),
+        (OFFICIAL_COMMON_MODULE, ["features-impl/common/src/com/jetbrains/ls/api/features/impl/common/processors/LSRenameProcessor.kt"]),
+        (OFFICIAL_KOTLIN_MODULE, ["features-impl/kotlin/src/com/jetbrains/ls/api/features/impl/kotlin/apiImpl/LLFirSessionCacheStorageComponent.kt",
+                                  "features-impl/kotlin/src/com/jetbrains/ls/api/features/impl/kotlin/configuration/LSKotlinLanguageConfiguration.kt",
+                                  str(navigation.resolve())]),
+        (OFFICIAL_FIR_MODULE, ["zed-completion/LLFirSoftLazyValue.kt"]),
+        (OFFICIAL_FIR_PROVIDERS_MODULE, ["zed-completion/FirCompositeSymbolProvider.kt"]),
+        (OFFICIAL_COMPLETION_API_MODULE, ["zed-completion/KaFirCompletionCandidateChecker.kt"]),
+        (OFFICIAL_COMPLETION_MODULE, ["zed-completion/KotlinFirCompletionParameters.kt", "zed-completion/K2CompletionRunner.kt"]),
+        (OFFICIAL_PROTOCOL_MODULE, ["zed-completion/LSP.kt"]),
+    ):
+        patched_module = server / module_name
+        module_classes = temporary / (patched_module.stem + "-classes")
+        module_classes.mkdir()
+        subprocess.run([
+            str(java_home / "bin/java"), "-Xmx768m", "-cp", os.pathsep.join(map(str, compiler)),
+            "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler", "-no-stdlib", "-no-reflect", "-jvm-target",
+            "25" if module_name == OFFICIAL_COMPLETION_MODULE else "21",
+            "-Xcontext-parameters", f"-Xfriend-paths={patched_module}",
+            "-classpath", os.pathsep.join(map(str, sorted(server.rglob("*.jar")))),
+            "-d", str(module_classes), *(str(source / name) for name in source_names),
+        ], check=True)
+        replace_jar_entries(patched_module, {path.relative_to(module_classes).as_posix(): path.read_bytes()
+                                             for path in module_classes.rglob("*.class")})
+        if module_name != OFFICIAL_KOTLIN_MODULE:
+            additional_modules[module_name] = hashlib.sha256(patched_module.read_bytes()).hexdigest()
+    compose = Path(__file__).with_name("android-kotlin-compose.kt")
+    compose_classes = temporary / "compose-classes"
+    compose_classes.mkdir()
+    subprocess.run([
+        str(java_home / "bin/java"), "-Xmx768m", "-cp", os.pathsep.join(map(str, compiler)),
+        "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler", "-no-stdlib", "-no-reflect", "-jvm-target", "21",
+        # The semantic named-argument marker is Kotlin-internal in this pinned runtime.
+        f"-Xfriend-paths={server / 'plugins/kotlin/lib/modules/intellij.kotlin.completion.impl.jar'}",
+        "-classpath", os.pathsep.join(map(str, sorted(server.rglob("*.jar")))),
+        "-d", str(compose_classes), str(compose),
+    ], check=True)
+    feature_path = "plugins/kotlin.lsp/lib/modules/language-server.api.features.impl.kotlin.jar"
+    feature = server / feature_path
+    descriptor_path = "META-INF/language-server/features/kotlin/completion.xml"
+    with zipfile.ZipFile(feature) as archive:
+        descriptor = archive.read(descriptor_path)
+    if descriptor.count(b"</extensions>") != 1:
+        raise RuntimeError("Unexpected pinned Kotlin completion descriptor")
+    descriptor = descriptor.replace(b"</extensions>", b'''<lang.inspectionSuppressor language="kotlin" implementationClass="dev.zed.kotlin.compose.ComposeSuppressor" />
+    <completion.contributor language="kotlin" id="ComposeCompletionContributor" order="first, before KotlinCompletionContributor" implementationClass="dev.zed.kotlin.compose.ComposeCompletionContributor" />
+  </extensions>''')
+    replacements = {path.relative_to(compose_classes).as_posix(): path.read_bytes()
+                    for path in compose_classes.rglob("*.class")}
+    replacements[descriptor_path] = descriptor
+    replace_jar_entries(feature, replacements)
+    (server / "zed-native-importer.json").write_text(json.dumps({
+        "revision": OFFICIAL_REVISION, "base_sha256": OFFICIAL_SHA256,
+        "patch_sha256": hashlib.sha256(patch.read_bytes()).hexdigest(),
+        "module": module_path, "module_sha256": hashlib.sha256(module.read_bytes()).hexdigest(),
+        "navigation_sha256": hashlib.sha256(navigation.read_bytes()).hexdigest(),
+        "compose_sha256": hashlib.sha256(compose.read_bytes()).hexdigest(),
+        "feature": feature_path, "feature_sha256": hashlib.sha256(feature.read_bytes()).hexdigest(),
+        "additional_modules": additional_modules,
+    }, indent=2) + "\n")
+    shutil.copy2(source / "LICENSE.txt", server / "zed-native-importer-LICENSE.txt")
+
+
+def install_official():
+    if OFFICIAL_INSTALLATION.exists() or OFFICIAL_INSTALLATION.is_symlink():
+        marker = OFFICIAL_INSTALLATION / ".sha256"
+        if OFFICIAL_INSTALLATION.is_symlink() or not marker.is_file() or marker.read_text().strip() != OFFICIAL_SHA256:
+            raise RuntimeError(f"Preserving the existing installation at {OFFICIAL_INSTALLATION}; move it aside first")
+        validate_official(OFFICIAL_INSTALLATION)
+        validate_official_patch(OFFICIAL_INSTALLATION)
+        print(f"Already installed: {OFFICIAL_INSTALLATION}")
+        return
+    archive = download(OFFICIAL_ARCHIVE, OFFICIAL_URL, OFFICIAL_SHA256)
+    with tempfile.TemporaryDirectory(prefix="kotlin-official-", dir=DEPENDENCIES) as temporary:
+        distribution = Path(temporary) / "distribution"
+        # JetBrains' macOS .sit is a ZIP; ditto preserves its executable modes and runtime links.
+        subprocess.run(["/usr/bin/ditto", "-x", "-k", str(archive), str(distribution)], check=True)
+        validate_official(distribution)
+        patch_official(distribution, Path(temporary))
+        validate_official_patch(distribution)
+        (distribution / ".sha256").write_text(OFFICIAL_SHA256 + "\n")
+        (distribution / "SOURCE.txt").write_text(OFFICIAL_URL + "\nSHA-256: " + OFFICIAL_SHA256 + "\nPatch: script/android-kotlin-official.patch\nCompose: script/android-kotlin-compose.kt\nNavigation: script/android-kotlin-navigation.kt\nRevision: " + OFFICIAL_REVISION + "\n")
+        distribution.rename(OFFICIAL_INSTALLATION)
+    print(f"Installed official Kotlin LSP {OFFICIAL_REVISION}: {OFFICIAL_INSTALLATION}")
+    print("Relaunch script/android-ide, then run Android: Configure Kotlin.")
+    print("The server uses its bundled Java 25 runtime; Android Gradle setup still uses project JDK 21.")
+
+
+def main():
+    if platform.system() != "Darwin" or platform.machine() != "arm64":
+        raise RuntimeError("This bootstrap currently supports Apple Silicon macOS")
+    DEPENDENCIES.mkdir(parents=True, exist_ok=True)
+    install_official()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--backend", choices=("official",), default="official",
+                        help="Compatibility option; the official Kotlin server is always installed")
+    parser.parse_args()
+    main()
+

@@ -1,5 +1,6 @@
 mod command_palette_settings;
 mod persistence;
+mod search_everywhere;
 
 use std::{
     cmp::{self, Reverse},
@@ -38,6 +39,7 @@ actions!(command_palette, [RemoveSelected]);
 pub fn init(cx: &mut App) {
     CommandPaletteSettings::register(cx);
     command_palette_hooks::init(cx);
+    search_everywhere::init(cx);
     cx.observe_new(CommandPalette::register).detach();
 }
 

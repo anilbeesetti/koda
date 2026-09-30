@@ -2888,6 +2888,12 @@ impl Window {
         self.platform_window.set_traffic_light_position(position);
     }
 
+    /// Centers the native macOS window buttons within the custom title bar.
+    #[cfg(target_os = "macos")]
+    pub fn center_traffic_lights(&self, titlebar_height: Pixels) {
+        self.platform_window.center_traffic_lights(titlebar_height);
+    }
+
     /// Sets the application identifier.
     pub fn set_app_id(&mut self, app_id: &str) {
         self.platform_window.set_app_id(app_id);

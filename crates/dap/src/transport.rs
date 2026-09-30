@@ -111,12 +111,14 @@ impl PendingRequests {
         }
     }
 
-    fn flush(&mut self, e: anyhow::Error) {
-        let Some(inner) = self.inner.as_mut() else {
+    fn close(&mut self, e: anyhow::Error) {
+        let Some(inner) = self.inner.take() else {
             return;
         };
-        for (_, sender) in inner.drain() {
-            sender.send(Err(e.cloned())).ok();
+        for (_, sender) in inner {
+            if sender.send(Err(e.cloned())).is_err() {
+                log::trace!("Discarded shutdown response for a cancelled debugger request");
+            }
         }
     }
 
@@ -143,14 +145,13 @@ impl PendingRequests {
     }
 
     pub(crate) fn shutdown(&mut self) {
-        self.flush(anyhow!("transport shutdown"));
-        self.inner = None;
+        self.close(anyhow!("transport shutdown"));
     }
 }
 
 pub(crate) struct TransportDelegate {
     log_handlers: LogHandlers,
-    pub(crate) pending_requests: Arc<Mutex<PendingRequests>>,
+    pub(crate) pending_requests: Mutex<Arc<Mutex<PendingRequests>>>,
     pub(crate) transport: Mutex<Box<dyn Transport>>,
     pub(crate) server_tx: smol::lock::Mutex<Option<Sender<Message>>>,
     tasks: Mutex<Vec<Task<()>>>,
@@ -164,7 +165,7 @@ impl TransportDelegate {
             transport: Mutex::new(transport),
             log_handlers,
             server_tx: Default::default(),
-            pending_requests: Arc::new(Mutex::new(PendingRequests::new())),
+            pending_requests: Mutex::new(Arc::new(Mutex::new(PendingRequests::new()))),
             tasks: Default::default(),
         })
     }
@@ -176,6 +177,7 @@ impl TransportDelegate {
     ) -> Result<()> {
         let (server_tx, client_rx) = unbounded::<Message>();
         self.tasks.lock().clear();
+        self.pending_requests.lock().lock().shutdown();
 
         let log_dap_communications =
             cx.update(|cx| DebuggerSettings::get_global(cx).log_dap_communications);
@@ -189,7 +191,10 @@ impl TransportDelegate {
             None
         };
 
-        let pending_requests = self.pending_requests.clone();
+        // Old I/O tasks must not close the request map of a replacement TCP connection.
+        let pending_requests = Arc::new(Mutex::new(PendingRequests::new()));
+        *self.pending_requests.lock() = pending_requests.clone();
+        let input_pending_requests = pending_requests.clone();
         let output_log_handler = log_handler.clone();
         {
             let mut tasks = self.tasks.lock();
@@ -205,10 +210,10 @@ impl TransportDelegate {
                     Ok(()) => {
                         pending_requests
                             .lock()
-                            .flush(anyhow!("debugger shutdown unexpectedly"));
+                            .close(anyhow!("debugger shutdown unexpectedly"));
                     }
                     Err(e) => {
-                        pending_requests.lock().flush(e);
+                        pending_requests.lock().close(e);
                     }
                 }
             }));
@@ -216,7 +221,10 @@ impl TransportDelegate {
             tasks.push(cx.background_spawn(async move {
                 match Self::send_to_server(input, client_rx, log_handler).await {
                     Ok(()) => {}
-                    Err(e) => log::error!("Error handling debugger input: {e}"),
+                    Err(e) => {
+                        log::error!("Error handling debugger input: {e}");
+                        input_pending_requests.lock().close(e);
+                    }
                 }
             }));
         }

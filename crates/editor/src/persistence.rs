@@ -23,11 +23,12 @@ pub(crate) struct SerializedEditor {
     pub(crate) contents: Option<String>,
     pub(crate) language: Option<String>,
     pub(crate) mtime: Option<MTime>,
+    pub(crate) language_server_document: Option<project::lsp_store::LanguageServerDocumentLocation>,
 }
 
 impl StaticColumnCount for SerializedEditor {
     fn column_count() -> usize {
-        6
+        7
     }
 }
 
@@ -57,7 +58,14 @@ impl Bind for SerializedEditor {
                 statement.bind::<Option<i32>>(&None, start_index)?
             }
         };
-        Ok(start_index)
+        statement.bind(
+            &self
+                .language_server_document
+                .as_ref()
+                .map(serde_json::to_string)
+                .transpose()?,
+            start_index,
+        )
     }
 }
 
@@ -76,11 +84,17 @@ impl Column for SerializedEditor {
         let (mtime_nanos, start_index): (Option<i32>, i32) =
             Column::column(statement, start_index)?;
 
+        let (language_server_document, start_index): (Option<String>, i32) =
+            Column::column(statement, start_index)?;
+        let language_server_document = language_server_document
+            .map(|value| serde_json::from_str(&value))
+            .transpose()?;
         let mtime = mtime_seconds
             .zip(mtime_nanos)
             .map(|(seconds, nanos)| MTime::from_seconds_and_nanos(seconds as u64, nanos as u32));
 
         let editor = Self {
+            language_server_document,
             abs_path,
             contents,
             language,
@@ -223,6 +237,7 @@ impl Domain for EditorDb {
                 PRIMARY KEY(workspace_id, path, start)
             );
         ),
+        sql!(ALTER TABLE editors ADD COLUMN language_server_document TEXT;),
     ];
 }
 
@@ -236,7 +251,7 @@ const MAX_QUERY_PLACEHOLDERS: usize = 32000;
 impl EditorDb {
     query! {
         pub fn get_serialized_editor(item_id: ItemId, workspace_id: WorkspaceId) -> Result<Option<SerializedEditor>> {
-            SELECT path, buffer_path, contents, language, mtime_seconds, mtime_nanos FROM editors
+            SELECT path, buffer_path, contents, language, mtime_seconds, mtime_nanos, language_server_document FROM editors
             WHERE item_id = ? AND workspace_id = ?
         }
     }
@@ -244,9 +259,9 @@ impl EditorDb {
     query! {
         pub async fn save_serialized_editor(item_id: ItemId, workspace_id: WorkspaceId, serialized_editor: SerializedEditor) -> Result<()> {
             INSERT INTO editors
-                (item_id, workspace_id, path, buffer_path, contents, language, mtime_seconds, mtime_nanos)
+                (item_id, workspace_id, path, buffer_path, contents, language, mtime_seconds, mtime_nanos, language_server_document)
             VALUES
-                (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+                (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
             ON CONFLICT DO UPDATE SET
                 item_id = ?1,
                 workspace_id = ?2,
@@ -255,7 +270,8 @@ impl EditorDb {
                 contents = ?5,
                 language = ?6,
                 mtime_seconds = ?7,
-                mtime_nanos = ?8
+                mtime_nanos = ?8,
+                language_server_document = ?9
         }
     }
 
@@ -421,6 +437,7 @@ mod tests {
         let editor_db = cx.update(|cx| EditorDb::global(cx));
 
         let serialized_editor = SerializedEditor {
+            language_server_document: None,
             abs_path: Some(PathBuf::from("testing.txt")),
             contents: None,
             language: None,
@@ -440,6 +457,7 @@ mod tests {
 
         // Now update contents and language
         let serialized_editor = SerializedEditor {
+            language_server_document: None,
             abs_path: Some(PathBuf::from("testing.txt")),
             contents: Some("Test".to_owned()),
             language: Some("Go".to_owned()),
@@ -459,6 +477,7 @@ mod tests {
 
         // Now set all the fields to NULL
         let serialized_editor = SerializedEditor {
+            language_server_document: None,
             abs_path: None,
             contents: None,
             language: None,
@@ -478,6 +497,7 @@ mod tests {
 
         // Storing and retrieving mtime
         let serialized_editor = SerializedEditor {
+            language_server_document: None,
             abs_path: None,
             contents: None,
             language: None,

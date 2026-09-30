@@ -1,0 +1,666 @@
+--- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/androidUtils.kt
++++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/androidUtils.kt
+@@ -2,30 +2,77 @@
+ package com.jetbrains.ls.imports.gradle.model.builder.android
+ 
+ import com.jetbrains.ls.imports.gradle.utils.AndroidVariantReflection
++import org.gradle.api.GradleException
+ import org.gradle.api.Project
++import org.gradle.api.Task
++import org.gradle.api.artifacts.Configuration
++import org.gradle.api.artifacts.component.ProjectComponentIdentifier
++import org.gradle.api.artifacts.result.ResolvedDependencyResult
+ 
+ const val SELECTED_ANDROID_VARIANT_KEY: String = "lsp.android.variant"
+ const val SELECTED_ANDROID_VARIANT_ENV_KEY: String = "LSP_ANDROID_VARIANT"
+ 
+-/**
+- * Android's buildType and flavors will form a matrix of 'variants' (e.g. debug, release, debugPaidGermany, ...)
+- * Resolving sources, however, requires selecting one 'active' variant.
+- *
+- */
+-internal fun Iterable<AndroidVariantReflection>.selectActiveVariant(): AndroidVariantReflection? {
+-    val selected = firstOrNull { variant ->
+-        val selectedVariant = variant.project.providers.gradleProperty(SELECTED_ANDROID_VARIANT_KEY)
+-            .orElse(variant.project.providers.systemProperty(SELECTED_ANDROID_VARIANT_KEY))
+-            .orElse(variant.project.providers.environmentVariable(SELECTED_ANDROID_VARIANT_ENV_KEY))
+-            .orNull
++private fun Project.selection(key: String, environment: String): String? =
++    providers.gradleProperty(key).orElse(providers.systemProperty(key))
++        .orElse(providers.environmentVariable(environment)).orNull
+ 
+-        selectedVariant != null && variant.name == selectedVariant
++internal fun Iterable<AndroidVariantReflection>.selectActiveVariant(): AndroidVariantReflection? {
++    val variants = toList()
++    val project = variants.firstOrNull()?.project ?: return null
++    val selectedName = project.selection(SELECTED_ANDROID_VARIANT_KEY, SELECTED_ANDROID_VARIANT_ENV_KEY)
++    val selectedModule = project.selection("lsp.android.module", "LSP_ANDROID_MODULE")
++    val selectedProject = selectedModule?.let { module ->
++        project.rootProject.findProject(module)
++            ?: throw GradleException("The selected Android module $module does not exist")
+     }
++    if (selectedProject != null && selectedName != null) {
++        val selectedVariant = selectedProject.androidVariants.orEmpty().singleOrNull { it.name == selectedName }
++            ?: throw GradleException("Android variant $selectedName does not exist in ${selectedProject.path}")
++        if (project == selectedProject) return selectedVariant
++        val resolvedVariants = selectedVariant.compileConfiguration?.incoming?.resolutionResult?.allDependencies.orEmpty()
++            .filterIsInstance<ResolvedDependencyResult>()
++            .filter { (it.selected.id as? ProjectComponentIdentifier)?.buildTreePath == project.buildTreePath }
++            .map { it.resolvedVariant.attributes }
++        val selectedVariants = resolvedVariants.map { attributes ->
++            val variantAttributes = attributes.keySet().filter {
++                it.name == "com.android.build.api.attributes.BuildTypeAttr" ||
++                    it.name.startsWith("com.android.build.api.attributes.ProductFlavor:")
++            }
++            variants.singleOrNull { candidate ->
++                val candidateAttributes = candidate.compileConfiguration?.attributes
++                variantAttributes.isNotEmpty() && variantAttributes.all { attribute ->
++                    val candidateAttribute = candidateAttributes?.keySet()?.singleOrNull { it.name == attribute.name }
++                    candidateAttribute != null && candidateAttributes.getAttribute(candidateAttribute)?.toString() == attributes.getAttribute(attribute)?.toString()
++                }
++            } ?: throw GradleException("Cannot map Gradle's selected attributes $attributes to an Android variant of ${project.path}")
++        }.distinct()
++        if (selectedVariants.size > 1) {
++            throw GradleException("The selected Android module requires multiple variants of ${project.path}; one active variant cannot represent this graph")
++        }
++        selectedVariants.singleOrNull()?.let { return it }
++    }
++    return variants.firstOrNull { it.name == selectedName }
++        ?: variants.sortedBy { if ("debug" in it.name.orEmpty()) 0 else 1 }.minByOrNull { it.name?.length ?: 0 }
++}
+ 
+-    return selected ?: sortedBy { if ("debug" in it.name.orEmpty()) 0 else 1 }.minByOrNull { it.name?.length ?: 0 }
++fun Project.selectedAndroidConfigurations(): List<Configuration> {
++    val variant = androidVariants?.selectActiveVariant() ?: return emptyList()
++    return (listOfNotNull(variant.compileConfiguration) +
++        variant.nestedComponents.orEmpty().mapNotNull { it.compileConfiguration }).distinct()
+ }
+ 
++fun Project.selectedAndroidGenerationTasks(): List<Task> {
++    val variant = androidVariants?.selectActiveVariant() ?: return emptyList()
++    val names = (listOfNotNull(variant.name) + variant.nestedComponents.orEmpty().mapNotNull { it.name }).toSet()
++    val generators = setOf("com.android.build.gradle.internal.res.GenerateLibraryRFileTask", "com.android.build.gradle.tasks.GenerateBuildConfig")
++    return tasks.filter { task ->
++        task.hasProperty("variantName") && task.property("variantName") in names &&
++            generateSequence<Class<*>>(task.javaClass) { it.superclass }.any { it.name in generators }
++    }
++}
++
+ fun Project.isAndroidProject(): Boolean {
+     return pluginManager.hasPlugin("com.android.application") ||
+-            pluginManager.hasPlugin("com.android.library")
++        pluginManager.hasPlugin("com.android.library") ||
++        pluginManager.hasPlugin("com.android.dynamic-feature")
+ }
+--- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/collectAndroidVariants.kt
++++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/collectAndroidVariants.kt
+@@ -43,6 +43,10 @@
+         project.plugins.withId("com.android.library") {
+             project.collectAndroidVariants()
+         }
++
++        project.plugins.withId("com.android.dynamic-feature") {
++            project.collectAndroidVariants()
++        }
+     }
+ }
+ 
+--- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/ExternalModuleDependencySetModuleBuilder.java
++++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/ExternalModuleDependencySetModuleBuilder.java
+@@ -38,7 +38,6 @@
+ import java.util.Map;
+ import java.util.Set;
+ import java.util.function.Consumer;
+-import java.util.stream.Collectors;
+ 
+ @SuppressWarnings("IO_FILE_USAGE")
+ public final class ExternalModuleDependencySetModuleBuilder implements ToolingModelBuilder {
+@@ -59,9 +58,16 @@
+ 
+     @Override
+     public @Nullable Object buildAll(@NotNull String modelName, @NotNull Project project) {
+-        /* Generically resolving dependencies in Android Projects is not allowed */
+-        if(AndroidUtilsKt.isAndroidProject(project)) {
+-            return null;
++        if (AndroidUtilsKt.isAndroidProject(project)) {
++            Set<ExternalModuleDependency> result = new HashSet<>();
++            boolean downloadSources = modelName.equals(ExternalModuleFullDependencySet.class.getCanonicalName());
++            for (Configuration configuration : AndroidUtilsKt.selectedAndroidConfigurations(project)) {
++                result.addAll(joinSourcesAndBinaries(
++                        resolveConfiguration(configuration),
++                        downloadSources ? resolveConfigurationSources(project, configuration) : Collections.emptySet()
++                ));
++            }
++            return new ExternalModuleDependencySetImpl(result);
+         }
+ 
+         ExtensionContainer extensions = project.getExtensions();
+@@ -102,21 +108,18 @@
+             @NotNull Set<@NotNull ResolvedArtifactResult> binaries,
+             @NotNull Set<@NotNull ResolvedArtifactResult> sources
+     ) {
+-        Map<String, File> artifactSources = new HashMap<>();
++        Map<String, Set<File>> artifactSources = new HashMap<>();
+         for (ResolvedArtifactResult source : sources) {
+-            artifactSources.put(getArtifactId(source), source.getFile());
++            artifactSources.computeIfAbsent(getArtifactId(source), ignored -> new HashSet<>()).add(source.getFile());
+         }
+-        return binaries.stream()
+-                .map(it -> {
+-                    String id = getArtifactId(it);
+-                    File sourceFile = artifactSources.get(id);
+-                    return new ExternalModuleDependencyImpl(
+-                            getArtifactMavenCoordinates(it),
+-                            it.getFile(),
+-                            sourceFile
+-                    );
+-                })
+-                .collect(Collectors.toSet());
++        Set<ExternalModuleDependency> result = new HashSet<>();
++        for (ResolvedArtifactResult binary : binaries) {
++            // A selected component can publish several source archives (AndroidX also publishes samples).
++            for (File source : artifactSources.getOrDefault(getArtifactId(binary), Collections.singleton(null))) {
++                result.add(new ExternalModuleDependencyImpl(getArtifactMavenCoordinates(binary), binary.getFile(), source));
++            }
++        }
++        return result;
+     }
+ 
+     private static @NotNull Set<@NotNull ResolvedArtifactResult> resolveConfiguration(@NotNull Configuration configuration) {
+--- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/resolveRJar.kt
++++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/resolveRJar.kt
+@@ -16,12 +16,15 @@
+ @Suppress("UNCHECKED_CAST")
+ internal fun AndroidVariantReflection.resolveRClassJar(): RegularFileProperty? {
+     val androidClassLoader = reflected.instance.javaClass.classLoader
+-    val taskClassName = "com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask"
+-    val taskClass = runCatching { androidClassLoader.loadClass(taskClassName) }.getOrNull() ?: return null
+-    taskClass as Class<Task>
+-    return project.tasks.withType(taskClass).map { LinkApplicationAndroidResourcesTaskReflection(project, it.reflected) }
+-        .firstOrNull { task -> task.variantName != null && task.variantName == this@resolveRClassJar.name }
+-        ?.rClassOutputJar
++    // AGP's compile R jar is available without linking the application or compiling its dependencies.
++    for (taskClassName in listOf("com.android.build.gradle.internal.res.GenerateLibraryRFileTask", "com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask")) {
++        val taskClass = runCatching { androidClassLoader.loadClass(taskClassName) as Class<Task> }.getOrNull() ?: continue
++        val jar = project.tasks.withType(taskClass).map { LinkApplicationAndroidResourcesTaskReflection(project, it.reflected) }
++            .firstOrNull { task -> task.variantName != null && task.variantName == this@resolveRClassJar.name }
++            ?.rClassOutputJar
++        if (jar != null) return jar
++    }
++    return null
+ }
+ 
+ private class LinkApplicationAndroidResourcesTaskReflection(val project: Project, val reflected: Reflected.Instance) {
+--- a/workspace-import/src/com/jetbrains/ls/imports/gradle/SourceSetDependencyResolver.kt
++++ b/workspace-import/src/com/jetbrains/ls/imports/gradle/SourceSetDependencyResolver.kt
+@@ -148 +148,2 @@
+-            moduleDependencies.forEach { dependency ->
++            // Gradle returns a set; unstable source-archive order otherwise invalidates an unchanged model.
++            moduleDependencies.sortedWith(compareBy({ it.file.path }, { it.sources?.path })).forEach { dependency ->
+@@ -168 +169,3 @@
+-                val libraryName = dependency.libraryName()
++                val libraryName = dependency.libraryName().let { name ->
++                    if (dependency.group == "android" && dependency.name == "r") "$name:${module.name}.${androidProject.activeVariant}" else name
++                }
+@@ -194,0 +198 @@
++                    artifacts += artifactFile
+@@ -259 +263 @@
+-private fun AndroidDependency.Library.libraryName(): String = "Gradle: $group:$name:$version"
+\ No newline at end of file
++private fun AndroidDependency.Library.libraryName(): String = "Gradle: $group:$name:$version"
+--- a/features-impl/java-base/src/com/jetbrains/ls/api/features/impl/javaBase/LSJavaBaseLanguageConfiguration.kt
++++ b/features-impl/java-base/src/com/jetbrains/ls/api/features/impl/javaBase/LSJavaBaseLanguageConfiguration.kt
+@@ -2,20 +2,29 @@
+ package com.jetbrains.ls.api.features.impl.javaBase
+ 
+ import com.intellij.psi.PsiElement
++import com.intellij.psi.PsiFile
++import com.intellij.psi.PsiClassOwner
+ import com.jetbrains.analyzer.java.javaPlugin
+ import com.jetbrains.ls.api.core.util.scheme
+ import com.jetbrains.ls.api.core.util.uri
+ import com.jetbrains.ls.api.features.impl.common.definitions.LSCommonDefinitionProvider
++import com.jetbrains.ls.api.features.impl.common.references.LSCommonReferencesProvider
++import com.jetbrains.ls.api.features.impl.common.rename.LSRenameProviderBase
+ import com.jetbrains.ls.api.core.util.TargetKind
+ import com.jetbrains.ls.api.features.language.LSConfigurationPiece
+ import com.jetbrains.lsp.protocol.URI
+ 
+ val LSJavaBaseLanguageConfiguration: LSConfigurationPiece = LSConfigurationPiece(
+     entries = listOf(
++        LSCommonReferencesProvider(setOf(LSJavaLanguage), TargetKind.ALL),
++        object : LSRenameProviderBase(setOf(LSJavaLanguage)) {
++            override fun getTargetClass(psiFile: PsiFile, name: String): PsiElement? =
++                (psiFile as? PsiClassOwner)?.classes?.firstOrNull { it.name == name }
++        },
+         // entries Kotlin for inlay hints to work
+         // they require hover and definition requests to work on the declaration site to have some interactivity on inlays with classes from java
+-        LSCommonDefinitionProvider(setOf(LSJavaLanguage), setOf(TargetKind.DECLARATION)),
+-        LSJavaPackageDefinitionProvider(setOf(LSJavaLanguage), setOf(TargetKind.DECLARATION)),
++        LSCommonDefinitionProvider(setOf(LSJavaLanguage), TargetKind.ALL),
++        LSJavaPackageDefinitionProvider(setOf(LSJavaLanguage), TargetKind.ALL),
+         object : LSJavaHoverProvider() {
+             override fun acceptTarget(target: PsiElement): Boolean {
+                 // if a user has some java support installed, then the hover results will be duplicated
+--- a/workspace-import/src/com/jetbrains/ls/imports/gradle/GradleWorkspaceImporter.kt
++++ b/workspace-import/src/com/jetbrains/ls/imports/gradle/GradleWorkspaceImporter.kt
+@@ -5,6 +5,12 @@
+ 
+ import com.intellij.openapi.diagnostic.logger
+ import com.intellij.openapi.project.Project
++import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
++import com.intellij.java.workspace.entities.javaSourceRoots
++import com.intellij.platform.workspace.jps.entities.SourceRootEntity
++import com.intellij.platform.workspace.jps.entities.modifySourceRootEntity
++import com.intellij.platform.workspace.jps.serialization.impl.toPath
++import com.intellij.platform.workspace.storage.entities
+ import com.intellij.platform.workspace.storage.EntityStorage
+ import com.intellij.platform.workspace.storage.MutableEntityStorage
+ import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+@@ -117,6 +123,16 @@
+                 ignoreDuplicateLibsAndSdks = true,
+                 "GRADLE"
+             )
++            val buildDirectories = gradleProjectData.includedProjects.flatMap { it.modules }
++                .map { it.gradleProject.buildDirectory.toPath().toAbsolutePath().normalize() }
++            for (sourceRoot in entities<SourceRootEntity>().toList()) {
++                if (sourceRoot.rootTypeId.name in setOf("java-source", "java-test") &&
++                    buildDirectories.any { sourceRoot.url.toPath().toAbsolutePath().normalize().startsWith(it) }) {
++                    modifySourceRootEntity(sourceRoot) {
++                        javaSourceRoots = listOf(JavaSourceRootPropertiesEntity(true, "", entitySource))
++                    }
++                }
++            }
+             fixMissingProjectSdk(parameters.options.javaHome ?: defaultSdkPath, virtualFileUrlManager)
+         }
+     }
+--- a/features-impl/common/src/com/jetbrains/ls/api/features/impl/common/processors/LSRenameProcessor.kt
++++ b/features-impl/common/src/com/jetbrains/ls/api/features/impl/common/processors/LSRenameProcessor.kt
+@@ -3,6 +3,7 @@
+ 
+ import com.intellij.openapi.diagnostic.Logger
+ import com.intellij.openapi.project.Project
++import com.intellij.openapi.roots.ProjectFileIndex
+ import com.intellij.openapi.util.Ref
+ import com.intellij.psi.PsiCompiledElement
+ import com.intellij.psi.PsiDocumentManager
+@@ -266,7 +267,9 @@
+             val target = context.target
+             if (!target.isValid) return null
+             val primaryElement = RenamePsiElementProcessor.forElement(target).substituteElementToRename(target, null) ?: target
+-            if (primaryElement is PsiCompiledElement) {
++            if (primaryElement is PsiCompiledElement || primaryElement.containingFile?.virtualFile?.let {
++                    ProjectFileIndex.getInstance(target.project).isInGeneratedSources(it)
++                } == true) {
+                 throwLspError(RenameRequestType, "This element cannot be renamed", Unit, ErrorCodes.InvalidParams)
+             }
+             return LSRenameProcessor(target.project, target, context.newName, false, false)
+--- a/features-impl/kotlin/src/com/jetbrains/ls/api/features/impl/kotlin/apiImpl/LLFirSessionCacheStorageComponent.kt
++++ b/features-impl/kotlin/src/com/jetbrains/ls/api/features/impl/kotlin/apiImpl/LLFirSessionCacheStorageComponent.kt
+@@ -40 +40,5 @@
+-            is WorkspaceEvent.InvalidateFiles -> state.invalidate(event.files.toList(), AnalyzerContext.current.project)
++            is WorkspaceEvent.InvalidateFiles -> {
++                val files = event.files.toList()
++                // Empty index publications must retain sessions still being prepared by concurrent readers.
++                if (files.isEmpty()) state else state.invalidate(files, AnalyzerContext.current.project)
++            }
+--- a/features-impl/kotlin/src/com/jetbrains/ls/api/features/impl/kotlin/configuration/LSKotlinLanguageConfiguration.kt
++++ b/features-impl/kotlin/src/com/jetbrains/ls/api/features/impl/kotlin/configuration/LSKotlinLanguageConfiguration.kt
+@@ -1,0 +2,2 @@
++@file:OptIn(EntityStorageInstrumentationApi::class)
++
+@@ -5,0 +8,4 @@
++import com.intellij.platform.workspace.storage.ImmutableEntityStorage
++import com.intellij.platform.workspace.storage.MutableEntityStorage
++import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
++import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
+@@ -60,0 +67,2 @@
++        WorkspaceComponentEntry { KotlinPreparationComponent },
++        KotlinNavigationPreparation,
+@@ -118,0 +127 @@
++    val entities: ImmutableEntityStorage? = null,
+@@ -127,2 +136,12 @@
+-            is WorkspaceEvent.WorkspaceModelChanged ->
+-                KotlinWorkspaceState(createKotlinWorkspaceModelCaches(AnalyzerContext.current.project))
++            is WorkspaceEvent.WorkspaceModelChanged -> {
++                val current = event.workspaceModel.entityStore
++                // Re-import can publish the same model while active-file analysis is still populating these caches.
++                val unchanged = state.entities?.let { previous ->
++                    val comparison = MutableEntityStorage.from(previous)
++                    comparison.replaceBySource({ true }, current)
++                    (comparison as MutableEntityStorageInstrumentation).hasSameEntities()
++                } ?: false
++                if (unchanged) state else KotlinWorkspaceState(
++                    createKotlinWorkspaceModelCaches(AnalyzerContext.current.project), current
++                )
++            }
+--- /dev/null
++++ b/zed-completion/LLFirSoftLazyValue.kt
+@@ -0,0 +1,24 @@
++/*
++ * Copyright 2010-2024 JetBrains s.r.o. and Kotlin Programming Language contributors.
++ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
++ */
++
++// Adapted from JetBrains/kotlin@7835533005e2359b3a9d5bb767337082e6f6bcbc for the pinned 2.5.0-dev-5674 ABI.
++package org.jetbrains.kotlin.analysis.low.level.api.fir.caches
++
++import com.intellij.openapi.project.Project
++import com.intellij.openapi.util.ModificationTracker
++import com.intellij.psi.util.CachedValue
++import com.intellij.psi.util.CachedValueProvider
++import com.intellij.util.CachedValueImpl
++import org.jetbrains.kotlin.fir.caches.FirLazyValue
++
++internal class LLFirSoftLazyValue<V>(@Suppress("UNUSED_PARAMETER") project: Project, createValue: () -> V) : FirLazyValue<V>() {
++    // The server wraps CachedValuesManager values per snapshot, even with NEVER_CHANGED.
++    // FIR sessions already own invalidation; retain their soft values across document edits.
++    private val cachedValue: CachedValue<V> = CachedValueImpl {
++        CachedValueProvider.Result(createValue(), ModificationTracker.NEVER_CHANGED)
++    }
++
++    override fun getValue(): V = cachedValue.getValue()
++}
+--- /dev/null
++++ b/zed-completion/FirCompositeSymbolProvider.kt
+@@ -0,0 +1,100 @@
++/*
++ * Copyright 2010-2023 JetBrains s.r.o. and Kotlin Programming Language contributors.
++ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
++ */
++
++// Adapted from JetBrains/kotlin@7835533005e2359b3a9d5bb767337082e6f6bcbc for the pinned 2.5.0-dev-5674 ABI.
++package org.jetbrains.kotlin.fir.resolve.providers.impl
++
++import org.jetbrains.kotlin.fir.caches.createCache
++import org.jetbrains.kotlin.fir.caches.firCachesFactory
++import org.jetbrains.kotlin.fir.caches.getValue
++import org.jetbrains.kotlin.fir.FirSession
++import org.jetbrains.kotlin.fir.NoMutableState
++import org.jetbrains.kotlin.fir.resolve.providers.FirCompositeCachedSymbolNamesProvider
++import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolNamesProvider
++import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
++import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProviderInternals
++import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
++import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
++import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
++import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
++import org.jetbrains.kotlin.name.ClassId
++import org.jetbrains.kotlin.name.FqName
++import org.jetbrains.kotlin.name.Name
++
++@NoMutableState
++class FirCompositeSymbolProvider(session: FirSession, val providers: List<FirSymbolProvider>) : FirSymbolProvider(session) {
++    private fun indexProviders(namesForProvider: (FirSymbolProvider) -> Set<Name>?): Pair<Map<Name, List<FirSymbolProvider>>, List<FirSymbolProvider>> {
++        val providersByName = mutableMapOf<Name, MutableList<FirSymbolProvider>>()
++        val unknownProviders = mutableListOf<FirSymbolProvider>()
++        // Unknown name sets participate in every lookup, in the original provider order.
++        for (provider in providers) {
++            val names = namesForProvider(provider)
++            if (names == null) {
++                unknownProviders.add(provider)
++                providersByName.values.forEach { it.add(provider) }
++            } else {
++                names.forEach { name -> providersByName.getOrPut(name) { unknownProviders.toMutableList() }.add(provider) }
++            }
++        }
++        return providersByName to unknownProviders
++    }
++
++    private val callableNamesByPackage by session.firCachesFactory.createPossiblySoftLazyValue {
++        session.firCachesFactory.createCache { packageName: FqName ->
++            indexProviders { it.symbolNamesProvider.getTopLevelCallableNamesInPackage(packageName) }
++        }
++    }
++
++    private val classifierNamesByPackage by session.firCachesFactory.createPossiblySoftLazyValue {
++        session.firCachesFactory.createCache { packageName: FqName ->
++            indexProviders { if (it.symbolNamesProvider.mayHaveSyntheticFunctionTypes) null else it.symbolNamesProvider.getTopLevelClassifierNamesInPackage(packageName) }
++        }
++    }
++
++    private fun callableProviders(packageName: FqName, name: Name): List<FirSymbolProvider> {
++        if (name.isSpecial) return providers
++        val (providersByName, unknownProviders) = callableNamesByPackage.getValue(packageName)
++        return providersByName[name] ?: unknownProviders
++    }
++
++    override val symbolNamesProvider: FirSymbolNamesProvider = FirCompositeCachedSymbolNamesProvider.fromSymbolProviders(session, providers)
++
++    override fun getTopLevelCallableSymbols(packageFqName: FqName, name: Name): List<FirCallableSymbol<*>> {
++        return callableProviders(packageFqName, name).flatMap { it.getTopLevelCallableSymbols(packageFqName, name) }
++    }
++
++    @FirSymbolProviderInternals
++    override fun getTopLevelCallableSymbolsTo(destination: MutableList<FirCallableSymbol<*>>, packageFqName: FqName, name: Name) {
++        destination += getTopLevelCallableSymbols(packageFqName, name)
++    }
++
++    @FirSymbolProviderInternals
++    override fun getTopLevelFunctionSymbolsTo(destination: MutableList<FirNamedFunctionSymbol>, packageFqName: FqName, name: Name) {
++        callableProviders(packageFqName, name).forEach {
++            it.getTopLevelFunctionSymbolsTo(destination, packageFqName, name)
++        }
++    }
++
++    @FirSymbolProviderInternals
++    override fun getTopLevelPropertySymbolsTo(destination: MutableList<FirPropertySymbol>, packageFqName: FqName, name: Name) {
++        callableProviders(packageFqName, name).forEach {
++            it.getTopLevelPropertySymbolsTo(destination, packageFqName, name)
++        }
++    }
++
++    override fun hasPackage(fqName: FqName): Boolean {
++        return providers.any { it.hasPackage(fqName) }
++    }
++
++    override fun getClassLikeSymbolByClassId(classId: ClassId): FirClassLikeSymbol<*>? {
++        val name = classId.outermostClassId.shortClassName
++        val candidates = if (name.isSpecial) providers else {
++            val (providersByName, unknownProviders) = classifierNamesByPackage.getValue(classId.packageFqName)
++            providersByName[name] ?: unknownProviders
++        }
++        return candidates.firstNotNullOfOrNull { it.getClassLikeSymbolByClassId(classId) }
++    }
++
++}
+--- a/zed-completion/KaFirCompletionCandidateChecker.kt
++++ b/zed-completion/KaFirCompletionCandidateChecker.kt
+@@ -2,6 +2,14 @@
+  * Copyright 2010-2026 JetBrains s.r.o. and Kotlin Programming Language contributors.
+  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+  */
++
++@file:OptIn(
++    org.jetbrains.kotlin.analysis.api.KaImplementationDetail::class,
++    org.jetbrains.kotlin.analysis.api.KaIdeApi::class,
++    org.jetbrains.kotlin.analysis.api.KaExperimentalApi::class,
++    org.jetbrains.kotlin.analysis.api.KaPlatformInterface::class,
++    org.jetbrains.kotlin.fir.symbols.SymbolInternals::class,
++)
+
+ package org.jetbrains.kotlin.analysis.api.fir.components
+
+@@ -39,7 +47,13 @@
+ import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
+ import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
+ import org.jetbrains.kotlin.fir.symbols.lazyResolveToPhase
+-import org.jetbrains.kotlin.fir.types.receiverType
++import org.jetbrains.kotlin.fir.types.*
++import org.jetbrains.kotlin.fir.resolve.toSymbol
++import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
++import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
++import org.jetbrains.kotlin.fir.expressions.FirSmartCastExpression
++import org.jetbrains.kotlin.name.StandardClassIds
++import org.jetbrains.kotlin.types.AbstractTypeChecker
+ import org.jetbrains.kotlin.psi.*
+ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
+ import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+@@ -98,6 +112,7 @@
+
+         val firSymbol = candidate.firSymbol as FirCallableSymbol<*>
+         firSymbol.lazyResolveToPhase(FirResolvePhase.STATUS)
++        if (isDefinitelyInapplicable(firSymbol)) return NonApplicable(token)
+
+         val resolutionMode = if (containingCallableReference != null) {
+             SingleCandidateResolutionMode.CHECK_EXTENSION_CALLABlE_REFERENCE_FOR_COMPLETION
+@@ -131,6 +146,41 @@
+         return implicitReceivers.firstNotNullOfOrNull(::processReceiver)
+             ?: processReceiver(null)
+             ?: NonApplicable(token)
++    }
++
++    private val explicitReceiverType by lazy {
++        val receiver = explicitReceiverInfo?.receiverExpression
++        val type = receiver?.resolvedType as? ConeClassLikeType
++        if (receiver is FirSmartCastExpression || receiver is FirResolvedQualifier || type == null ||
++            type.lookupTag.toSymbol(firCallSiteSession) !is FirRegularClassSymbol ||
++            type.lookupTag.classId in StandardClassIds.primitiveTypes ||
++            type.lookupTag.classId in StandardClassIds.unsignedTypes
++        ) {
++            null
++        } else {
++            // Native completion also accepts unsafe calls, so nullability cannot reject a receiver here.
++            type.withNullability(false, firCallSiteSession.typeContext)
++        }
++    }
++    private val receiverClassApplicability = mutableMapOf<ConeClassLikeType, Boolean>()
++
++    // Erasure can reject unrelated receiver classes, but only native inference can confirm applicability.
++    private fun isDefinitelyInapplicable(symbol: FirCallableSymbol<*>): Boolean {
++        if (containingCallableReference != null || symbol.dispatchReceiverType != null) return false
++        val actual = explicitReceiverType ?: return false
++        fun isInapplicable(type: ConeKotlinType): Boolean {
++            val expected = (type as? ConeClassLikeType)?.replaceArgumentsWithStarProjections() ?: return false
++            return !receiverClassApplicability.getOrPut(expected) {
++                expected.lookupTag.toSymbol(firCallSiteSession) !is FirRegularClassSymbol ||
++                    AbstractTypeChecker.isSubtypeOf(firCallSiteSession.typeContext, actual, expected, stubTypesEqualToAnything = true)
++            }
++        }
++        return when (val receiver = symbol.resolvedReceiverType) {
++            is ConeTypeParameterType -> (receiver.lookupTag.toSymbol(firCallSiteSession) as? FirTypeParameterSymbol)
++                ?.resolvedBounds?.any { isInapplicable(it.coneType) } == true
++            null -> false
++            else -> isInapplicable(receiver)
++        }
+     }
+
+     private fun computeImplicitReceivers(firFakeFile: FirFile): List<ImplicitReceiverValue<*>> {
+@@ -180,8 +230,10 @@
+                 val resolver = SingleCandidateResolver(firCallSiteSession, firOriginalFile)
+                 val components = resolver.bodyResolveComponents
+                 val context = components.context
+-                context.withFile(firOriginalFile, holder = components) {
+-                    components.callableReferenceLhsResolver.resolveLhsAsType(callableReferenceFir)
++                with(components) {
++                    context.withFile(firOriginalFile) {
++                        components.callableReferenceLhsResolver.resolveLhsAsType(callableReferenceFir)
++                    }
+                 }
+             } else {
+                 null
+--- a/zed-completion/KotlinFirCompletionParameters.kt
++++ b/zed-completion/KotlinFirCompletionParameters.kt
+@@ -7,12 +7,18 @@
+ import com.intellij.psi.PsiElement
+ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+ import org.jetbrains.kotlin.config.LanguageVersionSettings
++import org.jetbrains.kotlin.config.LanguageFeature
+ import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
+ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+ import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.InsertRequiredTypeArgumentsInsertHandler
+ import org.jetbrains.kotlin.idea.completion.impl.k2.handlers.QualifyContextSensitiveResolutionHandler
+ import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.StringTemplateCompletion.correctParametersForInStringTemplateCompletion
+ import org.jetbrains.kotlin.psi.KtFile
++import org.jetbrains.kotlin.psi.KtNameReferenceExpression
++import org.jetbrains.kotlin.psi.KtQualifiedExpression
++import org.jetbrains.kotlin.psi.KtCallExpression
++import org.jetbrains.kotlin.psi.KtSimpleNameExpression
++import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+
+ internal sealed class KotlinFirCompletionParameters(
+     val delegate: CompletionParameters, // delegate as much as possible; use only in corner cases/platform methods
+@@ -136,8 +142,18 @@
+             get() = originalFile.project.languageVersionSettings
+
+         fun create(parameters: CompletionParameters): KotlinFirCompletionParameters? {
+-            InsertRequiredTypeArgumentsInsertHandler.correctParametersForTypeArgumentInsertion(parameters)?.let { return it }
+-            QualifyContextSensitiveResolutionHandler.qualifyExpressionForContextSensitiveResolution(parameters)?.let { return it }
++            // The handlers create analysis sessions before checking whether their receiver can need a correction.
++            val receiver = (parameters.position.parent as? KtNameReferenceExpression)?.getQualifiedExpressionForSelector()?.receiverExpression
++            val callBeforeDot = ((receiver as? KtQualifiedExpression)?.selectorExpression ?: receiver) as? KtCallExpression
++            if (callBeforeDot != null && callBeforeDot.typeArguments.isEmpty()) {
++                InsertRequiredTypeArgumentsInsertHandler.correctParametersForTypeArgumentInsertion(parameters)?.let { return it }
++            }
++            if (receiver is KtSimpleNameExpression &&
++                parameters.originalKtFile?.languageVersionSettings
++                    ?.supportsFeature(LanguageFeature.ContextSensitiveResolutionUsingExpectedType) != false
++            ) {
++                QualifyContextSensitiveResolutionHandler.qualifyExpressionForContextSensitiveResolution(parameters)?.let { return it }
++            }
+
+             return when (val correctedParameters = correctParametersForInStringTemplateCompletion(parameters)) {
+                 null -> Original.create(parameters)
+--- a/zed-completion/K2CompletionRunner.kt
++++ b/zed-completion/K2CompletionRunner.kt
+@@ -1,4 +1,5 @@
+ // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
++@file:OptIn(org.jetbrains.kotlin.analysis.api.KaExperimentalApi::class, org.jetbrains.kotlin.analysis.api.KaIdeApi::class)
+ package org.jetbrains.kotlin.idea.completion.impl.k2
+
+ import com.intellij.codeInsight.completion.CompletionResultSet
+@@ -411,9 +412,10 @@
+  */
+ private class ParallelCompletionRunner : K2CompletionRunner {
+     private companion object {
+-        // There is currently no point of using more than 4 threads due to the lack of "heavy" completion contributors.
+-        // Currently, only 2 contributors are considered "heavy".
+-        private const val MAX_CONCURRENT_COMPLETION_THREADS = 4
++        // Each worker builds an analysis context even when most member-completion sections are empty.
++        private const val MAX_CONCURRENT_COMPLETION_THREADS = 1
++        // ponytail: one shared producer bounds overlapping requests; revisit for concurrent completion throughput.
++        private val completionDispatcher = Dispatchers.Default.limitedParallelism(MAX_CONCURRENT_COMPLETION_THREADS)
+     }
+
+     private val maxCompletionThreads
+@@ -543,7 +545,7 @@
+         return try {
+             runBlockingCancellable {
+                 repeat(maxCompletionThreads.coerceAtMost(sectionsWithSinks.size)) { _ ->
+-                    launch(Dispatchers.Default) {
++                    launch(completionDispatcher) {
+                         performCompletion(completionContext, remainingSectionsQueue)
+                     }
+                 }
+--- /dev/null
++++ b/zed-completion/LSP.kt
+@@ -0,0 +1,29 @@
++// Adapted from JetBrains/intellij-community@f21a5eeb8c857a3cb23ba35e0cacf44769c86e16, fleet/lsp.protocol/srcCommonMain/com/jetbrains/lsp/protocol/LSP.kt.
++package com.jetbrains.lsp.protocol
++
++import kotlinx.serialization.json.Json
++import kotlinx.serialization.builtins.serializer
++
++object LSP {
++    val json: Json = Json {
++        encodeDefaults = true
++        explicitNulls = false
++        ignoreUnknownKeys = true
++        isLenient = true
++        // Indentation increases completion transport and parsing work without changing JSON values.
++        prettyPrint = false
++        classDiscriminator = "kind"
++    }
++
++    val ProgressNotificationType: NotificationType<ProgressParams> =
++        NotificationType("$/progress", ProgressParams.serializer())
++
++    val CancelNotificationType: NotificationType<CancelParams> =
++        NotificationType("$/cancelRequest", CancelParams.serializer())
++
++    val RegisterCapabilityRequestType: RequestType<RegistrationParams, Unit, Unit> =
++        RequestType("client/registerCapability", RegistrationParams.serializer(), Unit.serializer(), Unit.serializer())
++
++    val UnregisterCapabilityRequestType: RequestType<UnregistrationParams, Unit, Unit> =
++      RequestType("client/unregisterCapability", UnregistrationParams.serializer(), Unit.serializer(), Unit.serializer())
++}

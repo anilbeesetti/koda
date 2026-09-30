@@ -1,5 +1,6 @@
 pub mod agent_registry_store;
 pub mod agent_server_store;
+mod android_resources;
 pub mod bookmark_store;
 pub mod buffer_store;
 pub mod color_extractor;
@@ -611,6 +612,14 @@ pub struct Completion {
 }
 
 #[derive(Debug, Clone)]
+pub struct CompletionSession {
+    pub(crate) id: u64,
+    pub(crate) buffer_id: BufferId,
+    pub(crate) buffer_version: clock::Global,
+    pub(crate) model_version: u64,
+}
+
+#[derive(Debug, Clone)]
 pub enum CompletionSource {
     Lsp {
         /// The alternate `insert` range, if provided by the LSP server.
@@ -623,6 +632,7 @@ pub enum CompletionSource {
         lsp_defaults: Option<Arc<lsp::CompletionListItemDefaults>>,
         /// Whether this completion has been resolved, to ensure it happens once per completion.
         resolved: bool,
+        completion_session: Option<CompletionSession>,
     },
     Dap {
         /// The sort text for this completion.
@@ -636,6 +646,15 @@ pub enum CompletionSource {
 }
 
 impl CompletionSource {
+    pub fn command_requires_current_session(&self) -> bool {
+        self.lsp_completion(false).is_some_and(|completion| {
+            completion
+                .command
+                .as_ref()
+                .is_some_and(|command| command.command == "jetbrains.kotlin.completion.apply")
+        })
+    }
+
     pub fn server_id(&self) -> Option<LanguageServerId> {
         if let CompletionSource::Lsp { server_id, .. } = self {
             Some(*server_id)
@@ -1344,6 +1363,7 @@ impl Project {
 
             let lsp_store = cx.new(|cx| {
                 LspStore::new_local(
+                    settings_observer.clone(),
                     buffer_store.clone(),
                     worktree_store.clone(),
                     prettier_store.clone(),
@@ -4408,6 +4428,23 @@ impl Project {
     ) -> Task<Result<Option<Vec<LocationLink>>>> {
         let position = position.to_point_utf16(buffer.read(cx));
         let guard = self.retain_remotely_created_models(cx);
+        if let Some(resources) = self.android_resource_definitions(buffer, position, cx) {
+            let buffer = buffer.clone();
+            return cx.spawn(async move |project, cx| {
+                let _guard = guard;
+                let locations = resources.await?;
+                if !locations.is_empty() {
+                    return Ok(Some(locations));
+                }
+                project
+                    .update(cx, |project, cx| {
+                        project
+                            .lsp_store
+                            .update(cx, |store, cx| store.definitions(&buffer, position, cx))
+                    })?
+                    .await
+            });
+        }
         let task = self.lsp_store.update(cx, |lsp_store, cx| {
             lsp_store.definitions(buffer, position, cx)
         });
@@ -5670,10 +5707,16 @@ impl Project {
         );
         let uri = lsp::Uri::from_str(&payload.uri)
             .with_context(|| format!("parsing show document uri {}", payload.uri))?;
+        let completion_session = payload
+            .completion_session
+            .map(LspStore::deserialize_completion_session)
+            .transpose()?;
         let (tx, rx) = async_channel::bounded(1);
         project.update(&mut cx, |_, cx| {
             cx.emit(Event::LanguageServerShowDocument(
                 LanguageServerShowDocumentRequest {
+                    language_server_id: LanguageServerId::from_proto(payload.language_server_id),
+                    completion_session,
                     uri,
                     external: payload.external,
                     take_focus: payload.take_focus,

@@ -227,6 +227,18 @@ pub trait Item: Focusable + EventEmitter<Self::Event> + Render + Sized {
         false
     }
 
+    fn restore_navigation(
+        _project: Entity<Project>,
+        _data: Arc<dyn Any + Send>,
+        _window: &mut Window,
+        _cx: &mut App,
+    ) -> Option<Task<Result<Entity<Self>>>>
+    where
+        Self: Sized,
+    {
+        None
+    }
+
     fn telemetry_event_text(&self) -> Option<&'static str> {
         None
     }
@@ -593,6 +605,13 @@ pub trait WeakItemHandle: Send + Sync {
     fn id(&self) -> EntityId;
     fn boxed_clone(&self) -> Box<dyn WeakItemHandle>;
     fn upgrade(&self) -> Option<Box<dyn ItemHandle>>;
+    fn restore_navigation(
+        &self,
+        project: Entity<Project>,
+        data: Arc<dyn Any + Send>,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> Option<Task<Result<Box<dyn ItemHandle>>>>;
 }
 
 impl dyn ItemHandle {
@@ -1211,6 +1230,17 @@ impl<T: Item> WeakItemHandle for WeakEntity<T> {
 
     fn upgrade(&self) -> Option<Box<dyn ItemHandle>> {
         self.upgrade().map(|v| Box::new(v) as Box<dyn ItemHandle>)
+    }
+
+    fn restore_navigation(
+        &self,
+        project: Entity<Project>,
+        data: Arc<dyn Any + Send>,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> Option<Task<Result<Box<dyn ItemHandle>>>> {
+        let restore = T::restore_navigation(project, data, window, cx)?;
+        Some(cx.spawn(async move |_| Ok(Box::new(restore.await?) as Box<dyn ItemHandle>)))
     }
 }
 

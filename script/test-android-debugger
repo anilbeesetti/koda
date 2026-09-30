@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""Exercise Java/Kotlin breakpoints and detach on the sample using an explicit emulator."""
+
+import argparse
+import json
+import os
+from pathlib import Path
+import queue
+import shutil
+import subprocess
+import threading
+import time
+
+
+class Protocol:
+    def __init__(self, process, log):
+        self.process = process
+        self.messages = queue.Queue()
+        self.pending = []
+        self.sequence = 0
+
+        def reader():
+            try:
+                while True:
+                    headers = {}
+                    while True:
+                        line = process.stdout.readline()
+                        if not line:
+                            raise EOFError("The debug adapter exited")
+                        if line == b"\r\n":
+                            break
+                        name, value = line.decode().split(":", 1)
+                        headers[name.lower()] = value.strip()
+                    message = json.loads(process.stdout.read(int(headers["content-length"])))
+                    log.write(json.dumps(message) + "\n")
+                    log.flush()
+                    self.messages.put(message)
+            except Exception as error:
+                self.messages.put(error)
+
+        threading.Thread(target=reader, daemon=True).start()
+
+    def send(self, command, arguments):
+        self.sequence += 1
+        body = json.dumps(dict(seq=self.sequence, type="request", command=command, arguments=arguments)).encode()
+        self.process.stdin.write(f"Content-Length: {len(body)}\r\n\r\n".encode() + body)
+        self.process.stdin.flush()
+        return self.sequence
+
+    def receive(self, predicate):
+        deadline = time.monotonic() + 35
+        while True:
+            for index, message in enumerate(self.pending):
+                if predicate(message):
+                    return self.pending.pop(index)
+            message = self.messages.get(timeout=max(0.01, deadline - time.monotonic()))
+            if isinstance(message, Exception):
+                raise message
+            self.pending.append(message)
+
+    def response(self, sequence):
+        message = self.receive(lambda message: message.get("request_seq") == sequence)
+        assert message.get("success"), message
+        return message.get("body", {})
+
+    def request(self, command, arguments):
+        return self.response(self.send(command, arguments))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--device", required=True, help="Running emulator serial, for example emulator-5554")
+    arguments = parser.parse_args()
+    if not arguments.device.startswith("emulator-") or not arguments.device.removeprefix("emulator-").isdecimal():
+        parser.error("Use an explicit emulator serial; physical devices are not supported")
+    repository = Path(__file__).resolve().parent.parent
+    root = repository / "examples/android-ide"
+    validation = repository / "target/android-ide/validation"
+    validation.mkdir(parents=True, exist_ok=True)
+    sdk = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT") or str(Path.home() / "Library/Android/sdk")
+    adb = str(Path(sdk) / "platform-tools/adb")
+    android_cli = shutil.which("android")
+    command = repository / "target/android-ide/dependencies/kotlin-debug-adapter/bin/kotlin-debug-adapter"
+    java_home = Path(os.environ.get("JAVA21_HOME", "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home"))
+    if android_cli is None or not command.is_file() or not (java_home / "bin/java").is_file():
+        raise RuntimeError("Install the Android CLI, JDK 21, and script/install-android-debugger before running this test")
+
+    def android(*args):
+        return subprocess.check_output([adb, "-s", arguments.device, *args], text=True, timeout=30).strip()
+
+    application = "dev.zed.androidsample.demo"
+    apk = root / "mobile/build/outputs/apk/demo/debug/mobile-demo-debug.apk"
+    android("shell", "am", "force-stop", application)
+    subprocess.run([android_cli, "run", "--debug", "--device=" + arguments.device, "--apks=" + str(apk)],
+                   check=True, timeout=120, env=dict(os.environ, ANDROID_HOME=sdk))
+    process_id = android("shell", "pidof", "-s", application)
+    assert process_id.isdecimal() and int(process_id) > 0, process_id
+    port = android("forward", "tcp:0", "jdwp:" + process_id)
+    assert port.isdecimal() and 0 < int(port) <= 65535, port
+    process = None
+    try:
+        with (validation / "kotlin-dap-protocol.jsonl").open("w") as log, (validation / "kotlin-dap-stderr.log").open("w") as stderr:
+            process = subprocess.Popen([str(command)], cwd=root, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                       stderr=stderr, env=dict(os.environ, JAVA_HOME=str(java_home)))
+            protocol = Protocol(process, log)
+            protocol.request("initialize", dict(adapterID="kotlin", linesStartAt1=True, columnsStartAt1=True, pathFormat="path"))
+            attach = protocol.send("attach", dict(projectRoot=str(root), hostName="127.0.0.1", port=int(port), timeout=5000))
+            protocol.receive(lambda message: message.get("event") == "initialized")
+            sources = [("mobile/src/main/java/dev/zed/androidsample/Greeting.java", 7),
+                       ("greeting/src/main/kotlin/dev/zed/greeting/LibraryGreeting.kt", 4)]
+            for source, line in sources:
+                protocol.request("setBreakpoints", dict(source={"name": Path(source).name, "path": str(root / source)}, breakpoints=[{"line": line}]))
+            configured = protocol.send("configurationDone", {})
+            protocol.response(attach)
+            for source, line in sources:
+                stopped = protocol.receive(lambda message: message.get("event") == "stopped")["body"]
+                thread = stopped["threadId"]
+                frames = protocol.request("stackTrace", dict(threadId=thread, startFrame=0, levels=5))["stackFrames"]
+                assert frames and frames[0]["source"]["path"] == str(root / source) and frames[0]["line"] == line, frames
+                frame = frames[0]["id"]
+                scopes = protocol.request("scopes", dict(frameId=frame))
+                for scope in scopes.get("scopes", []):
+                    variables = protocol.request("variables", dict(variablesReference=scope["variablesReference"]))
+                    print(Path(source).name, variables, flush=True)
+                if source.endswith("Greeting.java"):
+                    evaluation = protocol.request("evaluate", dict(frameId=frame, expression="edition", context="watch"))
+                    assert "demo" in evaluation["result"], evaluation
+                protocol.request("continue", dict(threadId=thread))
+            protocol.response(configured)
+            protocol.request("disconnect", dict(terminateDebuggee=False))
+            process.terminate()
+            process.wait(timeout=10)
+    finally:
+        try:
+            if process is not None and process.poll() is None:
+                process.terminate()
+                process.wait(timeout=10)
+        finally:
+            android("forward", "--remove", "tcp:" + port)
+    assert android("shell", "pidof", "-s", application) == process_id, "Detach must leave the app running"
+    assert not any(line.split()[1:2] == ["tcp:" + port] for line in android("forward", "--list").splitlines()), "JDWP forward was not removed"
+    print("PASS: Java/Kotlin breakpoints, variables, local evaluation, configuration handshake, and clean detach")
+
+
+if __name__ == "__main__":
+    main()
