@@ -927,10 +927,9 @@ mod tests {
             AppState::set_global(app_state.clone(), cx);
             cx.update_global::<SettingsStore, _>(|store, cx| {
                 store.update_user_settings(cx, |content| {
-                    content
-                        .extension
-                        .auto_install_extensions
-                        .insert(Arc::from("html"), false);
+                    for enabled in content.extension.auto_install_extensions.values_mut() {
+                        *enabled = false;
+                    }
                 });
             });
             cx.set_global(db::AppDatabase::test_new());

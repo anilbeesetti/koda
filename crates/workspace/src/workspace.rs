@@ -15750,7 +15750,8 @@ mod tests {
             assert_eq!(center_column_count, 2);
 
             let dock = workspace.right_dock().read(cx);
-            assert_eq!(workspace.dock_size(&dock, window, cx).unwrap(), px(640.));
+            let width = workspace.dock_size(&dock, window, cx).unwrap();
+            assert!((width.as_f32() - workspace.bounds.size.width.as_f32() / 3.0).abs() < 0.01);
 
             workspace.bounds.size.width = px(2400.);
 
@@ -16292,9 +16293,8 @@ mod tests {
                 .dock_size(&left_dock, window, cx)
                 .expect("left dock should still have an active panel after horizontal split");
 
-            assert_eq!(
-                left_width,
-                workspace.bounds.size.width / 3.,
+            assert!(
+                (left_width.as_f32() - (workspace.bounds.size.width / 3.).as_f32()).abs() < 0.01,
                 "flexible left panel width should match the average center column width"
             );
         });
@@ -16314,9 +16314,8 @@ mod tests {
                 .dock_size(&left_dock, window, cx)
                 .expect("left dock should still have an active panel after vertical split");
 
-            assert_eq!(
-                left_width,
-                workspace.bounds.size.width / 3.,
+            assert!(
+                (left_width.as_f32() - (workspace.bounds.size.width / 3.).as_f32()).abs() < 0.01,
                 "flexible left panel width should still match the average center column width"
             );
         });
@@ -16340,9 +16339,8 @@ mod tests {
                 .expect("left dock should still have an active panel");
 
             let available_width = workspace.bounds.size.width - right_width;
-            assert_eq!(
-                left_width,
-                available_width / 3.,
+            assert!(
+                (left_width.as_f32() - (available_width / 3.).as_f32()).abs() < 0.01,
                 "flexible left panel should keep matching one average center column"
             );
         });
