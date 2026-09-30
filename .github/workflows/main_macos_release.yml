@@ -64,6 +64,24 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
+      - name: Restore compiled Rust dependencies
+        id: rust_build_cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        continue-on-error: true
+        with:
+          # Preserve Cargo fingerprints, host proc macros and target libraries;
+          # leave generated app bundles, DMGs and extracted symbols uncached.
+          path: |
+            target/release/.fingerprint
+            target/release/build
+            target/release/deps
+            target/aarch64-apple-darwin/release/.fingerprint
+            target/aarch64-apple-darwin/release/build
+            target/aarch64-apple-darwin/release/deps
+          key: macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-
+            macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Install build dependencies and Rust toolchain
         run: |
           python3 -m unittest discover -s script/tests -p test_macos_release.py
@@ -95,6 +113,19 @@ jobs:
           path: release-assets/*
           if-no-files-found: error
           retention-days: 7
+      - name: Save compiled Rust dependencies
+        if: ${{ !cancelled() && steps.rust_build_cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        continue-on-error: true
+        with:
+          path: |
+            target/release/.fingerprint
+            target/release/build
+            target/release/deps
+            target/aarch64-apple-darwin/release/.fingerprint
+            target/aarch64-apple-darwin/release/build
+            target/aarch64-apple-darwin/release/deps
+          key: ${{ steps.rust_build_cache.outputs.cache-primary-key }}
 
   publish:
     if: github.ref == 'refs/heads/main'
