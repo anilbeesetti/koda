@@ -81,8 +81,9 @@ pub(super) fn init(cx: &mut App) {
                 .into_iter()
                 .filter(|action| !filter.is_some_and(|filter| filter.is_hidden(action.as_ref())))
                 .map(|action| Command {
-                    name: humanize_action_name(action.name()),
+                    name: humanize_action_name(action.name()).into(),
                     action,
+                    usage: None,
                 })
                 .collect();
             let project = workspace.project().clone();
