@@ -7,24 +7,22 @@ library dependency named `greeting`.
 From the repository root, run:
 
 ```sh
+script/install-android-kotlin
 script/android-ide --release examples/android-ide
 ```
 
 Trusted Android projects sync automatically on open. Select **:mobile · demoDebug**
-in the topbar and use **Configure community Kotlin** in the Android tools panel. Install the Kotlin extension from Extensions if it is
+in the topbar and use **Configure official Kotlin** in the Android tools panel. Install the Kotlin extension from Extensions if it is
 not already installed. Select a connected device or a stopped emulator in the topbar,
 then **Run**; a stopped emulator is booted before deployment. The app should display `dev.zed.androidsample.demo`. Repeat with
 `fullDebug`; it should display `dev.zed.androidsample.full`. Both variants should
-also display `Android library connected`. Configure the selected Kotlin backend
-again after switching variants so generated symbols use that variant.
+also display `Android library connected`. Generated symbols refresh automatically
+after switching variants.
 Use **Stop emulator** when finished to release the VM's memory.
 
-The community backend remains the default. To try the pinned official backend:
-
-```sh
-script/install-android-kotlin --backend official
-script/android-ide --release --kotlin-backend official examples/android-ide
-```
+The official JetBrains Kotlin backend is the only supported backend. If you used
+the community backend before, relaunch the IDE and configure Kotlin once to switch
+your existing project settings.
 
 Use **Configure official Kotlin** in the Android tools panel. The pinned
 `263.4702.0+android-5` build includes a source-built native importer patch for
@@ -42,7 +40,7 @@ execution if another generator would compile Kotlin or Java. Generation failures
 symbol support while still configuring Kotlin. Gradle, dependency, resource,
 manifest, and selected-variant changes refresh the managed backend automatically.
 An unavailable selected variant pauses it until a valid variant is selected.
-Explicit community fallback and disabled-server settings are preserved.
+Custom and disabled-server settings are preserved until you explicitly configure Kotlin.
 
 Library source and decompiled `jar:`/`jrt:` tabs support navigation, but their
 diagnostics are currently ignored.
@@ -223,3 +221,4 @@ annotations. Rendering uses downloaded Google tooling, JDK 21, and the selected
 variant's resources; Android Studio and a running device are unnecessary. Refresh
 after code changes. Interactive previews and multi-value preview parameter
 galleries are not implemented.
+

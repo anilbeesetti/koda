@@ -5,14 +5,14 @@ repository=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 build_profile=debug
 build=true
 profile="$repository/target/android-ide/profile"
-kotlin_backend=${ANDROID_IDE_KOTLIN_BACKEND:-community}
+kotlin_backend=${ANDROID_IDE_KOTLIN_BACKEND:-official}
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --release) build_profile=release; shift ;;
         --skip-build) build=false; shift ;;
         --kotlin-backend)
-            [[ $# -ge 2 && -n "$2" ]] || { echo "--kotlin-backend requires official or community" >&2; exit 2; }
+            [[ $# -ge 2 && -n "$2" ]] || { echo "--kotlin-backend requires official" >&2; exit 2; }
             kotlin_backend=$2
             shift 2
             ;;
@@ -24,7 +24,7 @@ while [[ $# -gt 0 ]]; do
         --help|-h)
             cat <<'USAGE'
 Usage: script/android-ide [--release] [--skip-build] [--profile DIR]
-                          [--kotlin-backend official|community] [--] [PATH ...]
+                          [--kotlin-backend official] [--] [PATH ...]
 
 Build and run the Android IDE development app on macOS. Paths are resolved from
 your current directory. Settings and extensions use target/android-ide/profile
@@ -32,12 +32,10 @@ unless --profile is supplied. Existing profile settings are preserved.
 
 Prerequisites: the repository's Rust toolchain, Xcode with Metal tools, Android
 CLI, Android SDK, and a Gradle-compatible JDK. Kotlin setup additionally needs
-JDK 21. Run script/install-android-kotlin for the community Kotlin server, or add
---backend official for the pinned JetBrains server with its bundled Java 25 runtime.
-Select it here with --kotlin-backend official (or ANDROID_IDE_KOTLIN_BACKEND).
-The default remains community. Run Android: Configure Kotlin in the project to
-apply the selected backend to existing settings. Custom server paths use
-ANDROID_IDE_OFFICIAL_KOTLIN_SERVER or ANDROID_IDE_KOTLIN_SERVER respectively.
+JDK 21. Run script/install-android-kotlin for the pinned JetBrains Kotlin server
+with its bundled Java 25 runtime. Run Android: Configure Kotlin in the project
+to apply it to existing settings. Set ANDROID_IDE_OFFICIAL_KOTLIN_SERVER to use
+a custom path to the tested official distribution.
 Run script/install-android-debugger for Java/Kotlin breakpoints and stepping.
 Run script/install-android-preview for standalone Compose previews.
 The Android Studio runtime is used for Gradle when JAVA_HOME is unset.
@@ -54,17 +52,16 @@ USAGE
 done
 
 case "$kotlin_backend" in
-    community) kotlin_server_id=kotlin-language-server ;;
     official) kotlin_server_id=kotlin-lsp ;;
-    *) echo "Unknown Kotlin backend: $kotlin_backend; choose official or community." >&2; exit 2 ;;
+    *) echo "Unknown Kotlin backend: $kotlin_backend; only official is supported." >&2; exit 2 ;;
 esac
 export ANDROID_IDE_KOTLIN_BACKEND="$kotlin_backend"
 kotlin_official_server="$repository/target/android-ide/dependencies/kotlin-lsp-263.4702.0+android-5/kotlin-server-263.4702.0/bin/intellij-server"
 if [[ -z ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} && -x "$kotlin_official_server" ]]; then
     export ANDROID_IDE_OFFICIAL_KOTLIN_SERVER="$kotlin_official_server"
 fi
-if [[ $kotlin_backend == official && ( ! -f ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} || ! -x ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} ) ]]; then
-    echo "Missing official Kotlin LSP; run script/install-android-kotlin --backend official or set ANDROID_IDE_OFFICIAL_KOTLIN_SERVER." >&2
+if [[ ! -f ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} || ! -x ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} ]]; then
+    echo "Missing official Kotlin LSP; run script/install-android-kotlin or set ANDROID_IDE_OFFICIAL_KOTLIN_SERVER." >&2
     exit 1
 fi
 
@@ -106,7 +103,7 @@ PLIST
 cp -c "$binary" "$executable" || cp "$binary" "$executable"
 
 if [[ ! -e "$profile/config/settings.json" ]]; then
-    python3 - "$profile/config/settings.json" "$kotlin_server_id" "${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-}" <<'SETTINGS'
+    python3 - "$profile/config/settings.json" "$ANDROID_IDE_OFFICIAL_KOTLIN_SERVER" <<'SETTINGS'
 import json
 from pathlib import Path
 import sys
@@ -115,13 +112,12 @@ settings = {
     "auto_update": False,
     "telemetry": {"diagnostics": False, "metrics": False},
     "auto_install_extensions": {"kotlin": True, "java": True},
-    "languages": {"Kotlin": {"language_servers": [sys.argv[2]]}},
+    "languages": {"Kotlin": {"language_servers": ["kotlin-lsp"]}},
 }
-if sys.argv[2] == "kotlin-lsp":
-    settings["lsp"] = {"kotlin-lsp": {"binary": {
-        "path": str(Path(sys.argv[3]).resolve()),
-        "arguments": ["--stdio", "--data-sharing=none"],
-    }}}
+settings["lsp"] = {"kotlin-lsp": {"binary": {
+    "path": str(Path(sys.argv[2]).resolve()),
+    "arguments": ["--stdio", "--data-sharing=none"],
+}}}
 Path(sys.argv[1]).write_text(json.dumps(settings, indent=2) + "\n")
 SETTINGS
 fi
@@ -132,11 +128,6 @@ if [[ -z ${JAVA_HOME:-} && -x "$studio_java/bin/java" ]]; then
 fi
 if [[ -z ${ANDROID_HOME:-} && -z ${ANDROID_SDK_ROOT:-} && -d "$HOME/Library/Android/sdk" ]]; then
     export ANDROID_HOME="$HOME/Library/Android/sdk"
-fi
-
-kotlin_server="$repository/target/android-ide/dependencies/kotlin-language-server/bin/kotlin-language-server"
-if [[ -z ${ANDROID_IDE_KOTLIN_SERVER:-} && -x "$kotlin_server" ]]; then
-    export ANDROID_IDE_KOTLIN_SERVER="$kotlin_server"
 fi
 
 kotlin_debugger="$repository/target/android-ide/dependencies/kotlin-debug-adapter/bin/kotlin-debug-adapter"
@@ -153,3 +144,4 @@ echo "App: $bundle"
 echo "Profile: $profile"
 echo "Kotlin backend: $kotlin_backend ($kotlin_server_id)"
 exec "$executable" --user-data-dir "$profile" "$@"
+

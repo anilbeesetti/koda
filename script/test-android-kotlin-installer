@@ -8,6 +8,8 @@ from pathlib import Path
 import runpy
 import shutil
 import subprocess
+import sys
+import tarfile
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -15,6 +17,28 @@ import zipfile
 
 
 class KotlinBootstrapTests(unittest.TestCase):
+    def setUp(self):
+        for target, value in (("platform.system", "Darwin"), ("platform.machine", "arm64")):
+            platform_patch = patch(target, return_value=value)
+            platform_patch.start()
+            self.addCleanup(platform_patch.stop)
+        original_run = subprocess.run
+
+        def run(command, *arguments, **options):
+            if command[0] == "/usr/bin/ditto":
+                with zipfile.ZipFile(command[3]) as archive:
+                    archive.extractall(command[4])
+                    for entry in archive.infolist():
+                        mode = entry.external_attr >> 16
+                        if mode:
+                            (Path(command[4]) / entry.filename).chmod(mode)
+                return subprocess.CompletedProcess(command, 0)
+            return original_run(command, *arguments, **options)
+
+        process_patch = patch("subprocess.run", side_effect=run)
+        process_patch.start()
+        self.addCleanup(process_patch.stop)
+
     def test_official_install_restart_and_integrity(self):
         bootstrap = runpy.run_path(str(Path(__file__).with_name("install-android-kotlin")))
         with tempfile.TemporaryDirectory() as temporary:
@@ -68,22 +92,22 @@ class KotlinBootstrapTests(unittest.TestCase):
                 "OFFICIAL_URL": source.as_uri(), "OFFICIAL_SHA256": checksum,
                 "patch_official": patch_fixture,
             }):
-                bootstrap["main"]("official")
+                bootstrap["main"]()
                 self.assertEqual((installation / ".sha256").read_text().strip(), checksum)
                 self.assertFalse((dependencies / "kotlin-language-server").exists())
                 with patch("urllib.request.urlopen", side_effect=AssertionError("Unexpected network request")):
-                    bootstrap["main"]("official")
+                    bootstrap["main"]()
                     module = installation / distribution.name / "plugins/kotlin.lsp/lib/modules/language-server.workspace-import.gradle-plugin.jar"
                     original = module.read_bytes()
                     module.write_bytes(b"changed importer")
                     with self.assertRaisesRegex(RuntimeError, "patch has changed"):
-                        bootstrap["main"]("official")
+                        bootstrap["main"]()
                     module.write_bytes(original)
                     feature = module.with_name("language-server.api.features.impl.kotlin.jar")
                     original_feature = feature.read_bytes()
                     feature.write_bytes(b"changed Compose feature")
                     with self.assertRaisesRegex(RuntimeError, "patch has changed"):
-                        bootstrap["main"]("official")
+                        bootstrap["main"]()
                     feature.write_bytes(original_feature)
                     manifest_path = installation / distribution.name / "zed-native-importer.json"
                     original_manifest = manifest_path.read_text()
@@ -91,28 +115,96 @@ class KotlinBootstrapTests(unittest.TestCase):
                     manifest["navigation_sha256"] = "outdated navigation preparation"
                     manifest_path.write_text(json.dumps(manifest))
                     with self.assertRaisesRegex(RuntimeError, "patch has changed"):
-                        bootstrap["main"]("official")
+                        bootstrap["main"]()
                     manifest_path.write_text(original_manifest)
                     for name in (bootstrap["OFFICIAL_MODEL_MODULE"], bootstrap["OFFICIAL_JAVA_MODULE"], bootstrap["OFFICIAL_COMMON_MODULE"], bootstrap["OFFICIAL_FIR_MODULE"], bootstrap["OFFICIAL_FIR_PROVIDERS_MODULE"], bootstrap["OFFICIAL_COMPLETION_API_MODULE"], bootstrap["OFFICIAL_COMPLETION_MODULE"], bootstrap["OFFICIAL_PROTOCOL_MODULE"]):
                         additional_module = installation / distribution.name / name
                         original_module = additional_module.read_bytes()
                         additional_module.write_bytes(b"changed model or Java feature")
                         with self.assertRaisesRegex(RuntimeError, "patch has changed"):
-                            bootstrap["main"]("official")
+                            bootstrap["main"]()
                         additional_module.write_bytes(original_module)
                     (installation / ".sha256").write_text("unrecognized installation")
                     with self.assertRaisesRegex(RuntimeError, "Preserving"):
-                        bootstrap["main"]("official")
+                        bootstrap["main"]()
                     (installation / ".sha256").write_text(checksum)
                     (installation / distribution.name / "jbr/Contents/Home/bin/java").unlink()
                     with self.assertRaisesRegex(RuntimeError, "incomplete"):
-                        bootstrap["main"]("official")
+                        bootstrap["main"]()
                 cached = dependencies / bootstrap["OFFICIAL_ARCHIVE"]
                 cached.write_bytes(b"corrupted archive")
                 with self.assertRaisesRegex(RuntimeError, "Checksum mismatch"):
                     bootstrap["download"](cached.name, source.as_uri(), checksum)
 
-    def test_backend_selection_preserves_settings_and_project_java(self):
+    def test_installer_rejects_community_backend(self):
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).with_name("install-android-kotlin")),
+             "--backend", "community"], text=True, capture_output=True,
+        )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("invalid choice", result.stderr)
+
+    def test_debugger_bootstraps_its_own_shared_sources_and_jdk(self):
+        debugger = runpy.run_path(str(Path(__file__).with_name("install-android-debugger")))
+        with tempfile.TemporaryDirectory() as temporary:
+            temporary = Path(temporary)
+            dependencies = temporary / "dependencies"
+            dependencies.mkdir()
+            source = temporary / f"kotlin-debug-adapter-{debugger['REVISION']}"
+            source.mkdir()
+            (source / "LICENSE").write_text("debugger license")
+            (source / "gradlew").touch()
+            shared = temporary / f"kotlin-language-server-{debugger['SHARED_REVISION']}"
+            shared.mkdir()
+            (shared / "LICENSE.txt").write_text("shared library license")
+            java = temporary / "jdk-11.0.32.1+1/Contents/Home/bin/java"
+            java.parent.mkdir(parents=True)
+            java.touch()
+            archives = {}
+            for name, directory in (("kotlin-debug-adapter-source.tar.gz", source),
+                                    ("fwcd-kls-6d9e61b.tar.gz", shared),
+                                    ("temurin11.tar.gz", java.parents[3])):
+                archive = temporary / name
+                with tarfile.open(archive, "w:gz") as output:
+                    output.add(directory, arcname=directory.name)
+                archives[name] = archive
+            downloads = []
+
+            def download(name, url, checksum):
+                downloads.append((name, url, checksum))
+                return archives[name]
+
+            def build(command, **options):
+                if command[0] == "patch":
+                    return subprocess.CompletedProcess(command, 0)
+                self.assertIn("--include-build", command)
+                self.assertTrue(Path(command[command.index("--include-build") + 1]).is_dir())
+                self.assertTrue((Path(options["env"]["JAVA_HOME"]) / "bin/java").is_file())
+                distribution = Path(command[0]).parent / "adapter/build/install/adapter/bin"
+                distribution.mkdir(parents=True)
+                (distribution / "kotlin-debug-adapter").touch()
+                return subprocess.CompletedProcess(command, 0)
+
+            official_installs = []
+            bootstrap = {"main": lambda: official_installs.append(True),
+                         "DEPENDENCIES": dependencies, "download": download}
+            environment = {key: value for key, value in os.environ.items() if key != "JAVA11_HOME"}
+            with patch.dict(os.environ, environment, clear=True), \
+                    patch("runpy.run_path", return_value=bootstrap), \
+                    patch("subprocess.run", side_effect=build):
+                debugger["main"]()
+                self.assertEqual(official_installs, [True])
+                installation = dependencies / "kotlin-debug-adapter"
+                self.assertEqual((installation / ".revision").read_text().strip(), debugger["VERSION"])
+                self.assertEqual((installation / "KOTLIN-SERVER-LICENSE.txt").read_text(), "shared library license")
+                self.assertFalse((dependencies / "kotlin-language-server").exists())
+                self.assertEqual(downloads[1][2], debugger["SHARED_SHA256"])
+                self.assertIn(debugger["SHARED_REVISION"], downloads[1][1])
+                self.assertEqual(downloads[2][2], debugger["JDK_SHA256"])
+                debugger["main"]()
+                self.assertEqual(len(downloads), 3)
+
+    def test_official_default_preserves_settings_and_project_java(self):
         bootstrap = runpy.run_path(str(Path(__file__).with_name("install-android-kotlin")))
         with tempfile.TemporaryDirectory() as temporary:
             repository = Path(temporary)
@@ -131,12 +223,15 @@ class KotlinBootstrapTests(unittest.TestCase):
             official = repository / f"target/android-ide/dependencies/kotlin-lsp-{bootstrap['OFFICIAL_REVISION']}/kotlin-server-{bootstrap['OFFICIAL_VERSION']}/bin/intellij-server"
             official.parent.mkdir(parents=True)
             shutil.copy2(executable, official)
-            community = repository / "target/android-ide/dependencies/kotlin-language-server/bin/kotlin-language-server"
-            community.parent.mkdir(parents=True)
-            shutil.copy2(executable, community)
             profile = repository / "profile with spaces"
             environment = {key: value for key, value in os.environ.items()
                            if not key.startswith("ANDROID_IDE_") and key != "CARGO_TARGET_DIR"}
+            host_tools = repository / "host-tools"
+            host_tools.mkdir()
+            uname = host_tools / "uname"
+            uname.write_text("#!/bin/sh\necho Darwin\n")
+            uname.chmod(0o755)
+            environment["PATH"] = str(host_tools) + os.pathsep + environment["PATH"]
             environment["JAVA_HOME"] = "/project/jdk21"
 
             def launch(*arguments):
@@ -145,7 +240,7 @@ class KotlinBootstrapTests(unittest.TestCase):
                     env=environment, text=True, capture_output=True,
                 )
 
-            result = launch("--kotlin-backend", "official")
+            result = launch()
             self.assertEqual(result.returncode, 0, result.stderr)
             launched = json.loads(result.stdout.splitlines()[-1])
             self.assertEqual(launched["ANDROID_IDE_KOTLIN_BACKEND"], "official")
@@ -162,14 +257,25 @@ class KotlinBootstrapTests(unittest.TestCase):
             result = launch()
             self.assertEqual(result.returncode, 0, result.stderr)
             launched = json.loads(result.stdout.splitlines()[-1])
-            self.assertEqual(launched["ANDROID_IDE_KOTLIN_BACKEND"], "community")
-            self.assertEqual(launched["ANDROID_IDE_KOTLIN_SERVER"], str(community))
+            self.assertEqual(launched["ANDROID_IDE_KOTLIN_BACKEND"], "official")
+            self.assertIsNone(launched["ANDROID_IDE_KOTLIN_SERVER"])
             self.assertEqual(settings.read_text(), existing_settings)
             environment["ANDROID_IDE_KOTLIN_BACKEND"] = "official"
             self.assertEqual(json.loads(launch().stdout.splitlines()[-1])["ANDROID_IDE_KOTLIN_BACKEND"], "official")
-            self.assertEqual(json.loads(launch("--kotlin-backend", "community").stdout.splitlines()[-1])["ANDROID_IDE_KOTLIN_BACKEND"], "community")
+            self.assertEqual(launch("--kotlin-backend", "community").returncode, 2)
+            environment["ANDROID_IDE_KOTLIN_BACKEND"] = "community"
+            self.assertEqual(launch().returncode, 2)
+            self.assertEqual(json.loads(launch("--kotlin-backend", "official").stdout.splitlines()[-1])["ANDROID_IDE_KOTLIN_BACKEND"], "official")
+            environment["ANDROID_IDE_KOTLIN_BACKEND"] = "official"
             self.assertEqual(launch("--kotlin-backend", "unknown").returncode, 2)
             self.assertEqual(launch("--kotlin-backend").returncode, 2)
+            custom_server = repository / "custom official server"
+            shutil.copy2(official, custom_server)
+            environment["ANDROID_IDE_OFFICIAL_KOTLIN_SERVER"] = str(custom_server)
+            self.assertEqual(json.loads(launch().stdout.splitlines()[-1])["ANDROID_IDE_OFFICIAL_KOTLIN_SERVER"], str(custom_server))
+            custom_server.chmod(0o644)
+            self.assertIn("Missing official Kotlin LSP", launch().stderr)
+            environment.pop("ANDROID_IDE_OFFICIAL_KOTLIN_SERVER")
             official.unlink()
             self.assertIn("Missing official Kotlin LSP", launch().stderr)
 
