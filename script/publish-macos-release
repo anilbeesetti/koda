@@ -23,9 +23,9 @@ Download the aarch64 DMG for Apple Silicon Macs.
 The apps are ad-hoc signed and are not Apple notarized. macOS may require
 allowing the application in System Settings > Privacy & Security on first launch.
 
-The macOS bundle uses this timestamp version. Cargo and the application's
-internal About version retain the source's semantic version because Cargo
-does not accept five-part versions.
+The release, macOS bundle, and application's displayed About version use this
+timestamp. Cargo retains the source's semantic version because Cargo does not
+accept five-part versions.
 EOF
 
 # Publish a draft only after every asset is uploaded. A failed upload can be
