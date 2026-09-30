@@ -111,8 +111,14 @@ jobs:
           tool: nextest
       - name: Install WASI SDK
         run: ./script/download-wasi-sdk
+      - name: Build test extension
+        run: >-
+          cargo build --locked --manifest-path extensions/test-extension/Cargo.toml
+          --target wasm32-wasip2 --target-dir extensions/test-extension/target
       - name: Run workspace tests
-        run: cargo nextest run --locked --workspace --no-fail-fast --no-tests=warn --test-threads=2
+        run: >-
+          cargo nextest run --locked --workspace --no-fail-fast --no-tests=warn
+          --test-threads=2 --status-level=fail --final-status-level=fail
       - name: Build Zed
         if: success() || failure()
         run: cargo build --locked -p zed --bin zed
