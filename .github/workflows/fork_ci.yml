@@ -110,7 +110,9 @@ jobs:
             target
             extensions/test-extension/target
           key: fork-ci-linux-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.sha }}
-          restore-keys: fork-ci-linux-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+          restore-keys: |
+            fork-ci-linux-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            fork-ci-linux-build-
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
         with:
           node-version: '24'
@@ -176,7 +178,9 @@ jobs:
         with:
           path: target
           key: fork-ci-macos-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.sha }}
-          restore-keys: fork-ci-macos-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+          restore-keys: |
+            fork-ci-macos-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
+            fork-ci-macos-build-
       - name: Install WASI SDK
         run: ./script/download-wasi-sdk
       - name: Check Xcode toolchain
