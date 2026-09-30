@@ -1,0 +1,53 @@
+# Fork updater tests run on a public Apple Silicon runner without upstream secrets.
+name: GitHub release updater
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'crates/auto_update/**'
+      - 'crates/auto_update_ui/**'
+      - 'crates/release_channel/**'
+      - 'crates/title_bar/**'
+      - 'crates/zed/src/zed.rs'
+      - 'Cargo.lock'
+      - '.github/workflows/github_release_updater.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-release-updater-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: macos-15
+    timeout-minutes: 180
+    env:
+      CARGO_INCREMENTAL: '0'
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_TERM_COLOR: always
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install build dependencies
+        run: |
+          brew list cmake >/dev/null 2>&1 || brew install cmake
+          rustup show
+          ./script/download-wasi-sdk
+      - name: Run updater and version UI tests
+        run: cargo test --locked -p auto_update -p title_bar --lib
+      - name: Check timestamp production configuration
+        env:
+          ZED_GITHUB_REPOSITORY: anilbeesetti/zed
+          ZED_RELEASE_VERSION: '2026.09.30.14.05'
+          ZED_RELEASE_CHANNEL: stable
+        run: cargo check --locked -p auto_update -p auto_update_ui -p release_channel -p title_bar

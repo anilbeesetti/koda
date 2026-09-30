@@ -1,3 +1,7 @@
+mod github_release;
+
+use github_release::{GitHubRelease, GitHubReleaseSource};
+
 use anyhow::{Context as _, Result};
 use client::Client;
 use db::kvp::KeyValueStore;
@@ -6,12 +10,13 @@ use gpui::{
     App, AppContext as _, AsyncApp, BackgroundExecutor, Context, Entity, EventEmitter, Global,
     Task, TaskExt, Window, actions,
 };
-use http_client::{HttpClient, HttpClientWithUrl};
+use http_client::{HttpClient, HttpClientWithUrl, HttpRequestExt as _};
 use paths::remote_servers_dir;
 use release_channel::{AppCommitSha, ReleaseChannel};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use settings::{RegisterSetting, Settings, SettingsStore};
+use sha2::{Digest as _, Sha256};
 use smol::fs::File;
 use smol::{
     fs,
@@ -181,6 +186,7 @@ pub enum AutoUpdateEvent {
 pub struct AutoUpdater {
     status: AutoUpdateStatus,
     current_version: Version,
+    github_source: Option<GitHubReleaseSource>,
     client: Arc<Client>,
     pending_poll: Option<Task<Option<()>>>,
     quit_subscription: Option<gpui::Subscription>,
@@ -193,6 +199,10 @@ pub struct AutoUpdater {
 pub struct ReleaseAsset {
     pub version: String,
     pub url: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sha256: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size: Option<u64>,
 }
 
 struct MacOsUnmounter<'a> {
@@ -342,7 +352,24 @@ pub fn check(_: &Check, window: &mut Window, cx: &mut App) {
     }
 }
 
+/// Formats an update status version, preserving fork release timestamps.
+pub fn display_update_version(version: &Version) -> String {
+    github_release::display_status_version(version)
+}
+
+pub fn github_release_notes_url(cx: &mut App) -> Option<String> {
+    let updater = AutoUpdater::get(cx)?;
+    updater
+        .read(cx)
+        .github_source
+        .as_ref()
+        .map(GitHubReleaseSource::release_notes_url)
+}
+
 pub fn release_notes_url(cx: &mut App) -> Option<String> {
+    if let Some(url) = github_release_notes_url(cx) {
+        return Some(url);
+    }
     let release_channel = ReleaseChannel::try_global(cx)?;
     let url = match release_channel {
         ReleaseChannel::Stable | ReleaseChannel::Preview => {
@@ -462,6 +489,7 @@ impl AutoUpdater {
         Self {
             status: AutoUpdateStatus::Idle,
             current_version,
+            github_source: GitHubReleaseSource::from_env(),
             client,
             pending_poll: None,
             quit_subscription,
@@ -569,6 +597,16 @@ impl AutoUpdater {
 
     pub fn current_version(&self) -> Version {
         self.current_version.clone()
+    }
+
+    pub fn current_version_display(&self) -> String {
+        if let Some(source) = &self.github_source {
+            return source.installed_tag.clone();
+        }
+        let mut version = self.current_version.clone();
+        version.pre = semver::Prerelease::EMPTY;
+        version.build = semver::BuildMetadata::EMPTY;
+        version.to_string()
     }
 
     pub fn status(&self) -> AutoUpdateStatus {
@@ -756,17 +794,40 @@ impl AutoUpdater {
             cx.notify();
         });
 
-        let fetched_release_data =
-            Self::get_release_asset(&this, release_channel, None, "zed", OS, ARCH, cx).await?;
-        let fetched_version = fetched_release_data.clone().version;
-        let app_commit_sha = Ok(cx.update(|cx| AppCommitSha::try_global(cx).map(|sha| sha.full())));
-        let newer_version = Self::check_if_fetched_version_is_newer(
-            release_channel,
-            app_commit_sha,
-            installed_version,
-            fetched_version,
-            previous_status.clone(),
-        )?;
+        let github_source = this.read_with(cx, |this, _| this.github_source.clone());
+        let (fetched_release_data, newer_version) = if let Some(source) = github_source {
+            // A configured fork must never fall back to the upstream updater,
+            // including on unsupported platforms, missing releases, or API errors.
+            #[cfg(not(test))]
+            anyhow::ensure!(
+                OS == "macos" && ARCH == "aarch64",
+                "GitHub fork updates require an Apple Silicon Mac"
+            );
+            let release = fetch_github_release(client.clone(), &source).await?;
+            let cached = match &previous_status {
+                AutoUpdateStatus::Updated { version } => Some(version),
+                _ => None,
+            };
+            let newer = release
+                .as_ref()
+                .map(|release| source.newer_version(&release.version, cached))
+                .transpose()?
+                .flatten();
+            (release, newer)
+        } else {
+            let release =
+                Self::get_release_asset(&this, release_channel, None, "zed", OS, ARCH, cx).await?;
+            let app_commit_sha =
+                Ok(cx.update(|cx| AppCommitSha::try_global(cx).map(|sha| sha.full())));
+            let newer = Self::check_if_fetched_version_is_newer(
+                release_channel,
+                app_commit_sha,
+                installed_version,
+                release.version.clone(),
+                previous_status.clone(),
+            )?;
+            (Some(release), newer)
+        };
 
         let Some(newer_version) = newer_version else {
             this.update(cx, |this, cx| {
@@ -800,7 +861,7 @@ impl AutoUpdater {
         let mut progress_cx = cx.clone();
         download_release(
             &target_path,
-            fetched_release_data,
+            fetched_release_data.context("new update has no release asset")?,
             client,
             move |progress| {
                 progress_entity.update(&mut progress_cx, |this, cx| {
@@ -1073,6 +1134,46 @@ async fn cleanup_remote_server_cache(
     Ok(())
 }
 
+async fn fetch_github_release(
+    client: Arc<HttpClientWithUrl>,
+    source: &GitHubReleaseSource,
+) -> Result<Option<ReleaseAsset>> {
+    let request = http_client::Request::builder()
+        .uri(source.api_url()?)
+        .header(
+            http_client::http::header::ACCEPT,
+            "application/vnd.github+json",
+        )
+        .header(http_client::http::header::USER_AGENT, "Zed-GitHub-Updater")
+        .header("x-github-api-version", "2022-11-28")
+        .follow_redirects(http_client::RedirectPolicy::FollowAll)
+        .timeout(Duration::from_secs(60))
+        .body(Default::default())?;
+    let mut response = client.send(request).await?;
+    if response.status() == http_client::http::StatusCode::NOT_FOUND {
+        // The fork may not have published its first production release yet.
+        return Ok(None);
+    }
+    anyhow::ensure!(
+        response.status().is_success(),
+        "GitHub release check failed: {}",
+        response.status()
+    );
+    let mut body = Vec::new();
+    response
+        .body_mut()
+        .take(1024 * 1024 + 1)
+        .read_to_end(&mut body)
+        .await?;
+    anyhow::ensure!(
+        body.len() <= 1024 * 1024,
+        "GitHub release response is too large"
+    );
+    let release: GitHubRelease =
+        serde_json::from_slice(&body).context("invalid GitHub release response")?;
+    source.release_asset(release).map(Some)
+}
+
 async fn download_release(
     target_path: &Path,
     release: ReleaseAsset,
@@ -1095,6 +1196,7 @@ async fn download_release(
         .and_then(|value| value.parse::<u64>().ok())
         .filter(|total_bytes| *total_bytes > 0);
 
+    let mut digest = Sha256::new();
     let mut downloaded_bytes: u64 = 0;
     let mut last_reported_percent: Option<u8> = None;
     let mut buffer = [0u8; 8192];
@@ -1106,6 +1208,15 @@ async fn download_release(
         }
         target_file.write_all(&buffer[..bytes_read]).await?;
         downloaded_bytes += bytes_read as u64;
+        if let Some(expected_size) = release.size {
+            anyhow::ensure!(
+                downloaded_bytes <= expected_size,
+                "GitHub update download exceeds expected size"
+            );
+        }
+        if release.sha256.is_some() {
+            digest.update(&buffer[..bytes_read]);
+        }
 
         if let Some(total_bytes) = total_bytes {
             let fraction = (downloaded_bytes as f32 / total_bytes as f32).clamp(0.0, 1.0);
@@ -1118,6 +1229,19 @@ async fn download_release(
         }
     }
     target_file.flush().await?;
+    if let Some(expected_size) = release.size {
+        anyhow::ensure!(
+            downloaded_bytes == expected_size,
+            "GitHub update download size mismatch"
+        );
+    }
+    if let Some(expected_digest) = release.sha256 {
+        let actual_digest = format!("{:x}", digest.finalize());
+        anyhow::ensure!(
+            actual_digest == expected_digest,
+            "GitHub update download SHA-256 mismatch"
+        );
+    }
     if total_bytes.is_some() && last_reported_percent != Some(100) {
         on_progress(Some(1.0));
     }
@@ -1510,6 +1634,207 @@ mod tests {
         assert_eq!(std::fs::read_to_string(path).unwrap(), "<fake-zed-update>");
     }
 
+    fn github_release_json(tag: &str, payload: &[u8]) -> String {
+        serde_json::json!({
+            "tag_name": tag,
+            "draft": false,
+            "prerelease": false,
+            "published_at": "2026-09-30T08:35:00Z",
+            "assets": [{
+                "name": format!("Zed-{tag}-macos-aarch64.dmg"),
+                "browser_download_url": format!("https://github.com/anilbeesetti/zed/releases/download/{tag}/Zed-{tag}-macos-aarch64.dmg"),
+                "state": "uploaded",
+                "size": payload.len(),
+                "digest": format!("sha256:{:x}", Sha256::digest(payload)),
+            }],
+        }).to_string()
+    }
+
+    fn github_test_updater(
+        http_client: Arc<HttpClientWithUrl>,
+        cx: &mut TestAppContext,
+    ) -> Entity<AutoUpdater> {
+        cx.update(|cx| {
+            settings::init(cx);
+            release_channel::init_test(Version::new(0, 225, 0), ReleaseChannel::Stable, cx);
+            let client = Client::new(Arc::new(FakeSystemClock::new()), http_client, cx);
+            let updater = cx.new(|cx| {
+                let mut updater = AutoUpdater::new(Version::new(0, 225, 0), client, cx);
+                updater.github_source = Some(GitHubReleaseSource {
+                    repository: "anilbeesetti/zed".into(),
+                    installed_tag: "2026.09.30.14.05".into(),
+                });
+                updater
+            });
+            cx.set_global(GlobalAutoUpdate(Some(updater.clone())));
+            updater
+        })
+    }
+
+    async fn poll_github_update(updater: &Entity<AutoUpdater>, cx: &mut TestAppContext) {
+        updater
+            .update(cx, |updater, cx| {
+                updater.poll(UpdateCheckType::Manual, cx);
+                updater.pending_poll.take().unwrap()
+            })
+            .await;
+    }
+
+    #[gpui::test]
+    async fn test_github_update_downloads_installs_and_does_not_repeat(cx: &mut TestAppContext) {
+        cx.background_executor.allow_parking();
+        let payload = b"<apple-silicon-update>";
+        let requests = Arc::new(parking_lot::Mutex::new(Vec::new()));
+        let fake_http = FakeHttpClient::create({
+            let requests = requests.clone();
+            move |request| {
+                requests.lock().push(request.uri().to_string());
+                async move {
+                    if request.uri().host() == Some("api.github.com") {
+                        assert_eq!(
+                            request.uri().path(),
+                            "/repos/anilbeesetti/zed/releases/latest"
+                        );
+                        assert_eq!(request.headers()["accept"], "application/vnd.github+json");
+                        assert_eq!(request.headers()["user-agent"], "Zed-GitHub-Updater");
+                        assert_eq!(request.headers()["x-github-api-version"], "2022-11-28");
+                        Ok(Response::builder()
+                            .status(200)
+                            .body(github_release_json("2026.09.30.14.06", payload).into())
+                            .unwrap())
+                    } else {
+                        assert_eq!(
+                            request.uri().to_string(),
+                            "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.06/Zed-2026.09.30.14.06-macos-aarch64.dmg"
+                        );
+                        Ok(Response::builder()
+                            .status(200)
+                            .body(payload.to_vec().into())
+                            .unwrap())
+                    }
+                }
+            }
+        });
+        let updater = github_test_updater(fake_http, cx);
+        let installations = Rc::new(std::cell::Cell::new(0));
+        cx.update(|cx| {
+            let installations = installations.clone();
+            cx.set_global(InstallOverride(Rc::new(move |path, _| {
+                assert_eq!(std::fs::read(path)?, payload);
+                installations.set(installations.get() + 1);
+                Ok(None)
+            })));
+            assert_eq!(
+                github_release_notes_url(cx).unwrap(),
+                "https://github.com/anilbeesetti/zed/releases/tag/2026.09.30.14.05"
+            );
+        });
+        poll_github_update(&updater, cx).await;
+        let status = updater.read_with(cx, |updater, _| updater.status());
+        let AutoUpdateStatus::Updated { version } = status else {
+            panic!("update was not installed: {status:?}");
+        };
+        assert_eq!(display_update_version(&version), "2026.09.30.14.06");
+        assert_eq!(installations.get(), 1);
+        poll_github_update(&updater, cx).await;
+        assert!(updater.read_with(cx, |updater, _| updater.status().is_updated()));
+        assert_eq!(installations.get(), 1);
+        assert_eq!(
+            requests.lock().len(),
+            3,
+            "cached update must not be downloaded again"
+        );
+    }
+
+    #[gpui::test]
+    async fn test_github_corrupt_downloads_never_install(cx: &mut TestAppContext) {
+        cx.background_executor.allow_parking();
+        for downloaded in [
+            b"corrupt-update".as_slice(),
+            b"truncated".as_slice(),
+            b"excess-download-data".as_slice(),
+        ] {
+            let fake_http = FakeHttpClient::create(move |request| async move {
+                if request.uri().host() == Some("api.github.com") {
+                    Ok(Response::builder()
+                        .status(200)
+                        .body(github_release_json("2026.09.30.14.06", b"correct-update").into())
+                        .unwrap())
+                } else {
+                    assert_eq!(request.uri().host(), Some("github.com"));
+                    Ok(Response::builder()
+                        .status(200)
+                        .body(downloaded.to_vec().into())
+                        .unwrap())
+                }
+            });
+            let updater = github_test_updater(fake_http, cx);
+            cx.update(|cx| {
+                cx.set_global(InstallOverride(Rc::new(|_, _| {
+                    panic!("corrupt download must not be installed")
+                })))
+            });
+            poll_github_update(&updater, cx).await;
+            let status = updater.read_with(cx, |updater, _| updater.status());
+            assert!(
+                matches!(status, AutoUpdateStatus::Errored { .. }),
+                "{status:?}"
+            );
+        }
+    }
+
+    #[gpui::test]
+    async fn test_github_unavailable_release_never_falls_back_to_upstream(cx: &mut TestAppContext) {
+        cx.background_executor.allow_parking();
+        for (status, body) in [
+            (404, String::new()),
+            (403, "rate limit exceeded".into()),
+            (200, "invalid JSON".into()),
+            (200, github_release_json("2026.09.30.14.05", b"update")),
+            (200, github_release_json("2026.09.30.14.04", b"update")),
+            (200, github_release_json("not-a-timestamp", b"update")),
+        ] {
+            let requests = Arc::new(parking_lot::Mutex::new(0));
+            let fake_http = FakeHttpClient::create({
+                let requests = requests.clone();
+                move |request| {
+                    assert_eq!(
+                        request.uri().host(),
+                        Some("api.github.com"),
+                        "must not fetch an upstream release or download a non-newer update"
+                    );
+                    *requests.lock() += 1;
+                    let body = body.clone();
+                    async move {
+                        Ok(Response::builder()
+                            .status(status)
+                            .body(body.into())
+                            .unwrap())
+                    }
+                }
+            });
+            let updater = github_test_updater(fake_http, cx);
+            cx.update(|cx| {
+                cx.set_global(InstallOverride(Rc::new(|_, _| {
+                    panic!("unavailable update must not be installed")
+                })))
+            });
+            poll_github_update(&updater, cx).await;
+            assert_eq!(*requests.lock(), 1);
+            let actual = updater.read_with(cx, |updater, _| updater.status());
+            if status == 404
+                || (status == 200 && !body.contains("not-a-timestamp") && body != "invalid JSON")
+            {
+                assert_eq!(actual, AutoUpdateStatus::Idle);
+            } else {
+                assert!(
+                    matches!(actual, AutoUpdateStatus::Errored { .. }),
+                    "{actual:?}"
+                );
+            }
+        }
+    }
+
     #[gpui::test]
     async fn test_download_release_reports_progress(cx: &mut TestAppContext) {
         cx.background_executor.allow_parking();
@@ -1536,6 +1861,8 @@ mod tests {
         let release = ReleaseAsset {
             version: "1.0.0".to_string(),
             url: "https://test.example/download".to_string(),
+            sha256: None,
+            size: None,
         };
 
         let reported = Rc::new(std::cell::RefCell::new(Vec::<f32>::new()));
@@ -1596,6 +1923,8 @@ mod tests {
         let release = ReleaseAsset {
             version: "1.0.0".to_string(),
             url: "https://test.example/download".to_string(),
+            sha256: None,
+            size: None,
         };
 
         let reported = Rc::new(std::cell::RefCell::new(Vec::<Option<f32>>::new()));

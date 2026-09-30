@@ -118,7 +118,7 @@ impl UpdateVersion {
     }
 
     fn version_tooltip_message(version: &Version) -> String {
-        UpdateButton::version_tooltip_message(version)
+        UpdateButton::version_tooltip_message(auto_update::display_update_version(version))
     }
 }
 
@@ -140,7 +140,10 @@ impl Render for UpdateVersion {
                     let status = AutoUpdater::get(cx).map(|updater| updater.read(cx).status());
                     let message = match &status {
                         Some(AutoUpdateStatus::Downloading { version, progress }) => {
-                            UpdateButton::downloading_tooltip_message(version, *progress)
+                            UpdateButton::downloading_tooltip_message(
+                                auto_update::display_update_version(version),
+                                *progress,
+                            )
                         }
                         _ => Self::version_tooltip_message(&rendered_version),
                     };
