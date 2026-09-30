@@ -1016,6 +1016,7 @@ impl Editor {
         });
 
         let selections_before = self.selections.disjoint_anchors_arc();
+        let add_selections_state_before = self.add_selections_state.clone();
         let tx_id = self.transact(window, cx, |editor, window, cx| {
             if let Some(mut snippet) = snippet {
                 snippet.text = new_text.to_string();
@@ -1182,15 +1183,19 @@ impl Editor {
                         });
                         if let Some(transaction_id) = transaction_id {
                             let selections_after = editor.selections.disjoint_anchors_arc();
-                            editor
+                            let transaction = editor
                                 .selection_history
                                 .selections_by_transaction
                                 .entry(transaction_id)
                                 .or_insert(TransactionSelections {
                                     undo: selections_before,
                                     redo: None,
-                                })
-                                .redo = Some(selections_after);
+                                    undo_add_selections_state: add_selections_state_before,
+                                    redo_add_selections_state: None,
+                                });
+                            transaction.redo = Some(selections_after);
+                            transaction.redo_add_selections_state =
+                                editor.add_selections_state.clone();
                         }
                     })?;
                 }
