@@ -102,6 +102,15 @@ jobs:
             ~/.cargo/git
           key: fork-ci-linux-cargo-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
           restore-keys: fork-ci-linux-cargo-
+      - name: Restore Linux build cache
+        id: build-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            target
+            extensions/test-extension/target
+          key: fork-ci-linux-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.sha }}
+          restore-keys: fork-ci-linux-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
         with:
           node-version: '24'
@@ -115,13 +124,15 @@ jobs:
         run: >-
           cargo build --locked --manifest-path extensions/test-extension/Cargo.toml
           --target wasm32-wasip2 --target-dir extensions/test-extension/target
+      - name: Build workspace tests
+        run: cargo test --locked --workspace --no-run --keep-going
       - name: Run workspace tests
         run: >-
           cargo nextest run --locked --workspace --no-fail-fast --no-tests=warn
           --test-threads=2 --status-level=fail --final-status-level=fail
       - name: Build Zed
         if: success() || failure()
-        run: cargo build --locked -p zed --bin zed
+        run: cargo build --locked --keep-going -p zed --bin zed
       - name: Upload main build
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
@@ -130,6 +141,15 @@ jobs:
           path: target/debug/zed
           if-no-files-found: error
           retention-days: 7
+      - name: Save Linux build cache
+        if: ${{ !cancelled() && steps.build-cache.outputs.cache-hit != 'true' }}
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            target
+            extensions/test-extension/target
+          key: ${{ steps.build-cache.outputs.cache-primary-key }}
 
   macos:
     name: macOS application check
@@ -150,6 +170,13 @@ jobs:
             ~/.cargo/git
           key: fork-ci-macos-cargo-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
           restore-keys: fork-ci-macos-cargo-
+      - name: Restore macOS build cache
+        id: build-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: target
+          key: fork-ci-macos-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.sha }}
+          restore-keys: fork-ci-macos-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
       - name: Install WASI SDK
         run: ./script/download-wasi-sdk
       - name: Check Xcode toolchain
@@ -158,4 +185,11 @@ jobs:
           xcrun clang --version
           xcrun --find metal
       - name: Check macOS Zed application
-        run: cargo check --locked -p zed --bin zed
+        run: cargo check --locked --keep-going -p zed --bin zed
+      - name: Save macOS build cache
+        if: ${{ !cancelled() && steps.build-cache.outputs.cache-hit != 'true' }}
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: target
+          key: ${{ steps.build-cache.outputs.cache-primary-key }}
