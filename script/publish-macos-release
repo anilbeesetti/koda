@@ -38,5 +38,11 @@ if ! grep -Fxq "$RELEASE_VERSION" <<< "$release_tags"; then
 fi
 gh release upload "$RELEASE_VERSION" release-assets/* \
     --repo "$GITHUB_REPOSITORY" --clobber
+# A slower build of an earlier push still gets its release, but must not replace
+# the download shown as Latest once main has advanced to a newer commit.
+latest=false
+if [[ "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')" == "$GITHUB_SHA" ]]; then
+    latest=true
+fi
 gh release edit "$RELEASE_VERSION" --repo "$GITHUB_REPOSITORY" \
-    --title "$RELEASE_VERSION" --notes-file "$notes" --draft=false
+    --title "$RELEASE_VERSION" --notes-file "$notes" --draft=false --latest="$latest"
