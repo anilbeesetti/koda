@@ -42,9 +42,10 @@ jobs:
         run: rustup show active-toolchain
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
-      - uses: taiki-e/install-action@a6b2e2dcd845ddd7f509ce4f3ed3d922b80cc5d9
-        with:
-          tool: actionlint
+      - name: Install actionlint
+        run: |
+          GOBIN="$RUNNER_TEMP/actionlint" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          echo "$RUNNER_TEMP/actionlint" >> "$GITHUB_PATH"
       - name: Check fork workflow
         run: actionlint .github/workflows/fork_ci.yml
       - name: Check Android launcher and Kotlin scripts
@@ -74,7 +75,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready --health-interval 5s
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
           --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -117,7 +118,9 @@ jobs:
 
   macos:
     name: macOS application check
-    runs-on: macos-14
+    runs-on: macos-15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -134,5 +137,10 @@ jobs:
           restore-keys: fork-ci-macos-cargo-
       - name: Install WASI SDK
         run: ./script/download-wasi-sdk
+      - name: Check Xcode toolchain
+        run: |
+          xcodebuild -version
+          xcrun clang --version
+          xcrun --find metal
       - name: Check macOS Zed application
         run: cargo check --locked -p zed --bin zed
