@@ -5765,7 +5765,7 @@ mod tests {
         // From the Atom keymap
         use workspace::ActivatePreviousPane;
         // From the JetBrains keymap
-        use project_panel::ToggleFocus;
+        use zed_actions::project_panel::ToggleFocus;
 
         window
             .update(cx, |_, _, cx| {
