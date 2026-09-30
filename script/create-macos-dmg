@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ $# != 2 ]]; then
+    echo "Usage: ${0##*/} SOURCE_DIRECTORY OUTPUT_DMG" >&2
+    exit 2
+fi
+
+error_log=$(mktemp)
+trap 'rm -f "$error_log"' EXIT
+
+# DiskImages can briefly return Resource busy on hosted macOS runners. Retry
+# only that creation error, leaving unrelated errors and their exit status intact.
+for attempt in 1 2 3 4 5; do
+    if hdiutil create -volname Zed -srcfolder "$1" -ov -format UDZO "$2" 2>"$error_log"; then
+        cat "$error_log" >&2
+        exit 0
+    else
+        status=$?
+    fi
+
+    cat "$error_log" >&2
+    if ! grep -Fxq 'hdiutil: create failed - Resource busy' "$error_log" || [[ $attempt == 5 ]]; then
+        exit "$status"
+    fi
+
+    echo "DMG creation is busy; retrying after 3 seconds (attempt $attempt/5)." >&2
+    sleep 3
+done

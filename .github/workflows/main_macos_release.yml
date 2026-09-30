@@ -84,7 +84,7 @@ jobs:
             macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Install build dependencies and Rust toolchain
         run: |
-          python3 -m unittest discover -s script/tests -p test_macos_release.py
+          python3 -m unittest discover -s script/tests -p 'test_macos_*.py'
           brew list cmake >/dev/null 2>&1 || brew install cmake
           rustup show
           ./script/download-wasi-sdk

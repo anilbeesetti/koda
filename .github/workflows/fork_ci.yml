@@ -3,6 +3,16 @@ name: Fork CI
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+    # Packaging-only changes are checked locally and by the main release run.
+    # Any application/Android/source change still runs the full fork checks.
+    paths-ignore:
+      - .github/workflows/main_macos_release.yml
+      - .github/workflows/fork_ci.yml
+      - script/bundle-mac
+      - script/create-macos-dmg
+      - script/reserve-macos-release-version
+      - script/publish-macos-release
+      - script/tests/test_macos_*.py
   workflow_dispatch:
 
 permissions:
