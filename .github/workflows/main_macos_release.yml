@@ -4,8 +4,6 @@ name: Main macOS release
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -23,7 +21,7 @@ defaults:
 
 jobs:
   version:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -44,7 +42,6 @@ jobs:
 
   build:
     needs: version
-    if: always() && (needs.version.result == 'success' || (github.event_name == 'pull_request' && needs.version.result == 'skipped'))
     runs-on: macos-15
     timeout-minutes: 360
     env:
@@ -75,12 +72,6 @@ jobs:
           ./script/download-wasi-sdk
       - name: Build optimized stable application and DMG
         run: |
-          if [[ -z "$ZED_BUNDLE_VERSION" ]]; then
-            ZED_BUNDLE_VERSION=$(TZ=Asia/Calcutta date +%Y.%m.%d.%H.%M)
-            export ZED_BUNDLE_VERSION RELEASE_VERSION="$ZED_BUNDLE_VERSION"
-            export ZED_RELEASE_VERSION="$ZED_BUNDLE_VERSION"
-            echo "ZED_BUNDLE_VERSION=$ZED_BUNDLE_VERSION" >> "$GITHUB_ENV"
-          fi
           printf 'stable\n' > crates/zed/RELEASE_CHANNEL
           ./script/bundle-mac "$TARGET_TRIPLE"
       - name: Verify app and collect release downloads
@@ -91,7 +82,7 @@ jobs:
           codesign --verify --deep --strict "$app"
           /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist" | grep -Fx "$ZED_BUNDLE_VERSION"
           /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Contents/Info.plist" | grep -Fx "$ZED_BUNDLE_VERSION"
-          lipo -verify_arch "${ARCHITECTURE/aarch64/arm64}" "$app/Contents/MacOS/zed"
+          lipo "$app/Contents/MacOS/zed" -verify_arch arm64
           "$app/Contents/MacOS/zed" --system-specs
           "$app/Contents/MacOS/cli" --version | grep -F "$ZED_BUNDLE_VERSION"
           mkdir -p release-assets
@@ -106,7 +97,7 @@ jobs:
           retention-days: 7
 
   publish:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     needs: [version, build]
     runs-on: ubuntu-latest
     timeout-minutes: 15
