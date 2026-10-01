@@ -1,4 +1,4 @@
-name: Release Koda (stable)
+name: Release Koda Dev (prerelease)
 
 on:
   workflow_dispatch:
@@ -12,4 +12,4 @@ jobs:
       contents: write
     uses: ./.github/workflows/macos_release.yml
     with:
-      channel: stable
+      channel: dev

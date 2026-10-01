@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Atomically reserve year.month.day.hour.minute tags, reusing them on retries.
 
-Tag and release timestamps use Asia/Calcutta. Colliding pushes wait for the next
+Tag and release timestamps use Asia/Calcutta. Colliding releases wait for the next
 available minute, so the format never needs a suffix or a fabricated future date.
-Annotated tags record the run ID and point at the exact pushed commit. Failed
+Annotated tags record the run ID and point at the selected workflow commit. Failed
 builds leave a reserved tag; rerunning that workflow reuses it.
 """
 
@@ -34,9 +34,13 @@ def api(endpoint, payload):
     return json.loads(result.stdout)
 
 
-def reserve(repository, run_id, commit, clock=None, wait=time.sleep):
+def reserve(repository, run_id, commit, clock=None, wait=time.sleep, channel="stable"):
+    if channel not in ("stable", "dev"):
+        raise ValueError(f"Unsupported release channel: {channel}")
     clock = clock or (lambda: datetime.datetime.now(ZoneInfo("Asia/Calcutta")))
-    marker = f"Main macOS release for workflow run {run_id}"
+    prefix = "dev-" if channel == "dev" else ""
+    name = "Dev" if channel == "dev" else "Main"
+    marker = f"{name} macOS release for workflow run {run_id}"
     tags = subprocess.check_output(
         ["git", "for-each-ref", "--format=%(refname:strip=2)%09%(contents:subject)%09%(*objectname)", "refs/tags"],
         text=True,
@@ -44,13 +48,13 @@ def reserve(repository, run_id, commit, clock=None, wait=time.sleep):
     for line in tags.splitlines():
         tag, subject, target = line.split("\t", 2)
         if subject == marker:
-            if target != commit or not re.fullmatch(r"\d{4}(?:\.\d{2}){4}", tag):
+            if target != commit or not re.fullmatch(prefix + r"\d{4}(?:\.\d{2}){4}", tag):
                 raise RuntimeError("Reserved tag does not match this run's commit or timestamp format")
             return tag
 
     deadline = time.monotonic() + 10 * 60
     while time.monotonic() < deadline:
-        version = clock().strftime("%Y.%m.%d.%H.%M")
+        version = prefix + clock().strftime("%Y.%m.%d.%H.%M")
         tag = api(f"repos/{repository}/git/tags", {
             "tag": version, "message": marker, "object": commit, "type": "commit",
         })
@@ -65,10 +69,13 @@ def reserve(repository, run_id, commit, clock=None, wait=time.sleep):
 
 
 def main():
-    version = reserve(os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_RUN_ID"], os.environ["GITHUB_SHA"])
+    tag = reserve(os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_RUN_ID"], os.environ["GITHUB_SHA"],
+                  channel=os.environ.get("RELEASE_CHANNEL", "stable"))
+    version = tag.removeprefix("dev-")
     with open(os.environ["GITHUB_OUTPUT"], "a") as output:
         output.write(f"version={version}\n")
-    print(f"Reserved release {version} for {os.environ['GITHUB_SHA']}")
+        output.write(f"tag={tag}\n")
+    print(f"Reserved release {tag} for {os.environ['GITHUB_SHA']}")
 
 
 if __name__ == "__main__":

@@ -28,8 +28,8 @@ class ReservationTests(unittest.TestCase):
         self.remote = self.api.start()
         self.addCleanup(self.api.stop)
 
-    def reserve(self, clock):
-        return release_version.reserve("owner/repo", "123", COMMIT, clock=clock, wait=lambda _: None)
+    def reserve(self, clock, channel="stable"):
+        return release_version.reserve("owner/repo", "123", COMMIT, clock=clock, wait=lambda _: None, channel=channel)
 
     def test_timestamp_timezone_and_exact_commit(self):
         # 18:35 UTC is 00:05 next day in Asia/Calcutta.
@@ -52,6 +52,26 @@ class ReservationTests(unittest.TestCase):
         release_version.subprocess.check_output.return_value = f"2026.09.30.12.00\tMain macOS release for workflow run 123\t{'b' * 40}\n"
         with self.assertRaisesRegex(RuntimeError, "does not match"):
             self.reserve(lambda: None)
+        self.remote.assert_not_called()
+
+    def test_dev_reservation_has_separate_tag_and_run_marker(self):
+        timestamp = datetime.datetime(2026, 10, 1, 12, 30)
+        self.assertEqual(self.reserve(lambda: timestamp, "dev"), "dev-2026.10.01.12.30")
+        payload = self.remote.call_args_list[0].args[1]
+        self.assertEqual(payload["tag"], "dev-2026.10.01.12.30")
+        self.assertEqual(payload["message"], "Dev macOS release for workflow run 123")
+
+    def test_dev_rerun_reuses_only_its_channel_tag(self):
+        release_version.subprocess.check_output.return_value = (
+            f"2026.09.30.12.00\tMain macOS release for workflow run 123\t{COMMIT}\n"
+            f"dev-2026.09.30.12.01\tDev macOS release for workflow run 123\t{COMMIT}\n"
+        )
+        self.assertEqual(self.reserve(lambda: self.fail("Rerun selected a new tag"), "dev"), "dev-2026.09.30.12.01")
+        self.remote.assert_not_called()
+
+    def test_unsupported_channel_fails_before_reservation(self):
+        with self.assertRaisesRegex(ValueError, "Unsupported release channel"):
+            self.reserve(lambda: None, "preview")
         self.remote.assert_not_called()
 
 

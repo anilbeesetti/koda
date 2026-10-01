@@ -279,7 +279,7 @@ pub fn init(client: Arc<Client>, cx: &mut App) {
         let updater = AutoUpdater::new(version, client, cx);
 
         let poll_for_updates = ReleaseChannel::try_global(cx)
-            .map(|channel| channel.poll_for_updates())
+            .map(|channel| channel.poll_for_updates() || updater.github_source.is_some())
             .unwrap_or(false);
 
         if option_env!("ZED_UPDATE_EXPLANATION").is_none()
@@ -1061,7 +1061,40 @@ async fn fetch_github_release(
     client: Arc<HttpClientWithUrl>,
     source: &GitHubReleaseSource,
 ) -> Result<Option<ReleaseAsset>> {
-    fetch_github_release_metadata(client, &source.api_url()?)
+    let url = source.api_url()?;
+    if source.channel == ReleaseChannel::Dev {
+        let mut page = 1;
+        let mut latest = None;
+        let mut latest_version = None;
+        loop {
+            let url = if page == 1 {
+                url.clone()
+            } else {
+                format!(
+                    "https://api.github.com/repos/{}/releases?per_page=100&page={page}",
+                    source.repository
+                )
+            };
+            let Some(releases) =
+                fetch_github_release_json::<Vec<GitHubRelease>>(client.clone(), &url).await?
+            else {
+                return Ok(latest);
+            };
+            let has_more = releases.len() == 100;
+            if let Some(asset) = source.latest_prerelease_asset(releases)?
+                && let Some(version) =
+                    source.newer_version(&asset.version, latest_version.as_ref())?
+            {
+                latest_version = Some(version);
+                latest = Some(asset);
+            }
+            if !has_more {
+                return Ok(latest);
+            }
+            page += 1;
+        }
+    }
+    fetch_github_release_metadata(client, &url)
         .await?
         .map(|release| source.release_asset(release))
         .transpose()
@@ -1071,6 +1104,13 @@ async fn fetch_github_release_metadata(
     client: Arc<HttpClientWithUrl>,
     url: &str,
 ) -> Result<Option<GitHubRelease>> {
+    fetch_github_release_json(client, url).await
+}
+
+async fn fetch_github_release_json<T: serde::de::DeserializeOwned>(
+    client: Arc<HttpClientWithUrl>,
+    url: &str,
+) -> Result<Option<T>> {
     let request = http_client::Request::builder()
         .uri(url)
         .header(
@@ -1084,7 +1124,7 @@ async fn fetch_github_release_metadata(
         .body(Default::default())?;
     let mut response = client.send(request).await?;
     if response.status() == http_client::http::StatusCode::NOT_FOUND {
-        // The fork may not have published its first production release yet.
+        // The fork may not have published its first release for this channel yet.
         return Ok(None);
     }
     anyhow::ensure!(
@@ -1095,15 +1135,14 @@ async fn fetch_github_release_metadata(
     let mut body = Vec::new();
     response
         .body_mut()
-        .take(1024 * 1024 + 1)
+        .take(8 * 1024 * 1024 + 1)
         .read_to_end(&mut body)
         .await?;
     anyhow::ensure!(
-        body.len() <= 1024 * 1024,
+        body.len() <= 8 * 1024 * 1024,
         "GitHub release response is too large"
     );
-    let release: GitHubRelease =
-        serde_json::from_slice(&body).context("invalid GitHub release response")?;
+    let release: T = serde_json::from_slice(&body).context("invalid GitHub release response")?;
     Ok(Some(release))
 }
 
@@ -1479,6 +1518,87 @@ mod tests {
         }).to_string()
     }
 
+    fn github_dev_release_json(version: &str, payload: &[u8]) -> serde_json::Value {
+        let mut release: serde_json::Value =
+            serde_json::from_str(&github_release_json(version, payload)).unwrap();
+        release["tag_name"] = format!("dev-{version}").into();
+        release["prerelease"] = true.into();
+        release["assets"][0]["name"] = format!("Koda-Dev-{version}-macos-aarch64.dmg").into();
+        release["assets"][0]["browser_download_url"] = format!(
+            "https://github.com/anilbeesetti/zed/releases/download/dev-{version}/Koda-Dev-{version}-macos-aarch64.dmg"
+        ).into();
+        release
+    }
+
+    #[gpui::test]
+    async fn test_dev_updater_paginates_prereleases_and_installs_only_dev(cx: &mut TestAppContext) {
+        cx.background_executor.allow_parking();
+        let payload = b"<koda-dev-update>";
+        let requests = Arc::new(parking_lot::Mutex::new(Vec::new()));
+        let fake_http = FakeHttpClient::create({
+            let requests = requests.clone();
+            move |request| {
+                requests.lock().push(request.uri().to_string());
+                async move {
+                    let body = if request.uri().host() == Some("api.github.com") {
+                        assert_eq!(request.uri().path(), "/repos/anilbeesetti/zed/releases");
+                        let releases = match request.uri().query().unwrap() {
+                            "per_page=100&page=1" => vec![
+                                serde_json::from_str::<serde_json::Value>(
+                                    &github_release_json("2027.01.01.00.00", payload)
+                                )
+                                .unwrap();
+                                100
+                            ],
+                            "per_page=100&page=2" => {
+                                let mut draft =
+                                    github_dev_release_json("2026.10.01.00.00", payload);
+                                draft["draft"] = true.into();
+                                vec![
+                                    github_dev_release_json("2026.09.30.14.06", payload),
+                                    draft,
+                                    github_dev_release_json("2026.09.30.14.04", payload),
+                                ]
+                            }
+                            query => panic!("unexpected Dev release query: {query}"),
+                        };
+                        serde_json::to_vec(&releases).unwrap()
+                    } else {
+                        assert_eq!(
+                            request.uri().to_string(),
+                            "https://github.com/anilbeesetti/zed/releases/download/dev-2026.09.30.14.06/Koda-Dev-2026.09.30.14.06-macos-aarch64.dmg"
+                        );
+                        payload.to_vec()
+                    };
+                    Ok(Response::builder().status(200).body(body.into()).unwrap())
+                }
+            }
+        });
+        let updater = github_test_updater(fake_http, cx);
+        updater.update(cx, |updater, _| {
+            updater.github_source = Some(GitHubReleaseSource {
+                repository: "anilbeesetti/zed".into(),
+                installed_tag: "dev-2026.09.30.14.05".into(),
+                channel: ReleaseChannel::Dev,
+            });
+        });
+        let installations = Rc::new(std::cell::Cell::new(0));
+        cx.update(|cx| {
+            let installations = installations.clone();
+            cx.set_global(InstallOverride(Rc::new(move |path, _| {
+                assert_eq!(std::fs::read(path)?, payload);
+                installations.set(installations.get() + 1);
+                Ok(None)
+            })));
+        });
+        poll_github_update(&updater, cx).await;
+        assert!(updater.read_with(cx, |updater, _| updater.status().is_updated()));
+        assert_eq!(installations.get(), 1);
+        poll_github_update(&updater, cx).await;
+        assert_eq!(installations.get(), 1);
+        assert_eq!(requests.lock().len(), 5);
+    }
+
     fn github_test_updater(
         http_client: Arc<HttpClientWithUrl>,
         cx: &mut TestAppContext,
@@ -1492,6 +1612,7 @@ mod tests {
                 updater.github_source = Some(GitHubReleaseSource {
                     repository: "anilbeesetti/zed".into(),
                     installed_tag: "2026.09.30.14.05".into(),
+                    channel: ReleaseChannel::Stable,
                 });
                 updater
             });

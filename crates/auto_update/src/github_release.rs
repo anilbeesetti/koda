@@ -1,6 +1,7 @@
 //! GitHub release metadata for timestamp-versioned Apple Silicon fork builds.
 
 use anyhow::{Context as _, Result, ensure};
+use release_channel::ReleaseChannel;
 use semver::Version;
 use serde::Deserialize;
 
@@ -12,6 +13,7 @@ const TIMESTAMP_METADATA_PREFIX: &str = "github-release.";
 pub(crate) struct GitHubReleaseSource {
     pub(crate) repository: String,
     pub(crate) installed_tag: String,
+    pub(crate) channel: ReleaseChannel,
 }
 
 impl GitHubReleaseSource {
@@ -21,6 +23,7 @@ impl GitHubReleaseSource {
             installed_tag: option_env!("ZED_RELEASE_VERSION")
                 .unwrap_or_default()
                 .to_string(),
+            channel: *release_channel::RELEASE_CHANNEL,
         })
     }
 
@@ -38,11 +41,50 @@ impl GitHubReleaseSource {
                 }),
             "invalid GitHub update repository"
         );
-        TimestampVersion::parse(&self.installed_tag)?;
+        self.timestamp(&self.installed_tag)?;
+        let endpoint = match self.channel {
+            ReleaseChannel::Stable => "releases/latest",
+            ReleaseChannel::Dev => "releases?per_page=100&page=1",
+            _ => anyhow::bail!("unsupported Koda release channel"),
+        };
         Ok(format!(
-            "https://api.github.com/repos/{}/releases/latest",
+            "https://api.github.com/repos/{}/{endpoint}",
             self.repository
         ))
+    }
+
+    fn timestamp(&self, tag: &str) -> Result<TimestampVersion> {
+        let version = match self.channel {
+            ReleaseChannel::Dev => tag
+                .strip_prefix("dev-")
+                .context("not a Koda Dev release tag")?,
+            ReleaseChannel::Stable => tag,
+            _ => anyhow::bail!("unsupported Koda release channel"),
+        };
+        TimestampVersion::parse(version)
+    }
+
+    pub(crate) fn latest_prerelease_asset(
+        &self,
+        releases: Vec<GitHubRelease>,
+    ) -> Result<Option<ReleaseAsset>> {
+        ensure!(
+            self.channel == ReleaseChannel::Dev,
+            "not a Koda Dev update source"
+        );
+        releases
+            .into_iter()
+            .filter(|release| {
+                !release.draft && release.prerelease && release.published_at.is_some()
+            })
+            .filter_map(|release| {
+                self.timestamp(&release.tag_name)
+                    .ok()
+                    .map(|version| (version, release))
+            })
+            .max_by_key(|(version, _)| *version)
+            .map(|(_, release)| self.release_asset(release))
+            .transpose()
     }
 
     pub(crate) fn release_notes_url(&self) -> String {
@@ -57,18 +99,29 @@ impl GitHubReleaseSource {
         fetched_tag: &str,
         cached: Option<&Version>,
     ) -> Result<Option<Version>> {
-        let installed = TimestampVersion::parse(&self.installed_tag)?;
+        let installed = self.timestamp(&self.installed_tag)?;
         let current = match cached {
             Some(version) => TimestampVersion::from_status_version(version)
                 .context("invalid cached GitHub release version")?,
             None => installed,
         };
-        let fetched = TimestampVersion::parse(fetched_tag)?;
+        let fetched = self.timestamp(fetched_tag)?;
         Ok((fetched > current).then(|| fetched.status_version()))
     }
 
     pub(crate) fn release_asset(&self, release: GitHubRelease) -> Result<ReleaseAsset> {
-        let name = format!("Koda-{}-macos-aarch64.dmg", release.tag_name);
+        let (name, version) = if self.channel == ReleaseChannel::Dev {
+            (
+                "Koda-Dev",
+                release
+                    .tag_name
+                    .strip_prefix("dev-")
+                    .context("not a Koda Dev release tag")?,
+            )
+        } else {
+            ("Koda", release.tag_name.as_str())
+        };
+        let name = format!("{name}-{version}-macos-aarch64.dmg");
         self.named_asset(release, name)
     }
 
@@ -93,10 +146,12 @@ impl GitHubReleaseSource {
 
     fn named_asset(&self, release: GitHubRelease, name: String) -> Result<ReleaseAsset> {
         ensure!(
-            !release.draft && !release.prerelease && release.published_at.is_some(),
-            "GitHub update is not a published production release"
+            !release.draft
+                && release.prerelease == (self.channel == ReleaseChannel::Dev)
+                && release.published_at.is_some(),
+            "GitHub update is not a published release for this Koda channel"
         );
-        TimestampVersion::parse(&release.tag_name)?;
+        self.timestamp(&release.tag_name)?;
         let asset = release
             .assets
             .into_iter()
@@ -231,6 +286,7 @@ mod tests {
         GitHubReleaseSource {
             repository: "anilbeesetti/zed".into(),
             installed_tag: tag.into(),
+            channel: ReleaseChannel::Stable,
         }
     }
 
@@ -243,6 +299,104 @@ mod tests {
                 "state": "uploaded", "size": 123, "digest": format!("sha256:{}", "a".repeat(64))
             }]
         })).unwrap()
+    }
+
+    fn dev_source() -> GitHubReleaseSource {
+        GitHubReleaseSource {
+            repository: "anilbeesetti/zed".into(),
+            installed_tag: "dev-2026.09.30.14.05".into(),
+            channel: ReleaseChannel::Dev,
+        }
+    }
+
+    fn dev_release(version: &str) -> GitHubRelease {
+        let mut release = release();
+        release.tag_name = format!("dev-{version}");
+        release.prerelease = true;
+        release.assets[0].name = format!("Koda-Dev-{version}-macos-aarch64.dmg");
+        release.assets[0].browser_download_url = format!(
+            "https://github.com/anilbeesetti/zed/releases/download/dev-{version}/Koda-Dev-{version}-macos-aarch64.dmg"
+        );
+        release
+    }
+
+    #[test]
+    fn dev_selects_only_the_newest_published_dev_prerelease() {
+        let source = dev_source();
+        assert_eq!(
+            source.api_url().unwrap(),
+            "https://api.github.com/repos/anilbeesetti/zed/releases?per_page=100&page=1"
+        );
+        let mut draft = dev_release("2026.10.01.14.05");
+        draft.draft = true;
+        let mut unpublished = dev_release("2026.10.02.14.05");
+        unpublished.published_at = None;
+        let mut preview = dev_release("2026.10.03.14.05");
+        preview.tag_name = "preview-2026.10.03.14.05".into();
+        let asset = source
+            .latest_prerelease_asset(vec![
+                dev_release("2026.09.30.14.06"),
+                release(),
+                draft,
+                unpublished,
+                preview,
+                dev_release("2026.09.29.14.05"),
+            ])
+            .unwrap()
+            .unwrap();
+        assert_eq!(asset.version, "dev-2026.09.30.14.06");
+        assert!(
+            source
+                .latest_prerelease_asset(vec![release()])
+                .unwrap()
+                .is_none()
+        );
+        let newer = source.newer_version(&asset.version, None).unwrap().unwrap();
+        assert_eq!(display_status_version(&newer), "2026.09.30.14.06");
+        assert!(
+            source
+                .newer_version(&asset.version, Some(&newer))
+                .unwrap()
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn stable_and_dev_releases_cannot_cross_channels() {
+        let stable = source("2026.09.30.14.05");
+        let dev = dev_source();
+        assert!(
+            stable
+                .release_asset(dev_release("2026.09.30.14.06"))
+                .is_err()
+        );
+        assert!(dev.release_asset(release()).is_err());
+        assert!(stable.newer_version("dev-2026.09.30.14.06", None).is_err());
+        assert!(dev.newer_version("2026.09.30.14.06", None).is_err());
+        let mut wrong_asset = dev_release("2026.09.30.14.06");
+        wrong_asset.assets[0].name = "Koda-2026.09.30.14.06-macos-aarch64.dmg".into();
+        assert!(dev.release_asset(wrong_asset).is_err());
+    }
+
+    #[test]
+    fn dev_remote_servers_are_pinned_to_the_installed_prerelease() {
+        let source = dev_source();
+        let mut remote = dev_release("2026.09.30.14.05");
+        let name = "koda-remote-server-dev-2026.09.30.14.05-macos-aarch64.gz";
+        remote.assets[0].name = name.into();
+        remote.assets[0].browser_download_url = format!(
+            "https://github.com/anilbeesetti/zed/releases/download/dev-2026.09.30.14.05/{name}"
+        );
+        assert!(
+            source
+                .remote_server_asset(remote, "macos", "aarch64")
+                .is_ok()
+        );
+        assert!(
+            source
+                .remote_server_asset(dev_release("2026.09.30.14.06"), "macos", "aarch64")
+                .is_err()
+        );
     }
 
     #[test]

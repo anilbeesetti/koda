@@ -62,7 +62,7 @@ class KodaIdentityTests(unittest.TestCase):
             shutil.copyfile(REPOSITORY / "script/android-ide", root / "script/android-ide")
             resources = root / "crates/zed/resources"
             resources.mkdir(parents=True)
-            shutil.copyfile(REPOSITORY / "crates/zed/resources/Koda.icns", resources / "Koda.icns")
+            shutil.copyfile(REPOSITORY / "crates/zed/resources/KodaDev.icns", resources / "KodaDev.icns")
             tools = root / "tools"
             tools.mkdir()
             (tools / "uname").write_text("#!/bin/sh\necho Darwin\n")
@@ -89,27 +89,37 @@ class KodaIdentityTests(unittest.TestCase):
             metadata = plistlib.loads((bundle / "Contents/Info.plist").read_bytes())
             self.assertEqual(metadata["CFBundleIdentifier"], "dev.anilbeesetti.koda-dev")
             self.assertEqual(metadata["CFBundleExecutable"], "koda")
-            self.assertEqual(metadata["CFBundleIconFile"], "Koda.icns")
-            self.assertEqual((bundle / "Contents/Resources/Koda.icns").read_bytes(),
-                             (resources / "Koda.icns").read_bytes())
+            self.assertEqual(metadata["CFBundleIconFile"], "KodaDev.icns")
+            self.assertEqual((bundle / "Contents/Resources/KodaDev.icns").read_bytes(),
+                             (resources / "KodaDev.icns").read_bytes())
             self.assertEqual(arguments.read_text().splitlines(),
                              ["--user-data-dir", str(profile), str(root / "project")])
             self.assertFalse(json.loads((profile / "config/settings.json").read_text())["auto_update"])
 
     def test_icons_share_koda_branding(self):
         resources = REPOSITORY / "crates/zed/resources"
-        for suffix in ("-dev", "-preview", "-nightly"):
+        for suffix in ("-preview", "-nightly"):
             for resolution in ("", "@2x"):
                 self.assertEqual((resources / f"app-icon{suffix}{resolution}.png").read_bytes(),
                                  (resources / f"app-icon{resolution}.png").read_bytes())
             self.assertEqual((resources / f"windows/app-icon{suffix}.ico").read_bytes(),
                              (resources / "windows/app-icon.ico").read_bytes())
+        for resolution in ("", "@2x"):
+            self.assertNotEqual((resources / f"app-icon-dev{resolution}.png").read_bytes(),
+                                (resources / f"app-icon{resolution}.png").read_bytes())
+        self.assertNotEqual((resources / "windows/app-icon-dev.ico").read_bytes(),
+                            (resources / "windows/app-icon.ico").read_bytes())
+        self.check_icns(resources, "KodaDev.icns", "-dev")
         icon = (resources / "Koda.icns").read_bytes()
         self.assertEqual((resources / "Document.icns").read_bytes(), icon)
+        self.check_icns(resources, "Koda.icns", "")
+
+    def check_icns(self, resources, filename, suffix):
+        icon = (resources / filename).read_bytes()
         self.assertEqual(icon[:4], b"icns")
         self.assertEqual(struct.unpack(">I", icon[4:8])[0], len(icon))
         offset = 8
-        for code, filename in ((b"ic09", "app-icon.png"), (b"ic10", "app-icon@2x.png")):
+        for code, filename in ((b"ic09", f"app-icon{suffix}.png"), (b"ic10", f"app-icon{suffix}@2x.png")):
             self.assertEqual(icon[offset:offset + 4], code)
             length = struct.unpack(">I", icon[offset + 4:offset + 8])[0]
             self.assertEqual(icon[offset + 8:offset + length], (resources / filename).read_bytes())

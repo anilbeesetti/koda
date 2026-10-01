@@ -44,10 +44,16 @@ jobs:
           rustup show
           ./script/download-wasi-sdk
       - name: Run updater and version UI tests
-        run: cargo test --locked -p auto_update -p title_bar --lib
+        run: cargo test --locked -p auto_update -p title_bar --lib --features workspace/test-support
       - name: Check timestamp production configuration
         env:
           ZED_GITHUB_REPOSITORY: anilbeesetti/zed
           ZED_RELEASE_VERSION: '2026.09.30.14.05'
           ZED_RELEASE_CHANNEL: stable
+        run: cargo check --locked -p auto_update -p auto_update_ui -p release_channel -p title_bar
+      - name: Check timestamp Dev configuration
+        env:
+          ZED_GITHUB_REPOSITORY: anilbeesetti/zed
+          ZED_RELEASE_VERSION: 'dev-2026.09.30.14.05'
+          ZED_RELEASE_CHANNEL: dev
         run: cargo check --locked -p auto_update -p auto_update_ui -p release_channel -p title_bar

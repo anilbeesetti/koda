@@ -94,14 +94,14 @@ cat > "$bundle/Contents/Info.plist" <<PLIST
 <key>CFBundleIdentifier</key><string>dev.anilbeesetti.koda-dev</string>
 <key>CFBundleName</key><string>Koda Dev</string>
 <key>CFBundleDisplayName</key><string>Koda Dev</string>
-<key>CFBundleIconFile</key><string>Koda.icns</string>
+<key>CFBundleIconFile</key><string>KodaDev.icns</string>
 <key>CFBundleExecutable</key><string>koda</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleVersion</key><string>0.1</string>
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST
-cp "$repository/crates/zed/resources/Koda.icns" "$bundle/Contents/Resources/Koda.icns"
+cp "$repository/crates/zed/resources/KodaDev.icns" "$bundle/Contents/Resources/KodaDev.icns"
 # A real executable keeps macOS app discovery attached to this bundle.
 cp -c "$binary" "$executable" || cp "$binary" "$executable"
 

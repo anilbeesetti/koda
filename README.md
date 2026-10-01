@@ -7,10 +7,11 @@ Koda is an Android-focused IDE fork of [Zed](https://github.com/zed-industries/z
 It uses its own app identity (`dev.anilbeesetti.koda`), `koda` CLI, settings,
 extensions, databases, caches, logs, keychain entries, and `koda://` URL handler.
 The app uses an angular K monogram inspired by Zed’s outlined logo.
-Icon source: `assets/branding/koda-icon.png`; regenerate platform assets with
-`script/generate-koda-icons` (requires ImageMagick).
-Development, nightly, and preview bundles append their channel to the app name
-and identifier.
+Icon sources: `assets/branding/koda-icon.png` and `koda-icon-dev.png`; regenerate
+platform assets with `script/generate-koda-icons` (requires ImageMagick).
+Koda Dev uses a blue DEV icon and the bundle identifier
+`dev.anilbeesetti.koda-dev`, so both apps can be installed together. Nightly and
+preview bundles also append their channel to the app name and identifier.
 
 Koda stores configuration in `~/.config/koda` on macOS and Linux, app data in
 `~/Library/Application Support/Koda` on macOS or `$XDG_DATA_HOME/koda` on Linux,
@@ -23,8 +24,10 @@ into Koda's directories if you want to reuse them.
 
 Download the Apple Silicon DMG from [this fork's releases](https://github.com/anilbeesetti/zed/releases)
 and drag `Koda.app` into Applications. Install the `koda` command using the
-app's **Install CLI** action. Production builds update from this fork's
-Koda release assets; unconfigured development builds do not download Zed updates.
+app's **Install CLI** action. Stable builds update from this fork's latest stable
+release. For Dev, download the `Koda-Dev` DMG from a prerelease and install
+`Koda Dev.app`; its updater follows only published `dev-` prereleases.
+Unconfigured local development builds require manual installation.
 Remote servers also come from the matching fork release and require an asset for
 the target platform, or a custom server build during development.
 
@@ -35,6 +38,16 @@ compatible with upstream Zed.
 Signed macOS builds require this fork's certificate and `MACOS_SIGNING_IDENTITY`
 (also configurable as a GitHub Actions secret); Koda bundles do not embed Zed's
 provisioning profiles.
+
+### Releases
+
+Merging to `main` does not publish a release. In GitHub Actions, manually run
+**Release Koda (stable)** on `main`, or **Release Koda Dev (prerelease)** on the
+branch you want to test. Both workflows currently build Apple Silicon macOS
+downloads. Stable tags use `year.month.day.hour.minute` in Asia/Calcutta; Dev
+tags use `dev-year.month.day.hour.minute`. Dev releases are marked as prereleases
+and leave GitHub's latest stable release unchanged. Failed runs can be retried
+with their reserved tag.
 
 ### Upstream development documentation
 

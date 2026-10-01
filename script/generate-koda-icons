@@ -8,28 +8,31 @@ import subprocess
 
 
 repository = Path(__file__).resolve().parents[1]
-source = repository / "assets/branding/koda-icon.png"
 resources = repository / "crates/zed/resources"
 
-for size, suffix in ((512, ""), (1024, "@2x")):
-    subprocess.run([
-        "magick", str(source), "-resize", f"{size}x{size}", "-strip",
-        str(resources / f"app-icon{suffix}.png"),
-    ], check=True)
-subprocess.run([
-    "magick", str(source), "-define", "icon:auto-resize=256,128,64,48,32,24,16", "-strip",
-    str(resources / "windows/app-icon.ico"),
-], check=True)
 
-for channel in ("dev", "nightly", "preview"):
+def export_icon(source, suffix, icns_name):
+    for size, resolution in ((512, ""), (1024, "@2x")):
+        subprocess.run([
+            "magick", str(source), "-resize", f"{size}x{size}", "-strip",
+            str(resources / f"app-icon{suffix}{resolution}.png"),
+        ], check=True)
+    subprocess.run([
+        "magick", str(source), "-define", "icon:auto-resize=256,128,64,48,32,24,16", "-strip",
+        str(resources / f"windows/app-icon{suffix}.ico"),
+    ], check=True)
+    chunks = []
+    for code, resolution in ((b"ic09", ""), (b"ic10", "@2x")):
+        content = (resources / f"app-icon{suffix}{resolution}.png").read_bytes()
+        chunks.append(code + struct.pack(">I", len(content) + 8) + content)
+    body = b"".join(chunks)
+    (resources / icns_name).write_bytes(b"icns" + struct.pack(">I", len(body) + 8) + body)
+
+
+export_icon(repository / "assets/branding/koda-icon.png", "", "Koda.icns")
+export_icon(repository / "assets/branding/koda-icon-dev.png", "-dev", "KodaDev.icns")
+for channel in ("nightly", "preview"):
     for suffix in ("", "@2x"):
         shutil.copyfile(resources / f"app-icon{suffix}.png", resources / f"app-icon-{channel}{suffix}.png")
     shutil.copyfile(resources / "windows/app-icon.ico", resources / f"windows/app-icon-{channel}.ico")
-
-chunks = []
-for code, filename in ((b"ic09", "app-icon.png"), (b"ic10", "app-icon@2x.png")):
-    content = (resources / filename).read_bytes()
-    chunks.append(code + struct.pack(">I", len(content) + 8) + content)
-body = b"".join(chunks)
-(resources / "Koda.icns").write_bytes(b"icns" + struct.pack(">I", len(body) + 8) + body)
 shutil.copyfile(resources / "Koda.icns", resources / "Document.icns")

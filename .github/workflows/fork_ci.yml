@@ -3,7 +3,7 @@ name: Fork CI
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    # Packaging-only changes are checked locally and by the main release run.
+    # Packaging-only changes are checked locally and by manual release runs.
     # Any application/Android/source change still runs the full fork checks.
     paths-ignore:
       - .github/workflows/main_macos_release.yml
@@ -54,8 +54,14 @@ jobs:
         run: |
           GOBIN="$RUNNER_TEMP/actionlint" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
           echo "$RUNNER_TEMP/actionlint" >> "$GITHUB_PATH"
-      - name: Check fork workflow
-        run: actionlint .github/workflows/fork_ci.yml
+      - name: Check fork workflows
+        run: >-
+          actionlint .github/workflows/fork_ci.yml
+          .github/workflows/main_macos_release.yml
+          .github/workflows/dev_macos_release.yml
+          .github/workflows/macos_release.yml
+          .github/workflows/release.yml
+          .github/workflows/release_nightly.yml
       - name: Check packaging identity and coexistence
         run: python3 -m unittest discover -s script/tests -p 'test_*.py'
       - name: Check Android launcher and Kotlin scripts
