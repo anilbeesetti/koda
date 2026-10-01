@@ -191,6 +191,7 @@ pub enum IconName {
     LocationEdit,
     Lock,
     LockOff,
+    Logcat,
     MagnifyingGlass,
     Maximize,
     MaximizeAlt,

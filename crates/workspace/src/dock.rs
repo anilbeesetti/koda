@@ -1574,7 +1574,7 @@ impl Render for PanelButtons {
             .children(buttons)
             .when(dock_position == DockPosition::Bottom, |rail| {
                 rail.child(
-                    IconButton::new("android-logcat", IconName::TerminalAlt)
+                    IconButton::new("android-logcat", IconName::Logcat)
                         .icon_size(IconSize::Small)
                         .tab_index(0isize)
                         .tooltip(|_, cx| {
