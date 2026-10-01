@@ -132,7 +132,26 @@ jobs:
           echo "VK_DRIVER_FILES=$vulkan_icd" >> "$GITHUB_ENV"
       - name: Install repository Rust toolchain
         run: rustup show active-toolchain
-      - id: source-cache
+      - name: Restore shared portable Cargo sources
+        id: source-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        continue-on-error: true
+        with:
+          # Identical relative paths keep archive contents and cache versions portable.
+          path: |
+            .ci-cache/cargo-sources/registry
+            .ci-cache/cargo-sources/git
+          enableCrossOsArchive: true
+          key: fork-ci-source-v3-shared-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock', 'extensions/test-extension/Cargo.lock') }}
+          restore-keys: fork-ci-source-v3-shared-${{ hashFiles('rust-toolchain.toml') }}-
+      - name: Install shared Cargo sources into original Cargo home
+        id: materialize-sources
+        if: steps.source-cache.outputs.cache-matched-key != ''
+        continue-on-error: true
+        run: python3 script/ci-source-cache restore
+      - name: Restore legacy Cargo sources during cache migration
+        id: legacy-source-cache
+        if: steps.source-cache.outputs.cache-matched-key == '' || steps.materialize-sources.outcome == 'failure'
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         continue-on-error: true
         with:
@@ -141,6 +160,11 @@ jobs:
             ~/.cargo/git
           key: fork-ci-source-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}
           restore-keys: fork-ci-source-v2-${{ runner.os }}-${{ runner.arch }}-
+      - name: Prefetch locked Linux, Apple Silicon and WASI sources
+        id: prefetch-sources
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        run: python3 script/ci-run stage 'Cargo source union prefetch' -- python3 script/ci-source-cache prefetch
       - name: Restore Linux build cache
         id: build-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
@@ -165,18 +189,21 @@ jobs:
             extensions/test-extension/target/wasm32-wasip2/debug/build
             extensions/test-extension/target/wasm32-wasip2/debug/deps
             extensions/test-extension/target/wasm32-wasip2/debug/*.wasm
-          key: fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          key: fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.event.pull_request.base.sha || github.sha }}
           restore-keys: |
             fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
             fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Report cache reuse
         env:
           SOURCE_CACHE_HIT: ${{ steps.source-cache.outputs.cache-hit }}
+          SOURCE_CACHE_KEY: ${{ steps.source-cache.outputs.cache-matched-key }}
+          LEGACY_SOURCE_CACHE_KEY: ${{ steps.legacy-source-cache.outputs.cache-matched-key }}
           BUILD_CACHE_HIT: ${{ steps.build-cache.outputs.cache-hit }}
           BUILD_CACHE_KEY: ${{ steps.build-cache.outputs.cache-matched-key }}
         run: |
-          printf 'Source cache exact hit: %s; build exact hit: %s; restored build key: %s\n' \
-            "$SOURCE_CACHE_HIT" "$BUILD_CACHE_HIT" "$BUILD_CACHE_KEY" | tee -a "$GITHUB_STEP_SUMMARY"
+          printf 'Shared source exact hit: %s; shared key: %s; legacy source key: %s; build exact hit: %s; build key: %s\n' \
+            "$SOURCE_CACHE_HIT" "$SOURCE_CACHE_KEY" "$LEGACY_SOURCE_CACHE_KEY" \
+            "$BUILD_CACHE_HIT" "$BUILD_CACHE_KEY" | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
         with:
           node-version: '24'
@@ -204,17 +231,23 @@ jobs:
       - name: Build Zed
         if: success() || failure()
         run: python3 script/ci-run stage 'Linux app build' -- cargo build --locked --keep-going -p zed --bin zed
-      - name: Save Linux Cargo source cache
-        if: ${{ !cancelled() && steps.source-cache.outputs.cache-hit != 'true' }}
+      - name: Stage portable Cargo sources
+        id: stage-sources
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.prefetch-sources.outcome == 'success' && steps.source-cache.outputs.cache-hit != 'true' }}
+        continue-on-error: true
+        run: python3 script/ci-source-cache stage
+      - name: Save shared Cargo source cache (Linux main/manual writer)
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.stage-sources.outcome == 'success' }}
         continue-on-error: true
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
-            ~/.cargo/registry
-            ~/.cargo/git
+            .ci-cache/cargo-sources/registry
+            .ci-cache/cargo-sources/git
+          enableCrossOsArchive: true
           key: ${{ steps.source-cache.outputs.cache-primary-key }}
       - name: Save Linux build cache
-        if: ${{ !cancelled() && steps.build-cache.outputs.cache-hit != 'true' }}
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.build-cache.outputs.cache-hit != 'true' }}
         continue-on-error: true
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
@@ -256,7 +289,26 @@ jobs:
         run: python3 script/ci-run resources --github-env "$GITHUB_ENV"
       - name: Install repository Rust toolchain
         run: rustup show active-toolchain
-      - id: source-cache
+      - name: Restore shared portable Cargo sources
+        id: source-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        continue-on-error: true
+        with:
+          # Identical relative paths keep archive contents and cache versions portable.
+          path: |
+            .ci-cache/cargo-sources/registry
+            .ci-cache/cargo-sources/git
+          enableCrossOsArchive: true
+          key: fork-ci-source-v3-shared-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock', 'extensions/test-extension/Cargo.lock') }}
+          restore-keys: fork-ci-source-v3-shared-${{ hashFiles('rust-toolchain.toml') }}-
+      - name: Install shared Cargo sources into original Cargo home
+        id: materialize-sources
+        if: steps.source-cache.outputs.cache-matched-key != ''
+        continue-on-error: true
+        run: python3 script/ci-source-cache restore
+      - name: Restore legacy Cargo sources during cache migration
+        id: legacy-source-cache
+        if: steps.source-cache.outputs.cache-matched-key == '' || steps.materialize-sources.outcome == 'failure'
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         continue-on-error: true
         with:
@@ -278,18 +330,21 @@ jobs:
             target/debug/deps/*.dylib
             target/debug/deps/*.a
             target/debug/deps/*.d
-          key: fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          key: fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.event.pull_request.base.sha || github.sha }}
           restore-keys: |
             fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
             fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Report cache reuse
         env:
           SOURCE_CACHE_HIT: ${{ steps.source-cache.outputs.cache-hit }}
+          SOURCE_CACHE_KEY: ${{ steps.source-cache.outputs.cache-matched-key }}
+          LEGACY_SOURCE_CACHE_KEY: ${{ steps.legacy-source-cache.outputs.cache-matched-key }}
           BUILD_CACHE_HIT: ${{ steps.build-cache.outputs.cache-hit }}
           BUILD_CACHE_KEY: ${{ steps.build-cache.outputs.cache-matched-key }}
         run: |
-          printf 'Source cache exact hit: %s; build exact hit: %s; restored build key: %s\n' \
-            "$SOURCE_CACHE_HIT" "$BUILD_CACHE_HIT" "$BUILD_CACHE_KEY" | tee -a "$GITHUB_STEP_SUMMARY"
+          printf 'Shared source exact hit: %s; shared key: %s; legacy source key: %s; build exact hit: %s; build key: %s\n' \
+            "$SOURCE_CACHE_HIT" "$SOURCE_CACHE_KEY" "$LEGACY_SOURCE_CACHE_KEY" \
+            "$BUILD_CACHE_HIT" "$BUILD_CACHE_KEY" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Install WASI SDK
         run: ./script/download-wasi-sdk
       - name: Check Xcode toolchain
@@ -299,17 +354,8 @@ jobs:
           xcrun --find metal
       - name: Check macOS Zed application
         run: python3 script/ci-run stage 'macOS app check' -- cargo check --locked --keep-going -p zed --bin zed
-      - name: Save macOS Cargo source cache
-        if: ${{ !cancelled() && steps.source-cache.outputs.cache-hit != 'true' }}
-        continue-on-error: true
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ steps.source-cache.outputs.cache-primary-key }}
       - name: Save macOS build cache
-        if: ${{ !cancelled() && steps.build-cache.outputs.cache-hit != 'true' }}
+        if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.build-cache.outputs.cache-hit != 'true' }}
         continue-on-error: true
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
