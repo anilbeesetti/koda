@@ -1,4 +1,5 @@
 mod android_debugger;
+mod android_logcat;
 mod android_preview;
 
 use android_tools::{
@@ -1417,26 +1418,16 @@ impl AndroidPanel {
     fn logcat(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let result = (|| {
             let root = self.trusted_root(cx)?;
-            let serial = self.selected_device()?.serial.clone();
-            let template = TaskTemplate {
-                label: format!("Logcat · {serial}"),
-                command: adb_path()?.to_string_lossy().into_owned(),
-                args: vec![
-                    "-s".into(),
-                    serial,
-                    "logcat".into(),
-                    "-v".into(),
-                    "threadtime".into(),
-                ],
-                reveal: RevealStrategy::Always,
-                show_summary: true,
-                show_command: true,
-                ..Default::default()
-            };
-            let task = resolve_android_task(template, "android-logcat", root)?;
-            self.workspace.update(cx, |workspace, cx| {
-                workspace.schedule_resolved_task(TaskSourceKind::UserInput, task, false, window, cx)
-            })?;
+            let workspace = self.workspace.clone();
+            let serial = self.selected_serial.clone();
+            let targets = self.targets.clone();
+            window.defer(cx, move |window, cx| {
+                workspace
+                    .update(cx, |workspace, cx| {
+                        android_logcat::open(workspace, root, serial, targets, window, cx);
+                    })
+                    .log_err();
+            });
             Ok::<_, anyhow::Error>(())
         })();
         if let Err(error) = result {
@@ -2007,7 +1998,7 @@ impl Render for AndroidPanel {
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))
             .child(self.preview_picker(cx))
             .child(Button::new("logcat", "Open Logcat")
-                .disabled(self.selected_device().is_err()).tab_index(0isize)
+                .tab_index(0isize)
                 .on_click(cx.listener(|panel, _, window, cx| panel.logcat(window, cx))))
             .child(div().text_sm().text_color(cx.theme().colors().text_muted).child(self.status.clone()))
             .when_some(self.error.clone().or_else(|| self.device_error.clone()), |this, error| {
