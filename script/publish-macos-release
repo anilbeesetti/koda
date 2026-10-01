@@ -7,8 +7,8 @@ set -euo pipefail
 
 test "$(git rev-parse "refs/tags/$RELEASE_VERSION^{commit}")" = "$GITHUB_SHA"
 for architecture in aarch64; do
-    test -s "release-assets/Zed-$RELEASE_VERSION-macos-$architecture.dmg"
-    test -s "release-assets/zed-remote-server-$RELEASE_VERSION-macos-$architecture.gz"
+    test -s "release-assets/Koda-$RELEASE_VERSION-macos-$architecture.dmg"
+    test -s "release-assets/koda-remote-server-$RELEASE_VERSION-macos-$architecture.gz"
     (cd release-assets && sha256sum --check "SHA256SUMS-macos-$architecture.txt")
 done
 

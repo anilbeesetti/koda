@@ -78,10 +78,10 @@ jobs:
             target/aarch64-apple-darwin/release/.fingerprint
             target/aarch64-apple-darwin/release/build
             target/aarch64-apple-darwin/release/deps
-          key: macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
+          key: koda-macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
-            macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-
-            macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-
+            koda-macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-lock-${{ hashFiles('Cargo.lock') }}-
+            koda-macos-aarch64-xcode16.4-release-rust-${{ hashFiles('rust-toolchain.toml') }}-
       - name: Install build dependencies and Rust toolchain
         run: |
           python3 -m unittest discover -s script/tests -p 'test_macos_*.py'
@@ -94,18 +94,20 @@ jobs:
           ./script/bundle-mac "$TARGET_TRIPLE"
       - name: Verify app and collect release downloads
         run: |
-          app="target/$TARGET_TRIPLE/release/dmg/Zed.app"
-          test -x "$app/Contents/MacOS/zed"
+          app="target/$TARGET_TRIPLE/release/dmg/Koda.app"
+          test -x "$app/Contents/MacOS/koda"
           test -x "$app/Contents/MacOS/cli"
           codesign --verify --deep --strict "$app"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist" | grep -Fx 'dev.anilbeesetti.koda'
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$app/Contents/Info.plist" | grep -Fx 'koda'
           /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist" | grep -Fx "$ZED_BUNDLE_VERSION"
           /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Contents/Info.plist" | grep -Fx "$ZED_BUNDLE_VERSION"
-          lipo "$app/Contents/MacOS/zed" -verify_arch arm64
-          "$app/Contents/MacOS/zed" --system-specs
+          lipo "$app/Contents/MacOS/koda" -verify_arch arm64
+          "$app/Contents/MacOS/koda" --system-specs
           "$app/Contents/MacOS/cli" --version | grep -F "$ZED_BUNDLE_VERSION"
           mkdir -p release-assets
-          cp "target/$TARGET_TRIPLE/release/Zed-$ARCHITECTURE.dmg" "release-assets/Zed-$ZED_BUNDLE_VERSION-macos-$ARCHITECTURE.dmg"
-          cp "target/zed-remote-server-macos-$ARCHITECTURE.gz" "release-assets/zed-remote-server-$ZED_BUNDLE_VERSION-macos-$ARCHITECTURE.gz"
+          cp "target/$TARGET_TRIPLE/release/Koda-$ARCHITECTURE.dmg" "release-assets/Koda-$ZED_BUNDLE_VERSION-macos-$ARCHITECTURE.dmg"
+          cp "target/koda-remote-server-macos-$ARCHITECTURE.gz" "release-assets/koda-remote-server-$ZED_BUNDLE_VERSION-macos-$ARCHITECTURE.gz"
           (cd release-assets && shasum -a 256 ./* > "SHA256SUMS-macos-$ARCHITECTURE.txt")
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:

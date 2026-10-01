@@ -30,7 +30,7 @@ pub struct OpenBrowser {
     pub url: Arc<str>,
 }
 
-/// Opens a zed:// URL within the application.
+/// Opens a koda:// URL within the application.
 #[derive(Clone, PartialEq, Deserialize, JsonSchema, Action)]
 #[action(namespace = zed)]
 #[serde(deny_unknown_fields)]

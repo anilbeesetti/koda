@@ -418,7 +418,7 @@ pub fn build_window_options(display_uuid: Option<Uuid>, cx: &mut App) -> WindowO
             height: px(240.0),
         }),
         tabbing_identifier: if use_system_window_tabs {
-            Some(String::from("zed"))
+            Some(String::from("koda"))
         } else {
             None
         },
@@ -1279,7 +1279,7 @@ fn register_actions(
                         Toast::new(
                             NotificationId::unique::<RegisterZedScheme>(),
                             format!(
-                                "zed:// links will now open in {}.",
+                                "koda:// links will now open in {}.",
                                 ReleaseChannel::global(cx).display_name()
                             ),
                         ),
@@ -1289,7 +1289,7 @@ fn register_actions(
                 Ok(())
             })
             .detach_and_prompt_err(
-                "Error registering zed:// scheme",
+                "Error registering koda:// scheme",
                 window,
                 cx,
                 |_, _, _| None,
@@ -1717,7 +1717,7 @@ fn open_about_window(cx: &mut App) {
     cx.open_window(
         WindowOptions {
             titlebar: Some(TitlebarOptions {
-                title: Some("About Zed".into()),
+                title: Some("About Koda".into()),
                 appears_transparent: true,
                 traffic_light_position: Some(point(px(12.), px(12.))),
             }),
@@ -6303,14 +6303,14 @@ mod tests {
             .insert_tree(
                 Path::new("/root"),
                 json!({
-                    ".zed": {
+                    ".koda": {
                         "settings.json": settings_init
                     }
                 }),
             )
             .await;
 
-        eprintln!("Created project with .zed/settings.json containing UNIQUEVALUE");
+        eprintln!("Created project with .koda/settings.json containing UNIQUEVALUE");
 
         // 2. Create a project with the file system and load it
         let project = Project::test(app_state.fs.clone(), [Path::new("/root")], cx).await;
@@ -6318,7 +6318,7 @@ mod tests {
         // Save original settings content for comparison
         let original_settings = app_state
             .fs
-            .load(Path::new("/root/.zed/settings.json"))
+            .load(Path::new("/root/.koda/settings.json"))
             .await
             .unwrap();
 
@@ -6335,7 +6335,7 @@ mod tests {
         cx.update_global::<SettingsStore, _>(|store, cx| {
             store.update_user_settings(cx, |worktree_settings| {
                 worktree_settings.project.worktree.file_scan_exclusions =
-                    Some(SplicingVec::from(vec![".zed".to_string()]));
+                    Some(SplicingVec::from(vec![".koda".to_string()]));
             });
         });
 
@@ -6347,8 +6347,12 @@ mod tests {
         // 5. Critical: Verify .zed is actually excluded from worktree
         let worktree = cx.update(|cx| project.read(cx).worktrees(cx).next().unwrap());
 
-        let has_zed_entry =
-            cx.update(|cx| worktree.read(cx).entry_for_path(rel_path(".zed")).is_some());
+        let has_zed_entry = cx.update(|cx| {
+            worktree
+                .read(cx)
+                .entry_for_path(rel_path(".koda"))
+                .is_some()
+        });
 
         eprintln!(
             "Is .zed directory visible in worktree after exclusion: {}",
@@ -6384,7 +6388,7 @@ mod tests {
         // 8. Verify file contents after calling function
         let new_content = app_state
             .fs
-            .load(Path::new("/root/.zed/settings.json"))
+            .load(Path::new("/root/.koda/settings.json"))
             .await
             .unwrap();
 

@@ -211,7 +211,10 @@ class KotlinBootstrapTests(unittest.TestCase):
             launcher = repository / "script/android-ide"
             launcher.parent.mkdir()
             shutil.copy2(Path(__file__).with_name("android-ide"), launcher)
-            executable = repository / "target/debug/zed"
+            icon = repository / "crates/zed/resources/Koda.icns"
+            icon.parent.mkdir(parents=True)
+            shutil.copy2(Path(__file__).resolve().parents[1] / "crates/zed/resources/Koda.icns", icon)
+            executable = repository / "target/debug/koda"
             executable.parent.mkdir(parents=True)
             executable.write_text(
                 "#!/usr/bin/env python3\nimport json, os\n"

@@ -71,34 +71,37 @@ target_directory=${CARGO_TARGET_DIR:-"$repository/target"}
 case "$target_directory" in /*) ;; *) target_directory="$PWD/$target_directory" ;; esac
 export CARGO_TARGET_DIR="$target_directory"
 
-bundle="$repository/target/android-ide/$build_profile/Android IDE Dev.app"
-executable="$bundle/Contents/MacOS/zed"
+bundle="$repository/target/android-ide/$build_profile/Koda Dev.app"
+executable="$bundle/Contents/MacOS/koda"
 if ps -axo command= | /usr/bin/grep -F "$executable" | /usr/bin/grep -v '[g]rep' >/dev/null; then
-    echo "Quit the $build_profile Android IDE Dev app before running this launcher again." >&2
+    echo "Quit the $build_profile Koda Dev app before running this launcher again." >&2
     exit 1
 fi
 
 if $build; then
-    arguments=(build --locked -p zed --bin zed)
+    arguments=(build --locked -p zed --bin koda)
     if [[ $build_profile == release ]]; then arguments+=(--release); fi
     (cd "$repository" && cargo "${arguments[@]}")
 fi
-binary="$target_directory/$build_profile/zed"
+binary="$target_directory/$build_profile/koda"
 [[ -x "$binary" ]] || { echo "Missing $binary; run again without --skip-build." >&2; exit 1; }
 
-mkdir -p "$bundle/Contents/MacOS" "$profile/config"
+mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources" "$profile/config"
 cat > "$bundle/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>dev.zed.android-ide-$build_profile</string>
-<key>CFBundleName</key><string>Android IDE Dev</string>
-<key>CFBundleExecutable</key><string>zed</string>
+<key>CFBundleIdentifier</key><string>dev.anilbeesetti.koda-dev</string>
+<key>CFBundleName</key><string>Koda Dev</string>
+<key>CFBundleDisplayName</key><string>Koda Dev</string>
+<key>CFBundleIconFile</key><string>Koda.icns</string>
+<key>CFBundleExecutable</key><string>koda</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleVersion</key><string>0.1</string>
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST
+cp "$repository/crates/zed/resources/Koda.icns" "$bundle/Contents/Resources/Koda.icns"
 # A real executable keeps macOS app discovery attached to this bundle.
 cp -c "$binary" "$executable" || cp "$binary" "$executable"
 

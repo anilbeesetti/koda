@@ -68,22 +68,40 @@ impl GitHubReleaseSource {
     }
 
     pub(crate) fn release_asset(&self, release: GitHubRelease) -> Result<ReleaseAsset> {
+        let name = format!("Koda-{}-macos-aarch64.dmg", release.tag_name);
+        self.named_asset(release, name)
+    }
+
+    pub(crate) fn remote_server_asset(
+        &self,
+        release: GitHubRelease,
+        os: &str,
+        arch: &str,
+    ) -> Result<ReleaseAsset> {
+        ensure!(
+            release.tag_name == self.installed_tag,
+            "remote server release does not match the installed Koda build"
+        );
+        ensure!(
+            matches!(os, "macos" | "linux" | "windows" | "freebsd")
+                && matches!(arch, "aarch64" | "x86_64"),
+            "unsupported Koda remote server platform"
+        );
+        let name = format!("koda-remote-server-{}-{os}-{arch}.gz", self.installed_tag);
+        self.named_asset(release, name)
+    }
+
+    fn named_asset(&self, release: GitHubRelease, name: String) -> Result<ReleaseAsset> {
         ensure!(
             !release.draft && !release.prerelease && release.published_at.is_some(),
             "GitHub update is not a published production release"
         );
         TimestampVersion::parse(&release.tag_name)?;
-        let name = format!("Zed-{}-macos-aarch64.dmg", release.tag_name);
         let asset = release
             .assets
             .into_iter()
             .find(|asset| asset.name == name)
-            .with_context(|| {
-                format!(
-                    "GitHub release {} has no Apple Silicon DMG",
-                    release.tag_name
-                )
-            })?;
+            .with_context(|| format!("GitHub release {} has no {name}", release.tag_name))?;
         let expected_url = format!(
             "https://github.com/{}/releases/download/{}/{}",
             self.repository, release.tag_name, name
@@ -94,11 +112,11 @@ impl GitHubReleaseSource {
         );
         ensure!(
             asset.state == "uploaded" && asset.size > 0,
-            "GitHub release DMG is not fully uploaded"
+            "GitHub release asset is not fully uploaded"
         );
         let digest = asset
             .digest
-            .context("GitHub release DMG has no SHA-256 digest")?;
+            .context("GitHub release asset has no SHA-256 digest")?;
         let checksum = digest
             .strip_prefix("sha256:")
             .context("unsupported GitHub release asset digest")?;
@@ -220,8 +238,8 @@ mod tests {
         serde_json::from_value(serde_json::json!({
             "tag_name": "2026.09.30.14.05", "draft": false, "prerelease": false,
             "published_at": "2026-09-30T08:35:00Z",
-            "assets": [{ "name": "Zed-2026.09.30.14.05-macos-aarch64.dmg",
-                "browser_download_url": "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.05/Zed-2026.09.30.14.05-macos-aarch64.dmg",
+            "assets": [{ "name": "Koda-2026.09.30.14.05-macos-aarch64.dmg",
+                "browser_download_url": "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.05/Koda-2026.09.30.14.05-macos-aarch64.dmg",
                 "state": "uploaded", "size": 123, "digest": format!("sha256:{}", "a".repeat(64))
             }]
         })).unwrap()
@@ -287,7 +305,7 @@ mod tests {
                 0 => release.draft = true,
                 1 => release.prerelease = true,
                 2 => release.published_at = None,
-                3 => release.assets[0].name = "Zed-2026.09.30.14.05-macos-x86_64.dmg".into(),
+                3 => release.assets[0].name = "Koda-2026.09.30.14.05-macos-x86_64.dmg".into(),
                 4 => {
                     release.assets[0].browser_download_url = "https://example.com/update.dmg".into()
                 }
@@ -297,6 +315,40 @@ mod tests {
             }
             assert!(source.release_asset(release).is_err());
         }
+    }
+
+    #[test]
+    fn remote_servers_require_the_installed_koda_release() {
+        let source = source("2026.09.30.14.05");
+        let remote = || {
+            let mut release = release();
+            let name = "koda-remote-server-2026.09.30.14.05-macos-aarch64.gz";
+            release.assets[0].name = name.into();
+            release.assets[0].browser_download_url = format!(
+                "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.05/{name}"
+            );
+            release
+        };
+        assert!(
+            source
+                .remote_server_asset(remote(), "macos", "aarch64")
+                .is_ok()
+        );
+        assert!(
+            source
+                .remote_server_asset(remote(), "linux", "x86_64")
+                .is_err()
+        );
+        let mut mismatched = remote();
+        mismatched.tag_name = "2026.09.30.14.06".into();
+        assert!(
+            source
+                .remote_server_asset(mismatched, "macos", "aarch64")
+                .is_err()
+        );
+        let mut upstream = release();
+        upstream.assets[0].name = "Zed-2026.09.30.14.05-macos-aarch64.dmg".into();
+        assert!(source.release_asset(upstream).is_err());
     }
 
     #[test]

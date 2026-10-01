@@ -43,12 +43,7 @@ pub static RELEASE_CHANNEL: LazyLock<ReleaseChannel> =
 /// The app identifier for the current release channel, Windows only.
 #[cfg(target_os = "windows")]
 pub fn app_identifier() -> &'static str {
-    match *RELEASE_CHANNEL {
-        ReleaseChannel::Dev => "Zed-Editor-Dev",
-        ReleaseChannel::Nightly => "Zed-Editor-Nightly",
-        ReleaseChannel::Preview => "Zed-Editor-Preview",
-        ReleaseChannel::Stable => "Zed-Editor-Stable",
-    }
+    RELEASE_CHANNEL.app_id()
 }
 
 /// The Git commit SHA that Zed was built at.
@@ -213,10 +208,10 @@ impl ReleaseChannel {
     /// Returns the display name for this [`ReleaseChannel`].
     pub fn display_name(&self) -> &'static str {
         match self {
-            ReleaseChannel::Dev => "Zed Dev",
-            ReleaseChannel::Nightly => "Zed Nightly",
-            ReleaseChannel::Preview => "Zed Preview",
-            ReleaseChannel::Stable => "Zed",
+            ReleaseChannel::Dev => "Koda Dev",
+            ReleaseChannel::Nightly => "Koda Nightly",
+            ReleaseChannel::Preview => "Koda Preview",
+            ReleaseChannel::Stable => "Koda",
         }
     }
 
@@ -235,10 +230,10 @@ impl ReleaseChannel {
     /// This also has to match the bundle identifier for Zed on macOS.
     pub fn app_id(&self) -> &'static str {
         match self {
-            ReleaseChannel::Dev => "dev.zed.Zed-Dev",
-            ReleaseChannel::Nightly => "dev.zed.Zed-Nightly",
-            ReleaseChannel::Preview => "dev.zed.Zed-Preview",
-            ReleaseChannel::Stable => "dev.zed.Zed",
+            ReleaseChannel::Dev => "dev.anilbeesetti.koda-dev",
+            ReleaseChannel::Nightly => "dev.anilbeesetti.koda-nightly",
+            ReleaseChannel::Preview => "dev.anilbeesetti.koda-preview",
+            ReleaseChannel::Stable => "dev.anilbeesetti.koda",
         }
     }
 

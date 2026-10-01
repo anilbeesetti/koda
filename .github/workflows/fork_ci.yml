@@ -56,6 +56,8 @@ jobs:
           echo "$RUNNER_TEMP/actionlint" >> "$GITHUB_PATH"
       - name: Check fork workflow
         run: actionlint .github/workflows/fork_ci.yml
+      - name: Check packaging identity and coexistence
+        run: python3 -m unittest discover -s script/tests -p 'test_*.py'
       - name: Check Android launcher and Kotlin scripts
         run: |
           if [[ -f script/android-ide ]]; then
@@ -142,7 +144,7 @@ jobs:
           --test-threads=2 --status-level=fail --final-status-level=fail
       - name: Build Zed
         if: success() || failure()
-        run: cargo build --locked --keep-going -p zed --bin zed
+        run: cargo build --locked --keep-going -p zed --bin koda
       - name: Save Linux build cache
         if: ${{ !cancelled() && steps.build-cache.outputs.cache-hit != 'true' }}
         continue-on-error: true
@@ -189,7 +191,7 @@ jobs:
           xcrun clang --version
           xcrun --find metal
       - name: Check macOS Zed application
-        run: cargo check --locked --keep-going -p zed --bin zed
+        run: cargo check --locked --keep-going -p zed --bin koda
       - name: Save macOS build cache
         if: ${{ !cancelled() && steps.build-cache.outputs.cache-hit != 'true' }}
         continue-on-error: true

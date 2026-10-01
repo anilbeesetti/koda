@@ -12,7 +12,7 @@ use gpui::{
 };
 use http_client::{HttpClient, HttpClientWithUrl, HttpRequestExt as _};
 use paths::remote_servers_dir;
-use release_channel::{AppCommitSha, ReleaseChannel};
+use release_channel::ReleaseChannel;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use settings::{RegisterSetting, Settings, SettingsStore};
@@ -113,16 +113,6 @@ actions!(
         ViewReleaseNotes,
     ]
 );
-
-#[derive(Serialize, Debug)]
-pub struct AssetQuery<'a> {
-    asset: &'a str,
-    os: &'a str,
-    arch: &'a str,
-    metrics_id: Option<&'a str>,
-    system_id: Option<&'a str>,
-    is_staff: Option<bool>,
-}
 
 #[derive(Clone, Debug)]
 pub enum AutoUpdateStatus {
@@ -295,6 +285,7 @@ pub fn init(client: Arc<Client>, cx: &mut App) {
         if option_env!("ZED_UPDATE_EXPLANATION").is_none()
             && env::var("ZED_UPDATE_EXPLANATION").is_err()
             && poll_for_updates
+            && updater.github_source.is_some()
         {
             let mut update_subscription = AutoUpdateSetting::get_global(cx)
                 .0
@@ -397,7 +388,7 @@ pub fn view_release_notes(_: &ViewReleaseNotes, cx: &mut App) -> Option<()> {
 }
 
 #[cfg(not(target_os = "windows"))]
-const INSTALLER_DIR_PREFIX: &str = "zed-auto-update";
+const INSTALLER_DIR_PREFIX: &str = "koda-auto-update";
 
 #[cfg(not(target_os = "windows"))]
 struct InstallerDir(tempfile::TempDir);
@@ -425,7 +416,7 @@ impl InstallerDir {
     async fn new() -> Result<Self> {
         let installer_dir = std::env::current_exe()?
             .parent()
-            .context("No parent dir for Zed.exe")?
+            .context("No parent dir for Koda.exe")?
             .join("updates");
         if smol::fs::metadata(&installer_dir).await.is_ok() {
             smol::fs::remove_dir_all(&installer_dir).await?;
@@ -654,7 +645,7 @@ impl AutoUpdater {
             &this,
             release_channel,
             version,
-            "zed-remote-server",
+            "koda-remote-server",
             os,
             arch,
             cx,
@@ -671,7 +662,7 @@ impl AutoUpdater {
 
         if smol::fs::metadata(&version_path).await.is_err() {
             log::info!(
-                "downloading zed-remote-server {os} {arch} version {}",
+                "downloading koda-remote-server {os} {arch} version {}",
                 release.version
             );
             set_status("Downloading remote server", cx);
@@ -692,99 +683,46 @@ impl AutoUpdater {
     }
 
     pub async fn get_remote_server_release_url(
-        channel: ReleaseChannel,
-        version: Option<Version>,
-        os: &str,
-        arch: &str,
-        cx: &mut AsyncApp,
+        _channel: ReleaseChannel,
+        _version: Option<Version>,
+        _os: &str,
+        _arch: &str,
+        _cx: &mut AsyncApp,
     ) -> Result<Option<String>> {
-        let this = cx.update(|cx| {
-            cx.default_global::<GlobalAutoUpdate>()
-                .0
-                .clone()
-                .context("auto-update not initialized")
-        })?;
-
-        let release =
-            Self::get_release_asset(&this, channel, version, "zed-remote-server", os, arch, cx)
-                .await?;
-
-        Ok(Some(release.url))
+        // Download through Koda so the pinned fork asset is verified before upload.
+        Ok(None)
     }
 
     async fn get_release_asset(
         this: &Entity<Self>,
-        release_channel: ReleaseChannel,
-        version: Option<Version>,
-        asset: &str,
+        _release_channel: ReleaseChannel,
+        _version: Option<Version>,
+        _asset: &str,
         os: &str,
         arch: &str,
         cx: &mut AsyncApp,
     ) -> Result<ReleaseAsset> {
-        let client = this.read_with(cx, |this, _| this.client.clone());
-
-        let (system_id, metrics_id, is_staff) = if client.telemetry().metrics_enabled() {
-            (
-                client.telemetry().system_id(),
-                client.telemetry().metrics_id(),
-                client.telemetry().is_staff(),
-            )
-        } else {
-            (None, None, None)
-        };
-
-        let version = if let Some(mut version) = version {
-            version.pre = semver::Prerelease::EMPTY;
-            version.build = semver::BuildMetadata::EMPTY;
-            version.to_string()
-        } else {
-            "latest".to_string()
-        };
-        let http_client = client.http_client();
-
-        let path = format!("/releases/{}/{}/asset", release_channel.dev_name(), version,);
-        let url = http_client.build_zed_cloud_url_with_query(
-            &path,
-            AssetQuery {
-                os,
-                arch,
-                asset,
-                metrics_id: metrics_id.as_deref(),
-                system_id: system_id.as_deref(),
-                is_staff,
-            },
+        let (client, source) = this.read_with(cx, |this, _| {
+            (this.client.http_client(), this.github_source.clone())
+        });
+        let source = source.context(
+            "Koda remote downloads require a fork release build; configure a custom remote server for development",
         )?;
-
-        let mut response = http_client
-            .get(url.as_str(), Default::default(), true)
-            .await?;
-        let mut body = Vec::new();
-        response.body_mut().read_to_end(&mut body).await?;
-
-        anyhow::ensure!(
-            response.status().is_success(),
-            "failed to fetch release: {:?}",
-            String::from_utf8_lossy(&body),
+        source.api_url()?;
+        let url = format!(
+            "https://api.github.com/repos/{}/releases/tags/{}",
+            source.repository, source.installed_tag
         );
-
-        serde_json::from_slice(body.as_slice()).with_context(|| {
-            format!(
-                "error deserializing release {:?}",
-                String::from_utf8_lossy(&body),
-            )
-        })
+        let release = fetch_github_release_metadata(client, &url)
+            .await?
+            .context("No published remote server release for this Koda build")?;
+        source.remote_server_asset(release, os, arch)
     }
 
     async fn update(this: Entity<Self>, cx: &mut AsyncApp) -> Result<()> {
-        let (client, installed_version, previous_status, release_channel) =
-            this.read_with(cx, |this, cx| {
-                (
-                    this.client.http_client(),
-                    this.current_version.clone(),
-                    this.status.clone(),
-                    ReleaseChannel::try_global(cx).unwrap_or(ReleaseChannel::Stable),
-                )
-            });
+        let (client, previous_status) = this.read_with(cx, |this, _| {
+            (this.client.http_client(), this.status.clone())
+        });
 
         Self::check_dependencies()?;
 
@@ -815,18 +753,9 @@ impl AutoUpdater {
                 .flatten();
             (release, newer)
         } else {
-            let release =
-                Self::get_release_asset(&this, release_channel, None, "zed", OS, ARCH, cx).await?;
-            let app_commit_sha =
-                Ok(cx.update(|cx| AppCommitSha::try_global(cx).map(|sha| sha.full())));
-            let newer = Self::check_if_fetched_version_is_newer(
-                release_channel,
-                app_commit_sha,
-                installed_version,
-                release.version.clone(),
-                previous_status.clone(),
-            )?;
-            (Some(release), newer)
+            anyhow::bail!(
+                "Koda updates require a build configured with ZED_GITHUB_REPOSITORY and ZED_RELEASE_VERSION"
+            );
         };
 
         let Some(newer_version) = newer_version else {
@@ -926,6 +855,7 @@ impl AutoUpdater {
         Ok(())
     }
 
+    #[cfg(test)]
     fn check_if_fetched_version_is_newer(
         release_channel: ReleaseChannel,
         app_commit_sha: Result<Option<String>>,
@@ -983,9 +913,9 @@ impl AutoUpdater {
 
     async fn target_path(installer_dir: &InstallerDir) -> Result<PathBuf> {
         let filename = match OS {
-            "macos" => anyhow::Ok("Zed.dmg"),
-            "linux" => Ok("zed.tar.gz"),
-            "windows" => Ok("Zed.exe"),
+            "macos" => anyhow::Ok("Koda.dmg"),
+            "linux" => Ok("koda.tar.gz"),
+            "windows" => Ok("Koda.exe"),
             unsupported_os => anyhow::bail!("not supported: {unsupported_os}"),
         }?;
 
@@ -1018,6 +948,7 @@ impl AutoUpdater {
         }
     }
 
+    #[cfg(test)]
     fn check_if_fetched_version_is_newer_non_nightly(
         mut installed_version: Version,
         fetched_version: Version,
@@ -1063,16 +994,8 @@ async fn download_remote_server_binary(
     client: Arc<HttpClientWithUrl>,
 ) -> Result<()> {
     let temp = tempfile::Builder::new().tempfile_in(remote_servers_dir())?;
-    let mut temp_file = File::create(&temp).await?;
-
-    let mut response = client.get(&release.url, Default::default(), true).await?;
-    anyhow::ensure!(
-        response.status().is_success(),
-        "failed to download remote server release: {:?}",
-        response.status()
-    );
-    smol::io::copy(response.body_mut(), &mut temp_file).await?;
-    smol::fs::rename(&temp, &target_path).await?;
+    download_release(temp.path(), release, client, |_| {}).await?;
+    smol::fs::rename(temp.path(), target_path).await?;
 
     Ok(())
 }
@@ -1138,13 +1061,23 @@ async fn fetch_github_release(
     client: Arc<HttpClientWithUrl>,
     source: &GitHubReleaseSource,
 ) -> Result<Option<ReleaseAsset>> {
+    fetch_github_release_metadata(client, &source.api_url()?)
+        .await?
+        .map(|release| source.release_asset(release))
+        .transpose()
+}
+
+async fn fetch_github_release_metadata(
+    client: Arc<HttpClientWithUrl>,
+    url: &str,
+) -> Result<Option<GitHubRelease>> {
     let request = http_client::Request::builder()
-        .uri(source.api_url()?)
+        .uri(url)
         .header(
             http_client::http::header::ACCEPT,
             "application/vnd.github+json",
         )
-        .header(http_client::http::header::USER_AGENT, "Zed-GitHub-Updater")
+        .header(http_client::http::header::USER_AGENT, "Koda-GitHub-Updater")
         .header("x-github-api-version", "2022-11-28")
         .follow_redirects(http_client::RedirectPolicy::FollowAll)
         .timeout(Duration::from_secs(60))
@@ -1171,7 +1104,7 @@ async fn fetch_github_release(
     );
     let release: GitHubRelease =
         serde_json::from_slice(&body).context("invalid GitHub release response")?;
-    source.release_asset(release).map(Some)
+    Ok(Some(release))
 }
 
 async fn download_release(
@@ -1258,7 +1191,7 @@ async fn install_release_linux(
 ) -> Result<Option<PathBuf>> {
     let home_dir = PathBuf::from(env::var("HOME").context("no HOME env var set")?);
 
-    let extracted = temp_dir.path().join("zed");
+    let extracted = temp_dir.path().join("koda");
     fs::create_dir_all(&extracted)
         .await
         .context("failed to create directory into which to extract update")?;
@@ -1286,12 +1219,12 @@ async fn install_release_linux(
     } else {
         String::default()
     };
-    let app_folder_name = format!("zed{}.app", suffix);
+    let app_folder_name = format!("koda{}.app", suffix);
 
     let from = extracted.join(&app_folder_name);
     let mut to = home_dir.join(".local");
 
-    let expected_suffix = format!("{}/libexec/zed-editor", app_folder_name);
+    let expected_suffix = format!("{}/libexec/koda-editor", app_folder_name);
 
     if let Some(prefix) = running_app_path
         .to_str()
@@ -1328,7 +1261,7 @@ async fn install_release_macos(
         .file_name()
         .with_context(|| format!("invalid running app path {running_app_path:?}"))?;
 
-    let mount_path = temp_dir.path().join("Zed");
+    let mount_path = temp_dir.path().join("Koda");
     let mut mounted_app_path: OsString = mount_path.join(running_app_filename).into();
 
     mounted_app_path.push("/");
@@ -1423,7 +1356,7 @@ async fn cleanup_stale_installer_dirs() {
 async fn cleanup_windows() -> Result<()> {
     let parent = std::env::current_exe()?
         .parent()
-        .context("No parent dir for Zed.exe")?
+        .context("No parent dir for Koda.exe")?
         .to_owned();
 
     // keep in sync with crates/auto_update_helper/src/updater.rs
@@ -1450,7 +1383,7 @@ async fn install_release_windows(downloaded_installer: &Path) -> Result<Option<P
     // deleting the old one, and launching the new binary.
     let helper_path = std::env::current_exe()?
         .parent()
-        .context("No parent dir for Zed.exe")?
+        .context("No parent dir for Koda.exe")?
         .join("tools")
         .join("auto_update_helper.exe");
     Ok(Some(helper_path))
@@ -1484,17 +1417,11 @@ pub async fn finalize_auto_update_on_quit() {
 mod tests {
     use client::Client;
     use clock::FakeSystemClock;
-    use futures::channel::oneshot;
     use gpui::TestAppContext;
     use http_client::{FakeHttpClient, Response};
+    use release_channel::AppCommitSha;
     use settings::default_settings;
-    use std::{
-        rc::Rc,
-        sync::{
-            Arc,
-            atomic::{self, AtomicBool},
-        },
-    };
+    use std::{rc::Rc, sync::Arc};
     use tempfile::tempdir;
 
     #[ctor::ctor(unsafe)]
@@ -1523,115 +1450,17 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_auto_update_downloads(cx: &mut TestAppContext) {
+    async fn test_unconfigured_koda_never_downloads_upstream(cx: &mut TestAppContext) {
         cx.background_executor.allow_parking();
-        zlog::init_test();
-        let release_available = Arc::new(AtomicBool::new(false));
-
-        let (dmg_tx, dmg_rx) = oneshot::channel::<String>();
-
-        cx.update(|cx| {
-            settings::init(cx);
-
-            let current_version = semver::Version::new(0, 100, 0);
-            release_channel::init_test(current_version, ReleaseChannel::Stable, cx);
-
-            let clock = Arc::new(FakeSystemClock::new());
-            let release_available = Arc::clone(&release_available);
-            let dmg_rx = Arc::new(parking_lot::Mutex::new(Some(dmg_rx)));
-            let fake_client_http = FakeHttpClient::create(move |req| {
-                let release_available = release_available.load(atomic::Ordering::Relaxed);
-                let dmg_rx = dmg_rx.clone();
-                async move {
-                if req.uri().path() == "/releases/stable/latest/asset" {
-                    if release_available {
-                        return Ok(Response::builder().status(200).body(
-                            r#"{"version":"0.100.1","url":"https://test.example/new-download"}"#.into()
-                        ).unwrap());
-                    } else {
-                        return Ok(Response::builder().status(200).body(
-                            r#"{"version":"0.100.0","url":"https://test.example/old-download"}"#.into()
-                        ).unwrap());
-                    }
-                } else if req.uri().path() == "/new-download" {
-                    return Ok(Response::builder().status(200).body({
-                        let dmg_rx = dmg_rx.lock().take().unwrap();
-                        dmg_rx.await.unwrap().into()
-                    }).unwrap());
-                }
-                Ok(Response::builder().status(404).body("".into()).unwrap())
-                }
-            });
-            let client = Client::new(clock, fake_client_http, cx);
-            crate::init(client, cx);
+        let fake_http = FakeHttpClient::create(|_| async {
+            panic!("an unconfigured Koda build must not contact an update server")
         });
-
-        let auto_updater = cx.update(|cx| AutoUpdater::get(cx).expect("auto updater should exist"));
-
-        cx.background_executor.run_until_parked();
-
-        auto_updater.read_with(cx, |updater, _| {
-            assert_eq!(updater.status(), AutoUpdateStatus::Idle);
-            assert_eq!(updater.current_version(), semver::Version::new(0, 100, 0));
+        let updater = github_test_updater(fake_http, cx);
+        updater.update(cx, |updater, _| updater.github_source = None);
+        poll_github_update(&updater, cx).await;
+        updater.read_with(cx, |updater, _| {
+            assert!(matches!(updater.status(), AutoUpdateStatus::Errored { .. }));
         });
-
-        release_available.store(true, atomic::Ordering::SeqCst);
-        cx.background_executor.advance_clock(POLL_INTERVAL);
-        cx.background_executor.run_until_parked();
-
-        loop {
-            cx.background_executor.timer(Duration::from_millis(0)).await;
-            cx.run_until_parked();
-            let status = auto_updater.read_with(cx, |updater, _| updater.status());
-            if !matches!(status, AutoUpdateStatus::Idle) {
-                break;
-            }
-        }
-        let status = auto_updater.read_with(cx, |updater, _| updater.status());
-        assert_eq!(
-            status,
-            AutoUpdateStatus::Downloading {
-                version: semver::Version::new(0, 100, 1),
-                progress: None,
-            }
-        );
-
-        dmg_tx.send("<fake-zed-update>".to_owned()).unwrap();
-
-        let tmp_dir = Arc::new(tempdir().unwrap());
-
-        cx.update(|cx| {
-            let tmp_dir = tmp_dir.clone();
-            cx.set_global(InstallOverride(Rc::new(move |target_path, _cx| {
-                let tmp_dir = tmp_dir.clone();
-                let dest_path = tmp_dir.path().join("zed");
-                std::fs::copy(&target_path, &dest_path)?;
-                Ok(Some(dest_path))
-            })));
-        });
-
-        loop {
-            cx.background_executor.timer(Duration::from_millis(0)).await;
-            cx.run_until_parked();
-            let status = auto_updater.read_with(cx, |updater, _| updater.status());
-            if !matches!(status, AutoUpdateStatus::Downloading { .. }) {
-                break;
-            }
-        }
-        let status = auto_updater.read_with(cx, |updater, _| updater.status());
-        assert_eq!(
-            status,
-            AutoUpdateStatus::Updated {
-                version: semver::Version::new(0, 100, 1)
-            }
-        );
-        let will_restart = cx.expect_restart();
-        cx.update(|cx| cx.restart());
-        let (path, arguments) = will_restart.await.unwrap();
-        assert!(arguments.is_empty());
-        let path = path.unwrap();
-        assert_eq!(path, tmp_dir.path().join("zed"));
-        assert_eq!(std::fs::read_to_string(path).unwrap(), "<fake-zed-update>");
     }
 
     fn github_release_json(tag: &str, payload: &[u8]) -> String {
@@ -1641,8 +1470,8 @@ mod tests {
             "prerelease": false,
             "published_at": "2026-09-30T08:35:00Z",
             "assets": [{
-                "name": format!("Zed-{tag}-macos-aarch64.dmg"),
-                "browser_download_url": format!("https://github.com/anilbeesetti/zed/releases/download/{tag}/Zed-{tag}-macos-aarch64.dmg"),
+                "name": format!("Koda-{tag}-macos-aarch64.dmg"),
+                "browser_download_url": format!("https://github.com/anilbeesetti/zed/releases/download/{tag}/Koda-{tag}-macos-aarch64.dmg"),
                 "state": "uploaded",
                 "size": payload.len(),
                 "digest": format!("sha256:{:x}", Sha256::digest(payload)),
@@ -1696,7 +1525,7 @@ mod tests {
                             "/repos/anilbeesetti/zed/releases/latest"
                         );
                         assert_eq!(request.headers()["accept"], "application/vnd.github+json");
-                        assert_eq!(request.headers()["user-agent"], "Zed-GitHub-Updater");
+                        assert_eq!(request.headers()["user-agent"], "Koda-GitHub-Updater");
                         assert_eq!(request.headers()["x-github-api-version"], "2022-11-28");
                         Ok(Response::builder()
                             .status(200)
@@ -1705,7 +1534,7 @@ mod tests {
                     } else {
                         assert_eq!(
                             request.uri().to_string(),
-                            "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.06/Zed-2026.09.30.14.06-macos-aarch64.dmg"
+                            "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.06/Koda-2026.09.30.14.06-macos-aarch64.dmg"
                         );
                         Ok(Response::builder()
                             .status(200)
