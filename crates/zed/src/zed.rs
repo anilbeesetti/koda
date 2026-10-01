@@ -1555,7 +1555,11 @@ fn open_about_window(cx: &mut App) {
         fn new(cx: &mut Context<Self>) -> Self {
             let release_channel = ReleaseChannel::global(cx);
             let release_channel_name = release_channel.display_name();
-            let full_version: SharedString = AppVersion::display(&AppVersion::global(cx)).into();
+            let full_version: SharedString = option_env!("ZED_RELEASE_VERSION")
+                .filter(|version| !version.is_empty())
+                .map(ToOwned::to_owned)
+                .unwrap_or_else(|| AppVersion::global(cx).to_string())
+                .into();
             let version = option_env!("ZED_RELEASE_VERSION").unwrap_or(env!("CARGO_PKG_VERSION"));
 
             let debug = if cfg!(debug_assertions) {

@@ -46,3 +46,7 @@ slow-timeout = { period = "300s", terminate-after = 1 }
 [[profile.default.overrides]]
 filter =  'package(editor) and test(test_random_blocks)'
 slow-timeout = { period = "300s", terminate-after = 1 }
+
+[[profile.default.overrides]]
+filter = 'package(=editor) and test(=columnar_selection::tests::test_random_columnar_selections)'
+slow-timeout = { period = "300s", terminate-after = 1 }

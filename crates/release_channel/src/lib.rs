@@ -119,14 +119,6 @@ impl AppVersion {
         version
     }
 
-    /// Returns the public release version, including timestamp tags in fork builds.
-    pub fn display(version: &Version) -> String {
-        option_env!("ZED_RELEASE_VERSION")
-            .filter(|version| !version.is_empty())
-            .map(ToOwned::to_owned)
-            .unwrap_or_else(|| version.to_string())
-    }
-
     /// Returns the global version number.
     pub fn global(cx: &App) -> Version {
         if cx.has_global::<GlobalAppVersion>() {
