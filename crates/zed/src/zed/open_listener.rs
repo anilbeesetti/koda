@@ -1,12 +1,12 @@
 use crate::handle_open_request;
 use crate::restore_or_create_workspace;
+use crate::zed::initialize_new_window;
 use agent_ui::ExternalSourcePrompt;
 use anyhow::{Context as _, Result, anyhow};
 use cli::{CliRequest, CliResponse, CliResponseSink};
 use cli::{IpcHandshake, ipc};
 use client::{ZedLink, parse_zed_link};
 use db::kvp::KeyValueStore;
-use editor::Editor;
 use fs::Fs;
 use futures::channel::mpsc::{UnboundedReceiver, UnboundedSender};
 use futures::channel::{mpsc, oneshot};
@@ -866,18 +866,14 @@ async fn open_workspaces(
         let kvp = cx.update(|cx| KeyValueStore::global(cx));
         if matches!(kvp.read_kvp(FIRST_OPEN), Ok(None)) {
             cx.update(|cx| show_onboarding_view(app_state, cx).detach());
-        }
-        // If not the first launch, show an empty window with empty editor
-        else {
+        } else {
             cx.update(|cx| {
                 let open_options = OpenOptions {
                     env,
                     ..Default::default()
                 };
-                workspace::open_new(open_options, app_state, cx, |workspace, window, cx| {
-                    Editor::new_file(workspace, &Default::default(), window, cx)
-                })
-                .detach_and_log_err(cx);
+                workspace::open_new(open_options, app_state, cx, initialize_new_window)
+                    .detach_and_log_err(cx);
             });
         }
         return Ok(());
@@ -2713,6 +2709,36 @@ mod tests {
     }
 
     #[gpui::test]
+    async fn test_e2e_new_window_without_paths_shows_welcome(cx: &mut TestAppContext) {
+        let app_state = init_test(cx);
+        let kvp = cx.update(|cx| KeyValueStore::global(cx));
+        kvp.write_kvp(FIRST_OPEN.to_string(), "false".to_string())
+            .await
+            .expect("failed to mark onboarding complete");
+
+        let (status, prompt_shown) = run_cli_with_zed_handler(
+            cx,
+            app_state,
+            make_cli_open_request(Vec::new(), cli::OpenBehavior::AlwaysNew),
+            None,
+        );
+
+        assert_eq!(status, 0);
+        assert!(!prompt_shown);
+        let windows = cx.windows();
+        assert_eq!(windows.len(), 1);
+        windows[0]
+            .downcast::<workspace::MultiWorkspace>()
+            .expect("expected a workspace window")
+            .read_with(cx, |multi_workspace, cx| {
+                let workspace = multi_workspace.workspace().read(cx);
+                assert!(workspace.root_paths(cx).is_empty());
+                assert_eq!(workspace.active_pane().read(cx).items_len(), 0);
+            })
+            .expect("failed to read the welcome workspace");
+    }
+
+    #[gpui::test]
     async fn test_e2e_new_window_setting_restores_workspace_when_no_paths(cx: &mut TestAppContext) {
         let app_state = init_test(cx);
 
@@ -2725,6 +2751,8 @@ mod tests {
         cx.update(|cx| {
             settings::SettingsStore::update_global(cx, |store, cx| {
                 store.update_user_settings(cx, |settings| {
+                    settings.workspace.restore_on_startup =
+                        Some(workspace::RestoreOnStartupBehavior::LastSession);
                     settings.workspace.cli_default_open_behavior =
                         Some(settings::CliDefaultOpenBehavior::NewWindow);
                 });
