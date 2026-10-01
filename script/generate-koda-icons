@@ -30,8 +30,8 @@ def export_icon(source, suffix, icns_name):
 
 
 export_icon(repository / "assets/branding/koda-icon.png", "", "Koda.icns")
-export_icon(repository / "assets/branding/koda-icon-dev.png", "-dev", "KodaDev.icns")
-for channel in ("nightly", "preview"):
+export_icon(repository / "assets/branding/koda-icon-nightly.png", "-nightly", "KodaNightly.icns")
+for channel in ("dev", "preview"):
     for suffix in ("", "@2x"):
         shutil.copyfile(resources / f"app-icon{suffix}.png", resources / f"app-icon-{channel}{suffix}.png")
     shutil.copyfile(resources / "windows/app-icon.ico", resources / f"windows/app-icon-{channel}.ico")

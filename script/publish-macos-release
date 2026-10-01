@@ -12,11 +12,11 @@ app_name="Koda"
 asset_name="Koda"
 case "$channel" in
     stable) test "$tag" = "$RELEASE_VERSION" ;;
-    dev)
-        test "$tag" = "dev-$RELEASE_VERSION"
+    nightly)
+        test "$tag" = "nightly-$RELEASE_VERSION"
         prerelease=true
-        app_name="Koda Dev"
-        asset_name="Koda-Dev"
+        app_name="Koda Nightly"
+        asset_name="Koda-Nightly"
         ;;
     *) echo "Unsupported release channel: $channel" >&2; exit 1 ;;
 esac

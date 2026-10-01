@@ -62,7 +62,7 @@ class KodaIdentityTests(unittest.TestCase):
             shutil.copyfile(REPOSITORY / "script/android-ide", root / "script/android-ide")
             resources = root / "crates/zed/resources"
             resources.mkdir(parents=True)
-            shutil.copyfile(REPOSITORY / "crates/zed/resources/KodaDev.icns", resources / "KodaDev.icns")
+            shutil.copyfile(REPOSITORY / "crates/zed/resources/KodaNightly.icns", resources / "KodaNightly.icns")
             tools = root / "tools"
             tools.mkdir()
             (tools / "uname").write_text("#!/bin/sh\necho Darwin\n")
@@ -85,31 +85,31 @@ class KodaIdentityTests(unittest.TestCase):
                                      "--profile", str(profile), str(root / "project")],
                                     env=environment, text=True, capture_output=True, timeout=10)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            bundle = root / "target/android-ide/debug/Koda Dev.app"
+            bundle = root / "target/android-ide/nightly/debug/Koda Nightly.app"
             metadata = plistlib.loads((bundle / "Contents/Info.plist").read_bytes())
-            self.assertEqual(metadata["CFBundleIdentifier"], "dev.anilbeesetti.koda-dev")
+            self.assertEqual(metadata["CFBundleIdentifier"], "dev.anilbeesetti.koda-nightly")
             self.assertEqual(metadata["CFBundleExecutable"], "koda")
-            self.assertEqual(metadata["CFBundleIconFile"], "KodaDev.icns")
-            self.assertEqual((bundle / "Contents/Resources/KodaDev.icns").read_bytes(),
-                             (resources / "KodaDev.icns").read_bytes())
+            self.assertEqual(metadata["CFBundleIconFile"], "KodaNightly.icns")
+            self.assertEqual((bundle / "Contents/Resources/KodaNightly.icns").read_bytes(),
+                             (resources / "KodaNightly.icns").read_bytes())
             self.assertEqual(arguments.read_text().splitlines(),
                              ["--user-data-dir", str(profile), str(root / "project")])
             self.assertFalse(json.loads((profile / "config/settings.json").read_text())["auto_update"])
 
     def test_icons_share_koda_branding(self):
         resources = REPOSITORY / "crates/zed/resources"
-        for suffix in ("-preview", "-nightly"):
+        for suffix in ("-preview", "-dev"):
             for resolution in ("", "@2x"):
                 self.assertEqual((resources / f"app-icon{suffix}{resolution}.png").read_bytes(),
                                  (resources / f"app-icon{resolution}.png").read_bytes())
             self.assertEqual((resources / f"windows/app-icon{suffix}.ico").read_bytes(),
                              (resources / "windows/app-icon.ico").read_bytes())
         for resolution in ("", "@2x"):
-            self.assertNotEqual((resources / f"app-icon-dev{resolution}.png").read_bytes(),
+            self.assertNotEqual((resources / f"app-icon-nightly{resolution}.png").read_bytes(),
                                 (resources / f"app-icon{resolution}.png").read_bytes())
-        self.assertNotEqual((resources / "windows/app-icon-dev.ico").read_bytes(),
+        self.assertNotEqual((resources / "windows/app-icon-nightly.ico").read_bytes(),
                             (resources / "windows/app-icon.ico").read_bytes())
-        self.check_icns(resources, "KodaDev.icns", "-dev")
+        self.check_icns(resources, "KodaNightly.icns", "-nightly")
         icon = (resources / "Koda.icns").read_bytes()
         self.assertEqual((resources / "Document.icns").read_bytes(), icon)
         self.check_icns(resources, "Koda.icns", "")
@@ -125,6 +125,39 @@ class KodaIdentityTests(unittest.TestCase):
             self.assertEqual(icon[offset + 8:offset + length], (resources / filename).read_bytes())
             offset += length
         self.assertEqual(offset, len(icon))
+
+    @unittest.skipUnless(sys.platform == "linux", "requires Linux uninstall tools")
+    def test_nightly_uninstall_preserves_stable_profile_and_cli(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            profile = root / "profile"
+            stable_files = [".local/koda.app/bin/koda", ".config/koda/settings.json",
+                            ".local/share/koda/db/0-stable/keep", ".koda_server/keep"]
+            for filename in stable_files:
+                path = profile / filename
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("stable data")
+            for filename in [".local/koda-nightly.app/keep", ".config/koda-nightly/settings.json",
+                             ".local/share/koda-nightly/db/0-nightly/keep"]:
+                path = profile / filename
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("nightly data")
+            command = profile / ".local/bin/koda"
+            command.parent.mkdir(parents=True)
+            command.symlink_to(profile / ".local/koda.app/bin/koda")
+            source = (REPOSITORY / "script/uninstall.sh").read_text()
+            script = root / "uninstall.sh"
+            script.write_text(source.replace("$HOME", str(profile)))
+            result = subprocess.run(["sh", str(script)], env=dict(os.environ, KODA_CHANNEL="nightly"),
+                                    input="n\n", text=True, capture_output=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            for filename in stable_files:
+                self.assertEqual((profile / filename).read_text(), "stable data")
+            self.assertTrue(command.is_symlink())
+            self.assertTrue(command.exists())
+            self.assertFalse((profile / ".local/koda-nightly.app").exists())
+            self.assertFalse((profile / ".config/koda-nightly").exists())
+            self.assertFalse((profile / ".local/share/koda-nightly").exists())
 
     @unittest.skipUnless(sys.platform == "linux", "requires Linux installation tools")
     def test_linux_install_and_uninstall_preserve_zed(self):
@@ -167,7 +200,8 @@ class KodaIdentityTests(unittest.TestCase):
                     script = root / f"{action}.sh"
                     script.write_text(source.replace("$HOME", str(profile)))
                     if action == "uninstall":
-                        for filename in (".config/koda/settings.json", f".local/share/koda/db/0-{channel}/keep", ".koda_server/keep"):
+                        profile_directory = "koda-nightly" if channel == "nightly" else "koda"
+                        for filename in (f".config/{profile_directory}/settings.json", f".local/share/{profile_directory}/db/0-{channel}/keep", ".koda_server/keep"):
                             path = profile / filename
                             path.parent.mkdir(parents=True, exist_ok=True)
                             path.write_text("Koda data")
@@ -180,7 +214,7 @@ class KodaIdentityTests(unittest.TestCase):
                     after = {filename: hashlib.sha256((profile / filename).read_bytes()).digest() for filename in upstream}
                     self.assertEqual(before, after)
                 self.assertFalse((profile / f".local/koda{suffix}.app").exists())
-                self.assertFalse((profile / ".config/koda").exists())
+                self.assertFalse((profile / f".config/{profile_directory}").exists())
                 self.assertFalse((profile / ".koda_server").exists())
 
 

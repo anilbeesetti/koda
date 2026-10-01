@@ -22,7 +22,7 @@ fn git_sha() -> Option<String> {
 fn product_version() -> String {
     let commit_sha = git_sha();
     let pkg_version = std::env::var("CARGO_PKG_VERSION").unwrap_or_default();
-    let channel = std::env::var("RELEASE_CHANNEL").unwrap_or_else(|_| "dev".into());
+    let channel = release_channel();
     let build_id = std::env::var("GITHUB_RUN_NUMBER").ok();
 
     let mut metadata = channel;
@@ -41,9 +41,21 @@ fn product_version() -> String {
 const ICON_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../zed/resources/windows");
 const MANIFEST_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/resources/manifest.xml");
 
+fn release_channel() -> String {
+    std::env::var("ZED_RELEASE_CHANNEL")
+        .or_else(|_| std::env::var("RELEASE_CHANNEL"))
+        .unwrap_or_else(|_| include_str!("../../zed/RELEASE_CHANNEL").trim().into())
+}
+
 pub fn compile(manifest: bool) -> Result<(), Box<dyn std::error::Error>> {
-    let channel = option_env!("RELEASE_CHANNEL").unwrap_or("dev");
-    let (icon_filename, product_name) = match channel {
+    println!("cargo:rerun-if-env-changed=ZED_RELEASE_CHANNEL");
+    println!("cargo:rerun-if-env-changed=RELEASE_CHANNEL");
+    println!(
+        "cargo:rerun-if-changed={}/../zed/RELEASE_CHANNEL",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    let channel = release_channel();
+    let (icon_filename, product_name) = match channel.as_str() {
         "stable" => ("app-icon.ico", "Koda"),
         "preview" => ("app-icon-preview.ico", "Koda Preview"),
         "nightly" => ("app-icon-nightly.ico", "Koda Nightly"),

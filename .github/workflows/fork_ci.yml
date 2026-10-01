@@ -3,7 +3,7 @@ name: Fork CI
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    # Packaging-only changes are checked locally and by manual release runs.
+    # Packaging-only changes are checked locally and by release runs.
     # Any application/Android/source change still runs the full fork checks.
     paths-ignore:
       - .github/workflows/main_macos_release.yml
@@ -58,7 +58,7 @@ jobs:
         run: >-
           actionlint .github/workflows/fork_ci.yml
           .github/workflows/main_macos_release.yml
-          .github/workflows/dev_macos_release.yml
+          .github/workflows/nightly_macos_release.yml
           .github/workflows/macos_release.yml
           .github/workflows/release.yml
           .github/workflows/release_nightly.yml

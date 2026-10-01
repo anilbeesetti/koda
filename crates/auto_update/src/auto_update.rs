@@ -279,7 +279,7 @@ pub fn init(client: Arc<Client>, cx: &mut App) {
         let updater = AutoUpdater::new(version, client, cx);
 
         let poll_for_updates = ReleaseChannel::try_global(cx)
-            .map(|channel| channel.poll_for_updates() || updater.github_source.is_some())
+            .map(|channel| channel.poll_for_updates())
             .unwrap_or(false);
 
         if option_env!("ZED_UPDATE_EXPLANATION").is_none()
@@ -1062,7 +1062,7 @@ async fn fetch_github_release(
     source: &GitHubReleaseSource,
 ) -> Result<Option<ReleaseAsset>> {
     let url = source.api_url()?;
-    if source.channel == ReleaseChannel::Dev {
+    if source.channel == ReleaseChannel::Nightly {
         let mut page = 1;
         let mut latest = None;
         let mut latest_version = None;
@@ -1518,22 +1518,24 @@ mod tests {
         }).to_string()
     }
 
-    fn github_dev_release_json(version: &str, payload: &[u8]) -> serde_json::Value {
+    fn github_nightly_release_json(version: &str, payload: &[u8]) -> serde_json::Value {
         let mut release: serde_json::Value =
             serde_json::from_str(&github_release_json(version, payload)).unwrap();
-        release["tag_name"] = format!("dev-{version}").into();
+        release["tag_name"] = format!("nightly-{version}").into();
         release["prerelease"] = true.into();
-        release["assets"][0]["name"] = format!("Koda-Dev-{version}-macos-aarch64.dmg").into();
+        release["assets"][0]["name"] = format!("Koda-Nightly-{version}-macos-aarch64.dmg").into();
         release["assets"][0]["browser_download_url"] = format!(
-            "https://github.com/anilbeesetti/zed/releases/download/dev-{version}/Koda-Dev-{version}-macos-aarch64.dmg"
+            "https://github.com/anilbeesetti/zed/releases/download/nightly-{version}/Koda-Nightly-{version}-macos-aarch64.dmg"
         ).into();
         release
     }
 
     #[gpui::test]
-    async fn test_dev_updater_paginates_prereleases_and_installs_only_dev(cx: &mut TestAppContext) {
+    async fn test_nightly_updater_paginates_prereleases_and_installs_only_nightly(
+        cx: &mut TestAppContext,
+    ) {
         cx.background_executor.allow_parking();
-        let payload = b"<koda-dev-update>";
+        let payload = b"<koda-nightly-update>";
         let requests = Arc::new(parking_lot::Mutex::new(Vec::new()));
         let fake_http = FakeHttpClient::create({
             let requests = requests.clone();
@@ -1552,21 +1554,21 @@ mod tests {
                             ],
                             "per_page=100&page=2" => {
                                 let mut draft =
-                                    github_dev_release_json("2026.10.01.00.00", payload);
+                                    github_nightly_release_json("2026.10.01.00.00", payload);
                                 draft["draft"] = true.into();
                                 vec![
-                                    github_dev_release_json("2026.09.30.14.06", payload),
+                                    github_nightly_release_json("2026.09.30.14.06", payload),
                                     draft,
-                                    github_dev_release_json("2026.09.30.14.04", payload),
+                                    github_nightly_release_json("2026.09.30.14.04", payload),
                                 ]
                             }
-                            query => panic!("unexpected Dev release query: {query}"),
+                            query => panic!("unexpected Nightly release query: {query}"),
                         };
                         serde_json::to_vec(&releases).unwrap()
                     } else {
                         assert_eq!(
                             request.uri().to_string(),
-                            "https://github.com/anilbeesetti/zed/releases/download/dev-2026.09.30.14.06/Koda-Dev-2026.09.30.14.06-macos-aarch64.dmg"
+                            "https://github.com/anilbeesetti/zed/releases/download/nightly-2026.09.30.14.06/Koda-Nightly-2026.09.30.14.06-macos-aarch64.dmg"
                         );
                         payload.to_vec()
                     };
@@ -1578,8 +1580,8 @@ mod tests {
         updater.update(cx, |updater, _| {
             updater.github_source = Some(GitHubReleaseSource {
                 repository: "anilbeesetti/zed".into(),
-                installed_tag: "dev-2026.09.30.14.05".into(),
-                channel: ReleaseChannel::Dev,
+                installed_tag: "nightly-2026.09.30.14.05".into(),
+                channel: ReleaseChannel::Nightly,
             });
         });
         let installations = Rc::new(std::cell::Cell::new(0));

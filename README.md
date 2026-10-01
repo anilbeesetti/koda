@@ -7,15 +7,18 @@ Koda is an Android-focused IDE fork of [Zed](https://github.com/zed-industries/z
 It uses its own app identity (`dev.anilbeesetti.koda`), `koda` CLI, settings,
 extensions, databases, caches, logs, keychain entries, and `koda://` URL handler.
 The app uses an angular K monogram inspired by Zed’s outlined logo.
-Icon sources: `assets/branding/koda-icon.png` and `koda-icon-dev.png`; regenerate
+Icon sources: `assets/branding/koda-icon.png` and `koda-icon-nightly.png`; regenerate
 platform assets with `script/generate-koda-icons` (requires ImageMagick).
-Koda Dev uses a blue DEV icon and the bundle identifier
-`dev.anilbeesetti.koda-dev`, so both apps can be installed together. Nightly and
-preview bundles also append their channel to the app name and identifier.
+Koda Nightly uses a blue NIGHTLY icon and the bundle identifier
+`dev.anilbeesetti.koda-nightly`, so both apps can be installed together.
 
 Koda stores configuration in `~/.config/koda` on macOS and Linux, app data in
 `~/Library/Application Support/Koda` on macOS or `$XDG_DATA_HOME/koda` on Linux,
 and configuration/data in `%APPDATA%\Koda` / `%LOCALAPPDATA%\Koda` on Windows.
+Nightly uses `~/.config/koda-nightly`, `~/Library/Application Support/Koda Nightly`
+on macOS, `$XDG_DATA_HOME/koda-nightly` on Linux, and
+`%APPDATA%\Koda Nightly` / `%LOCALAPPDATA%\Koda Nightly` on Windows. Its caches
+and logs are also separate from stable.
 Project settings, tasks, and Android tooling caches live in `.koda/`. Existing
 Zed settings and `.zed/` project files are left in place; copy selected settings
 into Koda's directories if you want to reuse them.
@@ -25,13 +28,14 @@ into Koda's directories if you want to reuse them.
 Download the Apple Silicon DMG from [this fork's releases](https://github.com/anilbeesetti/zed/releases)
 and drag `Koda.app` into Applications. Install the `koda` command using the
 app's **Install CLI** action. Stable builds update from this fork's latest stable
-release. For Dev, download the `Koda-Dev` DMG from a prerelease and install
-`Koda Dev.app`; its updater follows only published `dev-` prereleases.
+release. For Nightly, download the `Koda-Nightly` DMG from a prerelease and install
+`Koda Nightly.app`; its updater follows only published `nightly-` prereleases.
 Unconfigured local development builds require manual installation.
 Remote servers also come from the matching fork release and require an asset for
 the target platform, or a custom server build during development.
 
-For the isolated macOS Android development app, run `script/android-ide`.
+For the isolated macOS Android Nightly app, run `script/android-ide`. Its local
+bundle and profile live under `target/android-ide/nightly/`.
 For a direct debug build, run `cargo build --locked -p zed --bin koda` and
 launch `target/debug/koda`. Rust crate names and action namespaces remain
 compatible with upstream Zed.
@@ -41,13 +45,18 @@ provisioning profiles.
 
 ### Releases
 
-Merging to `main` does not publish a release. In GitHub Actions, manually run
-**Release Koda (stable)** on `main`, or **Release Koda Dev (prerelease)** on the
-branch you want to test. Both workflows currently build Apple Silicon macOS
-downloads. Stable tags use `year.month.day.hour.minute` in Asia/Calcutta; Dev
-tags use `dev-year.month.day.hour.minute`. Dev releases are marked as prereleases
-and leave GitHub's latest stable release unchanged. Failed runs can be retried
-with their reserved tag.
+Stable releases require manually running **Release Koda (stable)** on `main`.
+**Release Koda Nightly (prerelease)** runs daily at midnight in Asia/Calcutta
+(18:30 UTC) and can also be run manually on `main`. GitHub may delay scheduled
+runs. It skips the build when `main` matches the commit behind the latest
+published nightly tag; drafts and failed builds do not count as a published
+nightly. Merging to `main` does not immediately publish a release.
+
+Both workflows currently build Apple Silicon macOS downloads. Stable tags use
+`year.month.day.hour.minute` in Asia/Calcutta; Nightly tags use
+`nightly-year.month.day.hour.minute`. Nightlies are marked as prereleases and
+leave GitHub's latest stable release unchanged. Failed runs can be retried with
+their reserved tag.
 
 ### Upstream development documentation
 

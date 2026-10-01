@@ -119,8 +119,8 @@ fi
 # DocumentTypes.plist references CFBundleTypeIconFile "Document", so the bundle must contain Document.icns.
 # We use the app icon as a placeholder document icon for now.
 document_icon_source="crates/zed/resources/Document.icns"
-if [[ "$channel" == dev ]]; then
-    document_icon_source="crates/zed/resources/KodaDev.icns"
+if [[ "$channel" == nightly ]]; then
+    document_icon_source="crates/zed/resources/KodaNightly.icns"
 fi
 document_icon_target="${app_path}/Contents/Resources/Document.icns"
 if [[ -f "${document_icon_source}" ]]; then

@@ -46,6 +46,12 @@ pub const APP_NAME_LOWERCASE: &str = {
     }
 };
 
+/// Platform profile name, isolated for Nightly builds.
+pub const PROFILE_NAME: &str = env!("KODA_PROFILE_NAME");
+
+/// Directory name used for the platform profile on XDG systems.
+pub const PROFILE_DIRECTORY: &str = env!("KODA_PROFILE_DIRECTORY");
+
 /// A custom data directory override, set only by `set_custom_data_dir`.
 /// This is used to override the default data directory location.
 /// The directory will be created if it doesn't exist when set.
@@ -56,6 +62,7 @@ static CUSTOM_DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
 /// On macOS, this is `~/Library/Application Support/Koda`.
 /// On Linux/FreeBSD, this is `$XDG_DATA_HOME/koda`.
 /// On Windows, this is `%LOCALAPPDATA%\Koda`.
+/// Nightly uses `Koda Nightly` on macOS/Windows and `koda-nightly` on XDG systems.
 static CURRENT_DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 /// The resolved config directory, combining custom override or platform defaults.
@@ -63,6 +70,7 @@ static CURRENT_DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
 /// On macOS, this is `~/.config/koda`.
 /// On Linux/FreeBSD, this is `$XDG_CONFIG_HOME/koda`.
 /// On Windows, this is `%APPDATA%\Koda`.
+/// Nightly uses `Koda Nightly` on Windows and `koda-nightly` elsewhere.
 static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 /// Returns the relative path to the zed_server directory on the ssh host.
@@ -126,16 +134,16 @@ pub fn config_dir() -> &'static PathBuf {
         } else if cfg!(target_os = "windows") {
             dirs::config_dir()
                 .expect("failed to determine RoamingAppData directory")
-                .join(APP_NAME)
+                .join(PROFILE_NAME)
         } else if cfg!(any(target_os = "linux", target_os = "freebsd")) {
             if let Ok(flatpak_xdg_config) = std::env::var("FLATPAK_XDG_CONFIG_HOME") {
                 flatpak_xdg_config.into()
             } else {
                 dirs::config_dir().expect("failed to determine XDG_CONFIG_HOME directory")
             }
-            .join(APP_NAME_LOWERCASE)
+            .join(PROFILE_DIRECTORY)
         } else {
-            home_dir().join(".config").join(APP_NAME_LOWERCASE)
+            home_dir().join(".config").join(PROFILE_DIRECTORY)
         }
     })
 }
@@ -148,18 +156,18 @@ pub fn data_dir() -> &'static PathBuf {
         } else if cfg!(target_os = "macos") {
             home_dir()
                 .join("Library/Application Support")
-                .join(APP_NAME)
+                .join(PROFILE_NAME)
         } else if cfg!(any(target_os = "linux", target_os = "freebsd")) {
             if let Ok(flatpak_xdg_data) = std::env::var("FLATPAK_XDG_DATA_HOME") {
                 flatpak_xdg_data.into()
             } else {
                 dirs::data_local_dir().expect("failed to determine XDG_DATA_HOME directory")
             }
-            .join(APP_NAME_LOWERCASE)
+            .join(PROFILE_DIRECTORY)
         } else if cfg!(target_os = "windows") {
             dirs::data_local_dir()
                 .expect("failed to determine LocalAppData directory")
-                .join(APP_NAME)
+                .join(PROFILE_NAME)
         } else {
             config_dir().clone() // Fallback
         }
@@ -170,7 +178,7 @@ pub fn state_dir() -> &'static PathBuf {
     static STATE_DIR: OnceLock<PathBuf> = OnceLock::new();
     STATE_DIR.get_or_init(|| {
         if cfg!(target_os = "macos") {
-            return home_dir().join(".local").join("state").join(APP_NAME);
+            return home_dir().join(".local").join("state").join(PROFILE_NAME);
         }
 
         if cfg!(any(target_os = "linux", target_os = "freebsd")) {
@@ -179,12 +187,12 @@ pub fn state_dir() -> &'static PathBuf {
             } else {
                 dirs::state_dir().expect("failed to determine XDG_STATE_HOME directory")
             }
-            .join(APP_NAME_LOWERCASE);
+            .join(PROFILE_DIRECTORY);
         } else {
             // Windows
             return dirs::data_local_dir()
                 .expect("failed to determine LocalAppData directory")
-                .join(APP_NAME);
+                .join(PROFILE_NAME);
         }
     })
 }
@@ -196,13 +204,13 @@ pub fn temp_dir() -> &'static PathBuf {
         if cfg!(target_os = "macos") {
             return dirs::cache_dir()
                 .expect("failed to determine cachesDirectory directory")
-                .join(APP_NAME);
+                .join(PROFILE_NAME);
         }
 
         if cfg!(target_os = "windows") {
             return dirs::cache_dir()
                 .expect("failed to determine LocalAppData directory")
-                .join(APP_NAME);
+                .join(PROFILE_NAME);
         }
 
         if cfg!(any(target_os = "linux", target_os = "freebsd")) {
@@ -211,10 +219,10 @@ pub fn temp_dir() -> &'static PathBuf {
             } else {
                 dirs::cache_dir().expect("failed to determine XDG_CACHE_HOME directory")
             }
-            .join(APP_NAME_LOWERCASE);
+            .join(PROFILE_DIRECTORY);
         }
 
-        home_dir().join(".cache").join(APP_NAME_LOWERCASE)
+        home_dir().join(".cache").join(PROFILE_DIRECTORY)
     })
 }
 
@@ -229,7 +237,7 @@ pub fn logs_dir() -> &'static PathBuf {
     static LOGS_DIR: OnceLock<PathBuf> = OnceLock::new();
     LOGS_DIR.get_or_init(|| {
         if cfg!(target_os = "macos") {
-            home_dir().join("Library/Logs").join(APP_NAME)
+            home_dir().join("Library/Logs").join(PROFILE_NAME)
         } else {
             data_dir().join("logs")
         }
@@ -242,16 +250,16 @@ pub fn remote_server_state_dir() -> &'static PathBuf {
     REMOTE_SERVER_STATE.get_or_init(|| data_dir().join("server_state"))
 }
 
-/// Returns the path to the `Koda.log` file.
+/// Returns the path to the profile's log file.
 pub fn log_file() -> &'static PathBuf {
     static LOG_FILE: OnceLock<PathBuf> = OnceLock::new();
-    LOG_FILE.get_or_init(|| logs_dir().join(format!("{}.log", APP_NAME)))
+    LOG_FILE.get_or_init(|| logs_dir().join(format!("{}.log", PROFILE_NAME)))
 }
 
-/// Returns the path to the `Koda.log.old` file.
+/// Returns the path to the profile's rotated log file.
 pub fn old_log_file() -> &'static PathBuf {
     static OLD_LOG_FILE: OnceLock<PathBuf> = OnceLock::new();
-    OLD_LOG_FILE.get_or_init(|| logs_dir().join(format!("{}.log.old", APP_NAME)))
+    OLD_LOG_FILE.get_or_init(|| logs_dir().join(format!("{}.log.old", PROFILE_NAME)))
 }
 
 /// Returns the path to the database directory.
@@ -337,10 +345,10 @@ pub fn agents_file() -> &'static PathBuf {
 /// readability in announcement copy.
 #[cfg(target_os = "windows")]
 pub const GLOBAL_AGENTS_FILE_DISPLAY: &str =
-    const_format::concatcp!("%APPDATA%\\", APP_NAME, "\\AGENTS.md");
+    const_format::concatcp!("%APPDATA%\\", PROFILE_NAME, "\\AGENTS.md");
 #[cfg(not(target_os = "windows"))]
 pub const GLOBAL_AGENTS_FILE_DISPLAY: &str =
-    const_format::concatcp!("~/.config/", APP_NAME_LOWERCASE, "/AGENTS.md");
+    const_format::concatcp!("~/.config/", PROFILE_DIRECTORY, "/AGENTS.md");
 
 /// Returns the path to the extensions directory.
 ///
@@ -634,4 +642,37 @@ pub fn global_gitignore_path() -> Option<PathBuf> {
     GLOBAL_GITIGNORE_PATH
         .get_or_init(::ignore::gitignore::gitconfig_excludes_path)
         .clone()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn profile_paths_use_the_channel_directory() {
+        let (name, directory) = match PROFILE_NAME {
+            "Koda Nightly" => ("Koda Nightly", "koda-nightly"),
+            "Koda" => ("Koda", "koda"),
+            name => panic!("unexpected profile name: {name}"),
+        };
+        let config_name = if cfg!(target_os = "windows") {
+            name
+        } else {
+            directory
+        };
+        let data_name = if cfg!(any(target_os = "windows", target_os = "macos")) {
+            name
+        } else {
+            directory
+        };
+        assert!(config_dir().ends_with(config_name));
+        assert!(data_dir().ends_with(data_name));
+        assert!(temp_dir().ends_with(data_name));
+        assert_eq!(database_dir(), &data_dir().join("db"));
+        assert_eq!(
+            log_file().file_name().unwrap(),
+            format!("{name}.log").as_str()
+        );
+        assert!(agents_file().starts_with(config_dir()));
+    }
 }

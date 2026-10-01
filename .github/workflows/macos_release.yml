@@ -11,7 +11,7 @@ on:
 permissions:
   contents: read
 
-# Each manual run keeps its reserved tag when retried.
+# Each run keeps its reserved tag when retried.
 concurrency:
   group: macos-release-${{ inputs.channel }}-${{ github.run_id }}
   cancel-in-progress: false
@@ -22,12 +22,13 @@ defaults:
 
 jobs:
   version:
-    if: github.event_name == 'workflow_dispatch' && (inputs.channel == 'dev' || github.ref == 'refs/heads/main')
+    if: github.ref == 'refs/heads/main' && ((inputs.channel == 'stable' && github.event_name == 'workflow_dispatch') || (inputs.channel == 'nightly' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: write
     outputs:
+      release: ${{ steps.version.outputs.release }}
       version: ${{ steps.version.outputs.version }}
       tag: ${{ steps.version.outputs.tag }}
     steps:
@@ -36,7 +37,7 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Reserve timestamp tag for this commit
+      - name: Check for changes and reserve timestamp tag
         id: version
         env:
           GH_TOKEN: ${{ github.token }}
@@ -45,6 +46,7 @@ jobs:
 
   build:
     needs: version
+    if: needs.version.outputs.release == 'true'
     runs-on: macos-15
     timeout-minutes: 360
     env:
@@ -104,10 +106,10 @@ jobs:
           app_name="Koda"
           asset_name="Koda"
           identifier="dev.anilbeesetti.koda"
-          if [[ "$RELEASE_CHANNEL" == dev ]]; then
-            app_name="Koda Dev"
-            asset_name="Koda-Dev"
-            identifier="dev.anilbeesetti.koda-dev"
+          if [[ "$RELEASE_CHANNEL" == nightly ]]; then
+            app_name="Koda Nightly"
+            asset_name="Koda-Nightly"
+            identifier="dev.anilbeesetti.koda-nightly"
           fi
           app="target/$TARGET_TRIPLE/release/dmg/$app_name.app"
           test -x "$app/Contents/MacOS/koda"

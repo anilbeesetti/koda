@@ -35,11 +35,11 @@ def api(endpoint, payload):
 
 
 def reserve(repository, run_id, commit, clock=None, wait=time.sleep, channel="stable"):
-    if channel not in ("stable", "dev"):
+    if channel not in ("stable", "nightly"):
         raise ValueError(f"Unsupported release channel: {channel}")
     clock = clock or (lambda: datetime.datetime.now(ZoneInfo("Asia/Calcutta")))
-    prefix = "dev-" if channel == "dev" else ""
-    name = "Dev" if channel == "dev" else "Main"
+    prefix = "nightly-" if channel == "nightly" else ""
+    name = "Nightly" if channel == "nightly" else "Main"
     marker = f"{name} macOS release for workflow run {run_id}"
     tags = subprocess.check_output(
         ["git", "for-each-ref", "--format=%(refname:strip=2)%09%(contents:subject)%09%(*objectname)", "refs/tags"],
@@ -68,11 +68,47 @@ def reserve(repository, run_id, commit, clock=None, wait=time.sleep, channel="st
     raise RuntimeError("No release timestamp became available within ten minutes")
 
 
+def nightly_has_changes(repository, commit):
+    pages = json.loads(subprocess.check_output([
+        "gh", "api", "--paginate", "--slurp",
+        f"repos/{repository}/releases?per_page=100",
+    ], text=True))
+    published = []
+    for page in pages:
+        for release in page:
+            tag = release["tag_name"]
+            if (release["draft"] or not release["prerelease"] or not release["published_at"]
+                    or not re.fullmatch(r"nightly-\d{4}(?:\.\d{2}){4}", tag)):
+                continue
+            try:
+                timestamp = datetime.datetime.strptime(tag.removeprefix("nightly-"), "%Y.%m.%d.%H.%M")
+            except ValueError:
+                continue
+            published.append((timestamp, tag))
+    if not published:
+        return True
+    _, tag = max(published)
+    # Resolve the actual tag commit; target_commitish may just contain a branch
+    # name which has advanced since publication.
+    previous_commit = subprocess.check_output([
+        "git", "rev-parse", f"refs/tags/{tag}^{{commit}}",
+    ], text=True).strip()
+    return previous_commit != commit
+
+
 def main():
-    tag = reserve(os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_RUN_ID"], os.environ["GITHUB_SHA"],
-                  channel=os.environ.get("RELEASE_CHANNEL", "stable"))
-    version = tag.removeprefix("dev-")
+    repository = os.environ["GITHUB_REPOSITORY"]
+    commit = os.environ["GITHUB_SHA"]
+    channel = os.environ.get("RELEASE_CHANNEL", "stable")
+    if channel == "nightly" and not nightly_has_changes(repository, commit):
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+            output.write("release=false\n")
+        print("No changes since the last published nightly; skipping build and release.")
+        return
+    tag = reserve(repository, os.environ["GITHUB_RUN_ID"], commit, channel=channel)
+    version = tag.removeprefix("nightly-")
     with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+        output.write("release=true\n")
         output.write(f"version={version}\n")
         output.write(f"tag={tag}\n")
     print(f"Reserved release {tag} for {os.environ['GITHUB_SHA']}")

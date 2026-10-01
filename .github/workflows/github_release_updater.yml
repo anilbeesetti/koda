@@ -8,6 +8,8 @@ on:
       - 'crates/auto_update/**'
       - 'crates/auto_update_ui/**'
       - 'crates/release_channel/**'
+      - 'crates/paths/**'
+      - 'crates/zed/RELEASE_CHANNEL'
       - 'crates/title_bar/**'
       - 'crates/zed/src/zed.rs'
       - 'Cargo.lock'
@@ -44,16 +46,20 @@ jobs:
           rustup show
           ./script/download-wasi-sdk
       - name: Run updater and version UI tests
-        run: cargo test --locked -p auto_update -p title_bar --lib --features workspace/test-support
+        run: cargo test --locked -p auto_update -p title_bar -p paths --lib --features workspace/test-support
       - name: Check timestamp production configuration
         env:
           ZED_GITHUB_REPOSITORY: anilbeesetti/zed
           ZED_RELEASE_VERSION: '2026.09.30.14.05'
           ZED_RELEASE_CHANNEL: stable
         run: cargo check --locked -p auto_update -p auto_update_ui -p release_channel -p title_bar
-      - name: Check timestamp Dev configuration
+      - name: Check stable profile paths
+        env:
+          ZED_RELEASE_CHANNEL: stable
+        run: cargo test --locked -p paths --lib
+      - name: Check timestamp Nightly configuration
         env:
           ZED_GITHUB_REPOSITORY: anilbeesetti/zed
-          ZED_RELEASE_VERSION: 'dev-2026.09.30.14.05'
-          ZED_RELEASE_CHANNEL: dev
+          ZED_RELEASE_VERSION: 'nightly-2026.09.30.14.05'
+          ZED_RELEASE_CHANNEL: nightly
         run: cargo check --locked -p auto_update -p auto_update_ui -p release_channel -p title_bar

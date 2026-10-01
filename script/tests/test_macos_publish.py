@@ -45,9 +45,9 @@ if arguments[:2] == ['release', 'upload'] and os.environ.get('FAIL_UPLOAD'):
         return subprocess.check_output(["git", *arguments], cwd=self.root, text=True)
 
     def publish(self, channel="stable", **overrides):
-        tag = f"dev-{VERSION}" if channel == "dev" else VERSION
+        tag = f"nightly-{VERSION}" if channel == "nightly" else VERSION
         self.git("tag", tag)
-        name = "Koda-Dev" if channel == "dev" else "Koda"
+        name = "Koda-Nightly" if channel == "nightly" else "Koda"
         for filename in [f"{name}-{VERSION}-macos-aarch64.dmg",
                          f"koda-remote-server-{tag}-macos-aarch64.gz"]:
             (self.assets / filename).write_bytes(b"fixture download")
@@ -78,11 +78,11 @@ if arguments[:2] == ['release', 'upload'] and os.environ.get('FAIL_UPLOAD'):
         self.assertIn("--latest=true", edit)
         self.assertIn("--draft=false", edit)
 
-    def test_dev_publication_never_promotes_stable_latest(self):
-        result, calls = self.publish("dev")
+    def test_nightly_publication_never_promotes_stable_latest(self):
+        result, calls = self.publish("nightly")
         self.assertEqual(result.returncode, 0, result.stderr)
         create = next(call for call in calls if call[:2] == ["release", "create"])
-        self.assertEqual(create[2], f"dev-{VERSION}")
+        self.assertEqual(create[2], f"nightly-{VERSION}")
         self.assertIn("--prerelease=true", create)
         self.assertIn("--prerelease=true", calls[-1])
         self.assertIn("--latest=false", calls[-1])
@@ -94,19 +94,19 @@ if arguments[:2] == ['release', 'upload'] and os.environ.get('FAIL_UPLOAD'):
         self.assertIn("--latest=false", calls[-1])
 
     def test_upload_failure_keeps_release_draft(self):
-        result, calls = self.publish("dev", FAIL_UPLOAD="1")
+        result, calls = self.publish("nightly", FAIL_UPLOAD="1")
         self.assertNotEqual(result.returncode, 0)
         self.assertTrue(any(call[:2] == ["release", "create"] for call in calls))
         self.assertFalse(any(call[:2] == ["release", "edit"] for call in calls))
 
     def test_retry_uploads_existing_release_without_recreating_it(self):
-        result, calls = self.publish("dev", EXISTING_TAG=f"dev-{VERSION}")
+        result, calls = self.publish("nightly", EXISTING_TAG=f"nightly-{VERSION}")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertFalse(any(call[:2] == ["release", "create"] for call in calls))
         self.assertTrue(any(call[:2] == ["release", "upload"] for call in calls))
 
     def test_mismatched_channel_tag_fails_before_github_calls(self):
-        result, calls = self.publish("dev", RELEASE_TAG=VERSION)
+        result, calls = self.publish("nightly", RELEASE_TAG=VERSION)
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(calls, [])
 
@@ -118,7 +118,7 @@ if arguments[:2] == ['release', 'upload'] and os.environ.get('FAIL_UPLOAD'):
 
 class ReleaseTriggerTests(unittest.TestCase):
     def test_release_entrypoints_accept_only_manual_dispatch(self):
-        for filename in ["main_macos_release.yml", "dev_macos_release.yml",
+        for filename in ["main_macos_release.yml",
                          "release.yml", "release_nightly.yml"]:
             with self.subTest(workflow=filename):
                 text = (ROOT / ".github/workflows" / filename).read_text()
@@ -127,6 +127,15 @@ class ReleaseTriggerTests(unittest.TestCase):
                 self.assertNotIn("push:", trigger)
                 self.assertNotIn("schedule:", trigger)
                 self.assertNotIn("workflow_run:", trigger)
+
+    def test_nightly_runs_at_midnight_in_calcutta_and_allows_manual_retries(self):
+        workflow = (ROOT / ".github/workflows/nightly_macos_release.yml").read_text()
+        trigger = workflow.split("\non:\n", 1)[1].split("\n\n", 1)[0]
+        self.assertIn("cron: '30 18 * * *'", trigger)
+        self.assertIn("workflow_dispatch:", trigger)
+        self.assertNotIn("push:", trigger)
+        self.assertIn("channel: nightly", workflow)
+        self.assertIn("cancel-in-progress: false", workflow)
 
 
 if __name__ == "__main__":

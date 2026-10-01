@@ -17,11 +17,11 @@ check_remaining_installations() {
 }
 
 prompt_remove_preferences() {
-    printf "Do you want to keep your Koda preferences? [Y/n] "
+    printf "Do you want to keep your %s preferences? [Y/n] " "$profile_name"
     read -r response
     case "$response" in
         [nN]|[nN][oO])
-            rm -rf "$HOME/.config/koda"
+            rm -rf "$HOME/.config/$profile_directory"
             echo "Preferences removed."
             ;;
         *)
@@ -33,6 +33,12 @@ prompt_remove_preferences() {
 main() {
     platform="$(uname -s)"
     channel="${KODA_CHANNEL:-stable}"
+    profile_directory=koda
+    profile_name=Koda
+    if [ "$channel" = nightly ]; then
+        profile_directory=koda-nightly
+        profile_name="Koda Nightly"
+    fi
 
     if [ "$platform" = "Darwin" ]; then
         platform="macos"
@@ -84,24 +90,31 @@ linux() {
     rm -rf "$HOME/.local/koda$suffix.app"
 
     # Remove the binary symlink
-    rm -f "$HOME/.local/bin/koda"
+    if [ -L "$HOME/.local/bin/koda" ]; then
+        linked_binary=$(readlink "$HOME/.local/bin/koda")
+        case "$linked_binary" in
+            "$HOME/.local/koda$suffix.app/"*) rm -f "$HOME/.local/bin/koda" ;;
+        esac
+    fi
 
     # Remove the .desktop file
     rm -f "$HOME/.local/share/applications/${appid}.desktop"
 
     # Remove the database directory for this channel
-    rm -rf "$HOME/.local/share/koda/db/0-$db_suffix"
+    rm -rf "$HOME/.local/share/$profile_directory/db/0-$db_suffix"
 
     # Remove socket file
-    rm -f "$HOME/.local/share/koda/koda-$db_suffix.sock"
+    rm -f "$HOME/.local/share/$profile_directory/koda-$db_suffix.sock"
 
     # Remove the entire Koda directory if no installations remain
-    if check_remaining_installations; then
-        rm -rf "$HOME/.local/share/koda"
+    if [ "$channel" = nightly ] || check_remaining_installations; then
+        rm -rf "$HOME/.local/share/$profile_directory"
         prompt_remove_preferences
     fi
 
-    rm -rf $HOME/.koda_server
+    if check_remaining_installations; then
+        rm -rf "$HOME/.koda_server"
+    fi
 }
 
 macos() {
@@ -132,10 +145,15 @@ macos() {
     fi
 
     # Remove the binary symlink
-    rm -f "$HOME/.local/bin/koda"
+    if [ -L "$HOME/.local/bin/koda" ]; then
+        linked_binary=$(readlink "$HOME/.local/bin/koda")
+        case "$linked_binary" in
+            "/Applications/$app/"*) rm -f "$HOME/.local/bin/koda" ;;
+        esac
+    fi
 
     # Remove the database directory for this channel
-    rm -rf "$HOME/Library/Application Support/Koda/db/0-$db_suffix"
+    rm -rf "$HOME/Library/Application Support/$profile_name/db/0-$db_suffix"
 
     # Remove app-specific files and directories
     rm -rf "$HOME/Library/Application Support/com.apple.sharedfilelist/com.apple.LSSharedFileList.ApplicationRecentDocuments/$app_id.sfl"*
@@ -145,14 +163,16 @@ macos() {
     rm -rf "$HOME/Library/Saved Application State/$app_id.savedState"
 
     # Remove the entire Koda directory if no installations remain
-    if check_remaining_installations; then
-        rm -rf "$HOME/Library/Application Support/Koda"
-        rm -rf "$HOME/Library/Logs/Koda"
+    if [ "$channel" = nightly ] || check_remaining_installations; then
+        rm -rf "$HOME/Library/Application Support/$profile_name"
+        rm -rf "$HOME/Library/Logs/$profile_name"
 
         prompt_remove_preferences
     fi
 
-    rm -rf $HOME/.koda_server
+    if check_remaining_installations; then
+        rm -rf "$HOME/.koda_server"
+    fi
 }
 
 main "$@"

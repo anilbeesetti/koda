@@ -44,7 +44,7 @@ impl GitHubReleaseSource {
         self.timestamp(&self.installed_tag)?;
         let endpoint = match self.channel {
             ReleaseChannel::Stable => "releases/latest",
-            ReleaseChannel::Dev => "releases?per_page=100&page=1",
+            ReleaseChannel::Nightly => "releases?per_page=100&page=1",
             _ => anyhow::bail!("unsupported Koda release channel"),
         };
         Ok(format!(
@@ -55,9 +55,9 @@ impl GitHubReleaseSource {
 
     fn timestamp(&self, tag: &str) -> Result<TimestampVersion> {
         let version = match self.channel {
-            ReleaseChannel::Dev => tag
-                .strip_prefix("dev-")
-                .context("not a Koda Dev release tag")?,
+            ReleaseChannel::Nightly => tag
+                .strip_prefix("nightly-")
+                .context("not a Koda Nightly release tag")?,
             ReleaseChannel::Stable => tag,
             _ => anyhow::bail!("unsupported Koda release channel"),
         };
@@ -69,8 +69,8 @@ impl GitHubReleaseSource {
         releases: Vec<GitHubRelease>,
     ) -> Result<Option<ReleaseAsset>> {
         ensure!(
-            self.channel == ReleaseChannel::Dev,
-            "not a Koda Dev update source"
+            self.channel == ReleaseChannel::Nightly,
+            "not a Koda Nightly update source"
         );
         releases
             .into_iter()
@@ -110,13 +110,13 @@ impl GitHubReleaseSource {
     }
 
     pub(crate) fn release_asset(&self, release: GitHubRelease) -> Result<ReleaseAsset> {
-        let (name, version) = if self.channel == ReleaseChannel::Dev {
+        let (name, version) = if self.channel == ReleaseChannel::Nightly {
             (
-                "Koda-Dev",
+                "Koda-Nightly",
                 release
                     .tag_name
-                    .strip_prefix("dev-")
-                    .context("not a Koda Dev release tag")?,
+                    .strip_prefix("nightly-")
+                    .context("not a Koda Nightly release tag")?,
             )
         } else {
             ("Koda", release.tag_name.as_str())
@@ -147,7 +147,7 @@ impl GitHubReleaseSource {
     fn named_asset(&self, release: GitHubRelease, name: String) -> Result<ReleaseAsset> {
         ensure!(
             !release.draft
-                && release.prerelease == (self.channel == ReleaseChannel::Dev)
+                && release.prerelease == (self.channel == ReleaseChannel::Nightly)
                 && release.published_at.is_some(),
             "GitHub update is not a published release for this Koda channel"
         );
@@ -301,50 +301,53 @@ mod tests {
         })).unwrap()
     }
 
-    fn dev_source() -> GitHubReleaseSource {
+    fn nightly_source() -> GitHubReleaseSource {
         GitHubReleaseSource {
             repository: "anilbeesetti/zed".into(),
-            installed_tag: "dev-2026.09.30.14.05".into(),
-            channel: ReleaseChannel::Dev,
+            installed_tag: "nightly-2026.09.30.14.05".into(),
+            channel: ReleaseChannel::Nightly,
         }
     }
 
-    fn dev_release(version: &str) -> GitHubRelease {
+    fn nightly_release(version: &str) -> GitHubRelease {
         let mut release = release();
-        release.tag_name = format!("dev-{version}");
+        release.tag_name = format!("nightly-{version}");
         release.prerelease = true;
-        release.assets[0].name = format!("Koda-Dev-{version}-macos-aarch64.dmg");
+        release.assets[0].name = format!("Koda-Nightly-{version}-macos-aarch64.dmg");
         release.assets[0].browser_download_url = format!(
-            "https://github.com/anilbeesetti/zed/releases/download/dev-{version}/Koda-Dev-{version}-macos-aarch64.dmg"
+            "https://github.com/anilbeesetti/zed/releases/download/nightly-{version}/Koda-Nightly-{version}-macos-aarch64.dmg"
         );
         release
     }
 
     #[test]
-    fn dev_selects_only_the_newest_published_dev_prerelease() {
-        let source = dev_source();
+    fn nightly_selects_only_the_newest_published_nightly_prerelease() {
+        let source = nightly_source();
         assert_eq!(
             source.api_url().unwrap(),
             "https://api.github.com/repos/anilbeesetti/zed/releases?per_page=100&page=1"
         );
-        let mut draft = dev_release("2026.10.01.14.05");
+        let mut draft = nightly_release("2026.10.01.14.05");
         draft.draft = true;
-        let mut unpublished = dev_release("2026.10.02.14.05");
+        let mut unpublished = nightly_release("2026.10.02.14.05");
         unpublished.published_at = None;
-        let mut preview = dev_release("2026.10.03.14.05");
+        let mut preview = nightly_release("2026.10.03.14.05");
         preview.tag_name = "preview-2026.10.03.14.05".into();
+        let mut dev = nightly_release("2026.10.04.14.05");
+        dev.tag_name = "dev-2026.10.04.14.05".into();
         let asset = source
             .latest_prerelease_asset(vec![
-                dev_release("2026.09.30.14.06"),
+                nightly_release("2026.09.30.14.06"),
                 release(),
                 draft,
                 unpublished,
                 preview,
-                dev_release("2026.09.29.14.05"),
+                dev,
+                nightly_release("2026.09.29.14.05"),
             ])
             .unwrap()
             .unwrap();
-        assert_eq!(asset.version, "dev-2026.09.30.14.06");
+        assert_eq!(asset.version, "nightly-2026.09.30.14.06");
         assert!(
             source
                 .latest_prerelease_asset(vec![release()])
@@ -362,30 +365,35 @@ mod tests {
     }
 
     #[test]
-    fn stable_and_dev_releases_cannot_cross_channels() {
+    fn stable_and_nightly_releases_cannot_cross_channels() {
         let stable = source("2026.09.30.14.05");
-        let dev = dev_source();
+        let nightly = nightly_source();
         assert!(
             stable
-                .release_asset(dev_release("2026.09.30.14.06"))
+                .release_asset(nightly_release("2026.09.30.14.06"))
                 .is_err()
         );
-        assert!(dev.release_asset(release()).is_err());
-        assert!(stable.newer_version("dev-2026.09.30.14.06", None).is_err());
-        assert!(dev.newer_version("2026.09.30.14.06", None).is_err());
-        let mut wrong_asset = dev_release("2026.09.30.14.06");
+        assert!(nightly.release_asset(release()).is_err());
+        assert!(
+            stable
+                .newer_version("nightly-2026.09.30.14.06", None)
+                .is_err()
+        );
+        assert!(nightly.newer_version("2026.09.30.14.06", None).is_err());
+        assert!(nightly.newer_version("dev-2026.09.30.14.06", None).is_err());
+        let mut wrong_asset = nightly_release("2026.09.30.14.06");
         wrong_asset.assets[0].name = "Koda-2026.09.30.14.06-macos-aarch64.dmg".into();
-        assert!(dev.release_asset(wrong_asset).is_err());
+        assert!(nightly.release_asset(wrong_asset).is_err());
     }
 
     #[test]
-    fn dev_remote_servers_are_pinned_to_the_installed_prerelease() {
-        let source = dev_source();
-        let mut remote = dev_release("2026.09.30.14.05");
-        let name = "koda-remote-server-dev-2026.09.30.14.05-macos-aarch64.gz";
+    fn nightly_remote_servers_are_pinned_to_the_installed_prerelease() {
+        let source = nightly_source();
+        let mut remote = nightly_release("2026.09.30.14.05");
+        let name = "koda-remote-server-nightly-2026.09.30.14.05-macos-aarch64.gz";
         remote.assets[0].name = name.into();
         remote.assets[0].browser_download_url = format!(
-            "https://github.com/anilbeesetti/zed/releases/download/dev-2026.09.30.14.05/{name}"
+            "https://github.com/anilbeesetti/zed/releases/download/nightly-2026.09.30.14.05/{name}"
         );
         assert!(
             source
@@ -394,7 +402,7 @@ mod tests {
         );
         assert!(
             source
-                .remote_server_asset(dev_release("2026.09.30.14.06"), "macos", "aarch64")
+                .remote_server_asset(nightly_release("2026.09.30.14.06"), "macos", "aarch64")
                 .is_err()
         );
     }

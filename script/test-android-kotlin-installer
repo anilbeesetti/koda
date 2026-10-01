@@ -211,9 +211,9 @@ class KotlinBootstrapTests(unittest.TestCase):
             launcher = repository / "script/android-ide"
             launcher.parent.mkdir()
             shutil.copy2(Path(__file__).with_name("android-ide"), launcher)
-            icon = repository / "crates/zed/resources/KodaDev.icns"
+            icon = repository / "crates/zed/resources/KodaNightly.icns"
             icon.parent.mkdir(parents=True)
-            shutil.copy2(Path(__file__).resolve().parents[1] / "crates/zed/resources/KodaDev.icns", icon)
+            shutil.copy2(Path(__file__).resolve().parents[1] / "crates/zed/resources/KodaNightly.icns", icon)
             executable = repository / "target/debug/koda"
             executable.parent.mkdir(parents=True)
             executable.write_text(
