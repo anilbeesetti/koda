@@ -22,6 +22,8 @@ CHECKS_ONLY_PATHS = frozenset({
     "script/tests/test_ci_test_selection.py",
     "script/ci-run",
     "script/tests/test_ci_run.py",
+    "script/ci-source-cache",
+    "script/tests/test_ci_source_cache.py",
 })
 ROOT_DOCS = frozenset({
     "README.md", "CONTRIBUTING.md", "CHANGELOG.md", "CODE_OF_CONDUCT.md",
