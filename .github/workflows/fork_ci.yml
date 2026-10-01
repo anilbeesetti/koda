@@ -1,13 +1,14 @@
 name: Fork CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     # Packaging-only changes are checked locally and by the main release run.
-    # Any application/Android/source change still runs the full fork checks.
+    # Other changes always run checks; the planner selects native test coverage.
     paths-ignore:
       - .github/workflows/main_macos_release.yml
-      - .github/workflows/fork_ci.yml
       - script/bundle-mac
       - script/create-macos-dmg
       - script/reserve-macos-release-version
@@ -25,7 +26,6 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: '0'
-  CARGO_BUILD_JOBS: '2'
   CARGO_PROFILE_DEV_DEBUG: '0'
   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
   RUST_BACKTRACE: '1'
@@ -39,15 +39,37 @@ jobs:
     name: Formatting and scripts
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    outputs:
+      native_checks: ${{ steps.plan.outputs.native_checks }}
+      test_filter: ${{ steps.plan.outputs.test_filter }}
+      mode: ${{ steps.plan.outputs.mode }}
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
+          ref: ${{ github.sha }}
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.13'
       - name: Install repository Rust toolchain
         run: rustup show active-toolchain
+      - name: Fetch exact PR base for test planning
+        continue-on-error: true
+        if: github.event_name == 'pull_request'
+        env:
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: git fetch --no-tags --depth=1 origin "$CI_BASE_SHA"
+      - name: Plan native test coverage
+        id: plan
+        env:
+          CI_EVENT_NAME: ${{ github.event_name }}
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          CI_HEAD_SHA: ${{ github.sha }}
+        run: >-
+          python3 script/ci-test-selection --event-name "$CI_EVENT_NAME"
+          --base "$CI_BASE_SHA" --head "$CI_HEAD_SHA" --github-output "$GITHUB_OUTPUT"
+      - name: Test CI helpers
+        run: python3 -m unittest discover -s script/tests -p 'test_ci_*.py'
       - name: Check Rust formatting
         run: cargo fmt --all -- --check
       - name: Install actionlint
@@ -70,12 +92,16 @@ jobs:
 
   linux:
     name: Linux build and workspace tests
+    needs: checks
+    if: needs.checks.outputs.native_checks == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
       CC: clang
       CXX: clang++
       WGPU_BACKEND: vulkan
+      CI_TEST_FILTER: ${{ needs.checks.outputs.test_filter }}
+      CI_TEST_MODE: ${{ needs.checks.outputs.mode }}
     services:
       postgres:
         image: postgres:15@sha256:1b92e7a80c021647bf70f5d3eb66066a998e4f5cf43c07bb9dc9f729782cf88e
@@ -90,6 +116,9 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Select runner concurrency
+        run: python3 script/ci-run resources --github-env "$GITHUB_ENV"
       - name: Free runner disk space
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
       - name: Install Linux dependencies
@@ -103,24 +132,51 @@ jobs:
           echo "VK_DRIVER_FILES=$vulkan_icd" >> "$GITHUB_ENV"
       - name: Install repository Rust toolchain
         run: rustup show active-toolchain
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - id: source-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        continue-on-error: true
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: fork-ci-linux-cargo-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
-          restore-keys: fork-ci-linux-cargo-
+          key: fork-ci-source-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: fork-ci-source-v2-${{ runner.os }}-${{ runner.arch }}-
       - name: Restore Linux build cache
         id: build-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        continue-on-error: true
         with:
           path: |
-            target
-            extensions/test-extension/target
-          key: fork-ci-linux-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.sha }}
+            target/debug/.fingerprint
+            target/debug/build
+            target/debug/deps/*.rlib
+            target/debug/deps/*.rmeta
+            target/debug/deps/*.so
+            target/debug/deps/*.a
+            target/debug/deps/*.d
+            extensions/test-extension/target/debug/.fingerprint
+            extensions/test-extension/target/debug/build
+            extensions/test-extension/target/debug/deps/*.rlib
+            extensions/test-extension/target/debug/deps/*.rmeta
+            extensions/test-extension/target/debug/deps/*.so
+            extensions/test-extension/target/debug/deps/*.a
+            extensions/test-extension/target/debug/deps/*.d
+            extensions/test-extension/target/wasm32-wasip2/debug/.fingerprint
+            extensions/test-extension/target/wasm32-wasip2/debug/build
+            extensions/test-extension/target/wasm32-wasip2/debug/deps
+            extensions/test-extension/target/wasm32-wasip2/debug/*.wasm
+          key: fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
-            fork-ci-linux-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
-            fork-ci-linux-build-
+            fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
+      - name: Report cache reuse
+        env:
+          SOURCE_CACHE_HIT: ${{ steps.source-cache.outputs.cache-hit }}
+          BUILD_CACHE_HIT: ${{ steps.build-cache.outputs.cache-hit }}
+          BUILD_CACHE_KEY: ${{ steps.build-cache.outputs.cache-matched-key }}
+        run: |
+          printf 'Source cache exact hit: %s; build exact hit: %s; restored build key: %s\n' \
+            "$SOURCE_CACHE_HIT" "$BUILD_CACHE_HIT" "$BUILD_CACHE_KEY" | tee -a "$GITHUB_STEP_SUMMARY"
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
         with:
           node-version: '24'
@@ -132,29 +188,61 @@ jobs:
         run: ./script/download-wasi-sdk
       - name: Build test extension
         run: >-
+          python3 script/ci-run stage 'Test extension build' --
           cargo build --locked --manifest-path extensions/test-extension/Cargo.toml
           --target wasm32-wasip2 --target-dir extensions/test-extension/target
-      - name: Build workspace tests
-        run: cargo build --locked --workspace --tests --profile test --keep-going
-      - name: Run workspace tests
-        run: >-
-          cargo nextest run --locked --workspace --no-fail-fast --no-tests=warn
-          --test-threads=2 --status-level=fail --final-status-level=fail
+      - name: Build and run workspace tests
+        run: |
+          printf 'Test coverage: %s; filter: %s\n' "$CI_TEST_MODE" "$CI_TEST_FILTER"
+          filter_args=()
+          if [[ -n "$CI_TEST_FILTER" ]]; then
+            filter_args=(-E "$CI_TEST_FILTER")
+          fi
+          python3 script/ci-run stage 'Workspace tests (build and execution)' -- \
+            cargo nextest run --locked --workspace "${filter_args[@]}" --no-fail-fast --no-tests=warn \
+            --test-threads "$CI_TEST_THREADS" --status-level=fail --final-status-level=fail
       - name: Build Zed
         if: success() || failure()
-        run: cargo build --locked --keep-going -p zed --bin zed
+        run: python3 script/ci-run stage 'Linux app build' -- cargo build --locked --keep-going -p zed --bin zed
+      - name: Save Linux Cargo source cache
+        if: ${{ !cancelled() && steps.source-cache.outputs.cache-hit != 'true' }}
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ steps.source-cache.outputs.cache-primary-key }}
       - name: Save Linux build cache
         if: ${{ !cancelled() && steps.build-cache.outputs.cache-hit != 'true' }}
         continue-on-error: true
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
-            target
-            extensions/test-extension/target
+            target/debug/.fingerprint
+            target/debug/build
+            target/debug/deps/*.rlib
+            target/debug/deps/*.rmeta
+            target/debug/deps/*.so
+            target/debug/deps/*.a
+            target/debug/deps/*.d
+            extensions/test-extension/target/debug/.fingerprint
+            extensions/test-extension/target/debug/build
+            extensions/test-extension/target/debug/deps/*.rlib
+            extensions/test-extension/target/debug/deps/*.rmeta
+            extensions/test-extension/target/debug/deps/*.so
+            extensions/test-extension/target/debug/deps/*.a
+            extensions/test-extension/target/debug/deps/*.d
+            extensions/test-extension/target/wasm32-wasip2/debug/.fingerprint
+            extensions/test-extension/target/wasm32-wasip2/debug/build
+            extensions/test-extension/target/wasm32-wasip2/debug/deps
+            extensions/test-extension/target/wasm32-wasip2/debug/*.wasm
           key: ${{ steps.build-cache.outputs.cache-primary-key }}
 
   macos:
     name: macOS application check
+    needs: checks
+    if: needs.checks.outputs.native_checks == 'true'
     runs-on: macos-15
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
@@ -163,24 +251,45 @@ jobs:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Select runner concurrency
+        run: python3 script/ci-run resources --github-env "$GITHUB_ENV"
       - name: Install repository Rust toolchain
         run: rustup show active-toolchain
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+      - id: source-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        continue-on-error: true
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: fork-ci-macos-cargo-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}
-          restore-keys: fork-ci-macos-cargo-
+          key: fork-ci-source-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: fork-ci-source-v2-${{ runner.os }}-${{ runner.arch }}-
       - name: Restore macOS build cache
         id: build-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        continue-on-error: true
         with:
-          path: target
-          key: fork-ci-macos-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-${{ github.sha }}
+          path: |
+            target/debug/.fingerprint
+            target/debug/build
+            target/debug/deps/*.rlib
+            target/debug/deps/*.rmeta
+            target/debug/deps/*.dylib
+            target/debug/deps/*.a
+            target/debug/deps/*.d
+          key: fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.sha }}
           restore-keys: |
-            fork-ci-macos-build-${{ hashFiles('Cargo.lock', 'rust-toolchain.toml') }}-
-            fork-ci-macos-build-
+            fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-macos15-xcode16.4-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
+      - name: Report cache reuse
+        env:
+          SOURCE_CACHE_HIT: ${{ steps.source-cache.outputs.cache-hit }}
+          BUILD_CACHE_HIT: ${{ steps.build-cache.outputs.cache-hit }}
+          BUILD_CACHE_KEY: ${{ steps.build-cache.outputs.cache-matched-key }}
+        run: |
+          printf 'Source cache exact hit: %s; build exact hit: %s; restored build key: %s\n' \
+            "$SOURCE_CACHE_HIT" "$BUILD_CACHE_HIT" "$BUILD_CACHE_KEY" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Install WASI SDK
         run: ./script/download-wasi-sdk
       - name: Check Xcode toolchain
@@ -189,11 +298,27 @@ jobs:
           xcrun clang --version
           xcrun --find metal
       - name: Check macOS Zed application
-        run: cargo check --locked --keep-going -p zed --bin zed
+        run: python3 script/ci-run stage 'macOS app check' -- cargo check --locked --keep-going -p zed --bin zed
+      - name: Save macOS Cargo source cache
+        if: ${{ !cancelled() && steps.source-cache.outputs.cache-hit != 'true' }}
+        continue-on-error: true
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ steps.source-cache.outputs.cache-primary-key }}
       - name: Save macOS build cache
         if: ${{ !cancelled() && steps.build-cache.outputs.cache-hit != 'true' }}
         continue-on-error: true
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          path: target
+          path: |
+            target/debug/.fingerprint
+            target/debug/build
+            target/debug/deps/*.rlib
+            target/debug/deps/*.rmeta
+            target/debug/deps/*.dylib
+            target/debug/deps/*.a
+            target/debug/deps/*.d
           key: ${{ steps.build-cache.outputs.cache-primary-key }}

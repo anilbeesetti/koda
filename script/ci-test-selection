@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+"""Conservative changed-workspace-package planning for the fork's PR CI.
+
+Compare the event base tree with GitHub's checked-out synthetic merge revision,
+so tests exercise PR changes integrated with the current target branch.
+
+Keep nextest's --workspace flag: reducing Cargo packages can change unified
+features. The filter limits test execution; compilation still covers workspace.
+"""
+
+import argparse
+import json
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+
+CHECKS_ONLY_PATHS = frozenset({
+    ".github/workflows/fork_ci.yml",
+    "script/ci-test-selection",
+    "script/tests/test_ci_test_selection.py",
+    "script/ci-run",
+    "script/tests/test_ci_run.py",
+})
+ROOT_DOCS = frozenset({
+    "README.md", "CONTRIBUTING.md", "CHANGELOG.md", "CODE_OF_CONDUCT.md",
+    "SECURITY.md", "LICENSE", "LICENSE-APACHE", "LICENSE-GPL",
+})
+
+
+def plan(mode, reason, packages=()):
+    packages = sorted(set(packages))
+    return {
+        "mode": mode,
+        "native_checks": mode != "checks-only",
+        "test_filter": " | ".join(f"rdeps({name})" for name in packages),
+        "reason": reason,
+        "selected_packages": packages,
+    }
+
+
+def docs_only(path):
+    return path in ROOT_DOCS or (
+        path.startswith("docs/")
+        and Path(path).suffix.lower() in {".md", ".markdown", ".txt", ".png", ".jpg", ".jpeg", ".gif", ".svg"}
+    )
+
+
+def workspace_graph(metadata, root):
+    root = root.resolve()
+    members = set(metadata["workspace_members"])
+    packages = [p for p in metadata["packages"] if p["id"] in members]
+    if len(packages) != len(members) or not packages:
+        raise ValueError("incomplete workspace metadata")
+    directories = {}
+    names = set()
+    for package in packages:
+        name = package["name"]
+        # Only literal Cargo package identifiers enter nextest expressions.
+        if not re.fullmatch(r"[A-Za-z0-9_-]+", name) or name in names:
+            raise ValueError("ambiguous or invalid workspace package name")
+        directory = Path(package["manifest_path"]).resolve().parent
+        relative = directory.relative_to(root).as_posix()
+        if relative in directories:
+            raise ValueError("multiple workspace packages in one directory")
+        directories[relative] = name
+        names.add(name)
+    reverse = {name: set() for name in names}
+    for package in packages:
+        for dependency in package["dependencies"]:
+            # Include dev, build, optional and target-specific dependencies,
+            # irrespective of which edges Cargo enables on the current host.
+            dependency_name = None
+            if dependency.get("path"):
+                directory = Path(dependency["path"]).resolve()
+                try:
+                    dependency_name = directories.get(directory.relative_to(root).as_posix())
+                except ValueError:
+                    pass
+            elif dependency["name"] in names:
+                # --no-deps omits the resolved graph: a registry dependency
+                # can be patched to a workspace package. Matching by name is
+                # conservative even when its declared source is external.
+                dependency_name = dependency["name"]
+            if dependency_name:
+                reverse[dependency_name].add(package["name"])
+    return directories, reverse
+
+
+def select(changes, metadata, root):
+    if not changes:
+        return plan("checks-only", "No files changed between the exact comparison revisions")
+    if any(status != "A" and status != "M" for status, _ in changes):
+        return plan("full", "Deleted, renamed or unusual file changes require the full suite")
+    paths = [path for _, path in changes]
+    if all(path in CHECKS_ONLY_PATHS or docs_only(path) for path in paths):
+        return plan("checks-only", "Only documentation or locally checked fork CI helpers changed")
+    if any(Path(path).name in {"Cargo.toml", "Cargo.lock", "rust-toolchain", "rust-toolchain.toml"}
+           or path.startswith(".cargo/")
+           or path.startswith("extensions/")
+           or (path.startswith(".github/") and path not in CHECKS_ONLY_PATHS)
+           for path in paths):
+        # Manifest changes may alter unified features of dependencies shared
+        # with packages outside the changed package's reverse-dependency graph.
+        return plan("full", "Manifests, toolchain or shared CI configuration changed")
+    directories, reverse = workspace_graph(metadata, root)
+    ordered_directories = sorted(directories, key=len, reverse=True)
+    changed_packages = set()
+    for path in paths:
+        if path in CHECKS_ONLY_PATHS or docs_only(path):
+            continue
+        if path.startswith("assets/"):
+            # Some tests read global assets directly, without a Cargo edge to
+            # the assets/settings crates. Package selection cannot cover these.
+            return plan("full", "Shared assets require the full workspace")
+        package = next((directories[d] for d in ordered_directories
+                        if d != "." and path.startswith(d + "/")), None)
+        if package is None:
+            return plan("full", f"Unmapped changed path requires the full suite: {path!r}")
+        if Path(path).suffix != ".rs":
+            # Fixtures/resources can be read by tests in other packages without
+            # a Cargo dependency edge. Only Rust source gets package selection.
+            return plan("full", f"Shared fixtures or non-Rust package files changed: {path!r}")
+        changed_packages.add(package)
+    # Expand ourselves, so disabled optional/target edges omitted from nextest's
+    # resolved graph cannot silently omit affected workspace packages.
+    affected = set(changed_packages)
+    pending = list(changed_packages)
+    while pending:
+        for dependent in reverse[pending.pop()]:
+            if dependent not in affected:
+                affected.add(dependent)
+                pending.append(dependent)
+    return plan("selected", "Changed workspace packages and conservative reverse dependents", affected)
+
+
+def command(args, root):
+    result = subprocess.run(args, cwd=root, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, check=True, timeout=120)
+    return result.stdout
+
+
+def changed_files(root, base, head):
+    # No rename detection means moves produce a deletion and trigger full CI.
+    raw = command(["git", "diff", "--no-renames", "--name-status", "-z", base, head, "--"], root)
+    fields = raw.split(b"\0")
+    if fields.pop() != b"" or len(fields) % 2:
+        raise ValueError("invalid NUL-delimited Git diff")
+    return [(fields[i].decode("ascii"), fields[i + 1].decode("utf-8", errors="strict"))
+            for i in range(0, len(fields), 2)]
+
+
+def create_plan(root, event_name, base, head, metadata=None):
+    if event_name != "pull_request":
+        return plan("full", "Main pushes and manual runs always validate the full workspace")
+    try:
+        if not base or not head or not re.fullmatch(r"[0-9a-fA-F]{40,64}", base) or not re.fullmatch(r"[0-9a-fA-F]{40,64}", head):
+            raise ValueError("missing or invalid exact comparison revisions")
+        checkout = command(["git", "rev-parse", "HEAD"], root).decode().strip()
+        if checkout != head:
+            raise ValueError("checkout does not match the inspected revision used for metadata")
+        changes = changed_files(root, base, head)
+        # Documentation/helper-only plans do not need Cargo or network access.
+        if not changes or any(status not in {"A", "M"} for status, _ in changes) or all(
+                path in CHECKS_ONLY_PATHS or docs_only(path) for _, path in changes):
+            return select(changes, {}, root)
+        if metadata is None:
+            metadata = json.loads(command(["cargo", "metadata", "--locked", "--offline", "--no-deps", "--format-version", "1"], root))
+        return select(changes, metadata, root)
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, TypeError) as error:
+        # Git/Cargo unavailability must increase coverage, never skip it.
+        print(f"Warning: CI selection failed; running full suite: {error}", file=sys.stderr)
+        return plan("full", "Selection unavailable; conservatively running the full workspace")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--base")
+    parser.add_argument("--head")
+    parser.add_argument("--event-name", default="pull_request")
+    parser.add_argument("--github-output", type=Path)
+    args = parser.parse_args()
+    root = Path.cwd()
+    result = create_plan(root, args.event_name, args.base, args.head)
+    if args.github_output:
+        # All emitted scalars are one line; reason uses repr for untrusted paths.
+        with args.github_output.open("a") as output:
+            for key, value in result.items():
+                encoded = json.dumps(value) if isinstance(value, (bool, list)) else value
+                output.write(f"{key}={encoded}\n")
+    print(json.dumps(result, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
