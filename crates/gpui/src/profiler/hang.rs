@@ -691,6 +691,11 @@ mod tests {
     fn app_flushes_its_hang_monitor_on_shutdown(cx: &mut TestAppContext) {
         use super::{HangMonitorConfig, HangMonitorPollReason};
 
+        // The monitor runs on a real OS thread. Wait for its wakeup rather
+        // than letting the test scheduler's randomized tick budget time out.
+        cx.executor().allow_parking();
+        cx.executor().set_block_on_ticks(usize::MAX..=usize::MAX);
+
         let (sender, receiver) = std::sync::mpsc::channel();
         cx.update(|cx| {
             cx.start_hang_monitor(
