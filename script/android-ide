@@ -2,9 +2,11 @@
 set -euo pipefail
 
 repository=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+export ZED_RELEASE_CHANNEL=nightly
+export RELEASE_CHANNEL=nightly
 build_profile=debug
 build=true
-profile="$repository/target/android-ide/profile"
+profile="$repository/target/android-ide/nightly/profile"
 kotlin_backend=${ANDROID_IDE_KOTLIN_BACKEND:-official}
 
 while [[ $# -gt 0 ]]; do
@@ -27,7 +29,7 @@ Usage: script/android-ide [--release] [--skip-build] [--profile DIR]
                           [--kotlin-backend official] [--] [PATH ...]
 
 Build and run the Android IDE development app on macOS. Paths are resolved from
-your current directory. Settings and extensions use target/android-ide/profile
+your current directory. Settings and extensions use target/android-ide/nightly/profile
 unless --profile is supplied. Existing profile settings are preserved.
 
 Prerequisites: the repository's Rust toolchain, Xcode with Metal tools, Android
@@ -71,34 +73,37 @@ target_directory=${CARGO_TARGET_DIR:-"$repository/target"}
 case "$target_directory" in /*) ;; *) target_directory="$PWD/$target_directory" ;; esac
 export CARGO_TARGET_DIR="$target_directory"
 
-bundle="$repository/target/android-ide/$build_profile/Android IDE Dev.app"
-executable="$bundle/Contents/MacOS/zed"
+bundle="$repository/target/android-ide/nightly/$build_profile/Koda Nightly.app"
+executable="$bundle/Contents/MacOS/koda"
 if ps -axo command= | /usr/bin/grep -F "$executable" | /usr/bin/grep -v '[g]rep' >/dev/null; then
-    echo "Quit the $build_profile Android IDE Dev app before running this launcher again." >&2
+    echo "Quit the $build_profile Koda Nightly app before running this launcher again." >&2
     exit 1
 fi
 
 if $build; then
-    arguments=(build --locked -p zed --bin zed)
+    arguments=(build --locked -p zed --bin koda)
     if [[ $build_profile == release ]]; then arguments+=(--release); fi
     (cd "$repository" && cargo "${arguments[@]}")
 fi
-binary="$target_directory/$build_profile/zed"
+binary="$target_directory/$build_profile/koda"
 [[ -x "$binary" ]] || { echo "Missing $binary; run again without --skip-build." >&2; exit 1; }
 
-mkdir -p "$bundle/Contents/MacOS" "$profile/config"
+mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources" "$profile/config"
 cat > "$bundle/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>dev.zed.android-ide-$build_profile</string>
-<key>CFBundleName</key><string>Android IDE Dev</string>
-<key>CFBundleExecutable</key><string>zed</string>
+<key>CFBundleIdentifier</key><string>dev.anilbeesetti.koda-nightly</string>
+<key>CFBundleName</key><string>Koda Nightly</string>
+<key>CFBundleDisplayName</key><string>Koda Nightly</string>
+<key>CFBundleIconFile</key><string>KodaNightly.icns</string>
+<key>CFBundleExecutable</key><string>koda</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleVersion</key><string>0.1</string>
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST
+cp "$repository/crates/zed/resources/KodaNightly.icns" "$bundle/Contents/Resources/KodaNightly.icns"
 # A real executable keeps macOS app discovery attached to this bundle.
 cp -c "$binary" "$executable" || cp "$binary" "$executable"
 

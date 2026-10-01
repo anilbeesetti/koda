@@ -13,6 +13,7 @@ test-group = 'sequential-db-tests'
 [[profile.default.overrides]]
 filter = 'package(worktree) and test(test_random_worktree_changes)'
 priority = 100
+slow-timeout = { period = "300s", terminate-after = 1 }
 
 [[profile.default.overrides]]
 filter = 'package(collab) and (test(random_project_collaboration_tests) or test(random_channel_buffer_tests) or test(test_contact_requests) or test(test_basic_following))'
@@ -45,6 +46,10 @@ slow-timeout = { period = "300s", terminate-after = 1 }
 
 [[profile.default.overrides]]
 filter =  'package(editor) and test(test_random_blocks)'
+slow-timeout = { period = "300s", terminate-after = 1 }
+
+[[profile.default.overrides]]
+filter = 'package(=multi_buffer) and test(=multi_buffer_tests::test_random_multibuffer) or package(=project_panel) and test(=project_panel_tests::test_editing_files) or package(=workspace) and test(=pane::tests::property_test::single_pane_navigation)'
 slow-timeout = { period = "300s", terminate-after = 1 }
 
 [[profile.default.overrides]]

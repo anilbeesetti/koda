@@ -1,5 +1,5 @@
 use gh_workflow::{
-    Event, Expression, Level, Permissions, Push, Run, Step, Use, Workflow, ctx::Context,
+    Event, Expression, Level, Permissions, Run, Step, Use, Workflow, WorkflowDispatch, ctx::Context,
 };
 use indoc::formatdoc;
 
@@ -101,7 +101,7 @@ pub(crate) fn release() -> Workflow {
     );
 
     named::workflow()
-        .on(Event::default().push(Push::default().tags(vec!["v*".to_string()])))
+        .on(Event::default().workflow_dispatch(WorkflowDispatch::default()))
         .concurrency(vars::one_workflow_per_non_main_branch())
         .with_minimal_permissions()
         .add_env(("CARGO_TERM_COLOR", "always"))

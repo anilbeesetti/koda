@@ -2151,6 +2151,7 @@ mod tests {
                 let message = error.to_string();
                 assert!(
                     message.contains("CAP_PERFMON")
+                        || message.contains("does not expose")
                         || message.contains("does not advance")
                         || message.contains("unavailable on this platform")
                         || message.contains("unavailable for"),

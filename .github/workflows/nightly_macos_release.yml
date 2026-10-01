@@ -1,0 +1,23 @@
+name: Release Koda Nightly (prerelease)
+
+on:
+  # Midnight in Asia/Calcutta (UTC+05:30).
+  schedule:
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Serialize scheduled and manual runs so they cannot release the same commit twice.
+concurrency:
+  group: koda-nightly-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/macos_release.yml
+    with:
+      channel: nightly

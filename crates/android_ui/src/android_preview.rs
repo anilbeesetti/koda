@@ -13,7 +13,7 @@ pub(super) fn toggle_preview(
         panel
             .project
             .read(cx)
-            .find_project_path(root.join(".zed/android-preview/preview.png"), cx)
+            .find_project_path(root.join(".koda/android-preview/preview.png"), cx)
     });
     if let Some(path) = image
         && workspace
@@ -219,7 +219,7 @@ mod tests {
                 "/android",
                 serde_json::json!({
                     "settings.gradle.kts": "", "gradlew": "",
-                    ".zed": {"android-preview": {"preview.png": "cached preview"}}
+                    ".koda": {"android-preview": {"preview.png": "cached preview"}}
                 }),
             )
             .await;
@@ -263,7 +263,7 @@ mod tests {
             let other = cx.new(|cx| TestItem::new(cx).with_label("Other.kt"));
             let path = project
                 .read(cx)
-                .find_project_path("/android/.zed/android-preview/preview.png", cx)
+                .find_project_path("/android/.koda/android-preview/preview.png", cx)
                 .expect("Preview path");
             let project_item = cx.new(|_| TestProjectItem {
                 entry_id: Some(project::ProjectEntryId::from_proto(1)),
