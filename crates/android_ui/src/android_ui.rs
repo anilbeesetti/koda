@@ -2007,6 +2007,7 @@ impl Render for AndroidPanel {
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))
             .child(self.preview_picker(cx))
             .child(Button::new("logcat", "Open Logcat")
+                .start_icon(Icon::new(IconName::Logcat))
                 .disabled(self.selected_device().is_err()).tab_index(0isize)
                 .on_click(cx.listener(|panel, _, window, cx| panel.logcat(window, cx))))
             .child(div().text_sm().text_color(cx.theme().colors().text_muted).child(self.status.clone()))
