@@ -1,7 +1,10 @@
 import importlib.machinery
 import importlib.util
+import json
+import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -52,7 +55,38 @@ class ReleaseToolTests(unittest.TestCase):
             self.assertEqual(commands[0][-2:], ["--rev", tools.CARGO_BUNDLE_REVISION])
             self.assertNotIn("--branch", commands[0])
             self.assertEqual(commands[1][-1], "cargo-about@0.8.2")
-            self.assertEqual(commands[0][2:5], ["--force", "--root", str(root)])
+            self.assertEqual(commands[0][2:5], ["--force", "--root", str(root.resolve())])
+
+    def test_install_through_symlink_root_uses_canonical_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            root = temporary / "canonical tools"
+            root.mkdir()
+            alias = temporary / "tool alias"
+            alias.symlink_to(root, target_is_directory=True)
+            calls = temporary / "cargo-calls.jsonl"
+            cargo = temporary / "cargo"
+            cargo.write_text(f"#!{sys.executable}\n" + '''
+import json, os, pathlib, sys
+arguments = sys.argv[1:]
+with open(os.environ['TOOL_TEST_CALLS'], 'a') as output:
+    output.write(json.dumps(arguments) + '\\n')
+root = pathlib.Path(arguments[arguments.index('--root') + 1])
+name, version = ('cargo-about', 'cargo-about 0.8.2') if 'cargo-about@0.8.2' in arguments else ('cargo-bundle', 'cargo-bundle v0.6.1-zed')
+(root / 'bin').mkdir(exist_ok=True)
+binary = root / 'bin' / name
+binary.write_text("#!/bin/sh\\nprintf '%s\\\\n' '" + version + "'\\n")
+binary.chmod(0o755)
+''')
+            cargo.chmod(0o755)
+            with patch.dict(os.environ, PATH=f"{temporary}:{os.environ['PATH']}", TOOL_TEST_CALLS=str(calls)):
+                tools.install_tools(alias)
+            commands = [json.loads(line) for line in calls.read_text().splitlines()]
+            self.assertEqual(len(commands), 2)
+            for command in commands:
+                self.assertEqual(command[command.index("--root") + 1], str(root.resolve()))
+            self.assertTrue(tools.valid_tool(alias / "bin" / "cargo-bundle", "--help", "cargo-bundle v0.6.1-zed"))
+            self.assertTrue(tools.valid_tool(alias / "bin" / "cargo-about", "--version", "cargo-about 0.8.2"))
 
     def test_wrong_version_cannot_be_published_to_cache(self):
         with patch.object(tools, "valid_tool", return_value=False), patch.object(
