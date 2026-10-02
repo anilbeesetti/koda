@@ -1256,7 +1256,7 @@ impl AndroidPanel {
                         .find(|worktree| worktree.read(cx).abs_path().as_ref() == root.as_path())
                         .context("The Kotlin workspace was removed")?;
                     let refresh = worktree.read(cx).as_local().context("Kotlin setup requires a local workspace")?
-                        .refresh_entries_for_paths(vec![RelPath::from_unix_str(".zed/settings.json")?.into_arc()]);
+                        .refresh_entries_for_paths(vec![RelPath::from_unix_str(".koda/settings.json")?.into_arc()]);
                     Ok::<_, anyhow::Error>(refresh)
                 })??;
                 refresh.next().await;
@@ -2102,12 +2102,12 @@ fn java_settings(previous: String, root: &Path, cx: &App) -> Result<String> {
         .cloned()
         .unwrap_or_else(|| serde_json::json!({}));
     let import = root
-        .join(".zed/android-java/import.gradle")
+        .join(".koda/android-java/import.gradle")
         .to_string_lossy()
         .into_owned();
     let model = format!(
         "-Dzed.android.javaModel={}",
-        root.join(".zed/android-java/model.json").display()
+        root.join(".koda/android-java/model.json").display()
     );
     let arguments = java_settings
         .pointer("/java/import/gradle/arguments")
@@ -2149,7 +2149,7 @@ fn android_model_input(path: &RelPath) -> bool {
     if components.iter().any(|component| {
         matches!(
             *component,
-            "build" | "generated" | ".gradle" | ".zed" | ".git"
+            "build" | "generated" | ".gradle" | ".koda" | ".git"
         )
     }) {
         return false;
@@ -2185,7 +2185,7 @@ fn has_official_kotlin_system_path<'a>(
 ) -> bool {
     let expected = format!(
         "--system-path={}",
-        root.join(".zed/android-kotlin-official/system").display()
+        root.join(".koda/android-kotlin-official/system").display()
     );
     let mut system_paths = arguments
         .into_iter()
@@ -2365,7 +2365,7 @@ fn official_kotlin_settings(
             }
             arguments.push(format!(
                 "--system-path={}",
-                root.join(".zed/android-kotlin-official/system").display()
+                root.join(".koda/android-kotlin-official/system").display()
             ));
             binary
                 .env
@@ -2614,8 +2614,8 @@ mod tests {
             "mobile/build/generated/res/values/values.xml",
             "buildSrc/build/classes/AndroidPlugin.kt",
             "build-logic/.gradle/state.gradle",
-            ".zed/settings.json",
-            ".zed/android-kotlin-official/system/gradle.properties",
+            ".koda/settings.json",
+            ".koda/android-kotlin-official/system/gradle.properties",
             ".git/config",
             "generated/AndroidManifest.xml",
             "mobile/src/main/kotlin/Main.kt",
@@ -2710,13 +2710,13 @@ mod tests {
         let _app_state = cx.update(AppState::test);
         let directory = tempfile::tempdir().unwrap();
         let root = directory.path().canonicalize().unwrap();
-        let settings = json!({"languages": {"Kotlin": {"language_servers": ["kotlin-lsp"]}}, "lsp": {"kotlin-lsp": {"binary": {"arguments": [format!("--system-path={}", root.join(".zed/android-kotlin-official/system").display())]}}}}).to_string();
-        std::fs::create_dir(root.join(".zed")).unwrap();
-        std::fs::write(root.join(".zed/settings.json"), &settings).unwrap();
+        let settings = json!({"languages": {"Kotlin": {"language_servers": ["kotlin-lsp"]}}, "lsp": {"kotlin-lsp": {"binary": {"arguments": [format!("--system-path={}", root.join(".koda/android-kotlin-official/system").display())]}}}}).to_string();
+        std::fs::create_dir(root.join(".koda")).unwrap();
+        std::fs::write(root.join(".koda/settings.json"), &settings).unwrap();
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
             &root,
-            json!({".zed": {"settings.json": settings}, "main.kt": "fun main() {}"}),
+            json!({".koda": {"settings.json": settings}, "main.kt": "fun main() {}"}),
         )
         .await;
         let project = Project::test(fs, [root.as_path()], cx).await;
@@ -2774,7 +2774,7 @@ mod tests {
                     .is_err()
             );
             assert_eq!(
-                std::fs::read_to_string(root.join(".zed/settings.json")).unwrap(),
+                std::fs::read_to_string(root.join(".koda/settings.json")).unwrap(),
                 settings
             );
             panel.selected_target = Some(target.clone());
@@ -2789,7 +2789,7 @@ mod tests {
                 .publish_official_kotlin_settings(&root, &target, &settings, updated, cx)
                 .unwrap();
             assert_eq!(
-                std::fs::read_to_string(root.join(".zed/settings.json")).unwrap(),
+                std::fs::read_to_string(root.join(".koda/settings.json")).unwrap(),
                 updated
             );
             assert!(
@@ -2798,7 +2798,7 @@ mod tests {
                     .is_err()
             );
             assert_eq!(
-                std::fs::read_to_string(root.join(".zed/settings.json")).unwrap(),
+                std::fs::read_to_string(root.join(".koda/settings.json")).unwrap(),
                 updated
             );
         });
@@ -3090,7 +3090,7 @@ mod tests {
             other_servers.try_recv().is_err(),
             "A stale explicit restart ID must not start unrelated adapters"
         );
-        let current = json!({"languages": {"Kotlin": {"language_servers": ["kotlin-lsp", "other-server"]}}, "lsp": {"kotlin-lsp": {"binary": {"arguments": ["--system-path=/first/.zed/android-kotlin-official/system"], "env": {"LSP_ANDROID_VARIANT": "demoDebug"}}}}}).to_string();
+        let current = json!({"languages": {"Kotlin": {"language_servers": ["kotlin-lsp", "other-server"]}}, "lsp": {"kotlin-lsp": {"binary": {"arguments": ["--system-path=/first/.koda/android-kotlin-official/system"], "env": {"LSP_ANDROID_VARIANT": "demoDebug"}}}}}).to_string();
         let paused = cx
             .update(|_, cx| paused_official_kotlin_settings(current, Path::new("/first"), cx))
             .unwrap();
@@ -3200,7 +3200,7 @@ mod tests {
             assert_eq!(parsed["lsp"]["custom-kotlin"]["settings"]["custom"], true);
             let official = &parsed["lsp"]["kotlin-lsp"];
             assert_eq!(official["binary"]["path"], "/official/bin/intellij-server");
-            assert_eq!(official["binary"]["arguments"], json!(["--stdio", "--data-sharing=none", "--system-path=/android project/.zed/android-kotlin-official/system"]));
+            assert_eq!(official["binary"]["arguments"], json!(["--stdio", "--data-sharing=none", "--system-path=/android project/.koda/android-kotlin-official/system"]));
             assert_eq!(official["binary"]["env"], json!({"CUSTOM": "kept", "LSP_ANDROID_MODULE": ":mobile", "LSP_ANDROID_VARIANT": "demoDebug"}));
             assert_eq!(official["initialization_options"], json!({"custom": true, "defaultSdk": "/jdk 21", "projects": [
                 {"type": "gradle", "path": "file:///other", "java-home": "/other-jdk"},
@@ -3228,7 +3228,7 @@ mod tests {
             assert!(paused_official_kotlin_settings(disabled.to_string(), root, cx).is_err());
             for arguments in [
                 json!(["--stdio", "--system-path=/custom"]),
-                json!(["--system-path=/android project/.zed/android-kotlin-official/system", "--system-path", "/custom"]),
+                json!(["--system-path=/android project/.koda/android-kotlin-official/system", "--system-path", "/custom"]),
             ] {
                 let mut unmanaged = parsed.clone();
                 unmanaged["lsp"]["kotlin-lsp"]["binary"]["arguments"] = arguments;
@@ -3382,8 +3382,8 @@ mod tests {
             assert_eq!(server["settings"]["java"]["format"]["enabled"], false);
             assert_eq!(server["settings"], server["initialization_options"]["settings"]);
             assert_eq!(server["settings"]["java"]["import"]["gradle"]["arguments"], json!([
-                "--offline", "--init-script", "/android project/.zed/android-java/import.gradle",
-                "-Dzed.android.javaModel=/android project/.zed/android-java/model.json"
+                "--offline", "--init-script", "/android project/.koda/android-java/import.gradle",
+                "-Dzed.android.javaModel=/android project/.koda/android-java/model.json"
             ]));
             assert_eq!(java_settings(updated.clone(), Path::new("/android project"), cx).expect("Setup should be repeatable"), updated);
             assert!(java_settings(r#"{"lsp":{"jdtls":{"initialization_options":[]}}}"#.into(), Path::new("/android"), cx).is_err());
