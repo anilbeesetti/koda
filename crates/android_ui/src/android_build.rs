@@ -132,6 +132,7 @@ struct BuildSession {
     id: u64,
     label: SharedString,
     status: BuildStatus,
+    waiting_for_emulator: bool,
     started: Instant,
     elapsed: Option<Duration>,
     previous_elapsed: Duration,
@@ -160,6 +161,7 @@ impl BuildSession {
             id,
             label: label.into(),
             status: BuildStatus::Running,
+            waiting_for_emulator: false,
             started: Instant::now(),
             elapsed: None,
             previous_elapsed: Duration::ZERO,
@@ -180,6 +182,14 @@ impl BuildSession {
             follow: true,
             expanded: true,
             scroll: UniformListScrollHandle::new(),
+        }
+    }
+
+    fn activity_status(&self) -> BuildStatus {
+        if self.waiting_for_emulator {
+            BuildStatus::Running
+        } else {
+            self.status
         }
     }
 
@@ -594,6 +604,7 @@ impl BuildPanel {
             && session.id == id
         {
             session.status = status;
+            session.waiting_for_emulator = false;
             session.elapsed = Some(session.started.elapsed());
             if let Some(phase) = session.phases.back_mut() {
                 phase.status = status;
@@ -632,7 +643,28 @@ impl BuildPanel {
         }
     }
 
-    fn select(&mut self, tab: BuildTab, cx: &mut Context<Self>) {
+    pub(crate) fn is_waiting_for_emulator(&self, tab: BuildTab, id: u64) -> bool {
+        self.sessions[tab.index()]
+            .as_ref()
+            .is_some_and(|session| session.id == id && session.waiting_for_emulator)
+    }
+
+    pub(crate) fn set_waiting_for_emulator(
+        &mut self,
+        tab: BuildTab,
+        id: u64,
+        waiting: bool,
+        cx: &mut Context<Self>,
+    ) {
+        if let Some(session) = &mut self.sessions[tab.index()]
+            && session.id == id
+        {
+            session.waiting_for_emulator = waiting;
+            cx.notify();
+        }
+    }
+
+    pub(crate) fn select(&mut self, tab: BuildTab, cx: &mut Context<Self>) {
         self.selected = tab;
         cx.notify();
     }
@@ -648,7 +680,7 @@ impl BuildPanel {
                 .child(Label::new("Nothing to show").color(Color::Muted))
                 .into_any_element();
         };
-        let running = session.status == BuildStatus::Running;
+        let running = session.activity_status() == BuildStatus::Running;
         let toolbar = v_flex()
             .debug_selector(|| "build-left-actions".into())
             .h_full()
@@ -701,7 +733,9 @@ impl BuildPanel {
                         let row = *rows.get(index)?;
                         let (label, icon, color, line, depth, duration) = match row {
                             TreeRow::Root => {
-                                let state = if session.status == BuildStatus::Running {
+                                let state = if session.waiting_for_emulator {
+                                    "Waiting for emulator…"
+                                } else if session.status == BuildStatus::Running {
                                     match tab {
                                         BuildTab::Sync => "Syncing…",
                                         BuildTab::Output => "Building…",
@@ -713,7 +747,8 @@ impl BuildPanel {
                                     .label
                                     .strip_prefix("Sync ")
                                     .unwrap_or(&session.label);
-                                let label = if session.status == BuildStatus::Running
+                                let label = if !session.waiting_for_emulator
+                                    && session.status == BuildStatus::Running
                                     && let Some(task) = session
                                         .current_task
                                         .and_then(|index| index.checked_sub(session.task_offset))
@@ -728,8 +763,8 @@ impl BuildPanel {
                                 };
                                 (
                                     SharedString::from(label),
-                                    session.status.icon(),
-                                    session.status.color(),
+                                    session.activity_status().icon(),
+                                    session.activity_status().color(),
                                     None,
                                     0,
                                     Some(
@@ -1085,7 +1120,7 @@ impl Render for BuildPanel {
                     .children([BuildTab::Sync, BuildTab::Output].into_iter().map(|tab| {
                         let status = self.sessions[tab.index()]
                             .as_ref()
-                            .map(|session| session.status);
+                            .map(BuildSession::activity_status);
                         Button::new(tab.label(), tab.label())
                             .tab_index(0isize)
                             .toggle_state(self.selected == tab)
@@ -1353,6 +1388,52 @@ mod tests {
                     .is_some_and(|size| size.contents.width > console.size.width)
             );
         });
+        let stops = std::rc::Rc::new(std::cell::Cell::new(0));
+        let _subscription = cx.update(|_, cx| {
+            cx.subscribe(&pane, {
+                let stops = stops.clone();
+                move |_, event, _| {
+                    if matches!(event, BuildEvent::Stop(BuildTab::Output)) {
+                        stops.set(stops.get() + 1);
+                    }
+                }
+            })
+        });
+        let id = pane.read_with(cx, |pane, _| {
+            pane.sessions[BuildTab::Output.index()]
+                .as_ref()
+                .expect("Output")
+                .id
+        });
+        let stop = cx.debug_bounds("ICON-Stop").expect("Stop control");
+        cx.simulate_click(stop.center(), Default::default());
+        assert_eq!(stops.get(), 0, "Finished build cannot be stopped");
+        pane.update(cx, |pane, cx| {
+            pane.set_waiting_for_emulator(BuildTab::Output, id, true, cx)
+        });
+        cx.run_until_parked();
+        let stop = cx.debug_bounds("ICON-Stop").expect("Waiting Stop control");
+        cx.simulate_click(stop.center(), Default::default());
+        assert_eq!(
+            stops.get(),
+            1,
+            "Stop remains enabled after Gradle succeeds while the emulator boots"
+        );
+        pane.read_with(cx, |pane, _| {
+            assert_eq!(
+                pane.sessions[BuildTab::Output.index()]
+                    .as_ref()
+                    .expect("Output")
+                    .status,
+                BuildStatus::Succeeded
+            )
+        });
+        pane.update(cx, |pane, cx| {
+            pane.set_waiting_for_emulator(BuildTab::Output, id, false, cx)
+        });
+        cx.run_until_parked();
+        cx.simulate_click(stop.center(), Default::default());
+        assert_eq!(stops.get(), 1, "Stop is disabled once the wait ends");
         pane.update(cx, |pane, cx| pane.select(BuildTab::Sync, cx));
         cx.run_until_parked();
         pane.read_with(cx, |pane, _| {
