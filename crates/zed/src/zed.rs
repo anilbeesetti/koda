@@ -5914,6 +5914,7 @@ mod tests {
                 "agent",
                 "agents_sidebar",
                 "android",
+                "android_logcat",
                 "app_menu",
                 "assistant",
                 "assistant2",

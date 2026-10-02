@@ -1,13 +1,16 @@
 use super::*;
 use android_tools::logcat::{self, Buffer, Decoder, Entry, FilterContext, Level, Process, Query};
 use chrono::Utc;
-use editor::Editor;
+use editor::{Editor, MultiBufferOffset, SelectionEffects, ToOffset as _};
 use futures::{AsyncReadExt as _, SinkExt as _, channel::mpsc};
-use gpui::{ClipboardItem, FollowMode, ListAlignment, ListState, PathPromptOptions, list};
+use gpui::{
+    Bounds, ClipboardItem, FollowMode, Hsla, KeyContext, ListAlignment, ListState,
+    PathPromptOptions, Point, ScrollHandle, TextRun, deferred, list, point,
+};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, io::Read as _, time::Instant};
 use theme_settings::ThemeSettings;
-use ui::WithScrollbar;
+use ui::{ScrollAxes, ScrollableHandle, Scrollbars, WithScrollbar};
 use ui_input::{ErasedEditorEvent, InputField};
 use util::command::Stdio;
 use workspace::{
@@ -18,6 +21,20 @@ use workspace::{
 actions!(
     android_logcat,
     [
+        /// Shows or hides the Logcat panel.
+        Toggle,
+        /// Opens another Logcat tab.
+        NewViewer,
+        /// Hides Find.
+        CloseFind,
+        /// Selects the next query suggestion.
+        NextSuggestion,
+        /// Selects the previous query suggestion.
+        PreviousSuggestion,
+        /// Inserts the selected query suggestion.
+        AcceptSuggestion,
+        /// Dismisses query suggestions.
+        DismissSuggestions,
         /// Freezes or resumes the Logcat display while capture continues.
         Pause,
         /// Clears the current Logcat view.
@@ -47,32 +64,19 @@ pub(super) fn open(
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
-    let existing = workspace
-        .items_of_type::<LogcatView>(cx)
-        .find(|view| view.read(cx).root == root);
-    if let Some(view) = existing {
-        view.update(cx, |view, _| view.targets = targets);
-        workspace.activate_item(&view, true, true, window, cx);
-        return;
+    if let Some(panel) = workspace.panel::<LogcatPanel>(cx) {
+        panel.update(cx, |panel, cx| {
+            panel.show_logs(root, serial, targets, window, cx)
+        });
+        workspace.focus_panel::<LogcatPanel>(window, cx);
     }
-    let view = cx.new(|cx| {
-        LogcatView::new(
-            workspace.weak_handle(),
-            workspace.project().clone(),
-            root,
-            serial,
-            targets,
-            window,
-            cx,
-        )
-    });
-    view.update(cx, |view, cx| view.watch_devices(cx));
-    workspace.add_item_to_active_pane(Box::new(view), None, true, window, cx);
 }
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 struct Preferences {
+    #[serde(default)]
+    version: u32,
     filter: String,
     match_case: bool,
     wrap: bool,
@@ -86,9 +90,10 @@ struct Preferences {
 impl Default for Preferences {
     fn default() -> Self {
         Self {
-            filter: String::new(),
+            version: 1,
+            filter: "package:mine".into(),
             match_case: false,
-            wrap: true,
+            wrap: false,
             compact: false,
             fold_stacktraces: false,
             capacity: logcat::DEFAULT_CAPACITY,
@@ -140,9 +145,14 @@ pub(super) struct LogcatView {
     process_error: Option<String>,
     processes: Vec<Process>,
     project_packages: Vec<String>,
-    selected_package: Option<String>,
-    selected_process: Option<String>,
-    minimum_level: Level,
+    completions: Vec<String>,
+    completion_range: std::ops::Range<usize>,
+    completion_index: usize,
+    suppress_completion: bool,
+    search_visible: bool,
+    horizontal_scroll: ScrollHandle,
+    measured_widths: HashMap<u64, Pixels>,
+    measured_font: Option<(SharedString, Pixels)>,
     buffers: String,
     buffer: Buffer,
     cursor: Option<Arc<Entry>>,
@@ -171,7 +181,7 @@ pub(super) struct LogcatView {
 }
 
 impl LogcatView {
-    fn new(
+    pub(super) fn new(
         workspace: WeakEntity<Workspace>,
         project: Entity<Project>,
         root: PathBuf,
@@ -186,12 +196,15 @@ impl LogcatView {
             .flatten()
             .and_then(|value| serde_json::from_str(&value).log_err())
             .unwrap_or_default();
+        preferences.migrate();
         preferences.capacity = preferences.capacity.clamp(1024 * 1024, 64 * 1024 * 1024);
         if serial.is_some() {
             preferences.serial = serial;
         }
-        let filter_input =
-            cx.new(|cx| InputField::new(window, cx, "Filter: package:mine tag:MyTag level:WARN"));
+        let filter_input = cx.new(|cx| {
+            InputField::new(window, cx, "Filter: package:mine tag:MyTag level:WARN")
+                .start_icon(IconName::Filter)
+        });
         set_input_text(&filter_input, &preferences.filter, window, cx);
         let search_input = cx.new(|cx| InputField::new(window, cx, "Find in displayed messages"));
         let mut subscriptions = Vec::new();
@@ -199,14 +212,21 @@ impl LogcatView {
             let view = cx.weak_entity();
             let editor = input.read(cx).editor().clone();
             let subscription = editor.subscribe(
-                Box::new(move |event, _, cx| {
+                Box::new(move |event, window, cx| {
                     if event == ErasedEditorEvent::BufferEdited {
                         view.update(cx, |view, cx| {
                             if is_filter {
                                 view.update_filter(cx);
+                                view.update_completions(window, cx);
                             } else {
                                 view.update_search(cx);
                             }
+                        })
+                        .log_err();
+                    } else if is_filter && event == ErasedEditorEvent::Blurred {
+                        view.update(cx, |view, cx| {
+                            view.completions.clear();
+                            cx.notify();
                         })
                         .log_err();
                     }
@@ -251,9 +271,14 @@ impl LogcatView {
             process_error: None,
             processes: Vec::new(),
             project_packages: Vec::new(),
-            selected_package: None,
-            selected_process: None,
-            minimum_level: Level::Verbose,
+            completions: Vec::new(),
+            completion_range: 0..0,
+            completion_index: 0,
+            suppress_completion: false,
+            search_visible: false,
+            horizontal_scroll: ScrollHandle::new(),
+            measured_widths: HashMap::new(),
+            measured_font: None,
             buffers: "main,system,crash".into(),
             paused: None,
             visible: Vec::new(),
@@ -280,6 +305,226 @@ impl LogcatView {
         }
     }
 
+    pub(super) fn root(&self) -> &PathBuf {
+        &self.root
+    }
+
+    pub(super) fn capture_context(&self) -> (PathBuf, Option<String>, Vec<AndroidTarget>) {
+        (
+            self.root.clone(),
+            self.preferences.serial.clone(),
+            self.targets.clone(),
+        )
+    }
+
+    pub(super) fn set_targets(&mut self, targets: Vec<AndroidTarget>, cx: &mut Context<Self>) {
+        self.targets = targets;
+        self.watch_devices(cx);
+    }
+
+    fn current_targets(&self, cx: &App) -> Vec<AndroidTarget> {
+        self.workspace
+            .read_with(cx, |workspace, cx| {
+                workspace.panel::<AndroidPanel>(cx).and_then(|panel| {
+                    let panel = panel.read(cx);
+                    (panel.root.as_ref() == Some(&self.root)).then(|| {
+                        panel
+                            .selected_target
+                            .clone()
+                            .map(|target| vec![target])
+                            .unwrap_or_else(|| panel.targets.clone())
+                    })
+                })
+            })
+            .log_err()
+            .flatten()
+            .unwrap_or_else(|| self.targets.clone())
+    }
+
+    fn update_completions(&mut self, window: &Window, cx: &mut Context<Self>) {
+        if self.suppress_completion {
+            self.suppress_completion = false;
+            self.completions.clear();
+            return;
+        }
+        if !self.filter_input.focus_handle(cx).is_focused(window) {
+            self.completions.clear();
+            return;
+        }
+        let text = self.filter_input.read(cx).text(cx);
+        let cursor = input_cursor(&self.filter_input, cx).unwrap_or(text.len());
+        let mut candidates = [
+            "package:mine",
+            "package:",
+            "package=:",
+            "package~:",
+            "tag:",
+            "tag=:",
+            "tag~:",
+            "process:",
+            "message:",
+            "message~:",
+            "line:",
+            "pid:",
+            "tid:",
+            "uid:",
+            "name:",
+            "level:VERBOSE",
+            "level:DEBUG",
+            "level:INFO",
+            "level:WARN",
+            "level:ERROR",
+            "level:ASSERT",
+            "is:crash",
+            "is:stacktrace",
+            "is:firebase",
+            "age:30s",
+            "age:5m",
+        ]
+        .map(String::from)
+        .to_vec();
+        candidates.extend(self.preferences.saved_filters.clone());
+        for entry in self.buffer.entries.iter().rev().take(500) {
+            if !entry.tag.is_empty() {
+                candidates.push(format!("tag:{}", quote(&entry.tag)));
+            }
+            if !entry.package.is_empty() {
+                candidates.push(format!("package:{}", quote(&entry.package)));
+            }
+            if !entry.process.is_empty() {
+                candidates.push(format!("process:{}", quote(&entry.process)));
+            }
+        }
+        for process in &self.processes {
+            candidates.push(format!("process:{}", quote(&process.name)));
+            if !process.package.is_empty() {
+                candidates.push(format!("package:{}", quote(&process.package)));
+            }
+        }
+        let (range, completions) = complete_query(&text, cursor, candidates);
+        self.completion_range = range;
+        self.completions = completions;
+        self.completion_index = 0;
+        cx.notify();
+    }
+
+    fn move_completion(&mut self, previous: bool, cx: &mut Context<Self>) {
+        let count = self.completions.len();
+        if count > 0 {
+            self.completion_index = if previous {
+                (self.completion_index + count - 1) % count
+            } else {
+                (self.completion_index + 1) % count
+            };
+            cx.notify();
+        }
+    }
+
+    fn accept_completion(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(completion) = self.completions.get(self.completion_index).cloned() else {
+            return;
+        };
+        let Some(editor) = input_editor(&self.filter_input, cx) else {
+            return;
+        };
+        let text = self.filter_input.read(cx).text(cx);
+        if query_token(
+            &text,
+            input_cursor(&self.filter_input, cx).unwrap_or(text.len()),
+        ) != self.completion_range
+        {
+            self.update_completions(window, cx);
+            return;
+        }
+        self.suppress_completion = true;
+        let range = self.completion_range.clone();
+        let cursor = range.start + completion.len();
+        editor.update(cx, |editor, cx| {
+            editor.edit(
+                [(
+                    MultiBufferOffset(range.start)..MultiBufferOffset(range.end),
+                    completion,
+                )],
+                cx,
+            );
+            editor.change_selections(SelectionEffects::no_scroll(), window, cx, |selections| {
+                selections.select_ranges([MultiBufferOffset(cursor)..MultiBufferOffset(cursor)])
+            });
+        });
+        self.completions.clear();
+        cx.notify();
+    }
+
+    fn show_find(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.search_visible = true;
+        self.update_search(cx);
+        self.completions.clear();
+        window.focus(&self.search_input.focus_handle(cx), cx);
+        cx.notify();
+    }
+
+    fn close_find(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.search_visible = false;
+        self.search = None;
+        self.search_error = None;
+        self.search_matches.clear();
+        self.search_position = None;
+        self.list_state
+            .splice(0..self.visible.len(), self.visible.len());
+        window.focus(&self.focus_handle, cx);
+        cx.notify();
+    }
+
+    fn toggle_wrap(&mut self, cx: &mut Context<Self>) {
+        self.preferences.wrap = !self.preferences.wrap;
+        self.horizontal_scroll.set_offset(point(px(0.), px(0.)));
+        self.list_state.reset(self.visible.len());
+        self.persist(cx);
+        cx.notify();
+    }
+
+    fn content_width(&mut self, window: &Window, cx: &App) -> Pixels {
+        let font_size = window.rem_size() * 0.875;
+        let font = gpui::Font {
+            family: ThemeSettings::get_global(cx).buffer_font.family.clone(),
+            ..Default::default()
+        };
+        let measured_font = (font.family.clone(), font_size);
+        if self.measured_font.as_ref() != Some(&measured_font) {
+            self.measured_widths.clear();
+            self.measured_font = Some(measured_font);
+        }
+        let mut width = self.horizontal_scroll.bounds().size.width;
+        for entry in &self.visible {
+            let entry_width = self.measured_widths.entry(entry.id).or_insert_with(|| {
+                let display = display_line(entry, self.preferences.compact, false);
+                display
+                    .text
+                    .lines()
+                    .map(|line| {
+                        window
+                            .text_system()
+                            .shape_line(
+                                line.to_string().into(),
+                                font_size,
+                                &[TextRun {
+                                    len: line.len(),
+                                    font: font.clone(),
+                                    color: Hsla::default(),
+                                    ..Default::default()
+                                }],
+                                None,
+                            )
+                            .width
+                    })
+                    .fold(px(0.), Pixels::max)
+                    + px(40.)
+            });
+            width = width.max(*entry_width);
+        }
+        width
+    }
+
     fn ensure_trusted(&self, cx: &App) -> Result<()> {
         let project = self.project.read(cx);
         ensure!(project.is_local(), "Logcat supports local projects only");
@@ -296,7 +541,7 @@ impl LogcatView {
         Ok(())
     }
 
-    fn watch_devices(&mut self, cx: &mut Context<Self>) {
+    pub(super) fn watch_devices(&mut self, cx: &mut Context<Self>) {
         if let Err(error) = self.ensure_trusted(cx) {
             self.error = Some(error.to_string());
             cx.notify();
@@ -305,20 +550,18 @@ impl LogcatView {
         let executor = cx.background_executor().clone();
         let root = self.root.clone();
         self.device_task = Some(cx.spawn(async move |view, cx| {
-            loop {
-                let Some((previous, serial, targets, file)) = view
-                    .update(cx, |view, _| {
-                        (
-                            view.devices.clone(),
-                            view.preferences.serial.clone(),
-                            view.targets.clone(),
-                            view.file.is_some(),
-                        )
-                    })
-                    .log_err()
-                else {
-                    break;
-                };
+            while let Some((previous, serial, targets, file)) = view
+                .update(cx, |view, cx| {
+                    let targets = view.current_targets(cx);
+                    (
+                        view.devices.clone(),
+                        view.preferences.serial.clone(),
+                        targets,
+                        view.file.is_some(),
+                    )
+                })
+                .log_err()
+            {
                 let result = cx
                     .background_spawn({
                         let executor = executor.clone();
@@ -486,8 +729,6 @@ impl LogcatView {
         self.processes.clear();
         self.cursor = None;
         self.paused = None;
-        self.selected_package = None;
-        self.selected_process = None;
         self.clear(cx);
         self.persist(cx);
         self.watch_devices(cx);
@@ -661,21 +902,7 @@ impl LogcatView {
             None => Box::new(self.buffer.entries.iter()),
         };
         let visible = entries
-            .filter(|entry| {
-                entry.level >= self.minimum_level
-                    && self.selected_package.as_ref().is_none_or(|package| {
-                        if package == "mine" {
-                            self.project_packages.contains(&entry.package)
-                        } else {
-                            package == &entry.package
-                        }
-                    })
-                    && self
-                        .selected_process
-                        .as_ref()
-                        .is_none_or(|process| process == &entry.process)
-                    && self.query.matches(entry, &context)
-            })
+            .filter(|entry| self.query.matches(entry, &context))
             .cloned()
             .collect::<Vec<_>>();
         let old_ids: Vec<_> = self.visible.iter().map(|entry| entry.id).collect();
@@ -697,6 +924,8 @@ impl LogcatView {
             }
             self.visible = visible;
             let retained_ids: HashSet<_> = new_ids.into_iter().collect();
+            self.measured_widths
+                .retain(|id, _| retained_ids.contains(id));
             self.selected.retain(|id| retained_ids.contains(id));
             self.selection_anchor = self.selection_anchor.filter(|id| retained_ids.contains(id));
             self.update_search(cx);
@@ -705,6 +934,9 @@ impl LogcatView {
     }
 
     fn update_search(&mut self, cx: &mut Context<Self>) {
+        if !self.search_visible {
+            return;
+        }
         let text = self.search_input.read(cx).text(cx);
         match logcat::Search::new(&text, self.search_case, self.search_regex) {
             Ok(search) => {
@@ -883,8 +1115,6 @@ impl LogcatView {
                         view.paused = None;
                         view.buffer.clear();
                         view.selected.clear();
-                        view.selected_package = None;
-                        view.selected_process = None;
                         for entry in entries {
                             view.buffer.push(entry);
                         }
@@ -962,11 +1192,17 @@ impl LogcatView {
                         .unwrap_or_else(|| "Select device…".into())
                 })
         };
+        let tooltip = label.clone();
         let view = cx.weak_entity();
         PopoverMenu::new("logcat-device")
             .trigger(
                 Button::new("logcat-device-trigger", label)
+                    .full_width()
+                    .truncate(true)
+                    .tooltip(Tooltip::text(tooltip))
                     .tab_index(0isize)
+                    .style(ButtonStyle::Outlined)
+                    .start_icon(Icon::new(IconName::Screen))
                     .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall)),
             )
             .menu(move |window, cx| {
@@ -1004,243 +1240,10 @@ impl LogcatView {
             })
     }
 
-    fn app_picker(&self, cx: &Context<Self>) -> impl IntoElement {
-        let label = match self.selected_package.as_deref() {
-            Some("mine") => "Project applications",
-            Some(package) => package,
-            None => "All applications",
-        };
-        let view = cx.weak_entity();
-        PopoverMenu::new("logcat-app")
-            .trigger(
-                Button::new("logcat-app-trigger", label.to_string())
-                    .tab_index(0isize)
-                    .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall)),
-            )
-            .menu(move |window, cx| {
-                let view = view.clone();
-                let packages = view
-                    .read_with(cx, |view, _| {
-                        let mut packages = view
-                            .processes
-                            .iter()
-                            .map(|process| process.package.clone())
-                            .chain(
-                                view.buffer
-                                    .entries
-                                    .iter()
-                                    .map(|entry| entry.package.clone()),
-                            )
-                            .filter(|package| !package.is_empty())
-                            .collect::<Vec<_>>();
-                        packages.sort();
-                        packages.dedup();
-                        packages
-                    })
-                    .log_err()?;
-                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                    for (label, package) in [
-                        ("All applications".to_string(), None),
-                        ("Project applications".into(), Some("mine".into())),
-                    ]
-                    .into_iter()
-                    .chain(
-                        packages
-                            .into_iter()
-                            .map(|package| (package.clone(), Some(package))),
-                    ) {
-                        let view = view.clone();
-                        menu = menu.entry(label, None, move |_, cx| {
-                            view.update(cx, |view, cx| {
-                                view.selected_package = package.clone();
-                                view.selected_process = None;
-                                view.rebuild(cx);
-                            })
-                            .log_err();
-                        });
-                    }
-                    menu
-                }))
-            })
-    }
-
-    fn process_picker(&self, cx: &Context<Self>) -> impl IntoElement {
-        let view = cx.weak_entity();
-        PopoverMenu::new("logcat-process")
-            .trigger(
-                Button::new(
-                    "logcat-process-trigger",
-                    self.selected_process
-                        .clone()
-                        .unwrap_or_else(|| "All processes".into()),
-                )
-                .tab_index(0isize)
-                .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall)),
-            )
-            .menu(move |window, cx| {
-                let view = view.clone();
-                let processes = view
-                    .read_with(cx, |view, _| {
-                        view.processes
-                            .iter()
-                            .filter(|process| {
-                                view.selected_package.as_ref().is_none_or(|package| {
-                                    if package == "mine" {
-                                        view.project_packages.contains(&process.package)
-                                    } else {
-                                        package == &process.package
-                                    }
-                                })
-                            })
-                            .cloned()
-                            .collect::<Vec<_>>()
-                    })
-                    .log_err()?;
-                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                    let all = view.clone();
-                    menu = menu.entry("All processes", None, move |_, cx| {
-                        all.update(cx, |view, cx| {
-                            view.selected_process = None;
-                            view.rebuild(cx);
-                        })
-                        .log_err();
-                    });
-                    for process in processes {
-                        let view = view.clone();
-                        menu = menu.entry(
-                            format!("{} ({})", process.name, process.pid),
-                            None,
-                            move |_, cx| {
-                                view.update(cx, |view, cx| {
-                                    view.selected_process = Some(process.name.clone());
-                                    view.rebuild(cx);
-                                })
-                                .log_err();
-                            },
-                        );
-                    }
-                    menu
-                }))
-            })
-    }
-
-    fn level_picker(&self, cx: &Context<Self>) -> impl IntoElement {
-        let view = cx.weak_entity();
-        PopoverMenu::new("logcat-level")
-            .trigger(
-                Button::new(
-                    "logcat-level-trigger",
-                    format!("{} and above", self.minimum_level.letter()),
-                )
-                .tab_index(0isize)
-                .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall)),
-            )
-            .menu(move |window, cx| {
-                let view = view.clone();
-                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                    for level in Level::ALL {
-                        let view = view.clone();
-                        menu = menu.entry(format!("{level:?} and above"), None, move |_, cx| {
-                            view.update(cx, |view, cx| {
-                                view.minimum_level = level;
-                                view.rebuild(cx);
-                            })
-                            .log_err();
-                        });
-                    }
-                    menu
-                }))
-            })
-    }
-
-    fn suggestions(&self, cx: &Context<Self>) -> impl IntoElement {
-        let view = cx.weak_entity();
-        PopoverMenu::new("logcat-suggestions")
-            .trigger(Button::new("logcat-suggestions-trigger", "Suggestions").tab_index(0isize))
-            .menu(move |window, cx| {
-                let view = view.clone();
-                let (prefix, candidates) = view
-                    .read_with(cx, |view, _| {
-                        let text = &view.preferences.filter;
-                        let (prefix, token) = text
-                            .rsplit_once(char::is_whitespace)
-                            .map(|(prefix, token)| (format!("{prefix} "), token))
-                            .unwrap_or_else(|| (String::new(), text.as_str()));
-                        let mut candidates = [
-                            "package:mine",
-                            "level:VERBOSE",
-                            "level:DEBUG",
-                            "level:INFO",
-                            "level:WARN",
-                            "level:ERROR",
-                            "level:ASSERT",
-                            "is:crash",
-                            "is:stacktrace",
-                            "is:firebase",
-                            "age:30s",
-                            "age:5m",
-                            "message:",
-                            "message~:",
-                            "tag:",
-                            "package:",
-                            "process:",
-                            "line:",
-                            "name:",
-                        ]
-                        .map(String::from)
-                        .to_vec();
-                        let mut tags = HashSet::new();
-                        for entry in view.buffer.entries.iter().rev() {
-                            if tags.len() >= 100 {
-                                break;
-                            }
-                            tags.insert(entry.tag.clone());
-                        }
-                        candidates
-                            .extend(tags.into_iter().map(|tag| format!("tag:{}", quote(&tag))));
-                        candidates.extend(
-                            view.processes
-                                .iter()
-                                .map(|process| format!("process:{}", quote(&process.name))),
-                        );
-                        candidates.extend(
-                            view.processes
-                                .iter()
-                                .filter(|process| !process.package.is_empty())
-                                .map(|process| format!("package:{}", quote(&process.package))),
-                        );
-                        candidates.sort();
-                        candidates.dedup();
-                        let candidates = candidates
-                            .into_iter()
-                            .filter(|candidate| {
-                                candidate.to_lowercase().starts_with(&token.to_lowercase())
-                            })
-                            .take(50)
-                            .collect::<Vec<_>>();
-                        (prefix, candidates)
-                    })
-                    .log_err()?;
-                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                    for candidate in candidates {
-                        let view = view.clone();
-                        let filter = format!("{prefix}{candidate}");
-                        menu = menu.entry(candidate, None, move |window, cx| {
-                            view.update(cx, |view, cx| {
-                                set_input_text(&view.filter_input, &filter, window, cx);
-                            })
-                            .log_err();
-                        });
-                    }
-                    menu
-                }))
-            })
-    }
-
     fn options_menu(&self, cx: &Context<Self>) -> impl IntoElement {
         let view = cx.weak_entity();
         PopoverMenu::new("logcat-options")
-            .trigger(Button::new("logcat-options-trigger", "Options").tab_index(0isize))
+            .trigger(IconButton::new("logcat-options-trigger", IconName::Ellipsis).tooltip(Tooltip::text("Logcat options")).tab_index(0isize))
             .menu(move |window, cx| {
                 let view = view.clone();
                 let saved = view
@@ -1305,6 +1308,16 @@ impl LogcatView {
                             .log_err();
                         });
                     }
+                    let compact = view.clone();
+                    menu = menu.entry("Toggle compact metadata", None, move |_, cx| {
+                        compact.update(cx, |view, cx| {
+                            view.preferences.compact = !view.preferences.compact;
+                            view.measured_widths.clear();
+                            view.list_state.reset(view.visible.len());
+                            view.persist(cx);
+                            cx.notify();
+                        }).log_err();
+                    });
                     let clear_filters = view.clone();
                     menu = menu.entry("Remove saved filters", None, move |_, cx| {
                         clear_filters
@@ -1346,13 +1359,10 @@ impl LogcatView {
                                     .log_err();
                             });
                     let terminate = view.clone();
-                    menu = menu.entry("Terminate selected application", None, move |_, cx| {
+                    menu = menu.entry("Terminate current application", None, move |_, cx| {
                         terminate
                             .update(cx, |view, cx| {
-                                if let Some(package) = view
-                                    .selected_package
-                                    .clone()
-                                    .filter(|package| package != "mine")
+                                if let Some(package) = view.project_packages.first().cloned()
                                 {
                                     view.device_command(
                                         vec![
@@ -1365,7 +1375,7 @@ impl LogcatView {
                                     );
                                 } else {
                                     view.error =
-                                        Some("Select a specific application to terminate".into());
+                                        Some("Select an Android application in the project tools before terminating it".into());
                                     cx.notify();
                                 }
                             })
@@ -1376,42 +1386,12 @@ impl LogcatView {
                         split
                             .update(cx, |view, cx| {
                                 let workspace = view.workspace.clone();
-                                let root = view.root.clone();
-                                let serial = view.preferences.serial.clone();
-                                let targets = view.targets.clone();
-                                let project = view.project.clone();
                                 window.defer(cx, move |window, cx| {
-                                    workspace
-                                        .update(cx, |workspace, cx| {
-                                            let new_view = cx.new(|cx| {
-                                                LogcatView::new(
-                                                    workspace.weak_handle(),
-                                                    project,
-                                                    root,
-                                                    serial,
-                                                    targets,
-                                                    window,
-                                                    cx,
-                                                )
-                                            });
-                                            new_view.update(cx, |view, cx| view.watch_devices(cx));
-                                            let pane = workspace.split_pane(
-                                                workspace.active_pane().clone(),
-                                                SplitDirection::Right,
-                                                window,
-                                                cx,
-                                            );
-                                            workspace.add_item(
-                                                pane,
-                                                Box::new(new_view),
-                                                None,
-                                                true,
-                                                true,
-                                                window,
-                                                cx,
-                                            );
-                                        })
-                                        .log_err();
+                                    workspace.update(cx, |workspace, cx| {
+                                        if let Some(panel) = workspace.panel::<LogcatPanel>(cx) {
+                                            panel.update(cx, |panel, cx| panel.new_view(Some(SplitDirection::Right), window, cx));
+                                        }
+                                    }).log_err();
                                 });
                             })
                             .log_err();
@@ -1439,27 +1419,40 @@ impl LogcatView {
             Level::Warn => cx.theme().status().warning,
             Level::Info => cx.theme().status().success,
             Level::Verbose => cx.theme().colors().text_muted,
-            Level::Debug => cx.theme().colors().text,
+            Level::Debug => cx.theme().colors().text_accent,
         };
-        let message_text = if self.preferences.fold_stacktraces
-            && entry.is_stacktrace()
-            && !self.selected.contains(&entry.id)
-        {
-            format!(
-                "{} … {} lines (select to expand)",
-                entry.message.lines().next().unwrap_or_default(),
-                entry.message.lines().count()
-            )
-        } else {
-            entry.message.clone()
-        };
-        let highlights = self
-            .search
-            .as_ref()
-            .map(|search| search.ranges(&message_text))
-            .unwrap_or_default()
-            .into_iter()
-            .map(|range| {
+        let selected = self.selected.contains(&entry.id);
+        let display = display_line(
+            &entry,
+            self.preferences.compact,
+            self.preferences.fold_stacktraces && !selected,
+        );
+        let mut highlights = vec![
+            (
+                0..display.metadata_end,
+                gpui::HighlightStyle {
+                    color: Some(cx.theme().colors().text_muted),
+                    ..Default::default()
+                },
+            ),
+            (
+                display.tag,
+                gpui::HighlightStyle {
+                    color: Some(cx.theme().status().modified),
+                    ..Default::default()
+                },
+            ),
+            (
+                display.level,
+                gpui::HighlightStyle {
+                    color: Some(cx.theme().colors().editor_background),
+                    background_color: Some(color),
+                    ..Default::default()
+                },
+            ),
+        ];
+        if let Some(search) = &self.search {
+            highlights.extend(search.ranges(&display.text).into_iter().map(|range| {
                 (
                     range,
                     gpui::HighlightStyle {
@@ -1467,24 +1460,73 @@ impl LogcatView {
                         ..Default::default()
                     },
                 )
-            })
-            .collect::<Vec<_>>();
-        let selected = self.selected.contains(&entry.id);
-        let search_match = self.search_matches.binary_search(&index).is_ok();
-        let compact = self.preferences.compact;
+            }));
+        }
+        let highlights = gpui::combine_highlights(highlights, []).collect::<Vec<_>>();
         let id = entry.id;
         let view = cx.weak_entity();
+        let menu = PopoverMenu::new(("logcat-row-menu", id))
+            .trigger(
+                IconButton::new(("logcat-row-actions", id), IconName::Ellipsis)
+                    .icon_size(IconSize::XSmall)
+                    .tooltip(Tooltip::text("Message actions")),
+            )
+            .menu(move |window, cx| {
+                let view = view.clone();
+                let entry = entry.clone();
+                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
+                    let message = entry.message.clone();
+                    menu = menu.entry("Copy message", None, move |_, cx| {
+                        cx.write_to_clipboard(ClipboardItem::new_string(message.clone()))
+                    });
+                    let line = entry.line();
+                    menu = menu.entry("Copy message with metadata", None, move |_, cx| {
+                        cx.write_to_clipboard(ClipboardItem::new_string(line.clone()))
+                    });
+                    for (label, term) in [
+                        ("Show this tag", format!("tag=:{}", quote(&entry.tag))),
+                        ("Ignore this tag", format!("-tag=:{}", quote(&entry.tag))),
+                        (
+                            "Show this application",
+                            format!("package=:{}", quote(&entry.package)),
+                        ),
+                        (
+                            "Ignore this application",
+                            format!("-package=:{}", quote(&entry.package)),
+                        ),
+                    ] {
+                        if term.contains(":\"\"") {
+                            continue;
+                        }
+                        let view = view.clone();
+                        menu = menu.entry(label, None, move |window, cx| {
+                            view.update(cx, |view, cx| {
+                                let filter = if term.starts_with('-')
+                                    && !view.preferences.filter.is_empty()
+                                {
+                                    format!("({}) & {term}", view.preferences.filter)
+                                } else {
+                                    term.clone()
+                                };
+                                set_input_text(&view.filter_input, &filter, window, cx);
+                            })
+                            .log_err();
+                        });
+                    }
+                    menu
+                }))
+            });
         v_flex()
             .id(("logcat-entry", id))
             .w_full()
             .px_2()
-            .py_1()
             .text_sm()
             .font_family(ThemeSettings::get_global(cx).buffer_font.family.clone())
             .when(selected, |row| row.bg(cx.theme().colors().element_selected))
-            .when(search_match && !selected, |row| {
-                row.bg(cx.theme().colors().element_hover)
-            })
+            .when(
+                self.search_matches.binary_search(&index).is_ok() && !selected,
+                |row| row.bg(cx.theme().colors().element_hover),
+            )
             .on_click(
                 cx.listener(move |view, event: &gpui::ClickEvent, window, cx| {
                     window.focus(&view.focus_handle, cx);
@@ -1517,98 +1559,17 @@ impl LogcatView {
             )
             .child(
                 h_flex()
-                    .gap_2()
-                    .when(!compact, |row| {
-                        row.child(Label::new(entry.timestamp()).color(Color::Muted))
-                    })
-                    .child(div().text_color(color).child(entry.level.letter()))
-                    .when(!compact, |row| {
-                        row.child(
-                            Label::new(format!("{}:{}", entry.pid, entry.tid)).color(Color::Muted),
-                        )
-                        .when_some(entry.uid, |row, uid| {
-                            row.child(Label::new(format!("uid:{uid}")).color(Color::Muted))
-                        })
-                        .child(
-                            Label::new(entry.package.clone())
-                                .buffer_font(cx)
-                                .color(Color::Muted),
-                        )
-                        .child(
-                            Label::new(entry.process.clone())
-                                .buffer_font(cx)
-                                .color(Color::Muted),
-                        )
-                    })
-                    .child(Label::new(entry.tag.clone()).color(Color::Custom(color)))
+                    .items_start()
+                    .gap_1()
                     .child(
-                        PopoverMenu::new(("logcat-row-menu", id))
-                            .trigger(Button::new(("logcat-row-actions", id), "…").tab_index(0isize))
-                            .menu(move |window, cx| {
-                                let view = view.clone();
-                                let entry = entry.clone();
-                                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                                    let copy = view.clone();
-                                    let message = entry.message.clone();
-                                    menu = menu.entry("Copy message", None, move |_, cx| {
-                                        copy.update(cx, |_, cx| {
-                                            cx.write_to_clipboard(ClipboardItem::new_string(
-                                                message.clone(),
-                                            ))
-                                        })
-                                        .log_err();
-                                    });
-                                    for (label, term) in [
-                                        ("Show this tag", format!("tag=:{}", quote(&entry.tag))),
-                                        ("Ignore this tag", format!("-tag=:{}", quote(&entry.tag))),
-                                        (
-                                            "Show this application",
-                                            format!("package=:{}", quote(&entry.package)),
-                                        ),
-                                        (
-                                            "Ignore this application",
-                                            format!("-package=:{}", quote(&entry.package)),
-                                        ),
-                                    ] {
-                                        if term.contains(":\"\"") {
-                                            continue;
-                                        }
-                                        let view = view.clone();
-                                        menu = menu.entry(label, None, move |window, cx| {
-                                            view.update(cx, |view, cx| {
-                                                let filter = if term.starts_with('-')
-                                                    && !view.preferences.filter.is_empty()
-                                                {
-                                                    format!(
-                                                        "({}) & {term}",
-                                                        view.preferences.filter
-                                                    )
-                                                } else {
-                                                    term.clone()
-                                                };
-                                                set_input_text(
-                                                    &view.filter_input,
-                                                    &filter,
-                                                    window,
-                                                    cx,
-                                                );
-                                            })
-                                            .log_err();
-                                        });
-                                    }
-                                    menu
-                                }))
-                            }),
-                    ),
-            )
-            .child(
-                div()
-                    .id(("logcat-message", id))
-                    .text_color(color)
-                    .when(!self.preferences.wrap, |text| {
-                        text.whitespace_nowrap().overflow_x_scroll()
-                    })
-                    .child(gpui::StyledText::new(message_text).with_highlights(highlights)),
+                        div()
+                            .flex_1()
+                            .min_w_0()
+                            .text_color(color)
+                            .when(!self.preferences.wrap, |text| text.whitespace_nowrap())
+                            .child(gpui::StyledText::new(display.text).with_highlights(highlights)),
+                    )
+                    .child(menu),
             )
             .when(selected && self.selected.len() == 1, |row| {
                 row.children(self.source_buttons(index, cx))
@@ -1705,7 +1666,7 @@ impl Item for LogcatView {
         "Logcat".into()
     }
     fn tab_icon(&self, _: &Window, _: &App) -> Option<Icon> {
-        Some(Icon::new(IconName::Terminal))
+        Some(Icon::new(IconName::Logcat))
     }
     fn show_toolbar(&self) -> bool {
         false
@@ -1717,7 +1678,194 @@ impl Item for LogcatView {
 
 impl Render for LogcatView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let paused = self.paused.is_some();
+        let mut filter_context = KeyContext::new_with_defaults();
+        filter_context.add("AndroidLogcatFilter");
+        if !self.completions.is_empty() {
+            filter_context.add("showing_suggestions");
+        }
+        let suggestions = (!self.completions.is_empty()).then(|| {
+            let mut menu = v_flex()
+                .id("logcat-filter-suggestions")
+                .w(px(360.))
+                .p_1()
+                .rounded_md()
+                .occlude()
+                .border_1()
+                .border_color(cx.theme().colors().border)
+                .bg(cx.theme().colors().elevated_surface_background)
+                .shadow_lg();
+            for (index, completion) in self.completions.iter().enumerate() {
+                menu = menu.child(
+                    Button::new(("logcat-completion", index), completion.clone())
+                        .full_width()
+                        .toggle_state(index == self.completion_index)
+                        .on_click(cx.listener(move |view, _, window, cx| {
+                            view.completion_index = index;
+                            view.accept_completion(window, cx);
+                        })),
+                );
+            }
+            deferred(
+                gpui::anchored()
+                    .offset(point(px(0.), px(34.)))
+                    .snap_to_window_with_margin(px(8.))
+                    .child(menu),
+            )
+            .with_priority(1)
+        });
+        let filter = h_flex()
+            .id("logcat-filter-bar")
+            .relative()
+            .key_context(filter_context)
+            .flex_1()
+            .min_w_0()
+            .gap_1()
+            .on_action(
+                cx.listener(|view, _: &NextSuggestion, _, cx| view.move_completion(false, cx)),
+            )
+            .on_action(
+                cx.listener(|view, _: &PreviousSuggestion, _, cx| view.move_completion(true, cx)),
+            )
+            .on_action(cx.listener(|view, _: &AcceptSuggestion, window, cx| {
+                view.accept_completion(window, cx)
+            }))
+            .on_action(cx.listener(|view, _: &DismissSuggestions, _, cx| {
+                view.completions.clear();
+                cx.notify();
+            }))
+            .child(div().flex_1().min_w_0().child(self.filter_input.clone()))
+            .child(
+                IconButton::new("logcat-clear-filter", IconName::Close)
+                    .tooltip(Tooltip::text("Clear filter"))
+                    .on_click(cx.listener(|view, _, window, cx| {
+                        set_input_text(&view.filter_input, "", window, cx)
+                    })),
+            )
+            .child(
+                IconButton::new("logcat-case", IconName::CaseSensitive)
+                    .toggle_state(self.preferences.match_case)
+                    .tooltip(Tooltip::text("Match case in filters"))
+                    .on_click(cx.listener(|view, _, _, cx| {
+                        view.preferences.match_case = !view.preferences.match_case;
+                        view.update_filter(cx);
+                    })),
+            )
+            .children(suggestions);
+        let actions = v_flex()
+            .id("logcat-actions")
+            .h_full()
+            .overflow_y_scroll()
+            .flex_none()
+            .items_center()
+            .gap_1()
+            .p_1()
+            .border_r_1()
+            .border_color(cx.theme().colors().border)
+            .role(gpui::Role::Toolbar)
+            .aria_label("Logcat actions")
+            .child(
+                IconButton::new("logcat-clear", IconName::Trash)
+                    .tooltip(Tooltip::text("Clear view"))
+                    .on_click(cx.listener(|view, _, _, cx| view.clear(cx))),
+            )
+            .child(
+                IconButton::new(
+                    "logcat-pause",
+                    if self.paused.is_some() {
+                        IconName::PlayOutlined
+                    } else {
+                        IconName::DebugPause
+                    },
+                )
+                .toggle_state(self.paused.is_some())
+                .tooltip(Tooltip::text(if self.paused.is_some() {
+                    "Resume Logcat"
+                } else {
+                    "Pause Logcat"
+                }))
+                .on_click(cx.listener(|view, _, _, cx| view.pause(cx))),
+            )
+            .child(
+                IconButton::new("logcat-restart", IconName::RotateCw)
+                    .disabled(self.file.is_some() || !self.connected)
+                    .tooltip(Tooltip::text("Restart capture"))
+                    .on_click(cx.listener(|view, _, _, cx| view.start_capture(true, cx))),
+            )
+            .child(
+                IconButton::new("logcat-follow", IconName::ArrowDown)
+                    .toggle_state(self.list_state.is_following_tail())
+                    .tooltip(Tooltip::text("Scroll to end"))
+                    .on_click(cx.listener(|view, _, _, cx| {
+                        view.list_state.set_follow_mode(FollowMode::Tail);
+                        cx.notify();
+                    })),
+            )
+            .child(
+                IconButton::new("logcat-wrap", IconName::TextWrap)
+                    .toggle_state(self.preferences.wrap)
+                    .tooltip(Tooltip::text("Wrap long lines"))
+                    .on_click(cx.listener(|view, _, _, cx| view.toggle_wrap(cx))),
+            )
+            .child(
+                IconButton::new("logcat-find", IconName::ToolSearch)
+                    .tooltip(Tooltip::text("Find in Logcat"))
+                    .on_click(cx.listener(|view, _, window, cx| view.show_find(window, cx))),
+            )
+            .child(
+                IconButton::new("logcat-copy", IconName::Copy)
+                    .disabled(self.selected.is_empty())
+                    .tooltip(Tooltip::text("Copy selected messages"))
+                    .on_click(cx.listener(|view, _, _, cx| view.copy(false, cx))),
+            )
+            .child(
+                IconButton::new("logcat-export", IconName::Download)
+                    .disabled(self.control_task.is_some())
+                    .tooltip(Tooltip::text("Export logs"))
+                    .on_click(cx.listener(|view, _, window, cx| view.export(window, cx))),
+            )
+            .child(
+                IconButton::new("logcat-import", IconName::FolderOpen)
+                    .disabled(self.control_task.is_some())
+                    .tooltip(Tooltip::text("Open saved logs"))
+                    .on_click(cx.listener(|view, _, window, cx| view.import(window, cx))),
+            )
+            .child(self.options_menu(cx));
+        let width = if self.preferences.wrap {
+            px(0.)
+        } else {
+            self.content_width(window, cx)
+        };
+        let scroll = LogcatScrollHandle {
+            horizontal: self.horizontal_scroll.clone(),
+            vertical: self.list_state.clone(),
+        };
+        let content = div()
+            .id("logcat-scroll-view")
+            .size_full()
+            .overflow_x_scroll()
+            .restrict_scroll_to_axis()
+            .track_scroll(&self.horizontal_scroll)
+            .child(
+                list(self.list_state.clone(), cx.processor(Self::render_entry))
+                    .h_full()
+                    .when(self.preferences.wrap, |list| list.w_full())
+                    .when(!self.preferences.wrap, |list| list.w(width))
+                    .min_w_full(),
+            )
+            .custom_scrollbars(
+                Scrollbars::new(if self.preferences.wrap {
+                    ScrollAxes::Vertical
+                } else {
+                    ScrollAxes::Both
+                })
+                .tracked_scroll_handle(&scroll)
+                .with_stable_track_along(
+                    ScrollAxes::Horizontal,
+                    cx.theme().colors().editor_background,
+                ),
+                window,
+                cx,
+            );
         v_flex()
             .id("android-logcat")
             .key_context("AndroidLogcat")
@@ -1730,11 +1878,10 @@ impl Render for LogcatView {
             .on_action(cx.listener(|view, _: &Clear, _, cx| view.clear(cx)))
             .on_action(cx.listener(|view, _: &Restart, _, cx| view.start_capture(true, cx)))
             .on_action(cx.listener(|view, _: &FocusFilter, window, cx| {
-                window.focus(&view.filter_input.focus_handle(cx), cx)
+                window.focus(&view.filter_input.focus_handle(cx), cx);
+                view.update_completions(window, cx);
             }))
-            .on_action(cx.listener(|view, _: &Find, window, cx| {
-                window.focus(&view.search_input.focus_handle(cx), cx)
-            }))
+            .on_action(cx.listener(|view, _: &Find, window, cx| view.show_find(window, cx)))
             .on_action(cx.listener(|view, _: &FindNext, _, cx| view.find(false, cx)))
             .on_action(cx.listener(|view, _: &FindPrevious, _, cx| view.find(true, cx)))
             .on_action(cx.listener(|view, _: &Copy, _, cx| view.copy(false, cx)))
@@ -1748,29 +1895,17 @@ impl Render for LogcatView {
                 h_flex()
                     .p_2()
                     .gap_2()
-                    .flex_wrap()
-                    .child(self.device_picker(cx))
-                    .child(self.app_picker(cx))
-                    .child(self.process_picker(cx))
-                    .child(self.level_picker(cx)),
-            )
-            .child(
-                h_flex()
-                    .px_2()
-                    .gap_2()
-                    .child(div().flex_1().child(self.filter_input.clone()))
+                    .border_b_1()
+                    .border_color(cx.theme().colors().border)
                     .child(
-                        Button::new("logcat-case", "Aa")
-                            .toggle_state(self.preferences.match_case)
-                            .tab_index(0isize)
-                            .tooltip(Tooltip::text("Match case in filters"))
-                            .on_click(cx.listener(|view, _, _, cx| {
-                                view.preferences.match_case = !view.preferences.match_case;
-                                view.update_filter(cx);
-                            })),
+                        div()
+                            .w(gpui::relative(0.32))
+                            .min_w(px(160.))
+                            .max_w(px(480.))
+                            .flex_none()
+                            .child(self.device_picker(cx)),
                     )
-                    .child(self.suggestions(cx))
-                    .child(self.options_menu(cx)),
+                    .child(filter),
             )
             .when_some(self.filter_error.clone(), |view, error| {
                 view.child(
@@ -1781,169 +1916,125 @@ impl Render for LogcatView {
                         .child(format!("{error} · showing the last valid filter")),
                 )
             })
+            .when(self.search_visible, |view| {
+                view.child(
+                    h_flex()
+                        .key_context("AndroidLogcatSearch")
+                        .px_2()
+                        .pb_1()
+                        .gap_1()
+                        .on_action(cx.listener(|view, _: &CloseFind, window, cx| {
+                            view.close_find(window, cx)
+                        }))
+                        .child(div().flex_1().min_w_0().child(self.search_input.clone()))
+                        .child(
+                            IconButton::new("logcat-search-case", IconName::CaseSensitive)
+                                .toggle_state(self.search_case)
+                                .tooltip(Tooltip::text("Match case in Find"))
+                                .on_click(cx.listener(|view, _, _, cx| {
+                                    view.search_case = !view.search_case;
+                                    view.update_search(cx);
+                                })),
+                        )
+                        .child(
+                            IconButton::new("logcat-search-regex", IconName::Regex)
+                                .toggle_state(self.search_regex)
+                                .tooltip(Tooltip::text("Use regular expressions in Find"))
+                                .on_click(cx.listener(|view, _, _, cx| {
+                                    view.search_regex = !view.search_regex;
+                                    view.update_search(cx);
+                                })),
+                        )
+                        .child(
+                            Label::new(format!(
+                                "{}/{}",
+                                self.search_position
+                                    .map(|position| position + 1)
+                                    .unwrap_or(0),
+                                self.search_matches.len()
+                            ))
+                            .color(Color::Muted),
+                        )
+                        .child(
+                            IconButton::new("logcat-previous", IconName::ArrowUp)
+                                .disabled(self.search_matches.is_empty())
+                                .tooltip(Tooltip::text("Previous match"))
+                                .on_click(cx.listener(|view, _, _, cx| view.find(true, cx))),
+                        )
+                        .child(
+                            IconButton::new("logcat-next", IconName::ArrowDown)
+                                .disabled(self.search_matches.is_empty())
+                                .tooltip(Tooltip::text("Next match"))
+                                .on_click(cx.listener(|view, _, _, cx| view.find(false, cx))),
+                        )
+                        .child(
+                            IconButton::new("logcat-close-find", IconName::Close)
+                                .tooltip(Tooltip::text("Close Find"))
+                                .on_click(
+                                    cx.listener(|view, _, window, cx| view.close_find(window, cx)),
+                                ),
+                        ),
+                )
+            })
+            .when_some(
+                self.search_error.clone().filter(|_| self.search_visible),
+                |view, error| {
+                    view.child(
+                        div()
+                            .px_2()
+                            .text_sm()
+                            .text_color(cx.theme().status().error)
+                            .child(error),
+                    )
+                },
+            )
             .child(
                 h_flex()
-                    .p_2()
-                    .gap_2()
-                    .flex_wrap()
+                    .flex_1()
+                    .min_h_0()
+                    .items_start()
+                    .child(actions)
                     .child(
-                        Button::new("logcat-pause", if paused { "Resume" } else { "Pause" })
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, _, cx| view.pause(cx))),
-                    )
-                    .child(
-                        Button::new("logcat-clear", "Clear view")
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, _, cx| view.clear(cx))),
-                    )
-                    .child(
-                        Button::new("logcat-restart", "Restart")
-                            .disabled(self.file.is_some() || !self.connected)
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, _, cx| view.start_capture(true, cx))),
-                    )
-                    .child(
-                        Button::new("logcat-follow", "Scroll to end")
-                            .toggle_state(self.list_state.is_following_tail())
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, _, cx| {
-                                view.list_state.set_follow_mode(FollowMode::Tail);
-                                cx.notify();
-                            })),
-                    )
-                    .child(
-                        Button::new("logcat-wrap", "Wrap")
-                            .toggle_state(self.preferences.wrap)
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, _, cx| {
-                                view.preferences.wrap = !view.preferences.wrap;
-                                view.list_state.reset(view.visible.len());
-                                view.persist(cx);
-                                cx.notify();
-                            })),
-                    )
-                    .child(
-                        Button::new("logcat-format", "Compact")
-                            .toggle_state(self.preferences.compact)
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, _, cx| {
-                                view.preferences.compact = !view.preferences.compact;
-                                view.list_state.reset(view.visible.len());
-                                view.persist(cx);
-                                cx.notify();
-                            })),
-                    )
-                    .child(
-                        Button::new("logcat-copy", "Copy selected")
-                            .disabled(self.selected.is_empty())
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, _, cx| view.copy(false, cx))),
-                    )
-                    .child(
-                        Button::new("logcat-export", "Export…")
-                            .disabled(self.control_task.is_some())
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, window, cx| view.export(window, cx))),
-                    )
-                    .child(
-                        Button::new("logcat-import", "Open logs…")
-                            .disabled(self.control_task.is_some())
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, window, cx| view.import(window, cx))),
+                        div()
+                            .relative()
+                            .flex_1()
+                            .min_w_0()
+                            .h_full()
+                            .child(content)
+                            .when(self.visible.is_empty(), |view| {
+                                view.child(
+                                    div()
+                                        .absolute()
+                                        .inset_0()
+                                        .flex()
+                                        .items_center()
+                                        .justify_center()
+                                        .child(
+                                            Label::new(if self.buffer.entries.is_empty() {
+                                                "Waiting for logs…"
+                                            } else {
+                                                "No messages match the filter"
+                                            })
+                                            .color(Color::Muted),
+                                        ),
+                                )
+                            }),
                     ),
             )
             .child(
                 h_flex()
                     .px_2()
-                    .pb_2()
-                    .gap_2()
-                    .child(div().flex_1().child(self.search_input.clone()))
-                    .child(
-                        Button::new("logcat-search-case", "Aa")
-                            .toggle_state(self.search_case)
-                            .tab_index(0isize)
-                            .tooltip(Tooltip::text("Match case in search"))
-                            .on_click(cx.listener(|view, _, _, cx| {
-                                view.search_case = !view.search_case;
-                                view.update_search(cx);
-                            })),
-                    )
-                    .child(
-                        Button::new("logcat-search-regex", ".*")
-                            .toggle_state(self.search_regex)
-                            .tab_index(0isize)
-                            .tooltip(Tooltip::text("Use regular expressions in search"))
-                            .on_click(cx.listener(|view, _, _, cx| {
-                                view.search_regex = !view.search_regex;
-                                view.update_search(cx);
-                            })),
-                    )
-                    .child(
-                        Label::new(format!(
-                            "{}/{}",
-                            self.search_position
-                                .map(|position| position + 1)
-                                .unwrap_or(0),
-                            self.search_matches.len()
-                        ))
-                        .color(Color::Muted),
-                    )
-                    .child(
-                        Button::new("logcat-previous", "Previous")
-                            .disabled(self.search_matches.is_empty())
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, _, cx| view.find(true, cx))),
-                    )
-                    .child(
-                        Button::new("logcat-next", "Next")
-                            .disabled(self.search_matches.is_empty())
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, _, cx| view.find(false, cx))),
-                    ),
-            )
-            .when_some(self.search_error.clone(), |view, error| {
-                view.child(
-                    div()
-                        .px_2()
-                        .text_sm()
-                        .text_color(cx.theme().status().error)
-                        .child(error),
-                )
-            })
-            .child(
-                div()
-                    .flex_1()
-                    .min_h_0()
-                    .child(
-                        list(self.list_state.clone(), cx.processor(Self::render_entry)).size_full(),
-                    )
-                    .vertical_scrollbar_for(&self.list_state, window, cx)
-                    .when(self.visible.is_empty(), |view| {
-                        view.child(
-                            Label::new(if self.buffer.entries.is_empty() {
-                                "Waiting for logs…"
-                            } else {
-                                "No messages match the filters"
-                            })
-                            .color(Color::Muted),
-                        )
-                    }),
-            )
-            .child(
-                h_flex()
-                    .p_2()
                     .gap_2()
                     .border_t_1()
                     .border_color(cx.theme().colors().border)
                     .child(
                         Label::new(format!(
-                            "{} · {}{} messages · {} MiB · {} evicted · {}",
+                            "{} · {}{} messages · {} MiB · {} evicted",
                             self.status,
                             self.visible.len(),
-                            if paused { " frozen" } else { "" },
+                            if self.paused.is_some() { " frozen" } else { "" },
                             self.preferences.capacity / (1024 * 1024),
-                            self.buffer.dropped,
-                            self.buffers
+                            self.buffer.dropped
                         ))
                         .size(LabelSize::Small)
                         .color(Color::Muted),
@@ -1958,13 +2049,206 @@ impl Render for LogcatView {
                     view.child(
                         div()
                             .px_2()
-                            .pb_2()
+                            .pb_1()
                             .text_sm()
                             .text_color(cx.theme().status().error)
                             .child(error),
                     )
                 },
             )
+    }
+}
+
+impl Preferences {
+    fn migrate(&mut self) {
+        if self.version == 0 && self.filter.is_empty() {
+            self.filter = "package:mine".into();
+        }
+        self.version = 1;
+    }
+}
+
+fn input_editor(input: &Entity<InputField>, cx: &App) -> Option<Entity<Editor>> {
+    input
+        .read(cx)
+        .editor()
+        .as_any()
+        .downcast_ref::<Entity<Editor>>()
+        .cloned()
+}
+
+fn input_cursor(input: &Entity<InputField>, cx: &App) -> Option<usize> {
+    let editor = input_editor(input, cx)?;
+    let editor = editor.read(cx);
+    Some(
+        editor
+            .selections
+            .newest_anchor()
+            .head()
+            .to_offset(&editor.buffer().read(cx).snapshot(cx))
+            .0,
+    )
+}
+
+fn query_token(text: &str, cursor: usize) -> std::ops::Range<usize> {
+    let mut cursor = cursor.min(text.len());
+    while !text.is_char_boundary(cursor) {
+        cursor -= 1;
+    }
+    let mut start = 0;
+    let mut quoted = false;
+    let mut escaped = false;
+    for (index, character) in text.char_indices() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+        if character == '\\' {
+            escaped = true;
+            continue;
+        }
+        if character == '"' {
+            quoted = !quoted;
+        }
+        if !quoted && (character.is_whitespace() || matches!(character, '(' | ')' | '&' | '|')) {
+            if index >= cursor {
+                return start..index;
+            }
+            start = index + character.len_utf8();
+        }
+    }
+    start..text.len()
+}
+
+fn complete_query(
+    text: &str,
+    cursor: usize,
+    candidates: Vec<String>,
+) -> (std::ops::Range<usize>, Vec<String>) {
+    let range = query_token(text, cursor);
+    let token = text
+        .get(range.start..cursor.min(range.end))
+        .unwrap_or_default();
+    let (negative, token) = token
+        .strip_prefix('-')
+        .map(|token| ("-", token))
+        .unwrap_or(("", token));
+    let mut completions = candidates
+        .into_iter()
+        .filter_map(|candidate| {
+            let candidate = if let Some((field, value)) = token.split_once(':') {
+                let normalized_field = field.trim_end_matches(['=', '~']);
+                let (candidate_field, candidate_value) = candidate.split_once(':')?;
+                if candidate_field.trim_end_matches(['=', '~']) != normalized_field {
+                    return None;
+                }
+                let value = value.trim_start_matches('"').to_lowercase();
+                if !candidate_value
+                    .trim_start_matches('"')
+                    .to_lowercase()
+                    .starts_with(&value)
+                {
+                    return None;
+                }
+                format!("{field}:{candidate_value}")
+            } else {
+                if !candidate.to_lowercase().starts_with(&token.to_lowercase()) {
+                    return None;
+                }
+                candidate
+            };
+            let candidate = format!("{negative}{candidate}");
+            (text.get(range.clone()) != Some(candidate.as_str())).then_some(candidate)
+        })
+        .collect::<Vec<_>>();
+    completions.sort();
+    completions.dedup();
+    completions.truncate(12);
+    (range, completions)
+}
+
+struct DisplayLine {
+    text: String,
+    metadata_end: usize,
+    tag: std::ops::Range<usize>,
+    level: std::ops::Range<usize>,
+}
+
+fn display_line(entry: &Entry, compact: bool, fold: bool) -> DisplayLine {
+    let mut text = if compact {
+        String::new()
+    } else {
+        format!("{} {:5}-{:5}  ", entry.timestamp(), entry.pid, entry.tid)
+    };
+    let tag_start = text.len();
+    text.push_str(&entry.tag);
+    let tag = tag_start..text.len();
+    text.push_str("  ");
+    if !compact {
+        text.push_str(&entry.package);
+        if !entry.process.is_empty() && entry.process != entry.package {
+            text.push_str("  ");
+            text.push_str(&entry.process);
+        }
+        if let Some(uid) = entry.uid {
+            text.push_str(&format!("  uid:{uid}"));
+        }
+        text.push_str("  ");
+    }
+    let level_start = text.len();
+    text.push_str(entry.level.letter());
+    let level = level_start..text.len();
+    text.push_str("  ");
+    let metadata_end = text.len();
+    if fold && entry.is_stacktrace() {
+        text.push_str(&format!(
+            "{} … {} lines (select to expand)",
+            entry.message.lines().next().unwrap_or_default(),
+            entry.message.lines().count()
+        ));
+    } else {
+        text.push_str(&entry.message);
+    }
+    DisplayLine {
+        text,
+        metadata_end,
+        tag,
+        level,
+    }
+}
+
+#[derive(Clone)]
+struct LogcatScrollHandle {
+    horizontal: ScrollHandle,
+    vertical: ListState,
+}
+
+impl ScrollableHandle for LogcatScrollHandle {
+    fn max_offset(&self) -> Point<Pixels> {
+        point(
+            self.horizontal.max_offset().x,
+            self.vertical.max_offset_for_scrollbar().y,
+        )
+    }
+    fn offset(&self) -> Point<Pixels> {
+        point(
+            self.horizontal.offset().x,
+            self.vertical.scroll_px_offset_for_scrollbar().y,
+        )
+    }
+    fn set_offset(&self, offset: Point<Pixels>) {
+        self.horizontal.set_offset(point(offset.x, px(0.)));
+        self.vertical
+            .set_offset_from_scrollbar(point(px(0.), offset.y));
+    }
+    fn viewport(&self) -> Bounds<Pixels> {
+        self.horizontal.bounds()
+    }
+    fn drag_started(&self) {
+        self.vertical.scrollbar_drag_started();
+    }
+    fn drag_ended(&self) {
+        self.vertical.scrollbar_drag_ended();
     }
 }
 
@@ -2309,11 +2593,459 @@ async fn capture(
 }
 
 #[cfg(test)]
-mod tests {
+pub(super) mod tests {
     use super::*;
     use gpui::TestAppContext;
     use project::FakeFs;
     use workspace::AppState;
+
+    #[test]
+    fn preferences_default_to_current_app_and_preserve_explicit_all_logs() {
+        let defaults = Preferences::default();
+        assert_eq!(defaults.filter, "package:mine");
+        assert!(!defaults.wrap);
+        let mut legacy: Preferences =
+            serde_json::from_str(r#"{"filter":"","wrap":true}"#).expect("Legacy preferences");
+        legacy.migrate();
+        assert_eq!(legacy.filter, "package:mine");
+        assert!(legacy.wrap);
+        let mut explicit: Preferences =
+            serde_json::from_str(r#"{"version":1,"filter":""}"#).expect("Current preferences");
+        explicit.migrate();
+        assert_eq!(explicit.filter, "");
+        let mut saved: Preferences =
+            serde_json::from_str(r#"{"filter":"tag:Network"}"#).expect("Saved preferences");
+        saved.migrate();
+        assert_eq!(saved.filter, "tag:Network");
+    }
+
+    #[test]
+    fn completions_preserve_groups_quoted_values_suffixes_and_operators() {
+        let candidates = vec![
+            "tag:\"Network request\"".into(),
+            "tag:\"Database\"".into(),
+            "package:mine".into(),
+            "level:ERROR".into(),
+        ];
+        for (text, cursor, expected, completed) in [
+            (
+                "package:mine & (tag:Ne | level:ERROR)",
+                22,
+                "tag:\"Network request\"",
+                "package:mine & (tag:\"Network request\" | level:ERROR)",
+            ),
+            (
+                "-tag=:Ne",
+                8,
+                "-tag=:\"Network request\"",
+                "-tag=:\"Network request\"",
+            ),
+            (
+                "tag~:\"Network r",
+                15,
+                "tag~:\"Network request\"",
+                "tag~:\"Network request\"",
+            ),
+            (
+                "message:\"こんにちは world\" tag:Ne",
+                "message:\"こんにちは world\" tag:Ne".len(),
+                "tag:\"Network request\"",
+                "message:\"こんにちは world\" tag:\"Network request\"",
+            ),
+            (
+                "package:mine ",
+                13,
+                "level:ERROR",
+                "package:mine level:ERROR",
+            ),
+        ] {
+            let (range, suggestions) = complete_query(text, cursor, candidates.clone());
+            assert!(
+                suggestions.contains(&expected.to_string()),
+                "{text}: {suggestions:?}"
+            );
+            let mut result = text.to_string();
+            result.replace_range(range, expected);
+            assert_eq!(result, completed);
+            Query::parse(&result, false).expect("Completed query is valid");
+        }
+        let (range, _) = complete_query(
+            "tag:\"a \\\"quoted\\\" value\" level:E",
+            16,
+            candidates.clone(),
+        );
+        assert_eq!(
+            &"tag:\"a \\\"quoted\\\" value\" level:E"[range],
+            "tag:\"a \\\"quoted\\\" value\""
+        );
+        let (_, suggestions) = complete_query("package:mine", 12, candidates);
+        assert!(
+            suggestions.is_empty(),
+            "Do not suggest the already complete token"
+        );
+    }
+
+    #[test]
+    fn display_keeps_metadata_and_message_on_one_line_and_preserves_stacktraces() {
+        let mut entry = logcat::import("2026-10-01 12:00:00.000 42 43 E Example: first message")
+            .expect("Fixture")
+            .remove(0);
+        entry.package = "dev.example".into();
+        entry.process = "dev.example:worker".into();
+        entry.uid = Some(10123);
+        let display = display_line(&entry, false, false);
+        assert_eq!(display.text.lines().count(), 1);
+        assert_eq!(&display.text[display.tag], "Example");
+        assert_eq!(&display.text[display.level], "E");
+        assert_eq!(&display.text[display.metadata_end..], "first message");
+        assert!(display.text.contains("dev.example:worker"));
+        assert!(display.text.contains("uid:10123"));
+        entry.message = "failure\n\tat dev.example.Main.run(Main.kt:42)\n\tat dev.example.Main.start(Main.kt:50)".into();
+        assert_eq!(display_line(&entry, false, false).text.lines().count(), 3);
+        let folded = display_line(&entry, false, true);
+        assert_eq!(folded.text.lines().count(), 1);
+        assert!(folded.text.ends_with("3 lines (select to expand)"));
+        let compact = display_line(&entry, true, false);
+        assert!(!compact.text.contains("2026-10-01"));
+        assert!(!compact.text.contains("uid:"));
+        assert!(compact.text.ends_with(&entry.message));
+    }
+
+    pub(crate) async fn viewer(
+        cx: &mut TestAppContext,
+        displayed: bool,
+    ) -> (
+        Entity<Workspace>,
+        Entity<LogcatView>,
+        &mut gpui::VisualTestContext,
+    ) {
+        cx.update(|cx| {
+            AppState::test(cx);
+            editor::init(cx);
+            project::trusted_worktrees::init(Default::default(), cx);
+            cx.bind_keys([
+                gpui::KeyBinding::new("cmd-f", Find, Some("AndroidLogcat")),
+                gpui::KeyBinding::new("escape", CloseFind, Some("AndroidLogcatSearch")),
+                gpui::KeyBinding::new(
+                    "down",
+                    NextSuggestion,
+                    Some("AndroidLogcatFilter && showing_suggestions"),
+                ),
+                gpui::KeyBinding::new(
+                    "up",
+                    PreviousSuggestion,
+                    Some("AndroidLogcatFilter && showing_suggestions"),
+                ),
+                gpui::KeyBinding::new(
+                    "tab",
+                    AcceptSuggestion,
+                    Some("AndroidLogcatFilter && showing_suggestions"),
+                ),
+                gpui::KeyBinding::new(
+                    "escape",
+                    DismissSuggestions,
+                    Some("AndroidLogcatFilter && showing_suggestions"),
+                ),
+            ]);
+        });
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree(
+                "/logcat",
+                serde_json::json!({"settings.gradle.kts":"", "gradlew":""}),
+            )
+            .await;
+        let project = Project::test(filesystem, [Path::new("/logcat")], cx).await;
+        let store = project.read_with(cx, |project, _| project.worktree_store());
+        cx.update(|cx| {
+            TrustedWorktrees::try_get_global(cx)
+                .expect("Trust store")
+                .update(cx, |trusted, cx| {
+                    trusted.trust(
+                        &store,
+                        [project::trusted_worktrees::PathTrust::AbsPath(
+                            PathBuf::from("/logcat"),
+                        )]
+                        .into_iter()
+                        .collect(),
+                        cx,
+                    );
+                })
+        });
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let view = workspace.update_in(cx, |workspace, window, cx| {
+            cx.new(|cx| {
+                LogcatView::new(
+                    workspace.weak_handle(),
+                    project,
+                    PathBuf::from("/logcat"),
+                    None,
+                    Vec::new(),
+                    window,
+                    cx,
+                )
+            })
+        });
+        view.update_in(cx, |view, window, cx| {
+            view.preferences = Preferences::default();
+            view.query = Query::parse("package:mine", false).expect("Default query");
+            set_input_text(&view.filter_input, "package:mine", window, cx);
+        });
+        if displayed {
+            workspace.update_in(cx, |workspace, window, cx| {
+                workspace.add_item_to_active_pane(Box::new(view.clone()), None, true, window, cx)
+            });
+            cx.run_until_parked();
+        }
+        (workspace, view, cx)
+    }
+
+    fn draw_view(_: &Entity<LogcatView>, cx: &mut gpui::VisualTestContext) {
+        cx.simulate_resize(gpui::size(px(640.), px(320.)));
+        cx.run_until_parked();
+        cx.update(|window, cx| window.draw(cx).clear(cx));
+    }
+
+    #[gpui::test]
+    async fn find_is_hidden_until_invoked_and_escape_restores_log_focus(cx: &mut TestAppContext) {
+        let (_, view, cx) = viewer(cx, true).await;
+        view.update_in(cx, |view, window, cx| {
+            view.query = Query::default();
+            let entry = logcat::import("2026-10-01 12:00:00.000 42 43 I Example: needle")
+                .expect("Fixture")
+                .remove(0);
+            view.receive(vec![entry.clone(), entry], cx);
+            assert!(!view.search_visible);
+            window.focus(&view.filter_input.focus_handle(cx), cx);
+        });
+        draw_view(&view, cx);
+        cx.simulate_keystrokes("cmd-f");
+        view.read_with(cx, |view, _| assert!(view.search_visible));
+        draw_view(&view, cx);
+        cx.simulate_input("needle");
+        view.update_in(cx, |view, _, cx| {
+            assert_eq!(view.search_matches, vec![0, 1]);
+            view.find(true, cx);
+            assert_eq!(view.search_position, Some(1));
+            view.find(false, cx);
+            assert_eq!(view.search_position, Some(0));
+            view.find(false, cx);
+            assert_eq!(view.search_position, Some(1));
+        });
+        draw_view(&view, cx);
+        cx.simulate_keystrokes("escape");
+        view.read_with(cx, |view, cx| {
+            assert!(!view.search_visible);
+            assert!(view.search_matches.is_empty());
+            assert!(view.search.is_none());
+            assert_eq!(view.search_input.read(cx).text(cx), "needle");
+        });
+        view.update_in(cx, |view, window, _| {
+            assert!(view.focus_handle.is_focused(window))
+        });
+    }
+
+    #[gpui::test]
+    async fn query_popup_keyboard_completion_preserves_following_terms(cx: &mut TestAppContext) {
+        let (_, view, cx) = viewer(cx, true).await;
+        view.update_in(cx, |view, window, cx| {
+            set_input_text(&view.filter_input, "tag:Old level:ERROR", window, cx);
+            let editor = input_editor(&view.filter_input, cx).expect("Editor");
+            editor.update(cx, |editor, cx| {
+                editor.change_selections(SelectionEffects::no_scroll(), window, cx, |selections| {
+                    selections.select_ranges([MultiBufferOffset(0)..MultiBufferOffset(7)])
+                })
+            });
+            window.focus(&view.filter_input.focus_handle(cx), cx);
+        });
+        draw_view(&view, cx);
+        cx.simulate_input("pa");
+        view.read_with(cx, |view, _| {
+            assert!(view.completions.contains(&"package:mine".into()))
+        });
+        draw_view(&view, cx);
+        cx.simulate_keystrokes("down up");
+        view.update_in(cx, |view, _, _| {
+            view.completion_index = view
+                .completions
+                .iter()
+                .position(|item| item == "package:mine")
+                .expect("Completion")
+        });
+        draw_view(&view, cx);
+        cx.simulate_keystrokes("tab");
+        view.read_with(cx, |view, cx| {
+            assert_eq!(
+                view.filter_input.read(cx).text(cx),
+                "package:mine level:ERROR"
+            );
+            assert!(view.completions.is_empty());
+            assert_eq!(input_cursor(&view.filter_input, cx), Some(12));
+        });
+        cx.simulate_input(" ");
+        draw_view(&view, cx);
+        cx.simulate_keystrokes("escape");
+        view.read_with(cx, |view, _| assert!(view.completions.is_empty()));
+        view.update_in(cx, |view, window, cx| {
+            view.update_completions(window, cx);
+            window.focus(&view.focus_handle, cx);
+        });
+        cx.run_until_parked();
+        view.read_with(cx, |view, _| assert!(view.completions.is_empty()));
+    }
+
+    #[gpui::test]
+    async fn current_app_query_excludes_other_apps_and_tracks_scope_changes(
+        cx: &mut TestAppContext,
+    ) {
+        let (_, view, cx) = viewer(cx, true).await;
+        view.update_in(cx, |view, _, cx| {
+            let mut entry = logcat::import("2026-10-01 12:00:00.000 42 43 I Example: message")
+                .expect("Fixture")
+                .remove(0);
+            entry.package = "dev.first".into();
+            let mut second = entry.clone();
+            second.package = "dev.second".into();
+            view.project_packages = vec!["dev.first".into()];
+            view.receive(vec![entry, second], cx);
+            assert_eq!(view.visible.len(), 1);
+            assert_eq!(view.visible[0].package, "dev.first");
+            view.project_packages = vec!["dev.second".into()];
+            view.rebuild(cx);
+            assert_eq!(view.visible.len(), 1);
+            assert_eq!(view.visible[0].package, "dev.second");
+            view.project_packages.clear();
+            view.rebuild(cx);
+            assert!(view.visible.is_empty());
+        });
+    }
+
+    #[gpui::test]
+    async fn package_mine_uses_the_selected_android_target(cx: &mut TestAppContext) {
+        let (workspace, view, cx) = viewer(cx, true).await;
+        let first = AndroidTarget {
+            module: ":first".into(),
+            variant: "debug".into(),
+            output_listing: "/logcat/first/output-metadata.json".into(),
+        };
+        let second = AndroidTarget {
+            module: ":second".into(),
+            variant: "release".into(),
+            output_listing: "/logcat/second/output-metadata.json".into(),
+        };
+        let panel = workspace.update_in(cx, |workspace, window, cx| {
+            let panel = cx.new(|cx| {
+                AndroidPanel::new(workspace.weak_handle(), workspace.project().clone(), cx)
+            });
+            panel.update(cx, |panel, _| {
+                panel.root = Some(PathBuf::from("/logcat"));
+                panel.targets = vec![first.clone(), second.clone()];
+                panel.selected_target = Some(first.clone());
+            });
+            workspace.add_panel(panel.clone(), window, cx);
+            panel
+        });
+        view.read_with(cx, |view, cx| {
+            assert_eq!(view.current_targets(cx), vec![first.clone()])
+        });
+        panel.update(cx, |panel, _| panel.selected_target = Some(second.clone()));
+        view.read_with(cx, |view, cx| {
+            assert_eq!(view.current_targets(cx), vec![second])
+        });
+        panel.update(cx, |panel, _| {
+            panel.root = Some(PathBuf::from("/another-project"))
+        });
+        view.read_with(cx, |view, cx| {
+            assert_eq!(view.current_targets(cx), view.targets)
+        });
+    }
+
+    #[gpui::test]
+    async fn unwrapped_lines_share_horizontal_scroll_and_wrap_resets_it(cx: &mut TestAppContext) {
+        let (_, view, cx) = viewer(cx, true).await;
+        view.update_in(cx, |view, _, cx| {
+            view.query = Query::default();
+            let mut entry = logcat::import("2026-10-01 12:00:00.000 42 43 I Example: message")
+                .expect("Fixture")
+                .remove(0);
+            entry.message = "long Unicode 日本語 line ".repeat(50);
+            view.receive(vec![entry; 50], cx);
+        });
+        draw_view(&view, cx);
+        let (bounds, vertical_offset) = view.read_with(cx, |view, _| {
+            (
+                view.horizontal_scroll.bounds(),
+                view.list_state.scroll_px_offset_for_scrollbar().y,
+            )
+        });
+        cx.simulate_event(gpui::ScrollWheelEvent {
+            position: bounds.center(),
+            delta: gpui::ScrollDelta::Pixels(point(px(-120.), px(0.))),
+            ..Default::default()
+        });
+        draw_view(&view, cx);
+        view.read_with(cx, |view, _| {
+            assert!(
+                view.horizontal_scroll.offset().x < px(0.),
+                "Horizontal gestures scroll the shared viewport"
+            );
+            assert_eq!(
+                view.list_state.scroll_px_offset_for_scrollbar().y,
+                vertical_offset
+            );
+        });
+        let horizontal_offset = view.read_with(cx, |view, _| view.horizontal_scroll.offset().x);
+        cx.simulate_event(gpui::ScrollWheelEvent {
+            position: bounds.center(),
+            delta: gpui::ScrollDelta::Pixels(point(px(0.), px(40.))),
+            ..Default::default()
+        });
+        draw_view(&view, cx);
+        view.read_with(cx, |view, _| {
+            assert_eq!(
+                view.horizontal_scroll.offset().x,
+                horizontal_offset,
+                "Vertical scrolling does not shift text horizontally"
+            );
+            assert!(view.list_state.scroll_px_offset_for_scrollbar().y > vertical_offset);
+        });
+        view.update_in(cx, |view, _, _| {
+            let scroll = LogcatScrollHandle {
+                horizontal: view.horizontal_scroll.clone(),
+                vertical: view.list_state.clone(),
+            };
+            assert!(scroll.viewport().size.width > px(100.));
+            assert!(scroll.max_offset().x > px(1000.));
+            assert!(scroll.max_offset().y > px(0.));
+            assert!(
+                (scroll.max_offset().y + scroll.viewport().size.height) / 50. < px(35.),
+                "Unwrapped records occupy one row"
+            );
+            scroll.set_offset(point(-scroll.max_offset().x, px(-50.)));
+        });
+        draw_view(&view, cx);
+        view.update_in(cx, |view, _, cx| {
+            assert!(view.horizontal_scroll.offset().x < px(-1000.));
+            assert!(view.list_state.scroll_px_offset_for_scrollbar().y < px(0.));
+            view.toggle_wrap(cx);
+            assert_eq!(view.horizontal_scroll.offset().x, px(0.));
+        });
+        draw_view(&view, cx);
+        view.read_with(cx, |view, _| {
+            assert_eq!(view.horizontal_scroll.max_offset().x, px(0.))
+        });
+        cx.simulate_resize(gpui::size(px(400.), px(320.)));
+        cx.run_until_parked();
+        cx.update(|window, cx| window.draw(cx).clear(cx));
+        view.read_with(cx, |view, _| {
+            assert_eq!(
+                view.horizontal_scroll.max_offset().x,
+                px(0.),
+                "Wrapped text follows a narrower viewport"
+            )
+        });
+    }
 
     #[gpui::test]
     async fn frozen_logs_survive_eviction_and_disconnected_selection_is_preserved(
@@ -2387,6 +3119,7 @@ mod tests {
             view.update_filter(cx);
             assert!(view.filter_error.is_some());
             assert_eq!(view.visible.len(), 1);
+            view.show_find(window, cx);
             view.search_regex = true;
             set_input_text(&view.search_input, "x{3}", window, cx);
             view.update_search(cx);

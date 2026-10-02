@@ -1789,4 +1789,22 @@
       "cmd-a": "android_logcat::SelectAll",
     },
   },
+  {
+    "context": "AndroidLogcatFilter && showing_suggestions",
+    "bindings": {
+      "down": "android_logcat::NextSuggestion",
+      "up": "android_logcat::PreviousSuggestion",
+      "enter": "android_logcat::AcceptSuggestion",
+      "tab": "android_logcat::AcceptSuggestion",
+      "escape": "android_logcat::DismissSuggestions",
+    },
+  },
+  {
+    "context": "AndroidLogcatSearch",
+    "bindings": {
+      "escape": "android_logcat::CloseFind",
+      "enter": "android_logcat::FindNext",
+      "shift-enter": "android_logcat::FindPrevious",
+    },
+  },
 ]
