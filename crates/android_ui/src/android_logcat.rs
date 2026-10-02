@@ -192,14 +192,13 @@ impl LogcatView {
         }
         let filter_input =
             cx.new(|cx| InputField::new(window, cx, "Filter: package:mine tag:MyTag level:WARN"));
-        filter_input
-            .read(cx)
-            .set_text(&preferences.filter, window, cx);
+        set_input_text(&filter_input, &preferences.filter, window, cx);
         let search_input = cx.new(|cx| InputField::new(window, cx, "Find in displayed messages"));
         let mut subscriptions = Vec::new();
         for (input, is_filter) in [(filter_input.clone(), true), (search_input.clone(), false)] {
             let view = cx.weak_entity();
-            let subscription = input.read(cx).editor().subscribe(
+            let editor = input.read(cx).editor().clone();
+            let subscription = editor.subscribe(
                 Box::new(move |event, _, cx| {
                     if event == ErasedEditorEvent::BufferEdited {
                         view.update(cx, |view, cx| {
@@ -1228,7 +1227,7 @@ impl LogcatView {
                         let filter = format!("{prefix}{candidate}");
                         menu = menu.entry(candidate, None, move |window, cx| {
                             view.update(cx, |view, cx| {
-                                view.filter_input.read(cx).set_text(&filter, window, cx);
+                                set_input_text(&view.filter_input, &filter, window, cx);
                             })
                             .log_err();
                         });
@@ -1301,7 +1300,7 @@ impl LogcatView {
                         let view = view.clone();
                         menu = menu.entry(filter.clone(), None, move |window, cx| {
                             view.update(cx, |view, cx| {
-                                view.filter_input.read(cx).set_text(&filter, window, cx);
+                                set_input_text(&view.filter_input, &filter, window, cx);
                             })
                             .log_err();
                         });
@@ -1488,7 +1487,7 @@ impl LogcatView {
             })
             .on_click(
                 cx.listener(move |view, event: &gpui::ClickEvent, window, cx| {
-                    window.focus(&view.focus_handle);
+                    window.focus(&view.focus_handle, cx);
                     if event.modifiers().shift {
                         let anchor = view
                             .selection_anchor
@@ -1587,9 +1586,12 @@ impl LogcatView {
                                                 } else {
                                                     term.clone()
                                                 };
-                                                view.filter_input
-                                                    .read(cx)
-                                                    .set_text(&filter, window, cx);
+                                                set_input_text(
+                                                    &view.filter_input,
+                                                    &filter,
+                                                    window,
+                                                    cx,
+                                                );
                                             })
                                             .log_err();
                                         });
@@ -1601,11 +1603,10 @@ impl LogcatView {
             )
             .child(
                 div()
+                    .id(("logcat-message", id))
                     .text_color(color)
                     .when(!self.preferences.wrap, |text| {
-                        text.id(("logcat-message", id))
-                            .whitespace_nowrap()
-                            .overflow_x_scroll()
+                        text.whitespace_nowrap().overflow_x_scroll()
                     })
                     .child(gpui::StyledText::new(message_text).with_highlights(highlights)),
             )
@@ -1729,10 +1730,10 @@ impl Render for LogcatView {
             .on_action(cx.listener(|view, _: &Clear, _, cx| view.clear(cx)))
             .on_action(cx.listener(|view, _: &Restart, _, cx| view.start_capture(true, cx)))
             .on_action(cx.listener(|view, _: &FocusFilter, window, cx| {
-                window.focus(&view.filter_input.focus_handle(cx))
+                window.focus(&view.filter_input.focus_handle(cx), cx)
             }))
             .on_action(cx.listener(|view, _: &Find, window, cx| {
-                window.focus(&view.search_input.focus_handle(cx))
+                window.focus(&view.search_input.focus_handle(cx), cx)
             }))
             .on_action(cx.listener(|view, _: &FindNext, _, cx| view.find(false, cx)))
             .on_action(cx.listener(|view, _: &FindPrevious, _, cx| view.find(true, cx)))
@@ -1965,6 +1966,11 @@ impl Render for LogcatView {
                 },
             )
     }
+}
+
+fn set_input_text(input: &Entity<InputField>, text: &str, window: &mut Window, cx: &mut App) {
+    let editor = input.read(cx).editor().clone();
+    editor.set_text(text, window, cx);
 }
 
 fn preference_key(root: &Path) -> String {
@@ -2375,14 +2381,14 @@ mod tests {
             view.pause(cx);
             assert_eq!(view.visible.len(), 1);
             assert_eq!(view.visible[0].message.len(), 800);
-            view.filter_input.read(cx).set_text("message:x", window, cx);
+            set_input_text(&view.filter_input, "message:x", window, cx);
             view.update_filter(cx);
-            view.filter_input.read(cx).set_text("tag:", window, cx);
+            set_input_text(&view.filter_input, "tag:", window, cx);
             view.update_filter(cx);
             assert!(view.filter_error.is_some());
             assert_eq!(view.visible.len(), 1);
             view.search_regex = true;
-            view.search_input.read(cx).set_text("x{3}", window, cx);
+            set_input_text(&view.search_input, "x{3}", window, cx);
             view.update_search(cx);
             view.find(false, cx);
             assert_eq!(view.search_position, Some(0));
