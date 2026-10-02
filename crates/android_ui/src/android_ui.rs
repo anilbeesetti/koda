@@ -280,6 +280,7 @@ pub struct AndroidPanel {
     emulator_serials: HashMap<String, String>,
     emulator_task: Option<Task<()>>,
     emulator_startup: Option<EmulatorStartup>,
+    emulator_error_sequence: usize,
     status: SharedString,
     error: Option<String>,
     device_error: Option<String>,
@@ -358,6 +359,7 @@ impl AndroidPanel {
             emulator_serials: HashMap::new(),
             emulator_task: None,
             emulator_startup: None,
+            emulator_error_sequence: 0,
             status: "Sync an Android project to discover its build variants.".into(),
             error: None,
             device_error: None,
@@ -2063,14 +2065,16 @@ impl AndroidPanel {
 
     fn notify_emulator_error(&mut self, message: String, cx: &mut Context<Self>) {
         self.error = Some(message.clone());
+        self.emulator_error_sequence += 1;
+        let id = NotificationId::composite::<EmulatorStartup>(SharedString::from(format!(
+            "emulator-error-{}",
+            self.emulator_error_sequence
+        )));
         let workspace = self.workspace.clone();
         cx.defer(move |cx| {
             workspace
                 .update(cx, |workspace, cx| {
-                    workspace.show_toast(
-                        Toast::new(NotificationId::unique::<EmulatorStartup>(), message).autohide(),
-                        cx,
-                    );
+                    workspace.show_toast(Toast::new(id, message).autohide(), cx);
                 })
                 .log_err();
         });
@@ -2124,12 +2128,13 @@ impl AndroidPanel {
                         Ok(()) => {
                             let name = name.clone();
                             cx.background_spawn(async move {
-                                let mut command = new_command(android_cli_path()?);
+                                let mut command =
+                                    util::command::new_std_command(android_cli_path()?);
                                 command
                                     .args(["emulator", "start", &name])
                                     .current_dir(&root)
                                     .envs(environment);
-                                command_output(command, &executor, EMULATOR_START_TIMEOUT).await?;
+                                emulator_start_output(command, &executor).await?;
                                 Ok::<_, anyhow::Error>(())
                             })
                             .await
@@ -2227,7 +2232,8 @@ impl AndroidPanel {
                     panel.selected_serial = Some(serial.clone());
                     panel.selected_avd = Some(name);
                     panel.devices = devices;
-                    panel.emulator_serials = serials;
+                    panel.emulator_serials.retain(|_, serial| panel.devices.iter().any(|device| &device.serial == serial && device.is_available()));
+                    panel.emulator_serials.extend(serials);
                     Ok(serial)
                 });
                 match result {
@@ -2947,24 +2953,34 @@ async fn connected_devices_with_adb(
     .await?;
     let devices = parse_devices(&output)?;
     let mut emulator_serials = HashMap::new();
-    for device in &devices {
-        if !device.is_available() || !device.serial.starts_with("emulator-") {
-            continue;
-        }
-        let output = tool_output(
-            adb.clone(),
-            vec![
-                "-s".into(),
-                device.serial.clone(),
-                "emu".into(),
-                "avd".into(),
-                "name".into(),
-            ],
-            Path::new("."),
-            executor,
-            Duration::from_secs(5),
-        )
-        .await;
+    let candidates = devices
+        .iter()
+        .filter(|device| device.is_available() && device.serial.starts_with("emulator-"))
+        .map(|device| device.serial.clone())
+        .collect::<Vec<_>>();
+    let mut lookups = futures::stream::iter(candidates)
+        .map(|serial| {
+            let adb = adb.clone();
+            async move {
+                let output = tool_output(
+                    adb,
+                    vec![
+                        "-s".into(),
+                        serial.clone(),
+                        "emu".into(),
+                        "avd".into(),
+                        "name".into(),
+                    ],
+                    Path::new("."),
+                    executor,
+                    Duration::from_secs(5),
+                )
+                .await;
+                (serial, output)
+            }
+        })
+        .buffer_unordered(8);
+    while let Some((serial, output)) = lookups.next().await {
         if let Some(output) = output.log_err()
             && let Some(name) = output
                 .lines()
@@ -2972,13 +2988,12 @@ async fn connected_devices_with_adb(
                 .find(|line| !line.is_empty() && *line != "OK")
         {
             ensure!(
-                emulator_serials
-                    .insert(name.to_owned(), device.serial.clone())
-                    .is_none(),
+                emulator_serials.insert(name.to_owned(), serial).is_none(),
                 "More than one running device uses AVD {name}. Select its serial explicitly."
             );
         }
     }
+    drop(lookups);
     Ok((devices, emulator_serials))
 }
 
@@ -3013,12 +3028,18 @@ async fn booted_emulator_with_adb(
     adb: PathBuf,
     executor: &BackgroundExecutor,
 ) -> Result<BootedEmulator> {
+    let mut selected = None;
     loop {
-        if let Some((devices, serials)) = connected_devices_with_adb(adb.clone(), executor)
-            .await
-            .log_err()
-            && let Some(serial) = serials.get(name)
-        {
+        if selected.is_none() {
+            selected = connected_devices_with_adb(adb.clone(), executor)
+                .await
+                .log_err()
+                .and_then(|(devices, serials)| {
+                    let serial = serials.get(name)?.clone();
+                    Some((devices, serials, serial))
+                });
+        }
+        if let Some((_, _, serial)) = &selected {
             let boot_completed = tool_output(
                 adb.clone(),
                 vec![
@@ -3033,15 +3054,83 @@ async fn booted_emulator_with_adb(
                 Duration::from_secs(5),
             )
             .await;
-            if boot_completed
-                .log_err()
-                .is_some_and(|output| output.trim() == "1")
-            {
-                let serial = serial.clone();
-                return Ok((devices, serials, serial));
+            match boot_completed {
+                Ok(output) if output.trim() == "1" => {
+                    let identity = tool_output(
+                        adb.clone(),
+                        vec![
+                            "-s".into(),
+                            serial.clone(),
+                            "emu".into(),
+                            "avd".into(),
+                            "name".into(),
+                        ],
+                        Path::new("."),
+                        executor,
+                        Duration::from_secs(5),
+                    )
+                    .await
+                    .log_err();
+                    if identity.is_some_and(|output| {
+                        output
+                            .lines()
+                            .map(str::trim)
+                            .find(|line| !line.is_empty() && *line != "OK")
+                            == Some(name)
+                    }) {
+                        return selected.context("The selected emulator disconnected");
+                    }
+                    selected = None;
+                }
+                Ok(_) => {}
+                Err(error) => {
+                    log::debug!("Emulator {name} is not ready: {error:#}");
+                    selected = None;
+                }
             }
         }
         executor.timer(Duration::from_secs(1)).await;
+    }
+}
+
+async fn emulator_start_output(
+    command: std::process::Command,
+    executor: &BackgroundExecutor,
+) -> Result<()> {
+    let (sender, mut receiver) = futures::channel::mpsc::channel::<android_build::OutputLine>(128);
+    let (cancel, cancelled) = oneshot::channel();
+    let drain = async move {
+        let mut tail = String::new();
+        while let Some(line) = receiver.next().await {
+            tail.push_str(&line.text);
+            tail.push('\n');
+            if tail.len() > 4000 {
+                let mut start = tail.len() - 4000;
+                while !tail.is_char_boundary(start) {
+                    start += 1;
+                }
+                tail.drain(..start);
+            }
+        }
+        tail
+    };
+    let (result, tail) = futures::join!(
+        android_build::command_output(
+            command,
+            executor,
+            EMULATOR_START_TIMEOUT,
+            sender,
+            cancelled,
+            false
+        ),
+        drain,
+    );
+    drop(cancel);
+    match result {
+        Ok(ProcessOutput::Success(_)) => Ok(()),
+        Ok(ProcessOutput::Cancelled) => bail!("Emulator startup cancelled"),
+        Err(error) if tail.is_empty() => Err(error),
+        Err(error) => Err(error).with_context(|| tail),
     }
 }
 
@@ -3110,6 +3199,31 @@ mod tests {
     };
     use serde_json::json;
     use workspace::AppState;
+
+    #[cfg(unix)]
+    fn emulator_test_executor() -> BackgroundExecutor {
+        static DISPATCHER: std::sync::LazyLock<Arc<gpui::ThreadedDispatcher>> =
+            std::sync::LazyLock::new(|| Arc::new(gpui::ThreadedDispatcher::new()));
+        BackgroundExecutor::new(DISPATCHER.clone())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn background_emulator_output_keeps_bounded_error_details() -> Result<()> {
+        let executor = emulator_test_executor();
+        let mut command = util::command::new_std_command("/bin/sh");
+        command.args(["-c", "printf 'starting\\n'; head -c 200000 /dev/zero | tr '\\0' x >&2; printf '\\nLast error: é\\n' >&2; exit 7"]);
+        let error = futures::executor::block_on(emulator_start_output(command, &executor))
+            .expect_err("Failed emulator launcher");
+        let details = format!("{error:#}");
+        assert!(details.contains("Last error: é"));
+        assert!(details.contains("exit status: 7"));
+        assert!(
+            details.len() < 4200,
+            "Startup diagnostics must remain bounded"
+        );
+        Ok(())
+    }
 
     #[gpui::test]
     async fn run_schedules_build_and_background_emulator_together_and_cancels_both(
@@ -3305,19 +3419,19 @@ mod tests {
 if [ "$1" = devices ]; then
   printf 'List of devices attached\nemulator-5554 device model:Other\nemulator-5556 device model:Selected\n'
 elif [ "$3" = emu ]; then
-  if [ "$2" = emulator-5554 ]; then printf 'Other\nOK\n'; else printf 'Selected\nOK\n'; fi
+  if [ "$2" = emulator-5554 ]; then printf 'Other\nOK\n'; else printf x >> "${0%/*}/name-queries"; printf 'Selected\nOK\n'; fi
 elif [ "$3" = shell ]; then
   [ "$2" = emulator-5556 ] || exit 9
   [ "$4" = getprop ] && [ "$5" = sys.boot_completed ] || exit 8
   boot_marker="${0%/*}/boot-checked"
-  if [ -f "$boot_marker" ]; then printf '1\n'; else touch "$boot_marker"; printf '0\n'; fi
+  if [ ! -f "$boot_marker" ]; then printf 1 > "$boot_marker"; printf '0\n'; elif [ "$(cat "$boot_marker")" = 1 ]; then printf 2 > "$boot_marker"; printf '0\n'; else printf '1\n'; fi
 else
   exit 7
 fi
 "#,
         )?;
         std::fs::set_permissions(&adb, std::fs::Permissions::from_mode(0o755))?;
-        let executor = BackgroundExecutor::new(Arc::new(gpui::ThreadedDispatcher::new()));
+        let executor = emulator_test_executor();
         let (devices, serials, serial) = futures::executor::block_on(emulator_ready_with_timeout(
             "Selected",
             futures::future::ready(Ok(())),
@@ -3329,6 +3443,49 @@ fi
         assert_eq!(serials.get("Selected"), Some(&serial));
         assert_eq!(devices.len(), 2);
         assert!(directory.path().join("boot-checked").is_file());
+        assert_eq!(
+            std::fs::read_to_string(directory.path().join("name-queries"))?,
+            "xx",
+            "Resolve once and revalidate identity after boot; only the boot property is polled in between"
+        );
+        Ok(())
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn emulator_readiness_revalidates_avd_when_a_serial_is_reused() -> Result<()> {
+        use std::os::unix::fs::PermissionsExt as _;
+        let directory = tempfile::tempdir()?;
+        let adb = directory.path().join("adb");
+        std::fs::write(
+            &adb,
+            r#"#!/bin/sh
+swap_marker="${0%/*}/serial-reused"
+if [ "$1" = devices ]; then
+  if [ -f "$swap_marker" ]; then printf 'List of devices attached\nemulator-5556 device model:Other\nemulator-5558 device model:Selected\n'; else printf 'List of devices attached\nemulator-5556 device model:Selected\n'; fi
+elif [ "$3" = emu ]; then
+  if [ "$2" = emulator-5556 ] && [ -f "$swap_marker" ]; then printf 'Other\nOK\n'; else printf 'Selected\nOK\n'; fi
+elif [ "$3" = shell ]; then
+  touch "$swap_marker"
+  printf '1\n'
+else
+  exit 7
+fi
+"#,
+        )?;
+        std::fs::set_permissions(&adb, std::fs::Permissions::from_mode(0o755))?;
+        let executor = emulator_test_executor();
+        let (_, _, serial) = futures::executor::block_on(emulator_ready_with_timeout(
+            "Selected",
+            futures::future::ready(Ok(())),
+            booted_emulator_with_adb("Selected", adb, &executor),
+            &executor,
+            Duration::from_secs(5),
+        ))?;
+        assert_eq!(
+            serial, "emulator-5558",
+            "Never deploy to a different AVD that reused the cached serial"
+        );
         Ok(())
     }
 

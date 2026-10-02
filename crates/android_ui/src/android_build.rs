@@ -1247,10 +1247,7 @@ async fn command_output_inner(
             read_output(stderr, true, sender, false)
         )?;
         let status = child.status().await?;
-        ensure!(
-            status.success(),
-            "{program} failed ({status}). See Build output for details."
-        );
+        ensure!(status.success(), "{program} failed ({status}).");
         Ok::<_, anyhow::Error>(ProcessOutput::Success(stdout))
     }
     .boxed();
