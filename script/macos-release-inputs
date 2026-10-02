@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""Preserve only byte-identical release inputs alongside their compiled cache."""
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import stat
+import subprocess
+
+
+GENERATED_INPUTS = {"assets/licenses.md"}
+SCHEMA_VERSION = 1
+
+
+def tracked_inputs(root):
+    result = subprocess.check_output(["git", "ls-files", "-z"], cwd=root)
+    return {os.fsdecode(name) for name in result.split(b"\0") if name} | GENERATED_INPUTS
+
+
+def safe_file(root, name, allowed):
+    path = PurePosixPath(name)
+    if (
+        name not in allowed
+        or path.is_absolute()
+        or not path.parts
+        or any(part in {"..", ".git"} for part in path.parts)
+        or str(path) != name
+    ):
+        return None
+    candidate = root
+    for part in path.parts:
+        candidate = candidate / part
+        if candidate.is_symlink():
+            return None
+    return candidate if candidate.is_file() else None
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def matches(path, record):
+    return stat.S_IMODE(path.stat().st_mode) == record["mode"] and digest(path) == record["sha256"]
+
+
+def load_manifest(manifest):
+    data = json.loads(manifest.read_text())
+    if not isinstance(data, dict) or type(data.get("version")) is not int or data.get("version") != SCHEMA_VERSION:
+        raise ValueError("unsupported input manifest version")
+    files = data.get("files")
+    if not isinstance(files, dict):
+        raise ValueError("invalid input manifest files")
+    for name, record in files.items():
+        if not isinstance(name, str) or not isinstance(record, dict):
+            raise ValueError("invalid input manifest record")
+        checksum = record.get("sha256")
+        timestamp = record.get("mtime_ns")
+        mode = record.get("mode")
+        if (
+            not isinstance(checksum, str)
+            or len(checksum) != 64
+            or any(character not in "0123456789abcdef" for character in checksum)
+            or type(timestamp) is not int
+            or timestamp < 0
+            or timestamp > 2**63 - 1
+            or type(mode) is not int
+            or mode < 0
+            or mode > 0o7777
+        ):
+            raise ValueError("invalid input manifest hash, timestamp or mode")
+    return files
+
+
+def write_manifest(manifest, files):
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    temporary = manifest.with_name(manifest.name + ".tmp")
+    temporary.write_text(json.dumps({"version": SCHEMA_VERSION, "files": files}, sort_keys=True) + "\n")
+    temporary.replace(manifest)
+
+
+def capture(root, manifest):
+    allowed = tracked_inputs(root)
+    files = {}
+    for name in sorted(allowed):
+        if path := safe_file(root, name, allowed):
+            before = path.stat()
+            checksum = digest(path)
+            after = path.stat()
+            if (before.st_mtime_ns, before.st_size, before.st_mode) == (after.st_mtime_ns, after.st_size, after.st_mode):
+                files[name] = {"sha256": checksum, "mtime_ns": before.st_mtime_ns, "mode": stat.S_IMODE(before.st_mode)}
+    write_manifest(manifest, files)
+    print(f"Captured {len(files)} release input hashes and timestamps", flush=True)
+
+
+def restore(root, manifest):
+    if not manifest.exists():
+        print("No paired release input manifest; using normal Cargo freshness checks", flush=True)
+        return
+    try:
+        files = load_manifest(manifest)
+        allowed = tracked_inputs(root)
+        restored = 0
+        for name, record in files.items():
+            if (path := safe_file(root, name, allowed)) and matches(path, record):
+                os.utime(path, ns=(path.stat().st_atime_ns, record["mtime_ns"]))
+                restored += 1
+        print(f"Restored timestamps for {restored} byte-identical release inputs", flush=True)
+    except (OSError, ValueError, OverflowError, subprocess.CalledProcessError) as error:
+        print(f"Release input manifest unavailable: {error}; using normal Cargo freshness checks", flush=True)
+    finally:
+        # Never leave an old source snapshot beside partially replaced artifacts.
+        manifest.unlink(missing_ok=True)
+
+
+def validate(root, pending, output):
+    files = load_manifest(pending)
+    allowed = tracked_inputs(root)
+    retained = {
+        name: record
+        for name, record in files.items()
+        if (path := safe_file(root, name, allowed)) and matches(path, record)
+    }
+    write_manifest(output, retained)
+    pending.unlink()
+    print(f"Validated {len(retained)} release input timestamps; pruned {len(files) - len(retained)} changed inputs", flush=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("capture", "restore", "validate"))
+    parser.add_argument("--manifest", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    root = Path.cwd().resolve()
+    if args.action == "capture":
+        capture(root, args.manifest)
+    elif args.action == "restore":
+        restore(root, args.manifest)
+    else:
+        if args.output is None or args.output == args.manifest:
+            parser.error("validate requires a separate --output path")
+        validate(root, args.manifest, args.output)
+
+
+if __name__ == "__main__":
+    main()

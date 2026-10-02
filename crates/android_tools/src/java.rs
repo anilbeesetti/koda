@@ -90,20 +90,20 @@ pub struct JavaModule {
 }
 
 pub fn is_configured(root: &Path) -> bool {
-    let cache = root.join(".zed/android-java");
+    let cache = root.join(".koda/android-java");
     fs::read_to_string(cache.join(".gitignore")).is_ok_and(|marker| marker == CACHE_MARKER)
         && cache.join("model.json").is_file()
 }
 
 pub fn prepare(root: &Path) -> Result<PathBuf> {
-    let settings = root.join(".zed");
+    let settings = root.join(".koda");
     ensure_directory(&settings)?;
     let cache = settings.join("android-java");
     if cache.exists() {
         ensure_directory(&cache)?;
         ensure!(
             fs::read_to_string(cache.join(".gitignore"))? == CACHE_MARKER,
-            "The .zed/android-java directory contains unmanaged files. Move it aside before configuring Java."
+            "The .koda/android-java directory contains unmanaged files. Move it aside before configuring Java."
         );
     } else {
         ensure_directory(&cache)?;
@@ -171,8 +171,8 @@ pub fn parse_model(output: &str, root: &Path, target: &AndroidTarget) -> Result<
 }
 
 pub fn install_model(root: &Path, models: &[JavaModule]) -> Result<PathBuf> {
-    let cache = root.join(".zed/android-java");
-    ensure_directory(&root.join(".zed"))?;
+    let cache = root.join(".koda/android-java");
+    ensure_directory(&root.join(".koda"))?;
     ensure_directory(&cache)?;
     ensure!(
         fs::read_to_string(cache.join(".gitignore"))? == CACHE_MARKER,
@@ -189,7 +189,7 @@ pub fn finish(root: &Path, models: &[JavaModule], previous: &str, updated: &str)
         "Project settings changed during Java setup. Retry to preserve your latest edits."
     );
     install_model(root, models)?;
-    atomic_write(&root.join(".zed/settings.json"), updated, false)
+    atomic_write(&root.join(".koda/settings.json"), updated, false)
 }
 
 #[cfg(test)]
@@ -244,7 +244,7 @@ mod tests {
             )
             .is_err()
         );
-        let cache = root.join(".zed/android-java");
+        let cache = root.join(".koda/android-java");
         assert!(!is_configured(&root));
         fs::create_dir_all(&cache)?;
         fs::write(cache.join(".gitignore"), "user files")?;

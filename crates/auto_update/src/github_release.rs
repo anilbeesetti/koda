@@ -1,6 +1,7 @@
 //! GitHub release metadata for timestamp-versioned Apple Silicon fork builds.
 
 use anyhow::{Context as _, Result, ensure};
+use release_channel::ReleaseChannel;
 use semver::Version;
 use serde::Deserialize;
 
@@ -12,6 +13,7 @@ const TIMESTAMP_METADATA_PREFIX: &str = "github-release.";
 pub(crate) struct GitHubReleaseSource {
     pub(crate) repository: String,
     pub(crate) installed_tag: String,
+    pub(crate) channel: ReleaseChannel,
 }
 
 impl GitHubReleaseSource {
@@ -21,6 +23,7 @@ impl GitHubReleaseSource {
             installed_tag: option_env!("ZED_RELEASE_VERSION")
                 .unwrap_or_default()
                 .to_string(),
+            channel: *release_channel::RELEASE_CHANNEL,
         })
     }
 
@@ -38,11 +41,50 @@ impl GitHubReleaseSource {
                 }),
             "invalid GitHub update repository"
         );
-        TimestampVersion::parse(&self.installed_tag)?;
+        self.timestamp(&self.installed_tag)?;
+        let endpoint = match self.channel {
+            ReleaseChannel::Stable => "releases/latest",
+            ReleaseChannel::Nightly => "releases?per_page=100&page=1",
+            _ => anyhow::bail!("unsupported Koda release channel"),
+        };
         Ok(format!(
-            "https://api.github.com/repos/{}/releases/latest",
+            "https://api.github.com/repos/{}/{endpoint}",
             self.repository
         ))
+    }
+
+    fn timestamp(&self, tag: &str) -> Result<TimestampVersion> {
+        let version = match self.channel {
+            ReleaseChannel::Nightly => tag
+                .strip_prefix("nightly-")
+                .context("not a Koda Nightly release tag")?,
+            ReleaseChannel::Stable => tag,
+            _ => anyhow::bail!("unsupported Koda release channel"),
+        };
+        TimestampVersion::parse(version)
+    }
+
+    pub(crate) fn latest_prerelease_asset(
+        &self,
+        releases: Vec<GitHubRelease>,
+    ) -> Result<Option<ReleaseAsset>> {
+        ensure!(
+            self.channel == ReleaseChannel::Nightly,
+            "not a Koda Nightly update source"
+        );
+        releases
+            .into_iter()
+            .filter(|release| {
+                !release.draft && release.prerelease && release.published_at.is_some()
+            })
+            .filter_map(|release| {
+                self.timestamp(&release.tag_name)
+                    .ok()
+                    .map(|version| (version, release))
+            })
+            .max_by_key(|(version, _)| *version)
+            .map(|(_, release)| self.release_asset(release))
+            .transpose()
     }
 
     pub(crate) fn release_notes_url(&self) -> String {
@@ -57,33 +99,64 @@ impl GitHubReleaseSource {
         fetched_tag: &str,
         cached: Option<&Version>,
     ) -> Result<Option<Version>> {
-        let installed = TimestampVersion::parse(&self.installed_tag)?;
+        let installed = self.timestamp(&self.installed_tag)?;
         let current = match cached {
             Some(version) => TimestampVersion::from_status_version(version)
                 .context("invalid cached GitHub release version")?,
             None => installed,
         };
-        let fetched = TimestampVersion::parse(fetched_tag)?;
+        let fetched = self.timestamp(fetched_tag)?;
         Ok((fetched > current).then(|| fetched.status_version()))
     }
 
     pub(crate) fn release_asset(&self, release: GitHubRelease) -> Result<ReleaseAsset> {
+        let (name, version) = if self.channel == ReleaseChannel::Nightly {
+            (
+                "Koda-Nightly",
+                release
+                    .tag_name
+                    .strip_prefix("nightly-")
+                    .context("not a Koda Nightly release tag")?,
+            )
+        } else {
+            ("Koda", release.tag_name.as_str())
+        };
+        let name = format!("{name}-{version}-macos-aarch64.dmg");
+        self.named_asset(release, name)
+    }
+
+    pub(crate) fn remote_server_asset(
+        &self,
+        release: GitHubRelease,
+        os: &str,
+        arch: &str,
+    ) -> Result<ReleaseAsset> {
         ensure!(
-            !release.draft && !release.prerelease && release.published_at.is_some(),
-            "GitHub update is not a published production release"
+            release.tag_name == self.installed_tag,
+            "remote server release does not match the installed Koda build"
         );
-        TimestampVersion::parse(&release.tag_name)?;
-        let name = format!("Zed-{}-macos-aarch64.dmg", release.tag_name);
+        ensure!(
+            matches!(os, "macos" | "linux" | "windows" | "freebsd")
+                && matches!(arch, "aarch64" | "x86_64"),
+            "unsupported Koda remote server platform"
+        );
+        let name = format!("koda-remote-server-{}-{os}-{arch}.gz", self.installed_tag);
+        self.named_asset(release, name)
+    }
+
+    fn named_asset(&self, release: GitHubRelease, name: String) -> Result<ReleaseAsset> {
+        ensure!(
+            !release.draft
+                && release.prerelease == (self.channel == ReleaseChannel::Nightly)
+                && release.published_at.is_some(),
+            "GitHub update is not a published release for this Koda channel"
+        );
+        self.timestamp(&release.tag_name)?;
         let asset = release
             .assets
             .into_iter()
             .find(|asset| asset.name == name)
-            .with_context(|| {
-                format!(
-                    "GitHub release {} has no Apple Silicon DMG",
-                    release.tag_name
-                )
-            })?;
+            .with_context(|| format!("GitHub release {} has no {name}", release.tag_name))?;
         let expected_url = format!(
             "https://github.com/{}/releases/download/{}/{}",
             self.repository, release.tag_name, name
@@ -94,11 +167,11 @@ impl GitHubReleaseSource {
         );
         ensure!(
             asset.state == "uploaded" && asset.size > 0,
-            "GitHub release DMG is not fully uploaded"
+            "GitHub release asset is not fully uploaded"
         );
         let digest = asset
             .digest
-            .context("GitHub release DMG has no SHA-256 digest")?;
+            .context("GitHub release asset has no SHA-256 digest")?;
         let checksum = digest
             .strip_prefix("sha256:")
             .context("unsupported GitHub release asset digest")?;
@@ -213,6 +286,7 @@ mod tests {
         GitHubReleaseSource {
             repository: "anilbeesetti/zed".into(),
             installed_tag: tag.into(),
+            channel: ReleaseChannel::Stable,
         }
     }
 
@@ -220,11 +294,117 @@ mod tests {
         serde_json::from_value(serde_json::json!({
             "tag_name": "2026.09.30.14.05", "draft": false, "prerelease": false,
             "published_at": "2026-09-30T08:35:00Z",
-            "assets": [{ "name": "Zed-2026.09.30.14.05-macos-aarch64.dmg",
-                "browser_download_url": "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.05/Zed-2026.09.30.14.05-macos-aarch64.dmg",
+            "assets": [{ "name": "Koda-2026.09.30.14.05-macos-aarch64.dmg",
+                "browser_download_url": "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.05/Koda-2026.09.30.14.05-macos-aarch64.dmg",
                 "state": "uploaded", "size": 123, "digest": format!("sha256:{}", "a".repeat(64))
             }]
         })).unwrap()
+    }
+
+    fn nightly_source() -> GitHubReleaseSource {
+        GitHubReleaseSource {
+            repository: "anilbeesetti/zed".into(),
+            installed_tag: "nightly-2026.09.30.14.05".into(),
+            channel: ReleaseChannel::Nightly,
+        }
+    }
+
+    fn nightly_release(version: &str) -> GitHubRelease {
+        let mut release = release();
+        release.tag_name = format!("nightly-{version}");
+        release.prerelease = true;
+        release.assets[0].name = format!("Koda-Nightly-{version}-macos-aarch64.dmg");
+        release.assets[0].browser_download_url = format!(
+            "https://github.com/anilbeesetti/zed/releases/download/nightly-{version}/Koda-Nightly-{version}-macos-aarch64.dmg"
+        );
+        release
+    }
+
+    #[test]
+    fn nightly_selects_only_the_newest_published_nightly_prerelease() {
+        let source = nightly_source();
+        assert_eq!(
+            source.api_url().unwrap(),
+            "https://api.github.com/repos/anilbeesetti/zed/releases?per_page=100&page=1"
+        );
+        let mut draft = nightly_release("2026.10.01.14.05");
+        draft.draft = true;
+        let mut unpublished = nightly_release("2026.10.02.14.05");
+        unpublished.published_at = None;
+        let mut preview = nightly_release("2026.10.03.14.05");
+        preview.tag_name = "preview-2026.10.03.14.05".into();
+        let mut dev = nightly_release("2026.10.04.14.05");
+        dev.tag_name = "dev-2026.10.04.14.05".into();
+        let asset = source
+            .latest_prerelease_asset(vec![
+                nightly_release("2026.09.30.14.06"),
+                release(),
+                draft,
+                unpublished,
+                preview,
+                dev,
+                nightly_release("2026.09.29.14.05"),
+            ])
+            .unwrap()
+            .unwrap();
+        assert_eq!(asset.version, "nightly-2026.09.30.14.06");
+        assert!(
+            source
+                .latest_prerelease_asset(vec![release()])
+                .unwrap()
+                .is_none()
+        );
+        let newer = source.newer_version(&asset.version, None).unwrap().unwrap();
+        assert_eq!(display_status_version(&newer), "2026.09.30.14.06");
+        assert!(
+            source
+                .newer_version(&asset.version, Some(&newer))
+                .unwrap()
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn stable_and_nightly_releases_cannot_cross_channels() {
+        let stable = source("2026.09.30.14.05");
+        let nightly = nightly_source();
+        assert!(
+            stable
+                .release_asset(nightly_release("2026.09.30.14.06"))
+                .is_err()
+        );
+        assert!(nightly.release_asset(release()).is_err());
+        assert!(
+            stable
+                .newer_version("nightly-2026.09.30.14.06", None)
+                .is_err()
+        );
+        assert!(nightly.newer_version("2026.09.30.14.06", None).is_err());
+        assert!(nightly.newer_version("dev-2026.09.30.14.06", None).is_err());
+        let mut wrong_asset = nightly_release("2026.09.30.14.06");
+        wrong_asset.assets[0].name = "Koda-2026.09.30.14.06-macos-aarch64.dmg".into();
+        assert!(nightly.release_asset(wrong_asset).is_err());
+    }
+
+    #[test]
+    fn nightly_remote_servers_are_pinned_to_the_installed_prerelease() {
+        let source = nightly_source();
+        let mut remote = nightly_release("2026.09.30.14.05");
+        let name = "koda-remote-server-nightly-2026.09.30.14.05-macos-aarch64.gz";
+        remote.assets[0].name = name.into();
+        remote.assets[0].browser_download_url = format!(
+            "https://github.com/anilbeesetti/zed/releases/download/nightly-2026.09.30.14.05/{name}"
+        );
+        assert!(
+            source
+                .remote_server_asset(remote, "macos", "aarch64")
+                .is_ok()
+        );
+        assert!(
+            source
+                .remote_server_asset(nightly_release("2026.09.30.14.06"), "macos", "aarch64")
+                .is_err()
+        );
     }
 
     #[test]
@@ -287,7 +467,7 @@ mod tests {
                 0 => release.draft = true,
                 1 => release.prerelease = true,
                 2 => release.published_at = None,
-                3 => release.assets[0].name = "Zed-2026.09.30.14.05-macos-x86_64.dmg".into(),
+                3 => release.assets[0].name = "Koda-2026.09.30.14.05-macos-x86_64.dmg".into(),
                 4 => {
                     release.assets[0].browser_download_url = "https://example.com/update.dmg".into()
                 }
@@ -297,6 +477,40 @@ mod tests {
             }
             assert!(source.release_asset(release).is_err());
         }
+    }
+
+    #[test]
+    fn remote_servers_require_the_installed_koda_release() {
+        let source = source("2026.09.30.14.05");
+        let remote = || {
+            let mut release = release();
+            let name = "koda-remote-server-2026.09.30.14.05-macos-aarch64.gz";
+            release.assets[0].name = name.into();
+            release.assets[0].browser_download_url = format!(
+                "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.05/{name}"
+            );
+            release
+        };
+        assert!(
+            source
+                .remote_server_asset(remote(), "macos", "aarch64")
+                .is_ok()
+        );
+        assert!(
+            source
+                .remote_server_asset(remote(), "linux", "x86_64")
+                .is_err()
+        );
+        let mut mismatched = remote();
+        mismatched.tag_name = "2026.09.30.14.06".into();
+        assert!(
+            source
+                .remote_server_asset(mismatched, "macos", "aarch64")
+                .is_err()
+        );
+        let mut upstream = release();
+        upstream.assets[0].name = "Zed-2026.09.30.14.05-macos-aarch64.dmg".into();
+        assert!(source.release_asset(upstream).is_err());
     }
 
     #[test]

@@ -1,9 +1,13 @@
 mod android_debugger;
+mod android_logcat;
+mod android_logcat_panel;
 mod android_preview;
+
+use android_logcat_panel::LogcatPanel;
 
 use android_tools::{
     AndroidTarget, Device, adb_path, android_cli_path, emulator_path, is_gradle_project,
-    parse_devices, parse_emulators, parse_targets,
+    parse_device_abis, parse_devices, parse_emulators, parse_targets,
 };
 use anyhow::{Context as _, Result, bail, ensure};
 use db::kvp::KeyValueStore;
@@ -76,6 +80,8 @@ pub fn init(cx: &mut App) {
             .new(|cx| AndroidPanel::new(workspace.weak_handle(), workspace.project().clone(), cx));
         panel.update(cx, |panel, cx| panel.observe_project_open(window, cx));
         workspace.add_panel(panel, window, cx);
+        let logcat_panel = cx.new(|cx| LogcatPanel::new(workspace, window, cx));
+        workspace.add_panel(logcat_panel, window, cx);
         workspace
             .register_action(|workspace, _: &ToggleFocus, window, cx| {
                 workspace.toggle_panel_focus::<AndroidPanel>(window, cx);
@@ -115,6 +121,18 @@ pub fn init(cx: &mut App) {
                 with_panel(workspace, window, cx, |panel, window, cx| {
                     panel.gradle(GradleOperation::Lint, window, cx)
                 })
+            })
+            .register_action(|workspace, _: &android_logcat::Toggle, window, cx| {
+                if workspace
+                    .panel::<LogcatPanel>(cx)
+                    .is_some_and(|panel| panel.read(cx).has_views(cx))
+                {
+                    if !workspace.toggle_panel_focus::<LogcatPanel>(window, cx) {
+                        workspace.close_panel::<LogcatPanel>(window, cx);
+                    }
+                } else {
+                    with_panel(workspace, window, cx, AndroidPanel::logcat);
+                }
             })
             .register_action(|workspace, _: &Logcat, window, cx| {
                 with_panel(workspace, window, cx, AndroidPanel::logcat)
@@ -964,10 +982,23 @@ impl AndroidPanel {
         self.running = true;
         self.status = "Preparing APK for deployment…".into();
         let root = self.root.clone();
+        let executor = cx.background_executor().clone();
+        let deployment_root = root.clone();
+        let device_serial = serial.clone();
         self.deploy_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let result = cx
                 .background_spawn(async move {
-                    let apk = target.apk()?;
+                    let root = deployment_root.context("The Android project was closed.")?;
+                    let properties = tool_output(
+                        adb_path()?,
+                        vec!["-s".into(), device_serial, "shell".into(), "getprop".into()],
+                        &root,
+                        &executor,
+                        Duration::from_secs(15),
+                    )
+                    .await?;
+                    let abis = parse_device_abis(&properties)?;
+                    let apk = target.apk_for_device(&abis)?;
                     let application_id = if debug {
                         Some(apk.debug_application_id()?.to_owned())
                     } else {
@@ -1255,7 +1286,7 @@ impl AndroidPanel {
                         .find(|worktree| worktree.read(cx).abs_path().as_ref() == root.as_path())
                         .context("The Kotlin workspace was removed")?;
                     let refresh = worktree.read(cx).as_local().context("Kotlin setup requires a local workspace")?
-                        .refresh_entries_for_paths(vec![RelPath::from_unix_str(".zed/settings.json")?.into_arc()]);
+                        .refresh_entries_for_paths(vec![RelPath::from_unix_str(".koda/settings.json")?.into_arc()]);
                     Ok::<_, anyhow::Error>(refresh)
                 })??;
                 refresh.next().await;
@@ -1417,26 +1448,20 @@ impl AndroidPanel {
     fn logcat(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let result = (|| {
             let root = self.trusted_root(cx)?;
-            let serial = self.selected_device()?.serial.clone();
-            let template = TaskTemplate {
-                label: format!("Logcat · {serial}"),
-                command: adb_path()?.to_string_lossy().into_owned(),
-                args: vec![
-                    "-s".into(),
-                    serial,
-                    "logcat".into(),
-                    "-v".into(),
-                    "threadtime".into(),
-                ],
-                reveal: RevealStrategy::Always,
-                show_summary: true,
-                show_command: true,
-                ..Default::default()
-            };
-            let task = resolve_android_task(template, "android-logcat", root)?;
-            self.workspace.update(cx, |workspace, cx| {
-                workspace.schedule_resolved_task(TaskSourceKind::UserInput, task, false, window, cx)
-            })?;
+            let workspace = self.workspace.clone();
+            let serial = self.selected_serial.clone();
+            let targets = self
+                .selected_target
+                .clone()
+                .map(|target| vec![target])
+                .unwrap_or_else(|| self.targets.clone());
+            window.defer(cx, move |window, cx| {
+                workspace
+                    .update(cx, |workspace, cx| {
+                        android_logcat::open(workspace, root, serial, targets, window, cx);
+                    })
+                    .log_err();
+            });
             Ok::<_, anyhow::Error>(())
         })();
         if let Err(error) = result {
@@ -2006,8 +2031,8 @@ impl Render for AndroidPanel {
                 .tooltip(Tooltip::text("Build the selected variant and render a Compose @Preview beside the code."))
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))
             .child(self.preview_picker(cx))
-            .child(Button::new("logcat", "Open Logcat")
-                .disabled(self.selected_device().is_err()).tab_index(0isize)
+            .child(Button::new("logcat", "Open Logcat").start_icon(Icon::new(IconName::Logcat))
+                .tab_index(0isize)
                 .on_click(cx.listener(|panel, _, window, cx| panel.logcat(window, cx))))
             .child(div().text_sm().text_color(cx.theme().colors().text_muted).child(self.status.clone()))
             .when_some(self.error.clone().or_else(|| self.device_error.clone()), |this, error| {
@@ -2111,12 +2136,12 @@ fn java_settings(previous: String, root: &Path, cx: &App) -> Result<String> {
         .cloned()
         .unwrap_or_else(|| serde_json::json!({}));
     let import = root
-        .join(".zed/android-java/import.gradle")
+        .join(".koda/android-java/import.gradle")
         .to_string_lossy()
         .into_owned();
     let model = format!(
         "-Dzed.android.javaModel={}",
-        root.join(".zed/android-java/model.json").display()
+        root.join(".koda/android-java/model.json").display()
     );
     let arguments = java_settings
         .pointer("/java/import/gradle/arguments")
@@ -2158,7 +2183,7 @@ fn android_model_input(path: &RelPath) -> bool {
     if components.iter().any(|component| {
         matches!(
             *component,
-            "build" | "generated" | ".gradle" | ".zed" | ".git"
+            "build" | "generated" | ".gradle" | ".koda" | ".git"
         )
     }) {
         return false;
@@ -2194,7 +2219,7 @@ fn has_official_kotlin_system_path<'a>(
 ) -> bool {
     let expected = format!(
         "--system-path={}",
-        root.join(".zed/android-kotlin-official/system").display()
+        root.join(".koda/android-kotlin-official/system").display()
     );
     let mut system_paths = arguments
         .into_iter()
@@ -2374,7 +2399,7 @@ fn official_kotlin_settings(
             }
             arguments.push(format!(
                 "--system-path={}",
-                root.join(".zed/android-kotlin-official/system").display()
+                root.join(".koda/android-kotlin-official/system").display()
             ));
             binary
                 .env
@@ -2623,8 +2648,8 @@ mod tests {
             "mobile/build/generated/res/values/values.xml",
             "buildSrc/build/classes/AndroidPlugin.kt",
             "build-logic/.gradle/state.gradle",
-            ".zed/settings.json",
-            ".zed/android-kotlin-official/system/gradle.properties",
+            ".koda/settings.json",
+            ".koda/android-kotlin-official/system/gradle.properties",
             ".git/config",
             "generated/AndroidManifest.xml",
             "mobile/src/main/kotlin/Main.kt",
@@ -2719,13 +2744,13 @@ mod tests {
         let _app_state = cx.update(AppState::test);
         let directory = tempfile::tempdir().unwrap();
         let root = directory.path().canonicalize().unwrap();
-        let settings = json!({"languages": {"Kotlin": {"language_servers": ["kotlin-lsp"]}}, "lsp": {"kotlin-lsp": {"binary": {"arguments": [format!("--system-path={}", root.join(".zed/android-kotlin-official/system").display())]}}}}).to_string();
-        std::fs::create_dir(root.join(".zed")).unwrap();
-        std::fs::write(root.join(".zed/settings.json"), &settings).unwrap();
+        let settings = json!({"languages": {"Kotlin": {"language_servers": ["kotlin-lsp"]}}, "lsp": {"kotlin-lsp": {"binary": {"arguments": [format!("--system-path={}", root.join(".koda/android-kotlin-official/system").display())]}}}}).to_string();
+        std::fs::create_dir(root.join(".koda")).unwrap();
+        std::fs::write(root.join(".koda/settings.json"), &settings).unwrap();
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
             &root,
-            json!({".zed": {"settings.json": settings}, "main.kt": "fun main() {}"}),
+            json!({".koda": {"settings.json": settings}, "main.kt": "fun main() {}"}),
         )
         .await;
         let project = Project::test(fs, [root.as_path()], cx).await;
@@ -2783,7 +2808,7 @@ mod tests {
                     .is_err()
             );
             assert_eq!(
-                std::fs::read_to_string(root.join(".zed/settings.json")).unwrap(),
+                std::fs::read_to_string(root.join(".koda/settings.json")).unwrap(),
                 settings
             );
             panel.selected_target = Some(target.clone());
@@ -2798,7 +2823,7 @@ mod tests {
                 .publish_official_kotlin_settings(&root, &target, &settings, updated, cx)
                 .unwrap();
             assert_eq!(
-                std::fs::read_to_string(root.join(".zed/settings.json")).unwrap(),
+                std::fs::read_to_string(root.join(".koda/settings.json")).unwrap(),
                 updated
             );
             assert!(
@@ -2807,7 +2832,7 @@ mod tests {
                     .is_err()
             );
             assert_eq!(
-                std::fs::read_to_string(root.join(".zed/settings.json")).unwrap(),
+                std::fs::read_to_string(root.join(".koda/settings.json")).unwrap(),
                 updated
             );
         });
@@ -3099,7 +3124,7 @@ mod tests {
             other_servers.try_recv().is_err(),
             "A stale explicit restart ID must not start unrelated adapters"
         );
-        let current = json!({"languages": {"Kotlin": {"language_servers": ["kotlin-lsp", "other-server"]}}, "lsp": {"kotlin-lsp": {"binary": {"arguments": ["--system-path=/first/.zed/android-kotlin-official/system"], "env": {"LSP_ANDROID_VARIANT": "demoDebug"}}}}}).to_string();
+        let current = json!({"languages": {"Kotlin": {"language_servers": ["kotlin-lsp", "other-server"]}}, "lsp": {"kotlin-lsp": {"binary": {"arguments": ["--system-path=/first/.koda/android-kotlin-official/system"], "env": {"LSP_ANDROID_VARIANT": "demoDebug"}}}}}).to_string();
         let paused = cx
             .update(|_, cx| paused_official_kotlin_settings(current, Path::new("/first"), cx))
             .unwrap();
@@ -3209,7 +3234,7 @@ mod tests {
             assert_eq!(parsed["lsp"]["custom-kotlin"]["settings"]["custom"], true);
             let official = &parsed["lsp"]["kotlin-lsp"];
             assert_eq!(official["binary"]["path"], "/official/bin/intellij-server");
-            assert_eq!(official["binary"]["arguments"], json!(["--stdio", "--data-sharing=none", "--system-path=/android project/.zed/android-kotlin-official/system"]));
+            assert_eq!(official["binary"]["arguments"], json!(["--stdio", "--data-sharing=none", "--system-path=/android project/.koda/android-kotlin-official/system"]));
             assert_eq!(official["binary"]["env"], json!({"CUSTOM": "kept", "LSP_ANDROID_MODULE": ":mobile", "LSP_ANDROID_VARIANT": "demoDebug"}));
             assert_eq!(official["initialization_options"], json!({"custom": true, "defaultSdk": "/jdk 21", "projects": [
                 {"type": "gradle", "path": "file:///other", "java-home": "/other-jdk"},
@@ -3237,7 +3262,7 @@ mod tests {
             assert!(paused_official_kotlin_settings(disabled.to_string(), root, cx).is_err());
             for arguments in [
                 json!(["--stdio", "--system-path=/custom"]),
-                json!(["--system-path=/android project/.zed/android-kotlin-official/system", "--system-path", "/custom"]),
+                json!(["--system-path=/android project/.koda/android-kotlin-official/system", "--system-path", "/custom"]),
             ] {
                 let mut unmanaged = parsed.clone();
                 unmanaged["lsp"]["kotlin-lsp"]["binary"]["arguments"] = arguments;
@@ -3391,8 +3416,8 @@ mod tests {
             assert_eq!(server["settings"]["java"]["format"]["enabled"], false);
             assert_eq!(server["settings"], server["initialization_options"]["settings"]);
             assert_eq!(server["settings"]["java"]["import"]["gradle"]["arguments"], json!([
-                "--offline", "--init-script", "/android project/.zed/android-java/import.gradle",
-                "-Dzed.android.javaModel=/android project/.zed/android-java/model.json"
+                "--offline", "--init-script", "/android project/.koda/android-java/import.gradle",
+                "-Dzed.android.javaModel=/android project/.koda/android-java/model.json"
             ]));
             assert_eq!(java_settings(updated.clone(), Path::new("/android project"), cx).expect("Setup should be repeatable"), updated);
             assert!(java_settings(r#"{"lsp":{"jdtls":{"initialization_options":[]}}}"#.into(), Path::new("/android"), cx).is_err());

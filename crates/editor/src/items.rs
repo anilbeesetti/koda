@@ -2971,7 +2971,7 @@ mod tests {
             path!("/project"),
             json!({
                 "main.rs": "fn main() {}",
-                ".zed": {"settings.json": json!({"lsp": {"kotlin-lsp": {
+                ".koda": {"settings.json": json!({"lsp": {"kotlin-lsp": {
                     "initialization_options": {"project": "fixture"}
                 }}}).to_string()}
             }),

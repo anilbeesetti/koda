@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+"""Export the Koda icon into the platform packaging formats."""
+
+from pathlib import Path
+import shutil
+import struct
+import subprocess
+
+
+repository = Path(__file__).resolve().parents[1]
+resources = repository / "crates/zed/resources"
+
+
+def export_icon(source, suffix, icns_name):
+    for size, resolution in ((512, ""), (1024, "@2x")):
+        subprocess.run([
+            "magick", str(source), "-resize", f"{size}x{size}", "-strip",
+            str(resources / f"app-icon{suffix}{resolution}.png"),
+        ], check=True)
+    subprocess.run([
+        "magick", str(source), "-define", "icon:auto-resize=256,128,64,48,32,24,16", "-strip",
+        str(resources / f"windows/app-icon{suffix}.ico"),
+    ], check=True)
+    chunks = []
+    for code, resolution in ((b"ic09", ""), (b"ic10", "@2x")):
+        content = (resources / f"app-icon{suffix}{resolution}.png").read_bytes()
+        chunks.append(code + struct.pack(">I", len(content) + 8) + content)
+    body = b"".join(chunks)
+    (resources / icns_name).write_bytes(b"icns" + struct.pack(">I", len(body) + 8) + body)
+
+
+export_icon(repository / "assets/branding/koda-icon.png", "", "Koda.icns")
+export_icon(repository / "assets/branding/koda-icon-nightly.png", "-nightly", "KodaNightly.icns")
+for channel in ("dev", "preview"):
+    for suffix in ("", "@2x"):
+        shutil.copyfile(resources / f"app-icon{suffix}.png", resources / f"app-icon-{channel}{suffix}.png")
+    shutil.copyfile(resources / "windows/app-icon.ico", resources / f"windows/app-icon-{channel}.ico")
+shutil.copyfile(resources / "Koda.icns", resources / "Document.icns")
