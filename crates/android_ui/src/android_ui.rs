@@ -11,9 +11,9 @@ use android_tools::{
 use anyhow::{Context as _, Result, bail, ensure};
 use db::kvp::KeyValueStore;
 use futures::{
-    StreamExt as _,
+    FutureExt as _, StreamExt as _,
     channel::oneshot,
-    future::{Either, select},
+    future::{Either, Shared, select},
 };
 use gpui::{
     Action, App, BackgroundExecutor, Context, Entity, EventEmitter, FocusHandle, Focusable,
@@ -31,8 +31,9 @@ use task::{RevealStrategy, SaveStrategy, TaskContext, TaskTemplate};
 use ui::{ContextMenu, PopoverMenu, Tooltip, prelude::*};
 use util::{ResultExt as _, command::new_command, rel_path::RelPath};
 use workspace::{
-    Workspace,
+    Toast, Workspace,
     dock::{DockPosition, Panel, PanelEvent},
+    notifications::NotificationId,
     tasks::ScheduledTaskResult,
 };
 pub use zed_actions::android::Logcat;
@@ -194,11 +195,21 @@ enum GradleOperation {
 
 enum AfterTask {
     Deploy(AndroidTarget, String, bool),
+    DeployOnEmulator(AndroidTarget, String, bool),
     AttachDebugger(PathBuf, String, String),
     Java(AndroidTarget),
     Preview(AndroidTarget),
     RefreshDevices,
-    EmulatorReady(String, GradleOperation, PathBuf),
+}
+
+const EMULATOR_BOOT_TIMEOUT: Duration = Duration::from_secs(120);
+const EMULATOR_START_TIMEOUT: Duration = Duration::from_secs(180);
+
+struct EmulatorStartup {
+    root: PathBuf,
+    name: String,
+    ready: Shared<Task<std::result::Result<(), String>>>,
+    error_reported: bool,
 }
 
 #[derive(RegisterSetting)]
@@ -251,6 +262,7 @@ pub struct AndroidPanel {
     selected_avd: Option<String>,
     emulator_serials: HashMap<String, String>,
     emulator_task: Option<Task<()>>,
+    emulator_startup: Option<EmulatorStartup>,
     status: SharedString,
     error: Option<String>,
     device_error: Option<String>,
@@ -328,6 +340,7 @@ impl AndroidPanel {
             selected_avd: None,
             emulator_serials: HashMap::new(),
             emulator_task: None,
+            emulator_startup: None,
             status: "Sync an Android project to discover its build variants.".into(),
             error: None,
             device_error: None,
@@ -545,6 +558,8 @@ impl AndroidPanel {
         self.command_cancel = None;
         self.sync_task = None;
         self.build_task = None;
+        self.emulator_task = None;
+        self.emulator_startup = None;
         self.java_task = None;
         if self.kotlin_task.take().is_some() {
             self.kotlin_setup_error = Some("Kotlin setup cancelled".into());
@@ -571,6 +586,7 @@ impl AndroidPanel {
         if self
             .root
             .as_ref()
+            .or_else(|| self.emulator_startup.as_ref().map(|startup| &startup.root))
             .is_some_and(|root| !self.roots(cx).contains(root))
         {
             if let Some(cancel) = self.command_cancel.take() {
@@ -598,6 +614,10 @@ impl AndroidPanel {
                 }
             }
             self.syncing = false;
+            if self.emulator_startup.take().is_some() {
+                self.emulator_task = None;
+                self.running = false;
+            }
             self.kotlin_refresh_task = None;
             self.kotlin_refresh_pending = None;
             if self.kotlin_task.take().is_some() {
@@ -884,13 +904,6 @@ impl AndroidPanel {
         if self.running || self.syncing {
             return;
         }
-        if matches!(operation, GradleOperation::Run | GradleOperation::Debug)
-            && self.selected_device().is_err()
-            && let Some(name) = self.selected_avd.clone()
-        {
-            self.start_emulator(name, Some(operation), window, cx);
-            return;
-        }
         let result = (|| {
             let root = self.trusted_root(cx)?;
             let target = self
@@ -910,11 +923,26 @@ impl AndroidPanel {
                 android_tools::kotlin::java_home()?;
             }
             let after_task = match operation {
-                GradleOperation::Run | GradleOperation::Debug => Some(AfterTask::Deploy(
-                    target.clone(),
-                    self.selected_device()?.serial.clone(),
-                    matches!(operation, GradleOperation::Debug),
-                )),
+                GradleOperation::Run | GradleOperation::Debug => {
+                    let debug = matches!(operation, GradleOperation::Debug);
+                    if let Some(name) = &self.selected_avd {
+                        ensure!(
+                            self.selected_device().is_ok() || self.emulators.contains(name),
+                            "Refresh devices and select an available emulator first."
+                        );
+                        Some(AfterTask::DeployOnEmulator(
+                            target.clone(),
+                            name.clone(),
+                            debug,
+                        ))
+                    } else {
+                        Some(AfterTask::Deploy(
+                            target.clone(),
+                            self.selected_device()?.serial.clone(),
+                            debug,
+                        ))
+                    }
+                }
                 GradleOperation::Java => Some(AfterTask::Java(target.clone())),
                 GradleOperation::Preview => Some(AfterTask::Preview(target.clone())),
                 _ => None,
@@ -944,6 +972,11 @@ impl AndroidPanel {
                 )
             };
             self.last_build_operation = Some(operation);
+            let emulator = match &after_task {
+                Some(AfterTask::DeployOnEmulator(_, name, _)) => Some(name.clone()),
+                _ => None,
+            };
+            let emulator_root = root.clone();
             self.schedule_build(
                 format!(
                     "{name} {}",
@@ -955,7 +988,11 @@ impl AndroidPanel {
                 after_task,
                 window,
                 cx,
-            )
+            )?;
+            if let Some(name) = emulator {
+                self.start_emulator_background(name, emulator_root, cx);
+            }
+            Ok(())
         })();
         if let Err(error) = result {
             self.fail(error, window, cx);
@@ -1181,6 +1218,7 @@ impl AndroidPanel {
                     );
                     let target = match &after_task {
                         Some(AfterTask::Deploy(target, _, _))
+                        | Some(AfterTask::DeployOnEmulator(target, _, _))
                         | Some(AfterTask::Java(target))
                         | Some(AfterTask::Preview(target)) => Some(target),
                         _ => None,
@@ -1195,6 +1233,8 @@ impl AndroidPanel {
                     Ok::<_, anyhow::Error>(())
                 })();
                 if let Err(error) = context {
+                    self.emulator_task = None;
+                    self.emulator_startup = None;
                     self.fail(error, window, cx);
                     return;
                 }
@@ -1203,20 +1243,31 @@ impl AndroidPanel {
                     Some(AfterTask::Deploy(target, serial, debug)) => {
                         self.deploy(target, serial, debug, window, cx)
                     }
+                    Some(AfterTask::DeployOnEmulator(target, name, debug)) => self
+                        .wait_for_emulator(
+                            name,
+                            root.to_path_buf(),
+                            Some((target, debug)),
+                            window,
+                            cx,
+                        ),
                     Some(AfterTask::AttachDebugger(root, serial, application_id)) => {
                         self.attach_debugger(root, serial, application_id, window, cx)
                     }
                     Some(AfterTask::Java(target)) => self.configure_java(target, window, cx),
                     Some(AfterTask::Preview(target)) => self.generate_preview(target, window, cx),
                     Some(AfterTask::RefreshDevices) => self.refresh_devices(cx),
-                    Some(AfterTask::EmulatorReady(name, operation, root)) => {
-                        self.run_on_emulator(name, operation, root, window, cx)
-                    }
                     None => {}
                 }
             }
-            ScheduledTaskResult::Cancelled => self.status = "Task cancelled".into(),
+            ScheduledTaskResult::Cancelled => {
+                self.emulator_task = None;
+                self.emulator_startup = None;
+                self.status = "Task cancelled".into();
+            }
             ScheduledTaskResult::Failure | ScheduledTaskResult::SpawnFailed => {
+                self.emulator_task = None;
+                self.emulator_startup = None;
                 self.fail(
                     anyhow::anyhow!(
                         "Android command failed. See the Build pane or command output for the error and retry after fixing it."
@@ -1999,13 +2050,110 @@ impl AndroidPanel {
         menu
     }
 
-    fn start_emulator(
-        &mut self,
-        name: String,
-        operation: Option<GradleOperation>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    fn notify_emulator_error(&mut self, message: String, cx: &mut Context<Self>) {
+        self.error = Some(message.clone());
+        let workspace = self.workspace.clone();
+        cx.defer(move |cx| {
+            workspace
+                .update(cx, |workspace, cx| {
+                    workspace.show_toast(
+                        Toast::new(NotificationId::unique::<EmulatorStartup>(), message).autohide(),
+                        cx,
+                    );
+                })
+                .log_err();
+        });
+        cx.notify();
+    }
+
+    fn start_emulator_background(&mut self, name: String, root: PathBuf, cx: &mut Context<Self>) {
+        let already_running = self.emulator_serials.get(&name).is_some_and(|serial| {
+            self.devices
+                .iter()
+                .any(|device| &device.serial == serial && device.is_available())
+        });
+        let ready = if already_running {
+            Task::ready(Ok(())).shared()
+        } else {
+            let environment =
+                self.project
+                    .read(cx)
+                    .environment()
+                    .clone()
+                    .update(cx, |environment, cx| {
+                        environment.local_directory_environment(
+                            &task::Shell::Program(util::get_system_shell()),
+                            Arc::from(root.as_path()),
+                            cx,
+                        )
+                    });
+            let terminal_environment = self
+                .project
+                .read(cx)
+                .terminal_settings(&Some(root.clone()), cx)
+                .env
+                .clone();
+            let executor = cx.background_executor().clone();
+            cx.spawn({
+                let name = name.clone();
+                let root = root.clone();
+                async move |panel, cx| {
+                    let mut environment = environment.await.unwrap_or_default();
+                    environment.extend(terminal_environment);
+                    let valid = panel
+                        .read_with(cx, |panel, cx| {
+                            ensure!(
+                                panel.trusted_root(cx)? == root,
+                                "The Android project changed before emulator startup."
+                            );
+                            Ok::<_, anyhow::Error>(())
+                        })
+                        .and_then(|result| result);
+                    let result = match valid {
+                        Ok(()) => {
+                            let name = name.clone();
+                            cx.background_spawn(async move {
+                                let mut command = new_command(android_cli_path()?);
+                                command
+                                    .args(["emulator", "start", &name])
+                                    .current_dir(&root)
+                                    .envs(environment);
+                                command_output(command, &executor, EMULATOR_START_TIMEOUT).await?;
+                                Ok::<_, anyhow::Error>(())
+                            })
+                            .await
+                        }
+                        Err(error) => Err(error),
+                    };
+                    result.map_err(|error| format!("Could not start emulator {name}: {error:#}"))
+                }
+            })
+            .shared()
+        };
+        self.emulator_startup = Some(EmulatorStartup {
+            root: root.clone(),
+            name: name.clone(),
+            ready: ready.clone(),
+            error_reported: false,
+        });
+        self.emulator_task = Some(cx.spawn(async move |panel, cx| {
+            if let Err(message) = ready.await {
+                panel
+                    .update(cx, |panel, cx| {
+                        if let Some(startup) = &mut panel.emulator_startup
+                            && startup.root == root
+                            && startup.name == name
+                        {
+                            startup.error_reported = true;
+                            panel.notify_emulator_error(message, cx);
+                        }
+                    })
+                    .log_err();
+            }
+        }));
+    }
+
+    fn start_emulator(&mut self, name: String, window: &mut Window, cx: &mut Context<Self>) {
         if self.running || self.syncing {
             return;
         }
@@ -2015,56 +2163,77 @@ impl AndroidPanel {
                 self.emulators.contains(&name),
                 "Refresh devices and select an available emulator first."
             );
-            let after_task = operation
-                .map(|operation| AfterTask::EmulatorReady(name.clone(), operation, root.clone()))
-                .unwrap_or(AfterTask::RefreshDevices);
-            ensure!(
-                operation.is_none() || self.selected_target.is_some(),
-                "Sync the Android project and select a build variant first."
-            );
             self.selected_avd = Some(name.clone());
-            self.schedule(
-                format!("Android Emulator · {name}"),
-                android_cli_path()?,
-                vec!["emulator".into(), "start".into(), name],
-                root,
-                Some(after_task),
-                window,
-                cx,
-            )
+            self.start_emulator_background(name.clone(), root.clone(), cx);
+            self.wait_for_emulator(name, root, None, window, cx);
+            Ok::<_, anyhow::Error>(())
         })();
         if let Err(error) = result {
-            self.fail(error, window, cx);
+            self.notify_emulator_error(format!("{error:#}"), cx);
         }
     }
 
-    fn run_on_emulator(
+    fn wait_for_emulator(
         &mut self,
         name: String,
-        operation: GradleOperation,
         root: PathBuf,
+        deployment: Option<(AndroidTarget, bool)>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        self.running = true;
-        self.status = format!("Connecting to {name}…").into();
+        let Some(startup) = self
+            .emulator_startup
+            .as_ref()
+            .filter(|startup| startup.name == name && startup.root == root)
+        else {
+            self.notify_emulator_error(
+                "Emulator startup is no longer active. Run again to retry.".into(),
+                cx,
+            );
+            return;
+        };
+        let ready = startup.ready.clone();
         let executor = cx.background_executor().clone();
+        self.running = true;
+        self.status = format!("Waiting for {name} to finish booting…").into();
         self.emulator_task = Some(cx.spawn_in(window, async move |panel, cx| {
-            let result = cx.background_spawn(async move { connected_devices(&executor).await }).await;
+            let boot = async {
+                cx.background_spawn({
+                    let executor = executor.clone();
+                    let name = name.clone();
+                    async move { booted_emulator(&name, &executor).await }
+                }).await
+            };
+            let result = emulator_ready_with_timeout(&name, ready, boot, &executor, EMULATOR_BOOT_TIMEOUT).await;
             panel.update_in(cx, |panel, window, cx| {
+                let Some(startup) = panel.emulator_startup.take() else { return; };
                 panel.running = false;
-                let result = result.and_then(|(devices, serials)| {
+                let result = result.and_then(|(devices, serials, serial)| {
                     ensure!(panel.trusted_root(cx)? == root, "The Android project changed while the emulator was starting.");
-                    let serial = serials.get(&name).cloned().context("The selected emulator started but is not available in ADB. Refresh devices and retry.")?;
-                    panel.selected_serial = Some(serial);
+                    if let Some((target, _)) = &deployment {
+                        ensure!(panel.selected_target.as_ref() == Some(target) && panel.targets.contains(target), "The selected Android variant changed while the emulator was starting.");
+                    }
+                    panel.selected_serial = Some(serial.clone());
                     panel.selected_avd = Some(name);
                     panel.devices = devices;
                     panel.emulator_serials = serials;
-                    Ok(())
+                    Ok(serial)
                 });
                 match result {
-                    Ok(()) => panel.gradle(operation, window, cx),
-                    Err(error) => panel.fail(error, window, cx),
+                    Ok(serial) => {
+                        panel.error = None;
+                        if let Some((target, debug)) = deployment {
+                            panel.deploy(target, serial, debug, window, cx);
+                        } else {
+                            panel.status = "Emulator ready".into();
+                        }
+                    }
+                    Err(error) => {
+                        panel.status = "Emulator startup failed".into();
+                        if !startup.error_reported {
+                            panel.notify_emulator_error(format!("{error:#}"), cx);
+                        }
+                    }
                 }
                 cx.notify();
             }).log_err();
@@ -2118,7 +2287,7 @@ impl AndroidPanel {
                         let panel = panel.clone();
                         let name = name.clone();
                         menu = menu.entry(name.clone(), None, move |window, cx| {
-                            panel.update(cx, |panel, cx| panel.start_emulator(name.clone(), None, window, cx)).log_err();
+                            panel.update(cx, |panel, cx| panel.start_emulator(name.clone(), window, cx)).log_err();
                         });
                     }
                     menu
@@ -2750,7 +2919,13 @@ fn resolve_android_task(
 async fn connected_devices(
     executor: &BackgroundExecutor,
 ) -> Result<(Vec<Device>, HashMap<String, String>)> {
-    let adb = adb_path()?;
+    connected_devices_with_adb(adb_path()?, executor).await
+}
+
+async fn connected_devices_with_adb(
+    adb: PathBuf,
+    executor: &BackgroundExecutor,
+) -> Result<(Vec<Device>, HashMap<String, String>)> {
     let output = tool_output(
         adb.clone(),
         vec!["devices".into(), "-l".into()],
@@ -2794,6 +2969,69 @@ async fn connected_devices(
         }
     }
     Ok((devices, emulator_serials))
+}
+
+type BootedEmulator = (Vec<Device>, HashMap<String, String>, String);
+
+async fn emulator_ready_with_timeout(
+    name: &str,
+    startup: impl std::future::Future<Output = std::result::Result<(), String>>,
+    boot: impl std::future::Future<Output = Result<BootedEmulator>>,
+    executor: &BackgroundExecutor,
+    timeout: Duration,
+) -> Result<BootedEmulator> {
+    let wait = async {
+        startup.await.map_err(anyhow::Error::msg)?;
+        boot.await
+    };
+    match select(Box::pin(wait), Box::pin(executor.timer(timeout))).await {
+        Either::Left((result, _)) => result,
+        Either::Right(_) => bail!(
+            "Emulator {name} did not finish booting within {} seconds. Check the emulator and run again.",
+            timeout.as_secs()
+        ),
+    }
+}
+
+async fn booted_emulator(name: &str, executor: &BackgroundExecutor) -> Result<BootedEmulator> {
+    booted_emulator_with_adb(name, adb_path()?, executor).await
+}
+
+async fn booted_emulator_with_adb(
+    name: &str,
+    adb: PathBuf,
+    executor: &BackgroundExecutor,
+) -> Result<BootedEmulator> {
+    loop {
+        if let Some((devices, serials)) = connected_devices_with_adb(adb.clone(), executor)
+            .await
+            .log_err()
+            && let Some(serial) = serials.get(name)
+        {
+            let boot_completed = tool_output(
+                adb.clone(),
+                vec![
+                    "-s".into(),
+                    serial.clone(),
+                    "shell".into(),
+                    "getprop".into(),
+                    "sys.boot_completed".into(),
+                ],
+                Path::new("."),
+                executor,
+                Duration::from_secs(5),
+            )
+            .await;
+            if boot_completed
+                .log_err()
+                .is_some_and(|output| output.trim() == "1")
+            {
+                let serial = serial.clone();
+                return Ok((devices, serials, serial));
+            }
+        }
+        executor.timer(Duration::from_secs(1)).await;
+    }
 }
 
 async fn tool_output(
@@ -2861,6 +3099,227 @@ mod tests {
     };
     use serde_json::json;
     use workspace::AppState;
+
+    #[gpui::test]
+    async fn run_schedules_build_and_background_emulator_together_and_cancels_both(
+        cx: &mut TestAppContext,
+    ) {
+        let _app_state = cx.update(AppState::test);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree(
+            "/android",
+            json!({"settings.gradle.kts": "", "gradlew": ""}),
+        )
+        .await;
+        let project = Project::test(fs, [Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        panel.update_in(cx, |panel, window, cx| {
+            panel.root = Some(PathBuf::from("/android"));
+            let target = AndroidTarget {
+                module: ":app".into(),
+                variant: "debug".into(),
+                output_listing: "/android/output.json".into(),
+            };
+            panel.targets = vec![target.clone()];
+            panel.selected_target = Some(target);
+            panel.emulators = vec!["Selected".into()];
+            panel.selected_avd = Some("Selected".into());
+            panel.gradle(GradleOperation::Run, window, cx);
+            assert!(panel.running);
+            assert!(
+                panel.build_task.is_some(),
+                "Build starts before emulator readiness"
+            );
+            assert!(
+                panel
+                    .active_build_session
+                    .is_some_and(|(tab, _)| tab == BuildTab::Output)
+            );
+            assert!(panel.emulator_startup.is_some());
+            assert!(panel.emulator_task.is_some());
+            assert!(panel.deploy_task.is_none());
+            assert!(panel.error.is_none());
+            panel.cancel_build(BuildTab::Output, cx);
+            assert!(!panel.running);
+            assert!(panel.build_task.is_none());
+            assert!(panel.emulator_startup.is_none());
+            assert!(panel.emulator_task.is_none());
+        });
+    }
+
+    #[gpui::test]
+    async fn emulator_wait_handles_ready_failed_and_unfinished_startup(cx: &mut TestAppContext) {
+        let executor = cx.background_executor.clone();
+        let ready = emulator_ready_with_timeout(
+            "Selected",
+            futures::future::ready(Ok(())),
+            futures::future::ready(Ok((Vec::new(), HashMap::new(), "emulator-5556".into()))),
+            &executor,
+            EMULATOR_BOOT_TIMEOUT,
+        )
+        .await
+        .expect("Already booted emulator");
+        assert_eq!(ready.2, "emulator-5556");
+        let failed = emulator_ready_with_timeout(
+            "Selected",
+            futures::future::ready(Err("Emulator launch failed".into())),
+            futures::future::pending(),
+            &executor,
+            EMULATOR_BOOT_TIMEOUT,
+        )
+        .await
+        .expect_err("Launch failure must prevent deployment");
+        assert_eq!(failed.to_string(), "Emulator launch failed");
+        let timed_out = emulator_ready_with_timeout(
+            "Selected",
+            futures::future::pending(),
+            futures::future::pending(),
+            &executor,
+            Duration::from_secs(2),
+        )
+        .await
+        .expect_err("Unfinished startup must time out");
+        assert!(timed_out.to_string().contains("within 2 seconds"));
+    }
+
+    #[gpui::test]
+    async fn run_waits_for_emulator_only_after_build_and_times_out_without_deploying(
+        cx: &mut TestAppContext,
+    ) {
+        let _app_state = cx.update(AppState::test);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree(
+            "/android",
+            json!({"settings.gradle.kts": "", "gradlew": ""}),
+        )
+        .await;
+        let project = Project::test(fs, [Path::new("/android")], cx).await;
+        let root = PathBuf::from("/android");
+        let worktree_id = project.read_with(cx, |project, cx| {
+            project
+                .visible_worktrees(cx)
+                .next()
+                .expect("Worktree")
+                .read(cx)
+                .id()
+        });
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let target = AndroidTarget {
+            module: ":app".into(),
+            variant: "debug".into(),
+            output_listing: root.join("output.json"),
+        };
+        let (started, startup) = oneshot::channel::<()>();
+        panel.update(cx, |panel, cx| {
+            panel.root = Some(root.clone());
+            panel.targets = vec![target.clone()];
+            panel.selected_target = Some(target.clone());
+            panel.running = true;
+            panel.emulator_startup = Some(EmulatorStartup {
+                root: root.clone(),
+                name: "Selected".into(),
+                error_reported: false,
+                ready: cx
+                    .spawn(async move |_, _| startup.await.map_err(|error| error.to_string()))
+                    .shared(),
+            });
+        });
+        cx.run_until_parked();
+        cx.executor().advance_clock(Duration::from_secs(300));
+        cx.run_until_parked();
+        panel.read_with(cx, |panel, _| {
+            assert!(panel.running);
+            assert!(
+                panel.emulator_task.is_none(),
+                "Build does not wait for startup"
+            );
+            assert!(panel.error.is_none());
+        });
+        panel.update_in(cx, |panel, window, cx| {
+            panel.complete_scheduled_task(
+                &root,
+                worktree_id,
+                Some(AfterTask::DeployOnEmulator(
+                    target,
+                    "Selected".into(),
+                    false,
+                )),
+                ScheduledTaskResult::Success,
+                window,
+                cx,
+            )
+        });
+        cx.run_until_parked();
+        cx.executor().advance_clock(Duration::from_secs(119));
+        cx.run_until_parked();
+        panel.read_with(cx, |panel, _| {
+            assert!(panel.running);
+            assert!(panel.emulator_task.is_some());
+            assert!(
+                panel.build_task.is_none(),
+                "Emulator readiness must not rebuild"
+            );
+            assert!(panel.deploy_task.is_none());
+            assert!(panel.error.is_none());
+        });
+        cx.executor().advance_clock(Duration::from_secs(2));
+        cx.run_until_parked();
+        panel.read_with(cx, |panel, _| {
+            assert!(!panel.running);
+            assert!(panel.emulator_startup.is_none());
+            assert!(panel.deploy_task.is_none());
+            assert!(
+                panel
+                    .error
+                    .as_ref()
+                    .is_some_and(|error| error.contains("within 120 seconds"))
+            );
+        });
+        assert!(started.send(()).is_err(), "Timeout cancels pending startup");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn emulator_readiness_checks_selected_avd_and_waits_for_full_boot() -> Result<()> {
+        use std::os::unix::fs::PermissionsExt as _;
+        let directory = tempfile::tempdir()?;
+        let adb = directory.path().join("adb");
+        std::fs::write(
+            &adb,
+            r#"#!/bin/sh
+if [ "$1" = devices ]; then
+  printf 'List of devices attached\nemulator-5554 device model:Other\nemulator-5556 device model:Selected\n'
+elif [ "$3" = emu ]; then
+  if [ "$2" = emulator-5554 ]; then printf 'Other\nOK\n'; else printf 'Selected\nOK\n'; fi
+elif [ "$3" = shell ]; then
+  [ "$2" = emulator-5556 ] || exit 9
+  [ "$4" = getprop ] && [ "$5" = sys.boot_completed ] || exit 8
+  boot_marker="${0%/*}/boot-checked"
+  if [ -f "$boot_marker" ]; then printf '1\n'; else touch "$boot_marker"; printf '0\n'; fi
+else
+  exit 7
+fi
+"#,
+        )?;
+        std::fs::set_permissions(&adb, std::fs::Permissions::from_mode(0o755))?;
+        let executor = BackgroundExecutor::new(Arc::new(gpui::ThreadedDispatcher::new()));
+        let (devices, serials, serial) = futures::executor::block_on(emulator_ready_with_timeout(
+            "Selected",
+            futures::future::ready(Ok(())),
+            booted_emulator_with_adb("Selected", adb, &executor),
+            &executor,
+            Duration::from_secs(5),
+        ))?;
+        assert_eq!(serial, "emulator-5556");
+        assert_eq!(serials.get("Selected"), Some(&serial));
+        assert_eq!(devices.len(), 2);
+        assert!(directory.path().join("boot-checked").is_file());
+        Ok(())
+    }
 
     #[cfg(unix)]
     #[test]
@@ -3047,7 +3506,11 @@ mod tests {
             assert!(panel.running, "the original Gradle task is still pending");
             assert!(panel.root.is_none());
             assert_eq!(panel.trusted_root(cx).unwrap(), PathBuf::from("/android-b"));
-            for after_task in [AfterTask::Java(target.clone()), AfterTask::Preview(target)] {
+            for after_task in [
+                AfterTask::Java(target.clone()),
+                AfterTask::DeployOnEmulator(target.clone(), "Selected".into(), false),
+                AfterTask::Preview(target),
+            ] {
                 panel.running = true;
                 panel.complete_scheduled_task(
                     &root,
@@ -3063,6 +3526,10 @@ mod tests {
                     "must not start B's Gradle export"
                 );
                 assert!(panel.preview_task.is_none(), "must not start B's renderer");
+                assert!(
+                    panel.emulator_task.is_none(),
+                    "must not deploy in another root"
+                );
                 assert!(
                     panel
                         .error
@@ -3843,7 +4310,7 @@ mod tests {
                     .as_ref()
                     .is_some_and(|error| error.contains("physical devices"))
             );
-            panel.start_emulator("--help".into(), None, window, cx);
+            panel.start_emulator("--help".into(), window, cx);
             assert!(!panel.running);
             assert!(
                 panel
