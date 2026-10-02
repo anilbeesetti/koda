@@ -8,9 +8,9 @@ use gpui::{
     PathPromptOptions, Point, ScrollHandle, TextRun, deferred, list, point,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, io::Read as _, time::Instant};
+use std::{cell::Cell, collections::HashSet, io::Read as _, rc::Rc, time::Instant};
 use theme_settings::ThemeSettings;
-use ui::{ScrollAxes, ScrollableHandle, Scrollbars, WithScrollbar};
+use ui::{ButtonLike, ScrollAxes, ScrollableHandle, Scrollbars, WithScrollbar};
 use ui_input::{ErasedEditorEvent, InputField};
 use util::command::Stdio;
 use workspace::{
@@ -148,6 +148,7 @@ pub(super) struct LogcatView {
     completions: Vec<String>,
     completion_range: std::ops::Range<usize>,
     completion_index: usize,
+    completion_scroll: ScrollHandle,
     suppress_completion: bool,
     search_visible: bool,
     horizontal_scroll: ScrollHandle,
@@ -160,6 +161,9 @@ pub(super) struct LogcatView {
     visible: Vec<Arc<Entry>>,
     selected: HashSet<u64>,
     selection_anchor: Option<u64>,
+    text_selection: Option<((u64, usize), (u64, usize))>,
+    selecting_text: bool,
+    text_layouts: HashMap<u64, gpui::TextLayout>,
     search: Option<logcat::Search>,
     search_case: bool,
     search_regex: bool,
@@ -274,6 +278,7 @@ impl LogcatView {
             completions: Vec::new(),
             completion_range: 0..0,
             completion_index: 0,
+            completion_scroll: ScrollHandle::new(),
             suppress_completion: false,
             search_visible: false,
             horizontal_scroll: ScrollHandle::new(),
@@ -284,6 +289,9 @@ impl LogcatView {
             visible: Vec::new(),
             selected: HashSet::new(),
             selection_anchor: None,
+            text_selection: None,
+            selecting_text: false,
+            text_layouts: HashMap::default(),
             search: None,
             search_case: false,
             search_regex: false,
@@ -405,6 +413,8 @@ impl LogcatView {
         self.completion_range = range;
         self.completions = completions;
         self.completion_index = 0;
+        self.completion_scroll.set_offset(point(px(0.), px(0.)));
+        self.completion_scroll.scroll_to_item(0);
         cx.notify();
     }
 
@@ -416,6 +426,7 @@ impl LogcatView {
             } else {
                 (self.completion_index + 1) % count
             };
+            self.completion_scroll.scroll_to_item(self.completion_index);
             cx.notify();
         }
     }
@@ -518,7 +529,7 @@ impl LogcatView {
                             .width
                     })
                     .fold(px(0.), Pixels::max)
-                    + px(40.)
+                    + px(16.)
             });
             width = width.max(*entry_width);
         }
@@ -927,6 +938,9 @@ impl LogcatView {
             self.measured_widths
                 .retain(|id, _| retained_ids.contains(id));
             self.selected.retain(|id| retained_ids.contains(id));
+            self.text_selection = self.text_selection.filter(|(anchor, head)| {
+                retained_ids.contains(&anchor.0) && retained_ids.contains(&head.0)
+            });
             self.selection_anchor = self.selection_anchor.filter(|id| retained_ids.contains(id));
             self.update_search(cx);
         }
@@ -981,6 +995,7 @@ impl LogcatView {
             self.list_state.pause_following_tail();
             self.list_state.scroll_to_reveal_item(index);
             if let Some(entry) = self.visible.get(index) {
+                self.text_selection = None;
                 self.selected.clear();
                 self.selected.insert(entry.id);
             }
@@ -1007,10 +1022,74 @@ impl LogcatView {
         }
         self.selected.clear();
         self.selection_anchor = None;
+        self.text_selection = None;
+        self.selecting_text = false;
         self.rebuild(cx);
     }
 
+    fn text_selection_extent(&self) -> Option<((usize, usize), (usize, usize))> {
+        let (anchor, head) = self.text_selection?;
+        let anchor_index = self.visible.iter().position(|entry| entry.id == anchor.0)?;
+        let head_index = self.visible.iter().position(|entry| entry.id == head.0)?;
+        let anchor = (anchor_index, anchor.1);
+        let head = (head_index, head.1);
+        Some((anchor.min(head), anchor.max(head)))
+    }
+
+    fn text_selection_range(&self, index: usize, length: usize) -> Option<std::ops::Range<usize>> {
+        let (start, end) = self.text_selection_extent()?;
+        if index < start.0 || index > end.0 {
+            return None;
+        }
+        Some(
+            if index == start.0 {
+                start.1.min(length)
+            } else {
+                0
+            }..if index == end.0 {
+                end.1.min(length)
+            } else {
+                length
+            },
+        )
+    }
+
+    fn selected_text(&self) -> String {
+        let Some((start, end)) = self.text_selection_extent() else {
+            return String::new();
+        };
+        self.visible
+            .get(start.0..=end.0)
+            .unwrap_or_default()
+            .iter()
+            .enumerate()
+            .filter_map(|(offset, entry)| {
+                let display = display_line(
+                    entry,
+                    self.preferences.compact,
+                    self.preferences.fold_stacktraces && !self.selected.contains(&entry.id),
+                );
+                let start_offset = if offset == 0 { start.1 } else { 0 };
+                let end_offset = if start.0 + offset == end.0 {
+                    end.1
+                } else {
+                    display.text.len()
+                };
+                display
+                    .text
+                    .get(start_offset..end_offset)
+                    .map(str::to_owned)
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
     fn copy(&self, messages_only: bool, cx: &mut Context<Self>) {
+        let selected_text = self.selected_text();
+        if !selected_text.is_empty() {
+            cx.write_to_clipboard(ClipboardItem::new_string(selected_text));
+            return;
+        }
         let text = self
             .visible
             .iter()
@@ -1196,14 +1275,26 @@ impl LogcatView {
         let view = cx.weak_entity();
         PopoverMenu::new("logcat-device")
             .trigger(
-                Button::new("logcat-device-trigger", label)
+                ButtonLike::new("logcat-device-trigger")
                     .full_width()
-                    .truncate(true)
                     .tooltip(Tooltip::text(tooltip))
                     .tab_index(0isize)
                     .style(ButtonStyle::Outlined)
-                    .start_icon(Icon::new(IconName::Screen))
-                    .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall)),
+                    .child(
+                        h_flex()
+                            .w_full()
+                            .gap_1()
+                            .child(Icon::new(IconName::Screen))
+                            .child(
+                                div()
+                                    .flex_1()
+                                    .min_w_0()
+                                    .text_left()
+                                    .debug_selector(|| "logcat-device-label".into())
+                                    .child(Label::new(label).truncate()),
+                            )
+                            .child(Icon::new(IconName::ChevronDown).size(IconSize::XSmall)),
+                    ),
             )
             .menu(move |window, cx| {
                 let view = view.clone();
@@ -1312,6 +1403,7 @@ impl LogcatView {
                     menu = menu.entry("Toggle compact metadata", None, move |_, cx| {
                         compact.update(cx, |view, cx| {
                             view.preferences.compact = !view.preferences.compact;
+                            view.text_selection = None;
                             view.measured_widths.clear();
                             view.list_state.reset(view.visible.len());
                             view.persist(cx);
@@ -1334,6 +1426,7 @@ impl LogcatView {
                                 fold.update(cx, |view, cx| {
                                     view.preferences.fold_stacktraces =
                                         !view.preferences.fold_stacktraces;
+                                    view.text_selection = None;
                                     view.list_state.reset(view.visible.len());
                                     view.persist(cx);
                                     cx.notify();
@@ -1462,67 +1555,86 @@ impl LogcatView {
                 )
             }));
         }
+        if let Some(range) = self.text_selection_range(index, display.text.len()) {
+            if !range.is_empty() {
+                highlights.push((
+                    range,
+                    gpui::HighlightStyle {
+                        background_color: Some(cx.theme().colors().element_selected),
+                        ..Default::default()
+                    },
+                ));
+            }
+        }
         let highlights = gpui::combine_highlights(highlights, []).collect::<Vec<_>>();
+        let text = gpui::StyledText::new(display.text).with_highlights(highlights);
+        let layout = text.layout().clone();
+        self.text_layouts.insert(entry.id, layout.clone());
         let id = entry.id;
         let view = cx.weak_entity();
-        let menu = PopoverMenu::new(("logcat-row-menu", id))
-            .trigger(
-                IconButton::new(("logcat-row-actions", id), IconName::Ellipsis)
-                    .icon_size(IconSize::XSmall)
-                    .tooltip(Tooltip::text("Message actions")),
-            )
-            .menu(move |window, cx| {
-                let view = view.clone();
-                let entry = entry.clone();
-                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                    let message = entry.message.clone();
-                    menu = menu.entry("Copy message", None, move |_, cx| {
-                        cx.write_to_clipboard(ClipboardItem::new_string(message.clone()))
+        let menu = ui::right_click_menu(("logcat-row-menu", id)).maybe_menu(move |window, cx| {
+            let view = view.clone();
+            let entry = entry.clone();
+            let selected_text = view
+                .read_with(cx, |view, _| view.selected_text())
+                .log_err()?;
+            Some(ContextMenu::build(window, cx, |mut menu, _, _| {
+                if !selected_text.is_empty() {
+                    let text = selected_text.clone();
+                    menu = menu.entry("Copy selection", None, move |_, cx| {
+                        cx.write_to_clipboard(ClipboardItem::new_string(text.clone()));
                     });
-                    let line = entry.line();
-                    menu = menu.entry("Copy message with metadata", None, move |_, cx| {
-                        cx.write_to_clipboard(ClipboardItem::new_string(line.clone()))
-                    });
-                    for (label, term) in [
-                        ("Show this tag", format!("tag=:{}", quote(&entry.tag))),
-                        ("Ignore this tag", format!("-tag=:{}", quote(&entry.tag))),
-                        (
-                            "Show this application",
-                            format!("package=:{}", quote(&entry.package)),
-                        ),
-                        (
-                            "Ignore this application",
-                            format!("-package=:{}", quote(&entry.package)),
-                        ),
-                    ] {
-                        if term.contains(":\"\"") {
-                            continue;
-                        }
-                        let view = view.clone();
-                        menu = menu.entry(label, None, move |window, cx| {
-                            view.update(cx, |view, cx| {
-                                let filter = if term.starts_with('-')
-                                    && !view.preferences.filter.is_empty()
-                                {
+                }
+                let message = entry.message.clone();
+                menu = menu.entry("Copy message", None, move |_, cx| {
+                    cx.write_to_clipboard(ClipboardItem::new_string(message.clone()))
+                });
+                let line = entry.line();
+                menu = menu.entry("Copy message with metadata", None, move |_, cx| {
+                    cx.write_to_clipboard(ClipboardItem::new_string(line.clone()))
+                });
+                for (label, term) in [
+                    ("Show this tag", format!("tag=:{}", quote(&entry.tag))),
+                    ("Ignore this tag", format!("-tag=:{}", quote(&entry.tag))),
+                    (
+                        "Show this application",
+                        format!("package=:{}", quote(&entry.package)),
+                    ),
+                    (
+                        "Ignore this application",
+                        format!("-package=:{}", quote(&entry.package)),
+                    ),
+                ] {
+                    if term.contains(":\"\"") {
+                        continue;
+                    }
+                    let view = view.clone();
+                    menu = menu.entry(label, None, move |window, cx| {
+                        view.update(cx, |view, cx| {
+                            let filter =
+                                if term.starts_with('-') && !view.preferences.filter.is_empty() {
                                     format!("({}) & {term}", view.preferences.filter)
                                 } else {
                                     term.clone()
                                 };
-                                set_input_text(&view.filter_input, &filter, window, cx);
-                            })
-                            .log_err();
-                        });
-                    }
-                    menu
-                }))
-            });
-        v_flex()
+                            set_input_text(&view.filter_input, &filter, window, cx);
+                        })
+                        .log_err();
+                    });
+                }
+                menu
+            }))
+        });
+        let row = v_flex()
             .id(("logcat-entry", id))
+            .debug_selector(move || format!("logcat-entry-{index}"))
             .w_full()
             .px_2()
             .text_sm()
             .font_family(ThemeSettings::get_global(cx).buffer_font.family.clone())
-            .when(selected, |row| row.bg(cx.theme().colors().element_selected))
+            .when(selected && self.text_selection.is_none(), |row| {
+                row.bg(cx.theme().colors().element_selected)
+            })
             .when(
                 self.search_matches.binary_search(&index).is_ok() && !selected,
                 |row| row.bg(cx.theme().colors().element_hover),
@@ -1530,6 +1642,13 @@ impl LogcatView {
             .on_click(
                 cx.listener(move |view, event: &gpui::ClickEvent, window, cx| {
                     window.focus(&view.focus_handle, cx);
+                    if view
+                        .text_selection
+                        .is_some_and(|(anchor, head)| anchor != head)
+                    {
+                        return;
+                    }
+                    view.text_selection = None;
                     if event.modifiers().shift {
                         let anchor = view
                             .selection_anchor
@@ -1558,23 +1677,40 @@ impl LogcatView {
                 }),
             )
             .child(
-                h_flex()
-                    .items_start()
-                    .gap_1()
-                    .child(
-                        div()
-                            .flex_1()
-                            .min_w_0()
-                            .text_color(color)
-                            .when(!self.preferences.wrap, |text| text.whitespace_nowrap())
-                            .child(gpui::StyledText::new(display.text).with_highlights(highlights)),
-                    )
-                    .child(menu),
+                h_flex().items_start().gap_1().child(
+                    div()
+                        .flex_1()
+                        .min_w_0()
+                        .text_color(color)
+                        .when(!self.preferences.wrap, |text| text.whitespace_nowrap())
+                        .cursor_text()
+                        .on_mouse_down(
+                            gpui::MouseButton::Left,
+                            cx.listener({
+                                move |view, event: &gpui::MouseDownEvent, window, cx| {
+                                    if event.modifiers.platform || event.modifiers.shift {
+                                        view.text_selection = None;
+                                        view.selecting_text = false;
+                                        return;
+                                    }
+                                    let offset = match layout.index_for_position(event.position) {
+                                        Ok(offset) | Err(offset) => offset,
+                                    };
+                                    view.text_selection = Some(((id, offset), (id, offset)));
+                                    view.selecting_text = true;
+                                    view.list_state.pause_following_tail();
+                                    window.focus(&view.focus_handle, cx);
+                                    cx.notify();
+                                }
+                            }),
+                        )
+                        .child(text),
+                ),
             )
             .when(selected && self.selected.len() == 1, |row| {
                 row.children(self.source_buttons(index, cx))
-            })
-            .into_any_element()
+            });
+        menu.trigger(move |_, _, _| row).into_any_element()
     }
 
     fn source_buttons(&self, index: usize, cx: &Context<Self>) -> Vec<AnyElement> {
@@ -1678,38 +1814,98 @@ impl Item for LogcatView {
 
 impl Render for LogcatView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        self.text_layouts.clear();
         let mut filter_context = KeyContext::new_with_defaults();
         filter_context.add("AndroidLogcatFilter");
         if !self.completions.is_empty() {
             filter_context.add("showing_suggestions");
         }
+        let input_bounds = Rc::new(Cell::new(Bounds::default()));
         let suggestions = (!self.completions.is_empty()).then(|| {
-            let mut menu = v_flex()
-                .id("logcat-filter-suggestions")
-                .w(px(360.))
-                .p_1()
-                .rounded_md()
-                .occlude()
-                .border_1()
-                .border_color(cx.theme().colors().border)
-                .bg(cx.theme().colors().elevated_surface_background)
-                .shadow_lg();
-            for (index, completion) in self.completions.iter().enumerate() {
-                menu = menu.child(
-                    Button::new(("logcat-completion", index), completion.clone())
-                        .full_width()
-                        .toggle_state(index == self.completion_index)
-                        .on_click(cx.listener(move |view, _, window, cx| {
-                            view.completion_index = index;
-                            view.accept_completion(window, cx);
-                        })),
-                );
-            }
+            let input_bounds = input_bounds.clone();
+            let completions = self.completions.clone();
+            let selected = self.completion_index;
+            let scroll = self.completion_scroll.clone();
+            let view = cx.weak_entity();
+            // Lay out the popup after this frame has measured the filter input.
             deferred(
-                gpui::anchored()
-                    .offset(point(px(0.), px(34.)))
-                    .snap_to_window_with_margin(px(8.))
-                    .child(menu),
+                gpui::canvas(
+                    move |_, window, cx| {
+                        let bounds = suggestion_bounds(input_bounds.get(), window.viewport_size());
+                        if bounds.size.height <= px(0.) {
+                            return None;
+                        }
+                        let mut items = v_flex()
+                            .id("logcat-suggestion-scroll")
+                            .min_h_0()
+                            .overflow_y_scroll()
+                            .track_scroll(&scroll);
+                        for (index, completion) in completions.into_iter().enumerate() {
+                            let view = view.clone();
+                            items = items.child(
+                                div().flex_none().w_full().child(
+                                    ButtonLike::new(("logcat-completion", index))
+                                        .full_width()
+                                        .toggle_state(index == selected)
+                                        .child(
+                                            div()
+                                                .w_full()
+                                                .text_left()
+                                                .debug_selector(move || {
+                                                    format!("logcat-completion-label-{index}")
+                                                })
+                                                .child(Label::new(completion).truncate()),
+                                        )
+                                        .on_click(move |_, window, cx| {
+                                            view.update(cx, |view, cx| {
+                                                view.completion_index = index;
+                                                view.accept_completion(window, cx);
+                                            })
+                                            .log_err();
+                                        }),
+                                ),
+                            );
+                        }
+                        let mut menu = v_flex()
+                            .id("logcat-filter-suggestions")
+                            .debug_selector(|| "logcat-filter-suggestions".into())
+                            .w(bounds.size.width)
+                            .max_h(bounds.size.height)
+                            .p_1()
+                            .rounded_md()
+                            .occlude()
+                            .border_1()
+                            .border_color(cx.theme().colors().border)
+                            .bg(cx.theme().colors().elevated_surface_background)
+                            .shadow_lg()
+                            .child(items)
+                            .custom_scrollbars(
+                                Scrollbars::always_visible(ScrollAxes::Vertical)
+                                    .tracked_scroll_handle(&scroll)
+                                    .tracked_entity(view.entity_id()),
+                                window,
+                                cx,
+                            )
+                            .into_any_element();
+                        menu.layout_as_root(
+                            gpui::size(
+                                gpui::AvailableSpace::Definite(bounds.size.width),
+                                gpui::AvailableSpace::MaxContent,
+                            ),
+                            window,
+                            cx,
+                        );
+                        menu.prepaint_at(bounds.origin, window, cx);
+                        Some(menu)
+                    },
+                    |_, menu, window, cx| {
+                        if let Some(mut menu) = menu {
+                            menu.paint(window, cx);
+                        }
+                    },
+                )
+                .absolute()
+                .size_0(),
             )
             .with_priority(1)
         });
@@ -1733,7 +1929,18 @@ impl Render for LogcatView {
                 view.completions.clear();
                 cx.notify();
             }))
-            .child(div().flex_1().min_w_0().child(self.filter_input.clone()))
+            .child(
+                div()
+                    .flex_1()
+                    .min_w_0()
+                    .debug_selector(|| "logcat-filter-input".into())
+                    .on_children_prepainted(move |bounds, _, _| {
+                        if let Some(bounds) = bounds.first() {
+                            input_bounds.set(*bounds);
+                        }
+                    })
+                    .child(self.filter_input.clone()),
+            )
             .child(
                 IconButton::new("logcat-clear-filter", IconName::Close)
                     .tooltip(Tooltip::text("Clear filter"))
@@ -1813,8 +2020,13 @@ impl Render for LogcatView {
             )
             .child(
                 IconButton::new("logcat-copy", IconName::Copy)
-                    .disabled(self.selected.is_empty())
-                    .tooltip(Tooltip::text("Copy selected messages"))
+                    .disabled(
+                        self.selected.is_empty()
+                            && self
+                                .text_selection
+                                .is_none_or(|(anchor, head)| anchor == head),
+                    )
+                    .tooltip(Tooltip::text("Copy selection"))
                     .on_click(cx.listener(|view, _, _, cx| view.copy(false, cx))),
             )
             .child(
@@ -1839,7 +2051,7 @@ impl Render for LogcatView {
             horizontal: self.horizontal_scroll.clone(),
             vertical: self.list_state.clone(),
         };
-        let content = div()
+        let scrolling_content = div()
             .id("logcat-scroll-view")
             .size_full()
             .overflow_x_scroll()
@@ -1851,7 +2063,50 @@ impl Render for LogcatView {
                     .when(self.preferences.wrap, |list| list.w_full())
                     .when(!self.preferences.wrap, |list| list.w(width))
                     .min_w_full(),
+            );
+        // The tracks must stay outside the horizontal scrolling transform.
+        let content = div()
+            .id("logcat-viewport")
+            .relative()
+            .size_full()
+            .debug_selector(|| "logcat-scrollbar-frame".into())
+            .on_mouse_move(cx.listener(|view, event: &gpui::MouseMoveEvent, _, cx| {
+                if !view.selecting_text || !event.dragging() {
+                    return;
+                }
+                let nearest = view.text_layouts.iter().min_by_key(|(_, layout)| {
+                    let bounds = layout.bounds();
+                    if event.position.y < bounds.top() {
+                        bounds.top() - event.position.y
+                    } else if event.position.y > bounds.bottom() {
+                        event.position.y - bounds.bottom()
+                    } else {
+                        px(0.)
+                    }
+                });
+                if let Some((&id, layout)) = nearest {
+                    let offset = match layout.index_for_position(event.position) {
+                        Ok(offset) | Err(offset) => offset,
+                    };
+                    if let Some((_, head)) = &mut view.text_selection {
+                        *head = (id, offset);
+                        cx.notify();
+                    }
+                }
+            }))
+            .on_mouse_up(
+                gpui::MouseButton::Left,
+                cx.listener(|view, _, _, _| {
+                    view.selecting_text = false;
+                }),
             )
+            .on_mouse_up_out(
+                gpui::MouseButton::Left,
+                cx.listener(|view, _, _, _| {
+                    view.selecting_text = false;
+                }),
+            )
+            .child(scrolling_content)
             .custom_scrollbars(
                 Scrollbars::new(if self.preferences.wrap {
                     ScrollAxes::Vertical
@@ -1859,6 +2114,7 @@ impl Render for LogcatView {
                     ScrollAxes::Both
                 })
                 .tracked_scroll_handle(&scroll)
+                .tracked_entity(cx.entity_id())
                 .with_stable_track_along(
                     ScrollAxes::Horizontal,
                     cx.theme().colors().editor_background,
@@ -1886,6 +2142,7 @@ impl Render for LogcatView {
             .on_action(cx.listener(|view, _: &FindPrevious, _, cx| view.find(true, cx)))
             .on_action(cx.listener(|view, _: &Copy, _, cx| view.copy(false, cx)))
             .on_action(cx.listener(|view, _: &SelectAll, _, cx| {
+                view.text_selection = None;
                 view.selected = view.visible.iter().map(|entry| entry.id).collect();
                 view.list_state
                     .splice(0..view.visible.len(), view.visible.len());
@@ -1899,6 +2156,7 @@ impl Render for LogcatView {
                     .border_color(cx.theme().colors().border)
                     .child(
                         div()
+                            .debug_selector(|| "logcat-device-selector".into())
                             .w(gpui::relative(0.32))
                             .min_w(px(160.))
                             .max_w(px(480.))
@@ -2057,6 +2315,25 @@ impl Render for LogcatView {
                 },
             )
     }
+}
+
+fn suggestion_bounds(input: Bounds<Pixels>, viewport: gpui::Size<Pixels>) -> Bounds<Pixels> {
+    let margin = px(8.);
+    let width = px(360.).min((viewport.width - margin * 2.).max(px(0.)));
+    let origin = point(
+        input
+            .left()
+            .max(margin)
+            .min((viewport.width - width - margin).max(margin)),
+        input.bottom() + px(4.),
+    );
+    Bounds::new(
+        origin,
+        gpui::size(
+            width,
+            px(320.).min((viewport.height - origin.y - margin).max(px(0.))),
+        ),
+    )
 }
 
 impl Preferences {
@@ -2725,6 +3002,7 @@ pub(super) mod tests {
             project::trusted_worktrees::init(Default::default(), cx);
             cx.bind_keys([
                 gpui::KeyBinding::new("cmd-f", Find, Some("AndroidLogcat")),
+                gpui::KeyBinding::new("cmd-c", Copy, Some("AndroidLogcat")),
                 gpui::KeyBinding::new("escape", CloseFind, Some("AndroidLogcatSearch")),
                 gpui::KeyBinding::new(
                     "down",
@@ -2805,6 +3083,294 @@ pub(super) mod tests {
         cx.simulate_resize(gpui::size(px(640.), px(320.)));
         cx.run_until_parked();
         cx.update(|window, cx| window.draw(cx).clear(cx));
+    }
+
+    fn drag_text(cx: &mut gpui::VisualTestContext, start: Point<Pixels>, end: Point<Pixels>) {
+        cx.simulate_event(gpui::MouseDownEvent {
+            button: gpui::MouseButton::Left,
+            position: start,
+            ..Default::default()
+        });
+        cx.simulate_event(gpui::MouseMoveEvent {
+            position: end,
+            pressed_button: Some(gpui::MouseButton::Left),
+            ..Default::default()
+        });
+        cx.simulate_event(gpui::MouseUpEvent {
+            button: gpui::MouseButton::Left,
+            position: end,
+            ..Default::default()
+        });
+    }
+
+    #[test]
+    fn suggestion_geometry_stays_below_input_and_within_available_space() {
+        let input = Bounds::new(point(px(550.), px(220.)), gpui::size(px(300.), px(32.)));
+        let bounds = suggestion_bounds(input, gpui::size(px(640.), px(320.)));
+        assert!(bounds.top() > input.bottom());
+        assert!(bounds.right() <= px(632.));
+        assert!(bounds.bottom() <= px(312.));
+        assert!(bounds.size.height < px(100.));
+        let no_space = suggestion_bounds(input, gpui::size(px(640.), px(250.)));
+        assert_eq!(no_space.size.height, px(0.));
+        assert!(no_space.top() > input.bottom(), "Never flip over the input");
+    }
+
+    #[gpui::test]
+    async fn suggestions_are_below_input_left_aligned_and_scrollable(cx: &mut TestAppContext) {
+        let (_, view, cx) = viewer(cx, true).await;
+        view.update_in(cx, |view, window, cx| {
+            window.focus(&view.filter_input.focus_handle(cx), cx);
+            view.completions = (0..30)
+                .map(|index| format!("tag:Suggestion{index}"))
+                .collect();
+            view.completion_index = 0;
+            cx.notify();
+        });
+        draw_view(&view, cx);
+        let input = cx.debug_bounds("logcat-filter-input").expect("Filter");
+        let popup = cx.debug_bounds("logcat-filter-suggestions").expect("Popup");
+        let label = cx
+            .debug_bounds("logcat-completion-label-0")
+            .expect("Suggestion label");
+        let device = cx
+            .debug_bounds("logcat-device-label")
+            .expect("Device label");
+        assert!(popup.top() >= input.bottom());
+        assert!(popup.bottom() <= px(312.));
+        assert!(label.left() - popup.left() < px(20.));
+        assert!(label.size.width > popup.size.width / 2.);
+        assert!(
+            device.left()
+                - cx.debug_bounds("logcat-device-selector")
+                    .expect("Device selector")
+                    .left()
+                < px(40.),
+            "Device text starts next to its icon"
+        );
+        view.read_with(cx, |view, _| {
+            assert!(view.completion_scroll.max_offset().y > px(0.))
+        });
+        cx.simulate_event(gpui::ScrollWheelEvent {
+            position: popup.center(),
+            delta: gpui::ScrollDelta::Pixels(point(px(0.), px(-80.))),
+            ..Default::default()
+        });
+        draw_view(&view, cx);
+        view.read_with(cx, |view, _| {
+            assert!(view.completion_scroll.offset().y < px(0.))
+        });
+        view.update_in(cx, |view, _, cx| {
+            view.completion_index = 28;
+            view.move_completion(false, cx);
+        });
+        draw_view(&view, cx);
+        let last = cx
+            .debug_bounds("logcat-completion-label-29")
+            .expect("Last suggestion");
+        assert!(last.top() >= popup.top());
+        assert!(last.bottom() <= popup.bottom());
+    }
+
+    #[gpui::test]
+    async fn scrollbar_tracks_stay_in_viewport_after_horizontal_scrolling(cx: &mut TestAppContext) {
+        let (_, view, cx) = viewer(cx, true).await;
+        view.update_in(cx, |view, _, cx| {
+            view.query = Query::default();
+            let mut entry = logcat::import("2026-10-01 12:00:00.000 42 43 I Example: message")
+                .expect("Fixture")
+                .remove(0);
+            entry.message = "long line ".repeat(100);
+            view.receive(vec![entry; 50], cx);
+            view.list_state.pause_following_tail();
+        });
+        draw_view(&view, cx);
+        view.update_in(cx, |view, _, _| {
+            view.horizontal_scroll.set_offset(point(px(-2000.), px(0.)));
+            view.list_state
+                .set_offset_from_scrollbar(point(px(0.), px(0.)));
+        });
+        draw_view(&view, cx);
+        let bounds = cx
+            .debug_bounds("logcat-scrollbar-frame")
+            .expect("Fixed frame");
+        let before = view.read_with(cx, |view, _| view.horizontal_scroll.offset().x);
+        cx.simulate_click(
+            point(
+                bounds.left() + bounds.size.width * 0.7,
+                bounds.bottom() - px(7.),
+            ),
+            Default::default(),
+        );
+        draw_view(&view, cx);
+        let after = view.read_with(cx, |view, _| view.horizontal_scroll.offset().x);
+        assert!(
+            after < before,
+            "Horizontal track responds at the fixed bottom edge"
+        );
+        cx.simulate_click(
+            point(
+                bounds.left() + bounds.size.width * 0.2,
+                bounds.bottom() - px(7.),
+            ),
+            Default::default(),
+        );
+        draw_view(&view, cx);
+        view.read_with(cx, |view, _| {
+            assert!(view.horizontal_scroll.offset().x > after)
+        });
+        let thumb = point(bounds.right() - px(7.), bounds.top() + px(10.));
+        cx.simulate_event(gpui::MouseDownEvent {
+            button: gpui::MouseButton::Left,
+            position: thumb,
+            ..Default::default()
+        });
+        cx.simulate_event(gpui::MouseMoveEvent {
+            position: point(thumb.x, bounds.bottom() - px(24.)),
+            pressed_button: Some(gpui::MouseButton::Left),
+            ..Default::default()
+        });
+        cx.simulate_event(gpui::MouseUpEvent {
+            button: gpui::MouseButton::Left,
+            position: point(thumb.x, bounds.bottom() - px(24.)),
+            ..Default::default()
+        });
+        draw_view(&view, cx);
+        view.read_with(cx, |view, _| {
+            assert!(
+                view.list_state.scroll_px_offset_for_scrollbar().y < px(-100.),
+                "Vertical thumb stays on the right when text is scrolled horizontally"
+            )
+        });
+        assert_eq!(cx.debug_bounds("logcat-scrollbar-frame"), Some(bounds));
+    }
+
+    #[gpui::test]
+    async fn dragging_text_copies_partial_unicode_and_right_click_opens_message_menu(
+        cx: &mut TestAppContext,
+    ) {
+        let (_, view, cx) = viewer(cx, true).await;
+        view.update_in(cx, |view, _, cx| {
+            view.query = Query::default();
+            view.preferences.compact = true;
+            let entry = logcat::import("2026-10-01 12:00:00.000 42 43 I Tag: before 日本語 after")
+                .expect("Fixture")
+                .remove(0);
+            view.receive(vec![entry.clone(), entry], cx);
+        });
+        draw_view(&view, cx);
+        let (start, end) = view.read_with(cx, |view, _| {
+            let entry = &view.visible[0];
+            let display = display_line(entry, true, false);
+            let offset = display.text.find("日本語").expect("Unicode");
+            let layout = &view.text_layouts[&entry.id];
+            (
+                layout.position_for_index(offset).expect("Start") + point(px(0.), px(8.)),
+                layout
+                    .position_for_index(offset + "日本語".len())
+                    .expect("End")
+                    + point(px(0.), px(8.)),
+            )
+        });
+        drag_text(cx, start, end);
+        draw_view(&view, cx);
+        view.read_with(cx, |view, _| assert_eq!(view.selected_text(), "日本語"));
+        cx.simulate_keystrokes("cmd-c");
+        assert_eq!(
+            cx.read_from_clipboard().expect("Clipboard").text(),
+            Some("日本語".into())
+        );
+        cx.simulate_event(gpui::MouseDownEvent {
+            button: gpui::MouseButton::Right,
+            position: start,
+            ..Default::default()
+        });
+        draw_view(&view, cx);
+        assert!(cx.debug_bounds("MENU_ITEM-Copy selection").is_some());
+        let item = cx
+            .debug_bounds("MENU_ITEM-Copy message")
+            .expect("Right-click menu");
+        cx.simulate_click(item.center(), Default::default());
+        assert_eq!(
+            cx.read_from_clipboard().expect("Clipboard").text(),
+            Some("before 日本語 after".into())
+        );
+        view.update_in(cx, |view, _, cx| {
+            view.clear(cx);
+            assert!(view.text_selection.is_none());
+        });
+    }
+
+    #[gpui::test]
+    async fn text_selection_reverses_across_wrapped_rows_and_tracks_live_updates(
+        cx: &mut TestAppContext,
+    ) {
+        let (_, view, cx) = viewer(cx, true).await;
+        view.update_in(cx, |view, _, cx| {
+            view.query = Query::default();
+            view.preferences.compact = true;
+            view.preferences.wrap = true;
+            let mut entry =
+                logcat::import("2026-10-01 12:00:00.000 42 43 I Tag: before 日本語 after")
+                    .expect("Fixture")
+                    .remove(0);
+            entry.message = "before 日本語 after ".repeat(9);
+            view.receive(vec![entry.clone(), entry], cx);
+        });
+        draw_view(&view, cx);
+        let (start, end, expected) = view.read_with(cx, |view, _| {
+            let first = display_line(&view.visible[0], true, false).text;
+            let second = display_line(&view.visible[1], true, false).text;
+            let start = first.rfind("日本語").expect("Start");
+            let end = second.find("日本語").expect("End") + "日本語".len();
+            let first_layout = &view.text_layouts[&view.visible[0].id];
+            assert!(
+                first_layout.bounds().size.height > first_layout.line_height(),
+                "Fixture wraps"
+            );
+            (
+                first_layout
+                    .position_for_index(start)
+                    .expect("Start position")
+                    + point(px(0.), px(8.)),
+                view.text_layouts[&view.visible[1].id]
+                    .position_for_index(end)
+                    .expect("End position")
+                    + point(px(0.), px(8.)),
+                format!("{}\n{}", &first[start..], &second[..end]),
+            )
+        });
+        for (start, end) in [(start, end), (end, start)] {
+            drag_text(cx, start, end);
+            draw_view(&view, cx);
+            view.read_with(cx, |view, _| {
+                assert_eq!(view.selected_text(), expected);
+                assert!(!view.selecting_text);
+            });
+            cx.simulate_keystrokes("cmd-c");
+            assert_eq!(
+                cx.read_from_clipboard().expect("Clipboard").text(),
+                Some(expected.clone())
+            );
+        }
+        view.update_in(cx, |view, _, cx| {
+            let entry = logcat::import("2026-10-01 12:00:01.000 42 43 I Other: new message")
+                .expect("Fixture")
+                .remove(0);
+            view.receive(vec![entry], cx);
+            assert_eq!(
+                view.selected_text(),
+                expected,
+                "Stable IDs preserve selection during capture"
+            );
+            view.query = Query::parse("tag:Other", false).expect("Filter");
+            view.rebuild(cx);
+            assert!(
+                view.text_selection.is_none(),
+                "Hidden selection endpoints are discarded"
+            );
+            assert!(view.selected_text().is_empty());
+        });
     }
 
     #[gpui::test]

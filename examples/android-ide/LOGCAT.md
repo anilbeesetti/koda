@@ -17,7 +17,8 @@ application/process filtering. Use **Refresh devices** after installing apps.
 
 Each record puts its timestamp, PID/TID, tag, application, process, UID, severity,
 and message on one row. Long lines share a horizontal scrollbar when wrapping
-is off; vertical scrolling does not move the text horizontally. Multiline stack
+is off; both scrollbar tracks stay fixed to the viewport while their thumbs move.
+Vertical scrolling does not move the text horizontally. Multiline stack
 traces remain a single message. Select a
 message to see links to matching Kotlin/Java source files in the project.
 Severity uses the IDE's theme colors. Stack traces can be folded from Options,
@@ -59,7 +60,8 @@ negative forms. Regexes use Rust regex syntax; lookaround and backreferences
 are unsupported. Quote values containing spaces, parentheses, or boolean operators.
 Plain words search the formatted message. The filter's **Aa** button controls
 case sensitivity. Invalid queries show an error and preserve the last valid query.
-Suggestions appear as you type, using supported fields and observed tags,
+Suggestions appear below the query as you type and scroll when space is limited.
+They use supported fields and observed tags,
 applications, and processes. Up/Down choose a suggestion, Enter/Tab accepts it,
 and Escape dismisses it. Completion replaces the term at the cursor, preserves
 following terms and groups, and handles quoted values and exclusions.
@@ -70,8 +72,10 @@ is invoked. Escape closes Find and returns focus to Logcat. It searches the
 displayed messages, highlights matches,
 and supports case-sensitive and regex searches. **Next** and **Previous** wrap
 through matching messages. Select a row, Shift-click a range, or Cmd/Ctrl-click
-individual rows, then use **Copy selected**. Each row also offers **Copy message**
-and tag/application include/exclude shortcuts.
+individual rows, then use **Copy selected**. Drag across text to select part of a
+message or multiple lines, then press Cmd/Ctrl+C or use **Copy selected**.
+Right-click a row for **Copy selection**, **Copy message**, and tag/application
+include/exclude shortcuts.
 
 ## Capture and files
 
@@ -108,8 +112,7 @@ See also the [Logcat documentation](https://developer.android.com/studio/debug/l
 This implementation covers the main capture, device selection, structured display,
 filtering, search, copy, save/load, split-view, pause, restart, and app-termination
 workflows. It does not yet provide R8/ProGuard retracing, bugreport ZIP/Firebase
-file import, custom column/font presets, or character-level
-text selection.
+file import or custom column/font presets.
 
 ## Validation
 
@@ -140,6 +143,7 @@ For device validation:
 Native validation covers the Android tooling tests and the Android UI tests,
 including bottom-dock tab/split isolation, current-app filtering, preference
 migration, completion at the cursor, popup keyboard controls and dismissal,
-Find visibility/focus, one-row formatting, independent scroll axes, wrapping,
+Find visibility/focus, one-row formatting, fixed scrollbar tracks, popup placement
+and scrolling, partial Unicode text copying, right-click menus, wrapping,
 paused snapshots, clearing, and reconnect behavior. Desktop/emulator visual
 validation remains a manual check.
