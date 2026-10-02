@@ -762,6 +762,7 @@ dependencies = [
  "theme_settings",
  "ui",
  "ui_input",
+ "unicode-width 0.2.2",
  "util",
  "workspace",
  "zed_actions",

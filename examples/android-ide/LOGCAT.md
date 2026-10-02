@@ -67,6 +67,12 @@ and Escape dismisses it. Completion replaces the term at the cursor, preserves
 following terms and groups, and handles quoted values and exclusions.
 Use **Options → Save current filter** to retain queries across sessions.
 
+Large retained snapshots filter on a background worker after a 50 ms typing
+debounce; the input and suggestions update immediately. New capture batches
+update the visible tail incrementally, and loading estimates off-screen row sizes
+instead of shaping every message. Editing a query, pausing, clearing, or changing
+sources cancels stale work.
+
 Find stays hidden until `Cmd+F` (`Ctrl+F` on Linux/Windows) or the Find button
 is invoked. Escape closes Find and returns focus to Logcat. It searches the
 displayed messages, highlights matches,
@@ -119,6 +125,8 @@ file import or custom column/font presets.
 Run `cargo test --locked -p android_tools --lib` and
 `cargo test --locked -p android_ui --lib android_logcat` with the workspace
 dependencies available. Run `./script/clippy --locked -p android_tools -p android_ui`.
+For the virtual-list height regression, run
+`cargo test --locked -p gpui --lib elements::list::test`.
 
 For device validation:
 
@@ -146,4 +154,8 @@ migration, completion at the cursor, popup keyboard controls and dismissal,
 Find visibility/focus, one-row formatting, fixed scrollbar tracks, popup placement
 and scrolling, partial Unicode text copying, right-click menus, wrapping,
 paused snapshots, clearing, and reconnect behavior. Desktop/emulator visual
-validation remains a manual check.
+validation remains a manual check. Runtime regressions also cover loading and
+typing with 50,000 rows, byte limits for large messages, cancellation and live
+capture during background filtering/Find, paused imports, eviction during Find,
+and real painted Unicode drags across virtualized rows after scrolling/resizing.
+Timing diagnostics use a debug headless window; they are not desktop benchmarks.

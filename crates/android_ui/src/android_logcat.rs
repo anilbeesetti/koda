@@ -8,10 +8,18 @@ use gpui::{
     PathPromptOptions, Point, ScrollHandle, TextRun, deferred, list, point,
 };
 use serde::{Deserialize, Serialize};
-use std::{cell::Cell, collections::HashSet, io::Read as _, rc::Rc, time::Instant};
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashSet,
+    io::Read as _,
+    rc::Rc,
+    sync::atomic::{AtomicBool, Ordering},
+    time::Instant,
+};
 use theme_settings::ThemeSettings;
 use ui::{ButtonLike, ScrollAxes, ScrollableHandle, Scrollbars, WithScrollbar};
 use ui_input::{ErasedEditorEvent, InputField};
+use unicode_width::UnicodeWidthStr as _;
 use util::command::Stdio;
 use workspace::{
     SplitDirection,
@@ -129,6 +137,26 @@ impl LogcatDevice {
     }
 }
 
+const INLINE_FILTER_LIMIT: usize = 256;
+const INLINE_FILTER_BYTES: usize = 64 * 1024;
+const CAPTURE_BATCH_LIMIT: usize = 256;
+const CAPTURE_BATCH_BYTES: usize = 128 * 1024;
+
+#[derive(Default)]
+struct WorkCancellation(Arc<AtomicBool>);
+
+impl Drop for WorkCancellation {
+    fn drop(&mut self) {
+        self.0.store(true, Ordering::Relaxed);
+    }
+}
+
+#[derive(Clone)]
+struct PaintedLogcatText {
+    bounds: Bounds<Pixels>,
+    layout: gpui::TextLayout,
+}
+
 pub(super) struct LogcatView {
     workspace: WeakEntity<Workspace>,
     project: Entity<Project>,
@@ -152,8 +180,8 @@ pub(super) struct LogcatView {
     suppress_completion: bool,
     search_visible: bool,
     horizontal_scroll: ScrollHandle,
-    measured_widths: HashMap<u64, Pixels>,
-    measured_font: Option<(SharedString, Pixels)>,
+    unwrapped_columns: usize,
+    measured_line_width: Rc<Cell<Pixels>>,
     buffers: String,
     buffer: Buffer,
     cursor: Option<Arc<Entry>>,
@@ -163,8 +191,10 @@ pub(super) struct LogcatView {
     selection_anchor: Option<u64>,
     text_selection: Option<((u64, usize), (u64, usize))>,
     selecting_text: bool,
-    text_layouts: HashMap<u64, gpui::TextLayout>,
+    text_layouts: Rc<RefCell<HashMap<u64, PaintedLogcatText>>>,
     search: Option<logcat::Search>,
+    pending_search: Option<logcat::Search>,
+    search_tail: Vec<u64>,
     search_case: bool,
     search_regex: bool,
     search_error: Option<String>,
@@ -181,6 +211,17 @@ pub(super) struct LogcatView {
     device_task: Option<Task<()>>,
     control_task: Option<Task<()>>,
     persist_task: Option<Task<()>>,
+    filter_task: Option<Task<()>>,
+    rebuild_task: Option<Task<()>>,
+    search_task: Option<Task<()>>,
+    source_task: Option<Task<()>>,
+    source_cancellation: Option<WorkCancellation>,
+    source_entry: Option<u64>,
+    source_locations: Vec<(project::ProjectPath, u32)>,
+    rebuild_cancellation: Option<WorkCancellation>,
+    search_cancellation: Option<WorkCancellation>,
+    rebuild_tail: Vec<Arc<Entry>>,
+    rebuild_tail_columns: usize,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -255,7 +296,8 @@ impl LogcatView {
             Ok(query) => (query, None),
             Err(error) => (Query::default(), Some(error.to_string())),
         };
-        let list_state = ListState::new(0, ListAlignment::Top, px(1024.));
+        let list_state =
+            ListState::new(0, ListAlignment::Top, px(256.)).with_uniform_item_height(px(20.));
         list_state.set_follow_mode(FollowMode::Tail);
         Self {
             workspace,
@@ -282,8 +324,8 @@ impl LogcatView {
             suppress_completion: false,
             search_visible: false,
             horizontal_scroll: ScrollHandle::new(),
-            measured_widths: HashMap::new(),
-            measured_font: None,
+            unwrapped_columns: 0,
+            measured_line_width: Rc::default(),
             buffers: "main,system,crash".into(),
             paused: None,
             visible: Vec::new(),
@@ -291,8 +333,10 @@ impl LogcatView {
             selection_anchor: None,
             text_selection: None,
             selecting_text: false,
-            text_layouts: HashMap::default(),
+            text_layouts: Rc::default(),
             search: None,
+            pending_search: None,
+            search_tail: Vec::new(),
             search_case: false,
             search_regex: false,
             search_error: None,
@@ -309,6 +353,17 @@ impl LogcatView {
             device_task: None,
             control_task: None,
             persist_task: None,
+            filter_task: None,
+            rebuild_task: None,
+            search_task: None,
+            source_task: None,
+            source_cancellation: None,
+            source_entry: None,
+            source_locations: Vec::new(),
+            rebuild_cancellation: None,
+            search_cancellation: None,
+            rebuild_tail: Vec::new(),
+            rebuild_tail_columns: 0,
             _subscriptions: subscriptions,
         }
     }
@@ -392,21 +447,35 @@ impl LogcatView {
         .map(String::from)
         .to_vec();
         candidates.extend(self.preferences.saved_filters.clone());
-        for entry in self.buffer.entries.iter().rev().take(500) {
-            if !entry.tag.is_empty() {
-                candidates.push(format!("tag:{}", quote(&entry.tag)));
+        let mut values = HashSet::new();
+        let mut candidate_bytes: usize = candidates.iter().map(String::len).sum();
+        let observed = self
+            .buffer
+            .entries
+            .iter()
+            .rev()
+            .take(500)
+            .flat_map(|entry| {
+                [
+                    ("tag", entry.tag.as_str()),
+                    ("package", entry.package.as_str()),
+                    ("process", entry.process.as_str()),
+                ]
+            })
+            .chain(self.processes.iter().flat_map(|process| {
+                [
+                    ("process", process.name.as_str()),
+                    ("package", process.package.as_str()),
+                ]
+            }));
+        for (field, value) in observed {
+            if candidate_bytes >= INLINE_FILTER_BYTES {
+                break;
             }
-            if !entry.package.is_empty() {
-                candidates.push(format!("package:{}", quote(&entry.package)));
-            }
-            if !entry.process.is_empty() {
-                candidates.push(format!("process:{}", quote(&entry.process)));
-            }
-        }
-        for process in &self.processes {
-            candidates.push(format!("process:{}", quote(&process.name)));
-            if !process.package.is_empty() {
-                candidates.push(format!("package:{}", quote(&process.package)));
+            if !value.is_empty() && value.len() <= 256 && values.insert((field, value)) {
+                let candidate = format!("{field}:{}", quote(value));
+                candidate_bytes += candidate.len();
+                candidates.push(candidate);
             }
         }
         let (range, completions) = complete_query(&text, cursor, candidates);
@@ -476,12 +545,14 @@ impl LogcatView {
 
     fn close_find(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.search_visible = false;
+        self.search_task = None;
+        self.search_cancellation = None;
+        self.pending_search = None;
+        self.search_tail.clear();
         self.search = None;
         self.search_error = None;
         self.search_matches.clear();
         self.search_position = None;
-        self.list_state
-            .splice(0..self.visible.len(), self.visible.len());
         window.focus(&self.focus_handle, cx);
         cx.notify();
     }
@@ -494,46 +565,38 @@ impl LogcatView {
         cx.notify();
     }
 
-    fn content_width(&mut self, window: &Window, cx: &App) -> Pixels {
+    fn content_width(&self, window: &Window, cx: &App) -> Pixels {
         let font_size = window.rem_size() * 0.875;
         let font = gpui::Font {
             family: ThemeSettings::get_global(cx).buffer_font.family.clone(),
             ..Default::default()
         };
-        let measured_font = (font.family.clone(), font_size);
-        if self.measured_font.as_ref() != Some(&measured_font) {
-            self.measured_widths.clear();
-            self.measured_font = Some(measured_font);
+        // Logcat uses the buffer's monospace font. Compute the column advance once,
+        // rather than shaping every retained message on each frame.
+        let advance = window
+            .text_system()
+            .shape_line(
+                "M".into(),
+                font_size,
+                &[TextRun {
+                    len: 1,
+                    font,
+                    color: Hsla::default(),
+                    ..Default::default()
+                }],
+                None,
+            )
+            .width;
+        let width =
+            (advance * self.unwrapped_columns as f32).max(self.measured_line_width.get()) + px(16.);
+        // A record-width message should not invalidate every list row for a
+        // one-pixel increase. Painted rows can raise this estimate for fallback fonts.
+        let viewport = self.horizontal_scroll.bounds().size.width;
+        if width <= viewport || viewport == px(0.) {
+            width.max(viewport)
+        } else {
+            px((f32::from(width) / 1024.).ceil() * 1024.)
         }
-        let mut width = self.horizontal_scroll.bounds().size.width;
-        for entry in &self.visible {
-            let entry_width = self.measured_widths.entry(entry.id).or_insert_with(|| {
-                let display = display_line(entry, self.preferences.compact, false);
-                display
-                    .text
-                    .lines()
-                    .map(|line| {
-                        window
-                            .text_system()
-                            .shape_line(
-                                line.to_string().into(),
-                                font_size,
-                                &[TextRun {
-                                    len: line.len(),
-                                    font: font.clone(),
-                                    color: Hsla::default(),
-                                    ..Default::default()
-                                }],
-                                None,
-                            )
-                            .width
-                    })
-                    .fold(px(0.), Pixels::max)
-                    + px(16.)
-            });
-            width = width.max(*entry_width);
-        }
-        width
     }
 
     fn ensure_trusted(&self, cx: &App) -> Result<()> {
@@ -790,6 +853,10 @@ impl LogcatView {
                 if view.update(cx, |view, cx| view.receive(batch, cx)).is_err() {
                     return;
                 }
+                // Backlogs must leave time for input and painting between bounded batches.
+                cx.background_executor()
+                    .timer(Duration::from_millis(8))
+                    .await;
             }
             let result = worker.await;
             view.update(cx, |view, cx| {
@@ -825,61 +892,171 @@ impl LogcatView {
             self.capturing = false;
             return;
         }
-        for mut entry in entries {
+        let by_pid: HashMap<_, _> = self
+            .processes
+            .iter()
+            .map(|process| (process.pid, process))
+            .collect();
+        let mut by_uid = HashMap::new();
+        for process in &self.processes {
+            if !process.package.is_empty() {
+                by_uid.entry(process.uid).or_insert(process);
+            }
+        }
+        let device = self
+            .devices
+            .iter()
+            .find(|device| Some(&device.device.serial) == self.preferences.serial.as_ref());
+        let context = FilterContext {
+            now_millis: Utc::now().timestamp_millis(),
+            project_packages: &self.project_packages,
+        };
+        let mut appended = Vec::new();
+        if let Some(entry) = entries.last() {
             self.cursor = Some(Arc::new(entry.clone()));
+        }
+        for mut entry in entries {
             if matches!(entry.buffer, 2 | 5 | 6)
                 && let Ok(id) = entry.tag.parse::<u32>()
-                && let Some(tag) = self
-                    .devices
-                    .iter()
-                    .find(|device| Some(&device.device.serial) == self.preferences.serial.as_ref())
-                    .and_then(|device| device.event_tags.get(&id))
+                && let Some(tag) = device.and_then(|device| device.event_tags.get(&id))
             {
                 entry.tag = tag.clone();
             }
-            if let Some(process) = self.processes.iter().find(|process| {
-                process.pid == entry.pid && entry.uid.is_none_or(|uid| uid == process.uid)
-            }) {
+            if let Some(process) = by_pid
+                .get(&entry.pid)
+                .filter(|process| entry.uid.is_none_or(|uid| uid == process.uid))
+            {
                 entry.process = process.name.clone();
                 entry.package = process.package.clone();
-            } else if let Some(process) = self
-                .processes
-                .iter()
-                .find(|process| Some(process.uid) == entry.uid && !process.package.is_empty())
-            {
+            } else if let Some(process) = entry.uid.and_then(|uid| by_uid.get(&uid)) {
                 entry.package = process.package.clone();
             }
             if entry.package.is_empty()
-                && let Some(names) = self
-                    .devices
-                    .iter()
-                    .find(|device| Some(&device.device.serial) == self.preferences.serial.as_ref())
-                    .and_then(|device| entry.uid.and_then(|uid| device.packages.get(&uid)))
+                && let Some(names) =
+                    device.and_then(|device| entry.uid.and_then(|uid| device.packages.get(&uid)))
                 && names.len() == 1
                 && let Some(package) = names.first()
             {
                 entry.package = package.clone();
             }
             self.buffer.push(entry);
+            if self.paused.is_none()
+                && let Some(entry) = self.buffer.entries.back()
+                && self.query.matches(entry, &context)
+            {
+                appended.push(entry.clone());
+            }
         }
         if self.paused.is_none() {
-            self.rebuild(cx);
+            let first_id = self
+                .buffer
+                .entries
+                .front()
+                .map(|entry| entry.id)
+                .unwrap_or(u64::MAX);
+            let removed = self.visible.partition_point(|entry| entry.id < first_id);
+            self.visible.drain(..removed);
+            self.list_state.splice(0..removed, 0);
+            appended.retain(|entry| entry.id >= first_id);
+            let previous_length = self.visible.len();
+            for entry in &appended {
+                let columns = line_columns(entry, self.preferences.compact);
+                self.unwrapped_columns = self.unwrapped_columns.max(columns);
+                if self.rebuild_task.is_some() {
+                    self.rebuild_tail_columns = self.rebuild_tail_columns.max(columns);
+                }
+            }
+            self.visible.extend(appended);
+            self.list_state.splice(
+                previous_length..previous_length,
+                self.visible.len() - previous_length,
+            );
+            if removed > 0 {
+                self.retain_selection();
+                self.search_matches.retain_mut(|index| {
+                    if let Some(shifted) = index.checked_sub(removed) {
+                        *index = shifted;
+                        true
+                    } else {
+                        false
+                    }
+                });
+            }
+            if self.rebuild_task.is_some() {
+                let removed = self
+                    .rebuild_tail
+                    .partition_point(|entry| entry.id < first_id);
+                self.rebuild_tail.drain(..removed);
+                self.rebuild_tail
+                    .extend(self.visible.iter().skip(previous_length).cloned());
+            }
+            if let Some(search) = &self.pending_search {
+                let removed = self.search_tail.partition_point(|id| *id < first_id);
+                self.search_tail.drain(..removed);
+                self.search_tail.extend(
+                    self.visible
+                        .iter()
+                        .skip(previous_length)
+                        .filter_map(|entry| search.matches(&entry.line()).then_some(entry.id)),
+                );
+            }
+            if let Some(search) = &self.search {
+                self.search_matches.extend(
+                    self.visible
+                        .iter()
+                        .enumerate()
+                        .skip(previous_length)
+                        .filter_map(|(index, entry)| {
+                            search.matches(&entry.line()).then_some(index)
+                        }),
+                );
+            }
         }
+        self.search_position = self
+            .search_position
+            .filter(|position| *position < self.search_matches.len());
         cx.notify();
     }
 
     fn update_filter(&mut self, cx: &mut Context<Self>) {
         self.preferences.filter = self.filter_input.read(cx).text(cx);
-        match Query::parse(&self.preferences.filter, self.preferences.match_case) {
+        self.filter_task = None;
+        if small_snapshot(self.buffer.entries.iter()) {
+            self.apply_query(
+                Query::parse(&self.preferences.filter, self.preferences.match_case),
+                cx,
+            );
+        } else {
+            let text = self.preferences.filter.clone();
+            let match_case = self.preferences.match_case;
+            self.filter_task = Some(cx.spawn(async move |view, cx| {
+                cx.background_executor()
+                    .timer(Duration::from_millis(50))
+                    .await;
+                let result = cx
+                    .background_spawn(async move { Query::parse(&text, match_case) })
+                    .await;
+                view.update(cx, |view, cx| view.apply_query(result, cx))
+                    .log_err();
+            }));
+        }
+        self.persist(cx);
+        cx.notify();
+    }
+
+    fn apply_query(&mut self, result: Result<Query>, cx: &mut Context<Self>) {
+        self.filter_task = None;
+        match result {
             Ok(query) => {
                 self.query = query;
                 self.filter_error = None;
                 self.rebuild(cx);
             }
-            Err(error) => self.filter_error = Some(format!("{error:#}")),
+            Err(error) => {
+                self.filter_error = Some(format!("{error:#}"));
+                cx.notify();
+            }
         }
-        self.persist(cx);
-        cx.notify();
     }
 
     fn persist(&mut self, cx: &mut Context<Self>) {
@@ -903,56 +1080,185 @@ impl LogcatView {
     }
 
     fn rebuild(&mut self, cx: &mut Context<Self>) {
-        let now_millis = Utc::now().timestamp_millis();
-        let context = FilterContext {
-            now_millis,
-            project_packages: &self.project_packages,
-        };
-        let entries: Box<dyn Iterator<Item = &Arc<Entry>> + '_> = match &self.paused {
-            Some(entries) => Box::new(entries.iter()),
-            None => Box::new(self.buffer.entries.iter()),
-        };
-        let visible = entries
-            .filter(|entry| self.query.matches(entry, &context))
-            .cloned()
-            .collect::<Vec<_>>();
-        let old_ids: Vec<_> = self.visible.iter().map(|entry| entry.id).collect();
-        let new_ids: Vec<_> = visible.iter().map(|entry| entry.id).collect();
-        if old_ids != new_ids {
-            let removed = old_ids
-                .iter()
-                .position(|id| new_ids.first() == Some(id))
-                .unwrap_or(old_ids.len());
-            let retained = old_ids.get(removed..).unwrap_or_default();
-            if new_ids.starts_with(retained) {
-                self.list_state.splice(0..removed, 0);
-                self.list_state.splice(
-                    retained.len()..retained.len(),
-                    new_ids.len() - retained.len(),
-                );
-            } else {
-                self.list_state.reset(visible.len());
-            }
-            self.visible = visible;
-            let retained_ids: HashSet<_> = new_ids.into_iter().collect();
-            self.measured_widths
-                .retain(|id, _| retained_ids.contains(id));
-            self.selected.retain(|id| retained_ids.contains(id));
-            self.text_selection = self.text_selection.filter(|(anchor, head)| {
-                retained_ids.contains(&anchor.0) && retained_ids.contains(&head.0)
-            });
-            self.selection_anchor = self.selection_anchor.filter(|id| retained_ids.contains(id));
-            self.update_search(cx);
+        self.rebuild_task = None;
+        self.rebuild_cancellation = None;
+        self.rebuild_tail.clear();
+        self.rebuild_tail_columns = 0;
+        let entries = self
+            .paused
+            .clone()
+            .unwrap_or_else(|| self.buffer.entries.iter().cloned().collect());
+        let query = self.query.clone();
+        let packages = self.project_packages.clone();
+        let compact = self.preferences.compact;
+        let now = Utc::now().timestamp_millis();
+        if small_snapshot(entries.iter()) {
+            let (visible, columns) =
+                filter_entries(entries, &query, &packages, compact, now, None).unwrap_or_default();
+            self.apply_visible(visible, columns, cx);
+            return;
         }
+        let cancellation = WorkCancellation::default();
+        let cancelled = cancellation.0.clone();
+        self.rebuild_cancellation = Some(cancellation);
+        self.rebuild_task = Some(cx.spawn(async move |view, cx| {
+            let Some((mut visible, mut columns)) = cx
+                .background_spawn(async move {
+                    filter_entries(entries, &query, &packages, compact, now, Some(&cancelled))
+                })
+                .await
+            else {
+                return;
+            };
+            view.update(cx, |view, cx| {
+                if view.paused.is_none() {
+                    let first_id = view
+                        .buffer
+                        .entries
+                        .front()
+                        .map(|entry| entry.id)
+                        .unwrap_or(u64::MAX);
+                    visible.drain(..visible.partition_point(|entry| entry.id < first_id));
+                    let tail = std::mem::take(&mut view.rebuild_tail);
+                    visible.extend(tail.into_iter().filter(|entry| entry.id >= first_id));
+                    columns = columns.max(view.rebuild_tail_columns);
+                }
+                view.rebuild_task = None;
+                view.rebuild_cancellation = None;
+                view.rebuild_tail_columns = 0;
+                view.apply_visible(visible, columns, cx);
+            })
+            .log_err();
+        }));
+    }
+
+    fn retain_selection(&mut self) {
+        let contains = |id| {
+            self.visible
+                .binary_search_by_key(&id, |entry| entry.id)
+                .is_ok()
+        };
+        self.selected.retain(|id| contains(*id));
+        self.text_selection = self
+            .text_selection
+            .filter(|(anchor, head)| contains(anchor.0) && contains(head.0));
+        self.selection_anchor = self.selection_anchor.filter(|id| contains(*id));
+        if self.text_selection.is_none() {
+            self.selecting_text = false;
+        }
+    }
+
+    fn single_selected(&self) -> Option<u64> {
+        (self.selected.len() == 1)
+            .then(|| self.selected.iter().next().copied())
+            .flatten()
+    }
+
+    fn remeasure_selection(&self, previous: Option<u64>) {
+        if self.preferences.fold_stacktraces {
+            self.list_state.remeasure();
+        } else {
+            for id in previous.into_iter().chain(self.single_selected()) {
+                if let Ok(index) = self.visible.binary_search_by_key(&id, |entry| entry.id) {
+                    self.list_state.remeasure_items(index..index + 1);
+                }
+            }
+        }
+    }
+
+    fn apply_visible(&mut self, visible: Vec<Arc<Entry>>, columns: usize, cx: &mut Context<Self>) {
+        let removed = self
+            .visible
+            .partition_point(|entry| visible.first().is_none_or(|first| entry.id < first.id));
+        let retained = self.visible.get(removed..).unwrap_or_default();
+        if visible.len() >= retained.len()
+            && visible
+                .iter()
+                .zip(retained)
+                .all(|(new, old)| new.id == old.id)
+        {
+            self.list_state.splice(0..removed, 0);
+            self.list_state.splice(
+                retained.len()..retained.len(),
+                visible.len() - retained.len(),
+            );
+        } else {
+            self.list_state.reset(visible.len());
+        }
+        self.visible = visible;
+        self.unwrapped_columns = columns;
+        self.measured_line_width.set(px(0.));
+        self.retain_selection();
+        self.update_search(cx);
         cx.notify();
     }
 
     fn update_search(&mut self, cx: &mut Context<Self>) {
+        self.search_task = None;
+        self.search_cancellation = None;
+        self.pending_search = None;
+        self.search_tail.clear();
         if !self.search_visible {
             return;
         }
         let text = self.search_input.read(cx).text(cx);
-        match logcat::Search::new(&text, self.search_case, self.search_regex) {
+        let match_case = self.search_case;
+        let regex = self.search_regex;
+        if small_snapshot(self.visible.iter()) {
+            self.apply_search(logcat::Search::new(&text, match_case, regex), None, cx);
+            return;
+        }
+        let cancellation = WorkCancellation::default();
+        let cancelled = cancellation.0.clone();
+        self.search_cancellation = Some(cancellation);
+        self.search_task = Some(cx.spawn(async move |view, cx| {
+            let search = cx
+                .background_spawn(async move { logcat::Search::new(&text, match_case, regex) })
+                .await;
+            let Some(entries) = view
+                .update(cx, |view, _| {
+                    view.pending_search = search.as_ref().ok().cloned().flatten();
+                    view.visible.clone()
+                })
+                .log_err()
+            else {
+                return;
+            };
+            let worker_search = search.as_ref().ok().cloned().flatten();
+            let Some(matches) = cx
+                .background_spawn(async move {
+                    let mut matches = Vec::new();
+                    if let Some(search) = worker_search {
+                        for entry in &entries {
+                            if cancelled.load(Ordering::Relaxed) {
+                                return None;
+                            }
+                            if search.matches(&entry.line()) {
+                                matches.push(entry.id);
+                            }
+                        }
+                    }
+                    Some(matches)
+                })
+                .await
+            else {
+                return;
+            };
+            view.update(cx, |view, cx| view.apply_search(search, Some(matches), cx))
+                .log_err();
+        }));
+    }
+
+    fn apply_search(
+        &mut self,
+        result: Result<Option<logcat::Search>>,
+        snapshot: Option<Vec<u64>>,
+        cx: &mut Context<Self>,
+    ) {
+        self.search_task = None;
+        self.search_cancellation = None;
+        self.pending_search = None;
+        match result {
             Ok(search) => {
                 self.search = search;
                 self.search_error = None;
@@ -962,17 +1268,29 @@ impl LogcatView {
                 self.search_error = Some(error.to_string());
             }
         }
-        self.search_matches = self
-            .search
-            .as_ref()
-            .map(|search| {
-                self.visible
+        self.search_matches.clear();
+        if let Some(search) = &self.search {
+            if let Some(mut matches) = snapshot {
+                matches.append(&mut self.search_tail);
+                let mut matches = matches.into_iter().peekable();
+                for (index, entry) in self.visible.iter().enumerate() {
+                    while matches.peek().is_some_and(|id| *id < entry.id) {
+                        matches.next();
+                    }
+                    if matches.peek() == Some(&entry.id) {
+                        self.search_matches.push(index);
+                    }
+                }
+            } else {
+                self.search_matches = self
+                    .visible
                     .iter()
                     .enumerate()
                     .filter_map(|(index, entry)| search.matches(&entry.line()).then_some(index))
-                    .collect()
-            })
-            .unwrap_or_default();
+                    .collect();
+            }
+        }
+        self.search_tail.clear();
         self.search_position = self
             .search_position
             .filter(|position| *position < self.search_matches.len());
@@ -995,12 +1313,12 @@ impl LogcatView {
             self.list_state.pause_following_tail();
             self.list_state.scroll_to_reveal_item(index);
             if let Some(entry) = self.visible.get(index) {
+                let previous = self.single_selected();
                 self.text_selection = None;
                 self.selected.clear();
                 self.selected.insert(entry.id);
+                self.remeasure_selection(previous);
             }
-            self.list_state
-                .splice(0..self.visible.len(), self.visible.len());
         }
         cx.notify();
     }
@@ -1011,15 +1329,29 @@ impl LogcatView {
             self.rebuild(cx);
         } else {
             self.paused = Some(self.buffer.entries.iter().cloned().collect());
+            self.rebuild(cx);
         }
         cx.notify();
     }
 
     fn clear(&mut self, cx: &mut Context<Self>) {
+        self.source_task = None;
+        self.source_cancellation = None;
+        self.source_entry = None;
+        self.source_locations.clear();
+        self.rebuild_task = None;
+        self.rebuild_cancellation = None;
+        self.rebuild_tail.clear();
+        self.rebuild_tail_columns = 0;
+        let entries = std::mem::take(&mut self.buffer.entries);
+        let visible = std::mem::take(&mut self.visible);
+        let paused = self.paused.as_mut().map(std::mem::take);
+        cx.background_spawn(async move {
+            drop((entries, visible, paused));
+        })
+        .detach();
         self.buffer.clear();
-        if let Some(entries) = &mut self.paused {
-            entries.clear();
-        }
+        self.list_state.reset(0);
         self.selected.clear();
         self.selection_anchor = None;
         self.text_selection = None;
@@ -1029,8 +1361,14 @@ impl LogcatView {
 
     fn text_selection_extent(&self) -> Option<((usize, usize), (usize, usize))> {
         let (anchor, head) = self.text_selection?;
-        let anchor_index = self.visible.iter().position(|entry| entry.id == anchor.0)?;
-        let head_index = self.visible.iter().position(|entry| entry.id == head.0)?;
+        let anchor_index = self
+            .visible
+            .binary_search_by_key(&anchor.0, |entry| entry.id)
+            .ok()?;
+        let head_index = self
+            .visible
+            .binary_search_by_key(&head.0, |entry| entry.id)
+            .ok()?;
         let anchor = (anchor_index, anchor.1);
         let head = (head_index, head.1);
         Some((anchor.min(head), anchor.max(head)))
@@ -1156,6 +1494,7 @@ impl LogcatView {
             cx.notify();
             return;
         }
+        let capacity = self.preferences.capacity;
         let paths = cx.prompt_for_paths(PathPromptOptions {
             files: true,
             directories: false,
@@ -1180,28 +1519,18 @@ impl LogcatView {
                         "Logcat files must be smaller than 64 MiB"
                     );
                     let entries = logcat::import(&text)?;
-                    Ok::<_, anyhow::Error>(Some((path, entries)))
+                    let mut buffer = Buffer::new(capacity);
+                    for entry in entries {
+                        buffer.push(entry);
+                    }
+                    Ok::<_, anyhow::Error>(Some((path, buffer)))
                 })
                 .await
             }
             .await;
             view.update(cx, |view, cx| {
                 match result {
-                    Ok(Some((path, entries))) => {
-                        view.stream_task = None;
-                        view.capturing = false;
-                        view.file = Some(path);
-                        view.paused = None;
-                        view.buffer.clear();
-                        view.selected.clear();
-                        for entry in entries {
-                            view.buffer.push(entry);
-                        }
-                        view.error = None;
-                        view.status =
-                            "Viewing saved logs. Select a device to return to live capture.".into();
-                        view.rebuild(cx);
-                    }
+                    Ok(Some((path, buffer))) => view.apply_import(path, buffer, cx),
                     Ok(None) => {}
                     Err(error) => view.error = Some(format!("Import failed: {error:#}")),
                 }
@@ -1210,6 +1539,19 @@ impl LogcatView {
             })
             .log_err();
         }));
+    }
+
+    fn apply_import(&mut self, path: PathBuf, buffer: Buffer, cx: &mut Context<Self>) {
+        self.stream_task = None;
+        self.capturing = false;
+        self.file = Some(path);
+        self.clear(cx);
+        self.paused = None;
+        self.cursor = None;
+        self.buffer = buffer;
+        self.error = None;
+        self.status = "Viewing saved logs. Select a device to return to live capture.".into();
+        self.rebuild(cx);
     }
 
     fn device_command(&mut self, args: Vec<String>, cx: &mut Context<Self>) {
@@ -1404,7 +1746,7 @@ impl LogcatView {
                         compact.update(cx, |view, cx| {
                             view.preferences.compact = !view.preferences.compact;
                             view.text_selection = None;
-                            view.measured_widths.clear();
+                            view.rebuild(cx);
                             view.list_state.reset(view.visible.len());
                             view.persist(cx);
                             cx.notify();
@@ -1507,6 +1849,9 @@ impl LogcatView {
         let Some(entry) = self.visible.get(index).cloned() else {
             return gpui::Empty.into_any_element();
         };
+        if self.selected.contains(&entry.id) && self.selected.len() == 1 {
+            self.update_source_locations(&entry, cx);
+        }
         let color = match entry.level {
             Level::Error | Level::Assert => cx.theme().status().error,
             Level::Warn => cx.theme().status().warning,
@@ -1569,7 +1914,10 @@ impl LogcatView {
         let highlights = gpui::combine_highlights(highlights, []).collect::<Vec<_>>();
         let text = gpui::StyledText::new(display.text).with_highlights(highlights);
         let layout = text.layout().clone();
-        self.text_layouts.insert(entry.id, layout.clone());
+        let painted_layouts = self.text_layouts.clone();
+        let measured_width = self.measured_line_width.clone();
+        let wrapped = self.preferences.wrap;
+        let entity_id = cx.entity_id();
         let id = entry.id;
         let view = cx.weak_entity();
         let menu = ui::right_click_menu(("logcat-row-menu", id)).maybe_menu(move |window, cx| {
@@ -1648,6 +1996,10 @@ impl LogcatView {
                     {
                         return;
                     }
+                    let previous = view.single_selected();
+                    let Ok(index) = view.visible.binary_search_by_key(&id, |entry| entry.id) else {
+                        return;
+                    };
                     view.text_selection = None;
                     if event.modifiers().shift {
                         let anchor = view
@@ -1671,8 +2023,7 @@ impl LogcatView {
                         view.selected.insert(id);
                         view.selection_anchor = Some(id);
                     }
-                    view.list_state
-                        .splice(0..view.visible.len(), view.visible.len());
+                    view.remeasure_selection(previous);
                     cx.notify();
                 }),
             )
@@ -1683,6 +2034,33 @@ impl LogcatView {
                         .min_w_0()
                         .text_color(color)
                         .when(!self.preferences.wrap, |text| text.whitespace_nowrap())
+                        .on_children_prepainted({
+                            let layout = layout.clone();
+                            move |bounds, _, cx| {
+                                if let Some(bounds) = bounds.first() {
+                                    if !wrapped {
+                                        let width = layout
+                                            .line_layouts()
+                                            .iter()
+                                            .map(|line| line.unwrapped_layout.width)
+                                            .fold(px(0.), Pixels::max);
+                                        if width > measured_width.get() {
+                                            measured_width.set(width);
+                                            cx.notify(entity_id);
+                                        }
+                                    }
+                                    // List measures overscan rows without prepainting them. Only
+                                    // publish layouts whose text is ready for hit testing.
+                                    painted_layouts.borrow_mut().insert(
+                                        id,
+                                        PaintedLogcatText {
+                                            bounds: *bounds,
+                                            layout: layout.clone(),
+                                        },
+                                    );
+                                }
+                            }
+                        })
                         .cursor_text()
                         .on_mouse_down(
                             gpui::MouseButton::Left,
@@ -1708,49 +2086,101 @@ impl LogcatView {
                 ),
             )
             .when(selected && self.selected.len() == 1, |row| {
-                row.children(self.source_buttons(index, cx))
+                row.children(self.source_buttons())
             });
         menu.trigger(move |_, _, _| row).into_any_element()
     }
 
-    fn source_buttons(&self, index: usize, cx: &Context<Self>) -> Vec<AnyElement> {
-        let Some(entry) = self.visible.get(index) else {
-            return Vec::new();
-        };
-        let mut locations = Vec::new();
-        for line in entry.message.lines() {
-            let Some((_, location)) = line.rsplit_once('(') else {
-                continue;
-            };
-            let Some((file, line)) = location.trim_end_matches(')').rsplit_once(':') else {
-                continue;
-            };
-            let Ok(line) = line.parse::<u32>() else {
-                continue;
-            };
-            if !file.ends_with(".kt") && !file.ends_with(".java") {
-                continue;
-            }
-            for worktree in self.project.read(cx).worktrees(cx) {
-                let worktree = worktree.read(cx);
-                for source in worktree
-                    .snapshot()
-                    .entries(false, 0)
-                    .filter(|source| source.path.file_name() == Some(file))
-                {
-                    let path = project::ProjectPath {
-                        worktree_id: worktree.id(),
-                        path: source.path.clone(),
-                    };
-                    if !locations.contains(&(path.clone(), line)) {
-                        locations.push((path, line));
-                    }
-                }
-            }
+    fn update_source_locations(&mut self, entry: &Arc<Entry>, cx: &mut Context<Self>) {
+        if self.source_entry == Some(entry.id) {
+            return;
         }
-        locations
-            .into_iter()
-            .take(20)
+        self.source_task = None;
+        self.source_cancellation = None;
+        self.source_locations.clear();
+        self.source_entry = Some(entry.id);
+        let worktrees = self
+            .project
+            .read(cx)
+            .worktrees(cx)
+            .map(|worktree| worktree.read(cx).snapshot())
+            .collect::<Vec<_>>();
+        let entry = entry.clone();
+        let id = entry.id;
+        let cancellation = WorkCancellation::default();
+        let cancelled = cancellation.0.clone();
+        self.source_cancellation = Some(cancellation);
+        self.source_task = Some(cx.spawn(async move |view, cx| {
+            let locations = cx
+                .background_spawn(async move {
+                    let mut frames: HashMap<&str, Vec<u32>> = HashMap::new();
+                    for frame in entry.message.lines() {
+                        if cancelled.load(Ordering::Relaxed) {
+                            return Vec::new();
+                        }
+                        let Some((_, location)) = frame.rsplit_once('(') else {
+                            continue;
+                        };
+                        let Some((file, line)) = location.trim_end_matches(')').rsplit_once(':')
+                        else {
+                            continue;
+                        };
+                        if (file.ends_with(".kt") || file.ends_with(".java"))
+                            && let Ok(line) = line.parse::<u32>()
+                        {
+                            let lines = frames.entry(file).or_default();
+                            if lines.len() < 20 && !lines.contains(&line) {
+                                lines.push(line);
+                            }
+                        }
+                    }
+                    let mut locations = Vec::new();
+                    if frames.is_empty() {
+                        return locations;
+                    }
+                    for worktree in worktrees {
+                        for source in worktree.entries(false, 0) {
+                            if cancelled.load(Ordering::Relaxed) {
+                                return Vec::new();
+                            }
+                            if let Some(lines) =
+                                source.path.file_name().and_then(|file| frames.get(file))
+                            {
+                                for &line in lines {
+                                    locations.push((
+                                        project::ProjectPath {
+                                            worktree_id: worktree.id(),
+                                            path: source.path.clone(),
+                                        },
+                                        line,
+                                    ));
+                                    if locations.len() == 20 {
+                                        return locations;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    locations
+                })
+                .await;
+            view.update(cx, |view, cx| {
+                view.source_task = None;
+                view.source_cancellation = None;
+                view.source_locations = locations;
+                if let Ok(index) = view.visible.binary_search_by_key(&id, |entry| entry.id) {
+                    view.list_state.remeasure_items(index..index + 1);
+                }
+                cx.notify();
+            })
+            .log_err();
+        }));
+    }
+
+    fn source_buttons(&self) -> Vec<AnyElement> {
+        self.source_locations
+            .iter()
+            .cloned()
             .enumerate()
             .map(|(index, (path, line))| {
                 let workspace = self.workspace.clone();
@@ -1814,7 +2244,7 @@ impl Item for LogcatView {
 
 impl Render for LogcatView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        self.text_layouts.clear();
+        self.text_layouts.borrow_mut().clear();
         let mut filter_context = KeyContext::new_with_defaults();
         filter_context.add("AndroidLogcatFilter");
         if !self.completions.is_empty() {
@@ -2074,8 +2504,9 @@ impl Render for LogcatView {
                 if !view.selecting_text || !event.dragging() {
                     return;
                 }
-                let nearest = view.text_layouts.iter().min_by_key(|(_, layout)| {
-                    let bounds = layout.bounds();
+                let layouts = view.text_layouts.borrow();
+                let nearest = layouts.iter().min_by_key(|(_, text)| {
+                    let bounds = text.bounds;
                     if event.position.y < bounds.top() {
                         bounds.top() - event.position.y
                     } else if event.position.y > bounds.bottom() {
@@ -2084,13 +2515,15 @@ impl Render for LogcatView {
                         px(0.)
                     }
                 });
-                if let Some((&id, layout)) = nearest {
-                    let offset = match layout.index_for_position(event.position) {
+                if let Some((&id, text)) = nearest {
+                    let offset = match text.layout.index_for_position(event.position) {
                         Ok(offset) | Err(offset) => offset,
                     };
                     if let Some((_, head)) = &mut view.text_selection {
-                        *head = (id, offset);
-                        cx.notify();
+                        if *head != (id, offset) {
+                            *head = (id, offset);
+                            cx.notify();
+                        }
                     }
                 }
             }))
@@ -2142,10 +2575,10 @@ impl Render for LogcatView {
             .on_action(cx.listener(|view, _: &FindPrevious, _, cx| view.find(true, cx)))
             .on_action(cx.listener(|view, _: &Copy, _, cx| view.copy(false, cx)))
             .on_action(cx.listener(|view, _: &SelectAll, _, cx| {
+                let previous = view.single_selected();
                 view.text_selection = None;
                 view.selected = view.visible.iter().map(|entry| entry.id).collect();
-                view.list_state
-                    .splice(0..view.visible.len(), view.visible.len());
+                view.remeasure_selection(previous);
                 cx.notify();
             }))
             .child(
@@ -2449,6 +2882,67 @@ struct DisplayLine {
     metadata_end: usize,
     tag: std::ops::Range<usize>,
     level: std::ops::Range<usize>,
+}
+
+fn entry_bytes(entry: &Entry) -> usize {
+    std::mem::size_of::<Entry>()
+        + entry.tag.len()
+        + entry.message.len()
+        + entry.package.len()
+        + entry.process.len()
+}
+
+fn small_snapshot<'a>(entries: impl ExactSizeIterator<Item = &'a Arc<Entry>>) -> bool {
+    entries.len() <= INLINE_FILTER_LIMIT
+        && entries.map(|entry| entry_bytes(entry)).sum::<usize>() <= INLINE_FILTER_BYTES
+}
+
+fn line_columns(entry: &Entry, compact: bool) -> usize {
+    let digits = |value: u32| value.checked_ilog10().unwrap_or(0) as usize + 1;
+    let mut metadata = entry.tag.width() + 5;
+    if !compact {
+        metadata +=
+            27 + digits(entry.pid).max(5) + digits(entry.tid).max(5) + entry.package.width() + 2;
+        if !entry.process.is_empty() && entry.process != entry.package {
+            metadata += 2 + entry.process.width();
+        }
+        if let Some(uid) = entry.uid {
+            metadata += 6 + digits(uid);
+        }
+    }
+    entry
+        .message
+        .lines()
+        .enumerate()
+        .map(|(index, line)| line.width() + if index == 0 { metadata } else { 0 })
+        .max()
+        .unwrap_or(metadata)
+}
+
+fn filter_entries(
+    entries: Vec<Arc<Entry>>,
+    query: &Query,
+    packages: &[String],
+    compact: bool,
+    now_millis: i64,
+    cancelled: Option<&AtomicBool>,
+) -> Option<(Vec<Arc<Entry>>, usize)> {
+    let context = FilterContext {
+        now_millis,
+        project_packages: packages,
+    };
+    let mut columns = 0;
+    let mut visible = Vec::new();
+    for entry in entries {
+        if cancelled.is_some_and(|cancelled| cancelled.load(Ordering::Relaxed)) {
+            return None;
+        }
+        if query.matches(&entry, &context) {
+            columns = columns.max(line_columns(&entry, compact));
+            visible.push(entry);
+        }
+    }
+    Some((visible, columns))
 }
 
 fn display_line(entry: &Entry, compact: bool, fold: bool) -> DisplayLine {
@@ -2795,6 +3289,7 @@ async fn capture(
     let mut decoder = Decoder::default();
     let mut last_flush = Instant::now();
     let mut batch = Vec::new();
+    let mut batch_bytes = 0;
     let mut bytes = [0; 32 * 1024];
     let mut skip_cursor = cursor.is_some();
     loop {
@@ -2830,19 +3325,30 @@ async fn capture(
                         }
                         skip_cursor = false;
                     }
+                    batch_bytes += entry_bytes(&entry);
                     batch.push(entry);
+                    if batch.len() == CAPTURE_BATCH_LIMIT || batch_bytes >= CAPTURE_BATCH_BYTES {
+                        sender
+                            .send(std::mem::take(&mut batch))
+                            .await
+                            .context("Logcat view closed")?;
+                        last_flush = Instant::now();
+                        batch_bytes = 0;
+                    }
                 }
             }
             Either::Right(_) => {}
         }
         if !batch.is_empty()
-            && (batch.len() >= 1024 || last_flush.elapsed() >= Duration::from_millis(50))
+            && (batch.len() >= CAPTURE_BATCH_LIMIT
+                || last_flush.elapsed() >= Duration::from_millis(50))
         {
             sender
                 .send(std::mem::take(&mut batch))
                 .await
                 .context("Logcat view closed")?;
             last_flush = Instant::now();
+            batch_bytes = 0;
         } else if batch.is_empty() {
             last_flush = Instant::now();
         }
@@ -3079,7 +3585,7 @@ pub(super) mod tests {
         (workspace, view, cx)
     }
 
-    fn draw_view(_: &Entity<LogcatView>, cx: &mut gpui::VisualTestContext) {
+    pub(super) fn draw_view(_: &Entity<LogcatView>, cx: &mut gpui::VisualTestContext) {
         cx.simulate_resize(gpui::size(px(640.), px(320.)));
         cx.run_until_parked();
         cx.update(|window, cx| window.draw(cx).clear(cx));
@@ -3263,7 +3769,8 @@ pub(super) mod tests {
             let entry = &view.visible[0];
             let display = display_line(entry, true, false);
             let offset = display.text.find("日本語").expect("Unicode");
-            let layout = &view.text_layouts[&entry.id];
+            let layouts = view.text_layouts.borrow();
+            let layout = &layouts[&entry.id].layout;
             (
                 layout.position_for_index(offset).expect("Start") + point(px(0.), px(8.)),
                 layout
@@ -3323,7 +3830,8 @@ pub(super) mod tests {
             let second = display_line(&view.visible[1], true, false).text;
             let start = first.rfind("日本語").expect("Start");
             let end = second.find("日本語").expect("End") + "日本語".len();
-            let first_layout = &view.text_layouts[&view.visible[0].id];
+            let layouts = view.text_layouts.borrow();
+            let first_layout = &layouts[&view.visible[0].id].layout;
             assert!(
                 first_layout.bounds().size.height > first_layout.line_height(),
                 "Fixture wraps"
@@ -3333,7 +3841,8 @@ pub(super) mod tests {
                     .position_for_index(start)
                     .expect("Start position")
                     + point(px(0.), px(8.)),
-                view.text_layouts[&view.visible[1].id]
+                layouts[&view.visible[1].id]
+                    .layout
                     .position_for_index(end)
                     .expect("End position")
                     + point(px(0.), px(8.)),
@@ -3737,3 +4246,11 @@ pub(super) mod tests {
         });
     }
 }
+
+#[cfg(test)]
+#[path = "android_logcat_runtime_tests.rs"]
+mod runtime_tests;
+
+#[cfg(test)]
+#[path = "android_logcat_paint_tests.rs"]
+mod paint_tests;
