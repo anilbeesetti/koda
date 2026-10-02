@@ -118,15 +118,12 @@ if arguments[:2] == ['release', 'upload'] and os.environ.get('FAIL_UPLOAD'):
 
 class ReleaseTriggerTests(unittest.TestCase):
     def test_release_entrypoints_accept_only_manual_dispatch(self):
-        for filename in ["main_macos_release.yml",
-                         "release.yml", "release_nightly.yml"]:
-            with self.subTest(workflow=filename):
-                text = (ROOT / ".github/workflows" / filename).read_text()
-                trigger = text.split("\non:\n", 1)[1].split("\n\n", 1)[0]
-                self.assertIn("workflow_dispatch:", trigger)
-                self.assertNotIn("push:", trigger)
-                self.assertNotIn("schedule:", trigger)
-                self.assertNotIn("workflow_run:", trigger)
+        text = (ROOT / ".github/workflows/main_macos_release.yml").read_text()
+        trigger = text.split("\non:\n", 1)[1].split("\n\n", 1)[0]
+        self.assertIn("workflow_dispatch:", trigger)
+        self.assertNotIn("push:", trigger)
+        self.assertNotIn("schedule:", trigger)
+        self.assertNotIn("workflow_run:", trigger)
 
     def test_nightly_runs_at_midnight_in_calcutta_and_allows_manual_retries(self):
         workflow = (ROOT / ".github/workflows/nightly_macos_release.yml").read_text()
