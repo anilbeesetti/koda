@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+"""Exercise the real Compose preview bridge using an isolated Android IDE sample."""
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import time
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--project", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--installation", type=Path, default=os.environ.get("ANDROID_IDE_COMPOSE_PREVIEW"))
+    parser.add_argument("--java-home", type=Path, default=os.environ.get("JAVA21_HOME") or os.environ.get("JAVA_HOME"))
+    parser.add_argument("--module", default=":mobile")
+    parser.add_argument("--variant", default="demoDebug")
+    parser.add_argument("--source", default="mobile/src/main/kotlin/dev/zed/androidsample/PreviewGallery.kt")
+    args = parser.parse_args()
+    if not args.installation or not args.java_home:
+        parser.error("Set --installation and --java-home to the preview tools and JDK 21")
+    project = args.project.resolve(strict=True)
+    installation = args.installation.resolve(strict=True)
+    source = (project / args.source).resolve(strict=True)
+    if not source.is_relative_to(project):
+        parser.error("The source must belong to the sample project")
+    output = args.output.absolute()
+    output.mkdir(parents=True, exist_ok=False)
+    repository = Path(__file__).resolve().parent.parent
+    exporter = re.search(r'const INIT: &str = r#"(.*?)"#;',
+                         (repository / "crates/android_tools/src/preview.rs").read_text(), re.DOTALL)
+    if not exporter:
+        raise RuntimeError("Could not find the production Gradle exporter")
+    init = output / "export.gradle"
+    init.write_text(exporter.group(1))
+    java = args.java_home.resolve(strict=True) / "bin/java"
+    environment = dict(os.environ, JAVA_HOME=str(java.parent.parent))
+    environment["PATH"] = str(java.parent) + os.pathsep + environment.get("PATH", "")
+    java_args = [str(java), "-Xmx2g", "-Djava.awt.headless=true",
+                 "-Dkotlinx.coroutines.fast.service.loader=false", "--enable-native-access=ALL-UNNAMED",
+                 "-cp", os.pathsep.join(str(installation / path) for path in (".", "renderer.jar", "layoutlib.jar")),
+                 "PreviewBridge"]
+    original = source.read_bytes()
+    timings = {}
+
+    def run(command, log, timeout):
+        start = time.monotonic()
+        with log.open("w") as stream:
+            subprocess.run(command, cwd=project, stdout=stream, stderr=subprocess.STDOUT,
+                           env=environment, check=True, timeout=timeout)
+        timings[str(log.relative_to(output))] = time.monotonic() - start
+
+    def render_pass(name, overlay=None):
+        directory = output / name
+        directory.mkdir()
+        capitalized = args.variant[0].upper() + args.variant[1:]
+        command = [str(project / ("gradlew.bat" if os.name == "nt" else "gradlew")), "--init-script", str(init),
+                   f"-Dzed.android.module={args.module}", f"-Dzed.android.variant={args.variant}",
+                   f"{args.module}:assemble{capitalized}", f"{args.module}:zedAndroidPreviewModel",
+                   "--no-configuration-cache", "--console=plain"]
+        if overlay:
+            command.append(f"-Dzed.android.preview.overlay={overlay}")
+        log = directory / "build.log"
+        run(command, log, 600)
+        records = [line.removeprefix("ANDROID_IDE_PREVIEW_MODEL=") for line in log.read_text().splitlines()
+                   if line.startswith("ANDROID_IDE_PREVIEW_MODEL=")]
+        if len(records) != 1:
+            raise RuntimeError("Expected exactly one model in " + str(log))
+        model = json.loads(records[0])
+        model_path = directory / "model.json"
+        model_path.write_text(json.dumps(model))
+        discoveries = directory / "previews.json"
+        run(java_args + ["discover", str(model_path), str(discoveries)], directory / "discover.log", 60)
+        previews = [preview for preview in json.loads(discoveries.read_text())
+                    if preview["sourceFile"] == source.name and preview["packageName"] == "dev.zed.androidsample"]
+        if len(previews) != 9 or not all("PreviewGalleryFacade." in preview["methodFQN"] for preview in previews):
+            raise RuntimeError("File facade, repeated or multipreview discovery failed")
+        candidates = []
+        for path in project.glob(args.module.lstrip(":").replace(":", "/") + "/build/outputs/apk/**/output-metadata.json"):
+            listing = json.loads(path.read_text())
+            if listing.get("variantName") == args.variant:
+                candidates.extend(path.parent / entry["outputFile"] for entry in listing["elements"])
+        if not candidates:
+            raise RuntimeError("No APK for the requested variant")
+        settings = {key: model[key] for key in ("namespace", "classPath", "projectClassPath")}
+        settings.update(layoutlibPath=str(installation / "layoutlib"), resourceApkPath=str(candidates[0]),
+                        outputFolder=str(directory), metaDataFolder=str(directory / "metadata"),
+                        resultsFilePath=str(directory / "results.json"),
+                        screenshots=[{key: value for key, value in preview.items()
+                                      if key in ("methodFQN", "previewId", "previewParams", "methodParams", "previewWrapperFqn")}
+                                     for preview in previews])
+        settings_path = directory / "render.json"
+        settings_path.write_text(json.dumps(settings))
+        run(java_args + ["render", str(settings_path)], directory / "render.log", 180)
+        results = json.loads((directory / "results.json").read_text())
+        if results.get("globalError") or len(results["screenshotResults"]) != 10:
+            raise RuntimeError("Rendering or parameter expansion failed")
+        images = {}
+        for result in results["screenshotResults"]:
+            method = result["previewId"].rsplit(".", 1)[1].rsplit("_", 1)[0]
+            if method == "BrokenPreview":
+                if "Expected preview failure" not in json.dumps(result.get("error")):
+                    raise RuntimeError("The broken preview lost its diagnostic")
+                continue
+            if result.get("error") or result.get("inspectionError"):
+                raise RuntimeError(f"{method} failed: {result}")
+            if not any(node["fileName"] == source.name and node["lineNumber"] > 0 for node in result["nodes"]):
+                raise RuntimeError(f"{method} has no source navigation metadata")
+            image = (directory / result["imagePath"]).resolve(strict=True)
+            if not image.is_relative_to(directory) or image.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+                raise RuntimeError("Invalid rendered image")
+            images[(method, result["parameterIndex"], result["previewId"])] = hashlib.sha256(image.read_bytes()).hexdigest()
+        return images
+
+    try:
+        baseline = render_pass("baseline")
+        replacement = output / "sources" / source.name
+        replacement.parent.mkdir()
+        changed = original.decode().replace("Preview baseline", "Unsaved preview content")
+        if changed == original.decode():
+            raise RuntimeError("The source must contain the PreviewGallery fixture")
+        replacement.write_text(changed)
+        manifest = output / "sources.json"
+        manifest.write_text(json.dumps({str(source): str(replacement)}))
+        edited = render_pass("unsaved", manifest)
+        plain = next(key for key in baseline if key[0] == "PlainPreview")
+        if baseline[plain] == edited[plain]:
+            raise RuntimeError("Unsaved edits did not change the rendered preview")
+        restored = render_pass("restored")
+        if baseline != restored:
+            raise RuntimeError("A subsequent saved build did not restore the baseline previews")
+        (output / "report.json").write_text(json.dumps({"passed": True, "previews": 10,
+                                                       "sourceUnchanged": source.read_bytes() == original,
+                                                       "timingsSeconds": timings}, indent=2) + "\n")
+    finally:
+        if source.read_bytes() != original:
+            raise RuntimeError("The probe changed the original source file")
+    print(f"Compose preview integration passed; report: {output / 'report.json'}")
+
+
+if __name__ == "__main__":
+    main()

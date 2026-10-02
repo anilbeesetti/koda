@@ -31,16 +31,31 @@ def main():
     installation = dependencies / "compose-preview"
     bridge = bootstrap["REPOSITORY"] / "crates/android_tools/src/PreviewBridge.java"
     version = "alpha15-layoutlib16.2.4-" + hashlib.sha256(bridge.read_bytes()).hexdigest()
-    if installation.exists():
-        if installation.is_symlink() or (installation / ".revision").read_text().strip() != version:
-            raise RuntimeError(f"Preserving {installation}; move it aside before reinstalling")
-        if not (installation / "PreviewBridge.class").is_file():
-            raise RuntimeError("Incomplete preview installation; move it aside and retry")
-        print(f"Already installed: {installation}")
-        return
     java_home = Path(os.environ.get("JAVA21_HOME", "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home"))
     if not (java_home / "bin/javac").is_file():
         raise RuntimeError("Install JDK 21 or set JAVA21_HOME before installing preview tools")
+    if installation.exists():
+        revision = (installation / ".revision").read_text().strip()
+        if installation.is_symlink() or not revision.startswith("alpha15-layoutlib16.2.4-"):
+            raise RuntimeError(f"Preserving {installation}; move it aside before reinstalling")
+        if not (installation / "PreviewBridge.class").is_file():
+            raise RuntimeError("Incomplete preview installation; move it aside and retry")
+        for file, artifact in [("renderer.jar", ARTIFACTS[0]), ("layoutlib.jar", ARTIFACTS[1]), ("layoutlib/data/framework_res.jar", ARTIFACTS[3])]:
+            if hashlib.sha256((installation / file).read_bytes()).hexdigest() != artifact[2]:
+                raise RuntimeError(f"Preserving modified preview tools: {file}")
+        if revision != version or not (installation / ".protocol").is_file() or (installation / ".protocol").read_text().strip() != "2":
+            with tempfile.TemporaryDirectory(prefix="compose-preview-bridge-", dir=dependencies) as temporary:
+                subprocess.run([str(java_home / "bin/javac"), "-cp", str(installation / "renderer.jar"),
+                                "-d", temporary, str(bridge)], check=True)
+                os.replace(Path(temporary) / "PreviewBridge.class", installation / "PreviewBridge.class")
+                for name, contents in [(".protocol", "2\n"), (".revision", version + "\n")]:
+                    path = Path(temporary) / name
+                    path.write_text(contents)
+                    os.replace(path, installation / name)
+            print(f"Updated preview bridge: {installation}")
+        else:
+            print(f"Already installed: {installation}")
+        return
     archives = [bootstrap["download"](name, "https://dl.google.com/dl/android/maven2/" + path, checksum)
                 for name, path, checksum in ARTIFACTS]
     with tempfile.TemporaryDirectory(prefix="compose-preview-install-", dir=dependencies) as temporary:
@@ -54,6 +69,7 @@ def main():
         subprocess.run([str(java_home / "bin/javac"), "-cp", str(distribution / "renderer.jar"),
                         "-d", str(distribution), str(bridge)], check=True)
         (distribution / ".revision").write_text(version + "\n")
+        (distribution / ".protocol").write_text("2\n")
         (distribution / "SOURCE.txt").write_text("Google Android tooling (Apache-2.0); preserve bundled notices.\n" +
             "\n".join("https://dl.google.com/dl/android/maven2/" + path for _, path, _ in ARTIFACTS) + "\n")
         distribution.rename(installation)

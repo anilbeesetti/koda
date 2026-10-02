@@ -221,9 +221,10 @@ starts Android debugging, Command-Option-R continues, Shift-F8 steps out, and
 Command-F2 disconnects. `script/test-android-debugger --device emulator-5554` provides an
 explicit emulator-only smoke test after building `demoDebug`.
 
-**Compose preview** builds the selected variant and opens a rendered image beside
-the code. **Select preview…** switches between the default and large-text
-annotations. Rendering uses downloaded Google tooling, JDK 21, and the selected
-variant's resources; Android Studio and a running device are unnecessary. Refresh
-after code changes. Interactive previews and multi-value preview parameter
-galleries are not implemented.
+**Compose preview** opens all previews for the active Kotlin file beside the code,
+including multipreview annotations and parameter values. Use **Build & Refresh**
+or leave **Auto** enabled to rebuild after edits, including unsaved Kotlin changes.
+Click a preview to inspect its layout outlines, then click a component to navigate
+to its source. Rendering uses downloaded Google tooling, JDK 21, and the selected
+variant's resources. See [Compose previews](COMPOSE_PREVIEW.md) for controls,
+implementation research, compatibility boundaries, and integration checks.
