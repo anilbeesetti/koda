@@ -7353,6 +7353,73 @@ mod tests {
     }
 
     #[gpui::test]
+    async fn test_startup_defaults_to_welcome_with_recent_project(cx: &mut TestAppContext) {
+        use db::kvp::KeyValueStore;
+        use onboarding::FIRST_OPEN;
+        use session::Session;
+
+        let app_state = init_test(cx);
+        let kvp = cx.update(|cx| KeyValueStore::global(cx));
+        kvp.write_kvp(FIRST_OPEN.to_string(), "false".to_string())
+            .await
+            .expect("failed to mark onboarding complete");
+
+        app_state
+            .fs
+            .as_fake()
+            .insert_tree(path!("/project"), json!({ "file.txt": "content" }))
+            .await;
+        let session_id = cx.read(|cx| app_state.session.read(cx).id().to_owned());
+        let window = open_test_project_window_with_tabs(
+            &app_state,
+            Path::new(path!("/project")),
+            &[rel_path("file.txt")],
+            cx,
+        )
+        .await;
+        flush_workspace_serialization(&window, cx).await;
+        window
+            .update(cx, |_, window, _| window.remove_window())
+            .expect("failed to close the project window");
+        cx.run_until_parked();
+
+        cx.update(|cx| {
+            assert_eq!(
+                workspace::WorkspaceSettings::get_global(cx).restore_on_startup,
+                workspace::RestoreOnStartupBehavior::Launchpad,
+            );
+            app_state.session.update(cx, |app_session, _cx| {
+                app_session.replace_session_for_test(Session::test_with_old_session(session_id));
+            });
+        });
+
+        let mut async_cx = cx.to_async();
+        crate::restore_or_create_workspace(app_state.clone(), &mut async_cx)
+            .await
+            .expect("failed to open the welcome workspace");
+        cx.run_until_parked();
+
+        let windows = cx.windows();
+        assert_eq!(windows.len(), 1);
+        windows[0]
+            .downcast::<MultiWorkspace>()
+            .expect("expected a workspace window")
+            .read_with(cx, |multi_workspace, cx| {
+                let workspace = multi_workspace.workspace().read(cx);
+                assert!(workspace.root_paths(cx).is_empty());
+                assert_eq!(workspace.active_pane().read(cx).items_len(), 0);
+            })
+            .expect("failed to read the welcome workspace");
+
+        let database = cx.update(|cx| workspace::WorkspaceDb::global(cx));
+        let (_, _, recent_paths) =
+            workspace::last_opened_workspace_location(&database, app_state.fs.as_ref())
+                .await
+                .expect("previous project should remain available to reopen");
+        assert_eq!(recent_paths.paths(), &[PathBuf::from(path!("/project"))]);
+    }
+
+    #[gpui::test]
     async fn test_multi_workspace_session_restore(cx: &mut TestAppContext) {
         use collections::HashMap;
         use session::Session;
@@ -7360,6 +7427,14 @@ mod tests {
         use workspace::{OpenMode, ProjectGroupKey, Workspace, WorkspaceId};
 
         let app_state = init_test(cx);
+        cx.update(|cx| {
+            cx.update_global::<SettingsStore, _>(|store, cx| {
+                store.update_user_settings(cx, |settings| {
+                    settings.workspace.restore_on_startup =
+                        Some(workspace::RestoreOnStartupBehavior::LastSession);
+                });
+            });
+        });
 
         let dir1 = path!("/dir1");
         let dir2 = path!("/dir2");
@@ -7471,7 +7546,6 @@ mod tests {
 
         // Simulate a new session launch: replace the session so that
         // `last_session_id()` returns the ID used during workspace creation.
-        // `restore_on_startup` defaults to `LastSession`, which is what we need.
         cx.update(|cx| {
             app_state.session.update(cx, |app_session, _cx| {
                 app_session
@@ -7576,6 +7650,14 @@ mod tests {
         use workspace::{OpenMode, Workspace};
 
         let app_state = init_test(cx);
+        cx.update(|cx| {
+            cx.update_global::<SettingsStore, _>(|store, cx| {
+                store.update_user_settings(cx, |settings| {
+                    settings.workspace.restore_on_startup =
+                        Some(workspace::RestoreOnStartupBehavior::LastSession);
+                });
+            });
+        });
         cx.update(init);
 
         let dir1 = path!("/dir1");
@@ -7711,6 +7793,14 @@ mod tests {
         use session::Session;
 
         let app_state = init_test(cx);
+        cx.update(|cx| {
+            cx.update_global::<SettingsStore, _>(|store, cx| {
+                store.update_user_settings(cx, |settings| {
+                    settings.workspace.restore_on_startup =
+                        Some(workspace::RestoreOnStartupBehavior::LastSession);
+                });
+            });
+        });
         cx.update(init);
 
         let first_dir = format!("reload-restore-{}", uuid::Uuid::new_v4());
@@ -7846,6 +7936,14 @@ mod tests {
         use workspace::{OpenMode, ProjectGroupKey};
 
         let app_state = init_test(cx);
+        cx.update(|cx| {
+            cx.update_global::<SettingsStore, _>(|store, cx| {
+                store.update_user_settings(cx, |settings| {
+                    settings.workspace.restore_on_startup =
+                        Some(workspace::RestoreOnStartupBehavior::LastSession);
+                });
+            });
+        });
 
         let fs = app_state.fs.clone();
         let fake_fs = fs.as_fake();
