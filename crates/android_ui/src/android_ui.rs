@@ -1,6 +1,9 @@
+mod android_build;
 mod android_debugger;
 mod android_preview;
 
+use android_build::{BuildEvent, BuildStatus, BuildTab, ProcessOutput};
+pub use android_build::{BuildPanel, ToggleBuild};
 use android_tools::{
     AndroidTarget, Device, adb_path, android_cli_path, emulator_path, is_gradle_project,
     parse_devices, parse_emulators, parse_targets,
@@ -75,8 +78,12 @@ pub fn init(cx: &mut App) {
         let panel = cx
             .new(|cx| AndroidPanel::new(workspace.weak_handle(), workspace.project().clone(), cx));
         panel.update(cx, |panel, cx| panel.observe_project_open(window, cx));
+        workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
         workspace.add_panel(panel, window, cx);
         workspace
+            .register_action(|workspace, _: &ToggleBuild, window, cx| {
+                workspace.toggle_panel_focus::<BuildPanel>(window, cx);
+            })
             .register_action(|workspace, _: &ToggleFocus, window, cx| {
                 workspace.toggle_panel_focus::<AndroidPanel>(window, cx);
             })
@@ -227,6 +234,12 @@ pub struct AndroidPanel {
     workspace: WeakEntity<Workspace>,
     project: Entity<Project>,
     toolbar: Entity<AndroidToolbar>,
+    build_panel: Entity<BuildPanel>,
+    build_task: Option<Task<()>>,
+    command_cancel: Option<oneshot::Sender<()>>,
+    active_build_session: Option<(BuildTab, u64)>,
+    last_build_operation: Option<GradleOperation>,
+    _build_subscription: Subscription,
     focus_handle: FocusHandle,
     root: Option<PathBuf>,
     targets: Vec<AndroidTarget>,
@@ -273,6 +286,15 @@ impl AndroidPanel {
         project: Entity<Project>,
         cx: &mut Context<Self>,
     ) -> Self {
+        let build_panel = cx.new(|cx| BuildPanel::new(workspace.clone(), cx));
+        let build_subscription =
+            cx.subscribe(
+                &build_panel,
+                |panel, _, event: &BuildEvent, cx| match event {
+                    BuildEvent::Stop(tab) => panel.cancel_build(*tab, cx),
+                    BuildEvent::Rerun(_) => {}
+                },
+            );
         let project_subscription = cx.subscribe(&project, |panel, _, event, cx| {
             if let project::Event::LanguageServerAdded(id, name, worktree) = event
                 && name.0.as_ref() == "jdtls"
@@ -289,6 +311,12 @@ impl AndroidPanel {
             workspace,
             project,
             toolbar,
+            build_panel,
+            build_task: None,
+            command_cancel: None,
+            active_build_session: None,
+            last_build_operation: None,
+            _build_subscription: build_subscription,
             focus_handle: cx.focus_handle(),
             root: None,
             targets: Vec::new(),
@@ -333,6 +361,22 @@ impl AndroidPanel {
     }
 
     fn observe_project_open(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self._startup_subscriptions.push(cx.subscribe_in(
+            &self.build_panel,
+            window,
+            |panel, _, event: &BuildEvent, window, cx| {
+                if let BuildEvent::Rerun(tab) = event {
+                    match tab {
+                        BuildTab::Sync => panel.sync_project(window, cx),
+                        BuildTab::Output => {
+                            if let Some(operation) = panel.last_build_operation {
+                                panel.gradle(operation, window, cx);
+                            }
+                        }
+                    }
+                }
+            },
+        ));
         self._startup_subscriptions.push(cx.observe_in(
             &cx.entity(),
             window,
@@ -490,6 +534,36 @@ impl AndroidPanel {
         .then_some(root)
     }
 
+    fn cancel_build(&mut self, tab: BuildTab, cx: &mut Context<Self>) {
+        let Some((active, id)) = self.active_build_session else {
+            return;
+        };
+        if active != tab {
+            return;
+        }
+        self.active_build_session = None;
+        self.command_cancel = None;
+        self.sync_task = None;
+        self.build_task = None;
+        self.java_task = None;
+        if self.kotlin_task.take().is_some() {
+            self.kotlin_setup_error = Some("Kotlin setup cancelled".into());
+        }
+        self.syncing = false;
+        self.running = false;
+        self.status = "Operation cancelled".into();
+        self.build_panel.update(cx, |panel, cx| {
+            panel.finish(
+                tab,
+                id,
+                BuildStatus::Cancelled,
+                "Operation cancelled".into(),
+                cx,
+            )
+        });
+        cx.notify();
+    }
+
     fn auto_sync_project(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if !self.startup_settings_ready {
             return;
@@ -499,7 +573,30 @@ impl AndroidPanel {
             .as_ref()
             .is_some_and(|root| !self.roots(cx).contains(root))
         {
-            self.sync_task = None;
+            if let Some(cancel) = self.command_cancel.take() {
+                cancel
+                    .send(())
+                    .map_err(|_| anyhow::anyhow!("Android command already finished"))
+                    .log_err();
+            }
+            if let Some((tab, id)) = self.active_build_session.take() {
+                self.build_panel.update(cx, |panel, cx| {
+                    panel.finish(
+                        tab,
+                        id,
+                        BuildStatus::Cancelled,
+                        "Project closed; operation cancelled".into(),
+                        cx,
+                    )
+                });
+                self.sync_task = None;
+                if self.java_task.take().is_some() {
+                    self.running = false;
+                }
+                if self.build_task.take().is_some() {
+                    self.running = false;
+                }
+            }
             self.syncing = false;
             self.kotlin_refresh_task = None;
             self.kotlin_refresh_pending = None;
@@ -596,6 +693,21 @@ impl AndroidPanel {
         self.kotlin_setup_error = None;
         self.status = "Syncing Android project…".into();
         self.refresh_devices(cx);
+        let (session_id, output, logs) = self.build_panel.update(cx, |panel, cx| {
+            panel.begin(
+                BuildTab::Sync,
+                format!(
+                    "Sync {}",
+                    root.file_name().unwrap_or_default().to_string_lossy()
+                ),
+                false,
+                window,
+                cx,
+            )
+        });
+        let (cancel, cancelled) = oneshot::channel();
+        self.command_cancel = Some(cancel);
+        self.active_build_session = Some((BuildTab::Sync, session_id));
         let executor = cx.background_executor().clone();
         self.sync_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let expected_root = root.clone();
@@ -605,25 +717,36 @@ impl AndroidPanel {
                         is_gradle_project(&root),
                         "This folder has no Gradle wrapper. Open the project's Gradle root."
                     );
-                    let output = tool_output(
-                        android_cli_path()?,
-                        vec![
-                            "describe".into(),
+                    let mut command = util::command::new_std_command(android_cli_path()?);
+                    command
+                        .args([
+                            "describe".to_owned(),
                             format!("--project_dir={}", root.display()),
-                        ],
-                        &root,
+                        ])
+                        .current_dir(&root);
+                    match android_build::command_output(
+                        command,
                         &executor,
                         Duration::from_secs(300),
+                        output,
+                        cancelled,
+                        true,
                     )
-                    .await?;
-                    parse_targets(&output)
+                    .await?
+                    {
+                        ProcessOutput::Success(output) => parse_targets(&output).map(Some),
+                        ProcessOutput::Cancelled => Ok(None),
+                    }
                 })
                 .await;
+            logs.await;
             panel
                 .update_in(cx, |panel, window, cx| {
-                    if panel.root.as_ref() != Some(&expected_root) {
+                    if panel.active_build_session != Some((BuildTab::Sync, session_id)) {
                         return;
                     }
+                    panel.active_build_session = None;
+                    panel.command_cancel = None;
                     panel.syncing = false;
                     let result = result.and_then(|targets| {
                         ensure!(
@@ -632,8 +755,24 @@ impl AndroidPanel {
                         );
                         Ok(targets)
                     });
+                    let status = match &result {
+                        Ok(Some(_)) => BuildStatus::Succeeded,
+                        Ok(None) => BuildStatus::Cancelled,
+                        Err(_) => BuildStatus::Failed,
+                    };
+                    let message = match &result {
+                        Ok(Some(targets)) => format!(
+                            "Sync successful: {} build variants discovered",
+                            targets.len()
+                        ),
+                        Ok(None) => "Sync cancelled".into(),
+                        Err(error) => format!("{error:#}"),
+                    };
+                    panel.build_panel.update(cx, |panel, cx| {
+                        panel.finish(BuildTab::Sync, session_id, status, message, cx)
+                    });
                     match result {
-                        Ok(targets) => {
+                        Ok(Some(targets)) => {
                             panel.apply_targets(targets, cx);
                             if panel.official_kotlin_state(cx).is_some() {
                                 if let Some(target) = panel.selected_target.clone() {
@@ -644,6 +783,10 @@ impl AndroidPanel {
                                     panel.fail(error, window, cx);
                                 }
                             }
+                            cx.notify();
+                        }
+                        Ok(None) => {
+                            panel.status = "Sync cancelled".into();
                             cx.notify();
                         }
                         Err(error) => {
@@ -800,7 +943,8 @@ impl AndroidPanel {
                     vec!["./gradlew".into(), gradle_task, "--console=plain".into()],
                 )
             };
-            self.schedule(
+            self.last_build_operation = Some(operation);
+            self.schedule_build(
                 format!("Android {name} · {}", target.label()),
                 program,
                 args,
@@ -813,6 +957,135 @@ impl AndroidPanel {
         if let Err(error) = result {
             self.fail(error, window, cx);
         }
+    }
+
+    fn schedule_build(
+        &mut self,
+        label: String,
+        program: PathBuf,
+        args: Vec<String>,
+        root: PathBuf,
+        after_task: Option<AfterTask>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
+        let worktree_id = self
+            .project
+            .read(cx)
+            .visible_worktrees(cx)
+            .find(|worktree| worktree.read(cx).abs_path().as_ref() == root.as_path())
+            .map(|worktree| worktree.read(cx).id())
+            .context("The Android project is no longer open.")?;
+        let environment =
+            self.project
+                .read(cx)
+                .environment()
+                .clone()
+                .update(cx, |environment, cx| {
+                    environment.local_directory_environment(
+                        &task::Shell::Program(util::get_system_shell()),
+                        Arc::from(root.as_path()),
+                        cx,
+                    )
+                });
+        let terminal_environment = self
+            .project
+            .read(cx)
+            .terminal_settings(&Some(root.clone()), cx)
+            .env
+            .clone();
+        let (session_id, output, logs) = self.build_panel.update(cx, |panel, cx| {
+            panel.begin(BuildTab::Output, label.clone(), false, window, cx)
+        });
+        let (cancel, cancelled) = oneshot::channel();
+        self.command_cancel = Some(cancel);
+        self.active_build_session = Some((BuildTab::Output, session_id));
+        self.running = true;
+        self.error = None;
+        self.status = label.into();
+        let workspace = self.workspace.clone();
+        let executor = cx.background_executor().clone();
+        self.build_task = Some(cx.spawn_in(window, async move |panel, cx| {
+            Workspace::save_for_task(&workspace, SaveStrategy::All, cx).await;
+            let mut environment = environment.await.unwrap_or_default();
+            environment.extend(terminal_environment);
+            let valid = panel
+                .read_with(cx, |panel, cx| {
+                    panel.trusted_root(cx).and_then(|current| {
+                        ensure!(
+                            current == root,
+                            "The Android project changed before building"
+                        );
+                        Ok(())
+                    })
+                })
+                .and_then(|result| result);
+            let result = match valid {
+                Ok(()) => {
+                    cx.background_spawn({
+                        let root = root.clone();
+                        async move {
+                            let mut command = util::command::new_std_command(program);
+                            command.args(args).current_dir(&root).envs(environment);
+                            android_build::command_output(
+                                command,
+                                &executor,
+                                Duration::from_secs(3600),
+                                output,
+                                cancelled,
+                                false,
+                            )
+                            .await
+                        }
+                    })
+                    .await
+                }
+                Err(error) => {
+                    drop(output);
+                    Err(error)
+                }
+            };
+            logs.await;
+            panel
+                .update_in(cx, |panel, window, cx| {
+                    if panel.active_build_session != Some((BuildTab::Output, session_id)) {
+                        return;
+                    }
+                    panel.active_build_session = None;
+                    panel.command_cancel = None;
+                    let (status, result, message) = match result {
+                        Ok(ProcessOutput::Success(_)) => (
+                            BuildStatus::Succeeded,
+                            ScheduledTaskResult::Success,
+                            "Build completed successfully".into(),
+                        ),
+                        Ok(ProcessOutput::Cancelled) => (
+                            BuildStatus::Cancelled,
+                            ScheduledTaskResult::Cancelled,
+                            "Build cancelled".into(),
+                        ),
+                        Err(error) => (
+                            BuildStatus::Failed,
+                            ScheduledTaskResult::Failure,
+                            format!("{error:#}"),
+                        ),
+                    };
+                    panel.build_panel.update(cx, |panel, cx| {
+                        panel.finish(BuildTab::Output, session_id, status, message, cx)
+                    });
+                    panel.complete_scheduled_task(
+                        &root,
+                        worktree_id,
+                        after_task,
+                        result,
+                        window,
+                        cx,
+                    );
+                })
+                .log_err();
+        }));
+        cx.notify();
+        Ok(())
     }
 
     fn schedule(
@@ -943,7 +1216,7 @@ impl AndroidPanel {
             ScheduledTaskResult::Failure | ScheduledTaskResult::SpawnFailed => {
                 self.fail(
                     anyhow::anyhow!(
-                        "Android command failed. See the task terminal for the error and retry after fixing it."
+                        "Android command failed. See the Build pane or command output for the error and retry after fixing it."
                     ),
                     window,
                     cx,
@@ -1222,6 +1495,18 @@ impl AndroidPanel {
         self.coordinate_kotlin_setup(root.clone(), false, window, cx);
         self.kotlin_setup_error = None;
         self.status = "Configuring official Kotlin and generating Android resources…".into();
+        let (session_id, output, logs) = self.build_panel.update(cx, |panel, cx| {
+            panel.begin(
+                BuildTab::Sync,
+                "Generating Android resources for Kotlin import".into(),
+                true,
+                window,
+                cx,
+            )
+        });
+        let (cancel, cancelled) = oneshot::channel();
+        self.command_cancel = Some(cancel);
+        self.active_build_session = Some((BuildTab::Sync, session_id));
         let executor = cx.background_executor().clone();
         self.kotlin_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let result = async {
@@ -1241,12 +1526,13 @@ impl AndroidPanel {
                         let mut arguments = if cfg!(windows) { Vec::new() } else { vec!["./gradlew".into()] };
                         let server = server_binary.parent().and_then(Path::parent).context("The Kotlin server has no distribution directory")?;
                         arguments.extend(["--init-script".into(), resource_guard.to_string_lossy().into_owned(), format!("-Dzed.android.kotlinServer={}", server.display()), kotlin::RESOURCE_GENERATION_TASK.into(), "--no-configuration-cache".into(), "--console=plain".into()]);
-                        let mut command = new_command(program);
+                        let mut command = util::command::new_std_command(program);
                         command.args(arguments).current_dir(&root).env("JAVA_HOME", &java_home)
                             .env("LSP_ANDROID_MODULE", &target.module).env("LSP_ANDROID_VARIANT", &target.variant);
-                        command_output(command, &executor, Duration::from_secs(300)).await
+                        android_build::command_output(command, &executor, Duration::from_secs(300), output, cancelled, false).await?.stdout()
                     }
                 }).await.err();
+                if generation_error.as_ref().is_some_and(|error| error.is::<android_build::CommandCancelled>()) { return Err(android_build::CommandCancelled.into()); }
                 let mut refresh = panel.update_in(cx, |panel, _, cx| {
                     panel.validate_official_kotlin_target(&root, &target, cx)?;
                     let updated = official_kotlin_settings(previous.clone(), &root, &target, &java_home, &server_binary, cx)?;
@@ -1267,7 +1553,18 @@ impl AndroidPanel {
                 })??.await?;
                 Ok::<_, anyhow::Error>(generation_error)
             }.await;
+            logs.await;
             panel.update_in(cx, |panel, window, cx| {
+                if panel.active_build_session != Some((BuildTab::Sync, session_id)) { return; }
+                panel.active_build_session = None;
+                panel.command_cancel = None;
+                let (status, message) = match &result {
+                    Ok(None) => (BuildStatus::Succeeded, "Kotlin import configured".into()),
+                    Ok(Some(error)) => (BuildStatus::Failed, format!("Android resource generation failed: {error:#}")),
+                    Err(error) if error.is::<android_build::CommandCancelled>() => (BuildStatus::Cancelled, "Kotlin setup cancelled".into()),
+                    Err(error) => (BuildStatus::Failed, format!("{error:#}")),
+                };
+                panel.build_panel.update(cx, |panel, cx| panel.finish(BuildTab::Sync, session_id, status, message, cx));
                 panel.running = false;
                 panel.kotlin_task = None;
                 match result {
@@ -1305,6 +1602,18 @@ impl AndroidPanel {
         };
         self.running = true;
         self.status = "Preparing the selected Android Java model…".into();
+        let (session_id, output, logs) = self.build_panel.update(cx, |panel, cx| {
+            panel.begin(
+                BuildTab::Sync,
+                "Importing Android Java model".into(),
+                true,
+                window,
+                cx,
+            )
+        });
+        let (cancel, cancelled) = oneshot::channel();
+        self.command_cancel = Some(cancel);
+        self.active_build_session = Some((BuildTab::Sync, session_id));
         let executor = cx.background_executor().clone();
         self.java_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let result = async {
@@ -1318,7 +1627,9 @@ impl AndroidPanel {
                         args.extend(["--init-script".into(), init.to_string_lossy().into_owned(),
                             format!("-Dzed.android.compileTask={}", target.gradle_task("compile", "JavaWithJavac")),
                             java::MODEL_TASK.into(), "--no-configuration-cache".into(), "--console=plain".into()]);
-                        let output = tool_output(program, args, &root, &executor, Duration::from_secs(300)).await?;
+                        let mut command = util::command::new_std_command(program);
+                        command.args(args).current_dir(&root);
+                        let output = android_build::command_output(command, &executor, Duration::from_secs(300), output, cancelled, true).await?.stdout()?;
                         Ok::<_, anyhow::Error>((java::parse_model(&output, &root, &target)?, kotlin::read_settings(&root)?))
                     }
                 }).await?;
@@ -1339,7 +1650,17 @@ impl AndroidPanel {
                 }).await?;
                 Ok::<_, anyhow::Error>((root, serde_json::json!({"identifiers": [{"uri": uri}]})))
             }.await;
+            logs.await;
             panel.update_in(cx, |panel, window, cx| {
+                if panel.active_build_session != Some((BuildTab::Sync, session_id)) { return; }
+                panel.active_build_session = None;
+                panel.command_cancel = None;
+                let (status, message) = match &result {
+                    Ok(_) => (BuildStatus::Succeeded, "Java model imported".into()),
+                    Err(error) if error.is::<android_build::CommandCancelled>() => (BuildStatus::Cancelled, "Java import cancelled".into()),
+                    Err(error) => (BuildStatus::Failed, format!("{error:#}")),
+                };
+                panel.build_panel.update(cx, |panel, cx| panel.finish(BuildTab::Sync, session_id, status, message, cx));
                 panel.running = false;
                 match result {
                     Ok(refresh) => {
@@ -2638,6 +2959,43 @@ mod tests {
                 "{path}"
             );
         }
+    }
+
+    #[gpui::test]
+    async fn stop_sync_cancels_pending_import_after_the_command_exits(cx: &mut TestAppContext) {
+        let _app_state = cx.update(AppState::test);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree("/android", json!({"README.md": ""})).await;
+        let project = Project::test(fs, [Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let (send_cancel, receiver) = oneshot::channel();
+        drop(receiver);
+        panel.update_in(cx, |panel, window, cx| {
+            let (id, output, logs) = panel.build_panel.update(cx, |pane, cx| {
+                pane.begin(
+                    BuildTab::Sync,
+                    "Waiting for Kotlin import".into(),
+                    false,
+                    window,
+                    cx,
+                )
+            });
+            drop(output);
+            logs.detach();
+            panel.command_cancel = Some(send_cancel);
+            panel.active_build_session = Some((BuildTab::Sync, id));
+            panel.running = true;
+            panel.kotlin_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+            panel.cancel_build(BuildTab::Sync, cx);
+            assert!(!panel.running);
+            assert!(panel.active_build_session.is_none() && panel.kotlin_task.is_none());
+            assert_eq!(
+                panel.kotlin_setup_error.as_deref(),
+                Some("Kotlin setup cancelled")
+            );
+        });
     }
 
     #[gpui::test]

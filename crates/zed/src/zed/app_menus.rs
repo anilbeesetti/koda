@@ -285,6 +285,7 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
                 ),
                 MenuItem::action("Refresh Android Devices", android_ui::RefreshDevices),
                 MenuItem::action("Stop Selected Emulator", android_ui::StopEmulator),
+                MenuItem::action("Build Window", android_ui::ToggleBuild),
                 MenuItem::action("Logcat", android_ui::Logcat),
                 MenuItem::separator(),
                 MenuItem::action(

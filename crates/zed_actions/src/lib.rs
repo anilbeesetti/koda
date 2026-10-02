@@ -16,6 +16,8 @@ pub mod android {
     gpui::actions!(
         android,
         [
+            /// Shows or hides sync and build output.
+            ToggleBuild,
             /// Opens Logcat for the selected Android device.
             Logcat,
         ]
