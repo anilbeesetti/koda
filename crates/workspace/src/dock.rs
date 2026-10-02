@@ -1572,19 +1572,6 @@ impl Render for PanelButtons {
             .items_center()
             .gap_2()
             .children(buttons)
-            .when(dock_position == DockPosition::Bottom, |rail| {
-                rail.child(
-                    IconButton::new("android-logcat", IconName::TerminalAlt)
-                        .icon_size(IconSize::Small)
-                        .tab_index(0isize)
-                        .tooltip(|_, cx| {
-                            Tooltip::for_action("Logcat", &zed_actions::android::Logcat, cx)
-                        })
-                        .on_click(|_, window, cx| {
-                            window.dispatch_action(zed_actions::android::Logcat.boxed_clone(), cx);
-                        }),
-                )
-            })
     }
 }
 
