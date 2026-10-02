@@ -77,13 +77,7 @@ jobs:
           GOBIN="$RUNNER_TEMP/actionlint" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
           echo "$RUNNER_TEMP/actionlint" >> "$GITHUB_PATH"
       - name: Check fork workflows
-        run: >-
-          actionlint .github/workflows/fork_ci.yml
-          .github/workflows/main_macos_release.yml
-          .github/workflows/nightly_macos_release.yml
-          .github/workflows/macos_release.yml
-          .github/workflows/release.yml
-          .github/workflows/release_nightly.yml
+        run: actionlint
       - name: Check packaging identity and coexistence
         run: python3 -m unittest discover -s script/tests -p 'test_*.py'
       - name: Check Android launcher and Kotlin scripts

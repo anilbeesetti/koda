@@ -55,6 +55,27 @@ Both workflows currently build Apple Silicon macOS downloads. Stable tags use
 leave GitHub's latest stable release unchanged. Failed runs can be retried with
 their reserved tag.
 
+### GitHub Actions
+
+This fork keeps five workflows:
+
+- **Fork CI** checks formatting, scripts, and every repository workflow on PRs
+  and pushes to `main`, with Linux and macOS builds/tests selected by the changed
+  files. Native jobs may intentionally skip when only scripts or docs change.
+- **GitHub release updater** tests fork updater behavior and stable/nightly
+  configuration when updater-related files change, or when run manually.
+- **Release Koda (stable)** and **Release Koda Nightly (prerelease)** are the
+  release entrypoints described above. `script/trigger-release stable|nightly`
+  dispatches them on `main`.
+- **macOS release build** is the reusable workflow called by both release
+  entrypoints.
+
+Upstream Zed CI, deployment, community, Slack, and release automation is removed
+because it targets Zed's organizations and services. The fork workflows are
+maintained directly in `.github/workflows`; `cargo xtask workflows` regenerates
+only the templates under `extensions/workflows`, which call upstream Zed's
+shared extension workflows.
+
 ### Upstream development documentation
 
 - [Building Zed for macOS](./docs/src/development/macos.md)
