@@ -945,7 +945,10 @@ impl AndroidPanel {
             };
             self.last_build_operation = Some(operation);
             self.schedule_build(
-                format!("Android {name} · {}", target.label()),
+                format!(
+                    "{name} {}",
+                    root.file_name().unwrap_or_default().to_string_lossy()
+                ),
                 program,
                 args,
                 root,

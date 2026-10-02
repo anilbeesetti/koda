@@ -96,9 +96,36 @@ struct LogLine {
     stderr: bool,
 }
 struct BuildTask {
+    name: SharedString,
     label: SharedString,
     line: usize,
-    failed: bool,
+    status: BuildStatus,
+    phase_line: Option<usize>,
+}
+
+struct BuildPhase {
+    label: SharedString,
+    line: usize,
+    status: BuildStatus,
+    started: Instant,
+    elapsed: Option<Duration>,
+}
+
+struct BuildMessage {
+    label: SharedString,
+    line: usize,
+    task_line: Option<usize>,
+    phase_line: Option<usize>,
+    error: bool,
+}
+
+#[derive(Clone, Copy)]
+enum TreeRow {
+    Root,
+    Phase(usize),
+    Downloads,
+    Task(usize),
+    Message(usize),
 }
 
 struct BuildSession {
@@ -107,10 +134,20 @@ struct BuildSession {
     status: BuildStatus,
     started: Instant,
     elapsed: Option<Duration>,
+    previous_elapsed: Duration,
     lines: VecDeque<LogLine>,
     bytes: usize,
     discarded: usize,
     tasks: VecDeque<BuildTask>,
+    task_indexes: std::collections::HashMap<(Option<usize>, SharedString), usize>,
+    task_offset: usize,
+    task_name_bytes: usize,
+    current_task: Option<usize>,
+    phases: VecDeque<BuildPhase>,
+    messages: VecDeque<BuildMessage>,
+    download_line: Option<usize>,
+    show_successful: bool,
+    selected_line: Option<usize>,
     widths: VecDeque<(usize, usize)>,
     follow: bool,
     expanded: bool,
@@ -125,10 +162,20 @@ impl BuildSession {
             status: BuildStatus::Running,
             started: Instant::now(),
             elapsed: None,
+            previous_elapsed: Duration::ZERO,
             lines: VecDeque::new(),
             bytes: 0,
             discarded: 0,
             tasks: VecDeque::new(),
+            task_indexes: std::collections::HashMap::new(),
+            task_offset: 0,
+            task_name_bytes: 0,
+            current_task: None,
+            phases: VecDeque::new(),
+            messages: VecDeque::new(),
+            download_line: None,
+            show_successful: false,
+            selected_line: None,
             widths: VecDeque::new(),
             follow: true,
             expanded: true,
@@ -143,22 +190,97 @@ impl BuildSession {
                 end -= 1;
             }
             let text = &text[..end];
-            if let Some(task) = text
-                .trim()
-                .strip_prefix("> Task ")
-                .or_else(|| text.trim().strip_prefix("Task: "))
-            {
-                let mut label_end = task.len().min(MAX_TASK_LABEL_BYTES);
-                while !task.is_char_boundary(label_end) {
-                    label_end -= 1;
+            let line_index = self.discarded + self.lines.len();
+            let trimmed = text.trim();
+            if let Some(task) = trimmed.strip_prefix("> Task ") {
+                let name: SharedString = task
+                    .split_whitespace()
+                    .next()
+                    .unwrap_or_default()
+                    .to_owned()
+                    .into();
+                let status = if task.ends_with(" FAILED") {
+                    BuildStatus::Failed
+                } else {
+                    BuildStatus::Succeeded
+                };
+                // Gradle can emit a plain-console task header at completion or when
+                // output is flushed. It does not provide a task start time.
+                let phase_line = self.phases.back().map(|phase| phase.line);
+                let key = (phase_line, name.clone());
+                if let Some(index) = self.task_indexes.get(&key).copied()
+                    && let Some(previous) = self.tasks.get_mut(index - self.task_offset)
+                {
+                    if previous.status != BuildStatus::Failed {
+                        previous.status = status;
+                    }
+                    self.current_task = Some(index);
+                } else {
+                    let index = self.task_offset + self.tasks.len();
+                    self.task_indexes.insert(key, index);
+                    self.current_task = Some(index);
+                    self.task_name_bytes += name.len();
+                    self.tasks.push_back(BuildTask {
+                        label: if name.len() <= MAX_TASK_LABEL_BYTES {
+                            name.clone()
+                        } else {
+                            bounded_label(&name)
+                        },
+                        name,
+                        line: line_index,
+                        status,
+                        phase_line,
+                    });
                 }
-                self.tasks.push_back(BuildTask {
-                    label: task[..label_end].to_owned().into(),
-                    line: self.discarded + self.lines.len(),
-                    failed: task.ends_with(" FAILED"),
+                while self.tasks.len() > MAX_TASKS
+                    || self.task_name_bytes > MAX_TASKS * MAX_TASK_LABEL_BYTES
+                {
+                    if let Some(task) = self.tasks.pop_front() {
+                        self.task_name_bytes -= task.name.len();
+                        self.task_indexes.remove(&(task.phase_line, task.name));
+                        self.task_offset += 1;
+                    }
+                }
+            }
+            if trimmed.starts_with("Downloading ") || trimmed.starts_with("Download ") {
+                self.download_line.get_or_insert(line_index);
+            }
+            let error = trimmed.starts_with("e: ")
+                || trimmed.starts_with("error:")
+                || trimmed.contains(": error:")
+                || trimmed.starts_with("Execution failed for task ")
+                || trimmed.starts_with("FAILURE:");
+            let warning = trimmed.starts_with("w: ")
+                || trimmed.starts_with("warning:")
+                || trimmed.contains(": warning:");
+            if error || warning {
+                let phase_line = self.phases.back().map(|phase| phase.line);
+                let task_index = if let Some(task_name) = trimmed
+                    .strip_prefix("Execution failed for task '")
+                    .and_then(|message| message.split_once('\'').map(|(task, _)| task))
+                {
+                    self.task_indexes
+                        .get(&(phase_line, task_name.to_owned().into()))
+                        .copied()
+                } else {
+                    self.current_task
+                };
+                let task_line = task_index
+                    .and_then(|index| index.checked_sub(self.task_offset))
+                    .and_then(|index| self.tasks.get_mut(index))
+                    .filter(|task| {
+                        task.phase_line == phase_line && !trimmed.starts_with("FAILURE:")
+                    })
+                    .map(|task| task.line);
+                self.messages.push_back(BuildMessage {
+                    label: bounded_label(trimmed),
+                    line: line_index,
+                    task_line,
+                    phase_line,
+                    error,
                 });
-                if self.tasks.len() > MAX_TASKS {
-                    self.tasks.pop_front();
+                if self.messages.len() > MAX_TASKS {
+                    self.messages.pop_front();
                 }
             }
             let width = text.chars().count();
@@ -192,13 +314,117 @@ impl BuildSession {
         }
     }
 
+    fn tree_rows(&self) -> Vec<TreeRow> {
+        let mut rows = vec![TreeRow::Root];
+        if !self.expanded {
+            return rows;
+        }
+        if self.download_line.is_some() {
+            rows.push(TreeRow::Downloads);
+        }
+        let task_lines: std::collections::HashSet<_> =
+            self.tasks.iter().map(|task| task.line).collect();
+        let mut messages = std::collections::HashMap::<usize, Vec<usize>>::new();
+        let mut phase_messages = std::collections::HashMap::<usize, Vec<TreeRow>>::new();
+        for (index, message) in self.messages.iter().enumerate() {
+            if let Some(task_line) = message.task_line.filter(|line| task_lines.contains(line)) {
+                messages.entry(task_line).or_default().push(index);
+            } else if let Some(phase_line) = message.phase_line {
+                phase_messages
+                    .entry(phase_line)
+                    .or_default()
+                    .push(TreeRow::Message(index));
+            }
+        }
+        let mut phase_tasks = std::collections::HashMap::<usize, Vec<TreeRow>>::new();
+        let phase_lines: std::collections::HashSet<_> =
+            self.phases.iter().map(|phase| phase.line).collect();
+        for (index, task) in self.tasks.iter().enumerate() {
+            if self.show_successful
+                || task.status == BuildStatus::Failed
+                || messages.contains_key(&task.line)
+                || (self.status == BuildStatus::Running
+                    && Some(index + self.task_offset) == self.current_task
+                    && task.phase_line == self.phases.back().map(|phase| phase.line))
+            {
+                let children = if let Some(phase_line) = task.phase_line
+                    && phase_lines.contains(&phase_line)
+                {
+                    phase_tasks.entry(phase_line).or_default()
+                } else {
+                    &mut rows
+                };
+                children.push(TreeRow::Task(index));
+                if let Some(diagnostics) = messages.remove(&task.line) {
+                    children.extend(diagnostics.into_iter().map(TreeRow::Message));
+                }
+            }
+        }
+        for (index, phase) in self.phases.iter().enumerate() {
+            let mut children = phase_tasks.remove(&phase.line).unwrap_or_default();
+            children.extend(phase_messages.remove(&phase.line).unwrap_or_default());
+            if self.show_successful
+                || phase.status != BuildStatus::Succeeded
+                || !children.is_empty()
+            {
+                rows.push(TreeRow::Phase(index));
+                rows.extend(children);
+            }
+        }
+        rows.extend(
+            self.messages
+                .iter()
+                .enumerate()
+                .filter_map(|(index, message)| {
+                    ((message.task_line.is_none()
+                        || message
+                            .task_line
+                            .is_some_and(|line| !task_lines.contains(&line)))
+                        && (message.phase_line.is_none()
+                            || message
+                                .phase_line
+                                .is_some_and(|line| !phase_lines.contains(&line))))
+                    .then_some(TreeRow::Message(index))
+                }),
+        );
+        rows
+    }
+
     fn clear(&mut self) {
         self.lines.clear();
         self.tasks.clear();
+        self.task_indexes.clear();
+        self.task_offset = 0;
+        self.task_name_bytes = 0;
+        self.current_task = None;
+        self.phases
+            .retain(|phase| phase.status == BuildStatus::Running);
+        for phase in &mut self.phases {
+            phase.line = 0;
+        }
+        self.messages.clear();
+        self.download_line = None;
+        self.selected_line = None;
         self.widths.clear();
         self.bytes = 0;
         self.discarded = 0;
         self.scroll = UniformListScrollHandle::new();
+    }
+}
+
+fn bounded_label(text: &str) -> SharedString {
+    let mut end = text.len().min(MAX_TASK_LABEL_BYTES);
+    while !text.is_char_boundary(end) {
+        end -= 1;
+    }
+    text[..end].to_owned().into()
+}
+
+fn elapsed_label(elapsed: Duration) -> String {
+    if elapsed.as_secs() == 0 {
+        format!("{} ms", elapsed.as_millis())
+    } else {
+        format!("{} sec", elapsed.as_secs())
     }
 }
 
@@ -237,15 +463,45 @@ impl BuildPanel {
         let id = self.next_id;
         let previous = self.sessions[tab.index()].take().filter(|_| retain_output);
         let mut session = BuildSession::new(id, label);
+        let phase_label = session.label.clone();
         if let Some(previous) = previous {
+            session.label = previous.label;
+            session.previous_elapsed = previous.previous_elapsed
+                + previous
+                    .elapsed
+                    .unwrap_or_else(|| previous.started.elapsed());
             session.lines = previous.lines;
             session.bytes = previous.bytes;
             session.discarded = previous.discarded;
             session.tasks = previous.tasks;
+            session.task_indexes = previous.task_indexes;
+            session.task_offset = previous.task_offset;
+            session.task_name_bytes = previous.task_name_bytes;
+            session.current_task = previous.current_task;
+            session.phases = previous.phases;
+            session.messages = previous.messages;
+            session.download_line = previous.download_line;
+            session.show_successful = previous.show_successful;
             session.widths = previous.widths;
         }
+        if tab == BuildTab::Sync {
+            session.phases.push_back(BuildPhase {
+                label: if phase_label.starts_with("Sync ") {
+                    "Load Android project model".into()
+                } else {
+                    phase_label.clone()
+                },
+                line: session.discarded + session.lines.len(),
+                status: BuildStatus::Running,
+                started: Instant::now(),
+                elapsed: None,
+            });
+            if session.phases.len() > MAX_TASKS {
+                session.phases.pop_front();
+            }
+        }
         session.append(OutputLine {
-            text: session.label.to_string(),
+            text: phase_label.to_string(),
             stderr: false,
         });
         self.sessions[tab.index()] = Some(session);
@@ -339,6 +595,35 @@ impl BuildPanel {
         {
             session.status = status;
             session.elapsed = Some(session.started.elapsed());
+            if let Some(phase) = session.phases.back_mut() {
+                phase.status = status;
+                phase.elapsed = Some(phase.started.elapsed());
+            }
+            if session
+                .phases
+                .iter()
+                .any(|phase| phase.status == BuildStatus::Failed)
+            {
+                session.status = BuildStatus::Failed;
+            } else if session
+                .phases
+                .iter()
+                .any(|phase| phase.status == BuildStatus::Cancelled)
+            {
+                session.status = BuildStatus::Cancelled;
+            }
+            if status == BuildStatus::Failed {
+                session.messages.push_back(BuildMessage {
+                    label: bounded_label(&message),
+                    line: session.discarded + session.lines.len(),
+                    task_line: None,
+                    phase_line: session.phases.back().map(|phase| phase.line),
+                    error: true,
+                });
+                if session.messages.len() > MAX_TASKS {
+                    session.messages.pop_front();
+                }
+            }
             session.append(OutputLine {
                 text: message,
                 stderr: status == BuildStatus::Failed,
@@ -364,11 +649,11 @@ impl BuildPanel {
                 .into_any_element();
         };
         let running = session.status == BuildStatus::Running;
-        let expanded = session.expanded;
-        let label = session.label.clone();
-        let status = session.status;
-        let elapsed = session.elapsed.unwrap_or_else(|| session.started.elapsed());
         let toolbar = v_flex()
+            .debug_selector(|| "build-left-actions".into())
+            .h_full()
+            .justify_start()
+            .flex_shrink_0()
             .p_1()
             .gap_1()
             .border_r_1()
@@ -388,28 +673,157 @@ impl BuildPanel {
                     .disabled(!running)
                     .tooltip(Tooltip::text("Stop"))
                     .on_click(cx.listener(move |_, _, _, cx| cx.emit(BuildEvent::Stop(tab)))),
+            )
+            .child(
+                IconButton::new("show-successful-build-steps", IconName::Eye)
+                    .tab_index(0isize)
+                    .aria_label("Show successful steps")
+                    .toggle_state(session.show_successful)
+                    .tooltip(Tooltip::text("Show successful steps"))
+                    .on_click(cx.listener(move |panel, _, _, cx| {
+                        if let Some(session) = &mut panel.sessions[tab.index()] {
+                            session.show_successful = !session.show_successful;
+                        }
+                        cx.notify();
+                    })),
             );
-        let tree = uniform_list(
-            "build-task-tree",
-            1 + if expanded { session.tasks.len() } else { 0 },
-            {
-                let panel = cx.entity();
-                move |range, _, cx| {
-                    let entity = panel.clone();
-                    let panel = panel.read(cx);
-                    let Some(session) = &panel.sessions[tab.index()] else {
-                        return Vec::new();
-                    };
-                    range
-                        .map(|index| {
-                            if index == 0 {
-                                h_flex()
-                                    .id("build-root")
-                                    .h_8()
-                                    .px_2()
-                                    .gap_1()
-                                    .overflow_hidden()
-                                    .child(
+        let rows = session.tree_rows();
+        let tree = uniform_list("build-task-tree", rows.len(), {
+            let panel = cx.entity();
+            move |range, _, cx| {
+                let entity = panel.clone();
+                let panel = panel.read(cx);
+                let Some(session) = &panel.sessions[tab.index()] else {
+                    return Vec::new();
+                };
+                range
+                    .filter_map(|index| {
+                        let row = *rows.get(index)?;
+                        let (label, icon, color, line, depth, duration) = match row {
+                            TreeRow::Root => {
+                                let state = if session.status == BuildStatus::Running {
+                                    match tab {
+                                        BuildTab::Sync => "Syncing…",
+                                        BuildTab::Output => "Building…",
+                                    }
+                                } else {
+                                    session.status.label()
+                                };
+                                let root_label = session
+                                    .label
+                                    .strip_prefix("Sync ")
+                                    .unwrap_or(&session.label);
+                                let label = if session.status == BuildStatus::Running
+                                    && let Some(task) = session
+                                        .current_task
+                                        .and_then(|index| index.checked_sub(session.task_offset))
+                                        .and_then(|index| session.tasks.get(index))
+                                        .filter(|task| {
+                                            task.phase_line
+                                                == session.phases.back().map(|phase| phase.line)
+                                        }) {
+                                    format!("{}: {} {}", root_label, state, task.label)
+                                } else {
+                                    format!("{}: {}", root_label, state)
+                                };
+                                (
+                                    SharedString::from(label),
+                                    session.status.icon(),
+                                    session.status.color(),
+                                    None,
+                                    0,
+                                    Some(
+                                        session.previous_elapsed
+                                            + session
+                                                .elapsed
+                                                .unwrap_or_else(|| session.started.elapsed()),
+                                    ),
+                                )
+                            }
+                            TreeRow::Phase(index) => {
+                                let phase = session.phases.get(index)?;
+                                (
+                                    phase.label.clone(),
+                                    phase.status.icon(),
+                                    phase.status.color(),
+                                    Some(phase.line),
+                                    1,
+                                    Some(phase.elapsed.unwrap_or_else(|| phase.started.elapsed())),
+                                )
+                            }
+                            TreeRow::Downloads => (
+                                "Download info".into(),
+                                IconName::Download,
+                                Color::Muted,
+                                session.download_line,
+                                1,
+                                None,
+                            ),
+                            TreeRow::Task(index) => {
+                                let task = session.tasks.get(index)?;
+                                (
+                                    task.label.clone(),
+                                    if task.status == BuildStatus::Failed {
+                                        IconName::Warning
+                                    } else {
+                                        IconName::ToolHammer
+                                    },
+                                    if task.status == BuildStatus::Failed {
+                                        Color::Error
+                                    } else {
+                                        Color::Muted
+                                    },
+                                    Some(task.line),
+                                    if task.phase_line.is_some() { 2 } else { 1 },
+                                    None,
+                                )
+                            }
+                            TreeRow::Message(index) => {
+                                let message = session.messages.get(index)?;
+                                (
+                                    message.label.clone(),
+                                    IconName::Warning,
+                                    if message.error {
+                                        Color::Error
+                                    } else {
+                                        Color::Warning
+                                    },
+                                    Some(message.line),
+                                    if let Some(task) = session
+                                        .tasks
+                                        .iter()
+                                        .find(|task| Some(task.line) == message.task_line)
+                                    {
+                                        if task.phase_line.is_some() { 3 } else { 2 }
+                                    } else if message.phase_line.is_some_and(|line| {
+                                        session.phases.iter().any(|phase| phase.line == line)
+                                    }) {
+                                        2
+                                    } else {
+                                        1
+                                    },
+                                    None,
+                                )
+                            }
+                        };
+                        let is_root = matches!(row, TreeRow::Root);
+                        Some(
+                            h_flex()
+                                .id(("build-tree-row", index))
+                                .when(is_root, |row| {
+                                    row.debug_selector(|| "build-root-row".into())
+                                })
+                                .h_7()
+                                .pl(px(8. + depth as f32 * 16.))
+                                .pr_2()
+                                .gap_1()
+                                .overflow_hidden()
+                                .when(line.is_some() && line == session.selected_line, |row| {
+                                    row.bg(cx.theme().colors().element_selected)
+                                })
+                                .hover(|row| row.bg(cx.theme().colors().element_hover))
+                                .when(is_root, |row| {
+                                    row.child(
                                         Icon::new(if session.expanded {
                                             IconName::ChevronDown
                                         } else {
@@ -417,77 +831,54 @@ impl BuildPanel {
                                         })
                                         .size(IconSize::Small),
                                     )
-                                    .child(
-                                        Icon::new(session.status.icon())
-                                            .size(IconSize::Small)
-                                            .color(session.status.color()),
+                                })
+                                .child(Icon::new(icon).size(IconSize::Small).color(color))
+                                .child(
+                                    div().flex_1().min_w_0().child(
+                                        Label::new(label)
+                                            .when(is_root, |label| {
+                                                label.weight(FontWeight::SEMIBOLD)
+                                            })
+                                            .truncate(),
+                                    ),
+                                )
+                                .when_some(duration, |row, duration| {
+                                    row.child(
+                                        Label::new(elapsed_label(duration))
+                                            .size(LabelSize::Small)
+                                            .color(Color::Muted),
                                     )
-                                    .child(Label::new(session.label.clone()).truncate())
-                                    .on_click({
-                                        let entity = entity.clone();
-                                        move |_, _, cx| {
-                                            entity.update(cx, |panel, cx| {
-                                                if let Some(session) =
-                                                    &mut panel.sessions[tab.index()]
-                                                {
+                                })
+                                .on_click({
+                                    let entity = entity.clone();
+                                    move |_, _, cx| {
+                                        entity.update(cx, |panel, cx| {
+                                            if let Some(session) = &mut panel.sessions[tab.index()]
+                                            {
+                                                if is_root {
                                                     session.expanded = !session.expanded;
+                                                    session.selected_line = None;
+                                                } else if let Some(line) = line {
+                                                    session.selected_line = Some(line);
+                                                    if line >= session.discarded {
+                                                        session.follow = false;
+                                                        session.scroll.scroll_to_item(
+                                                            line - session.discarded,
+                                                            ScrollStrategy::Top,
+                                                        );
+                                                    }
                                                 }
-                                                cx.notify();
-                                            });
-                                        }
-                                    })
-                                    .into_any_element()
-                            } else if let Some(task) = session.tasks.get(index - 1) {
-                                let line = task.line;
-                                h_flex()
-                                    .id(("build-task", index))
-                                    .h_8()
-                                    .pl_8()
-                                    .pr_2()
-                                    .gap_1()
-                                    .overflow_hidden()
-                                    .child(
-                                        Icon::new(if task.failed {
-                                            IconName::Warning
-                                        } else {
-                                            IconName::ToolHammer
-                                        })
-                                        .size(IconSize::Small)
-                                        .color(
-                                            if task.failed {
-                                                Color::Error
-                                            } else {
-                                                Color::Muted
-                                            },
-                                        ),
-                                    )
-                                    .child(Label::new(task.label.clone()).truncate())
-                                    .on_click({
-                                        let entity = entity.clone();
-                                        move |_, _, cx| {
-                                            entity.update(cx, |panel, cx| {
-                                                if let Some(session) =
-                                                    &mut panel.sessions[tab.index()]
-                                                {
-                                                    session.follow = false;
-                                                    session.scroll.scroll_to_item(
-                                                        line.saturating_sub(session.discarded),
-                                                        ScrollStrategy::Top,
-                                                    );
-                                                }
-                                                cx.notify();
-                                            });
-                                        }
-                                    })
-                                    .into_any_element()
-                            } else {
-                                div().h_8().into_any_element()
-                            }
-                        })
-                        .collect()
-                }
-            },
-        )
+                                            }
+                                            cx.notify();
+                                        });
+                                    }
+                                })
+                                .into_any_element(),
+                        )
+                    })
+                    .collect()
+            }
+        })
         .size_full();
         if session.follow && !session.lines.is_empty() {
             session
@@ -541,6 +932,10 @@ impl BuildPanel {
             },
         ));
         let console_tools = v_flex()
+            .debug_selector(|| "build-right-actions".into())
+            .h_full()
+            .justify_start()
+            .flex_shrink_0()
             .p_1()
             .gap_1()
             .child(
@@ -591,21 +986,7 @@ impl BuildPanel {
             .min_h_0()
             .child(
                 h_flex()
-                    .px_3()
-                    .h_7()
-                    .gap_2()
-                    .border_b_1()
-                    .border_color(cx.theme().colors().border_variant)
-                    .child(
-                        Label::new(format!("{}: {}", label, status.label()))
-                            .color(status.color())
-                            .truncate(),
-                    )
-                    .child(div().flex_1())
-                    .child(Label::new(format!("{} sec", elapsed.as_secs())).color(Color::Muted)),
-            )
-            .child(
-                h_flex()
+                    .items_start()
                     .flex_1()
                     .min_h_0()
                     .overflow_hidden()
@@ -952,6 +1333,17 @@ mod tests {
         assert!(tree.size.width > px(0.) && tree.size.height > px(0.));
         assert!(console.origin.x >= tree.origin.x + tree.size.width);
         assert!(console.size.width > tree.size.width);
+        let root = cx.debug_bounds("build-root-row").expect("Build root row");
+        for selector in ["build-left-actions", "build-right-actions"] {
+            let actions = cx.debug_bounds(selector).expect("Build action rail");
+            assert_eq!(actions.origin.y, tree.origin.y);
+            assert_eq!(actions.size.height, tree.size.height);
+        }
+        for selector in ["ICON-RotateCcw", "ICON-ArrowDown"] {
+            let action = cx.debug_bounds(selector).expect("First rail action");
+            assert!(action.origin.y >= root.origin.y);
+            assert!(action.origin.y < root.origin.y + root.size.height);
+        }
         pane.read_with(cx, |pane, _| {
             assert!(pane.sessions.iter().all(Option::is_some));
             let session = pane.sessions[BuildTab::Output.index()]
@@ -968,6 +1360,265 @@ mod tests {
         cx.run_until_parked();
         pane.read_with(cx, |pane, _| {
             assert!(pane.sessions.iter().all(Option::is_some))
+        });
+    }
+
+    #[test]
+    fn tree_filters_completed_steps_and_groups_task_diagnostics() {
+        let mut session = BuildSession::new(1, "Build project".into());
+        for text in [
+            "Task: :app",
+            "Variant: debug",
+            "Downloading https://example.com/gradle.zip",
+            "> Task :app:preBuild UP-TO-DATE",
+            "> Task :app:compileDebugKotlin",
+            "w: /project/Main.kt: unused parameter",
+            "e: /project/Main.kt: unresolved reference",
+            "> Task :app:compileDebugKotlin FAILED",
+        ] {
+            session.append(OutputLine {
+                text: text.into(),
+                stderr: false,
+            });
+        }
+        assert_eq!(session.tasks.len(), 2);
+        assert_eq!(
+            session.tasks.back().expect("Compile task").label.as_ref(),
+            ":app:compileDebugKotlin"
+        );
+        assert_eq!(
+            session.tasks.back().expect("Compile task").status,
+            BuildStatus::Failed
+        );
+        let rows = session.tree_rows();
+        assert!(matches!(
+            rows.as_slice(),
+            [
+                TreeRow::Root,
+                TreeRow::Downloads,
+                TreeRow::Task(1),
+                TreeRow::Message(0),
+                TreeRow::Message(1)
+            ]
+        ));
+        session.status = BuildStatus::Failed;
+        assert_eq!(session.tree_rows().len(), rows.len());
+        session.show_successful = true;
+        assert_eq!(session.tree_rows().len(), rows.len() + 1);
+        session.expanded = false;
+        assert!(matches!(session.tree_rows().as_slice(), [TreeRow::Root]));
+    }
+
+    #[test]
+    fn repeated_task_names_and_diagnostics_stay_in_their_sync_phase() {
+        let mut session = BuildSession::new(1, "Sync project".into());
+        session.phases.push_back(BuildPhase {
+            label: "First import".into(),
+            line: 0,
+            status: BuildStatus::Succeeded,
+            started: Instant::now(),
+            elapsed: Some(Duration::from_secs(1)),
+        });
+        session.append(OutputLine {
+            text: "> Task :app:prepareModel".into(),
+            stderr: false,
+        });
+        session.phases.push_back(BuildPhase {
+            label: "Second import".into(),
+            line: 1,
+            status: BuildStatus::Running,
+            started: Instant::now(),
+            elapsed: None,
+        });
+        session.append(OutputLine {
+            text: "w: warning before any task".into(),
+            stderr: true,
+        });
+        assert_eq!(session.messages[0].task_line, None);
+        assert_eq!(session.messages[0].phase_line, Some(1));
+        session.append(OutputLine {
+            text: "> Task :app:prepareModel FAILED".into(),
+            stderr: false,
+        });
+        assert_eq!(session.tasks.len(), 2);
+        assert_eq!(session.tasks[0].status, BuildStatus::Succeeded);
+        assert_eq!(session.tasks[1].status, BuildStatus::Failed);
+        session.append(OutputLine {
+            text: "FAILURE: Build failed with an exception.".into(),
+            stderr: true,
+        });
+        assert_eq!(session.messages[1].task_line, None);
+        assert!(matches!(
+            session.tree_rows().as_slice(),
+            [
+                TreeRow::Root,
+                TreeRow::Phase(1),
+                TreeRow::Task(1),
+                TreeRow::Message(0),
+                TreeRow::Message(1)
+            ]
+        ));
+    }
+
+    #[test]
+    fn interleaved_task_output_deduplicates_and_attributes_named_failures() {
+        let mut session = BuildSession::new(1, "Build project".into());
+        for text in [
+            "> Task :app:compileDebugKotlin",
+            "e: Main.kt: unresolved reference",
+            "> Task :lib:processResources UP-TO-DATE",
+            "> Task :app:compileDebugKotlin FAILED",
+            "> Task :lib:processResources UP-TO-DATE",
+            "Execution failed for task ':app:compileDebugKotlin'.",
+        ] {
+            session.append(OutputLine {
+                text: text.into(),
+                stderr: false,
+            });
+        }
+        assert_eq!(session.tasks.len(), 2);
+        assert_eq!(session.tasks[0].status, BuildStatus::Failed);
+        assert_eq!(session.tasks[1].status, BuildStatus::Succeeded);
+        assert!(
+            session
+                .messages
+                .iter()
+                .all(|message| message.task_line == Some(0))
+        );
+        session.status = BuildStatus::Failed;
+        assert!(matches!(
+            session.tree_rows().as_slice(),
+            [
+                TreeRow::Root,
+                TreeRow::Task(0),
+                TreeRow::Message(0),
+                TreeRow::Message(1)
+            ]
+        ));
+    }
+
+    #[test]
+    fn long_task_names_keep_distinct_identities_with_bounded_storage() {
+        let mut session = BuildSession::new(1, "Build project".into());
+        let prefix = format!(":app:{}", "a".repeat(MAX_TASK_LABEL_BYTES));
+        for suffix in ["first", "second"] {
+            session.append(OutputLine {
+                text: format!("> Task {prefix}{suffix}"),
+                stderr: false,
+            });
+        }
+        assert_eq!(session.tasks.len(), 2);
+        assert_eq!(session.tasks[0].label, session.tasks[1].label);
+        assert_ne!(session.tasks[0].name, session.tasks[1].name);
+        for index in 0..300 {
+            session.append(OutputLine {
+                text: format!("> Task :app:{}{index}", "b".repeat(MAX_LINE_BYTES - 100)),
+                stderr: false,
+            });
+        }
+        assert!(session.task_name_bytes <= MAX_TASKS * MAX_TASK_LABEL_BYTES);
+        assert_eq!(session.task_indexes.len(), session.tasks.len());
+    }
+
+    #[gpui::test]
+    async fn sync_retains_project_root_and_completed_import_phases(cx: &mut gpui::TestAppContext) {
+        let _app_state = cx.update(workspace::AppState::test);
+        let fs = project::FakeFs::new(cx.executor());
+        fs.insert_tree("/project", serde_json::json!({"README.md": ""}))
+            .await;
+        let project = project::Project::test(fs, [std::path::Path::new("/project")], cx).await;
+        let workspace = cx
+            .add_window_view(|window, cx| Workspace::test_new(project, window, cx))
+            .0;
+        let (pane, cx) = cx.add_window_view(|_, cx| BuildPanel::new(workspace.downgrade(), cx));
+        pane.update_in(cx, |pane, window, cx| {
+            let (id, output, logs) =
+                pane.begin(BuildTab::Sync, "Sync project".into(), false, window, cx);
+            drop(output);
+            logs.detach();
+            pane.finish(
+                BuildTab::Sync,
+                id,
+                BuildStatus::Succeeded,
+                "Sync complete".into(),
+                cx,
+            );
+            let session = pane.sessions[BuildTab::Sync.index()]
+                .as_mut()
+                .expect("Sync");
+            session.elapsed = Some(Duration::from_secs(2));
+            session.started = Instant::now()
+                .checked_sub(Duration::from_secs(3600))
+                .expect("Past instant");
+            let (id, output, logs) = pane.begin(
+                BuildTab::Sync,
+                "Generating Android resources for Kotlin import".into(),
+                true,
+                window,
+                cx,
+            );
+            drop(output);
+            logs.detach();
+            let session = pane.sessions[BuildTab::Sync.index()]
+                .as_mut()
+                .expect("Sync session");
+            assert_eq!(session.label.as_ref(), "Sync project");
+            assert_eq!(session.previous_elapsed, Duration::from_secs(2));
+            assert_eq!(session.phases.len(), 2);
+            assert_eq!(session.phases[0].status, BuildStatus::Succeeded);
+            assert!(session.phases[0].elapsed.is_some());
+            assert_eq!(session.phases[1].status, BuildStatus::Running);
+            assert!(matches!(
+                session.tree_rows().as_slice(),
+                [TreeRow::Root, TreeRow::Phase(1)]
+            ));
+            session.append(OutputLine {
+                text: "> Task :app:generateDebugResources".into(),
+                stderr: false,
+            });
+            assert!(matches!(
+                session.tree_rows().as_slice(),
+                [TreeRow::Root, TreeRow::Phase(1), TreeRow::Task(0)]
+            ));
+            session.show_successful = true;
+            assert!(matches!(
+                session.tree_rows().as_slice(),
+                [
+                    TreeRow::Root,
+                    TreeRow::Phase(0),
+                    TreeRow::Phase(1),
+                    TreeRow::Task(0)
+                ]
+            ));
+            pane.finish(
+                BuildTab::Sync,
+                id,
+                BuildStatus::Failed,
+                "Resource generation failed".into(),
+                cx,
+            );
+            let (id, output, logs) = pane.begin(
+                BuildTab::Sync,
+                "Importing Android Java model".into(),
+                true,
+                window,
+                cx,
+            );
+            drop(output);
+            logs.detach();
+            pane.finish(
+                BuildTab::Sync,
+                id,
+                BuildStatus::Succeeded,
+                "Java import complete".into(),
+                cx,
+            );
+            let session = pane.sessions[BuildTab::Sync.index()]
+                .as_ref()
+                .expect("Sync");
+            assert_eq!(session.status, BuildStatus::Failed);
+            assert_eq!(session.phases[1].status, BuildStatus::Failed);
+            assert_eq!(session.phases[2].status, BuildStatus::Succeeded);
         });
     }
 
@@ -1012,6 +1663,7 @@ mod tests {
         assert_eq!(session.lines.len(), MAX_LINES);
         assert_eq!(session.discarded, 10);
         assert_eq!(session.tasks.len(), MAX_TASKS);
+        assert_eq!(session.task_indexes.len(), MAX_TASKS);
         assert_eq!(
             session.tasks.back().map(|task| task.line),
             Some(MAX_LINES + 9)
