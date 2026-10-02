@@ -7,7 +7,7 @@ use android_logcat_panel::LogcatPanel;
 
 use android_tools::{
     AndroidTarget, Device, adb_path, android_cli_path, emulator_path, is_gradle_project,
-    parse_devices, parse_emulators, parse_targets,
+    parse_device_abis, parse_devices, parse_emulators, parse_targets,
 };
 use anyhow::{Context as _, Result, bail, ensure};
 use db::kvp::KeyValueStore;
@@ -982,10 +982,23 @@ impl AndroidPanel {
         self.running = true;
         self.status = "Preparing APK for deployment…".into();
         let root = self.root.clone();
+        let executor = cx.background_executor().clone();
+        let deployment_root = root.clone();
+        let device_serial = serial.clone();
         self.deploy_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let result = cx
                 .background_spawn(async move {
-                    let apk = target.apk()?;
+                    let root = deployment_root.context("The Android project was closed.")?;
+                    let properties = tool_output(
+                        adb_path()?,
+                        vec!["-s".into(), device_serial, "shell".into(), "getprop".into()],
+                        &root,
+                        &executor,
+                        Duration::from_secs(15),
+                    )
+                    .await?;
+                    let abis = parse_device_abis(&properties)?;
+                    let apk = target.apk_for_device(&abis)?;
                     let application_id = if debug {
                         Some(apk.debug_application_id()?.to_owned())
                     } else {
