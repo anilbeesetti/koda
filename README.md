@@ -1,9 +1,3 @@
-> [!IMPORTANT]
-> Remove this line to confirm you've reviewed this PR before submitting.
-
-> [!IMPORTANT]
-> Remove this line to confirm you've reviewed this PR before submitting.
-
 # Koda
 
 Koda is an Android-focused IDE fork of [Zed](https://github.com/zed-industries/zed).
@@ -70,7 +64,6 @@ their reserved tag.
 ### Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for ways you can contribute to Zed.
-
 
 ### Licensing
 
