@@ -65,7 +65,6 @@ their reserved tag.
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for ways you can contribute to Zed.
 
-
 ### Licensing
 
 Zed source code is licensed primarily under GPL-3.0-or-later, with Apache-2.0 components where marked.
