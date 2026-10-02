@@ -51,6 +51,16 @@ pub struct ApplicationMenu {
 }
 
 impl ApplicationMenu {
+    pub fn refresh(&mut self, cx: &mut Context<Self>) {
+        for entry in &self.entries {
+            if entry.handle.is_deployed() {
+                entry.handle.hide(cx);
+            }
+        }
+        self.entries = Self::build_entries(cx.get_menus().unwrap_or_default());
+        cx.notify();
+    }
+
     pub fn new(_: &mut Window, cx: &mut Context<Self>) -> Self {
         let menus = cx.get_menus().unwrap_or_default();
 

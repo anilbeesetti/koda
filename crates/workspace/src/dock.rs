@@ -1376,6 +1376,10 @@ impl Render for Dock {
 impl PanelButtons {
     pub fn new(dock: Entity<Dock>, cx: &mut Context<Self>) -> Self {
         cx.observe(&dock, |_, _, cx| cx.notify()).detach();
+        if let Some(workspace) = dock.read(cx).workspace.upgrade() {
+            cx.observe(workspace.read(cx).project(), |_, _, cx| cx.notify())
+                .detach();
+        }
         let settings_subscription = cx.observe_global::<SettingsStore>(|_, cx| cx.notify());
         Self {
             dock,
@@ -1572,19 +1576,28 @@ impl Render for PanelButtons {
             .items_center()
             .gap_2()
             .children(buttons)
-            .when(dock_position == DockPosition::Bottom, |rail| {
-                rail.child(
-                    IconButton::new("android-logcat", IconName::TerminalAlt)
-                        .icon_size(IconSize::Small)
-                        .tab_index(0isize)
-                        .tooltip(|_, cx| {
-                            Tooltip::for_action("Logcat", &zed_actions::android::Logcat, cx)
-                        })
-                        .on_click(|_, window, cx| {
-                            window.dispatch_action(zed_actions::android::Logcat.boxed_clone(), cx);
-                        }),
-                )
-            })
+            .when(
+                dock_position == DockPosition::Bottom
+                    && workspace.upgrade().is_some_and(|workspace| {
+                        workspace.read(cx).project().read(cx).is_android_project(cx)
+                    }),
+                |rail| {
+                    rail.child(
+                        IconButton::new("android-logcat", IconName::TerminalAlt)
+                            .icon_size(IconSize::Small)
+                            .tab_index(0isize)
+                            .tooltip(|_, cx| {
+                                Tooltip::for_action("Logcat", &zed_actions::android::Logcat, cx)
+                            })
+                            .on_click(|_, window, cx| {
+                                window.dispatch_action(
+                                    zed_actions::android::Logcat.boxed_clone(),
+                                    cx,
+                                );
+                            }),
+                    )
+                },
+            )
     }
 }
 
