@@ -84,10 +84,7 @@ pub fn init(cx: &mut App) {
             .new(|cx| AndroidPanel::new(workspace.weak_handle(), workspace.project().clone(), cx));
         panel.update(cx, |panel, cx| panel.observe_project_open(window, cx));
         workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
-        let activity = cx.new(|cx| android_status::AndroidActivity::new(&panel, cx));
-        workspace
-            .status_bar()
-            .update(cx, |bar, cx| bar.add_right_item(activity, window, cx));
+        android_status::register(&panel, window, cx);
         workspace.add_panel(panel, window, cx);
         let logcat_panel = cx.new(|cx| LogcatPanel::new(workspace, window, cx));
         workspace.add_panel(logcat_panel, window, cx);

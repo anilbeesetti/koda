@@ -5,6 +5,22 @@ use workspace::{HideStatusItem, ItemHandle, StatusItemView};
 
 use crate::{AndroidPanel, BuildPanel, BuildTab};
 
+pub(crate) fn register(panel: &gpui::Entity<AndroidPanel>, window: &mut Window, cx: &mut App) {
+    let activity = cx.new(|cx| AndroidActivity::new(panel, cx));
+    let workspace = panel.read(cx).workspace.clone();
+    // Right-side items render in reverse registration order. Append after the
+    // workspace's regular items so progress grows leftward without moving them.
+    window.defer(cx, move |window, cx| {
+        workspace
+            .update(cx, |workspace, cx| {
+                workspace
+                    .status_bar()
+                    .update(cx, |bar, cx| bar.add_right_item(activity, window, cx));
+            })
+            .log_err();
+    });
+}
+
 #[derive(Clone, PartialEq, Eq)]
 enum ActivityToken {
     Build(BuildTab, u64),
@@ -192,6 +208,31 @@ mod tests {
     use std::path::Path;
     use workspace::{AppState, Workspace};
 
+    struct FixedStatus(&'static str);
+
+    impl StatusItemView for FixedStatus {
+        fn set_active_pane_item(
+            &mut self,
+            _: Option<&dyn ItemHandle>,
+            _: &mut Window,
+            _: &mut Context<Self>,
+        ) {
+        }
+        fn hide_setting(&self, _: &App) -> Option<HideStatusItem> {
+            None
+        }
+    }
+
+    impl Render for FixedStatus {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            let label = self.0;
+            div()
+                .debug_selector(move || label.into())
+                .w(px(70.))
+                .child(Button::new(label, label).label_size(LabelSize::Small))
+        }
+    }
+
     #[gpui::test]
     async fn status_stays_visible_with_build_hidden_and_cancels_sync_and_build(
         cx: &mut TestAppContext,
@@ -205,15 +246,21 @@ mod tests {
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
-        let activity = cx.new(|cx| AndroidActivity::new(&panel, cx));
         workspace.update_in(cx, |workspace, window, cx| {
             workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
-            workspace
-                .status_bar()
-                .update(cx, |bar, cx| bar.add_right_item(activity, window, cx));
+            register(&panel, window, cx);
+            let status_items =
+                ["completions", "language", "cursor"].map(|label| cx.new(|_| FixedStatus(label)));
+            workspace.status_bar().update(cx, |bar, cx| {
+                for item in status_items {
+                    bar.add_right_item(item, window, cx);
+                }
+            });
         });
         cx.run_until_parked();
         assert!(cx.debug_bounds("android-operation-status").is_none());
+        let idle_bounds = ["completions", "language", "cursor"]
+            .map(|label| (label, cx.debug_bounds(label).expect("Regular status item")));
         for tab in [BuildTab::Sync, BuildTab::Output] {
             panel.update_in(cx, |panel, window, cx| {
                 let id = panel.build_panel.update(cx, |pane, cx| {
@@ -245,6 +292,17 @@ mod tests {
             let status = cx
                 .debug_bounds("android-operation-status")
                 .expect("Activity survives hiding Build");
+            for (label, bounds) in idle_bounds {
+                assert_eq!(
+                    cx.debug_bounds(label),
+                    Some(bounds),
+                    "Progress must not move {label}"
+                );
+                assert!(
+                    status.origin.x + status.size.width <= bounds.origin.x,
+                    "Progress must be left of {label}"
+                );
+            }
             let progress = cx
                 .debug_bounds("android-operation-progress")
                 .expect("Progress bar");
@@ -284,6 +342,13 @@ mod tests {
                     cx.debug_bounds("android-operation-status").is_some(),
                     "Boot wait survives hiding Build"
                 );
+                for (label, bounds) in idle_bounds {
+                    assert_eq!(
+                        cx.debug_bounds(label),
+                        Some(bounds),
+                        "Boot wait must not move {label}"
+                    );
+                }
             }
             let cancel = cx
                 .debug_bounds("cancel-android-operation")
