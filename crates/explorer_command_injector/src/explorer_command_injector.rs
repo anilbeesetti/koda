@@ -44,7 +44,7 @@ struct ExplorerCommandInjector;
 impl IExplorerCommand_Impl for ExplorerCommandInjector_Impl {
     fn GetTitle(&self, _: Ref<IShellItemArray>) -> Result<windows_core::PWSTR> {
         let command_description =
-            retrieve_command_description().unwrap_or(HSTRING::from("Open with Zed"));
+            retrieve_command_description().unwrap_or(HSTRING::from("Open with Koda"));
         unsafe { SHStrDupW(&command_description) }
     }
 
@@ -128,10 +128,10 @@ impl IClassFactory_Impl for ExplorerCommandInjectorFactory_Impl {
 }
 
 const MODULE_ID: GUID = cfg_select! {
-    feature = "stable" => { GUID::from_u128(0x6a1f6b13_3b82_48a1_9e06_7bb0a6d0bffd) },
-    feature = "preview" => { GUID::from_u128(0xaf8e85ea_fb20_4db2_93cf_56513c1ec697) },
-    feature = "nightly" => { GUID::from_u128(0x266f2cfe_1653_42af_b55c_fe3590c83871) },
-    _ => { GUID::from_u128(0x685f4d49_6718_4c55_b271_ebb5c6a48d6f) },
+    feature = "stable" => { GUID::from_u128(0x3760fbe6_eabc_52ce_80e9_00f85e411ddd) },
+    feature = "preview" => { GUID::from_u128(0x786640be_d5b1_5d2c_a7b6_6d714f180349) },
+    feature = "nightly" => { GUID::from_u128(0xcc789959_e647_591c_a42f_89ef81cbba86) },
+    _ => { GUID::from_u128(0xcc64d0f3_4c86_568a_95d5_fb7884232625) },
 };
 
 #[unsafe(no_mangle)]
@@ -174,16 +174,16 @@ fn get_zed_install_folder() -> Option<PathBuf> {
 
 #[inline]
 fn get_zed_exe_path() -> Option<String> {
-    get_zed_install_folder().map(|path| path.join("Zed.exe").to_string_lossy().into_owned())
+    get_zed_install_folder().map(|path| path.join("Koda.exe").to_string_lossy().into_owned())
 }
 
 #[inline]
 fn retrieve_command_description() -> Result<HSTRING> {
     const REG_PATH: &str = cfg_select! {
-        feature = "stable" => { r#"Software\Classes\ZedContextMenu"# },
-        feature = "preview" => { r#"Software\Classes\ZedPreviewContextMenu"# },
-        feature = "nightly" => { r#"Software\Classes\ZedNightlyContextMenu"# },
-        _ => { r#"Software\Classes\ZedDevContextMenu"# },
+        feature = "stable" => { r#"Software\Classes\KodaContextMenu"# },
+        feature = "preview" => { r#"Software\Classes\KodaPreviewContextMenu"# },
+        feature = "nightly" => { r#"Software\Classes\KodaNightlyContextMenu"# },
+        _ => { r#"Software\Classes\KodaDevContextMenu"# },
     };
 
     let key = windows_registry::CURRENT_USER.open(REG_PATH)?;

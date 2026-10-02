@@ -64,19 +64,19 @@ export RUSTFLAGS="${RUSTFLAGS:-} -C link-args=-Wl,--disable-new-dtags,-rpath,\$O
 cargo build --release --target "${remote_server_triple}" --package remote_server
 
 # Strip debug symbols and save them for upload to DigitalOcean
-# objcopy --only-keep-debug "${target_dir}/${target_triple}/release/zed" "${target_dir}/${target_triple}/release/zed.dbg"
+# objcopy --only-keep-debug "${target_dir}/${target_triple}/release/koda" "${target_dir}/${target_triple}/release/koda.dbg"
 # objcopy --only-keep-debug "${target_dir}/${remote_server_triple}/release/remote_server" "${target_dir}/${remote_server_triple}/release/remote_server.dbg"
-# objcopy --strip-debug "${target_dir}/${target_triple}/release/zed"
+# objcopy --strip-debug "${target_dir}/${target_triple}/release/koda"
 # objcopy --strip-debug "${target_dir}/${target_triple}/release/cli"
 # objcopy --strip-debug "${target_dir}/${remote_server_triple}/release/remote_server"
 
-# gzip -f "${target_dir}/${target_triple}/release/zed.dbg"
+# gzip -f "${target_dir}/${target_triple}/release/koda.dbg"
 # gzip -f "${target_dir}/${remote_server_triple}/release/remote_server.dbg"
 
 # if [[ -n "${DIGITALOCEAN_SPACES_SECRET_KEY:-}" && -n "${DIGITALOCEAN_SPACES_ACCESS_KEY:-}" ]]; then
 #     upload_to_blob_store_public \
 #         "zed-debug-symbols" \
-#         "${target_dir}/${target_triple}/release/zed.dbg.gz" \
+#         "${target_dir}/${target_triple}/release/koda.dbg.gz" \
 #         "$channel/zed-$version-${target_triple}.dbg.gz"
 #     upload_to_blob_store_public \
 #         "zed-debug-symbols" \
@@ -97,16 +97,16 @@ fi
 # Move everything that should end up in the final package
 # into a temp directory.
 # temp_dir=$(mktemp -d)
-# zed_dir="${temp_dir}/zed$suffix.app"
+# zed_dir="${temp_dir}/koda$suffix.app"
 
 # Binary
 # mkdir -p "${zed_dir}/bin" "${zed_dir}/libexec"
-# cp "${target_dir}/${target_triple}/release/zed" "${zed_dir}/libexec/zed-editor"
-# cp "${target_dir}/${target_triple}/release/cli" "${zed_dir}/bin/zed"
+# cp "${target_dir}/${target_triple}/release/koda" "${zed_dir}/libexec/koda-editor"
+# cp "${target_dir}/${target_triple}/release/cli" "${zed_dir}/bin/koda"
 
 # Libs
 # find_libs() {
-#     ldd ${target_dir}/${target_triple}/release/zed |
+#     ldd ${target_dir}/${target_triple}/release/koda |
 #         cut -d' ' -f3 |
 #         grep -v '\<\(libstdc++.so\|libc.so\|libgcc_s.so\|libm.so\|libpthread.so\|libdl.so\|libasound.so\)'
 # }
@@ -117,23 +117,23 @@ fi
 
 # Icons
 # mkdir -p "${zed_dir}/share/icons/hicolor/512x512/apps"
-# cp "crates/zed/resources/app-icon$suffix.png" "${zed_dir}/share/icons/hicolor/512x512/apps/zed.png"
+# cp "crates/zed/resources/app-icon$suffix.png" "${zed_dir}/share/icons/hicolor/512x512/apps/koda.png"
 # mkdir -p "${zed_dir}/share/icons/hicolor/1024x1024/apps"
-# cp "crates/zed/resources/app-icon$suffix@2x.png" "${zed_dir}/share/icons/hicolor/1024x1024/apps/zed.png"
+# cp "crates/zed/resources/app-icon$suffix@2x.png" "${zed_dir}/share/icons/hicolor/1024x1024/apps/koda.png"
 
 # .desktop
 # export DO_STARTUP_NOTIFY="true"
-# export APP_CLI="zed"
-# export APP_ICON="zed"
+# export APP_CLI="koda"
+# export APP_ICON="koda"
 # export APP_ARGS="%U"
 # if [[ "$channel" == "preview" ]]; then
-#     export APP_NAME="Zed Preview"
+#     export APP_NAME="Koda Preview"
 # elif [[ "$channel" == "nightly" ]]; then
-#     export APP_NAME="Zed Nightly"
+#     export APP_NAME="Koda Nightly"
 # elif [[ "$channel" == "dev" ]]; then
-#     export APP_NAME="Zed Devel"
+#     export APP_NAME="Koda Devel"
 # else
-#     export APP_NAME="Zed"
+#     export APP_NAME="Koda"
 # fi
 
 # mkdir -p "${zed_dir}/share/applications"
@@ -155,7 +155,7 @@ arch=$(uname -m)
 # rm -rf "${archive}"
 # remove_match="zed(-[a-zA-Z0-9]+)?-linux-$(uname -m)\.tar\.gz"
 # ls "${target_dir}/release" | grep -E ${remove_match} | xargs -d "\n" -I {} rm -f "${target_dir}/release/{}" || true
-# tar -czvf "${target_dir}/release/$archive" -C ${temp_dir} "zed$suffix.app"
+# tar -czvf "${target_dir}/release/$archive" -C ${temp_dir} "koda$suffix.app"
 
 gzip -f --stdout --best "${target_dir}/${remote_server_triple}/release/remote_server" \
-    > "${target_dir}/zed-remote-server-freebsd-x86_64.gz"
+    > "${target_dir}/koda-remote-server-freebsd-x86_64.gz"

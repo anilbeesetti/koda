@@ -649,7 +649,7 @@ def process_memory(probe, label):
             role = "machine_jdt_lsp"
         elif "PreviewBridge" in command and "java" in command:
             role = "machine_compose_preview"
-        elif Path(command.split()[0]).name == "zed":
+        elif Path(command.split()[0]).name == "koda":
             role = "machine_zed"
         if role:
             processes.append({"pid": int(identifier), "parent_pid": int(parent), "rss_kib": int(resident), "role": role})
