@@ -106,29 +106,24 @@ impl Render for AndroidActivity {
                                 let panel = self.panel.clone();
                                 let token = token.clone();
                                 move |_, window, cx| {
-                                    panel
-                                        .update(cx, |panel, cx| match token {
-                                            ActivityToken::Build(tab, _) => {
-                                                panel
-                                                    .build_panel
-                                                    .update(cx, |pane, cx| pane.select(tab, cx));
-                                                panel
-                                                    .workspace
-                                                    .update(cx, |workspace, cx| {
-                                                        workspace
-                                                            .reveal_panel::<BuildPanel>(window, cx)
-                                                    })
-                                                    .log_err();
+                                    let Some((build_panel, workspace)) = panel
+                                        .read_with(cx, |panel, _| {
+                                            (panel.build_panel.clone(), panel.workspace.clone())
+                                        })
+                                        .log_err()
+                                    else {
+                                        return;
+                                    };
+                                    if let ActivityToken::Build(tab, _) = token {
+                                        build_panel.update(cx, |pane, cx| pane.select(tab, cx));
+                                    }
+                                    workspace
+                                        .update(cx, |workspace, cx| match token {
+                                            ActivityToken::Build(..) => {
+                                                workspace.reveal_panel::<BuildPanel>(window, cx)
                                             }
                                             ActivityToken::Emulator(..) => {
-                                                panel
-                                                    .workspace
-                                                    .update(cx, |workspace, cx| {
-                                                        workspace.reveal_panel::<AndroidPanel>(
-                                                            window, cx,
-                                                        )
-                                                    })
-                                                    .log_err();
+                                                workspace.reveal_panel::<AndroidPanel>(window, cx)
                                             }
                                         })
                                         .log_err();
@@ -248,6 +243,9 @@ mod tests {
         let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
         workspace.update_in(cx, |workspace, window, cx| {
             workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
+            workspace.add_panel(panel.clone(), window, cx);
+            workspace.reveal_panel::<AndroidPanel>(window, cx);
+            workspace.close_panel::<AndroidPanel>(window, cx);
             register(&panel, window, cx);
             let status_items =
                 ["completions", "language", "cursor"].map(|label| cx.new(|_| FixedStatus(label)));
@@ -349,6 +347,23 @@ mod tests {
                         "Boot wait must not move {label}"
                     );
                 }
+                let details = cx
+                    .debug_bounds("android-operation-details")
+                    .expect("Boot wait details");
+                cx.simulate_click(details.center(), Default::default());
+                cx.run_until_parked();
+                assert!(
+                    cx.debug_bounds("build-console").is_some(),
+                    "Boot wait details reveal Build"
+                );
+                panel.read_with(cx, |panel, _| {
+                    assert!(panel.running);
+                    assert!(panel.active_build_session.is_some());
+                });
+                workspace.update_in(cx, |workspace, window, cx| {
+                    workspace.close_panel::<BuildPanel>(window, cx)
+                });
+                cx.run_until_parked();
             }
             let cancel = cx
                 .debug_bounds("cancel-android-operation")
@@ -380,6 +395,23 @@ mod tests {
             panel.wait_for_emulator("Selected".into(), root, None, window, cx);
         });
         cx.run_until_parked();
+        let details = cx
+            .debug_bounds("android-operation-details")
+            .expect("Standalone boot wait details");
+        cx.simulate_click(details.center(), Default::default());
+        cx.run_until_parked();
+        assert!(
+            workspace.read_with(cx, |workspace, cx| {
+                workspace
+                    .right_dock()
+                    .read(cx)
+                    .visible_panel()
+                    .is_some_and(|visible| visible.panel_id() == panel.entity_id())
+            }),
+            "Standalone boot wait details reveal Android tools"
+        );
+        assert!(panel.read_with(cx, |panel, _| panel.running
+            && panel.emulator_startup.is_some()));
         let cancel = cx
             .debug_bounds("cancel-android-operation")
             .expect("Standalone boot wait is cancellable");
