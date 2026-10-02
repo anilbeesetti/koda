@@ -449,6 +449,12 @@ impl Render for TitleBar {
 }
 
 impl TitleBar {
+    pub fn refresh_application_menu(&mut self, cx: &mut Context<Self>) {
+        if let Some(menu) = &self.application_menu {
+            menu.update(cx, |menu, cx| menu.refresh(cx));
+        }
+    }
+
     pub fn new(
         id: impl Into<ElementId>,
         workspace: &Workspace,
@@ -477,6 +483,7 @@ impl TitleBar {
         };
 
         let mut subscriptions = Vec::new();
+        subscriptions.push(cx.observe(&project, |_, _, cx| cx.notify()));
         subscriptions.push(
             cx.observe(&workspace.weak_handle().upgrade().unwrap(), |_, _, cx| {
                 cx.notify()

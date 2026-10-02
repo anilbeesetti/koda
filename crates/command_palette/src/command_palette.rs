@@ -120,11 +120,17 @@ impl CommandPalette {
         cx: &mut Context<Self>,
     ) -> Self {
         let filter = CommandPaletteFilter::try_global(cx);
+        let is_android_project = entity
+            .upgrade()
+            .is_some_and(|workspace| workspace.read(cx).project().read(cx).is_android_project(cx));
 
         let commands = window
             .available_actions(cx)
             .into_iter()
             .filter_map(|action| {
+                if !is_android_project && action.name().starts_with("android::") {
+                    return None;
+                }
                 if filter.is_some_and(|filter| filter.is_hidden(&*action)) {
                     return None;
                 }

@@ -78,7 +78,9 @@ pub fn init(cx: &mut App) {
         workspace.add_panel(panel, window, cx);
         workspace
             .register_action(|workspace, _: &ToggleFocus, window, cx| {
-                workspace.toggle_panel_focus::<AndroidPanel>(window, cx);
+                if workspace.project().read(cx).is_android_project(cx) {
+                    workspace.toggle_panel_focus::<AndroidPanel>(window, cx);
+                }
             })
             .register_action(|workspace, _: &SyncProject, window, cx| {
                 with_panel(workspace, window, cx, AndroidPanel::sync_project)
@@ -153,6 +155,9 @@ fn with_panel(
     cx: &mut Context<Workspace>,
     callback: impl FnOnce(&mut AndroidPanel, &mut Window, &mut Context<AndroidPanel>) + 'static,
 ) {
+    if !workspace.project().read(cx).is_android_project(cx) {
+        return;
+    }
     if let Some(panel) = workspace.panel::<AndroidPanel>(cx) {
         // Task scheduling updates the workspace, so wait until its action handler has returned.
         window.defer(cx, move |window, cx| {
@@ -163,6 +168,9 @@ fn with_panel(
 
 pub fn toolbar(workspace: &WeakEntity<Workspace>, cx: &App) -> Option<Entity<AndroidToolbar>> {
     let workspace = workspace.upgrade()?;
+    if !workspace.read(cx).project().read(cx).is_android_project(cx) {
+        return None;
+    }
     let panel = workspace.read(cx).panel::<AndroidPanel>(cx)?;
     Some(panel.read(cx).toolbar.clone())
 }
@@ -376,7 +384,11 @@ impl AndroidPanel {
                         | project::Event::WorktreeUpdatedEntries(_, _)
                 ) {
                     cx.defer_in(window, |panel, window, cx| {
-                        panel.auto_sync_project(window, cx)
+                        panel.auto_sync_project(window, cx);
+                        if !panel.project.read(cx).is_android_project(cx) {
+                            panel.hide_panel(window, cx);
+                        }
+                        cx.notify();
                     });
                 }
             },
@@ -466,6 +478,14 @@ impl AndroidPanel {
 
     fn auto_sync_candidate(&self, cx: &App) -> Option<PathBuf> {
         let root = self.trusted_root(cx).ok()?;
+        if !self
+            .project
+            .read(cx)
+            .android_project_roots(cx)
+            .contains(&root)
+        {
+            return None;
+        }
         let worktree = self
             .project
             .read(cx)
@@ -488,6 +508,25 @@ impl AndroidPanel {
             .into_iter()
             .any(has_file))
         .then_some(root)
+    }
+
+    fn hide_panel(&self, window: &mut Window, cx: &mut Context<Self>) {
+        let workspace = self.workspace.clone();
+        // Closing a dock updates its active panel, so wait until this update returns.
+        window.defer(cx, move |window, cx| {
+            workspace
+                .update(cx, |workspace, cx| {
+                    let is_active = workspace.all_docks().iter().any(|dock| {
+                        dock.read(cx)
+                            .active_panel()
+                            .is_some_and(|panel| panel.to_any().downcast::<AndroidPanel>().is_ok())
+                    });
+                    if is_active {
+                        workspace.close_panel::<AndroidPanel>(window, cx);
+                    }
+                })
+                .log_err();
+        });
     }
 
     fn auto_sync_project(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -2048,9 +2087,12 @@ impl Panel for AndroidPanel {
         AndroidPanelSettings::get_global(cx).default_width
     }
     fn icon(&self, _: &Window, cx: &App) -> Option<IconName> {
-        AndroidPanelSettings::get_global(cx)
-            .button
-            .then_some(IconName::ToolHammer)
+        (AndroidPanelSettings::get_global(cx).button
+            && self.project.read(cx).is_android_project(cx))
+        .then_some(IconName::ToolHammer)
+    }
+    fn enabled(&self, cx: &App) -> bool {
+        self.project.read(cx).is_android_project(cx)
     }
     fn icon_tooltip(&self, _: &Window, _: &App) -> Option<&'static str> {
         Some("Android")
@@ -2061,8 +2103,12 @@ impl Panel for AndroidPanel {
     fn activation_priority(&self) -> u32 {
         10
     }
-    fn set_active(&mut self, active: bool, _: &mut Window, cx: &mut Context<Self>) {
-        if active && self.devices.is_empty() {
+    fn set_active(&mut self, active: bool, window: &mut Window, cx: &mut Context<Self>) {
+        if active && !self.enabled(cx) {
+            self.hide_panel(window, cx);
+            return;
+        }
+        if active && self.enabled(cx) && self.devices.is_empty() {
             self.refresh_devices(cx);
         }
     }
@@ -2538,6 +2584,51 @@ mod tests {
     use serde_json::json;
     use workspace::AppState;
 
+    #[gpui::test]
+    async fn android_controls_follow_project_files(cx: &mut TestAppContext) {
+        let _app_state = cx.update(AppState::test);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree(
+            "/project",
+            json!({"settings.gradle.kts": "", "gradlew": ""}),
+        )
+        .await;
+        let project = Project::test(fs.clone(), [Path::new("/project")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        workspace.update_in(cx, |workspace, window, cx| {
+            workspace.add_panel(panel.clone(), window, cx)
+        });
+        let weak_workspace = workspace.downgrade();
+        panel.read_with(cx, |panel, cx| {
+            assert!(!panel.enabled(cx));
+            assert!(toolbar(&weak_workspace, cx).is_none());
+        });
+        fs.insert_tree(
+            "/project/mobile",
+            json!({
+                "build.gradle.kts": "", "src": {"main": {"AndroidManifest.xml": "<manifest/>"}}
+            }),
+        )
+        .await;
+        cx.run_until_parked();
+        panel.update_in(cx, |panel, window, cx| {
+            assert!(panel.enabled(cx));
+            assert!(panel.icon(window, cx).is_some());
+        });
+        cx.update(|_, cx| assert!(toolbar(&weak_workspace, cx).is_some()));
+        project.update(cx, |project, cx| {
+            let id = project.visible_worktrees(cx).next().unwrap().read(cx).id();
+            project.remove_worktree(id, cx);
+        });
+        panel.update_in(cx, |panel, window, cx| {
+            assert!(!panel.enabled(cx));
+            assert!(panel.icon(window, cx).is_none());
+        });
+        cx.update(|_, cx| assert!(toolbar(&weak_workspace, cx).is_none()));
+    }
+
     #[cfg(unix)]
     #[test]
     fn android_tasks_preserve_literal_arguments() -> Result<()> {
@@ -2646,7 +2737,7 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree(
             "/android-a",
-            json!({"settings.gradle.kts": "", "gradlew": ""}),
+            json!({"settings.gradle.kts": "", "gradlew": "", "mobile": {"build.gradle.kts": "", "src": {"main": {"AndroidManifest.xml": "<manifest/>"}}}}),
         )
         .await;
         fs.insert_tree(
