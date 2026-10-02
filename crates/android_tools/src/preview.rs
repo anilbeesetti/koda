@@ -100,13 +100,13 @@ pub fn installation() -> Result<PathBuf> {
 }
 
 pub fn prepare(root: &Path) -> Result<PathBuf> {
-    ensure_directory(&root.join(".zed"))?;
-    let cache = root.join(".zed/android-preview");
+    ensure_directory(&root.join(".koda"))?;
+    let cache = root.join(".koda/android-preview");
     if cache.exists() {
         ensure_directory(&cache)?;
         ensure!(
             fs::read_to_string(cache.join(".gitignore"))? == MARKER,
-            "The .zed/android-preview directory contains unmanaged files. Move it aside before rendering previews."
+            "The .koda/android-preview directory contains unmanaged files. Move it aside before rendering previews."
         );
     } else {
         ensure_directory(&cache)?;
