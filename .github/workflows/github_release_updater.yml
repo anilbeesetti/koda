@@ -49,7 +49,7 @@ jobs:
         run: cargo test --locked -p auto_update -p title_bar -p paths --lib --features workspace/test-support
       - name: Check timestamp production configuration
         env:
-          ZED_GITHUB_REPOSITORY: anilbeesetti/zed
+          ZED_GITHUB_REPOSITORY: anilbeesetti/koda
           ZED_RELEASE_VERSION: '2026.09.30.14.05'
           ZED_RELEASE_CHANNEL: stable
         run: cargo check --locked -p auto_update -p auto_update_ui -p release_channel -p title_bar
@@ -59,7 +59,7 @@ jobs:
         run: cargo test --locked -p paths --lib
       - name: Check timestamp Nightly configuration
         env:
-          ZED_GITHUB_REPOSITORY: anilbeesetti/zed
+          ZED_GITHUB_REPOSITORY: anilbeesetti/koda
           ZED_RELEASE_VERSION: 'nightly-2026.09.30.14.05'
           ZED_RELEASE_CHANNEL: nightly
         run: cargo check --locked -p auto_update -p auto_update_ui -p release_channel -p title_bar

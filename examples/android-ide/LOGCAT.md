@@ -4,7 +4,7 @@ Open **Android: Logcat** (`Cmd+6` on macOS, `Alt+6` on Linux/Windows), or use
 **Open Logcat** in the Android panel. Logcat opens in the resizable bottom dock,
 alongside the terminal pane, and can be opened before a device is connected. Its tabs and split views stay in that dock;
 opening or hiding it preserves the editor tabs. The dock uses Android Studio’s
-official Logcat icon, copied from [PR #33](https://github.com/anilbeesetti/zed/pull/33)
+official Logcat icon, copied from [PR #33](https://github.com/anilbeesetti/koda/pull/33)
 with its Apache license notice. The project must be local and trusted.
 
 The device selector belongs to Logcat. It shows device/AVD names, serials,

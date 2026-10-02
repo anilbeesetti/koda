@@ -22,7 +22,7 @@ into Koda's directories if you want to reuse them.
 
 ### Installation
 
-Download the Apple Silicon DMG from [this fork's releases](https://github.com/anilbeesetti/zed/releases)
+Download the Apple Silicon DMG from [this fork's releases](https://github.com/anilbeesetti/koda/releases)
 and drag `Koda.app` into Applications. Install the `koda` command using the
 app's **Install CLI** action. Stable builds update from this fork's latest stable
 release. For Nightly, download the `Koda-Nightly` DMG from a prerelease and install

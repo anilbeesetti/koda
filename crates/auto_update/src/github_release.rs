@@ -284,7 +284,7 @@ mod tests {
 
     fn source(tag: &str) -> GitHubReleaseSource {
         GitHubReleaseSource {
-            repository: "anilbeesetti/zed".into(),
+            repository: "anilbeesetti/koda".into(),
             installed_tag: tag.into(),
             channel: ReleaseChannel::Stable,
         }
@@ -295,7 +295,7 @@ mod tests {
             "tag_name": "2026.09.30.14.05", "draft": false, "prerelease": false,
             "published_at": "2026-09-30T08:35:00Z",
             "assets": [{ "name": "Koda-2026.09.30.14.05-macos-aarch64.dmg",
-                "browser_download_url": "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.05/Koda-2026.09.30.14.05-macos-aarch64.dmg",
+                "browser_download_url": "https://github.com/anilbeesetti/koda/releases/download/2026.09.30.14.05/Koda-2026.09.30.14.05-macos-aarch64.dmg",
                 "state": "uploaded", "size": 123, "digest": format!("sha256:{}", "a".repeat(64))
             }]
         })).unwrap()
@@ -303,7 +303,7 @@ mod tests {
 
     fn nightly_source() -> GitHubReleaseSource {
         GitHubReleaseSource {
-            repository: "anilbeesetti/zed".into(),
+            repository: "anilbeesetti/koda".into(),
             installed_tag: "nightly-2026.09.30.14.05".into(),
             channel: ReleaseChannel::Nightly,
         }
@@ -315,7 +315,7 @@ mod tests {
         release.prerelease = true;
         release.assets[0].name = format!("Koda-Nightly-{version}-macos-aarch64.dmg");
         release.assets[0].browser_download_url = format!(
-            "https://github.com/anilbeesetti/zed/releases/download/nightly-{version}/Koda-Nightly-{version}-macos-aarch64.dmg"
+            "https://github.com/anilbeesetti/koda/releases/download/nightly-{version}/Koda-Nightly-{version}-macos-aarch64.dmg"
         );
         release
     }
@@ -325,7 +325,7 @@ mod tests {
         let source = nightly_source();
         assert_eq!(
             source.api_url().unwrap(),
-            "https://api.github.com/repos/anilbeesetti/zed/releases?per_page=100&page=1"
+            "https://api.github.com/repos/anilbeesetti/koda/releases?per_page=100&page=1"
         );
         let mut draft = nightly_release("2026.10.01.14.05");
         draft.draft = true;
@@ -393,7 +393,7 @@ mod tests {
         let name = "koda-remote-server-nightly-2026.09.30.14.05-macos-aarch64.gz";
         remote.assets[0].name = name.into();
         remote.assets[0].browser_download_url = format!(
-            "https://github.com/anilbeesetti/zed/releases/download/nightly-2026.09.30.14.05/{name}"
+            "https://github.com/anilbeesetti/koda/releases/download/nightly-2026.09.30.14.05/{name}"
         );
         assert!(
             source
@@ -487,7 +487,7 @@ mod tests {
             let name = "koda-remote-server-2026.09.30.14.05-macos-aarch64.gz";
             release.assets[0].name = name.into();
             release.assets[0].browser_download_url = format!(
-                "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.05/{name}"
+                "https://github.com/anilbeesetti/koda/releases/download/2026.09.30.14.05/{name}"
             );
             release
         };
@@ -517,11 +517,11 @@ mod tests {
     fn validates_source_and_preserves_upstream_status_display() {
         assert_eq!(
             source("2026.09.30.14.05").api_url().unwrap(),
-            "https://api.github.com/repos/anilbeesetti/zed/releases/latest"
+            "https://api.github.com/repos/anilbeesetti/koda/releases/latest"
         );
         assert_eq!(
             source("2026.09.30.14.05").release_notes_url(),
-            "https://github.com/anilbeesetti/zed/releases/tag/2026.09.30.14.05"
+            "https://github.com/anilbeesetti/koda/releases/tag/2026.09.30.14.05"
         );
         for repository in ["", "owner", "../zed", "owner/repo/other", "owner/repo?x=1"] {
             let mut source = source("2026.09.30.14.05");
