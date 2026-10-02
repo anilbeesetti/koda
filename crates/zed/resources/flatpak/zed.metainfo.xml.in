@@ -34,13 +34,13 @@
         <content_attribute id="social-audio">intense</content_attribute>
     </content_rating>
 
-    <url type="homepage">https://github.com/anilbeesetti/zed</url>
-    <url type="bugtracker">https://github.com/anilbeesetti/zed/issues</url>
+    <url type="homepage">https://github.com/anilbeesetti/koda</url>
+    <url type="bugtracker">https://github.com/anilbeesetti/koda/issues</url>
     <url type="faq">https://zed.dev/faq</url>
     <url type="help">https://zed.dev/docs/getting-started</url>
     <url type="contact">https://zed.dev/community-links</url>
-    <url type="vcs-browser">https://github.com/anilbeesetti/zed</url>
-    <url type="contribute">https://github.com/anilbeesetti/zed/blob/main/CONTRIBUTING.md</url>
+    <url type="vcs-browser">https://github.com/anilbeesetti/koda</url>
+    <url type="contribute">https://github.com/anilbeesetti/koda/blob/main/CONTRIBUTING.md</url>
 
     <supports>
         <internet>offline-only</internet>

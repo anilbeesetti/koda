@@ -1510,7 +1510,7 @@ mod tests {
             "published_at": "2026-09-30T08:35:00Z",
             "assets": [{
                 "name": format!("Koda-{tag}-macos-aarch64.dmg"),
-                "browser_download_url": format!("https://github.com/anilbeesetti/zed/releases/download/{tag}/Koda-{tag}-macos-aarch64.dmg"),
+                "browser_download_url": format!("https://github.com/anilbeesetti/koda/releases/download/{tag}/Koda-{tag}-macos-aarch64.dmg"),
                 "state": "uploaded",
                 "size": payload.len(),
                 "digest": format!("sha256:{:x}", Sha256::digest(payload)),
@@ -1525,7 +1525,7 @@ mod tests {
         release["prerelease"] = true.into();
         release["assets"][0]["name"] = format!("Koda-Nightly-{version}-macos-aarch64.dmg").into();
         release["assets"][0]["browser_download_url"] = format!(
-            "https://github.com/anilbeesetti/zed/releases/download/nightly-{version}/Koda-Nightly-{version}-macos-aarch64.dmg"
+            "https://github.com/anilbeesetti/koda/releases/download/nightly-{version}/Koda-Nightly-{version}-macos-aarch64.dmg"
         ).into();
         release
     }
@@ -1543,7 +1543,7 @@ mod tests {
                 requests.lock().push(request.uri().to_string());
                 async move {
                     let body = if request.uri().host() == Some("api.github.com") {
-                        assert_eq!(request.uri().path(), "/repos/anilbeesetti/zed/releases");
+                        assert_eq!(request.uri().path(), "/repos/anilbeesetti/koda/releases");
                         let releases = match request.uri().query().unwrap() {
                             "per_page=100&page=1" => vec![
                                 serde_json::from_str::<serde_json::Value>(
@@ -1568,7 +1568,7 @@ mod tests {
                     } else {
                         assert_eq!(
                             request.uri().to_string(),
-                            "https://github.com/anilbeesetti/zed/releases/download/nightly-2026.09.30.14.06/Koda-Nightly-2026.09.30.14.06-macos-aarch64.dmg"
+                            "https://github.com/anilbeesetti/koda/releases/download/nightly-2026.09.30.14.06/Koda-Nightly-2026.09.30.14.06-macos-aarch64.dmg"
                         );
                         payload.to_vec()
                     };
@@ -1579,7 +1579,7 @@ mod tests {
         let updater = github_test_updater(fake_http, cx);
         updater.update(cx, |updater, _| {
             updater.github_source = Some(GitHubReleaseSource {
-                repository: "anilbeesetti/zed".into(),
+                repository: "anilbeesetti/koda".into(),
                 installed_tag: "nightly-2026.09.30.14.05".into(),
                 channel: ReleaseChannel::Nightly,
             });
@@ -1612,7 +1612,7 @@ mod tests {
             let updater = cx.new(|cx| {
                 let mut updater = AutoUpdater::new(Version::new(0, 225, 0), client, cx);
                 updater.github_source = Some(GitHubReleaseSource {
-                    repository: "anilbeesetti/zed".into(),
+                    repository: "anilbeesetti/koda".into(),
                     installed_tag: "2026.09.30.14.05".into(),
                     channel: ReleaseChannel::Stable,
                 });
@@ -1645,7 +1645,7 @@ mod tests {
                     if request.uri().host() == Some("api.github.com") {
                         assert_eq!(
                             request.uri().path(),
-                            "/repos/anilbeesetti/zed/releases/latest"
+                            "/repos/anilbeesetti/koda/releases/latest"
                         );
                         assert_eq!(request.headers()["accept"], "application/vnd.github+json");
                         assert_eq!(request.headers()["user-agent"], "Koda-GitHub-Updater");
@@ -1657,7 +1657,7 @@ mod tests {
                     } else {
                         assert_eq!(
                             request.uri().to_string(),
-                            "https://github.com/anilbeesetti/zed/releases/download/2026.09.30.14.06/Koda-2026.09.30.14.06-macos-aarch64.dmg"
+                            "https://github.com/anilbeesetti/koda/releases/download/2026.09.30.14.06/Koda-2026.09.30.14.06-macos-aarch64.dmg"
                         );
                         Ok(Response::builder()
                             .status(200)
@@ -1678,7 +1678,7 @@ mod tests {
             })));
             assert_eq!(
                 github_release_notes_url(cx).unwrap(),
-                "https://github.com/anilbeesetti/zed/releases/tag/2026.09.30.14.05"
+                "https://github.com/anilbeesetti/koda/releases/tag/2026.09.30.14.05"
             );
         });
         poll_github_update(&updater, cx).await;

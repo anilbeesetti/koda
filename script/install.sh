@@ -156,7 +156,7 @@ macos() {
             echo "Published Koda downloads currently support stable Apple Silicon builds. Set KODA_BUNDLE_PATH for other builds." >&2
             exit 1
         fi
-        repository="${KODA_GITHUB_REPOSITORY:-anilbeesetti/zed}"
+        repository="${KODA_GITHUB_REPOSITORY:-anilbeesetti/koda}"
         if [ "$KODA_VERSION" = latest ]; then
             KODA_VERSION=$(curl "https://api.github.com/repos/$repository/releases/latest" | python3 -c 'import json, sys; print(json.load(sys.stdin)["tag_name"])')
         fi
