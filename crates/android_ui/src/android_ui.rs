@@ -1,5 +1,9 @@
 mod android_debugger;
+mod android_logcat;
+mod android_logcat_panel;
 mod android_preview;
+
+use android_logcat_panel::LogcatPanel;
 
 use android_tools::{
     AndroidTarget, Device, adb_path, android_cli_path, emulator_path, is_gradle_project,
@@ -76,6 +80,8 @@ pub fn init(cx: &mut App) {
             .new(|cx| AndroidPanel::new(workspace.weak_handle(), workspace.project().clone(), cx));
         panel.update(cx, |panel, cx| panel.observe_project_open(window, cx));
         workspace.add_panel(panel, window, cx);
+        let logcat_panel = cx.new(|cx| LogcatPanel::new(workspace, window, cx));
+        workspace.add_panel(logcat_panel, window, cx);
         workspace
             .register_action(|workspace, _: &ToggleFocus, window, cx| {
                 workspace.toggle_panel_focus::<AndroidPanel>(window, cx);
@@ -115,6 +121,18 @@ pub fn init(cx: &mut App) {
                 with_panel(workspace, window, cx, |panel, window, cx| {
                     panel.gradle(GradleOperation::Lint, window, cx)
                 })
+            })
+            .register_action(|workspace, _: &android_logcat::Toggle, window, cx| {
+                if workspace
+                    .panel::<LogcatPanel>(cx)
+                    .is_some_and(|panel| panel.read(cx).has_views(cx))
+                {
+                    if !workspace.toggle_panel_focus::<LogcatPanel>(window, cx) {
+                        workspace.close_panel::<LogcatPanel>(window, cx);
+                    }
+                } else {
+                    with_panel(workspace, window, cx, AndroidPanel::logcat);
+                }
             })
             .register_action(|workspace, _: &Logcat, window, cx| {
                 with_panel(workspace, window, cx, AndroidPanel::logcat)
@@ -1417,26 +1435,20 @@ impl AndroidPanel {
     fn logcat(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let result = (|| {
             let root = self.trusted_root(cx)?;
-            let serial = self.selected_device()?.serial.clone();
-            let template = TaskTemplate {
-                label: format!("Logcat · {serial}"),
-                command: adb_path()?.to_string_lossy().into_owned(),
-                args: vec![
-                    "-s".into(),
-                    serial,
-                    "logcat".into(),
-                    "-v".into(),
-                    "threadtime".into(),
-                ],
-                reveal: RevealStrategy::Always,
-                show_summary: true,
-                show_command: true,
-                ..Default::default()
-            };
-            let task = resolve_android_task(template, "android-logcat", root)?;
-            self.workspace.update(cx, |workspace, cx| {
-                workspace.schedule_resolved_task(TaskSourceKind::UserInput, task, false, window, cx)
-            })?;
+            let workspace = self.workspace.clone();
+            let serial = self.selected_serial.clone();
+            let targets = self
+                .selected_target
+                .clone()
+                .map(|target| vec![target])
+                .unwrap_or_else(|| self.targets.clone());
+            window.defer(cx, move |window, cx| {
+                workspace
+                    .update(cx, |workspace, cx| {
+                        android_logcat::open(workspace, root, serial, targets, window, cx);
+                    })
+                    .log_err();
+            });
             Ok::<_, anyhow::Error>(())
         })();
         if let Err(error) = result {
@@ -2006,8 +2018,8 @@ impl Render for AndroidPanel {
                 .tooltip(Tooltip::text("Build the selected variant and render a Compose @Preview beside the code."))
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))
             .child(self.preview_picker(cx))
-            .child(Button::new("logcat", "Open Logcat")
-                .disabled(self.selected_device().is_err()).tab_index(0isize)
+            .child(Button::new("logcat", "Open Logcat").start_icon(Icon::new(IconName::Logcat))
+                .tab_index(0isize)
                 .on_click(cx.listener(|panel, _, window, cx| panel.logcat(window, cx))))
             .child(div().text_sm().text_color(cx.theme().colors().text_muted).child(self.status.clone()))
             .when_some(self.error.clone().or_else(|| self.device_error.clone()), |this, error| {

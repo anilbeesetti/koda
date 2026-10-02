@@ -23,6 +23,9 @@ also display `Android library connected`. Generated symbols refresh automaticall
 after switching variants.
 Use **Stop emulator** when finished to release the VM's memory.
 
+Use **Open Logcat** for the structured device log viewer. See [Logcat](LOGCAT.md)
+for filtering syntax, capture controls, saved files, and validation steps.
+
 The official JetBrains Kotlin backend is the only supported backend. If you used
 the community backend before, relaunch the IDE and configure Kotlin once to switch
 your existing project settings.

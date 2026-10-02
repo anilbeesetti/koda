@@ -71,6 +71,7 @@ struct StateInner {
     scroll_handler: Option<Box<dyn FnMut(&ListScrollEvent, &mut Window, &mut App)>>,
     scrollbar_drag_start_height: Option<Pixels>,
     measuring_behavior: ListMeasuringBehavior,
+    uniform_item_height: Option<Pixels>,
     pending_scroll: Option<PendingScroll>,
     follow_state: FollowState,
 }
@@ -323,6 +324,7 @@ impl ListState {
             reset: false,
             scrollbar_drag_start_height: None,
             measuring_behavior: ListMeasuringBehavior::default(),
+            uniform_item_height: None,
             pending_scroll: None,
             follow_state: FollowState::default(),
         })));
@@ -344,6 +346,7 @@ impl ListState {
     /// As items are actually rendered their real heights replace the hint, so the scrollbar
     /// converges to the exact size over time. This is a cheaper alternative to [`Self::measure_all`]
     /// for lists where items have roughly uniform heights (e.g. table rows).
+    /// The hint is also used for new items and after the list's width changes.
     pub fn with_uniform_item_height(self, height: Pixels) -> Self {
         self.apply_uniform_item_height(height);
         self
@@ -370,6 +373,7 @@ impl ListState {
     /// uniform height hint so the scrollbar thumb is correctly sized from the first
     /// frame even for off-screen items.
     pub fn reset_with_uniform_height(&self, element_count: usize, height: Pixels) {
+        self.0.borrow_mut().uniform_item_height = Some(height);
         self.reset(element_count);
         self.apply_uniform_item_height(height);
     }
@@ -380,6 +384,7 @@ impl ListState {
             height,
         };
         let mut state = self.0.borrow_mut();
+        state.uniform_item_height = Some(height);
         let new_items = state
             .items
             .iter()
@@ -524,7 +529,7 @@ impl ListState {
             focus_handles.into_iter().map(|focus_handle| {
                 spliced_count += 1;
                 ListItem::Unmeasured {
-                    size_hint: None,
+                    size_hint: state.uniform_item_height.map(|height| size(px(0.), height)),
                     focus_handle,
                 }
             }),
@@ -1547,7 +1552,7 @@ impl Element for List {
         {
             let new_items = SumTree::from_iter(
                 state.items.iter().map(|item| ListItem::Unmeasured {
-                    size_hint: None,
+                    size_hint: state.uniform_item_height.map(|height| size(px(0.), height)),
                     focus_handle: item.focus_handle(),
                 }),
                 (),
@@ -1725,8 +1730,8 @@ mod test {
 
     use crate::{
         self as gpui, AppContext, Bounds, Context, Element, FollowMode, InteractiveElement,
-        IntoElement, ListState, Render, Styled, TestAppContext, Window, canvas, div, list, point,
-        px, size,
+        IntoElement, ListAlignment, ListState, Pixels, Render, Styled, TestAppContext, Window,
+        canvas, div, list, point, px, size,
     };
 
     #[gpui::test]
@@ -2061,6 +2066,78 @@ mod test {
         assert_eq!(state.logical_scroll_top().item_ix, state.item_count());
         assert_eq!(state.item_is_above_viewport(0), Some(true));
         assert_eq!(state.item_is_below_viewport(0), Some(false));
+    }
+
+    #[gpui::test]
+    fn test_uniform_height_hints_survive_paint_resize_and_append(cx: &mut TestAppContext) {
+        let cx = cx.add_empty_window();
+        let state =
+            ListState::new(10_000, ListAlignment::Top, px(40.)).with_uniform_item_height(px(20.));
+        let rendered = Rc::new(Cell::new(0));
+        let item_height = Rc::new(Cell::new(px(20.)));
+
+        struct TestView {
+            state: ListState,
+            rendered: Rc<Cell<usize>>,
+            item_height: Rc<Cell<Pixels>>,
+        }
+        impl Render for TestView {
+            fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+                let rendered = self.rendered.clone();
+                let item_height = self.item_height.clone();
+                list(self.state.clone(), move |_, _, _| {
+                    rendered.set(rendered.get() + 1);
+                    div().h(item_height.get()).w_full().into_any()
+                })
+                .w_full()
+                .h_full()
+            }
+        }
+        let view = cx.update(|_, cx| {
+            cx.new(|_| TestView {
+                state: state.clone(),
+                rendered: rendered.clone(),
+                item_height: item_height.clone(),
+            })
+        });
+
+        for width in [100., 200.] {
+            rendered.set(0);
+            cx.draw(point(px(0.), px(0.)), size(px(width), px(200.)), |_, _| {
+                view.clone().into_any_element()
+            });
+            assert_eq!(state.max_offset_for_scrollbar().y, px(199_800.));
+            assert!(rendered.get() > 0 && rendered.get() < 30);
+            assert!(state.0.borrow().items.summary().unrendered_count > 9_900);
+        }
+
+        state.splice(10_000..10_000, 100);
+        assert_eq!(state.max_offset_for_scrollbar().y, px(201_800.));
+        rendered.set(0);
+        cx.draw(point(px(0.), px(0.)), size(px(200.), px(200.)), |_, _| {
+            view.clone().into_any_element()
+        });
+        assert_eq!(state.max_offset_for_scrollbar().y, px(201_800.));
+        assert!(rendered.get() < 30);
+
+        // Hints remain estimates: visible rows still acquire their actual height.
+        item_height.set(px(40.));
+        state.remeasure_items(0..1);
+        cx.draw(point(px(0.), px(0.)), size(px(200.), px(200.)), |_, _| {
+            view.clone().into_any_element()
+        });
+        assert!(state.max_offset_for_scrollbar().y > px(201_800.));
+        assert!(state.max_offset_for_scrollbar().y < px(202_800.));
+
+        // Updating the configured hint must replace the previous reset estimate.
+        item_height.set(px(30.));
+        state.reset_with_uniform_height(10_000, px(30.));
+        rendered.set(0);
+        cx.draw(point(px(0.), px(0.)), size(px(300.), px(200.)), |_, _| {
+            view.into_any_element()
+        });
+        assert_eq!(state.max_offset_for_scrollbar().y, px(299_800.));
+        assert!(rendered.get() > 0 && rendered.get() < 30);
     }
 
     #[gpui::test]
