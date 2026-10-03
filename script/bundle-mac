@@ -127,9 +127,10 @@ compile_stage "macOS remote server release compilation" cargo --config .cargo/bu
 echo "Creating application bundle"
 pushd crates/zed
 cp Cargo.toml Cargo.toml.backup
+# --bin selects its own bundle settings instead of the package-level settings.
 sed \
     -i.backup \
-    "s/package.metadata.bundle-${channel}/package.metadata.bundle/" \
+    "s/package.metadata.bundle-${channel}/package.metadata.bundle.bin.koda/" \
     Cargo.toml
 
 app_path=$(cargo bundle ${build_flag} --bin koda --target $target_triple --select-workspace-root | xargs)

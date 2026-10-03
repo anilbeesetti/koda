@@ -190,6 +190,7 @@ jobs:
           vm_stat
       - name: Verify app and collect release downloads
         run: |
+          set -x
           app_name="Koda"
           asset_name="Koda"
           identifier="dev.anilbeesetti.koda"
@@ -208,7 +209,7 @@ jobs:
           /usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app/Contents/Info.plist" | grep -Fx "$ZED_BUNDLE_VERSION"
           lipo "$app/Contents/MacOS/koda" -verify_arch arm64
           "$app/Contents/MacOS/koda" --system-specs
-          "$app/Contents/MacOS/cli" --version | grep -F "$ZED_RELEASE_VERSION"
+          "$app/Contents/MacOS/cli" --version | grep -F "Koda $ZED_BUNDLE_VERSION –"
           mkdir -p release-assets
           cp "target/$TARGET_TRIPLE/release/Koda-$ARCHITECTURE.dmg" "release-assets/$asset_name-$ZED_BUNDLE_VERSION-macos-$ARCHITECTURE.dmg"
           cp "target/koda-remote-server-macos-$ARCHITECTURE.gz" "release-assets/koda-remote-server-$ZED_RELEASE_VERSION-macos-$ARCHITECTURE.gz"
