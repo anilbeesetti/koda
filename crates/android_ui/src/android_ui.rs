@@ -61,6 +61,12 @@ actions!(
         Run,
         /// Builds and debugs the selected Android variant on the selected device.
         Debug,
+        /// Refreshes debuggable processes for the selected application and device.
+        RefreshDebugProcesses,
+        /// Reloads reusable launches from .zed/android-run.json.
+        RefreshRunConfigurations,
+        /// Detaches the Android debugger while leaving the application running.
+        DisconnectDebugger,
         /// Runs local unit tests for the selected Android variant.
         Test,
         /// Runs Android lint for the selected variant.
@@ -122,6 +128,22 @@ pub fn init(cx: &mut App) {
             .register_action(|workspace, _: &Debug, window, cx| {
                 with_panel(workspace, window, cx, |panel, window, cx| {
                     panel.gradle(GradleOperation::Debug, window, cx)
+                })
+            })
+            .register_action(|workspace, _: &RefreshDebugProcesses, window, cx| {
+                with_panel(workspace, window, cx, AndroidPanel::refresh_debug_processes)
+            })
+            .register_action(|workspace, _: &RefreshRunConfigurations, window, cx| {
+                with_panel(
+                    workspace,
+                    window,
+                    cx,
+                    AndroidPanel::refresh_run_configurations,
+                )
+            })
+            .register_action(|workspace, _: &DisconnectDebugger, window, cx| {
+                with_panel(workspace, window, cx, |panel, _, cx| {
+                    panel.disconnect_debugger(cx)
                 })
             })
             .register_action(|workspace, _: &Test, window, cx| {
@@ -365,6 +387,12 @@ pub struct AndroidPanel {
     selected_preview: Option<String>,
     rendered_preview: Option<(PathBuf, AndroidTarget)>,
     debug_forward: Option<android_debugger::Forward>,
+    debug_processes: Vec<android_tools::debugging::Process>,
+    debug_process_context: Option<(android_tools::project_model::ModelToken, String, String)>,
+    debug_monitor: Option<Task<()>>,
+    run_configurations: Vec<android_tools::debugging::RunConfiguration>,
+    selected_run_configuration: Option<String>,
+    active_run_configuration: Option<android_tools::debugging::RunConfiguration>,
     _debug_subscriptions: Vec<Subscription>,
     java_refresh: Option<(
         PathBuf,
@@ -408,6 +436,18 @@ impl AndroidPanel {
         });
         let project_model_subscription = cx.observe(&project, |panel, _, cx| {
             panel.validate_test_context(cx);
+            if panel.debug_forward.as_ref().is_some_and(|forward| {
+                !panel
+                    .project
+                    .read(cx)
+                    .android_model()
+                    .is_current(&forward.model_token)
+            }) {
+                panel.disconnect_debugger(cx);
+                panel.debug_processes.clear();
+                panel.debug_process_context = None;
+                cx.notify();
+            }
             if panel
                 .followup_model_token
                 .as_ref()
@@ -478,6 +518,12 @@ impl AndroidPanel {
             selected_preview: None,
             rendered_preview: None,
             debug_forward: None,
+            debug_processes: Vec::new(),
+            debug_process_context: None,
+            debug_monitor: None,
+            run_configurations: Vec::new(),
+            selected_run_configuration: None,
+            active_run_configuration: None,
             _debug_subscriptions: Vec::new(),
             java_refresh: None,
             java_status_subscription: None,
@@ -1150,7 +1196,11 @@ impl AndroidPanel {
             );
             return;
         }
-        if self.running || self.syncing || self.test_panel.read(cx).busy {
+        if self.running
+            || self.syncing
+            || self.test_panel.read(cx).busy
+            || self.test_operation_id.is_some()
+        {
             return;
         }
         let result = (|| {
@@ -1169,6 +1219,12 @@ impl AndroidPanel {
                 .clone()
                 .context("Sync the Android project and select a build variant first.")?;
             self.validate_model_target(&target, cx)?;
+            if matches!(operation, GradleOperation::Run | GradleOperation::Debug) {
+                ensure!(
+                    self.debug_forward.is_none(),
+                    "Disconnect the current Android debug session before redeploying."
+                );
+            }
             if matches!(operation, GradleOperation::Debug) {
                 android_debugger::binary()?;
                 android_tools::kotlin::java_home()?;
@@ -1348,6 +1404,7 @@ impl AndroidPanel {
         if self.running
             || self.syncing
             || self.test_panel.read(cx).busy
+            || self.test_operation_id.is_some()
             || self.kotlin_refresh_task.is_some()
             || self.kotlin_refresh_pending.is_some()
         {
@@ -1425,12 +1482,16 @@ impl AndroidPanel {
         self.status = label.into();
         let workspace = self.workspace.clone();
         let executor = cx.background_executor().clone();
+        let launching = matches!(
+            after_task,
+            Some(AfterTask::Deploy(..) | AfterTask::DeployOnEmulator(..))
+        );
         self.build_task = Some(cx.spawn_in(window, async move |panel, cx| {
             Workspace::save_for_task(&workspace, SaveStrategy::All, cx).await;
             let mut environment = environment.await.unwrap_or_default();
             environment.extend(terminal_environment);
             let valid = panel
-                .read_with(cx, |panel, cx| {
+                .update(cx, |panel, cx| {
                     panel.trusted_root(cx).and_then(|current| {
                         ensure!(
                             current == root,
@@ -1444,6 +1505,15 @@ impl AndroidPanel {
                                 .is_current(&model_token),
                             "The Android project model changed before building"
                         );
+                        if launching {
+                            ensure!(!panel.debug_inputs_dirty(true, cx), "Save selected source/model/run-configuration edits before launching; the save was cancelled or failed.");
+                            panel.active_run_configuration = match &panel.selected_run_configuration {
+                                Some(name) => Some(android_tools::debugging::read_configurations(&root)?.into_iter()
+                                    .find(|configuration| &configuration.name == name)
+                                    .context("The selected run configuration was removed. Reload run configurations.")?),
+                                None => None,
+                            };
+                        }
                         Ok(())
                     })
                 })
@@ -1783,11 +1853,15 @@ impl AndroidPanel {
         let executor = cx.background_executor().clone();
         let deployment_root = root.clone();
         let device_serial = serial.clone();
+        let configuration = self.active_run_configuration.clone();
+        let launch_serial = serial.clone();
+        let configured_launch = configuration.is_some();
         self.deploy_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let target_for_apk = target.clone();
             let result = cx
                 .background_spawn(async move {
                     let root = deployment_root.context("The Android project was closed.")?;
+                    let serial = launch_serial;
                     let properties = tool_output(
                         adb_path()?,
                         vec!["-s".into(), device_serial, "shell".into(), "getprop".into()],
@@ -1798,20 +1872,77 @@ impl AndroidPanel {
                     .await?;
                     let abis = parse_device_abis(&properties)?;
                     let apk = target_for_apk.apk_for_device(&abis)?;
-                    let application_id = if debug {
+                    let application_id = if debug || configuration.is_some() {
                         Some(apk.debug_application_id()?.to_owned())
                     } else {
                         None
                     };
-                    Ok::<_, anyhow::Error>((
-                        android_cli_path()?,
-                        apk.paths
+                    if let Some(configuration) = &configuration {
+                        let application = application_id
+                            .as_deref()
+                            .context("APK application ID is missing")?;
+                        configuration.launch_arguments(application, debug)?;
+                        configuration.process_name(application)?;
+                        let adb = adb_path()?;
+                        tool_output(
+                            adb.clone(),
+                            vec![
+                                "-s".into(),
+                                serial.clone(),
+                                "install-multiple".into(),
+                                "-r".into(),
+                            ]
                             .into_iter()
-                            .map(|path| path.to_string_lossy().into_owned())
-                            .collect::<Vec<_>>()
-                            .join(","),
-                        application_id,
-                    ))
+                            .chain(
+                                apk.paths
+                                    .iter()
+                                    .map(|path| path.to_string_lossy().into_owned()),
+                            )
+                            .collect(),
+                            &root,
+                            &executor,
+                            Duration::from_secs(120),
+                        )
+                        .await?;
+                        let mut arguments = vec!["-s".into(), serial.clone()];
+                        arguments.extend(configuration.launch_arguments(application, debug)?);
+                        let mut command = new_command(&adb);
+                        command.args(&arguments).current_dir(&root);
+                        let output = command_output_including_stderr(
+                            command,
+                            &executor,
+                            Duration::from_secs(30),
+                        )
+                        .await?;
+                        android_tools::debugging::validate_launch_output(&output)?;
+                        let process_name = if debug {
+                            Some(configuration.process_name(application)?)
+                        } else {
+                            None
+                        };
+                        Ok::<_, anyhow::Error>((adb, Vec::new(), process_name))
+                    } else {
+                        Ok::<_, anyhow::Error>((
+                            android_cli_path()?,
+                            apk.paths
+                                .into_iter()
+                                .map(|path| path.to_string_lossy().into_owned())
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            application_id,
+                        ))
+                        .map(|(program, apks, application_id)| {
+                            let mut arguments = vec![
+                                "run".into(),
+                                format!("--device={serial}"),
+                                format!("--apks={apks}"),
+                            ];
+                            if debug {
+                                arguments.push("--debug".into());
+                            }
+                            (program, arguments, application_id)
+                        })
+                    }
                 })
                 .await;
             panel
@@ -1826,24 +1957,30 @@ impl AndroidPanel {
                     }
                     panel.followup_model_token = None;
                     panel.running = false;
-                    let result = result.and_then(|(program, apks, application_id)| {
+                    let result = result.and_then(|(program, args, application_id)| {
                         let root = root.context("The Android project was closed.")?;
                         ensure!(
                             panel.trusted_root(cx)? == root,
                             "The selected Android project changed during the build."
                         );
                         panel.validate_model_target(&target, cx)?;
-                        let mut args = vec![
-                            "run".into(),
-                            format!("--device={serial}"),
-                            format!("--apks={apks}"),
-                        ];
-                        if debug {
-                            args.push("--debug".into());
+                        let after = if debug {
+                            application_id.map(|application_id| {
+                                AfterTask::AttachDebugger(root.clone(), serial, application_id)
+                            })
+                        } else {
+                            None
+                        };
+                        if configured_launch {
+                            if let Some(AfterTask::AttachDebugger(root, serial, application)) =
+                                after
+                            {
+                                panel.attach_debugger(root, serial, application, window, cx);
+                            } else {
+                                panel.status = "Android launch completed".into();
+                            }
+                            return Ok(());
                         }
-                        let after = application_id.map(|application_id| {
-                            AfterTask::AttachDebugger(root.clone(), serial, application_id)
-                        });
                         panel.schedule(
                             if debug {
                                 "Android Debug"
@@ -1863,6 +2000,7 @@ impl AndroidPanel {
                     if let Err(error) = result {
                         panel.fail(error, window, cx);
                     }
+                    cx.notify();
                 })
                 .log_err();
         }));
@@ -2438,6 +2576,13 @@ impl AndroidPanel {
         cx: &mut Context<Self>,
     ) -> android_tools::project_model::ModelToken {
         self.pause_managed_java(cx).log_err();
+        self.disconnect_debugger(cx);
+        self.debug_processes.clear();
+        self.debug_process_context = None;
+        if self.root.as_ref() != root.as_ref() {
+            self.run_configurations.clear();
+            self.selected_run_configuration = None;
+        }
         self.cancel_model_followup(cx);
         if self.root.as_ref() != root.as_ref() {
             self.model_input_roots.clear();
@@ -2464,6 +2609,9 @@ impl AndroidPanel {
     }
 
     fn publish_selection(&mut self, cx: &mut Context<Self>) -> Result<()> {
+        self.disconnect_debugger(cx);
+        self.debug_processes.clear();
+        self.debug_process_context = None;
         self.pause_managed_java(cx).log_err();
         self.java_refresh = None;
         self.java_status_subscription = None;
@@ -2632,6 +2780,14 @@ impl AndroidPanel {
                         move |_, cx| {
                             panel
                                 .update(cx, |panel, cx| {
+                                    if panel.running || panel.syncing {
+                                        return;
+                                    }
+                                    if panel.selected_serial.as_ref() != Some(&device.serial) {
+                                        panel.disconnect_debugger(cx);
+                                        panel.debug_processes.clear();
+                                        panel.debug_process_context = None;
+                                    }
                                     panel.selected_serial = Some(device.serial.clone());
                                     panel.selected_avd = None;
                                     cx.notify();
@@ -2665,6 +2821,16 @@ impl AndroidPanel {
                         move |_, cx| {
                             panel
                                 .update(cx, |panel, cx| {
+                                    if panel.running || panel.syncing {
+                                        return;
+                                    }
+                                    if panel.selected_avd.as_ref() != Some(&name)
+                                        || panel.selected_serial != serial
+                                    {
+                                        panel.disconnect_debugger(cx);
+                                        panel.debug_processes.clear();
+                                        panel.debug_process_context = None;
+                                    }
                                     panel.selected_avd = Some(name.clone());
                                     panel.selected_serial = serial.clone();
                                     cx.notify();
@@ -3013,6 +3179,8 @@ impl AndroidPanel {
                     .disabled(
                         self.running
                             || self.syncing
+                            || self.test_operation_id.is_some()
+                            || self.debug_forward.is_some()
                             || self.selected_target.is_none()
                             || !self.can_run_on_selected_device(),
                     )
@@ -3028,6 +3196,7 @@ impl AndroidPanel {
                     .disabled(
                         self.running
                             || self.syncing
+                            || self.test_operation_id.is_some()
                             || self.debug_forward.is_some()
                             || self.selected_target.is_none()
                             || !self.can_run_on_selected_device(),
@@ -3041,7 +3210,12 @@ impl AndroidPanel {
                 IconButton::new("android-build", IconName::ToolHammer)
                     .tab_index(0isize)
                     .aria_label("Build selected variant")
-                    .disabled(self.running || self.syncing || self.selected_target.is_none())
+                    .disabled(
+                        self.running
+                            || self.syncing
+                            || self.test_operation_id.is_some()
+                            || self.selected_target.is_none(),
+                    )
                     .tooltip(|_, cx| Tooltip::for_action("Build selected variant", &Build, cx))
                     .on_click(cx.listener(|panel, _, window, cx| {
                         panel.gradle(GradleOperation::Build, window, cx)
@@ -3131,7 +3305,9 @@ impl Render for AndroidPanel {
                 .disabled(
                     self.syncing
                         || self.running
+                        || self.test_operation_id.is_some()
                         || self.selected_target.is_none()
+                        || (is_run && self.debug_forward.is_some())
                         || (is_run && !self.can_run_on_selected_device()),
                 )
                 .tab_index(0isize)
@@ -3163,6 +3339,12 @@ impl Render for AndroidPanel {
                 .on_click(cx.listener(|panel, _, window, cx| panel.sync_project(window, cx))))
             .child(Label::new("Build variant").color(Color::Muted))
             .child(self.target_picker("panel-target", cx))
+            .child(Label::new("Launch configuration").color(Color::Muted))
+            .child(self.run_configuration_picker(cx))
+            .child(Button::new("reload-android-launches", "Reload run configurations")
+                .disabled(self.running || self.syncing).tab_index(0isize)
+                .tooltip(Tooltip::text("Read reusable launches from .zed/android-run.json"))
+                .on_click(cx.listener(|panel, _, window, cx| panel.refresh_run_configurations(window, cx))))
             .child(Label::new("Device").color(Color::Muted))
             .child(self.device_picker("panel-device", cx))
             .child(Button::new("refresh-devices", if self.refreshing_devices { "Refreshing…" } else { "Refresh devices" })
@@ -3172,6 +3354,14 @@ impl Render for AndroidPanel {
                 this.child(div().text_sm().text_color(cx.theme().colors().text_muted)
                     .child("Start an Android emulator or connect a device with USB debugging, then refresh."))
             })
+            .child(h_flex().flex_wrap().gap_1()
+                .child(Button::new("refresh-debug-processes", "Refresh debug processes")
+                    .disabled(self.running || self.syncing || self.debug_forward.is_some() || self.test_operation_id.is_some() || self.selected_target.is_none() || self.selected_device().is_err())
+                    .tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.refresh_debug_processes(window, cx))))
+                .child(self.debug_process_picker(cx))
+                .child(Button::new("disconnect-android-debugger", "Detach debugger")
+                    .disabled(self.debug_forward.is_none()).tab_index(0isize)
+                    .on_click(cx.listener(|panel, _, _, cx| panel.disconnect_debugger(cx)))))
             .child(h_flex().flex_wrap().gap_1()
                 .child(self.emulator_picker(cx))
                 .child(Button::new("stop-emulator", "Stop emulator")
@@ -3184,17 +3374,17 @@ impl Render for AndroidPanel {
             })
             .child(h_flex().flex_wrap().gap_1().children(commands))
             .child(Button::new("configure-official-kotlin", "Configure official Kotlin")
-                .disabled(self.syncing || self.running || self.selected_target.is_none())
+                .disabled(self.syncing || self.running || self.test_operation_id.is_some() || self.selected_target.is_none())
                 .tab_index(0isize)
                 .tooltip(Tooltip::text("Use the official Kotlin server with Gradle import. Experimental until editing compatibility checks pass."))
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Kotlin, window, cx))))
             .child(Button::new("configure-java", "Configure Java")
-                .disabled(self.syncing || self.running || self.selected_target.is_none())
+                .disabled(self.syncing || self.running || self.test_operation_id.is_some() || self.selected_target.is_none())
                 .tab_index(0isize)
                 .tooltip(Tooltip::text("Build the selected variant and configure the Java extension with Android sources, generated symbols, and dependencies."))
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Java, window, cx))))
             .child(Button::new("android-compose-preview", "Compose preview")
-                .disabled(self.running || self.syncing || self.selected_target.is_none()).tab_index(0isize)
+                .disabled(self.running || self.syncing || self.test_operation_id.is_some() || self.selected_target.is_none()).tab_index(0isize)
                 .tooltip(Tooltip::text("Build the selected variant and render a Compose @Preview beside the code."))
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))
             .child(self.preview_picker(cx))
@@ -3961,9 +4151,26 @@ async fn tool_output(
 }
 
 async fn command_output(
+    command: util::command::Command,
+    executor: &BackgroundExecutor,
+    timeout: Duration,
+) -> Result<String> {
+    command_output_text(command, executor, timeout, false).await
+}
+
+async fn command_output_including_stderr(
+    command: util::command::Command,
+    executor: &BackgroundExecutor,
+    timeout: Duration,
+) -> Result<String> {
+    command_output_text(command, executor, timeout, true).await
+}
+
+async fn command_output_text(
     mut command: util::command::Command,
     executor: &BackgroundExecutor,
     timeout: Duration,
+    include_stderr: bool,
 ) -> Result<String> {
     let program = PathBuf::from(command.get_program());
     command.kill_on_drop(true);
@@ -4000,7 +4207,14 @@ async fn command_output(
                 .collect::<String>()
         );
     }
-    Ok(stdout.into_owned())
+    if include_stderr {
+        Ok(format!(
+            "{stdout}\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        ))
+    } else {
+        Ok(stdout.into_owned())
+    }
 }
 
 #[cfg(test)]
@@ -4014,7 +4228,7 @@ mod tests {
     use serde_json::json;
     use workspace::AppState;
 
-    fn publish_test_android_model(
+    pub(super) fn publish_test_android_model(
         panel: &mut AndroidPanel,
         target: &AndroidTarget,
         cx: &mut Context<AndroidPanel>,
@@ -4026,7 +4240,7 @@ mod tests {
                 "namespace": "example.app", "kind": "application", "variants": [{
                     "name": target.variant, "outputListing": target.output_listing,
                     "components": [{"name": target.variant, "scope": "main", "dependencies": [],
-                        "sources": [{"path": root.join("app/resources"), "kind": "resources", "generated": false}]}]
+                        "sources": [{"path": root.join("app/resources"), "kind": "resources", "generated": false}, {"path": root.join("app/src"), "kind": "kotlin", "generated": false}]}]
                 }]
             }]
         })).expect("Android fixture model");
