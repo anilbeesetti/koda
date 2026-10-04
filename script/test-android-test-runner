@@ -54,16 +54,27 @@ def main():
             cases += list(ET.parse(report).iter("testcase"))
         return directory, output, cases
 
-    directory, output, cases = run("kodaAndroidTestSources")
-    directories = json.loads((output / "sources.json").read_text())["directories"]
-    assert any("src/testDemo/java" in path for path in directories), directories
-    assert not any("testFull" in path for path in directories), directories
-    directory.cleanup()
-
-    directory, output, cases = run("kodaAndroidTestSources", kind="device")
-    directories = json.loads((output / "sources.json").read_text())["directories"]
-    assert any("src/androidTest/java" in path for path in directories), directories
-    directory.cleanup()
+    with tempfile.TemporaryDirectory(prefix="koda-runner-model-") as directory:
+        init = Path(directory) / "model.gradle"
+        init.write_text((root / "crates/android_tools/src/project_model.gradle").read_text())
+        completed = subprocess.run(["/bin/sh", "./gradlew", "--init-script", str(init),
+                                    "kodaAndroidProjectModel", "--no-configuration-cache",
+                                    "--no-daemon", "--console=plain"], cwd=fixture,
+                                   text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                   timeout=600, check=True)
+        print(completed.stdout)
+        records = [line.removeprefix("KODA_ANDROID_PROJECT_MODEL=") for line in completed.stdout.splitlines()
+                   if line.startswith("KODA_ANDROID_PROJECT_MODEL=")]
+        assert len(records) == 1, records
+        model = json.loads(records[0])
+        module = next(module for module in model["modules"] if module["path"] == ":mobile")
+        variant = next(variant for variant in module["variants"] if variant["name"] == "demoDebug")
+        for scope, name, path in [("unitTest", "demoDebugUnitTest", "src/testDemo/java"),
+                                  ("androidTest", "demoDebugAndroidTest", "src/androidTest/java")]:
+            component = next(component for component in variant["components"] if component["name"] == name and component["scope"] == scope)
+            directories = [source["path"] for source in component["sources"] if source["kind"] in ["java", "kotlin"]]
+            assert any(path in directory for directory in directories), directories
+            assert not any("testFull" in directory for directory in directories), directories
 
     probes = [
         (["dev.zed.androidsample.RunnerTest.passes"], False, 1, 0, 0),

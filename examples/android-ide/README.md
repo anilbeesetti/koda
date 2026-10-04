@@ -84,7 +84,11 @@ tree and retains completed results. Unit results appear while Gradle runs;
 instrumentation results appear when its XML reports are available. Build Output
 keeps the bounded raw command log and process errors.
 
-Runs save modified workspace files before launching. Edits and Gradle input
+Runs save modified workspace files before launching and wait for a refreshed shared
+project model when Gradle inputs changed or no selected snapshot exists. Discovery
+uses only the selected component’s Java/Kotlin roots, including registered generated
+roots; dependency test suites and test fixtures are excluded. Model generations
+guard launch and streamed/final results, including A → B → A selections. Edits and Gradle input
 changes mark old results stale and disable selection-based reruns and source
 links until rediscovery or a new suite run. Changing project, variant or selected
 device, losing project trust, or observing the device offline cancels an active
@@ -94,7 +98,7 @@ results and display a diagnostic.
 
 Discovery recognizes common Java/Kotlin JUnit annotations and explicit suite
 annotations. It is a bounded source scan, not framework reflection: inherited,
-generated, dynamically created, aliased or custom-annotation tests may first
+unregistered generated, dynamically created, aliased or custom-annotation tests may first
 appear in results after running the suite. Gradle resolves the selected test
 task's dependencies. Parameterized/dynamic invocation names and names that cannot
 be expressed as an exact runner filter rerun their owning class; there is no
@@ -102,10 +106,10 @@ individual parameter invocation filter. Failure links currently target test
 sources, not arbitrary production or helper stack frames. Custom named AGP device
 test suites are not exposed.
 
-The runner uses the current public `AndroidTarget` selection API. The current
-picker exposes APK-producing application variants; selecting library-only,
-KMP or standalone test modules depends on the companion project-model work.
-This change does not replace that model. Debugging tests is not integrated:
+The runner consumes `Project::android_model()` and its selected unit/device test
+components. The current picker still exposes APK-producing application variants;
+library-only, KMP and standalone test-module selection remain unsupported, including
+with the shared model. Debugging tests is not integrated:
 the existing Android DAP attaches to launched applications, and the runner does
 not yet coordinate Gradle `--debug-jvm` or suspended instrumentation processes.
 Existing application debug remains available.
@@ -381,8 +385,9 @@ Supported boundaries:
   Kotlin-plugin-only/JVM roots retain a build-directory classification fallback.
   Unregistered task outputs cannot be discovered. Managed cache files preserve
   unrelated user settings and refuse unmanaged/symlinked cache directories.
-- This change does not add a test runner, expand the preview renderer's supported
-  modes, or establish new debugger/emulator or Kotlin semantic compatibility claims.
+- The shared model does not expand preview modes or establish new debugger/emulator
+  or Kotlin semantic compatibility claims. The test runner described above consumes
+  its selected test components.
 
 The real Gradle model/Java/Eclipse probe creates isolated fixtures with flavors,
 variant fallbacks, a dynamic feature, JVM test dependencies, registered generated roots,
