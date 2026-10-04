@@ -22370,18 +22370,32 @@ async fn test_android_resource_rename_invalidates_failed_sync_and_recovers(
             })
             .is_err()
     );
+    let unavailable = project.update(cx, |project, cx| {
+        project.prepare_android_resource_rename(
+            &source,
+            Point::new(1, 25).to_point_utf16(source.read(cx)),
+            "renamed_title".into(),
+            cx,
+        )
+    });
     assert!(
-        project
-            .update(cx, |project, cx| {
-                project.prepare_android_resource_rename(
-                    &source,
-                    Point::new(1, 25).to_point_utf16(source.read(cx)),
-                    "renamed_title".into(),
-                    cx,
-                )
-            })
-            .is_none()
+        unavailable
+            .expect("Resource rename stays intercepted")
+            .await
+            .is_err()
     );
+    let definitions = project
+        .update(cx, |project, cx| {
+            project.definitions(&source, Point::new(1, 25), cx)
+        })
+        .await
+        .expect("Unavailable-model definition request");
+    assert!(
+        definitions
+            .expect("Intercepted resource request")
+            .is_empty()
+    );
+
     assert!(
         project
             .update(cx, |project, cx| {

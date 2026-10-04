@@ -4729,6 +4729,9 @@ impl Project {
         cx: &mut Context<Self>,
     ) -> Task<Result<Vec<CompletionResponse>>> {
         let position = position.to_point_utf16(buffer.read(cx));
+        if self.android_resource_model_unavailable(buffer, position, cx) {
+            return Task::ready(Ok(Vec::new()));
+        }
         let resources = self.android_resource_completions(buffer, position, cx);
         let lsp = self.lsp_store.update(cx, |lsp_store, cx| {
             lsp_store.completions(buffer, position, context, cx)

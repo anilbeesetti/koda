@@ -19,6 +19,50 @@ static IMPORT: LazyLock<Result<Regex, regex::Error>> =
     LazyLock::new(|| Regex::new(r"(?m)^\s*import\s+([\w.]+)\.R\s*;?\s*$"));
 
 impl Project {
+    pub(crate) fn android_resource_model_unavailable(
+        &self,
+        buffer: &Entity<Buffer>,
+        position: PointUtf16,
+        cx: &App,
+    ) -> bool {
+        let Some(root) = self.android_model.root() else {
+            return false;
+        };
+        if self.android_model.selected.is_some() || !self.is_local() {
+            return false;
+        }
+        let snapshot = buffer.read(cx).snapshot();
+        let Some(file) = snapshot.file() else {
+            return false;
+        };
+        let path = self.android_file_path(file.as_ref(), cx);
+        if !path.starts_with(root) {
+            return false;
+        }
+        let xml = path.extension().is_some_and(|extension| extension == "xml");
+        if !xml
+            && path
+                .extension()
+                .is_none_or(|extension| extension != "kt" && extension != "java")
+        {
+            return false;
+        }
+        let text = snapshot.text();
+        let offset = position.to_offset(&snapshot);
+        resources::completion_reference(&text, offset, xml).is_some()
+            || resources::references(&text, xml).is_ok_and(|references| {
+                references.iter().any(|reference| {
+                    reference.range.start <= offset && offset <= reference.range.end
+                })
+            })
+            || xml
+                && resources::declarations(&text, "").is_ok_and(|declarations| {
+                    declarations
+                        .iter()
+                        .any(|(_, _, _, range)| range.start <= offset && offset <= range.end)
+                })
+    }
+
     pub fn android_model(&self) -> &android_tools::project_model::ModelState {
         &self.android_model
     }
@@ -588,11 +632,16 @@ fn component_roots(
 
 impl Project {
     fn android_file_path(&self, file: &dyn language::File, cx: &App) -> PathBuf {
-        if let Some(selected) = &self.android_model.selected
+        if let Some(root) = self.android_model.root()
             && let Some(worktree) = self.worktree_for_id(file.worktree_id(cx), cx)
-            && self.android_model.root() == Some(worktree.read(cx).abs_path().as_ref())
+            && root == worktree.read(cx).abs_path().as_ref()
         {
-            return selected.model.root.join(file.path().as_std_path());
+            let root = self
+                .android_model
+                .selected
+                .as_ref()
+                .map_or(root, |selected| selected.model.root.as_path());
+            return root.join(file.path().as_std_path());
         }
         file.full_path(cx)
     }
@@ -718,6 +767,9 @@ impl Project {
         if self.android_model.root().is_none() {
             return self.legacy_android_resource_definitions(buffer, position, cx);
         }
+        if self.android_resource_model_unavailable(buffer, position, cx) {
+            return Some(Task::ready(Ok(Vec::new())));
+        }
         let query = self.android_query(buffer, position, cx)?;
         Some(cx.spawn(async move |project, cx| {
             let index = build_index(
@@ -823,6 +875,9 @@ impl Project {
         position: PointUtf16,
         cx: &mut Context<Self>,
     ) -> Option<Task<Result<Vec<Hover>>>> {
+        if self.android_resource_model_unavailable(buffer, position, cx) {
+            return Some(Task::ready(Ok(Vec::new())));
+        }
         let query = self.android_query(buffer, position, cx)?;
         Some(cx.spawn(async move |project, cx| {
             let index = build_index(
@@ -860,6 +915,9 @@ impl Project {
         position: PointUtf16,
         cx: &mut Context<Self>,
     ) -> Option<Task<Result<Vec<Location>>>> {
+        if self.android_resource_model_unavailable(buffer, position, cx) {
+            return Some(Task::ready(Ok(Vec::new())));
+        }
         let query = self.android_query(buffer, position, cx)?;
         let roots = component_roots(&query.selected, true, "", SourceScope::Main);
         Some(cx.spawn(async move |project, cx| {
@@ -991,7 +1049,8 @@ impl Project {
         position: PointUtf16,
         cx: &App,
     ) -> bool {
-        self.android_query(buffer, position, cx).is_some()
+        self.android_resource_model_unavailable(buffer, position, cx)
+            || self.android_query(buffer, position, cx).is_some()
     }
 
     pub(crate) fn android_prepare_resource_rename(
@@ -1000,6 +1059,11 @@ impl Project {
         position: PointUtf16,
         cx: &mut Context<Self>,
     ) -> Option<Task<Result<PrepareRenameResponse>>> {
+        if self.android_resource_model_unavailable(buffer, position, cx) {
+            return Some(Task::ready(Err(anyhow::anyhow!(
+                "Sync Android successfully and select a variant before renaming resources"
+            ))));
+        }
         let query = self.android_query(buffer, position, cx)?;
         let range = query
             .source_snapshot
@@ -1020,6 +1084,11 @@ impl Project {
         new_name: String,
         cx: &mut Context<Self>,
     ) -> Option<Task<Result<AndroidResourceRename>>> {
+        if self.android_resource_model_unavailable(buffer, position, cx) {
+            return Some(Task::ready(Err(anyhow::anyhow!(
+                "Sync Android successfully and select a variant before renaming resources"
+            ))));
+        }
         let query = self.android_query(buffer, position, cx)?;
         let roots = component_roots(&query.selected, true, "", SourceScope::Main);
         Some(cx.spawn(async move |project, cx| {
