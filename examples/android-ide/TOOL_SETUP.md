@@ -97,7 +97,10 @@ past 24 GiB/300,000 entries, including Gradle caches and older runtime slots. Th
 supervised process also has a 30-minute deadline and bounded Build Output.
 
 Debugger builds use a checksum-pinned Gradle distribution, private Gradle cache,
-HTTPS repository guard and no persistent daemon. The embedded, SHA-256-pinned
+HTTPS repository guard and no persistent daemon. The client JVM matches the
+build JVM and uses Gradle's required module opens; the Kotlin compiler runs in
+process. This prevents detached single-use/compile daemons escaping cancellation.
+Successful setup also terminates remaining children in its owned process group. The embedded, SHA-256-pinned
 Gradle verification metadata covers 217 components and 398 artifacts, including
 plugin and dependency metadata. Strict verification runs for the adapter, shared
 included build and buildSrc; unknown artifacts or checksum mismatches fail closed.

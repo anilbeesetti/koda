@@ -133,7 +133,7 @@ impl AndroidPanel {
                 let prepared = managed::prepare(tool, operation, offline)?;
                 let mut command = util::command::new_std_command(&prepared.program);
                 command.args(&prepared.arguments).envs(&prepared.environment).current_dir(&root);
-                let result = android_build::command_output(command, &executor, Duration::from_secs(1800), output, cancelled, false).await;
+                let result = android_build::command_output_with_cleanup(command, &executor, Duration::from_secs(1800), output, cancelled, false).await;
                 // Embedded recipes must remain available until every subprocess exits.
                 drop(prepared.directory);
                 result

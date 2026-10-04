@@ -60,11 +60,26 @@ def main(install_kotlin=True):
         subprocess.run(["patch", "--batch", "-p1", "-i", str(patch)], cwd=source, check=True)
         gradle = source / "gradlew"
         managed_arguments = []
+        build_environment = dict(os.environ, JAVA_HOME=str(java11))
         test_tasks = [":adapter:test"]
         if os.environ.get("KODA_TOOL_DEPENDENCIES"):
             # Upstream tests start a second, unchecked Gradle wrapper for their
             # sample project. Run those in development validation, not provisioning.
             test_tasks = []
+            # Match the client/build JVM so --no-daemon does not fork a detached
+            # single-use daemon. These are Gradle 8.3's required JPMS opens.
+            # Normalize inherited launcher options into both matching JVMs.
+            # Otherwise GRADLE_OPTS/JAVA_TOOL_OPTIONS can reopen the fork path.
+            inherited_options = [build_environment.pop(name, "") for name in
+                                 ("JAVA_OPTS", "GRADLE_OPTS", "JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS")]
+            jvm_arguments = " ".join(option for option in inherited_options if option)
+            jvm_arguments += " -Xmx1536m -Xms256m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8 -Duser.country= -Duser.language=en -Duser.variant="
+            module_opens = " ".join("--add-opens=" + module + "=ALL-UNNAMED" for module in (
+                "java.base/java.util", "java.base/java.lang", "java.base/java.lang.invoke",
+                "java.prefs/java.util.prefs", "java.base/java.nio.charset", "java.base/java.net",
+                "java.base/java.util.concurrent.atomic",
+            ))
+            build_environment["JAVA_OPTS"] = jvm_arguments + " " + module_opens
             verification = Path(__file__).with_name("android-debugger-verification.xml").read_bytes()
             if hashlib.sha256(verification).hexdigest() != VERIFICATION_SHA256:
                 raise RuntimeError("Debugger dependency verification manifest changed; update the pinned recipe before building")
@@ -96,13 +111,19 @@ gradle.beforeProject { project ->
     project.buildscript.repositories.all(requireHttps)
 }
 ''')
-            managed_arguments = ["--init-script", str(guard), "--dependency-verification", "strict"]
+            managed_arguments = ["--init-script", str(guard), "--dependency-verification", "strict",
+                                 "-Pkotlin.compiler.execution.strategy=in-process",
+                                 "-Dkotlin.daemon.enabled=false",
+                                 "-Dorg.gradle.jvmargs=" + jvm_arguments,
+                                 # This optional agent requires a separate VM; keep the
+                                 # build in the owned client. Verification remains strict.
+                                 "-Dorg.gradle.internal.instrumentation.agent=false"]
         subprocess.run([str(gradle), "-p", str(source), "--include-build", str(shared),
                         "-PkotlinVersion=2.1.0", *test_tasks, ":adapter:installDist",
                         "--console=plain", "--max-workers=2", "--no-daemon",
                         *managed_arguments,
                         *(["--offline"] if os.environ.get("KODA_TOOL_OFFLINE") == "1" else [])],
-                       env=dict(os.environ, JAVA_HOME=str(java11)), check=True)
+                       env=build_environment, check=True)
         distribution = source / "adapter/build/install/adapter"
         shutil.copy2(source / "LICENSE", distribution / "LICENSE.txt")
         shutil.copy2(shared / "LICENSE.txt", distribution / "KOTLIN-SERVER-LICENSE.txt")

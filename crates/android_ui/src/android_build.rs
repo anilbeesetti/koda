@@ -1256,13 +1256,46 @@ pub(crate) async fn command_output(
     .await
 }
 
+/// Managed setup owns all children, including after a successful installation.
+pub(crate) async fn command_output_with_cleanup(
+    command: Command,
+    executor: &BackgroundExecutor,
+    timeout: Duration,
+    sender: mpsc::Sender<OutputLine>,
+    cancel: oneshot::Receiver<()>,
+    capture: bool,
+) -> Result<ProcessOutput> {
+    command_output_policy(
+        command,
+        timeout,
+        sender,
+        cancel,
+        capture,
+        executor.timer(timeout),
+        false,
+    )
+    .await
+}
+
 async fn command_output_inner(
+    command: Command,
+    timeout: Duration,
+    sender: mpsc::Sender<OutputLine>,
+    cancel: oneshot::Receiver<()>,
+    capture: bool,
+    deadline: impl std::future::Future<Output = ()> + Send,
+) -> Result<ProcessOutput> {
+    command_output_policy(command, timeout, sender, cancel, capture, deadline, true).await
+}
+
+async fn command_output_policy(
     command: Command,
     timeout: Duration,
     sender: mpsc::Sender<OutputLine>,
     mut cancel: oneshot::Receiver<()>,
     capture: bool,
     deadline: impl std::future::Future<Output = ()> + Send,
+    preserve_descendants: bool,
 ) -> Result<ProcessOutput> {
     if cancel.try_recv()?.is_some() {
         return Ok(ProcessOutput::Cancelled);
@@ -1277,11 +1310,26 @@ async fn command_output_inner(
     let stdout = child.stdout.take().context("Missing command stdout")?;
     let stderr = child.stderr.take().context("Missing command stderr")?;
     let run = async {
-        let (stdout, _) = futures::try_join!(
-            read_output(stdout, false, sender.clone(), capture),
-            read_output(stderr, true, sender, false)
-        )?;
-        let status = child.status().await?;
+        let read = async {
+            let (stdout, _) = futures::try_join!(
+                read_output(stdout, false, sender.clone(), capture),
+                read_output(stderr, true, sender, false)
+            )?;
+            anyhow::Ok(stdout)
+        };
+        let (stdout, status) = if preserve_descendants {
+            let stdout = read.await?;
+            (stdout, child.status().await?)
+        } else {
+            // A child may inherit the pipes after its parent exits. Reap the
+            // parent and stop its group before waiting for output EOF.
+            let wait = async {
+                let status = child.status().await?;
+                child.kill()?;
+                anyhow::Ok(status)
+            };
+            futures::try_join!(read, wait)?
+        };
         ensure!(status.success(), "{program} failed ({status}).");
         Ok::<_, anyhow::Error>(ProcessOutput::Success(stdout))
     }
@@ -1296,7 +1344,9 @@ async fn command_output_inner(
         Either::Right((Either::Right(_), _)) => Ok(ProcessOutput::Cancelled),
     };
     if matches!(result, Ok(ProcessOutput::Success(_))) {
-        process.child.preserve_descendants()?;
+        if preserve_descendants {
+            process.child.preserve_descendants()?;
+        }
         process.completed = true;
     }
     result
@@ -1792,6 +1842,53 @@ mod tests {
             stderr: false,
         });
         assert_eq!(session.widths.front().map(|(index, _)| *index), Some(0));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn managed_setup_stops_background_children_after_success() -> Result<()> {
+        block_on(async {
+            let mut command = new_command("/bin/sh");
+            command.args(["-c", "sleep 30 & printf '%s\\n' \"$!\""]);
+            let (sender, mut receiver) = mpsc::channel::<OutputLine>(2);
+            let (_cancel, cancelled) = oneshot::channel();
+            let receive = async {
+                let pid = receiver.next().await.context("No child PID")?.text;
+                while receiver.next().await.is_some() {}
+                anyhow::Ok(pid)
+            };
+            let (result, pid) = futures::join!(
+                command_output_policy(
+                    command,
+                    Duration::from_secs(30),
+                    sender,
+                    cancelled,
+                    false,
+                    future::pending(),
+                    false
+                ),
+                receive
+            );
+            assert!(matches!(result?, ProcessOutput::Success(_)));
+            let pid = pid?;
+            let deadline = Instant::now() + Duration::from_secs(2);
+            loop {
+                let state = util::command::new_command("ps")
+                    .args(["-o", "stat=", "-p", &pid])
+                    .output()
+                    .await?;
+                let state = String::from_utf8_lossy(&state.stdout);
+                if state.trim().is_empty() || state.trim().starts_with('Z') {
+                    break;
+                }
+                ensure!(
+                    Instant::now() < deadline,
+                    "Child {pid} survived successful setup"
+                );
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            Ok(())
+        })
     }
 
     #[cfg(unix)]
