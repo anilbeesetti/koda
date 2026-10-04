@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""Exercise the test runner's actual Gradle script against the Android IDE fixture.
+
+Requires a full JDK, Android SDK, and normal Gradle repository access. Optional
+--device SERIAL runs the Compose fixture on an already connected Android device.
+"""
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import tempfile
+import xml.etree.ElementTree as ET
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--device", help="Connected device serial for instrumentation validation")
+    arguments = parser.parse_args()
+    root = Path(__file__).resolve().parent.parent
+    fixture = root / "examples/android-ide"
+    source = (root / "crates/android_tools/src/testing.rs").read_text()
+    match = re.search(r'pub const INIT_SCRIPT: &str = r#"(.*?)"#;', source, re.S)
+    if match is None:
+        raise RuntimeError("Could not locate the test runner init script")
+
+    def run(task, selectors=(), *, failure=False, kind="unit", device=None):
+        directory = tempfile.TemporaryDirectory(prefix="koda-runner-probe-")
+        output = Path(directory.name)
+        (output / "runner.gradle").write_text(match[1])
+        command = [str(fixture / "gradlew.bat")] if os.name == "nt" else ["/bin/sh", "./gradlew"]
+        command += [f":mobile:{task}", "--init-script", str(output / "runner.gradle"),
+                    "-Dkoda.test.module=:mobile", "-Dkoda.test.variant=demoDebug",
+                    f"-Dkoda.test.output={output}", f"-Dkoda.test.kind={kind}",
+                    "--console=plain", "--no-configuration-cache", "--no-daemon"]
+        if kind == "unit":
+            for selector in selectors:
+                command += ["--tests", selector]
+        else:
+            command += ["--rerun-tasks"]
+            if selectors:
+                command += ["-Pandroid.testInstrumentationRunnerArguments.class=" + ",".join(selectors)]
+        if failure:
+            command += ["-Pkoda.fixture.fail=true"]
+        environment = os.environ.copy()
+        if device:
+            environment["ANDROID_SERIAL"] = device
+        completed = subprocess.run(command, cwd=fixture, env=environment, timeout=600)
+        if bool(completed.returncode) != failure:
+            raise RuntimeError(f"Unexpected Gradle result for {task}: {completed.returncode}")
+        cases = []
+        for report in output.rglob("TEST-*.xml"):
+            cases += list(ET.parse(report).iter("testcase"))
+        return directory, output, cases
+
+    directory, output, cases = run("kodaAndroidTestSources")
+    directories = json.loads((output / "sources.json").read_text())["directories"]
+    assert any("src/testDemo/java" in path for path in directories), directories
+    assert not any("testFull" in path for path in directories), directories
+    directory.cleanup()
+
+    directory, output, cases = run("kodaAndroidTestSources", kind="device")
+    directories = json.loads((output / "sources.json").read_text())["directories"]
+    assert any("src/androidTest/java" in path for path in directories), directories
+    directory.cleanup()
+
+    probes = [
+        (["dev.zed.androidsample.RunnerTest.passes"], False, 1, 0, 0),
+        (["dev.zed.androidsample.RunnerSuite"], False, 5, 0, 1),
+        (["dev.zed.androidsample.RunnerTest"], True, 3, 1, 1),
+        (["dev.zed.androidsample.RunnerTest.optionalFailure"], False, 1, 0, 0),
+        (["dev.zed.androidsample.ParameterizedRunnerTest"], False, 2, 0, 0),
+    ]
+    for selectors, failure, count, failures, skipped in probes:
+        directory, output, cases = run("testDemoDebugUnitTest", selectors, failure=failure)
+        assert len(cases) == count, [(case.attrib) for case in cases]
+        assert sum(case.find("failure") is not None or case.find("error") is not None for case in cases) == failures
+        assert sum(case.find("skipped") is not None for case in cases) == skipped
+        events = [json.loads(line) for line in (output / "events.jsonl").read_text().splitlines()]
+        assert len(events) == count, events
+        if failure:
+            assert any("RunnerTest.java:" in event["detail"] for event in events if event["status"] == "Failed")
+        directory.cleanup()
+    print("PASS: selected variant unit/instrumentation discovery, method/class/suite, pass/fail/skipped, failure source, fresh rerun, parameterized class")
+
+    if arguments.device:
+        directory, _, cases = run("connectedDemoDebugAndroidTest", ["dev.zed.androidsample.RunnerComposeTest#showsContent"], kind="device", device=arguments.device)
+        assert len(cases) == 1 and cases[0].find("failure") is None and cases[0].find("error") is None
+        directory.cleanup()
+        print("PASS: Compose instrumentation method on selected device")
+    else:
+        print("NOT RUN: device/instrumentation validation (--device required)")
+
+
+if __name__ == "__main__":
+    main()

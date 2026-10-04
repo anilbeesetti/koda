@@ -64,6 +64,68 @@ macOS launcher discovers the standard SDK and Android Studio runtime; command
 line builds need `ANDROID_HOME` and `JAVA_HOME` set. Kotlin setup uses JDK 21
 separately. Generated caches and machine-specific settings are ignored.
 
+## Android test runner
+
+Sync the Android project and select its module and variant in Android Tools.
+Open **Android: Toggle Tests** from the command palette. **Local unit tests** and
+**Device / Compose tests** discover tests in that variant's evaluated test source roots;
+discovery does not need a connected device. Select a method or class and use
+**Run selected**, or use **Run suite** for the selected module and variant.
+**Android: Test** also runs the unit suite. **Android: Instrumentation Test** runs
+the device suite on the connected device selected in Android Tools, including
+Compose UI tests using the project's configured instrumentation runner.
+
+The tree groups suite, class and method results, with pass, fail, skipped and
+not-run states. Arrow keys navigate, Home/End jump, and Left/Right collapse or
+expand classes. Failure details retain stack traces; **Open test / failure source** opens the
+test's matching stack frame or declaration. **Rerun** repeats the previous
+selection and **Rerun failed** filters failed tests. **Cancel** stops the process
+tree and retains completed results. Unit results appear while Gradle runs;
+instrumentation results appear when its XML reports are available. Build Output
+keeps the bounded raw command log and process errors.
+
+Runs save modified workspace files before launching. Edits and Gradle input
+changes mark old results stale and disable selection-based reruns and source
+links until rediscovery or a new suite run. Changing project, variant or selected
+device, losing project trust, or observing the device offline cancels an active
+run. Reconnecting requires a fresh run. Each run uses isolated reports so previous
+results cannot be mistaken for a new run; incomplete reports retain readable
+results and display a diagnostic.
+
+Discovery recognizes common Java/Kotlin JUnit annotations and explicit suite
+annotations. It is a bounded source scan, not framework reflection: inherited,
+generated, dynamically created, aliased or custom-annotation tests may first
+appear in results after running the suite. Gradle resolves the selected test
+task's dependencies. Parameterized/dynamic invocation names and names that cannot
+be expressed as an exact runner filter rerun their owning class; there is no
+individual parameter invocation filter. Failure links currently target test
+sources, not arbitrary production or helper stack frames. Custom named AGP device
+test suites are not exposed.
+
+The runner uses the current public `AndroidTarget` selection API. The current
+picker exposes APK-producing application variants; selecting library-only,
+KMP or standalone test modules depends on the companion project-model work.
+This change does not replace that model. Debugging tests is not integrated:
+the existing Android DAP attaches to launched applications, and the runner does
+not yet coordinate Gradle `--debug-jvm` or suspended instrumentation processes.
+Existing application debug remains available.
+
+With a full JDK, Android SDK and Gradle repository access, run:
+
+```sh
+script/test-android-test-runner
+cd examples/android-ide
+./gradlew :mobile:assembleDemoDebugAndroidTest
+```
+
+The probe exercises selected-flavor unit/instrumentation source discovery,
+method/class/suite filters, pass/fail/skipped reports, test stack traces, fresh
+reruns and parameterized class runs against the actual runner init script.
+`script/test-android-test-runner --device SERIAL` additionally executes the Compose
+instrumentation method on an already connected device. APK compilation and GPUI
+tests do not validate device execution. The checked fixture uses AGP 9.4.0,
+Gradle 9.6.1 and JDK 21; older AGP compatibility has not been runtime validated.
+
 ## Official Kotlin LSP protocol check
 
 `script/test-kotlin-lsp --self-test` checks UTF-16 incremental edits, framing,

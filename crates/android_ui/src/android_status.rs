@@ -40,6 +40,7 @@ impl AndroidActivity {
                 BuildTab::Output if panel.build_panel.read(cx).is_waiting_for_emulator(tab, id) => {
                     panel.status.clone()
                 }
+                BuildTab::Output if panel.test_cancel.is_some() => panel.status.clone(),
                 BuildTab::Output => format!("Gradle build running · {}", panel.status).into(),
             };
             Some((ActivityToken::Build(tab, id), label))
