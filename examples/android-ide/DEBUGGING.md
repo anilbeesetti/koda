@@ -32,7 +32,10 @@ cancelled, and rereads the selected run configuration after saving.
 A timed-out or cancelled deferred start removes its forward immediately and
 checks for a late session for another 30 seconds, without shutting down unrelated
 debugger sessions. A second attach or deployment requires disconnecting
-the current Android session first.
+the current Android session first. Android test runs and process discovery/attachment
+exclude one another, including while tests wait for the project model or a cancelled
+test is still draining. Run/Debug cannot queue deployment during those phases. Starting
+a test run or discovery during debugging reports that you must disconnect first.
 
 ## Reusable launch configurations
 

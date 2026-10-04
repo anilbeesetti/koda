@@ -1196,7 +1196,11 @@ impl AndroidPanel {
             );
             return;
         }
-        if self.running || self.syncing || self.test_panel.read(cx).busy {
+        if self.running
+            || self.syncing
+            || self.test_panel.read(cx).busy
+            || self.test_operation_id.is_some()
+        {
             return;
         }
         let result = (|| {
@@ -1400,6 +1404,7 @@ impl AndroidPanel {
         if self.running
             || self.syncing
             || self.test_panel.read(cx).busy
+            || self.test_operation_id.is_some()
             || self.kotlin_refresh_task.is_some()
             || self.kotlin_refresh_pending.is_some()
         {
@@ -3174,6 +3179,8 @@ impl AndroidPanel {
                     .disabled(
                         self.running
                             || self.syncing
+                            || self.test_operation_id.is_some()
+                            || self.debug_forward.is_some()
                             || self.selected_target.is_none()
                             || !self.can_run_on_selected_device(),
                     )
@@ -3189,6 +3196,7 @@ impl AndroidPanel {
                     .disabled(
                         self.running
                             || self.syncing
+                            || self.test_operation_id.is_some()
                             || self.debug_forward.is_some()
                             || self.selected_target.is_none()
                             || !self.can_run_on_selected_device(),
@@ -3202,7 +3210,12 @@ impl AndroidPanel {
                 IconButton::new("android-build", IconName::ToolHammer)
                     .tab_index(0isize)
                     .aria_label("Build selected variant")
-                    .disabled(self.running || self.syncing || self.selected_target.is_none())
+                    .disabled(
+                        self.running
+                            || self.syncing
+                            || self.test_operation_id.is_some()
+                            || self.selected_target.is_none(),
+                    )
                     .tooltip(|_, cx| Tooltip::for_action("Build selected variant", &Build, cx))
                     .on_click(cx.listener(|panel, _, window, cx| {
                         panel.gradle(GradleOperation::Build, window, cx)
@@ -3292,7 +3305,9 @@ impl Render for AndroidPanel {
                 .disabled(
                     self.syncing
                         || self.running
+                        || self.test_operation_id.is_some()
                         || self.selected_target.is_none()
+                        || (is_run && self.debug_forward.is_some())
                         || (is_run && !self.can_run_on_selected_device()),
                 )
                 .tab_index(0isize)
@@ -3341,7 +3356,7 @@ impl Render for AndroidPanel {
             })
             .child(h_flex().flex_wrap().gap_1()
                 .child(Button::new("refresh-debug-processes", "Refresh debug processes")
-                    .disabled(self.running || self.syncing || self.debug_forward.is_some() || self.selected_target.is_none() || self.selected_device().is_err())
+                    .disabled(self.running || self.syncing || self.debug_forward.is_some() || self.test_operation_id.is_some() || self.selected_target.is_none() || self.selected_device().is_err())
                     .tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.refresh_debug_processes(window, cx))))
                 .child(self.debug_process_picker(cx))
                 .child(Button::new("disconnect-android-debugger", "Detach debugger")
@@ -3359,17 +3374,17 @@ impl Render for AndroidPanel {
             })
             .child(h_flex().flex_wrap().gap_1().children(commands))
             .child(Button::new("configure-official-kotlin", "Configure official Kotlin")
-                .disabled(self.syncing || self.running || self.selected_target.is_none())
+                .disabled(self.syncing || self.running || self.test_operation_id.is_some() || self.selected_target.is_none())
                 .tab_index(0isize)
                 .tooltip(Tooltip::text("Use the official Kotlin server with Gradle import. Experimental until editing compatibility checks pass."))
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Kotlin, window, cx))))
             .child(Button::new("configure-java", "Configure Java")
-                .disabled(self.syncing || self.running || self.selected_target.is_none())
+                .disabled(self.syncing || self.running || self.test_operation_id.is_some() || self.selected_target.is_none())
                 .tab_index(0isize)
                 .tooltip(Tooltip::text("Build the selected variant and configure the Java extension with Android sources, generated symbols, and dependencies."))
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Java, window, cx))))
             .child(Button::new("android-compose-preview", "Compose preview")
-                .disabled(self.running || self.syncing || self.selected_target.is_none()).tab_index(0isize)
+                .disabled(self.running || self.syncing || self.test_operation_id.is_some() || self.selected_target.is_none()).tab_index(0isize)
                 .tooltip(Tooltip::text("Build the selected variant and render a Compose @Preview beside the code."))
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))
             .child(self.preview_picker(cx))

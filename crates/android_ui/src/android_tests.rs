@@ -707,6 +707,14 @@ impl AndroidPanel {
         if self.running || self.syncing || self.test_operation_id.is_some() {
             return;
         }
+        if self.debug_forward.is_some() {
+            self.fail(
+                anyhow::anyhow!("Disconnect the Android debugger before starting tests."),
+                window,
+                cx,
+            );
+            return;
+        }
         let prepared = (|| {
             let root = self.trusted_root(cx)?;
             let target = self
@@ -1436,6 +1444,67 @@ mod tests {
             source: None,
             parameterized: false,
         }
+    }
+
+    #[gpui::test]
+    async fn tests_waiting_for_model_reject_run_debug_and_deferred_builds(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let _state = cx.update(workspace::AppState::test);
+        let filesystem = project::FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree("/android", serde_json::json!({"app": {}}))
+            .await;
+        let project = Project::test(filesystem, [Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        panel.update_in(cx, |panel, window, cx| {
+            let root = PathBuf::from("/android");
+            let target = AndroidTarget {
+                module: ":app".into(),
+                variant: "debug".into(),
+                output_listing: root.join("output.json"),
+            };
+            panel.root = Some(root.clone());
+            panel.selected_target = Some(target.clone());
+            crate::tests::publish_test_android_model(panel, &target, cx);
+            panel.test_operation_id = Some(17);
+            let (cancel, mut cancellation) = futures::channel::oneshot::channel();
+            panel.test_cancel = Some(cancel);
+            panel.test_panel.update(cx, |tests, _| {
+                tests.busy = false;
+                tests.waiting_for_model = true;
+            });
+            panel.kotlin_refresh_task = Some(Task::ready(()));
+            let operation = panel.next_operation_id;
+            for _ in 0..2 {
+                for requested in [GradleOperation::Run, GradleOperation::Debug] {
+                    panel.gradle(requested, window, cx);
+                    assert!(panel.pending_gradle_operation.is_none());
+                    assert!(panel.error.is_none());
+                }
+            }
+            panel.kotlin_refresh_task = None;
+            panel.pending_gradle_operation = Some((root, GradleOperation::Debug));
+            for _ in 0..2 {
+                panel.resume_pending_gradle_operation(window, cx);
+                assert!(panel.pending_gradle_operation.is_some());
+                assert!(!panel.running);
+                assert!(panel.build_task.is_none());
+                assert!(panel.debug_task.is_none());
+                assert!(panel.debug_forward.is_none());
+                assert_eq!(panel.test_operation_id, Some(17));
+                assert_eq!(panel.next_operation_id, operation);
+                assert_eq!(
+                    cancellation.try_recv().expect("Test cancellation channel"),
+                    None
+                );
+            }
+            panel.pending_gradle_operation = None;
+            panel.test_operation_id = None;
+        });
+        cx.run_until_parked();
     }
 
     #[gpui::test]

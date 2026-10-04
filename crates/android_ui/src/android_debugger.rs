@@ -381,7 +381,11 @@ impl AndroidPanel {
     }
 
     pub(super) fn refresh_debug_processes(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.running || self.syncing || self.debug_forward.is_some() {
+        if self.running
+            || self.syncing
+            || self.debug_forward.is_some()
+            || self.test_operation_id.is_some()
+        {
             return;
         }
         let context = (|| {
@@ -459,12 +463,13 @@ impl AndroidPanel {
         let context = self.debug_process_context.clone();
         let panel = cx.weak_entity();
         PopoverMenu::new("android-debug-process")
-            .trigger(Button::new("android-debug-process", "Attach process…").disabled(self.running || self.syncing || self.debug_forward.is_some() || processes.is_empty()).tab_index(0isize))
+            .trigger(Button::new("android-debug-process", "Attach process…").disabled(self.running || self.syncing || self.debug_forward.is_some() || self.test_operation_id.is_some() || processes.is_empty()).tab_index(0isize))
             .menu(move |window, cx| Some(ContextMenu::build(window, cx, |mut menu, _, _| {
                 for process in &processes {
                     let panel = panel.clone(); let process = process.clone(); let context = context.clone();
                     menu = menu.entry(format!("{} · PID {}", process.name, process.pid), None, move |window, cx| {
                         panel.update(cx, |panel, cx| {
+                            if panel.running || panel.syncing || panel.debug_forward.is_some() || panel.test_operation_id.is_some() { return; }
                             let result = (|| {
                                 let (token, serial, application) = context.clone().context("Refresh debug processes first")?;
                                 ensure!(panel.project.read(cx).android_model().is_current(&token) && panel.selected_device()?.serial == serial, "Variant or device changed. Refresh debug processes.");
@@ -532,7 +537,10 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if (self.running && selected_process.is_some()) || self.debug_forward.is_some() {
+        if (self.running && selected_process.is_some())
+            || self.debug_forward.is_some()
+            || self.test_operation_id.is_some()
+        {
             return;
         }
         if self.debug_inputs_dirty(false, cx) {
@@ -666,6 +674,115 @@ impl AndroidPanel {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[gpui::test]
+    async fn active_debugger_rejects_repeated_unit_device_and_discovery_requests(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let _state = cx.update(workspace::AppState::test);
+        let project = Project::test(project::FakeFs::new(cx.executor()), [], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        panel.update_in(cx, |panel, window, cx| {
+            panel.debug_forward = Some(Forward {
+                model_token: panel.project.read(cx).android_model().token(),
+                executor: cx.background_executor().clone(),
+                adb: "/missing-test-adb".into(),
+                serial: "device".into(),
+                port: 6000,
+                label: "active-debug".into(),
+                session: None,
+            });
+            let operation = panel.next_operation_id;
+            for _ in 0..2 {
+                for kind in [
+                    android_tools::testing::TestKind::Unit,
+                    android_tools::testing::TestKind::Device,
+                ] {
+                    for discover_only in [false, true] {
+                        panel.error = None;
+                        panel.start_tests(kind, Vec::new(), discover_only, window, cx);
+                        assert!(panel.error.as_ref().is_some_and(|error| {
+                            error.contains("Disconnect the Android debugger")
+                        }));
+                        assert!(panel.debug_forward.is_some());
+                        assert!(panel.test_operation_id.is_none());
+                        assert!(panel.pending_test.is_none());
+                        assert!(panel.test_task.is_none());
+                        assert!(panel.test_cancel.is_none());
+                        assert!(!panel.test_panel.read(cx).busy);
+                        assert_eq!(panel.next_operation_id, operation);
+                    }
+                }
+            }
+            panel.disconnect_debugger(cx);
+        });
+        cx.run_until_parked();
+    }
+
+    #[gpui::test]
+    async fn running_and_cancelling_tests_reject_repeated_debug_actions(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let _state = cx.update(workspace::AppState::test);
+        let project = Project::test(project::FakeFs::new(cx.executor()), [], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        panel.update_in(cx, |panel, window, cx| {
+            let (cancel, mut cancellation) = futures::channel::oneshot::channel();
+            panel.test_operation_id = Some(17);
+            panel.test_cancel = Some(cancel);
+            let operation = panel.next_operation_id;
+            for cancelling in [false, true] {
+                if cancelling {
+                    panel.cancel_tests(cx);
+                    assert_eq!(
+                        cancellation.try_recv().expect("Test cancellation channel"),
+                        Some(())
+                    );
+                }
+                let status = panel.status.clone();
+                for _ in 0..2 {
+                    panel.refresh_debug_processes(window, cx);
+                    for selected in [
+                        None,
+                        Some(android_tools::debugging::Process {
+                            pid: 42,
+                            name: "dev.app:worker".into(),
+                        }),
+                    ] {
+                        panel.attach_debugger_process(
+                            "/android".into(),
+                            "device".into(),
+                            "dev.app".into(),
+                            selected,
+                            window,
+                            cx,
+                        );
+                    }
+                    assert!(panel.error.is_none());
+                    assert_eq!(panel.status, status);
+                    assert_eq!(panel.test_operation_id, Some(17));
+                    assert_eq!(panel.next_operation_id, operation);
+                    assert!(panel.debug_forward.is_none());
+                    assert!(panel.debug_task.is_none());
+                    assert!(panel.debug_monitor.is_none());
+                    assert!(panel.followup_model_token.is_none());
+                    assert!(!panel.running);
+                    if !cancelling {
+                        assert_eq!(
+                            cancellation.try_recv().expect("Test cancellation channel"),
+                            None
+                        );
+                    }
+                }
+            }
+            panel.test_operation_id = None;
+        });
+        cx.run_until_parked();
+    }
 
     #[gpui::test]
     async fn cancelled_deferred_attach_shuts_down_only_its_session(cx: &mut gpui::TestAppContext) {
