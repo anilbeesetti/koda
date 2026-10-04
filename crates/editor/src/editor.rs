@@ -40,6 +40,7 @@ mod lsp_ext;
 mod mouse_context_menu;
 pub mod movement;
 mod persistence;
+mod resource_rename;
 mod runnables;
 mod rust_analyzer_ext;
 pub mod scroll;
@@ -8347,6 +8348,50 @@ impl Editor {
         }
 
         let old_name = rename.old_name;
+
+        if let Some(project) = self.project.clone() {
+            let position = language::ToPointUtf16::to_point_utf16(&start, buffer.read(cx));
+            let plan = project.update(cx, |project, cx| {
+                project.prepare_android_resource_rename(&buffer, position, new_name.clone(), cx)
+            });
+            if let Some(plan) = plan {
+                return Some(cx.spawn_in(window, async move |editor, cx| {
+                    let plan = plan.await?;
+                    let (plan, preview) = cx
+                        .background_executor()
+                        .spawn(async move {
+                            let preview = plan.preview();
+                            (plan, preview)
+                        })
+                        .await;
+                    let (decision, answer) = futures::channel::oneshot::channel();
+                    workspace.update_in(cx, |workspace, window, cx| {
+                        workspace.toggle_modal(window, cx, |window, cx| {
+                            resource_rename::ResourceRenameReview::new(
+                                preview, decision, window, cx,
+                            )
+                        });
+                    })?;
+                    if !answer.await.unwrap_or(false) {
+                        return Ok(());
+                    }
+                    let transaction = project
+                        .update(cx, |project, cx| {
+                            project.apply_android_resource_rename(plan, cx)
+                        })
+                        .await?;
+                    Self::open_project_transaction(
+                        &editor,
+                        workspace,
+                        transaction,
+                        format!("Rename resource: {old_name} → {new_name}"),
+                        cx,
+                    )
+                    .await?;
+                    Ok(())
+                }));
+            }
+        }
 
         let rename = self.semantics_provider.as_ref()?.perform_rename(
             &buffer,

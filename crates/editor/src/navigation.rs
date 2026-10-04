@@ -2456,6 +2456,20 @@ impl Editor {
         let Some((buffer, head)) = buffer.text_anchor_for_position(head, cx) else {
             return Task::ready(Ok(Navigated::No));
         };
+        let resource_files = if kind == GotoDefinitionKind::Symbol && !split {
+            self.project.clone().and_then(|project| {
+                project.update(cx, |project, cx| {
+                    project.android_resource_file_definitions(
+                        &buffer,
+                        language::ToPointUtf16::to_point_utf16(&head, buffer.read(cx)),
+                        cx,
+                    )
+                })
+            })
+        } else {
+            None
+        };
+        let workspace = self.workspace().map(|workspace| workspace.downgrade());
         let Some(definitions) = provider.definitions(&buffer, head, kind, cx) else {
             return Task::ready(Ok(Navigated::No));
         };
@@ -2463,6 +2477,26 @@ impl Editor {
         let nav_entry = self.navigation_entry(self.selections.newest_anchor().head(), cx);
 
         cx.spawn_in(window, async move |editor, cx| {
+            if let Some(files) = resource_files
+                && let Some(workspace) = workspace
+            {
+                let paths = files.await?;
+                if !paths.is_empty() {
+                    for path in paths {
+                        workspace
+                            .update_in(cx, |workspace, window, cx| {
+                                workspace.open_abs_path(
+                                    path,
+                                    workspace::OpenOptions::default(),
+                                    window,
+                                    cx,
+                                )
+                            })?
+                            .await?;
+                    }
+                    return Ok(Navigated::Yes);
+                }
+            }
             let Some(definitions) = definitions.await? else {
                 return Ok(Navigated::No);
             };
