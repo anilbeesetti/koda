@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""Probe the patched adapter against a real Kotlin/JDI JVM, without an Android target."""
+import argparse
+import os
+from pathlib import Path
+import runpy
+import socket
+import shutil
+import subprocess
+import tempfile
+
+Protocol = runpy.run_path(str(Path(__file__).with_name("test-android-debugger")))["Protocol"]
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--adapter", type=Path, required=True)
+    parser.add_argument("--java-home", type=Path, required=True)
+    parser.add_argument("--compiler-classpath", required=True, help="Classpath containing Kotlin compiler and its dependencies")
+    parser.add_argument("--stdlib", type=Path, required=True)
+    arguments = parser.parse_args()
+    repository = Path(__file__).resolve().parent.parent
+    validation = repository / "target/android-ide/validation/jvm-debugger"
+    validation.mkdir(parents=True, exist_ok=True)
+    source = repository / "examples/android-ide/debugger-fixture/src"
+    java = arguments.java_home / "bin/java"
+    javac = arguments.java_home / "bin/javac"
+    with tempfile.TemporaryDirectory(prefix="koda-debug-jvm-") as temporary:
+        temporary = Path(temporary)
+        classes = temporary / "classes"
+        classes.mkdir()
+        subprocess.run([str(javac), "-g", "-d", str(classes), str(source / "app/Values.java")], check=True)
+        subprocess.run([str(java), "-cp", arguments.compiler_classpath, "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler",
+                        "-no-stdlib", "-no-reflect", "-classpath", str(classes) + os.pathsep + str(arguments.stdlib),
+                        "-d", str(classes), str(source / "app/DebugFixture.kt"), str(source / "app/Inline.kt"), str(source / "other/Inline.kt")], check=True)
+        with socket.socket() as available:
+            available.bind(("127.0.0.1", 0))
+            port = available.getsockname()[1]
+        vm = subprocess.Popen([str(java), f"-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:{port}",
+                               "-cp", str(classes) + os.pathsep + str(arguments.stdlib), "app.DebugFixtureKt"],
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        adapter = None
+        try:
+            ready = vm.stdout.readline()
+            assert b"Listening for transport dt_socket" in ready, ready
+            with (temporary / "protocol.jsonl").open("w") as log, (temporary / "adapter.log").open("w") as errors:
+                def connect(breakpoints):
+                    nonlocal adapter
+                    adapter = subprocess.Popen([str(arguments.adapter.resolve())], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                               stderr=errors, env=dict(os.environ, JAVA_HOME=str(arguments.java_home)))
+                    protocol = Protocol(adapter, log)
+                    capabilities = protocol.request("initialize", dict(adapterID="kotlin", linesStartAt1=True, columnsStartAt1=True, pathFormat="path"))
+                    assert capabilities["supportsEvaluateForHovers"]
+                    attach = protocol.send("attach", dict(projectRoot=str(source.parent), sourceRoots=[str(source)], hostName="127.0.0.1", port=port, timeout=5000))
+                    protocol.receive(lambda message: message.get("event") == "initialized")
+                    for file, lines in breakpoints:
+                        protocol.request("setBreakpoints", dict(source={"path": str(source / file)}, breakpoints=[{"line": line} for line in lines]))
+                    protocol.request("setExceptionBreakpoints", {"filters": []})
+                    configured = protocol.send("configurationDone", {})
+                    protocol.response(attach)
+                    protocol.response(configured)
+                    return protocol
+
+                def stop(protocol, file, line, reason=None):
+                    event = protocol.receive(lambda message: message.get("event") == "stopped")["body"]
+                    thread = event["threadId"]
+                    frames = protocol.request("stackTrace", dict(threadId=thread))["stackFrames"]
+                    if reason:
+                        assert event["reason"] == reason, (event, frames)
+                    assert frames and frames[0].get("source", {}).get("path") == str(source / file) and frames[0]["line"] == line, frames
+                    return thread, frames[0]["id"]
+
+                protocol = connect([("app/DebugFixture.kt", [9, 20, 28]), ("app/Values.java", [9])])
+                thread, frame = stop(protocol, "app/DebugFixture.kt", 9)
+                evaluation = protocol.request("evaluate", dict(frameId=frame, expression="values[1]", context="watch"))
+                assert evaluation["result"] == "5", evaluation
+                old_frame = frame
+                protocol.request("next", {"threadId": thread})
+                thread, frame = stop(protocol, "app/DebugFixture.kt", 10, "step")
+                stale = protocol.send("evaluate", dict(frameId=old_frame, expression="values[0]", context="watch"))
+                assert not protocol.receive(lambda message: message.get("request_seq") == stale).get("success"), "Stepping retained a stale frame"
+                protocol.request("setBreakpoints", dict(source={"path": str(source / "other/Inline.kt")}, breakpoints=[{"line": 8}]))
+                protocol.request("continue", {"threadId": thread})
+                thread, frame = stop(protocol, "other/Inline.kt", 8)
+                protocol.request("next", {"threadId": thread})
+                thread, frame = stop(protocol, "other/Inline.kt", 9, "step")
+                protocol.request("stepOut", {"threadId": thread})
+                thread, frame = stop(protocol, "app/DebugFixture.kt", 12, "step")
+                protocol.request("setBreakpoints", dict(source={"path": str(source / "other/Inline.kt")}, breakpoints=[]))
+                unsupported = protocol.request("setBreakpoints", dict(source={"path": str(source / "other/Inline.kt")}, breakpoints=[{"line": 8, "condition": "value > 0"}, {"line": 9, "logMessage": "value"}]))["breakpoints"]
+                assert all(not breakpoint["verified"] and breakpoint.get("message") for breakpoint in unsupported), unsupported
+                protocol.request("continue", {"threadId": thread})
+                thread, frame = stop(protocol, "app/Values.java", 9)
+                for expression, expected in [("this.field", "7"), ("field", "7"), ("values[0]", "3"), ("large[2000]", "42"), ("untouched", "null")]:
+                    assert protocol.request("evaluate", dict(frameId=frame, expression=expression, context="watch"))["result"] == expected
+                for expression in ["", "field + 1", "toString()", "values[-1]", "values[1000]"]:
+                    sequence = protocol.send("evaluate", dict(frameId=frame, expression=expression, context="watch"))
+                    response = protocol.receive(lambda message: message.get("request_seq") == sequence)
+                    assert not response.get("success"), (expression, response)
+                completions = protocol.request("completions", dict(frameId=frame, text="this.", column=6))["targets"]
+                assert any(completion["label"] == "field" for completion in completions), completions
+                protocol.request("stepIn", {"threadId": thread})
+                thread, frame = stop(protocol, "app/Values.java", 18, "step")
+                protocol.request("stepOut", {"threadId": thread})
+                thread, frame = stop(protocol, "app/Values.java", 9, "step")
+                protocol.request("setExceptionBreakpoints", {"filters": ["C"]})
+                protocol.request("continue", {"threadId": thread})
+                thread, frame = stop(protocol, "app/Values.java", 12, "exception")
+                info = protocol.request("exceptionInfo", {"threadId": thread})
+                assert "debug-fixture-caught" in str(info), info
+                protocol.request("setExceptionBreakpoints", {"filters": []})
+                protocol.request("continue", {"threadId": thread})
+                thread, frame = stop(protocol, "app/DebugFixture.kt", 20)
+                scopes = protocol.request("scopes", {"frameId": frame})["scopes"]
+                coroutine = next(scope for scope in scopes if scope["name"] == "Coroutine state (raw)")
+                variables = protocol.request("variables", {"variablesReference": coroutine["variablesReference"]})["variables"]
+                assert any(variable["name"] == "label" for variable in variables), variables
+                assert any(variable["name"] == "L$0" and "retained-value" in variable["value"] for variable in variables), variables
+                protocol.request("continue", {"threadId": thread})
+                thread, frame = stop(protocol, "app/DebugFixture.kt", 28)
+                protocol.request("disconnect", {"terminateDebuggee": False})
+                adapter.terminate(); adapter.wait(timeout=10)
+                assert vm.poll() is None, "Detach killed the debuggee"
+                protocol = connect([])
+                assert protocol.request("threads", {})["threads"], "Reconnect did not discover threads"
+                vm.kill(); vm.wait(timeout=10)
+                protocol.receive(lambda message: message.get("event") == "terminated")
+                adapter.terminate(); adapter.wait(timeout=10)
+                vm = subprocess.Popen([str(java), f"-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:{port}",
+                                       "-cp", str(classes) + os.pathsep + str(arguments.stdlib), "app.InlineKt"],
+                                      stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                assert b"Listening for transport dt_socket" in vm.stdout.readline()
+                protocol = connect([("other/Inline.kt", [8])])
+                thread, frame = stop(protocol, "other/Inline.kt", 8)
+                protocol.request("next", {"threadId": thread})
+                thread, frame = stop(protocol, "other/Inline.kt", 9, "step")
+                protocol.request("stepOut", {"threadId": thread})
+                thread, frame = stop(protocol, "app/Inline.kt", 5, "step")
+                protocol.request("disconnect", {"terminateDebuggee": False})
+                adapter.terminate(); adapter.wait(timeout=10)
+                print("PASS: arrays/fields/unloaded types, rejected expressions, completions, cross-package and equal-filename inline breakpoints/step-over/step-out, Java step-in/out, exception inspection, raw resumed continuation state, detach/reconnect and process death")
+        finally:
+            for file in ["protocol.jsonl", "adapter.log"]:
+                if (temporary / file).is_file():
+                    shutil.copy2(temporary / file, validation / file)
+            if adapter is not None and adapter.poll() is None:
+                adapter.terminate(); adapter.wait(timeout=10)
+            if vm.poll() is None:
+                vm.kill(); vm.wait(timeout=10)
+
+
+if __name__ == "__main__":
+    main()

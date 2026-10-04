@@ -285,7 +285,10 @@ Set breakpoints on the return in `Greeting.java` and `LibraryGreeting.kt`; inspe
 variables, step, and disconnect using the debugger controls. On macOS, Control-D
 starts Android debugging, Command-Option-R continues, Shift-F8 steps out, and
 Command-F2 disconnects. `script/test-android-debugger --device emulator-5554` provides an
-explicit emulator-only smoke test after building `demoDebug`.
+explicit emulator-only smoke test after building `demoDebug`. See
+[Android/Kotlin debugging](DEBUGGING.md) for process attachment, reusable activity
+and deep-link launches, supported evaluation/inline/coroutine inspection, and
+validation limits.
 
 **Compose preview** builds the selected variant and opens a rendered image beside
 the code. **Select preview…** switches between the default and large-text

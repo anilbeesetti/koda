@@ -1,5 +1,5 @@
 diff --git a/adapter/src/main/kotlin/org/javacs/ktda/adapter/DAPConverter.kt b/adapter/src/main/kotlin/org/javacs/ktda/adapter/DAPConverter.kt
-index f477977..675eec0 100644
+index f477977..56a374c 100644
 --- a/adapter/src/main/kotlin/org/javacs/ktda/adapter/DAPConverter.kt
 +++ b/adapter/src/main/kotlin/org/javacs/ktda/adapter/DAPConverter.kt
 @@ -42,7 +42,7 @@ class DAPConverter(
@@ -11,11 +11,39 @@ index f477977..675eec0 100644
  		filePath = Paths.get(dapSource.path)
  	)
  	
+@@ -76,7 +76,7 @@ class DAPConverter(
+ 	}
+ 
+ 	fun toDAPBreakpoint(internalBreakpoint: InternalExceptionBreakpoint) = DAPBreakpoint().apply {
+-		id = internalBreakpoint.id.toInt()
++		id = internalBreakpoint.id.toIntOrNull()
+ 		message = internalBreakpoint.label
+ 		isVerified = true
+ 	}
 diff --git a/adapter/src/main/kotlin/org/javacs/ktda/adapter/KotlinDebugAdapter.kt b/adapter/src/main/kotlin/org/javacs/ktda/adapter/KotlinDebugAdapter.kt
-index f70f836..ec15ec8 100644
+index f70f836..ed53ed1 100644
 --- a/adapter/src/main/kotlin/org/javacs/ktda/adapter/KotlinDebugAdapter.kt
 +++ b/adapter/src/main/kotlin/org/javacs/ktda/adapter/KotlinDebugAdapter.kt
-@@ -127,6 +127,7 @@ class KotlinDebugAdapter(
+@@ -64,6 +64,7 @@ class KotlinDebugAdapter(
+ 		val capabilities = Capabilities()
+ 		capabilities.supportsConfigurationDoneRequest = true
+ 		capabilities.supportsCompletionsRequest = true
++		capabilities.supportsEvaluateForHovers = true
+ 		capabilities.supportsExceptionInfoRequest = true
+ 		capabilities.exceptionBreakpointFilters = ExceptionBreakpoint.values()
+ 			.map(converter::toDAPExceptionBreakpointsFilter)
+@@ -109,7 +110,9 @@ class KotlinDebugAdapter(
+ 		debuggee = launcher.launch(
+ 			config,
+ 			context
+-		).also(::setupDebuggeeListeners)
++		)
++        setupDebuggeeListeners(debuggee!!)
++        debuggee!!.startEvents()
+ 		LOG.trace("Instantiated debuggee")
+ 	}
+ 	
+@@ -127,6 +130,7 @@ class KotlinDebugAdapter(
  		LOG.trace("Waiting for configurationDoneResponse")
  		waitFor("configuration done response") { (configurationDoneResponse?.numberOfDependents ?: 0) != 0 }
  		LOG.trace("Done waiting for configurationDoneResponse")
@@ -23,28 +51,275 @@ index f70f836..ec15ec8 100644
  	}
  	
  	private fun setupDebuggeeListeners(debuggee: Debuggee) {
+@@ -178,6 +182,7 @@ class KotlinDebugAdapter(
+ 	}
+ 	
+ 	private fun sendStopEvent(threadId: Long, reason: String) {
++        debuggee?.updateThreads()
+ 		client!!.stopped(StoppedEventArguments().also {
+ 			it.reason = reason
+ 			it.threadId = threadId.toInt()
+@@ -210,9 +215,12 @@ class KotlinDebugAdapter(
+ 		setupCommonInitializationParams(args)
+ 		
+ 		debuggee = launcher.attach(
+-			AttachConfiguration(projectRoot, hostName, port, timeout),
++			AttachConfiguration(projectRoot, hostName, port, timeout,
++				(args["sourceRoots"] as? List<*>)?.map { Paths.get(it as String) }?.toSet()),
+ 			context
+-		).also(::setupDebuggeeListeners)
++		)
++        setupDebuggeeListeners(debuggee!!)
++        debuggee!!.startEvents()
+ 
+ 		// Since we are attaching to a running VM, we have to send custom
+ 		// 'start' events for all executing threads
+@@ -256,20 +264,20 @@ class KotlinDebugAdapter(
+ 	override fun setBreakpoints(args: SetBreakpointsArguments) = async.compute {
+ 		LOG.debug("{} breakpoints found", args.breakpoints.size)
+ 		
+-		// TODO: Support logpoints and conditional breakpoints
+-		
+-		val placedBreakpoints = context
+-			.breakpointManager
+-			.setAllIn(
+-				converter.toInternalSource(args.source),
+-				args.breakpoints.map { converter.toInternalSourceBreakpoint(args.source, it) }
+-			)
+-			.map(converter::toDAPBreakpoint)
+-			.toTypedArray()
+-		
+-		SetBreakpointsResponse().apply {
+-			breakpoints = placedBreakpoints
+-		}
++        val supported = args.breakpoints.filter { it.condition.isNullOrBlank() && it.hitCondition.isNullOrBlank() && it.logMessage.isNullOrBlank() }
++        val placed = context.breakpointManager.setAllIn(
++            converter.toInternalSource(args.source),
++            supported.map { converter.toInternalSourceBreakpoint(args.source, it) }
++        ).map(converter::toDAPBreakpoint).iterator()
++        SetBreakpointsResponse().apply {
++            breakpoints = args.breakpoints.map {
++                if (it in supported) placed.next() else Breakpoint().apply {
++                    isVerified = false
++                    line = it.line
++                    message = "Conditional breakpoints, hit counts and logpoints are not supported by this adapter"
++                }
++            }.toTypedArray()
++        }
+ 	}
+ 	
+ 	override fun setFunctionBreakpoints(args: SetFunctionBreakpointsArguments): CompletableFuture<SetFunctionBreakpointsResponse> = notImplementedDAPMethod()
+@@ -307,14 +315,23 @@ class KotlinDebugAdapter(
+ 	}
+ 	
+ 	override fun next(args: NextArguments) = async.execute {
++		converter.stackFramePool.removeAllOwnedBy(args.threadId.toLong())
++		converter.variablesPool.clear()
++		exceptionsPool.clear()
+ 		debuggee!!.threadByID(args.threadId.toLong())?.stepOver()
+ 	}
+ 	
+ 	override fun stepIn(args: StepInArguments) = async.execute {
++		converter.stackFramePool.removeAllOwnedBy(args.threadId.toLong())
++		converter.variablesPool.clear()
++		exceptionsPool.clear()
+ 		debuggee!!.threadByID(args.threadId.toLong())?.stepInto()
+ 	}
+ 	
+ 	override fun stepOut(args: StepOutArguments) = async.execute {
++		converter.stackFramePool.removeAllOwnedBy(args.threadId.toLong())
++		converter.variablesPool.clear()
++		exceptionsPool.clear()
+ 		debuggee!!.threadByID(args.threadId.toLong())?.stepOut()
+ 	}
+ 	
+@@ -398,16 +415,19 @@ class KotlinDebugAdapter(
+ 	override fun loadedSources(args: LoadedSourcesArguments): CompletableFuture<LoadedSourcesResponse> = notImplementedDAPMethod()
+ 	
+ 	override fun evaluate(args: EvaluateArguments): CompletableFuture<EvaluateResponse> = async.compute {
+-		val variable = (args.frameId
++		val frameId = args.frameId ?: throw KotlinDAException("Evaluation requires a suspended stack frame")
++		val variable = (frameId
+ 			.toLong()
+ 			.let(converter::toInternalStackFrame)
+ 				?: throw KotlinDAException("Could not find stack frame with ID ${args.frameId}"))
+ 			.evaluate(args.expression)
+ 			?.let(converter::toDAPVariable)
++			?: throw org.eclipse.lsp4j.jsonrpc.ResponseErrorException(org.eclipse.lsp4j.jsonrpc.messages.ResponseError(org.eclipse.lsp4j.jsonrpc.messages.ResponseErrorCode.InvalidParams, "Unavailable value. Supported expressions: locals, this, fields and array[index]; calls, operators and Kotlin getters are unsupported.", null))
+ 
+ 		EvaluateResponse().apply {
+-			result = variable?.value ?: "unknown"
+-			variablesReference = variable?.variablesReference ?: 0
++			result = variable.value
++			variablesReference = variable.variablesReference
++			type = variable.type
+ 		}
+ 	}
+ 	
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/core/Debuggee.kt b/adapter/src/main/kotlin/org/javacs/ktda/core/Debuggee.kt
+index ca70ad8..9ca684a 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/core/Debuggee.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/core/Debuggee.kt
+@@ -6,6 +6,8 @@ import java.io.OutputStream
+ 
+ /** A debuggee that is launched upon construction */
+ interface Debuggee {
++    fun startEvents() {}
++
+ 	val threads: List<DebuggeeThread>
+ 	val eventBus: DebuggeeEventBus
+ 	val stdin: OutputStream?
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/core/launch/AttachConfiguration.kt b/adapter/src/main/kotlin/org/javacs/ktda/core/launch/AttachConfiguration.kt
+index f8194b7..7203581 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/core/launch/AttachConfiguration.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/core/launch/AttachConfiguration.kt
+@@ -6,5 +6,6 @@ class AttachConfiguration(
+ 	val projectRoot: Path,
+ 	val hostName: String,
+ 	val port: Int,
+-	val timeout: Int
++	val timeout: Int,
++	val sourceRoots: Set<Path>? = null
+ )
 diff --git a/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIDebuggee.kt b/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIDebuggee.kt
-index b3c3623..afb6630 100644
+index b3c3623..6cd55ef 100644
 --- a/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIDebuggee.kt
 +++ b/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIDebuggee.kt
-@@ -72,6 +72,7 @@ class JDIDebuggee(
+@@ -34,9 +34,9 @@ class JDIDebuggee(
+ 	private val sourcesRoots: Set<Path>,
+ 	private val context: DebugContext
+ ) : Debuggee, JDISessionContext {
+-	override var threads = emptyList<DebuggeeThread>()
++	@Volatile override var threads = emptyList<DebuggeeThread>()
+ 	override val eventBus: VMEventBus
+-	override val pendingStepRequestThreadIds = mutableSetOf<Long>()
++	override val pendingStepRequestThreadIds = java.util.concurrent.ConcurrentHashMap.newKeySet<Long>()
+ 	override val stdin: OutputStream?
+ 	override val stdout: InputStream?
+ 	override val stderr: InputStream?
+@@ -58,6 +58,8 @@ class JDIDebuggee(
+ 		hookBreakpoints()
+ 	}
+ 	
++    override fun startEvents() = eventBus.startAsyncPoller()
++
+ 	override fun updateThreads() {
+ 		threads = vm.allThreads().map { JDIThread(it, this) }
+ 	}
+@@ -72,14 +74,22 @@ class JDIDebuggee(
  	private fun setAllBreakpoints(breakpoints: List<Breakpoint>) {
  		breakpointSubscriptions.unsubscribe()
  		vm.eventRequestManager().deleteAllBreakpoints()
+-		breakpoints.forEach { bp ->
+-			bp.position.let { setBreakpoint(
+-				it.source.filePath.toAbsolutePath().toString(),
+-				it.lineNumber.toLong()
+-			) }
+-		}
+-	}
+-	
 +		vm.eventRequestManager().deleteEventRequests(vm.eventRequestManager().classPrepareRequests())
- 		breakpoints.forEach { bp ->
- 			bp.position.let { setBreakpoint(
- 				it.source.filePath.toAbsolutePath().toString(),
-@@ -106,7 +107,7 @@ class JDIDebuggee(
- 				for (name in listOf(className, "$className$*")) { // For local types
- 					val request = eventRequestManager
- 						.createClassPrepareRequest()
--						.apply { addClassFilter(className) }
-+						.apply { addClassFilter(name) }
++        if (breakpoints.isEmpty()) return
++        fun place(referenceType: ReferenceType) {
++            for (breakpoint in breakpoints) {
++                val position = breakpoint.position
++                setBreakpointAtType(referenceType, position.source.filePath, position.lineNumber)
++            }
++        }
++        val request = vm.eventRequestManager().createClassPrepareRequest().apply { setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD) }
++        breakpointSubscriptions.add(eventBus.subscribe(ClassPrepareEvent::class) {
++            if (it.jdiEvent.request() == request) place(it.jdiEvent.referenceType())
++        })
++        request.enable()
++        vm.allClasses().filter { it.isPrepared }.forEach(::place)
++    }
++
+ 	private fun setExceptionBreakpoints(breakpoints: Set<ExceptionBreakpoint>) = vm
+ 		.eventRequestManager()
+ 		.also { it.deleteEventRequests(it.exceptionRequests()) }
+@@ -95,59 +105,29 @@ class JDIDebuggee(
+ 		?.enable()
+ 		?: Unit
+ 	
+-	/** Tries to set a breakpoint */
+-	private fun setBreakpoint(filePath: String, lineNumber: Long) {
+-		val eventRequestManager = vm.eventRequestManager()
+-
+-		toJVMClassNames(filePath)
+-			?.forEach { className ->
+-				// Try setting breakpoint using a ClassPrepareRequest
++    private fun stratum(type: ReferenceType): String =
++        if (type.availableStrata().contains("Kotlin")) "Kotlin" else "Java"
  
- 					breakpointSubscriptions.add(eventBus.subscribe(ClassPrepareEvent::class) {
- 						if (it.jdiEvent.request() == request) {
-@@ -158,6 +159,8 @@ class JDIDebuggee(
+-				for (name in listOf(className, "$className$*")) { // For local types
+-					val request = eventRequestManager
+-						.createClassPrepareRequest()
+-						.apply { addClassFilter(className) }
+-
+-					breakpointSubscriptions.add(eventBus.subscribe(ClassPrepareEvent::class) {
+-						if (it.jdiEvent.request() == request) {
+-							val referenceType = it.jdiEvent.referenceType()
+-							LOG.trace("Setting breakpoint at prepared type {}", referenceType.name())
+-							setBreakpointAtType(referenceType, lineNumber)
+-						}
+-					})
+-					
+-					request.enable()
+-				}
+-				
+-				// Try setting breakpoint using loaded VM classes
+-				
+-				val classPattern = "^${Regex.escape(className)}(?:\\$.*)?".toRegex()
+-				vm.allClasses()
+-					.filter { classPattern.matches(it.name()) }
+-					.forEach {
+-						LOG.trace("Setting breakpoint at known type {}", it.name())
+-						setBreakpointAtType(it, lineNumber)
+-					}
+-			} ?: LOG.warn("Not adding breakpoint in unrecognized source file {}", Paths.get(filePath).fileName)
+-	}
+-	
+-	/** Tries to set a breakpoint - Will return whether this was successful */
+-	private fun setBreakpointAtType(refType: ReferenceType, lineNumber: Long): Boolean {
+-		try {
+-			val location = refType
+-				.locationsOfLine(lineNumber.toInt())
+-				?.firstOrNull() ?: return false
+-			val request = vm.eventRequestManager()
+-				.createBreakpointRequest(location)
+-				?.apply {
+-					setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD)
+-					enable()
+-				}
+-			return request != null
+-		} catch (e: AbsentInformationException) {
+-			return false
+-		}
+-	}
++    private fun setBreakpointAtType(type: ReferenceType, path: Path, line: Int) {
++        try {
++            val stratum = stratum(type)
++            if (!type.sourceNames(stratum).contains(path.fileName.toString())) return
++            type.locationsOfLine(stratum, path.fileName.toString(), line)
++                .filter { sourceOf(it)?.filePath?.toAbsolutePath()?.normalize() == path.toAbsolutePath().normalize() }
++                .distinct()
++                .forEach { location ->
++                    val manager = vm.eventRequestManager()
++                    if (manager.breakpointRequests().none { it.location() == location }) {
++                        manager.createBreakpointRequest(location).apply {
++                            setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD)
++                            enable()
++                        }
++                    }
++                }
++        } catch (exception: AbsentInformationException) {
++            // Android may strip debug metadata from dependency classes.
++        }
++    }
+ 
+ 	override fun resume() {
+ 		vm.resume()
+@@ -158,31 +138,30 @@ class JDIDebuggee(
  		try {
  			if (vm.process()?.isAlive() ?: false) {
  				vm.exit(0)
@@ -53,3 +328,432 @@ index b3c3623..afb6630 100644
  			}
  		} catch (e: VMDisconnectedException) {
  			// Ignore since we wanted to stop the VM anyway
+ 		}
+ 	}
+ 	
+-	override fun positionOf(location: Location): Position? = sourceOf(location)
+-		?.let { Position(it, location.lineNumber()) }
+-	
+-    private fun sourceOf(location: Location): Source? =
+-        try {
+-            val sourcePath = location.sourcePath()
+-            val sourceName = location.sourceName()
++    override fun positionOf(location: Location): Position? = sourceOf(location)
++        ?.let { Position(it, location.lineNumber(stratum(location.declaringType()))) }
+ 
+-            sourcesRoots
+-                .asSequence()
+-                .map { it.resolve(sourcePath) }
+-                .orEmpty()
+-                .mapNotNull { findValidKtFilePath(it, sourceName) }
+-                .firstOrNull()
+-                ?.let { Source(
+-                    name = sourceName ?: it.fileName.toString(),
+-                    filePath = it
+-                ) }
+-        } catch(exception: AbsentInformationException) {
+-            null
+-        }
++    private fun sourceOf(location: Location): Source? = try {
++        val stratum = stratum(location.declaringType())
++        val sourceName = location.sourceName(stratum)
++        val sourcePath = location.sourcePath(stratum)
++        val packagePath = location.declaringType().name().substringBeforeLast('.', "").replace('.', '/')
++        fun validPaths(paths: (Path) -> List<Path>) = sourcesRoots.flatMap { sourceRoot ->
++            val root = sourceRoot.toAbsolutePath().normalize()
++            paths(root).map { it.toAbsolutePath().normalize() }.filter { it.startsWith(root) && java.nio.file.Files.isRegularFile(it) }
++        }.distinct()
++        val authoritative = validPaths { root -> listOf(root.resolve(sourcePath), root.resolve(sourcePath).resolveSibling(sourceName)) }
++        val candidates = if (authoritative.isNotEmpty()) authoritative else validPaths { root -> listOf(root.resolve(packagePath).resolve(sourceName)) }
++        candidates.singleOrNull()?.let { Source(name = sourceName, filePath = it) }
++    } catch (exception: AbsentInformationException) {
++        null
++    }
+ }
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIThread.kt b/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIThread.kt
+index 6dab6b6..9d1a7a8 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIThread.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/jdi/JDIThread.kt
+@@ -18,13 +18,16 @@ class JDIThread(
+ 	override val name: String = threadRef.name() ?: "Unnamed Thread"
+ 	override val id: Long = threadRef.uniqueID()
+ 	
+-	override fun pause() =
+-		if (!threadRef.isSuspended()) {
+-			threadRef.suspend()
+-			true
+-		} else false
+-	
+-	override fun resume(): Boolean {
++    override fun pause(): Boolean {
++        context.eventBus.cancelStep(id)
++        return if (!threadRef.isSuspended()) { threadRef.suspend(); true } else false
++    }
++
++    override fun resume(): Boolean {
++        context.eventBus.cancelStep(id)
++        return resumeThread()
++    }
++    private fun resumeThread(): Boolean {
+ 		val suspends = threadRef.suspendCount()
+ 		(0 until suspends).forEach {
+ 			threadRef.resume()
+@@ -34,49 +37,63 @@ class JDIThread(
+ 	
+ 	override fun stackTrace() = JDIStackTrace(threadRef.frames(), context)
+ 	
+-	override fun stepOver() = stepLine(StepRequest.STEP_OVER)
+-	
+-	override fun stepInto() = stepLine(StepRequest.STEP_INTO)
+-	
+-	override fun stepOut() = stepLine(StepRequest.STEP_OUT)
+-	
+-	private fun stepLine(depth: Int) {
+-		stepRequest(StepRequest.STEP_LINE, depth)
+-			?.let { performStep(it) }
+-	}
+-	
+-	private fun performStep(request: StepRequest) {
+-		request.enable()
+-		resume()
+-	}
+-	
+-	private fun stepRequest(size: Int, depth: Int) =
+-		if (context.pendingStepRequestThreadIds.contains(id)) null else {
+-			val eventRequestManager = threadRef.virtualMachine().eventRequestManager()
+-			eventRequestManager
+-				.createStepRequest(threadRef, size, depth)
+-				?.also { request ->
+-					request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD)
+-					request.addCountFilter(1)
+-					
+-					// Abort pending StepRequest when a breakpoint is hit
+-					context.pendingStepRequestThreadIds.add(id)
+-					
+-					fun abortUponEvent(eventClass: KClass<out Event>) {
+-						var sub: Subscription? = null
+-						
+-						sub = context.eventBus.subscribe(eventClass) {
+-							val pending = context.pendingStepRequestThreadIds.contains(id)
+-							if (pending) {
+-								eventRequestManager.deleteEventRequest(request)
+-								context.pendingStepRequestThreadIds.remove(id)
+-							}
+-							sub?.unsubscribe()
+-						}
+-					}
+-					
+-					abortUponEvent(com.sun.jdi.event.StepEvent::class)
+-					abortUponEvent(com.sun.jdi.event.BreakpointEvent::class)
+-				}
+-		}
++    override fun stepOver() = stepLine(StepRequest.STEP_OVER, skipInline = !insideInline(threadRef.frame(0).location()))
++    override fun stepInto() = stepLine(StepRequest.STEP_INTO)
++    override fun stepOut() {
++        val location = threadRef.frame(0).location()
++        val inline = insideInline(location)
++        stepLine(if (inline) StepRequest.STEP_OVER else StepRequest.STEP_OUT, skipInline = inline)
++    }
++
++    private fun sourceIdentity(location: com.sun.jdi.Location, stratum: String) =
++        java.nio.file.Paths.get(location.sourcePath(stratum)).resolveSibling(location.sourceName(stratum)).normalize().toString()
++
++    private fun insideInline(location: com.sun.jdi.Location): Boolean = try {
++        location.declaringType().availableStrata().contains("KotlinDebug") &&
++            (location.lineNumber("Java") != location.lineNumber("Kotlin") || sourceIdentity(location, "Java") != sourceIdentity(location, "Kotlin"))
++    } catch (exception: com.sun.jdi.AbsentInformationException) { false }
++
++    private fun callSite(location: com.sun.jdi.Location): Pair<String, Int>? = try {
++        if (!location.declaringType().availableStrata().contains("KotlinDebug")) null else {
++            // KotlinDebug may retain the last inline callsite on ordinary lines.
++            val stratum = if (location.lineNumber("Java") != location.lineNumber("Kotlin") || sourceIdentity(location, "Java") != sourceIdentity(location, "Kotlin")) "KotlinDebug" else "Kotlin"
++            val line = location.lineNumber(stratum)
++            if (line > 0) sourceIdentity(location, stratum) to line else null
++        }
++    } catch (exception: com.sun.jdi.AbsentInformationException) { null }
++
++    private fun stepLine(depth: Int, skipInline: Boolean = false) {
++        if (!context.pendingStepRequestThreadIds.add(id)) return
++        val manager = threadRef.virtualMachine().eventRequestManager()
++        try {
++            val request = manager.createStepRequest(threadRef, StepRequest.STEP_LINE, depth)
++            request.setSuspendPolicy(EventRequest.SUSPEND_EVENT_THREAD)
++            request.addClassExclusionFilter("kotlin.coroutines.jvm.internal.*")
++            val origin = if (skipInline) callSite(threadRef.frame(0).location()) else null
++            val originalDepth = threadRef.frameCount()
++            val originLocation = threadRef.frame(0).location()
++            val kotlin = originLocation.declaringType().availableStrata().contains("Kotlin")
++            val sourceStratum = if (kotlin) "Kotlin" else "Java"
++            val originSource = try { originLocation.sourcePath(sourceStratum) to originLocation.lineNumber(sourceStratum) }
++                catch (exception: com.sun.jdi.AbsentInformationException) { null }
++            if (originSource != null) context.eventBus.breakpointFilters[id] = { location ->
++                try { threadRef.frameCount() != originalDepth || location.method() != originLocation.method() || (location.sourcePath(sourceStratum) to location.lineNumber(sourceStratum)) != originSource }
++                catch (exception: com.sun.jdi.AbsentInformationException) { true }
++            }
++            if (origin != null) context.eventBus.stepFilters[id] = { location ->
++                val next = callSite(location)
++                threadRef.frameCount() < originalDepth || next != origin
++            }
++            context.eventBus.stepCleanup[id] = {
++                context.pendingStepRequestThreadIds.remove(id)
++                if (manager.stepRequests().contains(request)) manager.deleteEventRequest(request)
++            }
++            request.enable()
++            resumeThread()
++        } catch (exception: Exception) {
++            context.eventBus.cancelStep(id)
++            context.pendingStepRequestThreadIds.remove(id)
++            throw exception
++        }
++    }
+ }
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/jdi/event/VMEventBus.kt b/adapter/src/main/kotlin/org/javacs/ktda/jdi/event/VMEventBus.kt
+index 12a2d12..d3b9c0f 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/jdi/event/VMEventBus.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/jdi/event/VMEventBus.kt
+@@ -33,6 +33,14 @@ import kotlin.reflect.KClass
+  */
+ class VMEventBus(private val vm: VirtualMachine): DebuggeeEventBus {
+ 	private var exited = false
++    val stepFilters = ConcurrentHashMap<Long, (com.sun.jdi.Location) -> Boolean>()
++    val breakpointFilters = ConcurrentHashMap<Long, (com.sun.jdi.Location) -> Boolean>()
++    val stepCleanup = ConcurrentHashMap<Long, () -> Unit>()
++    fun cancelStep(threadId: Long) {
++        stepFilters.remove(threadId)
++        breakpointFilters.remove(threadId)
++        stepCleanup.remove(threadId)?.invoke()
++    }
+ 	private val eventListeners = ConcurrentHashMap<KClass<out JDIEvent>, ListenerList<VMEvent<JDIEvent>>>()
+ 	override val exitListeners = ListenerList<ExitEvent>()
+ 	override val breakpointListeners = ListenerList<BreakpointStopEvent>()
+@@ -42,10 +50,10 @@ class VMEventBus(private val vm: VirtualMachine): DebuggeeEventBus {
+ 	
+ 	init {
+ 		hookListeners()
+-		startAsyncPoller()
++
+ 	}
+ 	
+-	private fun startAsyncPoller() {
++	fun startAsyncPoller() {
+ 		Thread({
+ 			val eventQueue = vm.eventQueue()
+ 			try {
+@@ -84,18 +92,24 @@ class VMEventBus(private val vm: VirtualMachine): DebuggeeEventBus {
+ 		eventRequestManager.createVMDeathRequest().enable()
+ 
+ 		subscribe(JDIBreakpointEvent::class) {
++            if (breakpointFilters[toThreadID(it.jdiEvent)]?.invoke(it.jdiEvent.location()) == false) return@subscribe
++            cancelStep(toThreadID(it.jdiEvent))
+ 			breakpointListeners.fire(BreakpointStopEvent(
+ 				threadID = toThreadID(it.jdiEvent)
+ 			))
+ 			it.resumeThreads = false
+ 		}
+ 		subscribe(JDIStepEvent::class) {
++            val threadId = toThreadID(it.jdiEvent)
++            if (stepFilters[threadId]?.invoke(it.jdiEvent.location()) == false) return@subscribe
++            cancelStep(threadId)
+ 			stepListeners.fire(StepStopEvent(
+ 				threadID = toThreadID(it.jdiEvent)
+ 			))
+ 			it.resumeThreads = false
+ 		}
+ 		subscribe(JDIExceptionEvent::class) {
++            cancelStep(toThreadID(it.jdiEvent))
+ 			exceptionListeners.fire(ExceptionStopEvent(
+ 				threadID = toThreadID(it.jdiEvent),
+ 				exception = JDIException(it.jdiEvent.exception(), it.jdiEvent.thread())
+@@ -109,6 +123,7 @@ class VMEventBus(private val vm: VirtualMachine): DebuggeeEventBus {
+ 			))
+ 		}
+ 		subscribe(JDIThreadDeathEvent::class) {
++            cancelStep(it.jdiEvent.thread().uniqueID())
+ 			threadListeners.fire(ThreadEvent(
+ 				threadID = it.jdiEvent.thread().uniqueID(),
+ 				reason = ThreadEventReason.STOPPED
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/jdi/exception/JDIException.kt b/adapter/src/main/kotlin/org/javacs/ktda/jdi/exception/JDIException.kt
+index 57911b9..c1e8466 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/jdi/exception/JDIException.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/jdi/exception/JDIException.kt
+@@ -2,35 +2,24 @@ package org.javacs.ktda.jdi.exception
+ 
+ import com.sun.jdi.ObjectReference
+ import com.sun.jdi.ThreadReference
++import com.sun.jdi.StringReference
+ import org.javacs.ktda.core.exception.DebuggeeException
+ 
+ class JDIException(
+     private val exception: ObjectReference,
+-    private val thread: ThreadReference
++    private val thread: ThreadReference,
++    private val visited: Set<Long> = emptySet()
+ ) : DebuggeeException {
+     private val type by lazy { exception.referenceType() }
+-
+     override val fullTypeName: String by lazy { type.name() }
+-    override val typeName: String? by lazy { fullTypeName.split(".").last() }
+-    override val description: String by lazy {
+-        type.methodsByName("toString")
+-            .firstOrNull()
+-            ?.let { exception.invokeMethod(thread, it, emptyList(), 0) }
+-            ?.toString()
+-            ?: fullTypeName
+-    }
+-    override val message: String? by lazy {
+-        type.methodsByName("getMessage")
+-            .firstOrNull()
+-            ?.let { exception.invokeMethod(thread, it, emptyList(), 0) }
+-            ?.toString()
+-    }
++    override val typeName: String? by lazy { fullTypeName.substringAfterLast('.') }
++    private fun field(name: String) = type.allFields().firstOrNull { it.name() == name }?.let(exception::getValue)
++    // Inspect Throwable fields without running overridden methods in the suspended app.
++    override val message: String? by lazy { (field("detailMessage") as? StringReference)?.value() }
++    override val description: String by lazy { message?.let { "$fullTypeName: $it" } ?: fullTypeName }
+     override val innerException: JDIException? by lazy {
+-        type.methodsByName("getCause")
+-            .firstOrNull()
+-            ?.let { exception.invokeMethod(thread, it, emptyList(), 0)?.let { it as? ObjectReference } }
+-            ?.let { JDIException(it, thread) }
++        val cause = field("cause") as? ObjectReference
++        val seen = visited + exception.uniqueID()
++        if (cause == null || seen.size >= 16 || cause.uniqueID() in seen) null else JDIException(cause, thread, seen)
+     }
+-
+-    // TODO: Stack frames
+ }
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/jdi/launch/JDILauncher.kt b/adapter/src/main/kotlin/org/javacs/ktda/jdi/launch/JDILauncher.kt
+index ecb8814..5e2dbdd 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/jdi/launch/JDILauncher.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/jdi/launch/JDILauncher.kt
+@@ -47,7 +47,7 @@ class JDILauncher(
+ 		LOG.info("Attaching JVM debug session on {}:{}", config.hostName, config.port)
+ 		return JDIDebuggee(
+ 			connector.attach(createAttachArgs(config, connector)) ?: throw KotlinDAException("Could not attach the VM"),
+-			sourcesRootsOf(config.projectRoot),
++			config.sourceRoots ?: sourcesRootsOf(config.projectRoot),
+ 			context
+ 		)
+ 	}
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/jdi/scope/JDILocalScope.kt b/adapter/src/main/kotlin/org/javacs/ktda/jdi/scope/JDILocalScope.kt
+index f467a0a..4cd4891 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/jdi/scope/JDILocalScope.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/jdi/scope/JDILocalScope.kt
+@@ -11,8 +11,9 @@ class JDILocalScope(
+ 	override val childs: List<VariableTreeNode> = variablesIn(frame)
+ 	
+ 	private fun variablesIn(frame: StackFrame) = try {
+-		listOfNotNull(thisIn(frame)) + localsIn(frame)
++		localsIn(frame)
+ 	} catch (e: AbsentInformationException) { emptyList<JDIVariable>() }
++		.let { listOfNotNull(thisIn(frame)) + it }
+ 	
+ 	private fun localsIn(frame: StackFrame) = frame.visibleVariables()
+ 		.map { JDIVariable(it.name(), frame.getValue(it)) }
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/jdi/scope/JDIVariable.kt b/adapter/src/main/kotlin/org/javacs/ktda/jdi/scope/JDIVariable.kt
+index 1a3774d..4a34360 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/jdi/scope/JDIVariable.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/jdi/scope/JDIVariable.kt
+@@ -12,10 +12,10 @@ import com.sun.jdi.Type
+ class JDIVariable(
+ 	override val name: String,
+ 	private val jdiValue: Value?,
+-	jdiType: Type? = null
++	declaredType: String? = null
+ ) : VariableTreeNode {
+ 	override val value: String = jdiValue?.toString() ?: "null" // TODO: Better string representation
+-	override val type: String = (jdiType?.name() ?: jdiValue?.type()?.name()) ?: "Unknown type"
++	override val type: String = (declaredType ?: jdiValue?.type()?.name()) ?: "Unknown type"
+ 	override val childs: List<VariableTreeNode>? by lazy { jdiValue?.let(::childrenOf) }
+ 	override val id: Long? = (jdiValue as? ObjectReference)?.uniqueID() ?: (jdiValue as? ArrayReference)?.uniqueID()
+ 	
+@@ -31,9 +31,14 @@ class JDIVariable(
+ 		}
+ 	}
+ 	
+-	private fun arrayElementsOf(jdiValue: ArrayReference): List<VariableTreeNode> = jdiValue.values
++	private fun arrayElementsOf(jdiValue: ArrayReference): List<VariableTreeNode> = jdiValue.getValues(0, minOf(jdiValue.length(), 1000))
+ 		.mapIndexed { i, it -> JDIVariable(i.toString(), it) }
+ 		
+-	private fun fieldsOf(jdiValue: ObjectReference, jdiType: ReferenceType) = jdiType.allFields()
+-		.map { JDIVariable(it.name(), jdiValue.getValue(it), jdiType) }
++	private fun fieldsOf(jdiValue: ObjectReference, jdiType: ReferenceType) = jdiType.allFields().take(1000)
++		.map { JDIVariable(it.name(), jdiValue.getValue(it), it.typeName()) }
++    fun childNamed(name: String): JDIVariable? = when (val value = jdiValue) {
++        is ArrayReference -> name.toIntOrNull()?.takeIf { it >= 0 && it < value.length() }?.let { JDIVariable(name, value.getValue(it)) }
++        is ObjectReference -> value.referenceType().allFields().firstOrNull { it.name() == name }?.let { JDIVariable(name, value.getValue(it), it.typeName()) }
++        else -> null
++    }
+ }
+diff --git a/adapter/src/main/kotlin/org/javacs/ktda/jdi/stack/JDIStackFrame.kt b/adapter/src/main/kotlin/org/javacs/ktda/jdi/stack/JDIStackFrame.kt
+index dd6062e..848ad00 100644
+--- a/adapter/src/main/kotlin/org/javacs/ktda/jdi/stack/JDIStackFrame.kt
++++ b/adapter/src/main/kotlin/org/javacs/ktda/jdi/stack/JDIStackFrame.kt
+@@ -19,7 +19,14 @@ class JDIStackFrame(
+ 	override val position: Position? = context.positionOf(location)
+ 	override val scopes: List<VariableTreeNode> by lazy {
+ 		try {
+-			listOf(JDILocalScope(frame))
++			val receiver = frame.thisObject()
++            val fields = receiver?.referenceType()?.allFields().orEmpty()
++            val continuationFields = fields.filter { it.name() == "label" || it.name() == "completion" || Regex("[LIFJDZ]\\$[0-9]+").matches(it.name()) }
++            val coroutineScope = if (continuationFields.any { it.name() == "label" } && continuationFields.any { it.name() == "completion" })
++                org.javacs.ktda.core.scope.BasicVariableTreeNode("Coroutine state (raw)", childs = continuationFields.map {
++                    org.javacs.ktda.jdi.scope.JDIVariable(it.name(), receiver!!.getValue(it), it.typeName())
++                }) else null
++            listOfNotNull(JDILocalScope(frame), coroutineScope)
+ 		} catch (e: InvalidStackFrameException) {
+ 			LOG.warn("Could not fetch scopes, invalid stack frame: {}", e.message)
+ 			emptyList<VariableTreeNode>()
+@@ -31,14 +38,14 @@ class JDIStackFrame(
+ 	// TODO: Scope "Fields"
+ 	// TODO: Argument values?
+ 
+-	private fun evaluateQualified(qualName: List<String>, scopeVariables: List<VariableTreeNode> = variables): VariableTreeNode? =
+-		qualName.firstOrNull().let { qual ->
+-			val rest = qualName.drop(1)
+-			scopeVariables
+-				.filter { it.name == qual }
+-				.mapNotNull { if (rest.isEmpty()) it else evaluateQualified(rest, it.childs ?: emptyList()) }
+-				.firstOrNull()
+-		}
++    private fun evaluateQualified(names: List<String>, scopeVariables: List<VariableTreeNode> = variables): VariableTreeNode? {
++        var value = scopeVariables.firstOrNull { it.name == names.firstOrNull() } ?: return null
++        for (name in names.drop(1)) {
++            value = if (value is org.javacs.ktda.jdi.scope.JDIVariable) value.childNamed(name) ?: return null
++                else value.childs?.firstOrNull { it.name == name } ?: return null
++        }
++        return value
++    }
+ 
+ 	private fun completeQualified(qualName: List<String>, scopeVariables: List<VariableTreeNode> = variables): List<CompletionItem> =
+ 		qualName.firstOrNull()?.let { qual ->
+@@ -53,7 +60,11 @@ class JDIStackFrame(
+ 					?.map { CompletionItem(it.name, CompletionItemType.VARIABLE) }
+ 		}.orEmpty()
+ 
+-	private fun parseQualified(expression: String): List<String> = expression.split(".")
++	private fun parseQualified(expression: String): List<String> {
++        val text = expression.trim()
++        if (!Regex("[A-Za-z_$][A-Za-z0-9_$]*(?:\\[[0-9]+\\]|\\.[A-Za-z_$][A-Za-z0-9_$]*)*").matches(text)) return emptyList()
++        return text.replace("[", ".").replace("]", "").split(".")
++    }
+ 
+ 	override fun evaluate(expression: String): VariableTreeNode? {
+ 		// TODO: Implement proper expression parsing
+@@ -70,12 +81,13 @@ class JDIStackFrame(
+ 		// using VirtualMachine.mirrorOf.
+ 
+ 		val qualified = parseQualified(expression)
++        if (qualified.isEmpty()) return null
+ 		return evaluateQualified(qualified)
+ 			?: evaluateQualified(listOf("this") + qualified)
+ 	}
+ 
+ 	override fun completions(expression: String): List<CompletionItem> {
+-		val qualified = parseQualified(expression)
++		val qualified = if (expression.endsWith(".")) parseQualified(expression.dropLast(1)) + "" else parseQualified(expression)
+ 		return completeQualified(qualified) + completeQualified(listOf("this") + qualified)
+ 	}
+ }
