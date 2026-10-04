@@ -909,9 +909,11 @@ impl LocalLspStore {
                 }
                 let mut env = delegate.shell_env().await;
                 env.extend(settings.env.unwrap_or_default());
+                let path = delegate.resolve_relative_path(path);
+                android_tools::managed::validate_language_server_binary(&path)?;
 
                 Ok(LanguageServerBinary {
-                    path: delegate.resolve_relative_path(path),
+                    path,
                     env: Some(env),
                     arguments: settings
                         .arguments

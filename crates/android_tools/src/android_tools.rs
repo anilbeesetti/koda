@@ -1,4 +1,5 @@
 pub mod logcat;
+pub mod managed;
 pub mod preview;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
@@ -131,6 +132,11 @@ fn sdk_tool_path(directory: &str, name: &str) -> Result<PathBuf> {
     } else {
         name.to_owned()
     };
+    if let Some(root) = managed::environment()?.sdk {
+        let path = root.join(directory).join(&executable);
+        managed::executable(&path).with_context(|| format!("Saved Android SDK is missing {directory}/{executable}. Choose SDK in Android tools → Tool setup."))?;
+        return Ok(path);
+    }
     for variable in ["ANDROID_HOME", "ANDROID_SDK_ROOT"] {
         if let Some(root) = env::var_os(variable).filter(|value| !value.is_empty()) {
             let path = PathBuf::from(root).join(directory).join(&executable);
@@ -157,7 +163,26 @@ fn sdk_tool_path(directory: &str, name: &str) -> Result<PathBuf> {
             return Ok(path);
         }
     }
-    bail!("{executable} was not found. Install Android SDK {directory} and set ANDROID_HOME.")
+    bail!(
+        "{executable} was not found. Install Android SDK {directory} with Android Studio, then choose SDK in Android tools → Tool setup."
+    )
+}
+
+pub fn sdk_root() -> Option<PathBuf> {
+    for variable in ["ANDROID_HOME", "ANDROID_SDK_ROOT"] {
+        if let Some(path) = env::var_os(variable).filter(|value| !value.is_empty()) {
+            return Some(PathBuf::from(path));
+        }
+    }
+    let home = dirs::home_dir()?;
+    let path = home.join(if cfg!(target_os = "macos") {
+        "Library/Android/sdk"
+    } else if cfg!(windows) {
+        "AppData/Local/Android/Sdk"
+    } else {
+        "Android/Sdk"
+    });
+    path.is_dir().then_some(path)
 }
 
 pub fn parse_emulators(output: &str) -> Result<Vec<String>> {
@@ -182,8 +207,21 @@ pub fn parse_emulators(output: &str) -> Result<Vec<String>> {
 }
 
 pub fn android_cli_path() -> Result<PathBuf> {
-    which::which("android")
-        .context("Android CLI was not found. Install Google's Android CLI and add it to PATH.")
+    if let Some(path) = managed::environment()?.android_cli {
+        managed::executable(&path)
+            .context("Saved Android CLI is unavailable. Choose Android CLI in Tool setup.")?;
+        return Ok(path);
+    }
+    for path in ["/opt/homebrew/bin/android", "/usr/local/bin/android"] {
+        let path = PathBuf::from(path);
+        if path.is_file() {
+            managed::executable(&path)?;
+            return Ok(path);
+        }
+    }
+    which::which("android").context(
+        "Install Google's Android CLI, then choose its executable in Android tools → Tool setup.",
+    )
 }
 
 pub fn is_gradle_project(root: &Path) -> bool {

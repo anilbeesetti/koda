@@ -14,9 +14,10 @@ import tarfile
 import tempfile
 import urllib.request
 import zipfile
+import time
 
 REPOSITORY = Path(__file__).resolve().parent.parent
-DEPENDENCIES = REPOSITORY / "target/android-ide/dependencies"
+DEPENDENCIES = Path(os.environ.get("KODA_TOOL_DEPENDENCIES", REPOSITORY / "target/android-ide/dependencies"))
 OFFICIAL_VERSION = "263.4702.0"
 OFFICIAL_REVISION = OFFICIAL_VERSION + "+android-5"
 OFFICIAL_SHA256 = "95da3fc6d3b9092c7616345044a05edb85e5408dc648d081e4e433595c892bec"
@@ -32,17 +33,39 @@ OFFICIAL_FIR_PROVIDERS_MODULE = "plugins/kotlin/lib/intellij.libraries.kotlinc.k
 OFFICIAL_COMPLETION_API_MODULE = "plugins/kotlin/lib/intellij.libraries.kotlinc.analysis.api.k2.jar"
 OFFICIAL_COMPLETION_MODULE = "plugins/kotlin/lib/modules/intellij.kotlin.completion.impl.jar"
 OFFICIAL_PROTOCOL_MODULE = "lib/fleet.lsp.protocol.jar"
+MAX_DOWNLOAD_BYTES = 2 * 1024**3
+DOWNLOAD_SECONDS = 900
 
 
 def download(name, url, expected):
-    archive = DEPENDENCIES / name
+    cache = Path(os.environ.get("KODA_TOOL_DOWNLOADS", DEPENDENCIES))
+    cache.mkdir(parents=True, exist_ok=True)
+    archive = cache / name
+    if not url.startswith("https://"):
+        raise RuntimeError("Managed tool downloads require HTTPS")
+    if archive.exists() and (archive.is_symlink() or not archive.is_file()):
+        raise RuntimeError(f"Unsafe download cache entry: {archive}")
+    if archive.exists():
+        with archive.open("rb") as source:
+            if hashlib.file_digest(source, "sha256").hexdigest() != expected:
+                archive.unlink()
     if not archive.exists():
-        with tempfile.NamedTemporaryFile(dir=DEPENDENCIES, delete=False) as output:
+        if os.environ.get("KODA_TOOL_OFFLINE") == "1":
+            raise RuntimeError(f"Offline: verified cache is missing {name}. Reconnect and retry.")
+        with tempfile.NamedTemporaryFile(prefix=".download-", dir=cache, delete=False) as output:
             temporary = Path(output.name)
             try:
                 print(f"Downloading {name}", flush=True)
                 with urllib.request.urlopen(url, timeout=60) as response:
-                    shutil.copyfileobj(response, output)
+                    if not response.url.startswith("https://"):
+                        raise RuntimeError("Download redirected to an insecure URL")
+                    total = 0
+                    deadline = time.monotonic() + DOWNLOAD_SECONDS
+                    while block := response.read(1024 * 1024):
+                        total += len(block)
+                        if total > MAX_DOWNLOAD_BYTES or time.monotonic() > deadline:
+                            raise RuntimeError(f"Download exceeded the 2 GiB / 15 minute limit: {name}")
+                        output.write(block)
                 output.flush()
                 with temporary.open("rb") as downloaded:
                     if hashlib.file_digest(downloaded, "sha256").hexdigest() != expected:

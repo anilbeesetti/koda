@@ -729,9 +729,13 @@ dependencies = [
  "anyhow",
  "chrono",
  "dirs",
+ "libc",
+ "paths",
  "regex",
  "serde",
  "serde_json",
+ "sha2",
+ "smol",
  "tempfile",
  "which",
 ]
@@ -14150,6 +14154,7 @@ name = "project"
 version = "0.1.0"
 dependencies = [
  "aho-corasick",
+ "android_tools",
  "anyhow",
  "askpass",
  "async-channel 2.5.0",

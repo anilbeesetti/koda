@@ -79,8 +79,10 @@ impl Preview {
 }
 
 pub fn installation() -> Result<PathBuf> {
-    let directory = env::var_os("ANDROID_IDE_COMPOSE_PREVIEW").map(PathBuf::from)
-        .context("Run script/install-android-preview, then relaunch script/android-ide to enable Compose preview.")?;
+    let directory = match env::var_os("ANDROID_IDE_COMPOSE_PREVIEW") {
+        Some(path) => PathBuf::from(path),
+        None => super::managed::resolve(super::managed::Tool::Preview)?,
+    };
     ensure!(
         directory.is_absolute(),
         "ANDROID_IDE_COMPOSE_PREVIEW must be an absolute directory"

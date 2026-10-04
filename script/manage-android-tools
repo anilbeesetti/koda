@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+"""Transactional private-profile provisioning for Koda's embedded pinned recipes."""
+
+import argparse
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import runpy
+import shutil
+import signal
+import sys
+import tempfile
+import uuid
+
+MAX_FILES = 100_000
+MAX_BYTES = 10 * 1024**3
+ENTRYPOINTS = {"kotlin": "kotlin-server-263.4702.0/bin/intellij-server",
+              "debugger": "bin/kotlin-debug-adapter", "preview": "PreviewBridge.class"}
+
+
+class CorruptManifest(RuntimeError):
+    pass
+
+
+class StorageLimit(RuntimeError):
+    pass
+
+
+def enforce_budget(root, maximum=24 * 1024**3):
+    total = 0
+    count = 0
+    for path in root.rglob("*"):
+        if not path.is_symlink() and path.is_file():
+            try:
+                total += path.stat().st_size
+            except FileNotFoundError:
+                continue
+        count += 1
+        if total > maximum or count > 300_000:
+            raise StorageLimit("Managed storage exceeds 24 GiB / 300,000 entries. Close all Koda windows, reveal managed storage, remove unused old installations or cached downloads, restart and Configure Kotlin.")
+
+
+def regular_directory(path):
+    if path.is_symlink() or (path.exists() and not path.is_dir()):
+        raise RuntimeError(f"Preserving unsafe managed directory: {path}")
+    path.mkdir(parents=True, exist_ok=True)
+
+
+def inventory(directory):
+    files = {}
+    size = 0
+    for path in sorted(directory.rglob("*")):
+        relative = path.relative_to(directory).as_posix()
+        if path.is_symlink():
+            if not path.resolve().is_relative_to(directory.resolve()):
+                raise RuntimeError(f"Runtime link escapes installation: {relative}")
+            files[relative] = "link:" + os.readlink(path)
+        elif path.is_file():
+            size += path.stat().st_size
+            if size > MAX_BYTES:
+                raise RuntimeError("Installed tools exceed the 10 GiB limit")
+            with path.open("rb") as source:
+                files[relative] = hashlib.file_digest(source, "sha256").hexdigest()
+        elif not path.is_dir():
+            raise RuntimeError(f"Unsupported runtime file: {relative}")
+        if len(files) > MAX_FILES:
+            raise RuntimeError("Installed tools exceed the file count limit")
+    return files
+
+
+def read_manifest(path):
+    if not path.exists():
+        return None
+    if path.is_symlink() or path.stat().st_size > 16 * 1024**2:
+        raise RuntimeError(f"Unsafe runtime manifest: {path}")
+    manifest = json.loads(path.read_text())
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("schema"), int):
+        raise CorruptManifest("Runtime manifest must be an object with a schema")
+    if manifest.get("schema") != 1:
+        raise RuntimeError("Unsupported runtime manifest. Update Koda before modifying it.")
+    if any(not isinstance(manifest.get(name), str) for name in ("tool", "recipe", "slot", "entrypoint")) or not isinstance(manifest.get("files"), dict) or not isinstance(manifest.get("modes"), dict):
+        raise CorruptManifest("Runtime manifest fields are corrupt")
+    return manifest
+
+
+def installation(root, manifest):
+    slot = manifest["slot"]
+    if not isinstance(slot, str) or not slot.startswith("install-") or len(slot) != 40 or any(character not in "0123456789abcdefABCDEF" for character in slot[8:]):
+        raise RuntimeError("Invalid managed installation slot")
+    directory = root / slot
+    if directory.is_symlink() or not directory.is_dir():
+        raise RuntimeError("Managed runtime is missing. Choose Install / repair.")
+    return directory
+
+
+def validate(root, manifest, recipe, tool=None):
+    if manifest is None:
+        raise RuntimeError("Tool is not installed. Choose Install / repair.")
+    if manifest["recipe"] != recipe:
+        raise RuntimeError("Koda's runtime recipe changed. Choose Install / repair to update.")
+    tool = tool or manifest.get("tool")
+    if tool not in ENTRYPOINTS or manifest.get("tool") != tool or manifest.get("entrypoint") != ENTRYPOINTS[tool]:
+        raise RuntimeError("Runtime manifest has the wrong tool or entrypoint. Choose Install / repair.")
+    directory = installation(root, manifest)
+    if inventory(directory) != manifest["files"]:
+        raise RuntimeError("Runtime integrity validation failed. Choose Install / repair.")
+    modes = {name: (directory / name).lstat().st_mode & 0o7777 for name in manifest["files"]}
+    if modes != manifest["modes"]:
+        raise RuntimeError("Runtime permissions changed. Choose Install / repair.")
+    entrypoint = directory / manifest["entrypoint"]
+    if not entrypoint.resolve().is_relative_to(directory.resolve()) or not entrypoint.is_file():
+        raise RuntimeError("Managed entrypoint is missing or unsafe")
+    if manifest["tool"] != "preview" and not os.access(entrypoint, os.X_OK):
+        raise RuntimeError("Managed executable permission is missing. Choose Install / repair.")
+    if tool == "kotlin" and not os.access(directory / "kotlin-server-263.4702.0/jbr/Contents/Home/bin/java", os.X_OK):
+        raise RuntimeError("Kotlin's bundled JVM is missing or not executable. Choose Install / repair.")
+    return directory
+
+
+def publish(path, manifest):
+    with tempfile.NamedTemporaryFile(mode="w", dir=path.parent, delete=False) as output:
+        temporary = Path(output.name)
+        try:
+            json.dump(manifest, output, sort_keys=True)
+            output.flush()
+            os.fsync(output.fileno())
+            if path.is_symlink():
+                raise RuntimeError(f"Preserving unsafe manifest: {path}")
+            temporary.replace(path)
+            descriptor = os.open(path.parent, os.O_RDONLY)
+            try:
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
+def provision(root, tool, recipe, build, entrypoint):
+    regular_directory(root)
+    lock_path = root / ".lock"
+    if lock_path.is_symlink():
+        raise RuntimeError("Managed tool lock must not be a symlink")
+    with lock_path.open("a") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise RuntimeError("Another Koda window is managing tools. Wait for it, then retry.") from error
+        active_path = root / (tool + ".json")
+        try:
+            previous = read_manifest(active_path)
+        except (json.JSONDecodeError, UnicodeDecodeError, CorruptManifest):
+            backup = root / (tool + ".corrupt-" + uuid.uuid4().hex + ".json")
+            active_path.rename(backup)
+            print(f"Preserved corrupt runtime manifest at {backup}", flush=True)
+            previous = None
+        # A killed process cannot clean its temporary tree; only the lock owner may recover it.
+        for stale in root.glob(".stage-*"):
+            if stale.is_symlink() or not stale.is_dir():
+                raise RuntimeError(f"Preserving unexpected recovery entry: {stale}")
+            shutil.rmtree(stale)
+        downloads = root / "downloads"
+        regular_directory(downloads)
+        for partial in downloads.glob(".download-*"):
+            if partial.is_symlink() or not partial.is_file():
+                raise RuntimeError(f"Preserving unexpected download recovery entry: {partial}")
+            partial.unlink()
+        enforce_budget(root)
+        with tempfile.TemporaryDirectory(prefix=".stage-", dir=root) as staging:
+            def check_budget(signum, frame):
+                enforce_budget(root)
+                signal.alarm(2)
+            old_handler = signal.signal(signal.SIGALRM, check_budget)
+            signal.alarm(2)
+            try:
+                distribution = build(Path(staging))
+            finally:
+                signal.alarm(0)
+                signal.signal(signal.SIGALRM, old_handler)
+            enforce_budget(root)
+            if not distribution.is_relative_to(Path(staging)):
+                raise RuntimeError("Recipe returned a path outside its transaction")
+            files = inventory(distribution)
+            if entrypoint not in files:
+                raise RuntimeError("Recipe did not produce its runtime entrypoint")
+            manifest = {"schema": 1, "tool": tool, "recipe": recipe,
+                        "slot": "install-" + uuid.uuid4().hex, "entrypoint": entrypoint,
+                        "files": files, "modes": {name: (distribution / name).lstat().st_mode & 0o7777 for name in files}}
+            if previous:
+                manifest["previous"] = {key: value for key, value in previous.items() if key != "previous"}
+            distribution.rename(root / manifest["slot"])
+            validate(root, manifest, recipe, tool)
+            publish(active_path, manifest)
+    return manifest
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("operation", choices=("install", "validate", "rollback"))
+    parser.add_argument("tool", choices=("kotlin", "debugger", "preview"))
+    parser.add_argument("root", type=Path)
+    parser.add_argument("recipe")
+    parser.add_argument("--offline", action="store_true")
+    arguments = parser.parse_args()
+    if sys.version_info < (3, 12):
+        raise RuntimeError("Install Python 3.12 or newer (python.org or Homebrew), then retry.")
+    if platform.system() != "Darwin" or platform.machine() != "arm64":
+        raise RuntimeError("Managed Kotlin, Debug and Preview provisioning supports Apple Silicon macOS only.")
+    root = arguments.root
+    regular_directory(root)
+    if arguments.operation != "install":
+        lock_path = root / ".lock"
+        if lock_path.is_symlink():
+            raise RuntimeError("Unsafe tool lock")
+        with lock_path.open("a") as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as error:
+                raise RuntimeError("Another Koda window is managing tools. Wait, then retry.") from error
+            path = root / (arguments.tool + ".json")
+            manifest = read_manifest(path)
+            if arguments.operation == "rollback":
+                if not manifest or not manifest.get("previous"):
+                    raise RuntimeError("No previous compatible installation is available")
+                manifest = manifest["previous"]
+                validate(root, manifest, arguments.recipe, arguments.tool)
+                publish(path, manifest)
+            else:
+                validate(root, manifest, arguments.recipe, arguments.tool)
+        print("Runtime validated", flush=True)
+        return
+    if not shutil.which("patch") or not Path("/usr/bin/ditto").is_file():
+        raise RuntimeError("Install Apple's Command Line Tools to provide patch and ditto, then retry.")
+    downloads = root / "downloads"
+    regular_directory(downloads)
+    os.environ["KODA_TOOL_DOWNLOADS"] = str(downloads)
+    if arguments.offline:
+        os.environ["KODA_TOOL_OFFLINE"] = "1"
+    def build(staging):
+        os.environ["KODA_TOOL_DEPENDENCIES"] = str(staging)
+        script = Path(__file__).with_name("install-android-" + arguments.tool)
+        bootstrap = runpy.run_path(str(script))
+        if arguments.tool == "debugger":
+            bootstrap["main"](install_kotlin=False)
+            # Never let a Gradle daemon survive cancellation or publication.
+            return staging / "kotlin-debug-adapter"
+        bootstrap["main"]()
+        if arguments.tool == "kotlin":
+            return bootstrap["OFFICIAL_INSTALLATION"]
+        return staging / "compose-preview"
+    provision(root, arguments.tool, arguments.recipe, build, ENTRYPOINTS[arguments.tool])
+    print("Installed and validated. Configure Kotlin or retry the Android operation.", flush=True)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as error:
+        print(f"Koda tool setup: {error}", file=sys.stderr, flush=True)
+        # The app starts this process in its own session. Stop Gradle's descendants
+        # on failure even if they still hold an output pipe open.
+        if os.getpgrp() == os.getpid():
+            os.killpg(os.getpgrp(), signal.SIGKILL)
+        sys.exit(1)

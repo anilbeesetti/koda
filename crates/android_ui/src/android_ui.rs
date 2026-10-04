@@ -4,6 +4,7 @@ mod android_logcat;
 mod android_logcat_panel;
 mod android_preview;
 mod android_status;
+mod android_tool_setup;
 
 use android_build::{BuildEvent, BuildStatus, BuildTab, ProcessOutput};
 pub use android_build::{BuildPanel, ToggleBuild};
@@ -302,6 +303,7 @@ pub struct AndroidPanel {
     java_task: Option<Task<()>>,
     debug_task: Option<Task<()>>,
     preview_task: Option<Task<()>>,
+    tool_setup: android_tool_setup::ToolSetup,
     previews: Vec<android_tools::preview::Preview>,
     selected_preview: Option<String>,
     rendered_preview: Option<(PathBuf, AndroidTarget)>,
@@ -381,6 +383,7 @@ impl AndroidPanel {
             java_task: None,
             debug_task: None,
             preview_task: None,
+            tool_setup: android_tool_setup::ToolSetup::new(),
             previews: Vec::new(),
             selected_preview: None,
             rendered_preview: None,
@@ -391,6 +394,7 @@ impl AndroidPanel {
             _project_subscription: project_subscription,
         };
         panel._debug_subscriptions = panel.observe_debugger(cx);
+        panel.refresh_tool_setup(cx);
         panel
     }
 
@@ -403,7 +407,9 @@ impl AndroidPanel {
                     match tab {
                         BuildTab::Sync => panel.sync_project(window, cx),
                         BuildTab::Output => {
-                            if let Some(operation) = panel.last_build_operation {
+                            if let Some((tool, operation)) = panel.tool_setup.last_operation {
+                                panel.manage_tool(tool, operation, window, cx);
+                            } else if let Some(operation) = panel.last_build_operation {
                                 panel.gradle(operation, window, cx);
                             }
                         }
@@ -579,6 +585,7 @@ impl AndroidPanel {
         self.command_cancel = None;
         self.sync_task = None;
         self.build_task = None;
+        self.tool_setup.operation = None;
         self.emulator_task = None;
         self.emulator_startup = None;
         self.java_task = None;
@@ -601,6 +608,10 @@ impl AndroidPanel {
     }
 
     fn auto_sync_project(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.active_build_session.is_some() && self.trusted_root(cx).is_err() {
+            self.cancel_build(BuildTab::Output, cx);
+            self.cancel_build(BuildTab::Sync, cx);
+        }
         if !self.startup_settings_ready {
             return;
         }
@@ -640,6 +651,9 @@ impl AndroidPanel {
                 self.running = false;
             }
             self.kotlin_refresh_task = None;
+            if self.tool_setup.operation.take().is_some() {
+                self.running = false;
+            }
             self.kotlin_refresh_pending = None;
             if self.kotlin_task.take().is_some() {
                 self.running = false;
@@ -650,7 +664,7 @@ impl AndroidPanel {
             self.selected_target = None;
             cx.notify();
         }
-        if self.syncing || self.running {
+        if self.syncing || self.running || self.tool_setup.choosing {
             return;
         }
         let Some(root) = self.auto_sync_candidate(cx) else {
@@ -715,7 +729,7 @@ impl AndroidPanel {
     }
 
     fn sync_project(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.syncing || self.running {
+        if self.syncing || self.running || self.tool_setup.choosing {
             return;
         }
         let root = match self.trusted_root(cx) {
@@ -765,6 +779,7 @@ impl AndroidPanel {
                             format!("--project_dir={}", root.display()),
                         ])
                         .current_dir(&root);
+                    command.envs(android_tools::managed::command_environment()?);
                     match android_build::command_output(
                         command,
                         &executor,
@@ -922,7 +937,7 @@ impl AndroidPanel {
     }
 
     fn gradle(&mut self, operation: GradleOperation, window: &mut Window, cx: &mut Context<Self>) {
-        if self.running || self.syncing {
+        if self.running || self.syncing || self.tool_setup.choosing {
             return;
         }
         let result = (|| {
@@ -932,16 +947,10 @@ impl AndroidPanel {
                 .clone()
                 .context("Sync the Android project and select a build variant first.")?;
             if matches!(operation, GradleOperation::Debug) {
-                android_debugger::binary()?;
-                android_tools::kotlin::java_home()?;
                 ensure!(
                     self.debug_forward.is_none(),
                     "Disconnect the current Android debug session before starting another."
                 );
-            }
-            if matches!(operation, GradleOperation::Preview) {
-                android_tools::preview::installation()?;
-                android_tools::kotlin::java_home()?;
             }
             let after_task = match operation {
                 GradleOperation::Run | GradleOperation::Debug => {
@@ -1030,6 +1039,8 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Result<()> {
+        self.tool_setup.last_operation = None;
+        let operation = self.last_build_operation;
         let worktree_id = self
             .project
             .read(cx)
@@ -1086,8 +1097,20 @@ impl AndroidPanel {
                     cx.background_spawn({
                         let root = root.clone();
                         async move {
+                            match operation {
+                                Some(GradleOperation::Debug) => {
+                                    android_debugger::binary()?;
+                                    android_tools::kotlin::java_home()?;
+                                }
+                                Some(GradleOperation::Preview) => {
+                                    android_tools::preview::installation()?;
+                                    android_tools::kotlin::java_home()?;
+                                }
+                                _ => {}
+                            }
                             let mut command = util::command::new_std_command(program);
                             command.args(args).current_dir(&root).envs(environment);
+                            command.envs(android_tools::managed::command_environment()?);
                             android_build::command_output(
                                 command,
                                 &executor,
@@ -1502,7 +1525,7 @@ impl AndroidPanel {
             self.kotlin_refresh_pending = None;
             return false;
         }
-        if self.running || self.syncing {
+        if self.running || self.syncing || self.tool_setup.choosing {
             return false;
         }
         self.kotlin_refresh_pending = None;
@@ -1589,7 +1612,7 @@ impl AndroidPanel {
                 return;
             }
         };
-        if self.running || self.syncing {
+        if self.running || self.syncing || self.tool_setup.choosing {
             return;
         }
         if let Err(error) = self.validate_official_kotlin_target(&root, &target, cx) {
@@ -1634,7 +1657,7 @@ impl AndroidPanel {
                         let server = server_binary.parent().and_then(Path::parent).context("The Kotlin server has no distribution directory")?;
                         arguments.extend(["--init-script".into(), resource_guard.to_string_lossy().into_owned(), format!("-Dzed.android.kotlinServer={}", server.display()), kotlin::RESOURCE_GENERATION_TASK.into(), "--no-configuration-cache".into(), "--console=plain".into()]);
                         let mut command = util::command::new_std_command(program);
-                        command.args(arguments).current_dir(&root).env("JAVA_HOME", &java_home)
+                        command.args(arguments).current_dir(&root).envs(android_tools::managed::command_environment()?).env("JAVA_HOME", &java_home)
                             .env("LSP_ANDROID_MODULE", &target.module).env("LSP_ANDROID_VARIANT", &target.variant);
                         android_build::command_output(command, &executor, Duration::from_secs(300), output, cancelled, false).await?.stdout()
                     }
@@ -1736,6 +1759,7 @@ impl AndroidPanel {
                             java::MODEL_TASK.into(), "--no-configuration-cache".into(), "--console=plain".into()]);
                         let mut command = util::command::new_std_command(program);
                         command.args(args).current_dir(&root);
+                        command.envs(android_tools::managed::command_environment()?);
                         let output = android_build::command_output(command, &executor, Duration::from_secs(300), output, cancelled, true).await?.stdout()?;
                         Ok::<_, anyhow::Error>((java::parse_model(&output, &root, &target)?, kotlin::read_settings(&root)?))
                     }
@@ -2212,7 +2236,7 @@ impl AndroidPanel {
     }
 
     fn start_emulator(&mut self, name: String, window: &mut Window, cx: &mut Context<Self>) {
-        if self.running || self.syncing {
+        if self.running || self.syncing || self.tool_setup.choosing {
             return;
         }
         let result = (|| {
@@ -2325,7 +2349,7 @@ impl AndroidPanel {
     }
 
     fn stop_emulator(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.running || self.syncing {
+        if self.running || self.syncing || self.tool_setup.choosing {
             return;
         }
         let result = (|| {
@@ -2533,6 +2557,7 @@ impl Render for AndroidPanel {
                     .on_click(cx.listener(|_, _, _, cx| cx.emit(PanelEvent::Close)))))
             .child(Label::new("Project").color(Color::Muted))
             .child(project_picker)
+            .child(self.render_tool_setup(cx))
             .child(Button::new("sync-project", if self.syncing { "Syncing…" } else { "Sync project" })
                 .disabled(self.syncing || self.running).tab_index(0isize)
                 .on_click(cx.listener(|panel, _, window, cx| panel.sync_project(window, cx))))
@@ -2663,6 +2688,7 @@ impl lsp::notification::Notification for RefreshJavaProjects {
 }
 
 fn java_settings(previous: String, root: &Path, cx: &App) -> Result<String> {
+    let managed_environment = android_tools::managed::language_environment()?;
     let parsed: serde_json::Value = settings::parse_json_with_comments(&previous)?;
     let mut options = parsed
         .pointer("/lsp/jdtls/initialization_options")
@@ -2716,6 +2742,14 @@ fn java_settings(previous: String, root: &Path, cx: &App) -> Result<String> {
             let settings = content.project.lsp.0.entry("jdtls".into()).or_default();
             settings.settings = Some(java_settings);
             settings.initialization_options = Some(options);
+            if !managed_environment.is_empty() {
+                settings
+                    .binary
+                    .get_or_insert_default()
+                    .env
+                    .get_or_insert_default()
+                    .extend(managed_environment.clone());
+            }
         })
 }
 
@@ -2836,6 +2870,7 @@ fn official_kotlin_settings(
     server_binary: &Path,
     cx: &App,
 ) -> Result<String> {
+    let managed_environment = android_tools::managed::language_environment()?;
     let uri = lsp::Uri::from_file_path(root)
         .map_err(|_| anyhow::anyhow!("Could not create the Kotlin project URI"))?;
     let parsed: serde_json::Value = if previous.trim().is_empty() {
@@ -2951,6 +2986,10 @@ fn official_kotlin_settings(
                 ("LSP_ANDROID_MODULE".into(), target.module.clone()),
                 ("LSP_ANDROID_VARIANT".into(), target.variant.clone()),
             ]);
+            binary
+                .env
+                .get_or_insert_default()
+                .extend(managed_environment.clone());
         })
 }
 
@@ -3209,6 +3248,7 @@ async fn tool_output(
 ) -> Result<String> {
     let mut command = new_command(&program);
     command.args(args).current_dir(root);
+    command.envs(android_tools::managed::command_environment()?);
     command_output(command, executor, timeout).await
 }
 
@@ -3813,6 +3853,81 @@ fi
     }
 
     #[gpui::test]
+    async fn managed_tool_setup_cancel_and_root_removal_clear_busy_state(cx: &mut TestAppContext) {
+        let _app_state = cx.update(AppState::test);
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree("/android", json!({"README.md": ""}))
+            .await;
+        let project = Project::test(filesystem, [Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        for closed in [false, true] {
+            panel.update_in(cx, |panel, window, cx| {
+                let (session, output, logs) = panel.build_panel.update(cx, |build, cx| {
+                    build.begin(BuildTab::Output, "Install tools".into(), false, window, cx)
+                });
+                drop(output);
+                logs.detach();
+                panel.active_build_session = Some((BuildTab::Output, session));
+                panel.root = Some(if closed {
+                    PathBuf::from("/closed")
+                } else {
+                    PathBuf::from("/android")
+                });
+                panel.running = true;
+                panel.tool_setup.operation =
+                    Some(cx.spawn(async |_, _| futures::future::pending().await));
+                if closed {
+                    panel.auto_sync_project(window, cx);
+                } else {
+                    panel.cancel_build(BuildTab::Output, cx);
+                }
+                assert!(!panel.running);
+                assert!(panel.active_build_session.is_none());
+                assert!(panel.tool_setup.operation.is_none());
+                assert!(panel.command_cancel.is_none());
+            });
+        }
+    }
+
+    #[gpui::test]
+    async fn managed_tool_setup_rerun_retains_tool_intent(cx: &mut TestAppContext) {
+        let _app_state = cx.update(AppState::test);
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree("/android", json!({"README.md": ""}))
+            .await;
+        let project = Project::test(filesystem, [Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        panel.update_in(cx, |panel, window, cx| {
+            panel.observe_project_open(window, cx);
+            panel.last_build_operation = Some(GradleOperation::Run);
+            panel.tool_setup.last_operation =
+                Some((android_tools::managed::Tool::Preview, "invalid"));
+            panel
+                .build_panel
+                .update(cx, |_, cx| cx.emit(BuildEvent::Rerun(BuildTab::Output)));
+        });
+        cx.run_until_parked();
+        panel.read_with(cx, |panel, _| {
+            assert!(panel.last_build_operation.is_none());
+            assert_eq!(
+                panel.tool_setup.last_operation,
+                Some((android_tools::managed::Tool::Preview, "invalid"))
+            );
+            assert!(panel.error.as_ref().is_some_and(|error| {
+                error.contains("provisioning supports Apple Silicon")
+                    || error.contains("Invalid tool operation")
+            }));
+            assert!(!panel.running);
+        });
+    }
+
+    #[gpui::test]
     async fn completed_build_does_not_continue_in_a_different_project(cx: &mut TestAppContext) {
         let _app_state = cx.update(AppState::test);
         let fs = FakeFs::new(cx.executor());
@@ -4390,7 +4505,11 @@ fi
             let official = &parsed["lsp"]["kotlin-lsp"];
             assert_eq!(official["binary"]["path"], "/official/bin/intellij-server");
             assert_eq!(official["binary"]["arguments"], json!(["--stdio", "--data-sharing=none", "--system-path=/android project/.koda/android-kotlin-official/system"]));
-            assert_eq!(official["binary"]["env"], json!({"CUSTOM": "kept", "LSP_ANDROID_MODULE": ":mobile", "LSP_ANDROID_VARIANT": "demoDebug"}));
+            let mut expected_environment = json!({"CUSTOM": "kept", "LSP_ANDROID_MODULE": ":mobile", "LSP_ANDROID_VARIANT": "demoDebug"});
+            for (name, value) in android_tools::managed::language_environment().expect("Managed language environment") {
+                expected_environment[&name] = value.into();
+            }
+            assert_eq!(official["binary"]["env"], expected_environment);
             assert_eq!(official["initialization_options"], json!({"custom": true, "defaultSdk": "/jdk 21", "projects": [
                 {"type": "gradle", "path": "file:///other", "java-home": "/other-jdk"},
                 {"type": "gradle", "path": "file:///android%20project", "java-home": "/jdk 21"}

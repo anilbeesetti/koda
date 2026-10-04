@@ -19,8 +19,10 @@ pub(super) const ADAPTER: &str = "Android Kotlin";
 pub(super) struct AndroidKotlinAdapter;
 
 pub(super) fn binary() -> Result<PathBuf> {
-    let path = std::env::var_os("ANDROID_IDE_KOTLIN_DEBUGGER").map(PathBuf::from)
-        .context("Run script/install-android-debugger, then relaunch script/android-ide to enable Android debugging.")?;
+    let path = match std::env::var_os("ANDROID_IDE_KOTLIN_DEBUGGER") {
+        Some(path) => PathBuf::from(path),
+        None => android_tools::managed::resolve(android_tools::managed::Tool::Debugger)?,
+    };
     ensure!(
         path.is_absolute() && path.is_file(),
         "ANDROID_IDE_KOTLIN_DEBUGGER must point to the installed debugger executable"
@@ -45,11 +47,11 @@ impl DebugAdapter for AndroidKotlinAdapter {
         user_installed_path: Option<PathBuf>,
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
-        _: &mut AsyncApp,
+        cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
         let executable = match user_installed_path {
             Some(path) => path,
-            None => binary()?,
+            None => cx.background_spawn(async { binary() }).await?,
         };
         ensure!(
             executable.is_absolute() && executable.is_file(),

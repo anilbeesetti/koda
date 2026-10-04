@@ -62,8 +62,8 @@ kotlin_official_server="$repository/target/android-ide/dependencies/kotlin-lsp-2
 if [[ -z ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} && -x "$kotlin_official_server" ]]; then
     export ANDROID_IDE_OFFICIAL_KOTLIN_SERVER="$kotlin_official_server"
 fi
-if [[ ! -f ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} || ! -x ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} ]]; then
-    echo "Missing official Kotlin LSP; run script/install-android-kotlin or set ANDROID_IDE_OFFICIAL_KOTLIN_SERVER." >&2
+if [[ -n ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} && ! -x "$ANDROID_IDE_OFFICIAL_KOTLIN_SERVER" ]]; then
+    echo "Missing official Kotlin LSP at the explicit override; clear ANDROID_IDE_OFFICIAL_KOTLIN_SERVER or choose a valid executable." >&2
     exit 1
 fi
 
@@ -108,7 +108,7 @@ cp "$repository/crates/zed/resources/KodaNightly.icns" "$bundle/Contents/Resourc
 cp -c "$binary" "$executable" || cp "$binary" "$executable"
 
 if [[ ! -e "$profile/config/settings.json" ]]; then
-    python3 - "$profile/config/settings.json" "$ANDROID_IDE_OFFICIAL_KOTLIN_SERVER" <<'SETTINGS'
+    python3 - "$profile/config/settings.json" "${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-}" <<'SETTINGS'
 import json
 from pathlib import Path
 import sys
@@ -119,10 +119,11 @@ settings = {
     "auto_install_extensions": {"kotlin": True, "java": True},
     "languages": {"Kotlin": {"language_servers": ["kotlin-lsp"]}},
 }
-settings["lsp"] = {"kotlin-lsp": {"binary": {
-    "path": str(Path(sys.argv[2]).resolve()),
-    "arguments": ["--stdio", "--data-sharing=none"],
-}}}
+if sys.argv[2]:
+    settings["lsp"] = {"kotlin-lsp": {"binary": {
+        "path": str(Path(sys.argv[2]).resolve()),
+        "arguments": ["--stdio", "--data-sharing=none"],
+    }}}
 Path(sys.argv[1]).write_text(json.dumps(settings, indent=2) + "\n")
 SETTINGS
 fi
@@ -149,4 +150,3 @@ echo "App: $bundle"
 echo "Profile: $profile"
 echo "Kotlin backend: $kotlin_backend ($kotlin_server_id)"
 exec "$executable" --user-data-dir "$profile" "$@"
-

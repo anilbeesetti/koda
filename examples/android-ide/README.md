@@ -4,6 +4,11 @@ This small Compose app tests a module named `mobile`, two product flavors,
 generated `R` and `BuildConfig` symbols, a Kotlin call into Java, and an Android
 library dependency named `greeting`.
 
+Downloaded Koda apps can provision their own Kotlin, debugger and preview tools
+from **Android → Tool setup**, without this checkout or launcher environment
+variables. See [Managed tool setup](TOOL_SETUP.md) for prerequisites, repair,
+updates, platform limits and acceptance checks.
+
 The Android tool installers require Python 3.12 or newer. Ensure `python3` on
 your `PATH` meets that requirement (`python3 --version`) before running setup.
 
