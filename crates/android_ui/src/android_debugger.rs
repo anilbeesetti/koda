@@ -740,6 +740,73 @@ mod tests {
     }
 
     #[gpui::test]
+    async fn active_debugger_detaches_after_variant_changes_and_switching_back(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let _state = cx.update(workspace::AppState::test);
+        let project = Project::test(project::FakeFs::new(cx.executor()), [], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let target = AndroidTarget {
+            module: ":app".into(),
+            variant: "debug".into(),
+            output_listing: "/android/output.json".into(),
+        };
+        panel.update(cx, |panel, cx| {
+            panel.root = Some("/android".into());
+            crate::tests::publish_test_android_model(panel, &target, cx);
+        });
+        cx.run_until_parked();
+        let store = project.read_with(cx, |project, _| project.dap_store());
+        let (owned, unrelated) = store.update(cx, |store, cx| {
+            let session =
+                |store: &mut project::debugger::dap_store::DapStore,
+                 label: &str,
+                 cx: &mut Context<project::debugger::dap_store::DapStore>| {
+                    store
+                        .new_session(
+                            Some(label.into()),
+                            ADAPTER.into(),
+                            TaskContext::default().into(),
+                            None,
+                            Default::default(),
+                            cx,
+                        )
+                        .read(cx)
+                        .session_id()
+                };
+            (
+                session(store, "active-attach", cx),
+                session(store, "unrelated-attach", cx),
+            )
+        });
+        panel.update(cx, |panel, cx| {
+            panel.debug_forward = Some(Forward {
+                model_token: panel.project.read(cx).android_model().token(),
+                executor: cx.background_executor().clone(),
+                adb: "/missing-test-adb".into(),
+                serial: "device".into(),
+                port: 6000,
+                label: "active-attach".into(),
+                session: Some(owned),
+            });
+            let other_variant = AndroidTarget {
+                variant: "release".into(),
+                ..target.clone()
+            };
+            crate::tests::publish_test_android_model(panel, &other_variant, cx);
+            crate::tests::publish_test_android_model(panel, &target, cx);
+        });
+        cx.run_until_parked();
+        assert!(panel.read_with(cx, |panel, _| panel.debug_forward.is_none()));
+        store.read_with(cx, |store, _| {
+            assert!(store.session_by_id(owned).is_none());
+            assert!(store.session_by_id(unrelated).is_some());
+        });
+    }
+
+    #[gpui::test]
     async fn attach_ignores_unrelated_dirty_buffers_but_rejects_selected_sources(
         cx: &mut gpui::TestAppContext,
     ) {
