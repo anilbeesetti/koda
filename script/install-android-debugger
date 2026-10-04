@@ -14,7 +14,7 @@ import zipfile
 
 REVISION = "7f05669b642d21afa46ac7b75307fa5d523a7263"
 SHA256 = "69ae1dc3d97b372bfe326c25a32469adf3bead1a254b0371c2e0ead93fceb6bd"
-VERSION = REVISION + "+android-1"
+VERSION = REVISION + "+android-2"
 SHARED_REVISION = "6d9e61b79d4631e75516def7ab7ff0d8b9310467"
 SHARED_SHA256 = "c82e551b82db7066a8f4c0cc83ce6ef58efb14489882fdf5560af6594bc06ce2"
 JDK_SHA256 = "c487a1c3a56588b3a32d0d07cdd526bf3d401c4b8422be772ca178bfcd647f3f"
@@ -60,7 +60,11 @@ def main(install_kotlin=True):
         subprocess.run(["patch", "--batch", "-p1", "-i", str(patch)], cwd=source, check=True)
         gradle = source / "gradlew"
         managed_arguments = []
+        test_tasks = [":adapter:test"]
         if os.environ.get("KODA_TOOL_DEPENDENCIES"):
+            # Upstream tests start a second, unchecked Gradle wrapper for their
+            # sample project. Run those in development validation, not provisioning.
+            test_tasks = []
             verification = Path(__file__).with_name("android-debugger-verification.xml").read_bytes()
             if hashlib.sha256(verification).hexdigest() != VERIFICATION_SHA256:
                 raise RuntimeError("Debugger dependency verification manifest changed; update the pinned recipe before building")
@@ -94,7 +98,7 @@ gradle.beforeProject { project ->
 ''')
             managed_arguments = ["--init-script", str(guard), "--dependency-verification", "strict"]
         subprocess.run([str(gradle), "-p", str(source), "--include-build", str(shared),
-                        "-PkotlinVersion=2.1.0", ":adapter:test", ":adapter:installDist",
+                        "-PkotlinVersion=2.1.0", *test_tasks, ":adapter:installDist",
                         "--console=plain", "--max-workers=2", "--no-daemon",
                         *managed_arguments,
                         *(["--offline"] if os.environ.get("KODA_TOOL_OFFLINE") == "1" else [])],

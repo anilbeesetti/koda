@@ -103,7 +103,10 @@ plugin and dependency metadata. Strict verification runs for the adapter, shared
 included build and buildSrc; unknown artifacts or checksum mismatches fail closed.
 The installed distribution preserves that metadata for provenance. Changing the
 adapter's dependency graph requires reviewing and updating this pinned metadata;
-provisioning does not trust newly generated checksums automatically.
+provisioning does not trust newly generated checksums automatically. Managed
+installation builds the distribution only. The upstream adapter tests are run
+separately during development validation because their sample-project fixture
+starts another Gradle wrapper outside the managed verification boundary.
 
 **Cancel tool setup** or the Build Output Stop control terminates the supervised
 process tree. Tool setup also cancels when its project closes or loses trust.
@@ -162,7 +165,13 @@ will require reinstallation. PR #49's test runner remains separate; it can use
 `managed::command_environment` for its Gradle commands without another installer
 or discovery model. Reconcile Android panel and README changes when stacking.
 
-The debugger task owns adapter semantics and patch revisions. Preserve
+The debugger task owns adapter semantics and patch revisions. The provisioner
+now incorporates PR #51's exact adapter patch from `84e1f6def2` and revision
+`7f05669b642d21afa46ac7b75307fa5d523a7263+android-2`, with unchanged upstream/source/JDK
+checksums. This is the runtime dependency; PR #51's debugger UI and session
+changes remain separate. The entrypoint and installation-root `.revision` layout
+are compatible. Repair builds a new immutable slot and preserves the old runtime;
+it never merely relabels an existing installation. Preserve
 `install-android-debugger`'s default repository behavior and optional
 `main(install_kotlin=False)` interface. Adapter revisions/patches automatically
 change `Tool::Debugger.recipe`; consume `managed::resolve(Tool::Debugger)` and

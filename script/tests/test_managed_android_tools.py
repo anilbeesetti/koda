@@ -76,6 +76,27 @@ class ManagedToolTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "changed"):
             MANAGER["validate"](self.root, second["previous"], "new recipe")
 
+    def test_debugger_revision_upgrade_builds_a_new_slot_without_relabeling_old_runtime(self):
+        def build_revision(revision):
+            def build(staging):
+                distribution = staging / "adapter"
+                (distribution / "bin").mkdir(parents=True)
+                binary = distribution / "bin/kotlin-debug-adapter"
+                binary.write_text("launcher")
+                binary.chmod(0o755)
+                (distribution / ".revision").write_text(revision)
+                return distribution
+            return build
+        provision = MANAGER["provision"]
+        old = provision(self.root, "debugger", "recipe-1", build_revision("upstream+android-1"), "bin/kotlin-debug-adapter")
+        new = provision(self.root, "debugger", "recipe-2", build_revision("upstream+android-2"), "bin/kotlin-debug-adapter")
+        self.assertEqual((self.root / old["slot"] / ".revision").read_text(), "upstream+android-1")
+        self.assertEqual((self.root / new["slot"] / ".revision").read_text(), "upstream+android-2")
+        self.assertEqual(new["previous"]["slot"], old["slot"])
+        MANAGER["validate"](self.root, new, "recipe-2", "debugger")
+        with self.assertRaisesRegex(RuntimeError, "changed"):
+            MANAGER["validate"](self.root, old, "recipe-2", "debugger")
+
     def test_concurrent_windows_are_rejected_without_mutation(self):
         first = self.install()
         with (self.root / ".lock").open("a") as lock:
