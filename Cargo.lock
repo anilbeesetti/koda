@@ -730,6 +730,7 @@ dependencies = [
  "chrono",
  "dirs",
  "regex",
+ "roxmltree 0.21.1",
  "serde",
  "serde_json",
  "tempfile",
