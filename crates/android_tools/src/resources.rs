@@ -310,13 +310,13 @@ fn rename_scopes_are_unambiguous(mask: &str) -> bool {
     // receivers or anonymous superclasses. Accept only recognizable declaration
     // and control-flow blocks; other scopes need language-server verification.
     let unsupported = Regex::new(
-        r"\bnew\s+[\w.<>]+\s*\([^{}]*\)\s*\{|\bcontext\s*\(|\b(?:fun|val|var)\s+[\w<>?.]+\.",
+        r"\bnew\b[^{};]*\{|\bcontext\s*\(|\b(?:fun|val|var)\s+(?:<[^>{}]*>\s*)?[\w<>?]+\s*\.",
     );
     if unsupported.is_ok_and(|expression| expression.is_match(mask)) {
         return false;
     }
     let Ok(block) = Regex::new(
-        r"(?:\b(?:class|interface|enum|object)\s+\w+[^{};\n]*|\bfun\s+\w+\s*\([^{};]*\)[^{};]*|\b(?:void|int|long|boolean|byte|short|float|double|char|[A-Z]\w*(?:<[^{};]*>)?(?:\[\])?)\s+\w+\s*\([^{};]*\)|\b(?:if|for|while|when|switch|catch|synchronized)\s*\([^{};]*\)|\b(?:else|try|finally|do))\s*$",
+        r"(?:\b(?:class|interface|enum|object)\s+\w+[^{};\n]*|\bfun\s+\w+\s*\([^{};=]*\)(?:\s*:\s*[^{};=]+)?|\b(?:void|int|long|boolean|byte|short|float|double|char|[A-Z]\w*(?:<[^{};]*>)?(?:\[\])?)\s+\w+\s*\([^{};]*\)|\b(?:if|for|while|when|switch|catch|synchronized)\s*\([^{};]*\)|\b(?:else|try|finally|do))\s*$",
     ) else {
         return false;
     };
@@ -527,6 +527,33 @@ pub fn valid_rename(kind: &str, old_name: &str, new_name: &str) -> Result<()> {
         "Renaming styles, attributes and generated styleable members is unsupported"
     );
     ensure!(
+        matches!(
+            kind,
+            "anim"
+                | "animator"
+                | "array"
+                | "bool"
+                | "color"
+                | "dimen"
+                | "drawable"
+                | "font"
+                | "fraction"
+                | "id"
+                | "integer"
+                | "interpolator"
+                | "layout"
+                | "menu"
+                | "mipmap"
+                | "navigation"
+                | "plurals"
+                | "raw"
+                | "string"
+                | "transition"
+                | "xml"
+        ),
+        "This resource kind is unsupported for reviewed rename"
+    );
+    ensure!(
         old_name
             .bytes()
             .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_'),
@@ -696,6 +723,8 @@ mod tests {
             assert!(valid_rename("string", "title", name).is_err());
         }
         assert!(valid_rename("style", "Theme_App", "theme").is_err());
+        assert!(valid_rename("overlayable", "policy", "renamed_policy").is_err());
+        assert!(valid_rename("macro", "macro_name", "renamed_macro").is_err());
         assert_eq!(resource_file_name("image.9.png"), Some("image"));
         assert_eq!(resource_file_name("image.webp"), Some("image"));
     }
@@ -895,6 +924,11 @@ mod tests {
             "val Model.title get() = R.string.title",
             "context(Model) fun render() = R.string.title",
             "class Screen<R> { int title = R.string.title; }",
+            "fun render() = ResourceScope { R.string.title }",
+            "fun render() = ResourceScope(model) { R.string.title }",
+            "fun <T> T.render() = R.string.title",
+            "fun Model . render() = R.string.title",
+            "class Screen { Object value = new @Marker Base() { int title = R.string.title; }; }",
         ] {
             assert!(!rename_code_is_unambiguous(text), "{text}");
         }
