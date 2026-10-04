@@ -1,4 +1,5 @@
 use super::*;
+use android_tools::project_model::ModelToken;
 use android_tools::testing::{self, SourceLocation, TestCase, TestKind, TestStatus};
 use gpui::{ListHorizontalSizingBehavior, ScrollStrategy, UniformListScrollHandle, uniform_list};
 use std::collections::{BTreeMap, BTreeSet};
@@ -29,11 +30,53 @@ enum TestRow {
     Case(usize),
 }
 
+#[derive(Clone)]
+pub(super) struct TestRequest {
+    id: u64,
+    root: PathBuf,
+    target: AndroidTarget,
+    kind: TestKind,
+    serial: Option<String>,
+    selectors: Vec<String>,
+    discover_only: bool,
+    initial_token: Option<ModelToken>,
+    inputs_dirty: bool,
+    waiting_for_model: bool,
+    cancel_requested: bool,
+    saved_revision: Option<u64>,
+}
+
+impl TestRequest {
+    fn context_matches(&self, panel: &AndroidPanel, cx: &App) -> bool {
+        panel.trusted_root(cx).is_ok_and(|root| root == self.root)
+            && panel.selected_target.as_ref().is_some_and(|target| {
+                target.module == self.target.module && target.variant == self.target.variant
+            })
+            && self.serial.as_ref().is_none_or(|serial| {
+                panel.selected_serial.as_ref() == Some(serial) && panel.selected_device().is_ok()
+            })
+    }
+}
+
+struct TestRun {
+    request: TestRequest,
+    token: ModelToken,
+    session: u64,
+    revision: u64,
+}
+type TestOutcome = (
+    Vec<TestCase>,
+    Vec<TestCase>,
+    Result<ProcessOutput>,
+    Option<String>,
+);
+
 pub struct TestPanel {
     focus_handle: FocusHandle,
     root: Option<PathBuf>,
     target: Option<AndroidTarget>,
     serial: Option<String>,
+    model_token: Option<ModelToken>,
     kind: TestKind,
     sources: Vec<TestCase>,
     cases: Vec<TestCase>,
@@ -44,6 +87,7 @@ pub struct TestPanel {
     selected: TestRow,
     scroll: UniformListScrollHandle,
     pub(super) busy: bool,
+    waiting_for_model: bool,
     stale: bool,
     revision: u64,
     last_selectors: Option<Vec<String>>,
@@ -56,6 +100,7 @@ impl TestPanel {
             root: None,
             target: None,
             serial: None,
+            model_token: None,
             kind: TestKind::Unit,
             sources: Vec::new(),
             cases: Vec::new(),
@@ -66,6 +111,7 @@ impl TestPanel {
             selected: TestRow::Suite,
             scroll: UniformListScrollHandle::new(),
             busy: false,
+            waiting_for_model: false,
             stale: false,
             revision: 0,
             last_selectors: None,
@@ -99,10 +145,12 @@ impl TestPanel {
         self.target = Some(target);
         self.kind = kind;
         self.serial = serial;
+        self.model_token = None;
         self.cases.clear();
         self.selected = TestRow::Suite;
         self.last_selectors = selectors;
         self.busy = true;
+        self.waiting_for_model = false;
         self.stale = false;
         self.revision += 1;
         self.message = if self.last_selectors.is_some() {
@@ -404,6 +452,7 @@ impl Render for TestPanel {
         .debug_selector(|| "android-tests-tree".into())
         .track_scroll(&self.scroll)
         .size_full();
+        let busy = self.busy || self.waiting_for_model;
         let controls = h_flex()
             .flex_wrap()
             .min_h_9()
@@ -415,13 +464,13 @@ impl Render for TestPanel {
                 Button::new(kind.label(), kind.label())
                     .tab_index(0isize)
                     .toggle_state(self.kind == kind)
-                    .disabled(self.busy)
+                    .disabled(busy)
                     .on_click(cx.listener(move |_, _, _, cx| cx.emit(TestEvent::Discover(kind))))
             }))
             .child(
                 Button::new("discover-tests", "Discover")
                     .tab_index(0isize)
-                    .disabled(self.busy)
+                    .disabled(busy)
                     .on_click(
                         cx.listener(|panel, _, _, cx| cx.emit(TestEvent::Discover(panel.kind))),
                     ),
@@ -429,7 +478,7 @@ impl Render for TestPanel {
             .child(
                 Button::new("run-selected-test", "Run selected")
                     .tab_index(0isize)
-                    .disabled(self.busy || self.stale)
+                    .disabled(busy || self.stale)
                     .on_click(cx.listener(|panel, _, _, cx| {
                         cx.emit(TestEvent::Run(panel.kind, panel.selectors()))
                     })),
@@ -437,7 +486,7 @@ impl Render for TestPanel {
             .child(
                 Button::new("run-test-suite", "Run suite")
                     .tab_index(0isize)
-                    .disabled(self.busy)
+                    .disabled(busy)
                     .on_click(cx.listener(|panel, _, _, cx| {
                         cx.emit(TestEvent::Run(panel.kind, Vec::new()))
                     })),
@@ -447,7 +496,7 @@ impl Render for TestPanel {
                     .tab_index(0isize)
                     .aria_label("Rerun last selection")
                     .tooltip(Tooltip::text("Rerun last selection"))
-                    .disabled(self.busy || self.stale || self.last_selectors.is_none())
+                    .disabled(busy || self.stale || self.last_selectors.is_none())
                     .on_click(cx.listener(|panel, _, _, cx| {
                         if let Some(selectors) = &panel.last_selectors {
                             cx.emit(TestEvent::Run(panel.kind, selectors.clone()));
@@ -458,8 +507,7 @@ impl Render for TestPanel {
                 Button::new("rerun-failed-tests", "Rerun failed")
                     .tab_index(0isize)
                     .disabled(
-                        self.busy
-                            || self.stale
+                        busy || self.stale
                             || !self
                                 .cases
                                 .iter()
@@ -474,7 +522,7 @@ impl Render for TestPanel {
                     .tab_index(0isize)
                     .aria_label("Cancel tests")
                     .tooltip(Tooltip::text("Cancel tests"))
-                    .disabled(!self.busy)
+                    .disabled(!busy)
                     .on_click(cx.listener(|_, _, _, cx| cx.emit(TestEvent::Stop))),
             )
             .child(div().flex_1())
@@ -577,7 +625,7 @@ impl Render for TestPanel {
 impl AndroidPanel {
     pub(super) fn rerun_tests(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let tests = self.test_panel.read(cx);
-        if tests.stale || tests.busy {
+        if tests.stale || tests.busy || tests.waiting_for_model {
             return;
         }
         let kind = tests.kind;
@@ -603,13 +651,22 @@ impl AndroidPanel {
     }
     pub(super) fn validate_test_context(&mut self, cx: &mut Context<Self>) {
         let tests = self.test_panel.read(cx);
-        let valid = tests.root.as_ref().is_none_or(|root| {
-            self.trusted_root(cx).is_ok_and(|current| &current == root)
-                && self.selected_target == tests.target
-                && tests.serial.as_ref().is_none_or(|serial| {
-                    self.selected_serial.as_ref() == Some(serial) && self.selected_device().is_ok()
+        let valid = self.pending_test.as_ref().map_or_else(
+            || {
+                tests.root.as_ref().is_none_or(|root| {
+                    self.trusted_root(cx).is_ok_and(|current| &current == root)
+                        && self.selected_target == tests.target
+                        && tests.serial.as_ref().is_none_or(|serial| {
+                            self.selected_serial.as_ref() == Some(serial)
+                                && self.selected_device().is_ok()
+                        })
                 })
-        });
+            },
+            |request| request.context_matches(self, cx),
+        ) && tests
+            .model_token
+            .as_ref()
+            .is_none_or(|token| self.project.read(cx).android_model().is_current(token));
         if !valid {
             if !tests.stale {
                 self.test_panel.update(cx, |tests, cx| tests.invalidate(cx));
@@ -619,6 +676,9 @@ impl AndroidPanel {
     }
 
     pub(super) fn cancel_tests(&mut self, cx: &mut Context<Self>) {
+        if let Some(request) = &mut self.pending_test {
+            request.cancel_requested = true;
+        }
         if let Some(cancel) = self.test_cancel.take() {
             if cancel.send(()).is_err() {
                 log::debug!("Android test command already finished");
@@ -627,8 +687,15 @@ impl AndroidPanel {
                 tests.message = "Cancelling tests…".into();
                 cx.notify();
             });
+        } else if self
+            .pending_test
+            .as_ref()
+            .is_some_and(|request| request.waiting_for_model)
+        {
+            self.finish_pending_tests("Test request cancelled", cx);
         }
     }
+
     pub(super) fn start_tests(
         &mut self,
         kind: TestKind,
@@ -637,7 +704,7 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if self.running || self.syncing || self.test_panel.read(cx).busy {
+        if self.running || self.syncing || self.test_operation_id.is_some() {
             return;
         }
         let prepared = (|| {
@@ -651,16 +718,289 @@ impl AndroidPanel {
             } else {
                 None
             };
-            let directory = tempfile::Builder::new().prefix("koda-tests-").tempdir()?;
-            std::fs::write(directory.path().join("runner.gradle"), testing::INIT_SCRIPT)?;
-            let discovery = testing::arguments(&target, kind, directory.path(), &[], true)?;
-            let run = testing::arguments(&target, kind, directory.path(), &selectors, false)?;
-            Ok::<_, anyhow::Error>((root, target, serial, directory, discovery, run))
+            let model = self.project.read(cx).android_model();
+            let initial_token = model
+                .selected
+                .as_ref()
+                .filter(|selected| selected.validate_target(&target).is_ok())
+                .map(|_| model.token());
+            Ok::<_, anyhow::Error>((root, target, serial, initial_token))
         })();
-        let (root, target, serial, directory, discovery, run) = match prepared {
+        let (root, target, serial, initial_token) = match prepared {
             Ok(prepared) => prepared,
             Err(error) => {
                 self.fail(error, window, cx);
+                return;
+            }
+        };
+        self.next_operation_id += 1;
+        let id = self.next_operation_id;
+        self.pending_test = Some(TestRequest {
+            id,
+            root: root.clone(),
+            target: target.clone(),
+            kind,
+            serial: serial.clone(),
+            selectors: selectors.clone(),
+            discover_only,
+            initial_token,
+            inputs_dirty: self.model_inputs_dirty(cx),
+            waiting_for_model: false,
+            cancel_requested: false,
+            saved_revision: None,
+        });
+        self.test_operation_id = Some(id);
+        self.test_panel.update(cx, |tests, cx| {
+            tests.begin(
+                root,
+                target,
+                kind,
+                serial,
+                (!discover_only).then_some(selectors),
+                cx,
+            );
+            tests.message = "Saving files before testing…".into();
+            cx.notify();
+        });
+        self.running = true;
+        self.error = None;
+        self.status = "Saving files before testing…".into();
+        let workspace = self.workspace.clone();
+        let reveal_workspace = workspace.clone();
+        window.defer(cx, move |window, cx| {
+            reveal_workspace
+                .update(cx, |workspace, cx| {
+                    workspace.reveal_panel::<TestPanel>(window, cx)
+                })
+                .log_err();
+        });
+        let (cancel, mut cancelled) = oneshot::channel();
+        self.test_cancel = Some(cancel);
+        self.test_task = Some(cx.spawn_in(window, async move |panel, cx| {
+            let save = async {
+                Workspace::save_for_task(&workspace, SaveStrategy::All, cx).await;
+                workspace
+                    .read_with(cx, |workspace, cx| {
+                        !workspace.items(cx).any(|item| item.is_dirty(cx))
+                    })
+                    .unwrap_or(false)
+            }
+            .boxed_local();
+            let saved = match select(save, &mut cancelled).await {
+                Either::Left((saved, _)) => Some(saved),
+                Either::Right((_, save)) => {
+                    drop(save);
+                    None
+                }
+            };
+            panel
+                .update_in(cx, |panel, window, cx| {
+                    panel.complete_test_save(id, saved, window, cx)
+                })
+                .log_err();
+        }));
+        cx.notify();
+    }
+
+    fn complete_test_save(
+        &mut self,
+        id: u64,
+        saved: Option<bool>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.test_operation_id != Some(id) {
+            return;
+        }
+        self.test_cancel = None;
+        let Some(mut request) = self.pending_test.take() else {
+            return;
+        };
+        let cancelled = saved.is_none() || request.cancel_requested;
+        if saved != Some(true) || cancelled {
+            self.pending_test = Some(request);
+            self.finish_pending_tests(
+                if cancelled {
+                    "Test request cancelled"
+                } else {
+                    "Save modified files before testing"
+                },
+                cx,
+            );
+            cx.defer_in(window, |panel, window, cx| {
+                panel.auto_sync_project(window, cx)
+            });
+            return;
+        }
+        let model = self.project.read(cx).android_model();
+        let selection_changed = !request.inputs_dirty
+            && request
+                .initial_token
+                .as_ref()
+                .is_some_and(|token| model.selected.is_some() && !model.is_current(token));
+        if !request.context_matches(self, cx) || selection_changed || self.model_inputs_dirty(cx) {
+            self.pending_test = Some(request);
+            self.finish_pending_tests(
+                "The test selection changed or project inputs remain unsaved; select and run again",
+                cx,
+            );
+            cx.defer_in(window, |panel, window, cx| {
+                panel.auto_sync_project(window, cx)
+            });
+            return;
+        }
+        let needs_sync = request.inputs_dirty
+            || request
+                .initial_token
+                .as_ref()
+                .is_none_or(|token| !model.is_current(token));
+        request.saved_revision = Some(self.test_panel.update(cx, |tests, cx| {
+            tests.stale = false;
+            cx.notify();
+            tests.revision
+        }));
+        self.running = false;
+        self.test_panel.update(cx, |tests, cx| {
+            tests.busy = false;
+            tests.waiting_for_model = true;
+            tests.message = "Waiting for the selected Android project model…".into();
+            cx.notify();
+        });
+        request.waiting_for_model = true;
+        self.pending_test = Some(request);
+        if needs_sync {
+            self.kotlin_refresh_task = None;
+            self.kotlin_refresh_pending = None;
+            self.sync_project(window, cx);
+        } else {
+            self.resume_pending_tests(window, cx);
+        }
+        cx.notify();
+    }
+
+    pub(super) fn resume_pending_tests(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.running
+            || self.syncing
+            || self.kotlin_refresh_task.is_some()
+            || self.kotlin_refresh_pending.is_some()
+        {
+            return;
+        }
+        let Some(request) = self
+            .pending_test
+            .as_ref()
+            .filter(|request| request.waiting_for_model)
+        else {
+            return;
+        };
+        if !request.context_matches(self, cx) {
+            self.finish_pending_tests(
+                "The requested test variant or device is no longer selected",
+                cx,
+            );
+            return;
+        }
+        if self.model_inputs_dirty(cx) || self.test_sources_dirty(&request.root, cx) {
+            self.finish_pending_tests(
+                "Files changed while waiting for the Android model; save and run again",
+                cx,
+            );
+            return;
+        }
+        let prepared = (|| {
+            let target = self
+                .selected_target
+                .as_ref()
+                .context("Select an Android variant after syncing")?;
+            let state = self.project.read(cx).android_model();
+            let selected = state
+                .selected
+                .as_ref()
+                .context("Android sync did not publish a selected model; sync and try again")?;
+            let sources = testing::component_sources(selected, target, request.kind)?;
+            Ok::<_, anyhow::Error>((state.token(), target.clone(), sources))
+        })();
+        let (token, target, sources) = match prepared {
+            Ok(prepared) => prepared,
+            Err(error) => {
+                self.finish_pending_tests(&format!("Cannot start tests: {error:#}"), cx);
+                return;
+            }
+        };
+        let Some(mut request) = self.pending_test.take() else {
+            return;
+        };
+        request.target = target;
+        self.launch_tests(request, token, sources, window, cx);
+    }
+
+    fn finish_pending_tests(&mut self, message: &str, cx: &mut Context<Self>) {
+        let saving = self
+            .pending_test
+            .as_ref()
+            .is_some_and(|request| !request.waiting_for_model);
+        self.pending_test = None;
+        self.test_operation_id = None;
+        self.test_cancel = None;
+        if saving
+            && self.active_build_session.is_none()
+            && self.active_operation_id.is_none()
+            && self.followup_model_token.is_none()
+        {
+            self.running = false;
+            self.status = message.to_owned().into();
+        }
+        self.test_panel.update(cx, |tests, cx| {
+            tests.busy = false;
+            tests.waiting_for_model = false;
+            tests.stale = true;
+            tests.message = message.to_owned().into();
+            cx.notify();
+        });
+        cx.notify();
+    }
+
+    fn test_sources_dirty(&self, root: &Path, cx: &App) -> bool {
+        self.project
+            .read(cx)
+            .buffer_store()
+            .read(cx)
+            .buffers()
+            .any(|buffer| {
+                let buffer = buffer.read(cx);
+                buffer.is_dirty()
+                    && buffer.file().is_some_and(|file| {
+                        self.project
+                            .read(cx)
+                            .worktree_for_id(file.worktree_id(cx), cx)
+                            .is_some_and(|worktree| worktree.read(cx).abs_path().as_ref() == root)
+                    })
+            })
+    }
+
+    fn launch_tests(
+        &mut self,
+        request: TestRequest,
+        token: ModelToken,
+        sources: Vec<PathBuf>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let prepared = (|| {
+            let directory = tempfile::Builder::new().prefix("koda-tests-").tempdir()?;
+            std::fs::write(directory.path().join("runner.gradle"), testing::INIT_SCRIPT)?;
+            let arguments = testing::arguments(
+                &request.target,
+                request.kind,
+                directory.path(),
+                &request.selectors,
+            )?;
+            Ok::<_, anyhow::Error>((directory, arguments))
+        })();
+        let (directory, arguments) = match prepared {
+            Ok(prepared) => prepared,
+            Err(error) => {
+                self.finish_pending_tests(&format!("Cannot prepare tests: {error:#}"), cx);
                 return;
             }
         };
@@ -672,30 +1012,38 @@ impl AndroidPanel {
                 .update(cx, |environment, cx| {
                     environment.local_directory_environment(
                         &task::Shell::Program(util::get_system_shell()),
-                        Arc::from(root.as_path()),
+                        Arc::from(request.root.as_path()),
                         cx,
                     )
                 });
         let terminal_environment = self
             .project
             .read(cx)
-            .terminal_settings(&Some(root.clone()), cx)
+            .terminal_settings(&Some(request.root.clone()), cx)
             .env
             .clone();
-        let revision = self.test_panel.update(cx, |tests, cx| {
-            tests.begin(
-                root.clone(),
-                target.clone(),
-                kind,
-                serial.clone(),
-                (!discover_only).then_some(selectors),
-                cx,
-            )
+        let Some(revision) = request.saved_revision else {
+            self.finish_pending_tests("Save files before starting tests", cx);
+            return;
+        };
+        self.test_panel.update(cx, |tests, cx| {
+            tests.busy = true;
+            tests.waiting_for_model = false;
+            tests.stale |= tests.revision != revision;
+            tests.model_token = Some(token.clone());
+            tests.target = Some(request.target.clone());
+            tests.message = if request.discover_only {
+                "Discovering tests…"
+            } else {
+                "Running tests…"
+            }
+            .into();
+            cx.notify();
         });
         let (session, output, logs) = self.build_panel.update(cx, |panel, cx| {
             panel.begin(
                 BuildTab::Output,
-                format!("{} · {}", kind.label(), target.label()),
+                format!("{} · {}", request.kind.label(), request.target.label()),
                 false,
                 window,
                 cx,
@@ -709,91 +1057,169 @@ impl AndroidPanel {
                 })
                 .log_err();
         });
-        let (cancel, cancelled) = oneshot::channel();
+        let (cancel, mut cancelled) = oneshot::channel();
         self.test_cancel = Some(cancel);
         self.active_build_session = Some((BuildTab::Output, session));
-        self.status = format!("{} · {}", kind.label(), target.label()).into();
+        self.status = format!("{} · {}", request.kind.label(), request.target.label()).into();
         self.last_build_operation = Some(GradleOperation::Test);
         self.running = true;
-        self.error = None;
         let executor = cx.background_executor().clone();
-        let workspace = self.workspace.clone();
         let (progress, mut progress_receiver) = futures::channel::mpsc::channel(1);
+        let id = request.id;
+        let progress_token = token.clone();
         let progress_task = cx.spawn(async move |panel, cx| {
             while let Some(cases) = progress_receiver.next().await {
                 panel
                     .update(cx, |panel, cx| {
-                        panel.test_panel.update(cx, |tests, cx| {
-                            if tests.busy {
-                                tests.replace_cases(cases);
-                                cx.notify();
-                            }
-                        })
+                        panel.publish_test_progress(id, &progress_token, cases, cx);
                     })
                     .log_err();
             }
         });
         self.test_task = Some(cx.spawn_in(window, async move |panel, cx| {
-            let mut cancelled = cancelled;
-            let preparation = async {
-                Workspace::save_for_task(&workspace, SaveStrategy::All, cx).await;
-                let saved = workspace.read_with(cx, |workspace, cx| !workspace.items(cx).any(|item| item.is_dirty(cx))).unwrap_or(false);
-                let saved_revision = panel.update(cx, |panel, cx| panel.test_panel.update(cx, |tests, cx| { tests.stale = false; cx.notify(); tests.revision })).unwrap_or(revision);
+            let prepare_environment = async {
                 let mut environment = environment.await.unwrap_or_default();
                 environment.extend(terminal_environment);
-                if let Some(serial) = &serial { environment.insert("ANDROID_SERIAL".into(), serial.clone()); }
-                (saved_revision, environment, saved)
-            }.boxed_local();
-            let prepared = match select(preparation, &mut cancelled).await {
-                Either::Left((prepared, _)) => Some(prepared),
-                Either::Right((_, preparation)) => { drop(preparation); None }
+                if let Some(serial) = &request.serial {
+                    environment.insert("ANDROID_SERIAL".into(), serial.clone());
+                }
+                environment
+            }
+            .boxed_local();
+            let environment = match select(prepare_environment, &mut cancelled).await {
+                Either::Left((environment, _)) => Some(environment),
+                Either::Right((_, environment)) => {
+                    drop(environment);
+                    None
+                }
             };
-            let valid = panel.read_with(cx, |panel, cx| panel.trusted_root(cx).is_ok_and(|current| current == root) && panel.selected_target.as_ref() == Some(&target) && serial.as_ref().is_none_or(|serial| panel.selected_serial.as_ref() == Some(serial) && panel.selected_device().is_ok())).unwrap_or(false);
-            let (revision, environment, saved) = prepared.clone().unwrap_or((revision, Default::default(), false));
-            let (sources, results, result, report_error) = if valid && saved && prepared.is_some() {
-                cx.background_spawn(execute_tests(TestExecution {
-                    root: root.clone(), environment, directory, discovery, run, discover_only,
-                }, executor, output, cancelled, progress)).await
+            let valid = panel
+                .read_with(cx, |panel, cx| {
+                    panel.test_operation_id == Some(id)
+                        && panel.test_cancel.is_some()
+                        && request.context_matches(panel, cx)
+                        && panel.project.read(cx).android_model().is_current(&token)
+                        && !panel.model_inputs_dirty(cx)
+                        && !panel.test_sources_dirty(&request.root, cx)
+                })
+                .unwrap_or(false);
+            let outcome = if valid && let Some(environment) = environment {
+                cx.background_spawn(execute_tests(
+                    TestExecution {
+                        root: request.root.clone(),
+                        environment,
+                        directory,
+                        sources,
+                        run: arguments,
+                        discover_only: request.discover_only,
+                    },
+                    executor,
+                    output,
+                    cancelled,
+                    progress,
+                ))
+                .await
             } else {
                 drop(output);
                 drop(progress);
-                (Vec::new(), Vec::new(), if prepared.is_none() { Ok(ProcessOutput::Cancelled) } else { Err(anyhow::anyhow!("Save modified files and check the selected project, variant and device before testing")) }, None)
+                (Vec::new(), Vec::new(), Ok(ProcessOutput::Cancelled), None)
             };
             progress_task.await;
             logs.await;
-            panel.update_in(cx, |panel, window, cx| {
-                panel.test_cancel = None;
-                if panel.active_build_session == Some((BuildTab::Output, session)) {
-                    panel.active_build_session = None;
-                }
-                panel.running = false;
-                let (status, mut message) = match result {
-                    Ok(ProcessOutput::Cancelled) => (BuildStatus::Cancelled, "Test run cancelled; completed results retained".to_owned()),
-                    Err(error) => (BuildStatus::Failed, format!("Test process failed: {error:#}. See Build Output.")),
-                    Ok(_) if report_error.is_some() => (BuildStatus::Failed, "Test reports are incomplete".into()),
-                    Ok(_) if discover_only => (BuildStatus::Succeeded, format!("Discovered {} tests. Select a method, class, or run suite.", sources.len())),
-                    Ok(_) if results.is_empty() => (BuildStatus::Failed, "No test results were produced. Check the test task, runner and Build Output.".into()),
-                    Ok(_) if results.iter().any(|case| case.status == TestStatus::Failed) => (BuildStatus::Failed, "Tests failed".into()),
-                    Ok(_) => (BuildStatus::Succeeded, "Tests completed".into()),
-                };
-                if let Some(report_error) = report_error { message.push_str(&format!("\nPartial results: {report_error}")); }
-                panel.status = message.clone().into();
-                panel.build_panel.update(cx, |build, cx| build.finish(BuildTab::Output, session, status, message.clone(), cx));
-                panel.test_panel.update(cx, |tests, cx| {
-                    tests.busy = false;
-                    tests.stale |= tests.revision != revision;
-                    tests.sources = sources;
-                    tests.replace_cases(if discover_only { tests.sources.clone() } else { results });
-                    tests.message = message.into();
-                    tests.rebuild_rows();
-                    cx.notify();
-                });
-                cx.notify();
-                cx.defer_in(window, |panel, window, cx| panel.auto_sync_project(window, cx));
-            }).log_err();
+            panel
+                .update_in(cx, |panel, window, cx| {
+                    if panel.finish_test_run(
+                        TestRun {
+                            request,
+                            token,
+                            session,
+                            revision,
+                        },
+                        outcome,
+                        cx,
+                    ) {
+                        cx.defer_in(window, |panel, window, cx| {
+                            panel.auto_sync_project(window, cx)
+                        });
+                    }
+                })
+                .log_err();
         }));
         cx.notify();
     }
+
+    fn finish_test_run(
+        &mut self,
+        run: TestRun,
+        outcome: TestOutcome,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        if self.test_operation_id != Some(run.request.id) {
+            return false;
+        }
+        let current = run.request.context_matches(self, cx)
+            && self.project.read(cx).android_model().is_current(&run.token);
+        let (sources, results, result, report_error) = outcome;
+        self.test_cancel = None;
+        self.test_operation_id = None;
+        let (status, mut message) = match result {
+            _ if !current => (BuildStatus::Cancelled, "The Android test model or selection changed; previous completed results retained as stale".to_owned()),
+            Ok(ProcessOutput::Cancelled) => (BuildStatus::Cancelled, "Test run cancelled; completed results retained".to_owned()),
+            Err(error) => (BuildStatus::Failed, format!("Test process failed: {error:#}. See Build Output.")),
+            Ok(_) if report_error.is_some() => (BuildStatus::Failed, "Test reports are incomplete".into()),
+            Ok(_) if run.request.discover_only => (BuildStatus::Succeeded, format!("Discovered {} tests. Select a method, class, or run suite.", sources.len())),
+            Ok(_) if results.is_empty() => (BuildStatus::Failed, "No test results were produced. Check the test task, runner and Build Output.".into()),
+            Ok(_) if results.iter().any(|case| case.status == TestStatus::Failed) => (BuildStatus::Failed, "Tests failed".into()),
+            Ok(_) => (BuildStatus::Succeeded, "Tests completed".into()),
+        };
+        if current && let Some(report_error) = report_error {
+            message.push_str(&format!("\nPartial results: {report_error}"));
+        }
+        if self.active_build_session == Some((BuildTab::Output, run.session)) {
+            self.active_build_session = None;
+            self.running = false;
+            self.status = message.clone().into();
+        }
+        self.build_panel.update(cx, |build, cx| {
+            build.finish(BuildTab::Output, run.session, status, message.clone(), cx)
+        });
+        self.test_panel.update(cx, |tests, cx| {
+            tests.busy = false;
+            tests.waiting_for_model = false;
+            tests.stale |= !current || tests.revision != run.revision;
+            if current {
+                tests.sources = sources;
+                tests.replace_cases(if run.request.discover_only {
+                    tests.sources.clone()
+                } else {
+                    results
+                });
+            }
+            tests.message = message.into();
+            cx.notify();
+        });
+        cx.notify();
+        true
+    }
+
+    fn publish_test_progress(
+        &mut self,
+        id: u64,
+        token: &ModelToken,
+        cases: Vec<TestCase>,
+        cx: &mut Context<Self>,
+    ) {
+        if self.test_operation_id == Some(id)
+            && self.project.read(cx).android_model().is_current(token)
+            && self.test_panel.read(cx).model_token.as_ref() == Some(token)
+        {
+            self.test_panel.update(cx, |tests, cx| {
+                tests.replace_cases(cases);
+                cx.notify();
+            });
+        }
+    }
+
     fn open_test_source(
         &self,
         source: SourceLocation,
@@ -830,7 +1256,7 @@ struct TestExecution {
     root: PathBuf,
     environment: collections::HashMap<String, String>,
     directory: tempfile::TempDir,
-    discovery: Vec<String>,
+    sources: Vec<PathBuf>,
     run: Vec<String>,
     discover_only: bool,
 }
@@ -846,6 +1272,9 @@ async fn execute_tests(
     Result<ProcessOutput>,
     Option<String>,
 ) {
+    if !matches!(cancelled.try_recv(), Ok(None)) {
+        return (Vec::new(), Vec::new(), Ok(ProcessOutput::Cancelled), None);
+    }
     let command = |arguments: Vec<String>| {
         let mut command = if cfg!(windows) {
             util::command::new_std_command(execution.root.join("gradlew.bat"))
@@ -862,18 +1291,7 @@ async fn execute_tests(
     };
     let mut sources = Vec::new();
     let operation = async {
-        let (_keep_cancel, never_cancel) = oneshot::channel();
-        android_build::command_output(
-            command(execution.discovery.clone()),
-            &executor,
-            Duration::from_secs(300),
-            output.clone(),
-            never_cancel,
-            false,
-        )
-        .await?
-        .stdout()?;
-        sources = testing::discover(execution.directory.path())?;
+        sources = testing::discover(&execution.sources)?;
         if execution.discover_only {
             return Ok(ProcessOutput::Success(String::new()));
         }
@@ -923,6 +1341,505 @@ async fn execute_tests(
 mod tests {
     use super::*;
 
+    async fn runner_fixture(
+        cx: &mut gpui::TestAppContext,
+    ) -> (
+        Arc<workspace::AppState>,
+        Entity<AndroidPanel>,
+        &mut gpui::VisualTestContext,
+    ) {
+        let state = cx.update(|cx| {
+            let state = workspace::AppState::test(cx);
+            editor::init(cx);
+            state
+        });
+        let filesystem = project::FakeFs::new(cx.executor());
+        filesystem.insert_tree("/android", serde_json::json!({"settings.gradle.kts":"", "build.gradle.kts":"// original", "gradlew":"", "app":{"src":{"test":{"java":{"Tests.kt":"class Tests {}"}}}}})).await;
+        let project = Project::test(filesystem, [Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        panel.update(cx, |panel, _| {
+            panel.root = Some("/android".into());
+            let target = AndroidTarget {
+                module: ":app".into(),
+                variant: "debug".into(),
+                output_listing: "/android/output.json".into(),
+            };
+            panel.targets = vec![target.clone()];
+            panel.selected_target = Some(target);
+            panel.selected_serial = Some("selected".into());
+            panel.devices = parse_devices("List of devices attached\nselected device\n").unwrap();
+        });
+        (state, panel, cx)
+    }
+
+    fn publish_runner_model(
+        panel: &mut AndroidPanel,
+        cx: &mut Context<AndroidPanel>,
+    ) -> ModelToken {
+        let root = panel.root.clone().unwrap();
+        let target = panel.selected_target.clone().unwrap();
+        let variants = ["debug", "release"].map(|name| serde_json::json!({
+            "name":name,"outputListing":target.output_listing,"components":[
+                {"name":name,"scope":"main","sources":[],"dependencies":[]},
+                {"name":format!("{name}UnitTest"),"scope":"unitTest","sources":[],"dependencies":[]},
+                {"name":format!("{name}AndroidTest"),"scope":"androidTest","sources":[],"dependencies":[]}
+            ]
+        }));
+        let model = serde_json::from_value(serde_json::json!({"version":1,"root":root,"diagnostics":[],"modules":[{"path":target.module,"directory":root.join("app"),"kind":"application","variants":variants}]})).unwrap();
+        panel.project.update(cx, |project, cx| {
+            let token = project.invalidate_android_model(Some(root), cx);
+            project.publish_android_model(&token, model, cx).unwrap();
+            project
+                .select_android_variant(
+                    Some(android_tools::project_model::VariantId::from(&target)),
+                    cx,
+                )
+                .unwrap();
+            project.android_model().token()
+        })
+    }
+
+    fn request(panel: &AndroidPanel, id: u64, cx: &App) -> TestRequest {
+        TestRequest {
+            id,
+            root: panel.root.clone().unwrap(),
+            target: panel.selected_target.clone().unwrap(),
+            kind: TestKind::Unit,
+            serial: None,
+            selectors: vec!["dev.Tests.method".into()],
+            discover_only: false,
+            initial_token: panel
+                .project
+                .read(cx)
+                .android_model()
+                .selected
+                .as_ref()
+                .map(|_| panel.project.read(cx).android_model().token()),
+            inputs_dirty: false,
+            waiting_for_model: false,
+            cancel_requested: false,
+            saved_revision: None,
+        }
+    }
+
+    fn result(name: &str) -> TestCase {
+        TestCase {
+            id: testing::TestId {
+                class: "dev.Tests".into(),
+                method: name.into(),
+            },
+            status: TestStatus::Passed,
+            duration_ms: 1,
+            detail: String::new(),
+            source: None,
+            parameterized: false,
+        }
+    }
+
+    #[gpui::test]
+    async fn missing_snapshot_waits_for_sync_and_preserves_device_method_request(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        panel.update_in(cx, |panel, window, cx| {
+            let mut request = request(panel, 1, cx);
+            request.kind = TestKind::Device;
+            request.serial = Some("selected".into());
+            request.selectors = vec!["dev.Tests#method".into()];
+            panel.test_panel.update(cx, |tests, cx| {
+                tests.begin(
+                    request.root.clone(),
+                    request.target.clone(),
+                    request.kind,
+                    request.serial.clone(),
+                    Some(request.selectors.clone()),
+                    cx,
+                );
+            });
+            panel.pending_test = Some(request.clone());
+            panel.test_operation_id = Some(1);
+            panel.running = true;
+            panel.complete_test_save(1, Some(true), window, cx);
+            assert!(panel.syncing);
+            assert!(panel.sync_task.is_some());
+            assert!(panel.pending_test.as_ref().unwrap().waiting_for_model);
+            assert!(panel.test_panel.read(cx).model_token.is_none());
+            assert!(!panel.test_panel.read(cx).busy);
+            panel.sync_task = None;
+            panel.command_cancel = None;
+            panel.active_build_session = None;
+            panel.syncing = false;
+            let token = publish_runner_model(panel, cx);
+            panel.resume_pending_tests(window, cx);
+            let tests = panel.test_panel.read(cx);
+            assert_eq!(tests.model_token.as_ref(), Some(&token));
+            assert_eq!(tests.kind, TestKind::Device);
+            assert_eq!(tests.serial.as_deref(), Some("selected"));
+            assert_eq!(tests.last_selectors.as_ref().unwrap(), &request.selectors);
+            assert!(panel.pending_test.is_none());
+            assert!(tests.busy);
+            panel.cancel_tests(cx);
+            panel.test_task = None;
+            let session = panel.active_build_session.unwrap().1;
+            let revision = panel.test_panel.read(cx).revision;
+            panel.finish_test_run(
+                TestRun {
+                    request,
+                    token,
+                    session,
+                    revision,
+                },
+                (Vec::new(), Vec::new(), Ok(ProcessOutput::Cancelled), None),
+                cx,
+            );
+            assert!(panel.test_operation_id.is_none());
+            panel.start_tests(TestKind::Unit, Vec::new(), true, window, cx);
+        });
+        cx.run_until_parked();
+        panel.read_with(cx, |panel, cx| {
+            assert!(panel.test_operation_id.is_none());
+            assert!(!panel.test_panel.read(cx).busy);
+            assert!(!panel.test_panel.read(cx).stale);
+            assert!(panel.test_panel.read(cx).message.starts_with("Discovered"));
+        });
+    }
+
+    #[gpui::test]
+    async fn dirty_model_inputs_save_before_test_sync_and_never_launch_old_snapshot(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        let project = panel.read_with(cx, |panel, _| panel.project.clone());
+        let buffer = project
+            .update(cx, |project, cx| {
+                project.open_local_buffer("/android/build.gradle.kts", cx)
+            })
+            .await
+            .unwrap();
+        panel.update_in(cx, |panel, window, cx| {
+            panel
+                .workspace
+                .update(cx, |workspace, cx| {
+                    let editor = cx.new(|cx| {
+                        editor::Editor::for_buffer(
+                            buffer.clone(),
+                            Some(project.clone()),
+                            window,
+                            cx,
+                        )
+                    });
+                    workspace.add_item(
+                        workspace.active_pane().clone(),
+                        Box::new(editor),
+                        None,
+                        true,
+                        true,
+                        window,
+                        cx,
+                    );
+                })
+                .unwrap();
+            publish_runner_model(panel, cx);
+            buffer.update(cx, |buffer, cx| {
+                buffer.edit([(0..0, "// change\n")], None, cx)
+            });
+            assert!(panel.model_inputs_dirty(cx));
+            panel.start_tests(
+                TestKind::Device,
+                vec!["dev.Tests#method".into()],
+                false,
+                window,
+                cx,
+            );
+            assert!(panel.pending_test.as_ref().unwrap().inputs_dirty);
+            assert!(panel.active_build_session.is_none());
+        });
+        cx.run_until_parked();
+        assert!(!buffer.read_with(cx, |buffer, _| buffer.is_dirty()));
+        panel.read_with(cx, |panel, cx| {
+            assert!(
+                panel.sync_task.is_some(),
+                "Saved model inputs must sync before a test task starts"
+            );
+            assert!(
+                panel.test_panel.read(cx).model_token.is_none(),
+                "An old snapshot must not launch tests"
+            );
+            assert!(panel.last_build_operation.is_none());
+        });
+    }
+
+    #[gpui::test]
+    async fn edits_during_model_wait_reject_dirty_sources_and_gradle_inputs(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        let project = panel.read_with(cx, |panel, _| panel.project.clone());
+        for path in [
+            "/android/app/src/test/java/Tests.kt",
+            "/android/build.gradle.kts",
+        ] {
+            let buffer = project
+                .update(cx, |project, cx| project.open_local_buffer(path, cx))
+                .await
+                .unwrap();
+            panel.update_in(cx, |panel, window, cx| {
+                publish_runner_model(panel, cx);
+                let mut request = request(panel, 1, cx);
+                let revision = panel.test_panel.update(cx, |tests, cx| {
+                    tests.begin(
+                        request.root.clone(),
+                        request.target.clone(),
+                        TestKind::Unit,
+                        None,
+                        None,
+                        cx,
+                    )
+                });
+                request.saved_revision = Some(revision);
+                request.waiting_for_model = true;
+                panel.pending_test = Some(request);
+                panel.test_operation_id = Some(1);
+                buffer.update(cx, |buffer, cx| {
+                    buffer.edit([(0..0, "// late edit\n")], None, cx)
+                });
+                if path.ends_with("gradle.kts") {
+                    assert!(panel.model_inputs_dirty(cx));
+                } else {
+                    assert!(panel.test_sources_dirty(Path::new("/android"), cx));
+                }
+                panel.resume_pending_tests(window, cx);
+                assert!(panel.pending_test.is_none());
+                assert!(panel.test_operation_id.is_none());
+                assert!(panel.active_build_session.is_none());
+                assert!(panel.test_panel.read(cx).stale);
+                assert!(
+                    panel
+                        .test_panel
+                        .read(cx)
+                        .message
+                        .starts_with("Files changed")
+                );
+                buffer.update(cx, |buffer, cx| buffer.undo(cx));
+            });
+        }
+    }
+
+    #[gpui::test]
+    async fn post_save_revision_stays_stale_through_discovery(cx: &mut gpui::TestAppContext) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        panel.update_in(cx, |panel, window, cx| {
+            let token = publish_runner_model(panel, cx);
+            let mut request = request(panel, 1, cx);
+            request.discover_only = true;
+            request.saved_revision = Some(panel.test_panel.update(cx, |tests, cx| {
+                tests.begin(
+                    request.root.clone(),
+                    request.target.clone(),
+                    TestKind::Unit,
+                    None,
+                    None,
+                    cx,
+                )
+            }));
+            panel
+                .test_panel
+                .update(cx, |tests, cx| tests.invalidate(cx));
+            panel.test_operation_id = Some(1);
+            panel.launch_tests(request, token, Vec::new(), window, cx);
+            assert!(panel.test_panel.read(cx).stale);
+        });
+        cx.run_until_parked();
+        panel.read_with(cx, |panel, cx| {
+            assert!(panel.test_operation_id.is_none());
+            assert!(panel.test_panel.read(cx).stale);
+        });
+    }
+
+    #[gpui::test]
+    async fn selection_a_b_a_during_save_rejects_pending_request(cx: &mut gpui::TestAppContext) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        panel.update_in(cx, |panel, window, cx| {
+            publish_runner_model(panel, cx);
+            panel.pending_test = Some(request(panel, 1, cx));
+            panel.test_operation_id = Some(1);
+            panel.running = true;
+            panel.project.update(cx, |project, cx| {
+                for variant in ["release", "debug"] {
+                    project
+                        .select_android_variant(
+                            Some(android_tools::project_model::VariantId {
+                                module: ":app".into(),
+                                variant: variant.into(),
+                            }),
+                            cx,
+                        )
+                        .unwrap();
+                }
+            });
+            panel.complete_test_save(1, Some(true), window, cx);
+            assert!(panel.test_operation_id.is_none());
+            assert!(panel.sync_task.is_none());
+            assert!(panel.active_build_session.is_none());
+            assert!(!panel.running);
+        });
+    }
+
+    #[gpui::test]
+    async fn selection_generation_rejects_stale_reports_and_callbacks_after_a_b_a_and_rerun(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        panel.update_in(cx, |panel, window, cx| {
+            let token = publish_runner_model(panel, cx);
+            let request = request(panel, 1, cx);
+            panel.test_panel.update(cx, |tests, cx| {
+                tests.begin(
+                    request.root.clone(),
+                    request.target.clone(),
+                    TestKind::Unit,
+                    None,
+                    Some(request.selectors.clone()),
+                    cx,
+                );
+                tests.model_token = Some(token.clone());
+                tests.replace_cases(vec![result("beforeChange")]);
+            });
+            let (session, _, _) = panel.build_panel.update(cx, |build, cx| {
+                build.begin(BuildTab::Output, "Tests".into(), false, window, cx)
+            });
+            let run = TestRun {
+                request: request.clone(),
+                token: token.clone(),
+                session,
+                revision: panel.test_panel.read(cx).revision,
+            };
+            panel.test_operation_id = Some(1);
+            panel.active_build_session = Some((BuildTab::Output, session));
+            panel.running = true;
+            let (cancel, mut cancelled) = oneshot::channel();
+            panel.test_cancel = Some(cancel);
+            panel.project.update(cx, |project, cx| {
+                project
+                    .select_android_variant(
+                        Some(android_tools::project_model::VariantId {
+                            module: ":app".into(),
+                            variant: "release".into(),
+                        }),
+                        cx,
+                    )
+                    .unwrap();
+                project
+                    .select_android_variant(
+                        Some(android_tools::project_model::VariantId::from(
+                            &request.target,
+                        )),
+                        cx,
+                    )
+                    .unwrap();
+            });
+            panel.publish_test_progress(1, &token, vec![result("lateOldResult")], cx);
+            assert_eq!(panel.test_panel.read(cx).cases[0].id.method, "beforeChange");
+            panel.validate_test_context(cx);
+            assert_eq!(cancelled.try_recv().unwrap(), Some(()));
+            assert!(panel.test_panel.read(cx).stale);
+            panel.finish_test_run(
+                run,
+                (
+                    Vec::new(),
+                    vec![result("lateFinal")],
+                    Ok(ProcessOutput::Success(String::new())),
+                    None,
+                ),
+                cx,
+            );
+            assert_eq!(panel.test_panel.read(cx).cases[0].id.method, "beforeChange");
+            let new_token = panel.project.read(cx).android_model().token();
+            panel.test_operation_id = Some(2);
+            panel.active_build_session = Some((BuildTab::Output, session + 1));
+            panel.running = true;
+            panel.status = "New run".into();
+            panel.test_panel.update(cx, |tests, _| {
+                tests.busy = true;
+                tests.model_token = Some(new_token.clone());
+            });
+            panel.publish_test_progress(2, &new_token, vec![result("newResult")], cx);
+            let old = TestRun {
+                request,
+                token,
+                session,
+                revision: 0,
+            };
+            assert!(!panel.finish_test_run(
+                old,
+                (Vec::new(), Vec::new(), Ok(ProcessOutput::Cancelled), None),
+                cx
+            ));
+            panel.complete_test_save(1, Some(true), window, cx);
+            assert!(panel.running);
+            assert_eq!(panel.status.as_ref(), "New run");
+            assert_eq!(panel.test_operation_id, Some(2));
+            assert_eq!(panel.test_panel.read(cx).cases[0].id.method, "newResult");
+            panel.publish_test_progress(1, &new_token, vec![result("oldRunSameGeneration")], cx);
+            assert_eq!(panel.test_panel.read(cx).cases[0].id.method, "newResult");
+        });
+    }
+
+    #[gpui::test]
+    async fn repeated_cancel_preserves_save_and_shared_sync_ownership(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        panel.update_in(cx, |panel, window, cx| {
+            publish_runner_model(panel, cx);
+            let request = request(panel, 1, cx);
+            panel.pending_test = Some(request.clone());
+            panel.test_operation_id = Some(1);
+            panel.running = true;
+            panel.test_panel.update(cx, |tests, cx| {
+                tests.begin(
+                    request.root.clone(),
+                    request.target.clone(),
+                    TestKind::Unit,
+                    None,
+                    Some(request.selectors.clone()),
+                    cx,
+                );
+            });
+            let (cancel, mut cancelled) = oneshot::channel();
+            panel.test_cancel = Some(cancel);
+            panel.cancel_tests(cx);
+            panel.cancel_tests(cx);
+            assert_eq!(cancelled.try_recv().unwrap(), Some(()));
+            assert_eq!(panel.test_operation_id, Some(1));
+            assert!(panel.test_panel.read(cx).busy);
+            panel.complete_test_save(1, Some(true), window, cx);
+            assert!(panel.test_operation_id.is_none());
+            assert!(!panel.running);
+            let mut request = request;
+            request.id = 2;
+            request.waiting_for_model = true;
+            panel.pending_test = Some(request);
+            panel.test_operation_id = Some(2);
+            panel.running = true;
+            panel.syncing = true;
+            panel.active_build_session = Some((BuildTab::Sync, 9));
+            panel.status = "Shared model sync".into();
+            panel.test_panel.update(cx, |tests, _| {
+                tests.waiting_for_model = true;
+            });
+            panel.cancel_build(BuildTab::Output, cx);
+            panel.cancel_build(BuildTab::Output, cx);
+            assert!(panel.pending_test.is_none());
+            assert!(panel.running);
+            assert!(panel.syncing);
+            assert_eq!(panel.active_build_session, Some((BuildTab::Sync, 9)));
+            assert_eq!(panel.status.as_ref(), "Shared model sync");
+        });
+    }
+
     #[gpui::test]
     async fn context_changes_cancel_even_when_results_are_already_stale(
         cx: &mut gpui::TestAppContext,
@@ -964,6 +1881,7 @@ mod tests {
                 });
                 let (cancel, mut cancelled) = oneshot::channel();
                 panel.test_cancel = Some(cancel);
+                panel.test_operation_id = Some(1);
                 panel.validate_test_context(cx);
                 assert!(panel.test_cancel.is_some(), "The captured context is valid");
                 match change {
@@ -1103,7 +2021,6 @@ mod tests {
         let root = tempfile::tempdir().unwrap();
         let directory = tempfile::tempdir().unwrap();
         std::fs::write(root.path().join("gradlew"), r#"case "$1" in
-discover) printf '{"directories":[]}' > "$KODA_TEST_OUTPUT/sources.json" ;;
 run)
 printf '{"id":{"class":"dev.Tests","method":"completed"},"status":"Passed"}\n' > "$KODA_TEST_OUTPUT/events.jsonl"
 mkdir "$KODA_TEST_OUTPUT/unit"
@@ -1119,7 +2036,7 @@ esac
             root: root.path().into(),
             environment,
             directory,
-            discovery: vec!["discover".into()],
+            sources: Vec::new(),
             run: vec!["run".into()],
             discover_only: false,
         };

@@ -317,6 +317,8 @@ pub struct AndroidPanel {
     test_panel: Entity<TestPanel>,
     test_task: Option<Task<()>>,
     test_cancel: Option<oneshot::Sender<()>>,
+    test_operation_id: Option<u64>,
+    pending_test: Option<android_tests::TestRequest>,
     build_task: Option<Task<()>>,
     command_cancel: Option<oneshot::Sender<()>>,
     active_build_session: Option<(BuildTab, u64)>,
@@ -405,6 +407,7 @@ impl AndroidPanel {
             }
         });
         let project_model_subscription = cx.observe(&project, |panel, _, cx| {
+            panel.validate_test_context(cx);
             if panel
                 .followup_model_token
                 .as_ref()
@@ -427,6 +430,8 @@ impl AndroidPanel {
             test_panel,
             test_task: None,
             test_cancel: None,
+            test_operation_id: None,
+            pending_test: None,
             build_task: None,
             command_cancel: None,
             active_build_session: None,
@@ -512,6 +517,7 @@ impl AndroidPanel {
                 if panel.take_official_kotlin_refresh(cx) {
                     panel.sync_project(window, cx);
                 } else {
+                    panel.resume_pending_tests(window, cx);
                     panel.resume_pending_gradle_operation(window, cx);
                 }
             },
@@ -668,7 +674,7 @@ impl AndroidPanel {
     }
 
     fn cancel_build(&mut self, tab: BuildTab, cx: &mut Context<Self>) {
-        if tab == BuildTab::Output && self.test_panel.read(cx).busy {
+        if tab == BuildTab::Output && self.test_operation_id.is_some() {
             self.cancel_tests(cx);
             return;
         }
@@ -1341,6 +1347,7 @@ impl AndroidPanel {
     fn resume_pending_gradle_operation(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.running
             || self.syncing
+            || self.test_panel.read(cx).busy
             || self.kotlin_refresh_task.is_some()
             || self.kotlin_refresh_pending.is_some()
         {
@@ -2046,6 +2053,9 @@ impl AndroidPanel {
         cx: &mut Context<Self>,
     ) {
         use android_tools::kotlin;
+        if self.test_panel.read(cx).busy {
+            return;
+        }
         let root = match self.trusted_root(cx) {
             Ok(root) => root,
             Err(error) => {
@@ -2801,7 +2811,7 @@ impl AndroidPanel {
     }
 
     fn start_emulator(&mut self, name: String, window: &mut Window, cx: &mut Context<Self>) {
-        if self.running || self.syncing {
+        if self.running || self.syncing || self.test_operation_id.is_some() {
             return;
         }
         let result = (|| {
@@ -2936,7 +2946,7 @@ impl AndroidPanel {
     }
 
     fn stop_emulator(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.running || self.syncing {
+        if self.running || self.syncing || self.test_operation_id.is_some() {
             return;
         }
         let result = (|| {

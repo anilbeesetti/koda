@@ -1,15 +1,17 @@
-use crate::AndroidTarget;
+use crate::{
+    AndroidTarget,
+    project_model::{SelectedProject, SourceKind, SourceScope},
+};
 use anyhow::{Context as _, Result, ensure};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::BTreeMap,
+    collections::{BTreeMap, BTreeSet},
     fs,
     io::Read as _,
     path::{Path, PathBuf},
 };
 
-pub const MODEL_TASK: &str = "kodaAndroidTestSources";
 pub const MAX_TESTS: usize = 20_000;
 const MAX_BYTES: usize = 8 * 1024 * 1024;
 const MAX_SOURCE_BYTES: usize = 2 * 1024 * 1024;
@@ -92,13 +94,33 @@ impl TestCase {
         }
     }
 }
-#[derive(Clone, Debug, Deserialize)]
-pub struct TestSources {
-    pub directories: Vec<PathBuf>,
+pub fn component_sources(
+    selected: &SelectedProject,
+    target: &AndroidTarget,
+    kind: TestKind,
+) -> Result<Vec<PathBuf>> {
+    selected.validate_target(target)?;
+    let (_, variant) = selected
+        .modules()
+        .find(|(module, variant)| module.path == target.module && variant.name == target.variant)
+        .context("Selected test module is absent from the Android model")?;
+    let (scope, suffix) = match kind {
+        TestKind::Unit => (SourceScope::UnitTest, "UnitTest"),
+        TestKind::Device => (SourceScope::AndroidTest, "AndroidTest"),
+    };
+    let name = format!("{}{suffix}", target.variant);
+    let component = variant.components.iter().find(|component| component.scope == scope && component.name == name).context("Standard tests are disabled or unavailable for the selected variant; custom test suites are unsupported")?;
+    Ok(component
+        .sources
+        .iter()
+        .filter(|source| matches!(source.kind, SourceKind::Java | SourceKind::Kotlin))
+        .map(|source| source.path.clone())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect())
 }
 
-// Keep discovery/report paths in the evaluated module: projectDir and source
-// providers can differ from the Gradle project path and conventional src layout.
+// Reports must stay isolated from previous runs and the project's own reports.
 pub const INIT_SCRIPT: &str = r#"
 def module = System.getProperty('koda.test.module')
 def variantName = System.getProperty('koda.test.variant')
@@ -112,31 +134,7 @@ gradle.beforeProject { project ->
                 components.finalizeDsl { android ->
                     if (deviceTests) android.testOptions.resultsDir = new File(destination, 'device').absolutePath
                 }
-                components.onVariants(components.selector().withName(variantName)) { variant ->
-                    def component = deviceTests ? (variant.hasProperty('deviceTests') ? variant.deviceTests.get('AndroidTest') : variant.androidTest) : variant.unitTest
-                    project.tasks.register('kodaAndroidTestSources') {
-                        doLast {
-                            if (component == null) throw new GradleException('Tests are disabled for ' + variantName)
-                            def directories = []
-                            def javaSources = component.sources.java
-                            if (javaSources != null) directories.addAll(javaSources.all.get().flatten()*.asFile)
-                            if (component.sources.hasProperty('kotlin') && component.sources.kotlin != null) directories.addAll(component.sources.kotlin.all.get().flatten()*.asFile)
-                            // Older Kotlin plugins expose their directories via
-                            // AndroidSourceSet instead of the component sources API.
-                            def prefix = deviceTests ? 'androidTest' : 'test'
-                            def sourceNames = [prefix, prefix + variantName.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + variantName.substring(1)]
-                            if (variant.buildType != null) sourceNames.add(prefix + variant.buildType.capitalize())
-                            variant.productFlavors.each { flavor -> sourceNames.add(prefix + flavor.second.capitalize()) }
-                            if (variant.flavorName) sourceNames.add(prefix + variant.flavorName.capitalize())
-                            sourceNames.unique().each { name ->
-                                def sourceSet = project.android.sourceSets.findByName(name)
-                                if (sourceSet != null && sourceSet.hasProperty('kotlin')) directories.addAll(sourceSet.kotlin.srcDirs)
-                                directories.add(project.file('src/' + name + '/kotlin'))
-                            }
-                            new File(destination, 'sources.json').text = groovy.json.JsonOutput.toJson([directories:directories.unique()*.absolutePath])
-                        }
-                    }
-                }
+
             }
         }
         project.tasks.withType(org.gradle.api.tasks.testing.Test).configureEach { task ->
@@ -186,7 +184,6 @@ pub fn arguments(
     kind: TestKind,
     output: &Path,
     selectors: &[String],
-    discover: bool,
 ) -> Result<Vec<String>> {
     ensure!(
         !target.variant.is_empty()
@@ -214,13 +211,9 @@ pub fn arguments(
             "Test name cannot be represented by an exact runner filter: {selector}"
         );
     }
-    let task = if discover {
-        format!("{}:{MODEL_TASK}", target.module.trim_end_matches(':'))
-    } else {
-        match kind {
-            TestKind::Unit => target.gradle_task("test", "UnitTest"),
-            TestKind::Device => target.gradle_task("connected", "AndroidTest"),
-        }
+    let task = match kind {
+        TestKind::Unit => target.gradle_task("test", "UnitTest"),
+        TestKind::Device => target.gradle_task("connected", "AndroidTest"),
     };
     let mut arguments = vec![
         task,
@@ -241,23 +234,21 @@ pub fn arguments(
         "--no-configuration-cache".into(),
         "--no-daemon".into(),
     ];
-    if !discover {
-        match kind {
-            TestKind::Unit => {
-                for selector in selectors {
-                    arguments.extend(["--tests".into(), selector.clone()]);
-                }
+    match kind {
+        TestKind::Unit => {
+            for selector in selectors {
+                arguments.extend(["--tests".into(), selector.clone()]);
             }
-            TestKind::Device => {
-                // Force fresh instrumentation reports even when Gradle considers
-                // the connected task up to date. ANDROID_SERIAL scopes the device.
-                arguments.push("--rerun-tasks".into());
-                if !selectors.is_empty() {
-                    arguments.push(format!(
-                        "-Pandroid.testInstrumentationRunnerArguments.class={}",
-                        selectors.join(",")
-                    ));
-                }
+        }
+        TestKind::Device => {
+            // Force fresh instrumentation reports even when Gradle considers
+            // the connected task up to date. ANDROID_SERIAL scopes the device.
+            arguments.push("--rerun-tasks".into());
+            if !selectors.is_empty() {
+                arguments.push(format!(
+                    "-Pandroid.testInstrumentationRunnerArguments.class={}",
+                    selectors.join(",")
+                ));
             }
         }
     }
@@ -278,16 +269,14 @@ fn read_bounded(path: &Path, limit: usize) -> Result<String> {
     String::from_utf8(data).context("Test data is not UTF-8")
 }
 
-pub fn discover(output: &Path) -> Result<Vec<TestCase>> {
-    let model: TestSources =
-        serde_json::from_str(&read_bounded(&output.join("sources.json"), MAX_BYTES)?)?;
+pub fn discover(directories: &[PathBuf]) -> Result<Vec<TestCase>> {
     let mut cases = BTreeMap::new();
     let mut identity_bytes = 0;
     let mut files = 0;
     let mut bytes = 0;
-    for directory in model.directories {
+    for directory in directories {
         if directory.exists() {
-            walk(&directory, 0, &mut |path| {
+            walk(directory, 0, &mut |path| {
                 files += 1;
                 ensure!(files <= MAX_TESTS, "Test source file limit exceeded");
                 if matches!(
@@ -745,6 +734,58 @@ fn source_for(case: &TestCase, source: &TestCase) -> Option<SourceLocation> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn selected_component_sources_preserve_custom_and_generated_roots_without_dependency_suites() {
+        let root = tempfile::tempdir().unwrap();
+        for (directory, class) in [
+            ("custom-tests", "Custom"),
+            ("generated-tests", "Generated"),
+            ("main", "Main"),
+            ("library-tests", "Library"),
+            ("fixtures", "Fixture"),
+        ] {
+            fs::create_dir(root.path().join(directory)).unwrap();
+            fs::write(
+                root.path().join(directory).join(format!("{class}.java")),
+                format!("package dev; class {class} {{ @Test void works() {{}} }}"),
+            )
+            .unwrap();
+        }
+        let model: crate::project_model::ProjectModel = serde_json::from_value(serde_json::json!({
+            "version":1,"root":root.path(),"diagnostics":[],"modules":[
+                {"path":":app","directory":root.path(),"kind":"application","variants":[
+                    {"name":"demoDebug","outputListing":root.path().join("output.json"),"components":[
+                        {"name":"demoDebug","scope":"main","sources":[{"path":root.path().join("main"),"kind":"java","generated":false}],"dependencies":[{"kind":"project","module":":library","variant":"release"}]},
+                        {"name":"demoDebugUnitTest","scope":"unitTest","sources":[{"path":root.path().join("custom-tests"),"kind":"java","generated":false},{"path":root.path().join("custom-tests"),"kind":"kotlin","generated":false},{"path":root.path().join("generated-tests"),"kind":"kotlin","generated":true},{"path":root.path().join("main"),"kind":"resources","generated":false}],"dependencies":[]},
+                        {"name":"demoDebugTestFixtures","scope":"testFixtures","sources":[{"path":root.path().join("fixtures"),"kind":"java","generated":false}],"dependencies":[]}
+                    ]}
+                ]},
+                {"path":":library","directory":root.path(),"kind":"library","variants":[{"name":"release","components":[{"name":"releaseUnitTest","scope":"unitTest","sources":[{"path":root.path().join("library-tests"),"kind":"java","generated":false}],"dependencies":[]}]}]}
+            ]
+        })).unwrap();
+        let model = std::sync::Arc::new(model);
+        let target = model.targets().remove(0);
+        let selected = model
+            .select(crate::project_model::VariantId::from(&target))
+            .unwrap();
+        let roots = component_sources(&selected, &target, TestKind::Unit).unwrap();
+        assert_eq!(roots.len(), 2);
+        let cases = discover(&roots).unwrap();
+        assert_eq!(
+            cases
+                .iter()
+                .map(|case| case.id.class.as_str())
+                .collect::<Vec<_>>(),
+            ["dev.Custom", "dev.Generated"]
+        );
+        assert!(component_sources(&selected, &target, TestKind::Device).is_err());
+        let wrong_target = AndroidTarget {
+            variant: "fullDebug".into(),
+            ..target
+        };
+        assert!(component_sources(&selected, &wrong_target, TestKind::Unit).is_err());
+    }
     #[test]
     fn discovers_java_kotlin_nested_and_ignores_comments_strings() {
         let text = "package dev.tests\nclass Example {\n// @Test fun fake() {}\nval sample = \"@Test fun fake() {}\"\n@Test fun `with spaces`() {}\nclass Inner { @org.junit.Test public void javaTest() {} }\n@ParameterizedTest\n@ValueSource(strings = [\"a\"])\nfun parameter(value: String) {}\n}";
@@ -826,7 +867,6 @@ mod tests {
             TestKind::Unit,
             Path::new("/tmp/run"),
             &["dev.Test.test".into()],
-            false,
         )
         .unwrap();
         assert_eq!(unit[0], ":mobile:application:testFreeDebugUnitTest");
@@ -839,7 +879,6 @@ mod tests {
             TestKind::Device,
             Path::new("/tmp/run"),
             &["dev.Test#test".into()],
-            false,
         )
         .unwrap();
         assert_eq!(
@@ -854,7 +893,6 @@ mod tests {
                 TestKind::Unit,
                 Path::new("/tmp"),
                 &["dev.*".into()],
-                false
             )
             .is_err()
         );
@@ -863,7 +901,7 @@ mod tests {
             ..target
         };
         assert_eq!(
-            arguments(&root, TestKind::Unit, Path::new("/tmp"), &[], false).unwrap()[0],
+            arguments(&root, TestKind::Unit, Path::new("/tmp"), &[]).unwrap()[0],
             ":testFreeDebugUnitTest"
         );
     }
