@@ -156,6 +156,23 @@ pub fn parse_model(output: &str, root: &Path, target: &AndroidTarget) -> Result<
     Ok(model)
 }
 
+pub fn validate_selection(
+    model: &Model,
+    selected: &crate::project_model::SelectedProject,
+) -> Result<()> {
+    let (module, _) = selected
+        .model
+        .variant(&selected.selected)
+        .context("The preview selection is unavailable")?;
+    ensure!(
+        model.module == selected.selected.module
+            && model.variant == selected.selected.variant
+            && module.namespace.as_deref() == Some(model.namespace.as_str()),
+        "The Compose preview does not match the current Android project model"
+    );
+    Ok(())
+}
+
 pub fn bridge_arguments(
     installation: &Path,
     operation: &str,

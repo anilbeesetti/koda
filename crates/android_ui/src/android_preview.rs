@@ -26,6 +26,7 @@ pub(super) fn toggle_preview(
         with_panel(workspace, window, cx, |panel, window, cx| {
             if let Some((image, target)) = &panel.rendered_preview
                 && panel.selected_target.as_ref() == Some(target)
+                && panel.validate_model_target(target, cx).is_ok()
                 && panel
                     .trusted_root(cx)
                     .is_ok_and(|root| image.starts_with(root))
@@ -60,6 +61,23 @@ impl AndroidPanel {
                 return;
             }
         };
+        let selected_model = match self.project.read(cx).android_model().selected.clone() {
+            Some(selected) => selected,
+            None => {
+                self.fail(
+                    anyhow::anyhow!("Sync and select an Android variant before rendering previews"),
+                    window,
+                    cx,
+                );
+                return;
+            }
+        };
+        if let Err(error) = selected_model.validate_target(&target) {
+            self.fail(error, window, cx);
+            return;
+        }
+        let model_token = self.project.read(cx).android_model().token();
+        self.followup_model_token = Some(model_token.clone());
         self.running = true;
         self.status = "Rendering Compose preview…".into();
         let selected = self.selected_preview.clone();
@@ -82,6 +100,7 @@ impl AndroidPanel {
                         "--no-configuration-cache".into(), "--console=plain".into()]);
                     let output = tool_output(program, args, &root, &executor, Duration::from_secs(300)).await?;
                     let model = preview::parse_model(&output, &root, &target)?;
+                    preview::validate_selection(&model, &selected_model)?;
                     let model_path = directory.join("model.json");
                     std::fs::write(&model_path, serde_json::to_vec(&model)?)?;
                     let previews_path = directory.join("previews.json");
@@ -97,14 +116,16 @@ impl AndroidPanel {
                     let final_image = cache.join("preview.png");
                     let file = tempfile::NamedTempFile::new_in(&cache)?;
                     std::fs::copy(image, file.path())?;
-                    file.persist(&final_image)?;
-                    Ok::<_, anyhow::Error>((final_image, selected.id.clone(), previews))
+                    Ok::<_, anyhow::Error>((file, final_image, selected.id.clone(), previews))
                 }
             }).await;
             let opened = panel.update_in(cx, |panel, window, cx| {
+                panel.followup_model_token = None;
                 panel.running = false;
-                let result = result.and_then(|(image, selected, previews)| {
-                    ensure!(panel.trusted_root(cx)? == root, "The Android project changed during preview rendering");
+                let result = result.and_then(|(file, image, selected, previews)| {
+                    ensure!(panel.trusted_root(cx)? == root && panel.project.read(cx).android_model().is_current(&model_token), "The Android project model changed during preview rendering");
+                    ensure!(panel.selected_target.as_ref() == Some(&rendered_target), "The selected Android variant changed during preview rendering");
+                    file.persist(&image)?;
                     panel.previews = previews;
                     panel.selected_preview = Some(selected);
                     panel.rendered_preview = Some((image.clone(), rendered_target));
@@ -129,8 +150,18 @@ impl AndroidPanel {
     ) -> Task<Result<()>> {
         let project_path = Workspace::project_path_for_path(self.project.clone(), image, false, cx);
         let workspace = self.workspace.clone();
-        cx.spawn_in(window, async move |_, cx| {
+        let model_token = self.project.read(cx).android_model().token();
+        cx.spawn_in(window, async move |panel, cx| {
             let (_, path) = project_path.await?;
+            if !panel.read_with(cx, |panel, cx| {
+                panel
+                    .project
+                    .read(cx)
+                    .android_model()
+                    .is_current(&model_token)
+            })? {
+                return Ok(());
+            }
             workspace
                 .update_in(cx, |workspace, window, cx| {
                     let pane = workspace

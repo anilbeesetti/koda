@@ -216,6 +216,7 @@ pub enum OpenedBufferEvent {
 ///
 /// Can be either local (for the project opened on the same host) or remote.(for collab projects, browsed by multiple remote users).
 pub struct Project {
+    android_model: android_tools::project_model::ModelState,
     active_entry: Option<ProjectEntryId>,
     buffer_ordered_messages_tx: mpsc::UnboundedSender<BufferOrderedMessage>,
     languages: Arc<LanguageRegistry>,
@@ -1394,6 +1395,7 @@ impl Project {
             cx.subscribe(&lsp_store, Self::on_lsp_store_event).detach();
 
             Self {
+                android_model: Default::default(),
                 buffer_ordered_messages_tx: tx,
                 collaborators: Default::default(),
                 worktree_store,
@@ -1621,6 +1623,7 @@ impl Project {
             cx.subscribe(&remote, Self::on_remote_client_event).detach();
 
             let this = Self {
+                android_model: Default::default(),
                 buffer_ordered_messages_tx: tx,
                 collaborators: Default::default(),
                 worktree_store,
@@ -1927,6 +1930,7 @@ impl Project {
             cx.subscribe(&dap_store, Self::on_dap_store_event).detach();
 
             let mut project = Self {
+                android_model: Default::default(),
                 buffer_ordered_messages_tx: tx,
                 buffer_store: buffer_store.clone(),
                 image_store,

@@ -31,7 +31,7 @@ the community backend before, relaunch the IDE and configure Kotlin once to swit
 your existing project settings.
 
 Use **Configure official Kotlin** in the Android tools panel. The pinned
-`263.4702.0+android-5` build includes a source-built native importer patch for
+`263.4702.0+android-6` build includes a source-built native importer patch for
 selected dependency variants, exact library sources, and dynamic features, plus
 semantic Compose completion and naming fixes. It prepares the focused Kotlin
 file during import and retains analysis caches when the imported model is unchanged.
@@ -227,3 +227,91 @@ annotations. Rendering uses downloaded Google tooling, JDK 21, and the selected
 variant's resources; Android Studio and a running device are unnecessary. Refresh
 after code changes. Interactive previews and multi-value preview parameter
 galleries are not implemented.
+
+## Shared Android project model
+
+Sync evaluates `kodaAndroidProjectModel` through the project's own Gradle wrapper.
+It discovers the application targets, Android library and dynamic-feature modules,
+JVM project dependencies, and variant components in one versioned catalog. Main,
+unit-test, device-test, and test-fixture components retain separate source roots
+and dependency scopes, including component-specific resource namespaces. Sync runs
+registered source/resource producers to read task-backed AGP source providers; it
+may execute transitive compilation tasks required by those producers. The selected graph uses Gradle's resolved build-type and
+flavor attributes, including `matchingFallbacks`; it never assumes that dependency
+variants have the application's name.
+
+`Project::android_model()` exposes the shared catalog and immutable selected
+snapshot. `SelectedProject::modules()` supplies the selected components and
+`ModelState::token()` identifies the current generation. Consumers must retain
+that token and check `is_current()` before publishing asynchronous results or
+continuing a build/run/debug operation. A root change, a variant change, or changed
+Gradle/model inputs invalidates older tokens, including an A → B → A selection.
+A failed or cancelled sync leaves no selected shared snapshot; resync restores a
+previous variant only if its identity still exists in the fresh catalog. This is
+also the integration API for the separate structured Android testing UI: use the
+selected component names/scopes and dependencies; do not discover another graph.
+
+The official Kotlin server still owns Kotlin/Java semantic analysis and rename.
+The managed `263.4702.0+android-6` importer accepts the resolved variant map and
+source-root projection without replacing native compiler settings, friend source
+sets, dependency source archives, or semantic features. Reinstall the managed
+server after this change. Java's Eclipse/Buildship projection uses the same selected
+modules and component roots, marks test folders and test-only libraries with
+`test=true`, and may compile selected components to materialize their classpaths.
+Configured Java refreshes on selection/input changes even if Kotlin is not
+configured. Language-server indexing remains asynchronous; a model sync is not
+confirmation that every server has finished indexing.
+
+Preview export retains its separate **runtime** classpath, while validating the
+selected module, variant, namespace, and model generation. Compiled runtime inputs
+are distinct from Kotlin/Java compile inputs. Resource navigation uses the selected
+Gradle roots rather than scanning every flavor, supports custom/registered generated
+roots, and keeps locale/qualifier and overlay declarations visible. It does not
+compute the final AGP resource-merge winner. Before the first sync, the existing
+conventional `src/.../res` fallback remains available.
+Local resource lookup follows the owning component and dependency main resources;
+cross-module fixture-specific `R` resources are not resolved locally.
+
+Supported boundaries:
+
+- The picker still selects application APK targets. Library/dynamic-feature and
+  JVM modules are imported as part of that selected graph; library-only projects
+  are catalogued but cannot currently be selected for language setup/build/preview.
+- Included builds, external module/source directories, standalone `com.android.test`
+  modules, and `com.android.kotlin.multiplatform.library` have explicit sync
+  diagnostics. Nested unit/device tests are distinct from standalone test modules.
+- A graph requiring two active variants of one module is rejected, including
+  conflicting main/test requirements. Ordinary resolution failures fail sync;
+  partial catalogs are not published. Sync resolves the catalog's variants, so an
+  unresolved dependency in another variant can also prevent catalog publication.
+  A source producer or its transitive compilation failure also fails sync.
+- AGP-generated roots use the public `all`/`static` registration APIs where available;
+  AGP 8 also normalizes legacy static source sets and build-directory producers.
+  Kotlin-plugin-only/JVM roots retain a build-directory classification fallback.
+  Unregistered task outputs cannot be discovered. Managed cache files preserve
+  unrelated user settings and refuse unmanaged/symlinked cache directories.
+- This change does not add a test runner, expand the preview renderer's supported
+  modes, or establish new debugger/emulator or Kotlin semantic compatibility claims.
+
+The real Gradle model/Java/Eclipse probe creates isolated fixtures with flavors,
+variant fallbacks, a dynamic feature, JVM test dependencies, registered generated roots,
+and library test fixtures. AGP 9 retains generator output outside `build/`; AGP 8
+relocates this registered output into its managed generated directory. It verifies removal/restoration of a selected
+variant, failed sync/recovery, and included-build diagnostics:
+
+```sh
+script/test-android-project-model --gradle /path/to/gradle-8.11.1/bin/gradle \
+  --sdk /path/to/android-sdk --agp 8.9.1
+script/test-android-project-model --gradle /path/to/gradle-9.6.1/bin/gradle \
+  --sdk /path/to/android-sdk --agp 9.4.0
+cargo test --locked -p android_tools --lib
+cargo test --locked -p android_ui --lib
+cargo test --locked -p project --features test-support --test integration test_android_resource
+python3 script/test-android-kotlin-installer
+```
+
+The Gradle probe needs JDK 21 and installed API 35 and AGP-required build tools (35 for AGP 8.9.1, 36 for AGP 9.4.0), and uses the session's
+normal network/proxy/trust configuration. It does **not** launch the native Kotlin
+server, renderer, editor UI, debugger, or an emulator. Those require their separate
+runtime probes; successful catalog/Eclipse checks alone must not be reported as
+Kotlin semantic, preview-rendering, or device validation.
