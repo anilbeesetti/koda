@@ -1170,9 +1170,16 @@ impl AndroidPanel {
         let (sources, results, result, report_error) = outcome;
         self.test_cancel = None;
         self.test_operation_id = None;
+        let failed_tests = results.iter().any(|case| case.status == TestStatus::Failed);
+        let process_diagnostic = result
+            .as_ref()
+            .err()
+            .filter(|_| current && failed_tests && report_error.is_none())
+            .map(|error| format!("Test task failed: {error:#}"));
         let (status, mut message) = match result {
             _ if !current => (BuildStatus::Cancelled, "The Android test model or selection changed; previous completed results retained as stale".to_owned()),
             Ok(ProcessOutput::Cancelled) => (BuildStatus::Cancelled, "Test run cancelled; completed results retained".to_owned()),
+            Err(_) if failed_tests && report_error.is_none() => (BuildStatus::Failed, "Tests failed. See Build Output.".into()),
             Err(error) => (BuildStatus::Failed, format!("Test process failed: {error:#}. See Build Output.")),
             Ok(_) if report_error.is_some() => (BuildStatus::Failed, "Test reports are incomplete".into()),
             Ok(_) if run.request.discover_only => (BuildStatus::Succeeded, format!("Discovered {} tests. Select a method, class, or run suite.", sources.len())),
@@ -1188,8 +1195,11 @@ impl AndroidPanel {
             self.running = false;
             self.status = message.clone().into();
         }
+        let build_message = process_diagnostic
+            .map(|diagnostic| format!("{message}\n{diagnostic}"))
+            .unwrap_or_else(|| message.clone());
         self.build_panel.update(cx, |build, cx| {
-            build.finish(BuildTab::Output, run.session, status, message.clone(), cx)
+            build.finish(BuildTab::Output, run.session, status, build_message, cx)
         });
         self.test_panel.update(cx, |tests, cx| {
             tests.busy = false;
@@ -1444,6 +1454,71 @@ mod tests {
             source: None,
             parameterized: false,
         }
+    }
+
+    #[gpui::test]
+    async fn assertion_failures_and_process_or_report_failures_have_distinct_summaries(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        panel.update_in(cx, |panel, window, cx| {
+            let token = publish_runner_model(panel, cx);
+            for (index, (case_status, report_error, expected)) in [
+                (TestStatus::Failed, None, "Tests failed. See Build Output."),
+                (TestStatus::Passed, None, "Test process failed:"),
+                (
+                    TestStatus::Failed,
+                    Some("Interrupted report"),
+                    "Test process failed:",
+                ),
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                let request = request(panel, index as u64 + 1, cx);
+                let revision = panel.test_panel.update(cx, |tests, cx| {
+                    tests.begin(
+                        request.root.clone(),
+                        request.target.clone(),
+                        TestKind::Unit,
+                        None,
+                        Some(request.selectors.clone()),
+                        cx,
+                    )
+                });
+                let (session, _, _) = panel.build_panel.update(cx, |build, cx| {
+                    build.begin(BuildTab::Output, "Tests".into(), false, window, cx)
+                });
+                panel.test_operation_id = Some(request.id);
+                panel.active_build_session = Some((BuildTab::Output, session));
+                panel.running = true;
+                let mut case = result("method");
+                case.status = case_status;
+                assert!(panel.finish_test_run(
+                    TestRun {
+                        request,
+                        token: token.clone(),
+                        session,
+                        revision
+                    },
+                    (
+                        Vec::new(),
+                        vec![case],
+                        Err(anyhow::anyhow!("Fixture task exit failure")),
+                        report_error.map(str::to_owned),
+                    ),
+                    cx,
+                ));
+                let tests = panel.test_panel.read(cx);
+                assert!(tests.message.starts_with(expected), "{}", tests.message);
+                assert_eq!(tests.cases[0].status, case_status);
+                assert_eq!(
+                    tests.message.contains("Partial results"),
+                    report_error.is_some()
+                );
+                assert!(!tests.busy && !panel.running);
+            }
+        });
     }
 
     #[gpui::test]
