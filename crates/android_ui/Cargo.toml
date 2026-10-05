@@ -44,6 +44,11 @@ workspace.workspace = true
 zed_actions.workspace = true
 
 [dev-dependencies]
+assets.workspace = true
 gpui = { workspace = true, features = ["test-support"] }
+menu.workspace = true
 project = { workspace = true, features = ["test-support"] }
 workspace = { workspace = true, features = ["test-support"] }
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+gpui_wgpu = { workspace = true, features = ["test-support"] }
