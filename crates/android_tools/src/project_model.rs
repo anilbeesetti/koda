@@ -461,7 +461,15 @@ fn validate_project_path(path: &Path, root: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn prepare(root: &Path) -> Result<PathBuf> {
+pub fn prepare() -> Result<tempfile::TempDir> {
+    let directory = tempfile::Builder::new()
+        .prefix("koda-android-model-")
+        .tempdir()?;
+    atomic_write(&directory.path().join("export.gradle"), EXPORT, false)?;
+    Ok(directory)
+}
+
+fn selection_directory(root: &Path) -> Result<PathBuf> {
     ensure_directory(&root.join(".koda"))?;
     let cache = root.join(".koda/android-model");
     if cache.exists() {
@@ -474,9 +482,7 @@ pub fn prepare(root: &Path) -> Result<PathBuf> {
         ensure_directory(&cache)?;
         atomic_write(&cache.join(".gitignore"), MARKER, false)?;
     }
-    let script = cache.join("export.gradle");
-    atomic_write(&script, EXPORT, false)?;
-    Ok(script)
+    Ok(cache)
 }
 
 pub fn install_selection(root: &Path, selected: &SelectedProject) -> Result<PathBuf> {
@@ -484,10 +490,7 @@ pub fn install_selection(root: &Path, selected: &SelectedProject) -> Result<Path
         selected.model.root == root.canonicalize()?,
         "The Android selection belongs to a different project"
     );
-    let cache = prepare(root)?
-        .parent()
-        .context("Android model cache has no parent")?
-        .to_path_buf();
+    let cache = selection_directory(root)?;
     let path = cache.join("selected.json");
     atomic_write(
         &path,
@@ -794,11 +797,47 @@ mod tests {
         let cache = root.join(".koda/android-model");
         fs::create_dir_all(&cache)?;
         fs::write(cache.join(".gitignore"), "user files")?;
-        assert!(prepare(&root).is_err());
+        assert!(selection_directory(&root).is_err());
         assert_eq!(fs::read_to_string(cache.join(".gitignore"))?, "user files");
         fs::rename(&cache, root.join("user-cache"))?;
-        assert!(prepare(&root)?.is_file());
-        assert!(prepare(&root)?.is_file());
+        assert!(selection_directory(&root)?.is_dir());
+        assert!(selection_directory(&root)?.is_dir());
+        Ok(())
+    }
+
+    #[test]
+    fn exporters_are_request_owned_and_selection_does_not_write_a_project_script() -> Result<()> {
+        let first = prepare()?;
+        let second = prepare()?;
+        assert_ne!(first.path(), second.path());
+        let first_script = first.path().join("export.gradle");
+        assert_eq!(fs::read_to_string(&first_script)?, EXPORT);
+        drop(first);
+        assert!(!first_script.exists());
+        assert!(second.path().join("export.gradle").is_file());
+
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().canonicalize()?;
+        let selected = Arc::new(fixture(&root)?).select(VariantId {
+            module: ":app".into(),
+            variant: "paidDebug".into(),
+        })?;
+        let selection = install_selection(&root, &selected)?;
+        assert_eq!(selection, root.join(".koda/android-model/selected.json"));
+        assert!(!root.join(".koda/android-model/export.gradle").exists());
+        let legacy_script = root.join(".koda/android-model/export.gradle");
+        fs::write(&legacy_script, "legacy exporter sentinel")?;
+        let request = prepare()?;
+        install_selection(&root, &selected)?;
+        assert_eq!(fs::read_to_string(legacy_script)?, "legacy exporter sentinel");
+        assert_eq!(
+            fs::read_to_string(request.path().join("export.gradle"))?,
+            EXPORT
+        );
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&fs::read_to_string(selection)?)?,
+            serde_json::to_value(selected.projection())?
+        );
         Ok(())
     }
 

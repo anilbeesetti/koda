@@ -830,7 +830,7 @@ impl AndroidPanel {
                         is_gradle_project(&root),
                         "This folder has no Gradle wrapper. Open the project's Gradle root."
                     );
-                    let init = android_tools::project_model::prepare(&root)?;
+                    let init = android_tools::project_model::prepare()?;
                     let program = if cfg!(windows) {
                         root.join("gradlew.bat")
                     } else {
@@ -843,7 +843,10 @@ impl AndroidPanel {
                     };
                     arguments.extend([
                         "--init-script".into(),
-                        init.to_string_lossy().into_owned(),
+                        init.path()
+                            .join("export.gradle")
+                            .to_string_lossy()
+                            .into_owned(),
                         android_tools::project_model::MODEL_TASK.into(),
                         "--no-configuration-cache".into(),
                         "--console=plain".into(),

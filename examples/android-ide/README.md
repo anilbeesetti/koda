@@ -242,6 +242,26 @@ may execute transitive compilation tasks required by those producers. The select
 flavor attributes, including `matchingFallbacks`; it never assumes that dependency
 variants have the application's name.
 
+Each module collects its own sources and resolves its own compile configurations
+in a project-owned task. The root task aggregates plain model data after all module
+tasks finish, so parallel Gradle execution does not resolve another project's
+configurations without its lock. The Java classpath exporter follows the same rule.
+Sync's `export.gradle` is written into a unique OS temporary directory (normally
+outside the project) and removed when that request finishes or is cancelled. Existing
+`.koda/android-model/export.gradle` files from older versions are no longer used
+or overwritten. The persistent `.koda/android-model/selected.json` remains the
+managed projection used to configure the native Kotlin importer.
+
+Android Studio instead requests AGP's per-project, selected-variant models using
+the Gradle Tooling API ([Studio model fetchers](https://android.googlesource.com/platform/tools/adt/idea/+/mirror-goog-studio-main/project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/ModelFetchers.kt),
+[AGP model builder](https://android.googlesource.com/platform/tools/base/+/mirror-goog-studio-main/build-system/gradle-core/src/main/java/com/android/build/gradle/internal/ide/v2/ModelBuilder.kt)).
+Its IntelliJ Gradle integration can inject helper init scripts, but writes them
+to temporary storage ([init-script utility](https://github.com/JetBrains/intellij-community/blob/master/plugins/gradle/src/org/jetbrains/plugins/gradle/service/execution/GradleInitScriptUtil.kt)).
+Koda's CLI JSON exporter remains a separate bridge; `.koda/android-model` is a
+Koda convention. The script's location does not cause Gradle's lock error:
+[unsafe configuration resolution](https://docs.gradle.org/current/userguide/declaring_configurations.html#sec:configuration_unsafe_access)
+includes resolving another project's configuration from a task.
+
 `Project::android_model()` exposes the shared catalog and immutable selected
 snapshot. `SelectedProject::modules()` supplies the selected components and
 `ModelState::token()` identifies the current generation. Consumers must retain
@@ -292,6 +312,8 @@ Supported boundaries:
   partial catalogs are not published. Sync resolves the catalog's variants, so an
   unresolved dependency in another variant can also prevent catalog publication.
   A source producer or its transitive compilation failure also fails sync.
+  The exporter disables configuration caching and does not support Gradle's
+  isolated-project mode; its configuration phase still inspects the build's modules.
 - AGP-generated roots use the public `all`/`static` registration APIs where available;
   AGP 8 also normalizes legacy static source sets and build-directory producers.
   Kotlin-plugin-only/JVM roots retain a build-directory classification fallback.
@@ -309,7 +331,7 @@ variant, failed sync/recovery, and included-build diagnostics:
 ```sh
 script/test-android-project-model --gradle /path/to/gradle-8.11.1/bin/gradle \
   --sdk /path/to/android-sdk --agp 8.9.1
-script/test-android-project-model --gradle /path/to/gradle-9.6.1/bin/gradle \
+script/test-android-project-model --gradle /path/to/gradle-9.7.1/bin/gradle \
   --sdk /path/to/android-sdk --agp 9.4.0
 cargo test --locked -p android_tools --lib
 cargo test --locked -p android_ui --lib
@@ -318,7 +340,9 @@ python3 script/test-android-kotlin-installer
 ```
 
 The Gradle probe needs JDK 21 and installed API 35 and AGP-required build tools (35 for AGP 8.9.1, 36 for AGP 9.4.0), and uses the session's
-normal network/proxy/trust configuration. It does **not** launch the native Kotlin
+normal network/proxy/trust configuration. Every Gradle invocation enables parallel
+execution to cover project-lock ownership for the model and Java exporters.
+It does **not** launch the native Kotlin
 server, renderer, editor UI, debugger, or an emulator. Those require their separate
 runtime probes; successful catalog/Eclipse checks alone must not be reported as
 Kotlin semantic, preview-rendering, or device validation.
