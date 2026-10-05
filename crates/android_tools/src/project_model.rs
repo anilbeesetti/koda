@@ -112,6 +112,8 @@ pub struct ProjectModel {
     pub root: PathBuf,
     pub modules: Vec<Module>,
     pub diagnostics: Vec<String>,
+    #[serde(default)]
+    pub resource_models: BTreeMap<String, crate::resources::ResourceModel>,
 }
 
 #[derive(Clone, Debug)]
@@ -459,6 +461,58 @@ pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
             }
         }
     }
+    for (identity, resources) in &model.resource_models {
+        let component = model
+            .modules
+            .iter()
+            .flat_map(|module| {
+                module.variants.iter().flat_map(move |variant| {
+                    variant
+                        .components
+                        .iter()
+                        .map(move |component| (module, component))
+                })
+            })
+            .find(|(module, component)| format!("{}/{}", module.path, component.name) == *identity)
+            .context("Resource metadata refers to an unknown Android component")?
+            .1;
+        let mut paths = BTreeSet::new();
+        for layer in &resources.layers {
+            for path in layer {
+                validate_project_path(path, &root)?;
+                ensure!(
+                    paths.insert(path)
+                        && component
+                            .sources
+                            .iter()
+                            .any(|source| source.kind == SourceKind::Resources
+                                && &source.path == path),
+                    "Resource overlay path is duplicate or absent from the shared component roots"
+                );
+            }
+        }
+        if let Some(manifest) = &resources.merged_manifest {
+            validate_project_path(manifest, &root)?;
+        }
+        for path in resources
+            .dependencies
+            .iter()
+            .flat_map(|dependency| {
+                std::iter::once(&dependency.path)
+                    .chain(dependency.manifest.iter())
+                    .chain(dependency.public_resources.iter())
+            })
+            .chain(resources.framework.iter())
+        {
+            ensure!(
+                path.is_absolute()
+                    && !path
+                        .components()
+                        .any(|part| matches!(part, PathComponent::ParentDir)),
+                "Invalid external resource path"
+            );
+        }
+    }
     ensure!(
         model
             .modules
@@ -638,6 +692,7 @@ mod tests {
             version: 1,
             root: root.to_path_buf(),
             diagnostics: Vec::new(),
+            resource_models: BTreeMap::new(),
             modules: vec![
                 module(
                     "app",

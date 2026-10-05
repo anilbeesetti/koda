@@ -1,6 +1,7 @@
 pub mod agent_registry_store;
 pub mod agent_server_store;
 mod android_resources;
+pub use android_resources::AndroidResourceRename;
 pub mod bookmark_store;
 pub mod buffer_store;
 pub mod color_extractor;
@@ -4433,11 +4434,12 @@ impl Project {
         let position = position.to_point_utf16(buffer.read(cx));
         let guard = self.retain_remotely_created_models(cx);
         if let Some(resources) = self.android_resource_definitions(buffer, position, cx) {
+            let using_model = self.android_model.root().is_some();
             let buffer = buffer.clone();
             return cx.spawn(async move |project, cx| {
                 let _guard = guard;
                 let locations = resources.await?;
-                if !locations.is_empty() {
+                if using_model || !locations.is_empty() {
                     return Ok(Some(locations));
                 }
                 project
@@ -4447,6 +4449,12 @@ impl Project {
                             .update(cx, |store, cx| store.definitions(&buffer, position, cx))
                     })?
                     .await
+            });
+        }
+        if let Some(task) = self.android_manifest_provenance(buffer, position, cx) {
+            return cx.background_spawn(async move {
+                let _guard = guard;
+                Ok(Some(task.await?.0))
             });
         }
         let task = self.lsp_store.update(cx, |lsp_store, cx| {
@@ -4534,6 +4542,12 @@ impl Project {
     ) -> Task<Result<Option<Vec<Location>>>> {
         let position = position.to_point_utf16(buffer.read(cx));
         let guard = self.retain_remotely_created_models(cx);
+        if let Some(task) = self.android_resource_references(buffer, position, cx) {
+            return cx.background_spawn(async move {
+                let _guard = guard;
+                Ok(Some(task.await?))
+            });
+        }
         let task = self.lsp_store.update(cx, |lsp_store, cx| {
             lsp_store.references(buffer, position, cx)
         });
@@ -4686,6 +4700,12 @@ impl Project {
         cx: &mut Context<Self>,
     ) -> Task<Option<Vec<Hover>>> {
         let position = position.to_point_utf16(buffer.read(cx));
+        if let Some(task) = self.android_resource_hover(buffer, position, cx) {
+            return cx.background_spawn(async move { task.await.log_err() });
+        }
+        if let Some(task) = self.android_manifest_provenance(buffer, position, cx) {
+            return cx.background_spawn(async move { task.await.log_err().map(|result| result.1) });
+        }
         self.lsp_store
             .update(cx, |lsp_store, cx| lsp_store.hover(buffer, position, cx))
     }
@@ -4709,8 +4729,19 @@ impl Project {
         cx: &mut Context<Self>,
     ) -> Task<Result<Vec<CompletionResponse>>> {
         let position = position.to_point_utf16(buffer.read(cx));
-        self.lsp_store.update(cx, |lsp_store, cx| {
+        if self.android_resource_model_unavailable(buffer, position, cx) {
+            return Task::ready(Ok(Vec::new()));
+        }
+        let resources = self.android_resource_completions(buffer, position, cx);
+        let lsp = self.lsp_store.update(cx, |lsp_store, cx| {
             lsp_store.completions(buffer, position, context, cx)
+        });
+        cx.background_spawn(async move {
+            let mut responses = lsp.await?;
+            if let Some(resources) = resources {
+                responses.push(resources.await?);
+            }
+            Ok(responses)
         })
     }
 
@@ -4759,6 +4790,9 @@ impl Project {
         cx: &mut Context<Self>,
     ) -> Task<Result<PrepareRenameResponse>> {
         let position = position.to_point_utf16(buffer.read(cx));
+        if let Some(task) = self.android_prepare_resource_rename(&buffer, position, cx) {
+            return task;
+        }
         self.request_lsp(
             buffer,
             LanguageServerToQuery::FirstCapable,
@@ -4777,6 +4811,11 @@ impl Project {
     ) -> Task<Result<ProjectTransaction>> {
         let push_to_history = true;
         let position = position.to_point_utf16(buffer.read(cx));
+        if self.android_query_is_resource(&buffer, position, cx) {
+            return Task::ready(Err(anyhow::anyhow!(
+                "Android resource rename requires a reviewed resource edit plan"
+            )));
+        }
         let mut request = PerformRename {
             position,
             new_name,

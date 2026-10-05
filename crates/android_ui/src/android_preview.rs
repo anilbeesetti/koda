@@ -1024,7 +1024,17 @@ impl ComposePreviewView {
                             .map(move |source| (module, component, source))
                     })
                     .filter(|(_, _, source)| absolute.starts_with(&source.path))
-                    .max_by_key(|(_, _, source)| source.path.components().count())
+                    // More specific roots exclude nested generated or test sources. At
+                    // equal depth, shared roots still belong to an eligible main component.
+                    .max_by_key(|(module, component, source)| {
+                        (
+                            source.path.components().count(),
+                            visible.contains(&module.path)
+                                && !source.generated
+                                && component.scope
+                                    == android_tools::project_model::SourceScope::Main,
+                        )
+                    })
                     .map(|(module, component, source)| {
                         visible.contains(&module.path)
                             && !source.generated
@@ -1046,6 +1056,71 @@ impl ComposePreviewView {
                         && panel.selected_target.as_ref() == Some(&self.target)
                 })
                 .unwrap_or(false)
+    }
+
+    fn unsaved_resource_path(
+        &self,
+        selected: &android_tools::project_model::SelectedProject,
+        root: &Path,
+        cx: &App,
+    ) -> Option<PathBuf> {
+        use android_tools::project_model::{SourceKind, SourceScope};
+        let visible = selected.visible_modules(&selected.selected.module, SourceScope::Main);
+        self.project
+            .read(cx)
+            .opened_buffers(cx)
+            .into_iter()
+            .find_map(|buffer| {
+                let path = buffer_path(&buffer, cx)?;
+                if !buffer.read(cx).is_dirty()
+                    || path.extension().is_none_or(|extension| extension != "xml")
+                {
+                    return None;
+                }
+                let absolute = selected.model.root.join(path.strip_prefix(root).ok()?);
+                selected
+                    .modules()
+                    .flat_map(|(module, variant)| {
+                        variant
+                            .components
+                            .iter()
+                            .map(move |component| (module, component))
+                    })
+                    .flat_map(|(module, component)| {
+                        component
+                            .sources
+                            .iter()
+                            .map(move |source| (module, component, source))
+                    })
+                    .filter(|(_, _, source)| absolute.starts_with(&source.path))
+                    .max_by_key(|(module, component, source)| {
+                        (
+                            source.path.components().count(),
+                            visible.contains(&module.path)
+                                && component.scope == SourceScope::Main
+                                && !source.generated
+                                && source.kind == SourceKind::Resources,
+                        )
+                    })
+                    .filter(|(module, component, source)| {
+                        visible.contains(&module.path)
+                            && component.scope == SourceScope::Main
+                            && !source.generated
+                            && source.kind == SourceKind::Resources
+                    })
+                    .map(|_| path)
+            })
+    }
+
+    fn require_saved_resource(&mut self, path: &Path) {
+        self.pending = false;
+        self.pending_manual = false;
+        self.stale = true;
+        self.error = Some(format!(
+            "Save {} before refreshing Compose previews. Resource declarations are read from disk; unsaved Kotlin changes remain supported.",
+            path.display()
+        ));
+        self.status = "Save resources to refresh previews".into();
     }
 
     fn selected_model(
@@ -1115,6 +1190,10 @@ impl ComposePreviewView {
                 self.source_path.starts_with(&root),
                 "The preview file belongs to a different Android project"
             );
+            if let Some(path) = self.unsaved_resource_path(&selected, &root, cx) {
+                self.require_saved_resource(&path);
+                return Ok(());
+            }
             let source_text = self.source.read(cx).snapshot().text();
             let source_path = self.source_path.clone();
             let package = preview::kotlin_package(&source_text);
@@ -1315,7 +1394,11 @@ impl ComposePreviewView {
                                 && panel.selected_target.as_ref() == Some(&request_target)
                         })
                         .unwrap_or(false);
-                    if view.revision == revision && valid {
+                    let unsaved_resource = view.project.read(cx).android_model().selected.clone()
+                        .and_then(|selected| view.unsaved_resource_path(&selected, &view.root, cx));
+                    if valid && let Some(path) = unsaved_resource {
+                        view.require_saved_resource(&path);
+                    } else if view.revision == revision && valid {
                         match result {
                             Ok(gallery) => {
                                 view.status = if gallery.cards.is_empty() {
@@ -3875,6 +3958,16 @@ mod tests {
                             generated: true,
                         },
                         SourceRoot {
+                            path: canonical_root.join("code/shared"),
+                            kind: SourceKind::Kotlin,
+                            generated: false,
+                        },
+                        SourceRoot {
+                            path: canonical_root.join("code/shared/generated"),
+                            kind: SourceKind::Kotlin,
+                            generated: true,
+                        },
+                        SourceRoot {
                             path: canonical_root.join("custom-generated"),
                             kind: SourceKind::Kotlin,
                             generated: true,
@@ -3885,11 +3978,18 @@ mod tests {
                         namespace: None,
                         scope: SourceScope::UnitTest,
                         dependencies: Vec::new(),
-                        sources: vec![SourceRoot {
-                            path: canonical_root.join("code/tests"),
-                            kind: SourceKind::Kotlin,
-                            generated: false,
-                        }],
+                        sources: vec![
+                            SourceRoot {
+                                path: canonical_root.join("code/tests"),
+                                kind: SourceKind::Kotlin,
+                                generated: false,
+                            },
+                            SourceRoot {
+                                path: canonical_root.join("code/shared"),
+                                kind: SourceKind::Kotlin,
+                                generated: false,
+                            },
+                        ],
                     });
                 }
             }
@@ -3902,7 +4002,12 @@ mod tests {
                 .expect("Select variant");
         });
         view.read_with(cx, |view, cx| {
-            for path in ["Main.kt", "code/Content.kt", "app/build.gradle.kts"] {
+            for path in [
+                "Main.kt",
+                "code/Content.kt",
+                "code/shared/Content.kt",
+                "app/build.gradle.kts",
+            ] {
                 assert!(
                     view.preview_input(RelPath::from_unix_str(path).expect("Path"), cx),
                     "{path}"
@@ -3910,6 +4015,7 @@ mod tests {
             }
             for path in [
                 "code/custom-output/Generated.kt",
+                "code/shared/generated/Generated.kt",
                 "custom-generated/Generated.kt",
                 "code/tests/Test.kt",
             ] {
@@ -3919,6 +4025,174 @@ mod tests {
                 );
             }
         });
+    }
+
+    #[gpui::test]
+    async fn unsaved_main_resources_require_save_before_preview_and_resume_after_save(
+        cx: &mut TestAppContext,
+    ) {
+        use android_tools::project_model::{
+            Component, SourceKind, SourceRoot, SourceScope, VariantId,
+        };
+        let (project, source) = test_project(cx).await;
+        let filesystem = project.read_with(cx, |project, _| project.fs().clone());
+        let resources = Path::new("/android/custom-res");
+        for (relative, text) in [
+            (
+                "values/strings.xml",
+                "<resources><string name='title'>Title</string></resources>",
+            ),
+            ("generated/generated.xml", "<resources/>"),
+            ("tests/test.xml", "<resources/>"),
+        ] {
+            let path = resources.join(relative);
+            filesystem
+                .create_dir(path.parent().expect("Resource directory"))
+                .await
+                .expect("Create resource directory");
+            filesystem
+                .atomic_write(path, text.into())
+                .await
+                .expect("Write resource");
+        }
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, panel, _) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project.clone(), source.clone(), window, cx)
+        });
+        let target = panel.read_with(cx, |panel, _| {
+            panel.selected_target.clone().expect("Target")
+        });
+        project.update(cx, |project, cx| {
+            let mut model = project
+                .android_model()
+                .model
+                .as_deref()
+                .expect("Model")
+                .clone();
+            for variant in model
+                .modules
+                .iter_mut()
+                .flat_map(|module| &mut module.variants)
+            {
+                let main = variant
+                    .components
+                    .iter_mut()
+                    .find(|component| component.scope == SourceScope::Main)
+                    .expect("Main component");
+                main.sources.extend([
+                    SourceRoot {
+                        path: resources.into(),
+                        kind: SourceKind::Resources,
+                        generated: false,
+                    },
+                    SourceRoot {
+                        path: resources.join("generated"),
+                        kind: SourceKind::Resources,
+                        generated: true,
+                    },
+                ]);
+                variant.components.push(Component {
+                    name: format!("{}UnitTest", variant.name),
+                    namespace: None,
+                    scope: SourceScope::UnitTest,
+                    dependencies: Vec::new(),
+                    sources: vec![SourceRoot {
+                        path: resources.join("tests"),
+                        kind: SourceKind::Resources,
+                        generated: false,
+                    }],
+                });
+            }
+            let token = project.invalidate_android_model(Some(PathBuf::from("/android")), cx);
+            project
+                .publish_android_model(&token, model, cx)
+                .expect("Publish resource roots");
+            project
+                .select_android_variant(Some(VariantId::from(&target)), cx)
+                .expect("Select variant");
+        });
+        let mut buffers = Vec::new();
+        for path in [
+            "generated/generated.xml",
+            "tests/test.xml",
+            "values/strings.xml",
+        ] {
+            let path = resources.join(path);
+            buffers.push(
+                project
+                    .update(cx, |project, cx| project.open_local_buffer(&path, cx))
+                    .await
+                    .expect("Resource buffer"),
+            );
+        }
+        cx.run_until_parked();
+        source.update(cx, |buffer, cx| {
+            buffer.edit([(0..0, "// unsaved Kotlin\n")], None, cx)
+        });
+        for buffer in &buffers[..2] {
+            buffer.update(cx, |buffer, cx| {
+                buffer.edit([(0..0, "<!-- unsaved -->\n")], None, cx)
+            });
+        }
+        view.read_with(cx, |view, cx| {
+            let selected = view
+                .project
+                .read(cx)
+                .android_model()
+                .selected
+                .as_ref()
+                .expect("Model");
+            assert!(
+                view.unsaved_resource_path(selected, &view.root, cx)
+                    .is_none(),
+                "Kotlin, generated and test changes must not require saving main resources"
+            );
+        });
+        let resource = buffers.pop().expect("Main resource");
+        resource.update(cx, |buffer, cx| {
+            buffer.edit([(0..0, "<!-- resource rename -->\n")], None, cx)
+        });
+        view.update_in(cx, |view, window, cx| {
+            view.refresh(window, cx);
+            assert!(!view.building && view.render_task.is_none());
+            assert!(view.stale && !view.pending);
+            assert_eq!(view.status, "Save resources to refresh previews");
+            assert!(
+                view.error
+                    .as_ref()
+                    .is_some_and(|error| error.contains("custom-res/values/strings.xml"))
+            );
+        });
+        assert!(resource.read_with(cx, |buffer, _| buffer.is_dirty()));
+        let revision = view.read_with(cx, |view, _| view.revision);
+        project
+            .update(cx, |project, cx| project.save_buffer(resource.clone(), cx))
+            .await
+            .expect("Save resource");
+        cx.run_until_parked();
+        view.update(cx, |view, cx| {
+            let selected = view
+                .project
+                .read(cx)
+                .android_model()
+                .selected
+                .as_ref()
+                .expect("Model");
+            assert!(
+                view.unsaved_resource_path(selected, &view.root, cx)
+                    .is_none()
+            );
+            assert!(
+                view.revision > revision && view.pending && view.debounce_task.is_some(),
+                "Saving resources should schedule the next refresh"
+            );
+            view.stop(cx);
+        });
+        assert!(
+            source.read_with(cx, |buffer, _| buffer.is_dirty()),
+            "Kotlin changes must remain unsaved"
+        );
     }
 
     #[gpui::test]

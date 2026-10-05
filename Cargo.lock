@@ -731,6 +731,7 @@ dependencies = [
  "dirs",
  "flate2",
  "fs2",
+ "quick-xml 0.41.0",
  "regex",
  "serde",
  "serde_json",
@@ -10624,12 +10625,14 @@ dependencies = [
 name = "lsp_locations"
 version = "0.1.0"
 dependencies = [
+ "android_tools",
  "anyhow",
  "collections",
  "editor",
  "file_icons",
  "fuzzy",
  "gpui",
+ "image_viewer",
  "indoc",
  "language",
  "log",

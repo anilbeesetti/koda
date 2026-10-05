@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+"""Validate AGP resource layers, custom roots, AAR visibility and manifest paths.
+
+Requires the same Gradle/JDK/SDK setup as test-android-project-model. This probe
+exports metadata; it does not assert Android resource runtime selection.
+"""
+import argparse
+import importlib.machinery
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import tempfile
+
+REPOSITORY = Path(__file__).resolve().parent.parent
+loader = importlib.machinery.SourceFileLoader(
+    "android_model_fixture", str(REPOSITORY / "script/test-android-project-model")
+)
+shared = importlib.util.module_from_spec(importlib.util.spec_from_loader(loader.name, loader))
+loader.exec_module(shared)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--gradle", required=True)
+    parser.add_argument("--sdk", required=True)
+    parser.add_argument("--agp", choices=["8.9.1", "9.4.0"], required=True)
+    parser.add_argument("--keep", type=Path)
+    args = parser.parse_args()
+    temporary = tempfile.TemporaryDirectory(prefix="koda-resources-") if args.keep is None else None
+    root = (args.keep or Path(temporary.name)).resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    shared.fixture(root, args.agp)
+    shared.write(root, "local.properties", f"sdk.dir={Path(args.sdk).resolve()}\n")
+    with (root / "app/build.gradle").open("a") as output:
+        output.write("""
+android {
+ buildFeatures { resValues true }
+ sourceSets.main.res.srcDirs = ['custom/main-res', 'custom/equal-res']
+ sourceSets.demo.res.srcDirs = ['custom/demo-res']
+ defaultConfig { resValue 'string', 'generated_probe', 'Generated' }
+}
+dependencies { implementation 'androidx.core:core:1.16.0' }
+""")
+    shared.write(root, "gradle.properties", "android.useAndroidX=true\nandroid.nonTransitiveRClass=true\n")
+    for directory in ["custom/main-res", "custom/equal-res", "custom/demo-res", "src/debug/res", "src/demoDebug/res", "src/androidTest/res"]:
+        shared.write(root, f"app/{directory}/values/probe.xml", '<resources><string name="overlay_probe">Probe</string></resources>')
+    shared.write(root, "app/custom/main-res/values-fr/probe.xml", '<resources><string name="overlay_probe">French</string></resources>')
+    shared.write(root, "library/src/main/res/values/public.xml", '<resources><public type="string" name="library_probe"/></resources>')
+    shared.write(root, "library/src/main/res/values/probe.xml", '<resources><string name="library_probe">Library</string></resources>')
+    command = [args.gradle, "--console=plain", "--no-configuration-cache", "--parallel", "--max-workers=2", "--init-script", str(REPOSITORY / "crates/android_tools/src/project_model.gradle"), "kodaAndroidProjectModel"]
+    log = root / "resources.log"
+    with log.open("w") as output:
+        subprocess.run(command, cwd=root, stdout=output, stderr=subprocess.STDOUT, check=True)
+    model = shared.model_from_log(log)
+    app = next(module for module in model["modules"] if module["path"] == ":app")
+    main = next(component for variant in app["variants"] if variant["name"] == "demoDebug" for component in variant["components"] if component["scope"] == "main")
+    resources = model["resourceModels"][":app/demoDebug"]
+    layers = resources["layers"]
+    rank = lambda directory: next(index for index, layer in enumerate(layers) if str(root / "app" / directory) in layer)
+    assert rank("src/demoDebug/res") < rank("src/debug/res") < rank("custom/demo-res") < rank("custom/main-res"), layers
+    assert rank("custom/main-res") == rank("custom/equal-res"), layers
+    roots = {source["path"]: source for source in main["sources"] if source["kind"] == "resources"}
+    for layer in layers:
+        for directory in layer:
+            assert directory in roots, (directory, roots)
+    assert not roots[str(root / "app/src/demoDebug/res")]["generated"], roots
+    assert any(source["generated"] and "/generated/res/" in source["path"] for source in roots.values()), roots
+    assert resources["nonTransitiveR"] is True
+    assert Path(resources["framework"]).is_dir()
+    assert resources["mergedManifest"].endswith("AndroidManifest.xml")
+    core = next(dependency for dependency in resources["dependencies"] if dependency["namespace"] == "androidx.core")
+    assert Path(core["path"]).is_dir() and Path(core["manifest"]).is_file(), core
+    assert core["publicResources"] and Path(core["publicResources"]).is_file(), core
+    test = model["resourceModels"][":app/demoDebugAndroidTest"]
+    assert any(str(root / "app/src/androidTest/res") in layer for layer in test["layers"]), test
+    metadata = json.loads(subprocess.check_output(["cargo", "metadata", "--no-deps", "--format-version", "1"], cwd=REPOSITORY))
+    subprocess.run(["cargo", "build", "--locked", "-p", "android_tools", "--example", "project_model_probe"], cwd=REPOSITORY, check=True)
+    subprocess.run([str(Path(metadata["target_directory"]) / "debug/examples/project_model_probe"), str(root), str(log), ":app", "demoDebug"], check=True, stdout=subprocess.DEVNULL)
+    print(f"AGP {args.agp}: resource layers, equal/custom roots, qualifiers, generated roots, AAR public metadata, framework and test roots passed")
+
+
+if __name__ == "__main__":
+    main()

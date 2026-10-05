@@ -75,9 +75,8 @@ gradle.projectsEvaluated {
             def staticProvider = optional(source, 'static')
             def staticPaths = staticProvider?.get()?.flatten()?.collect { it.asFile.canonicalPath } as Set
             def buildPath = project.layout.buildDirectory.get().asFile.canonicalFile.toPath()
-            def legacy = project.extensions.getByName('androidComponents').pluginVersion.major < 9
-            if (legacy && staticProvider != null) {
-                // Older AGP omits variant-only static roots and includes res-value producers.
+            if (staticProvider != null) {
+                // AGP's static provider can omit variant-only roots; the DSL owns those directories.
                 staticPaths = staticPaths.findAll { !new File(it).toPath().startsWith(buildPath) } as Set
                 project.extensions.getByName('android').sourceSets.each { sourceSet ->
                     def conventional = optional(sourceSet, property)
@@ -105,6 +104,34 @@ gradle.projectsEvaluated {
             result.add([path: file.path, kind: 'manifest', generated: file.toPath().startsWith(project.layout.buildDirectory.get().asFile.canonicalFile.toPath())])
         }
         result.unique()
+    }
+    def resourceModel = { project, component, scope ->
+        def layers = optional(optional(component.sources, 'res'), 'all')?.get()?.collect { layer ->
+            (layer instanceof Collection ? layer : [layer]).collect { it.asFile.canonicalPath }
+        } ?: []
+        def config = configuration(project, component)
+        def artifact = { type -> config.incoming.artifactView { view ->
+            view.attributes.attribute(org.gradle.api.attributes.Attribute.of('artifactType', String), type)
+            view.componentFilter { !(it instanceof ProjectComponentIdentifier) }
+            view.lenient true
+        }.artifacts.artifacts }
+        def publicResources = artifact('android-public-res').collectEntries { [(it.id.componentIdentifier.displayName): it.file.canonicalPath] }
+        def manifests = artifact('android-manifest').collectEntries { [(it.id.componentIdentifier.displayName): it.file] }
+        def external = artifact('android-res').collect { entry ->
+            def manifest = manifests[entry.id.componentIdentifier.displayName]
+            if (manifest == null || !manifest.isFile() || !entry.file.isDirectory()) return null
+            def packageName = new groovy.xml.XmlSlurper(false, false).parse(manifest).@package.text()
+            packageName ? [namespace: packageName, path: entry.file.canonicalPath, manifest: manifest.canonicalPath, publicResources: publicResources[entry.id.componentIdentifier.displayName]] : null
+        }.findAll { it != null }.unique()
+        def android = project.extensions.getByName('android')
+        def sdk = project.extensions.getByName('androidComponents').sdkComponents.sdkDirectory.get().asFile
+        def framework = new File(sdk, 'platforms/' + android.compileSdkVersion + '/data/res')
+        def merged = null
+        if (scope == 'main') {
+            def type = component.class.classLoader.loadClass('com.android.build.api.artifact.SingleArtifact$MERGED_MANIFEST')
+            merged = component.artifacts.get(type.getField('INSTANCE').get(null)).get().asFile.canonicalPath
+        }
+        [nonTransitiveR: project.findProperty('android.nonTransitiveRClass')?.toString() != 'false', layers: layers, dependencies: external, framework: framework.isDirectory() ? framework.canonicalPath : null, mergedManifest: merged]
     }
     def defaultVariant = { project, variants ->
         if (variants.isEmpty()) return null
@@ -136,6 +163,7 @@ gradle.projectsEvaluated {
     // Under parallel execution Gradle holds the task owner's project lock only.
     // Collect each module there, then aggregate plain data without resolving foreign configurations.
     def models = new java.util.concurrent.ConcurrentHashMap()
+    def resourceModels = new java.util.concurrent.ConcurrentHashMap()
     def collectors = []
     androidVariants.each { path, variants ->
         def project = root.project(path)
@@ -179,6 +207,7 @@ gradle.projectsEvaluated {
                                 graph.add([kind: 'project', module: feature, variant: candidates.first().name])
                             }
                         }
+                        resourceModels[project.path + '/' + entry.component.name] = resourceModel(project, entry.component, entry.scope)
                         [name: entry.component.name, namespace: optional(entry.component, 'namespace')?.get(), scope: entry.scope, sources: sources(project, entry.component), dependencies: graph.unique()]
                     }]
                  }]
@@ -212,7 +241,7 @@ gradle.projectsEvaluated {
             def modules = models.entrySet().sort { it.key }.collect { it.value }
             if (modules.size() != collectors.size()) throw new GradleException('Android module collection did not finish; sync again')
             def diagnostics = modules.any { it.kind == 'application' } ? [] : ['No runnable application module was found. Library-only builds are catalogued, but selecting an application target is currently required for language setup, build/run/debug, and previews.']
-            println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics]))
+            println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics, resourceModels: resourceModels.entrySet().sort { it.key }.collectEntries { [(it.key): it.value] }]))
         }
     }
 }
