@@ -21855,6 +21855,338 @@ async fn android_resource_semantics_fixture(
 }
 
 #[gpui::test]
+async fn test_android_resource_external_definitions_share_directory_worktrees(
+    cx: &mut TestAppContext,
+) {
+    let (project, filesystem, source) = android_resource_semantics_fixture(cx).await;
+    let framework = PathBuf::from(path!("/external-resources/framework"));
+    let dependency = PathBuf::from(path!("/external-resources/aar"));
+    for (root, name, value) in [
+        (&framework, "ok", "OK"),
+        (&dependency, "external_title", "AAR"),
+    ] {
+        for qualifier in ["fr", "es", "de"] {
+            let directory = root.join(format!("values-{qualifier}"));
+            filesystem
+                .create_dir(&directory)
+                .await
+                .expect("Create external resource qualifier");
+            filesystem
+                .insert_file(
+                    directory.join("extra.xml"),
+                    format!(
+                        "<resources><string name=\"{name}\">{value}-{qualifier}</string></resources>"
+                    )
+                    .into_bytes(),
+                )
+                .await;
+        }
+    }
+    project.read_with(cx, |project, cx| {
+        assert_eq!(project.worktrees(cx).count(), 1);
+        assert_eq!(project.visible_worktrees(cx).count(), 1);
+    });
+
+    let mut retained_definitions = Vec::new();
+    for (reference, root, value) in [
+        ("android.R.string.ok", &framework, "OK"),
+        (
+            "external.library.R.string.external_title",
+            &dependency,
+            "AAR",
+        ),
+    ] {
+        source.update(cx, |buffer, cx| {
+            buffer.set_text(format!("package example.app\nval value = {reference}"), cx);
+        });
+        let position = source.read_with(cx, |buffer, _| buffer.len() - 2);
+        let definitions = project
+            .update(cx, |project, cx| project.definitions(&source, position, cx))
+            .await
+            .expect("Query external resource definitions")
+            .expect("External resource locations");
+        assert_eq!(definitions.len(), 4, "{reference}");
+        let values = definitions
+            .iter()
+            .map(|definition| {
+                definition.target.buffer.read_with(cx, |buffer, cx| {
+                    let file = buffer.file().expect("External resource file");
+                    assert!(
+                        project
+                            .read(cx)
+                            .worktree_for_id(file.worktree_id(cx), cx)
+                            .expect("Resource worktree")
+                            .read(cx)
+                            .abs_path()
+                            .starts_with(root)
+                    );
+                    buffer.text()
+                })
+            })
+            .collect::<Vec<_>>();
+        for expected in [
+            value.to_owned(),
+            format!("{value}-fr"),
+            format!("{value}-es"),
+            format!("{value}-de"),
+        ] {
+            assert!(
+                values
+                    .iter()
+                    .any(|text| text.contains(&format!(">{expected}<"))),
+                "Missing qualifier value {expected} for {reference}"
+            );
+        }
+        retained_definitions.extend(definitions);
+    }
+    project.read_with(cx, |project, cx| {
+        assert_eq!(project.visible_worktrees(cx).count(), 1);
+        let hidden_roots = project
+            .worktrees(cx)
+            .filter_map(|worktree| {
+                let worktree = worktree.read(cx);
+                if worktree.is_visible() {
+                    return None;
+                }
+                assert!(
+                    !worktree.is_single_file(),
+                    "External resource XML must share a directory worktree"
+                );
+                Some(worktree.abs_path().to_path_buf())
+            })
+            .collect::<BTreeSet<_>>();
+        assert_eq!(hidden_roots, BTreeSet::from_iter([framework, dependency]));
+        assert_eq!(project.worktrees(cx).count(), 3);
+    });
+    assert_eq!(retained_definitions.len(), 8);
+}
+
+#[gpui::test]
+async fn test_android_resource_external_directory_worktrees_ignore_initial_and_late_configs(
+    cx: &mut TestAppContext,
+) {
+    async fn write_configs(filesystem: &FakeFs, root: &Path, label: &str, tab_size: u32) {
+        for directory in [".koda", ".vscode"] {
+            filesystem
+                .create_dir(&root.join(directory))
+                .await
+                .expect("Create configuration directory");
+        }
+        for (relative, content) in [
+            (
+                ".editorconfig",
+                format!("root = true\n[*]\nindent_style = space\nindent_size = {tab_size}\n"),
+            ),
+            (
+                ".koda/settings.json",
+                json!({"tab_size": tab_size}).to_string(),
+            ),
+            (
+                ".koda/tasks.json",
+                json!([{"label": label, "command": "echo marker"}]).to_string(),
+            ),
+            (
+                ".koda/debug.json",
+                json!([{"label": label, "adapter": "CodeLLDB", "request": "launch", "program": "marker"}]).to_string(),
+            ),
+            (
+                ".vscode/tasks.json",
+                json!({"version": "2.0.0", "tasks": [{"label": format!("{label}-vscode"), "type": "shell", "command": "echo marker"}]}).to_string(),
+            ),
+            (
+                ".vscode/launch.json",
+                json!({"version": "0.2.0", "configurations": [{"name": format!("{label}-vscode"), "type": "lldb", "request": "launch", "program": "marker"}]}).to_string(),
+            ),
+        ] {
+            filesystem
+                .insert_file(root.join(relative), content.into_bytes())
+                .await;
+        }
+    }
+
+    let (project, filesystem, source) = android_resource_semantics_fixture(cx).await;
+    cx.update_global::<SettingsStore, _>(|settings, cx| {
+        settings.update_user_settings(cx, |settings| {
+            settings
+                .session
+                .get_or_insert_with(Default::default)
+                .trust_all_worktrees = Some(true);
+        });
+    });
+    let default_tab_size = cx.update(|cx| LanguageSettings::resolve(None, None, cx).tab_size);
+    let framework = PathBuf::from(path!("/external-resources/framework"));
+    let dependency = PathBuf::from(path!("/external-resources/aar"));
+    write_configs(
+        &filesystem,
+        Path::new(path!("/android-resources")),
+        "app-control",
+        7,
+    )
+    .await;
+    for root in [&framework, &dependency] {
+        write_configs(&filesystem, root, "external-initial", 31).await;
+    }
+    let mut retained_definitions = Vec::new();
+    for (reference, expected) in [
+        ("android.R.string.ok", "OK"),
+        ("external.library.R.string.external_title", "AAR"),
+    ] {
+        source.update(cx, |buffer, cx| {
+            buffer.set_text(format!("package example.app\nval value = {reference}"), cx);
+        });
+        let position = source.read_with(cx, |buffer, _| buffer.len() - 2);
+        let definitions = project
+            .update(cx, |project, cx| project.definitions(&source, position, cx))
+            .await
+            .expect("Query configured external resources")
+            .expect("External definitions");
+        assert_eq!(definitions.len(), 1);
+        assert!(definitions[0].target.buffer.read_with(cx, |buffer, _| {
+            buffer.text().contains(&format!(">{expected}<"))
+        }));
+        retained_definitions.extend(definitions);
+    }
+    cx.run_until_parked();
+    let inventory = project.read_with(cx, |project, cx| {
+        project
+            .task_store()
+            .read(cx)
+            .task_inventory()
+            .cloned()
+            .expect("Task inventory")
+    });
+    for phase in 0..3 {
+        if phase == 1 {
+            for root in [&framework, &dependency] {
+                write_configs(&filesystem, root, "external-replaced", 37).await;
+                write_configs(&filesystem, &root.join("values"), "external-late", 41).await;
+            }
+            cx.run_until_parked();
+        }
+        if phase == 2 {
+            for (root, relocated) in [
+                (&framework, PathBuf::from(path!("/relocated-framework"))),
+                (&dependency, PathBuf::from(path!("/relocated-aar"))),
+            ] {
+                let worktree = project.read_with(cx, |project, cx| {
+                    project.find_worktree(root, cx).expect("External root").0
+                });
+                let original_id = worktree.read_with(cx, |worktree, _| worktree.id());
+                filesystem
+                    .rename(root, &relocated, Default::default())
+                    .await
+                    .expect("Move external resource directory");
+                cx.run_until_parked();
+                worktree.read_with(cx, |worktree, _| {
+                    assert_eq!(worktree.abs_path().as_ref(), relocated.as_path());
+                    assert_eq!(worktree.id(), original_id);
+                    assert!(!worktree.is_visible());
+                });
+                write_configs(&filesystem, &relocated, "external-renamed", 47).await;
+                write_configs(
+                    &filesystem,
+                    &relocated.join("values"),
+                    "external-renamed-late",
+                    49,
+                )
+                .await;
+            }
+            cx.run_until_parked();
+        }
+        for definition in &retained_definitions {
+            let buffer = &definition.target.buffer;
+            let worktree_id = buffer.read_with(cx, |buffer, cx| {
+                assert_eq!(
+                    LanguageSettings::for_buffer(buffer, cx).tab_size,
+                    default_tab_size,
+                    "External resource settings must be ignored"
+                );
+                let worktree_id = buffer.file().expect("Resource file").worktree_id(cx);
+                assert_eq!(
+                    cx.global::<SettingsStore>()
+                        .local_settings(worktree_id)
+                        .count(),
+                    0
+                );
+                let worktree = project
+                    .read(cx)
+                    .worktree_for_id(worktree_id, cx)
+                    .expect("Resource worktree");
+                assert!(!worktree.read(cx).is_visible());
+                assert!(!worktree.read(cx).is_single_file());
+                worktree_id
+            });
+            let tasks = inventory
+                .update(cx, |inventory, cx| {
+                    inventory.list_tasks(None, None, Some(worktree_id), cx)
+                })
+                .await;
+            assert!(
+                tasks
+                    .iter()
+                    .all(|(_, task)| !task.label.starts_with("external-"))
+            );
+            let (_, scenarios) = inventory
+                .update(cx, |inventory, cx| {
+                    inventory.list_debug_scenarios(
+                        &TaskContexts {
+                            active_worktree_context: Some((worktree_id, TaskContext::default())),
+                            ..Default::default()
+                        },
+                        Vec::new(),
+                        Vec::new(),
+                        false,
+                        cx,
+                    )
+                })
+                .await;
+            assert!(
+                scenarios
+                    .iter()
+                    .all(|(_, scenario)| !scenario.label.starts_with("external-"))
+            );
+        }
+        let app_worktree_id = source.read_with(cx, |buffer, cx| {
+            assert_eq!(LanguageSettings::for_buffer(buffer, cx).tab_size.get(), 7);
+            buffer.file().expect("Source file").worktree_id(cx)
+        });
+        let app_tasks = inventory
+            .update(cx, |inventory, cx| {
+                inventory.list_tasks(None, None, Some(app_worktree_id), cx)
+            })
+            .await;
+        assert!(
+            app_tasks
+                .iter()
+                .any(|(_, task)| task.label == "app-control")
+        );
+        let (_, app_scenarios) = inventory
+            .update(cx, |inventory, cx| {
+                inventory.list_debug_scenarios(
+                    &TaskContexts {
+                        active_worktree_context: Some((app_worktree_id, TaskContext::default())),
+                        ..Default::default()
+                    },
+                    Vec::new(),
+                    Vec::new(),
+                    false,
+                    cx,
+                )
+            })
+            .await;
+        assert!(
+            app_scenarios
+                .iter()
+                .any(|(_, scenario)| scenario.label == "app-control")
+        );
+    }
+    project.read_with(cx, |project, cx| {
+        assert_eq!(project.visible_worktrees(cx).count(), 1);
+        assert_eq!(project.worktrees(cx).count(), 3);
+    });
+}
+
+#[gpui::test]
 async fn test_android_resource_overlays_provenance_dependencies_files_and_completions(
     cx: &mut TestAppContext,
 ) {

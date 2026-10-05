@@ -23,6 +23,12 @@ resource rename requires overlay metadata from a successful sync.
 Repeated `@+id` declarations are legal and are not treated as duplicate-resource
 conflicts. Dependency, SDK and generated resources are read-only for this rename
 operation; that restriction does not globally lock ordinary editor buffers.
+External XML resources share hidden directory worktrees instead of creating one
+worktree per file. Newly created resource worktrees ignore initial and later
+project settings, tasks, debug configurations and EditorConfig; existing
+containing project worktrees retain their usual configuration and trust policy.
+Large SDK queries still scan and parse many XML files on demand; this is not a
+claim of low-latency indexing or bounded resident memory.
 
 The resource model uses compile-classpath AAR transforms and the compile SDK's
 `data/res`. It does not parse binary-only APK tables or a dependency R JAR as a
@@ -47,7 +53,9 @@ not Android Studio refactoring parity or a visual layout editor.
   custom/flavor/qualifier/dependency/framework/non-XML roots, completion and
   manifest candidates, preview/unsaved edits/undo, collisions/generated files,
   stale source/model/disk state, file addition/deletion, failed sync/recovery,
-  metadata edits and safe refusals.
+  metadata edits and safe refusals; shared external directory worktrees and
+  suppression of initial and later dependency configuration with a working
+  visible-project configuration control.
 - Editor tests filtered by `resource_rename::tests`: read-only preview,
   apply/cancel/Escape/dismissal, keyboard focus and viewport bounds.
 - `lsp_locations` tests: default action dispatch opens a real PNG image under

@@ -1547,6 +1547,25 @@ async fn build_index(
 ) -> Result<ResourceIndex> {
     let filesystem = project.read_with(cx, |project, _| project.fs.clone())?;
     let mut files = enumerate_files(&filesystem, &roots, sources).await?;
+    // External resources are often outside every existing worktree. Establish
+    // directory worktrees once, rather than making a hidden worktree for each
+    // SDK/AAR XML file. Keep them alive until indexed buffers retain them.
+    let mut external_worktrees = Vec::new();
+    for root in roots.iter().filter(|root| root.external) {
+        if files.iter().any(|path| path.starts_with(&root.path)) {
+            let (worktree, _) = project
+                .update(cx, |project, cx| {
+                    if project.find_worktree(&root.path, cx).is_none() {
+                        project.settings_observer.update(cx, |observer, _| {
+                            observer.exclude_resource_root_settings(root.path.clone());
+                        });
+                    }
+                    project.find_or_create_worktree(&root.path, false, cx)
+                })?
+                .await?;
+            external_worktrees.push(worktree);
+        }
+    }
     // Keep live buffer handles, rather than searching all opened buffers for
     // every resource. Snapshots are still captured when each file is visited.
     let mut opened_buffers = project.read_with(cx, |project, cx| {
