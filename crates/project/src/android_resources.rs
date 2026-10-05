@@ -1106,6 +1106,19 @@ impl Project {
             ensure!(resolution.conflicts.is_empty(), "Resource has equal-priority conflicts; resolve them before renaming");
             ensure!(resolution.winners.iter().all(|entry| !entry.generated && !entry.external), "Dependency, framework and generated resources are read-only for resource rename");
             let index = build_index(&project, roots, query.token.clone(), true, cx).await?;
+            for path in &index.files {
+                for resource_root in index.roots.iter().filter(|root| root.kind == SourceKind::Resources && root.namespace == symbol.namespace && path.strip_prefix(&root.path).is_ok_and(|relative| relative.components().count() == 2)) {
+                    ensure!(!index.roots.iter().any(|root| path.starts_with(&root.path) && root.path.components().count() >= resource_root.path.components().count() && (root.kind != SourceKind::Resources || !path.strip_prefix(&root.path).is_ok_and(|relative| relative.components().count() == 2))), "Resource file in {} overlaps incompatible source roots; rename ownership cannot be proven safely", path.display());
+                }
+            }
+            for declaration in selected_index.declarations.iter().chain(&index.declarations).filter(|entry| entry.symbol.kind == symbol.kind && entry.symbol.name == symbol.name) {
+                let namespaces = index.roots.iter().filter(|root| {
+                    root.kind == SourceKind::Resources
+                        && declaration.path.strip_prefix(&root.path).is_ok_and(|relative| relative.components().count() == 2)
+                }).map(|root| root.namespace.as_str()).collect::<BTreeSet<_>>();
+                ensure!(!(namespaces.contains(symbol.namespace.as_str()) && namespaces.len() > 1), "Resource declaration in {} is shared by multiple namespaces; rename ownership cannot be proven safely", declaration.path.display());
+            }
+            ensure!(selected_index.declarations.iter().filter(|entry| &entry.symbol == symbol).all(|entry| index.declarations.iter().any(|candidate| &candidate.symbol == symbol && candidate.path == entry.path && candidate.name_range == entry.name_range)), "Resource declaration ownership changed across source roots; rename ownership cannot be proven safely");
             ensure!(!index.conflicts.contains(symbol), "Resource has conflicting declarations in a source set");
             ensure!(!index.declarations.iter().any(|entry| entry.symbol.namespace == symbol.namespace && entry.symbol.kind == symbol.kind && entry.symbol.name == new_name), "The new resource name already exists in a variant or qualifier");
             let declarations = index.declarations.iter().filter(|entry| &entry.symbol == symbol).collect::<Vec<_>>();
@@ -1126,6 +1139,14 @@ impl Project {
                 if xml { ensure!(resources::xml_rename_is_unambiguous(&text, &symbol.kind, &symbol.name)?, "Data binding or escaped references in {} require server-backed rename", document.path.display()); }
                 for reference in document_references(document)? {
                     if reference.kind == symbol.kind && reference.name == symbol.name {
+                        if !xml && reference.namespace.is_none() {
+                            let namespaces = index.roots.iter().filter(|root| matches!(root.kind, SourceKind::Java | SourceKind::Kotlin) && document.path.starts_with(&root.path)).map(|root| root.namespace.as_str()).collect::<BTreeSet<_>>();
+                            ensure!(!(namespaces.contains(symbol.namespace.as_str()) && namespaces.len() > 1), "An implicit R reference in {} is shared by multiple namespaces; rename ownership cannot be proven safely", document.path.display());
+                        }
+                        if xml && reference.namespace.is_none() {
+                            let namespaces = index.roots.iter().filter(|root| root.kind == SourceKind::Resources && document.path.strip_prefix(&root.path).is_ok_and(|relative| relative.components().count() == 2)).map(|root| root.namespace.as_str()).collect::<BTreeSet<_>>();
+                            ensure!(!(namespaces.contains(symbol.namespace.as_str()) && namespaces.len() > 1), "An unqualified XML reference in {} is shared by multiple namespaces; rename ownership cannot be proven safely", document.path.display());
+                        }
                         if xml && reference.namespace.is_none() && document.namespace != symbol.namespace {
                             anyhow::bail!("An unqualified cross-namespace XML reference in {} cannot be proven safe across all variants", document.path.display());
                         }
@@ -1219,7 +1240,12 @@ impl Project {
             project.update(cx, |project, cx| {
                 ensure!(
                     project.android_model.is_current(&plan.index.token)
-                        && !project.is_read_only(cx),
+                        && !project.is_read_only(cx)
+                        && project.is_local()
+                        && !crate::trusted_worktrees::TrustedWorktrees::has_restricted_worktrees(
+                            &project.worktree_store(),
+                            cx,
+                        ),
                     "Android project changed after resource rename preview"
                 );
                 for document in plan.index.documents.values() {

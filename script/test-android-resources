@@ -48,7 +48,7 @@ dependencies { implementation 'androidx.core:core:1.16.0' }
     shared.write(root, "app/custom/main-res/values-fr/probe.xml", '<resources><string name="overlay_probe">French</string></resources>')
     shared.write(root, "library/src/main/res/values/public.xml", '<resources><public type="string" name="library_probe"/></resources>')
     shared.write(root, "library/src/main/res/values/probe.xml", '<resources><string name="library_probe">Library</string></resources>')
-    command = [args.gradle, "--console=plain", "--no-configuration-cache", "--max-workers=2", "--init-script", str(REPOSITORY / "crates/android_tools/src/project_model.gradle"), "kodaAndroidProjectModel"]
+    command = [args.gradle, "--console=plain", "--no-configuration-cache", "--parallel", "--max-workers=2", "--init-script", str(REPOSITORY / "crates/android_tools/src/project_model.gradle"), "kodaAndroidProjectModel"]
     log = root / "resources.log"
     with log.open("w") as output:
         subprocess.run(command, cwd=root, stdout=output, stderr=subprocess.STDOUT, check=True)

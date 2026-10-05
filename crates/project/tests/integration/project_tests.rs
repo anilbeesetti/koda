@@ -22542,3 +22542,606 @@ async fn test_android_resource_app_queries_do_not_scan_unrelated_framework_paths
         "An explicit framework request must still reject symlinked paths"
     );
 }
+
+#[gpui::test]
+async fn test_android_resource_rename_rejects_trust_revocation_without_partial_edits(
+    cx: &mut TestAppContext,
+) {
+    use project::trusted_worktrees::{self, PathTrust, TrustedWorktrees};
+
+    let (project, _, source) = android_resource_semantics_fixture(cx).await;
+    let worktree_store = project.read_with(cx, |project, _| project.worktree_store());
+    let worktree_id = source.read_with(cx, |buffer, cx| {
+        buffer.file().expect("Source file").worktree_id(cx)
+    });
+    let trusted = cx.update(|cx| {
+        trusted_worktrees::init(Default::default(), cx);
+        trusted_worktrees::track_worktree_trust(worktree_store.clone(), None, None, None, cx);
+        TrustedWorktrees::try_get_global(cx).expect("Trust store")
+    });
+    trusted.update(cx, |trusted, cx| {
+        trusted.trust(
+            &worktree_store,
+            HashSet::from_iter([PathTrust::Worktree(worktree_id)]),
+            cx,
+        );
+    });
+    let plan = prepare_android_title_rename(&project, &source, cx).await;
+    let before = android_resource_buffer_texts(&project, cx);
+    let token = project.read_with(cx, |project, _| project.android_model().token());
+
+    trusted.update(cx, |trusted, cx| {
+        trusted.restrict(
+            worktree_store.downgrade(),
+            HashSet::from_iter([PathTrust::Worktree(worktree_id)]),
+            cx,
+        );
+    });
+    project.read_with(cx, |project, cx| {
+        assert!(project.android_model().is_current(&token));
+        assert!(project.is_local());
+        assert!(!project.is_read_only(cx));
+        assert!(TrustedWorktrees::has_restricted_worktrees(
+            &worktree_store,
+            cx,
+        ));
+    });
+    assert!(
+        project
+            .update(cx, |project, cx| project
+                .apply_android_resource_rename(plan, cx))
+            .await
+            .is_err()
+    );
+    for (buffer, text) in before {
+        assert_eq!(buffer.read_with(cx, |buffer, _| buffer.text()), text);
+    }
+}
+
+#[gpui::test]
+async fn test_android_resource_rename_rejects_shadowed_roots_shared_by_test_namespace(
+    cx: &mut TestAppContext,
+) {
+    use android_tools::project_model::{SourceKind, SourceRoot, SourceScope, VariantId};
+
+    let (project, filesystem, source) = android_resource_semantics_fixture(cx).await;
+    let shared = PathBuf::from(path!("/android-resources/app/shared"));
+    filesystem
+        .insert_tree(
+            &shared,
+            json!({"values": {"strings.xml": "<resources><string name=\"title\">Shared</string></resources>"}}),
+        )
+        .await;
+    let mut model = project.read_with(cx, |project, _| {
+        project
+            .android_model()
+            .model
+            .as_ref()
+            .expect("Model")
+            .as_ref()
+            .clone()
+    });
+    for variant in &mut model
+        .modules
+        .iter_mut()
+        .find(|module| module.path == ":app")
+        .expect("App")
+        .variants
+    {
+        for component in &mut variant.components {
+            if matches!(
+                component.scope,
+                SourceScope::Main | SourceScope::AndroidTest
+            ) {
+                component.sources.push(SourceRoot {
+                    path: shared.clone(),
+                    kind: SourceKind::Resources,
+                    generated: false,
+                });
+                if component.scope == SourceScope::Main {
+                    model
+                        .resource_models
+                        .get_mut(&format!(":app/{}", component.name))
+                        .expect("Main resource layers")
+                        .layers
+                        .push(vec![shared.clone()]);
+                }
+            }
+        }
+    }
+    project.update(cx, |project, cx| {
+        let token = project.invalidate_android_model(Some(model.root.clone()), cx);
+        project
+            .publish_android_model(&token, model, cx)
+            .expect("Publish shared-root model");
+        project
+            .select_android_variant(
+                Some(VariantId {
+                    module: ":app".into(),
+                    variant: "demoDebug".into(),
+                }),
+                cx,
+            )
+            .expect("Select main variant");
+    });
+    let hover = project
+        .update(cx, |project, cx| {
+            project.hover(&source, Point::new(1, 25), cx)
+        })
+        .await
+        .expect("Main resource provenance");
+    assert!(
+        hover
+            .iter()
+            .flat_map(|hover| &hover.contents)
+            .any(|block| block.text.contains("app/shared/values/strings.xml"))
+    );
+    let rename = project
+        .update(cx, |project, cx| {
+            project.prepare_android_resource_rename(
+                &source,
+                Point::new(1, 25).to_point_utf16(source.read(cx)),
+                "renamed_title".into(),
+                cx,
+            )
+        })
+        .expect("Resource rename")
+        .await;
+    let error = rename
+        .err()
+        .expect("Shared physical declaration must reject rename");
+    assert!(
+        error.to_string().contains("shared by multiple namespaces"),
+        "{error}"
+    );
+    for (_, text) in android_resource_buffer_texts(&project, cx) {
+        assert!(!text.contains("renamed_title"));
+    }
+    assert!(
+        filesystem
+            .load(&shared.join("values/strings.xml"))
+            .await
+            .expect("Shared resource remains unchanged")
+            .contains("name=\"title\"")
+    );
+}
+
+#[gpui::test]
+async fn test_android_resource_rename_rejects_shared_xml_references_with_distinct_owners(
+    cx: &mut TestAppContext,
+) {
+    use android_tools::project_model::{SourceKind, SourceRoot, SourceScope, VariantId};
+
+    let (project, filesystem, source) = android_resource_semantics_fixture(cx).await;
+    let shared = PathBuf::from(path!("/android-resources/app/shared"));
+    filesystem
+        .insert_tree(
+            &shared,
+            json!({"layout": {"shared.xml": "<view title=\"@string/title\"/>"}}),
+        )
+        .await;
+    let test_resources = PathBuf::from(path!("/android-resources/app/test-resources"));
+    filesystem.insert_tree(&test_resources, json!({"values": {"strings.xml": "<resources><string name=\"title\">Test title</string></resources>"}})).await;
+    let mut model = project.read_with(cx, |project, _| {
+        project
+            .android_model()
+            .model
+            .as_ref()
+            .expect("Model")
+            .as_ref()
+            .clone()
+    });
+    for variant in &mut model
+        .modules
+        .iter_mut()
+        .find(|module| module.path == ":app")
+        .expect("App")
+        .variants
+    {
+        for component in &mut variant.components {
+            if matches!(
+                component.scope,
+                SourceScope::Main | SourceScope::AndroidTest
+            ) {
+                component.sources.push(SourceRoot {
+                    path: shared.clone(),
+                    kind: SourceKind::Resources,
+                    generated: false,
+                });
+                if component.scope == SourceScope::Main {
+                    model
+                        .resource_models
+                        .get_mut(&format!(":app/{}", component.name))
+                        .expect("Main resource layers")
+                        .layers
+                        .push(vec![shared.clone()]);
+                } else {
+                    component.sources.push(SourceRoot {
+                        path: test_resources.clone(),
+                        kind: SourceKind::Resources,
+                        generated: false,
+                    });
+                }
+            }
+        }
+        variant.components.reverse();
+    }
+    project.update(cx, |project, cx| {
+        let token = project.invalidate_android_model(Some(model.root.clone()), cx);
+        project
+            .publish_android_model(&token, model, cx)
+            .expect("Publish shared XML model");
+        project
+            .select_android_variant(
+                Some(VariantId {
+                    module: ":app".into(),
+                    variant: "demoDebug".into(),
+                }),
+                cx,
+            )
+            .expect("Select main variant");
+    });
+    let result = project
+        .update(cx, |project, cx| {
+            project.prepare_android_resource_rename(
+                &source,
+                Point::new(1, 25).to_point_utf16(source.read(cx)),
+                "renamed_title".into(),
+                cx,
+            )
+        })
+        .expect("Resource rename")
+        .await;
+    let error = result
+        .err()
+        .expect("Shared XML can bind two distinct title resources");
+    assert!(
+        error.to_string().contains("unqualified XML reference")
+            && error.to_string().contains("shared by multiple namespaces"),
+        "{error}"
+    );
+    for (_, text) in android_resource_buffer_texts(&project, cx) {
+        assert!(!text.contains("renamed_title"));
+    }
+    assert_eq!(
+        filesystem
+            .load(&shared.join("layout/shared.xml"))
+            .await
+            .expect("Saved shared layout"),
+        "<view title=\"@string/title\"/>"
+    );
+}
+
+#[gpui::test]
+async fn test_android_resource_rename_rejects_shared_implicit_code_references(
+    cx: &mut TestAppContext,
+) {
+    use android_tools::project_model::{SourceKind, SourceRoot, SourceScope, VariantId};
+
+    let (project, filesystem, source) = android_resource_semantics_fixture(cx).await;
+    let shared = PathBuf::from(path!("/android-resources/app/shared-code"));
+    let examples = [
+        (
+            "Shared.kt",
+            "import example.app.R\nval shared = R.string.title",
+            "val shared = R.string.title",
+        ),
+        (
+            "Shared.java",
+            "import example.app.R;\nclass Shared { int shared = R.string.title; }",
+            "class Shared { int shared = R.string.title; }",
+        ),
+    ];
+    filesystem
+        .insert_tree(
+            &shared,
+            json!({"Shared.kt": examples[0].1, "Shared.java": examples[1].1}),
+        )
+        .await;
+    let mut model = project.read_with(cx, |project, _| {
+        project
+            .android_model()
+            .model
+            .as_ref()
+            .expect("Model")
+            .as_ref()
+            .clone()
+    });
+    for variant in &mut model
+        .modules
+        .iter_mut()
+        .find(|module| module.path == ":app")
+        .expect("App")
+        .variants
+    {
+        for component in &mut variant.components {
+            if matches!(
+                component.scope,
+                SourceScope::Main | SourceScope::AndroidTest
+            ) {
+                component.sources.push(SourceRoot {
+                    path: shared.clone(),
+                    kind: SourceKind::Kotlin,
+                    generated: false,
+                });
+            }
+        }
+        variant.components.reverse();
+    }
+    project.update(cx, |project, cx| {
+        let token = project.invalidate_android_model(Some(model.root.clone()), cx);
+        project
+            .publish_android_model(&token, model, cx)
+            .expect("Publish shared code model");
+        project
+            .select_android_variant(
+                Some(VariantId {
+                    module: ":app".into(),
+                    variant: "demoDebug".into(),
+                }),
+                cx,
+            )
+            .expect("Select main variant");
+    });
+    let _plan = prepare_android_title_rename(&project, &source, cx).await;
+    for (filename, explicit, implicit) in examples {
+        let path = shared.join(filename);
+        let buffer = project
+            .update(cx, |project, cx| project.open_local_buffer(&path, cx))
+            .await
+            .expect("Open shared code");
+        buffer.update(cx, |buffer, cx| buffer.set_text(implicit, cx));
+        let before = android_resource_buffer_texts(&project, cx);
+        let result = project
+            .update(cx, |project, cx| {
+                project.prepare_android_resource_rename(
+                    &source,
+                    Point::new(1, 25).to_point_utf16(source.read(cx)),
+                    "renamed_title".into(),
+                    cx,
+                )
+            })
+            .expect("Resource rename")
+            .await;
+        let error = result
+            .err()
+            .expect("Implicit shared R cannot prove its namespace");
+        assert!(
+            error.to_string().contains("implicit R reference")
+                && error.to_string().contains("shared by multiple namespaces"),
+            "{filename}: {error}"
+        );
+        for (buffer, text) in before {
+            assert_eq!(buffer.read_with(cx, |buffer, _| buffer.text()), text);
+        }
+        assert_eq!(
+            filesystem.load(&path).await.expect("Disk stays saved"),
+            explicit
+        );
+        buffer.update(cx, |buffer, cx| buffer.set_text(explicit, cx));
+    }
+    let _plan = prepare_android_title_rename(&project, &source, cx).await;
+}
+
+#[gpui::test]
+async fn test_android_resource_rename_rejects_resource_roots_shadowed_by_code_roots(
+    cx: &mut TestAppContext,
+) {
+    use android_tools::project_model::{SourceKind, SourceRoot, SourceScope, VariantId};
+
+    let (project, _, source) = android_resource_semantics_fixture(cx).await;
+    let mut model = project.read_with(cx, |project, _| {
+        project
+            .android_model()
+            .model
+            .as_ref()
+            .expect("Model")
+            .as_ref()
+            .clone()
+    });
+    let resources = model.root.join("app/full");
+    for variant in &mut model
+        .modules
+        .iter_mut()
+        .find(|module| module.path == ":app")
+        .expect("App")
+        .variants
+    {
+        if variant.name != "fullDebug" {
+            continue;
+        }
+        for component in &mut variant.components {
+            if component.scope == SourceScope::Main {
+                component.sources.push(SourceRoot {
+                    path: resources.clone(),
+                    kind: SourceKind::Java,
+                    generated: false,
+                });
+            }
+        }
+    }
+    project.update(cx, |project, cx| {
+        let token = project.invalidate_android_model(Some(model.root.clone()), cx);
+        project
+            .publish_android_model(&token, model, cx)
+            .expect("Publish overlapping roots");
+        project
+            .select_android_variant(
+                Some(VariantId {
+                    module: ":app".into(),
+                    variant: "demoDebug".into(),
+                }),
+                cx,
+            )
+            .expect("Keep a variant with unambiguous resource roots selected");
+    });
+    let before = android_resource_buffer_texts(&project, cx);
+    let result = project
+        .update(cx, |project, cx| {
+            project.prepare_android_resource_rename(
+                &source,
+                Point::new(1, 25).to_point_utf16(source.read(cx)),
+                "renamed_title".into(),
+                cx,
+            )
+        })
+        .expect("Resource rename")
+        .await;
+    let error = result
+        .err()
+        .expect("Resource declaration hidden by a code root must reject rename");
+    assert!(
+        error
+            .to_string()
+            .contains("overlaps incompatible source roots"),
+        "{error}"
+    );
+    for (buffer, text) in before {
+        assert_eq!(buffer.read_with(cx, |buffer, _| buffer.text()), text);
+    }
+    for (_, text) in android_resource_buffer_texts(&project, cx) {
+        assert!(!text.contains("renamed_title"));
+    }
+}
+
+#[gpui::test]
+async fn test_android_resource_rename_uses_unsaved_xml_declarations_and_references(
+    cx: &mut TestAppContext,
+) {
+    let (project, filesystem, source) = android_resource_semantics_fixture(cx).await;
+    let strings_path = Path::new(path!("/android-resources/app/main/values/strings.xml"));
+    let disk_text = filesystem.load(strings_path).await.expect("Saved XML");
+    let strings = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer(strings_path, cx)
+        })
+        .await
+        .expect("Open values XML");
+    strings.update(cx, |buffer, cx| {
+        buffer.set_text(
+            disk_text.replace(
+                "</resources>",
+                "<string name=\"unsaved_title\">Draft</string></resources>",
+            ),
+            cx,
+        );
+    });
+    let layout = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer(path!("/android-resources/app/main/layout/main.xml"), cx)
+        })
+        .await
+        .expect("Open layout XML");
+    layout.update(cx, |buffer, cx| {
+        buffer.set_text("<view title=\"@string/unsaved_title\"/>", cx);
+    });
+    source.update(cx, |buffer, cx| {
+        buffer.set_text(
+            "package example.app\nval title = R.string.unsaved_title",
+            cx,
+        );
+    });
+    let position = strings.read_with(cx, |buffer, _| {
+        buffer
+            .text()
+            .find("unsaved_title")
+            .expect("Unsaved declaration")
+            + 3
+    });
+    let plan = project
+        .update(cx, |project, cx| {
+            project.prepare_android_resource_rename(
+                &strings,
+                position.to_point_utf16(strings.read(cx)),
+                "renamed_unsaved_title".into(),
+                cx,
+            )
+        })
+        .expect("Rename unsaved XML declaration")
+        .await
+        .expect("Unsaved declaration is indexed");
+    let transaction = project
+        .update(cx, |project, cx| {
+            project.apply_android_resource_rename(plan, cx)
+        })
+        .await
+        .expect("Rename unsaved resource");
+    assert!(transaction.0.contains_key(&strings));
+    assert!(transaction.0.contains_key(&layout));
+    assert!(transaction.0.contains_key(&source));
+    assert!(strings.read_with(cx, |buffer, _| {
+        buffer.text().contains("name=\"renamed_unsaved_title\"")
+    }));
+    assert_eq!(
+        layout.read_with(cx, |buffer, _| buffer.text()),
+        "<view title=\"@string/renamed_unsaved_title\"/>"
+    );
+    assert!(source.read_with(cx, |buffer, _| {
+        buffer.text().contains("R.string.renamed_unsaved_title")
+    }));
+    assert_eq!(
+        filesystem
+            .load(strings_path)
+            .await
+            .expect("Disk stays saved"),
+        disk_text
+    );
+    for buffer in transaction.0.keys() {
+        buffer.update(cx, |buffer, cx| {
+            buffer.undo(cx);
+        });
+    }
+    assert!(strings.read_with(cx, |buffer, _| {
+        buffer.text().contains("name=\"unsaved_title\"")
+    }));
+    assert_eq!(
+        layout.read_with(cx, |buffer, _| buffer.text()),
+        "<view title=\"@string/unsaved_title\"/>"
+    );
+    assert!(source.read_with(cx, |buffer, _| {
+        buffer.text().contains("R.string.unsaved_title")
+    }));
+}
+
+#[gpui::test]
+async fn test_android_resource_rename_rejects_variant_switch_after_preview(
+    cx: &mut TestAppContext,
+) {
+    use android_tools::project_model::VariantId;
+
+    let (project, _, source) = android_resource_semantics_fixture(cx).await;
+    let plan = prepare_android_title_rename(&project, &source, cx).await;
+    let before = android_resource_buffer_texts(&project, cx);
+    project.update(cx, |project, cx| {
+        project
+            .select_android_variant(
+                Some(VariantId {
+                    module: ":app".into(),
+                    variant: "fullDebug".into(),
+                }),
+                cx,
+            )
+            .expect("Switch selected variant");
+    });
+    assert!(
+        project
+            .update(cx, |project, cx| {
+                project.apply_android_resource_rename(plan, cx)
+            })
+            .await
+            .is_err()
+    );
+    for (buffer, text) in before {
+        assert_eq!(buffer.read_with(cx, |buffer, _| buffer.text()), text);
+    }
+    let plan = prepare_android_title_rename(&project, &source, cx).await;
+    project
+        .update(cx, |project, cx| {
+            project.apply_android_resource_rename(plan, cx)
+        })
+        .await
+        .expect("A fresh preview uses the new variant");
+    assert!(source.read_with(cx, |buffer, _| {
+        buffer.text().contains("R.string.renamed_title")
+    }));
+}
