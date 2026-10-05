@@ -10625,12 +10625,14 @@ dependencies = [
 name = "lsp_locations"
 version = "0.1.0"
 dependencies = [
+ "android_tools",
  "anyhow",
  "collections",
  "editor",
  "file_icons",
  "fuzzy",
  "gpui",
+ "image_viewer",
  "indoc",
  "language",
  "log",

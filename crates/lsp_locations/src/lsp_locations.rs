@@ -222,6 +222,15 @@ async fn run_picker_query(
         .update(cx, |editor, cx| kind.run_query(editor, project, cx))
         .ok()
         .flatten()?;
+    resolve_picker_query(kind, query, workspace, cx).await
+}
+
+async fn resolve_picker_query(
+    kind: LspPickerKind,
+    query: Task<anyhow::Result<Vec<Location>>>,
+    workspace: &WeakEntity<Workspace>,
+    cx: &mut AsyncWindowContext,
+) -> Option<Vec<Location>> {
     match query.await {
         Ok(locations) => Some(locations),
         Err(error) => {
@@ -331,16 +340,65 @@ impl LspLocationsPicker {
         let started = Instant::now();
         let project = workspace.project().clone();
         let fallback = EditorSettings::get_global(cx).go_to_definition_fallback;
+        // Capture both queries at the same selection. The resource scan may take
+        // long enough for the cursor to move before it finishes.
+        let resource_files = if kind == LspPickerKind::Definition {
+            editor.update(cx, |editor, cx| {
+                editor.android_resource_file_definitions(cx)
+            })
+        } else {
+            None
+        };
+        let query = editor.update(cx, |editor, cx| kind.run_query(editor, &project, cx));
         let editor = editor.downgrade();
         cx.spawn_in(window, async move |workspace, cx| {
             let mut kind = kind;
+
+            if let Some(resource_files) = resource_files {
+                let result = async {
+                    let paths = resource_files.await?;
+                    let navigated = !paths.is_empty();
+                    for path in paths {
+                        workspace
+                            .update_in(cx, |workspace, window, cx| {
+                                workspace.open_abs_path(
+                                    path,
+                                    workspace::OpenOptions::default(),
+                                    window,
+                                    cx,
+                                )
+                            })?
+                            .await?;
+                    }
+                    anyhow::Ok(navigated)
+                }
+                .await;
+                match result {
+                    Ok(true) => return,
+                    Ok(false) => {}
+                    Err(error) => {
+                        log::error!("Android resource definition failed: {error:#}");
+                        workspace
+                            .update(cx, |workspace, cx| workspace.show_error(error, cx))
+                            .log_err();
+                        return;
+                    }
+                }
+            }
 
             // Count on the built matches (not raw locations): they are deduped by
             // range and exclude fileless results, so a single distinct result
             // jumps directly and a fileless-only result reports "no results"
             // instead of opening a blank picker.
-            let Some(mut matches) =
-                run_picker_matches(kind, &editor, &workspace, &project, cx).await
+            let Some(query) = query else {
+                return;
+            };
+            let Some(locations) = resolve_picker_query(kind, query, &workspace, cx).await else {
+                return;
+            };
+            let Some(mut matches) = editor
+                .update(cx, |_, cx| build_location_matches(&locations, cx))
+                .ok()
             else {
                 return;
             };
@@ -950,6 +1008,232 @@ mod tests {
             let xyz = abc;
         }
     "#};
+
+    #[gpui::test]
+    async fn test_android_drawable_definition_opens_image_for_picker_and_multibuffer(
+        cx: &mut TestAppContext,
+    ) {
+        use android_tools::project_model::{
+            Component, Module, ModuleKind, ProjectModel, SourceKind, SourceRoot, SourceScope,
+            Variant, VariantId,
+        };
+        use android_tools::resources::ResourceModel;
+        use project::trusted_worktrees::{self, PathTrust, TrustedWorktrees};
+
+        cx.update(crate::init);
+        let language = language::Language::new(
+            language::LanguageConfig {
+                name: "Kotlin".into(),
+                matcher: language::LanguageMatcher {
+                    path_suffixes: vec!["kt".into()],
+                    ..Default::default()
+                }
+                .into(),
+                ..Default::default()
+            },
+            None,
+        );
+        let mut cx = EditorLspTestContext::new(
+            language,
+            lsp::ServerCapabilities {
+                definition_provider: Some(lsp::OneOf::Left(true)),
+                references_provider: Some(lsp::OneOf::Left(true)),
+                ..Default::default()
+            },
+            cx,
+        )
+        .await;
+        cx.update(|_, cx| image_viewer::init(cx));
+        cx.update_global::<settings::SettingsStore, _>(|settings, cx| {
+            settings.update_user_settings(cx, |settings| {
+                settings.editor.lsp_results_location = Some(OpenResultsIn::Picker);
+                settings.editor.go_to_definition_fallback =
+                    Some(GoToDefinitionFallback::FindAllReferences);
+            });
+        });
+        let project = cx.update_workspace(|workspace, _, _| workspace.project().clone());
+        let filesystem = cx.update(|_, cx| project.read(cx).fs().clone());
+        let root = EditorLspTestContext::root_path();
+        let resources = root.join("res");
+        let image_path = resources.join("drawable/logo.png");
+        for directory in ["drawable", "values", "values-fr"] {
+            filesystem
+                .create_dir(&resources.join(directory))
+                .await
+                .expect("Create resource directory");
+        }
+        filesystem
+            .as_fake()
+            .insert_file(
+                &image_path,
+                vec![
+                    137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0,
+                    0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137, 0, 0, 0, 13, 73, 68, 65, 84, 120, 156,
+                    99, 248, 207, 192, 240, 31, 0, 5, 0, 1, 255, 137, 153, 61, 29, 0, 0, 0, 0, 73,
+                    69, 78, 68, 174, 66, 96, 130,
+                ],
+            )
+            .await;
+        for (directory, value) in [("values", "Title"), ("values-fr", "Titre")] {
+            filesystem
+                .as_fake()
+                .insert_file(
+                    resources.join(directory).join("strings.xml"),
+                    format!("<resources><string name=\"title\">{value}</string></resources>")
+                        .into_bytes(),
+                )
+                .await;
+        }
+        let worktree_store = cx.update(|_, cx| project.read(cx).worktree_store());
+        let worktree_id =
+            cx.buffer(|buffer, cx| buffer.file().expect("Kotlin file").worktree_id(cx));
+        cx.update(|_, cx| {
+            trusted_worktrees::init(Default::default(), cx);
+            trusted_worktrees::track_worktree_trust(worktree_store.clone(), None, None, None, cx);
+            TrustedWorktrees::try_get_global(cx)
+                .expect("Trust store")
+                .update(cx, |trusted, cx| {
+                    trusted.trust(
+                        &worktree_store,
+                        collections::HashSet::from_iter([PathTrust::Worktree(worktree_id)]),
+                        cx,
+                    );
+                });
+            project.update(cx, |project, cx| {
+                let token = project.invalidate_android_model(Some(root.into()), cx);
+                project
+                    .publish_android_model(
+                        &token,
+                        ProjectModel {
+                            version: 1,
+                            root: root.into(),
+                            diagnostics: Vec::new(),
+                            modules: vec![Module {
+                                path: ":app".into(),
+                                directory: root.into(),
+                                namespace: Some("example.app".into()),
+                                kind: ModuleKind::Application,
+                                variants: vec![Variant {
+                                    name: "debug".into(),
+                                    output_listing: None,
+                                    components: vec![Component {
+                                        name: "debug".into(),
+                                        namespace: None,
+                                        scope: SourceScope::Main,
+                                        dependencies: Vec::new(),
+                                        sources: vec![
+                                            SourceRoot {
+                                                path: root.join("dir"),
+                                                kind: SourceKind::Kotlin,
+                                                generated: false,
+                                            },
+                                            SourceRoot {
+                                                path: resources.clone(),
+                                                kind: SourceKind::Resources,
+                                                generated: false,
+                                            },
+                                        ],
+                                    }],
+                                }],
+                            }],
+                            resource_models: std::collections::BTreeMap::from_iter([(
+                                ":app/debug".into(),
+                                ResourceModel {
+                                    layers: vec![vec![resources.clone()]],
+                                    dependencies: Vec::new(),
+                                    framework: None,
+                                    merged_manifest: None,
+                                    non_transitive_r: true,
+                                },
+                            )]),
+                        },
+                        cx,
+                    )
+                    .expect("Publish Android model");
+                project
+                    .select_android_variant(
+                        Some(VariantId {
+                            module: ":app".into(),
+                            variant: "debug".into(),
+                        }),
+                        cx,
+                    )
+                    .expect("Select Android variant");
+            });
+        });
+        let lsp_requests = Arc::new(AtomicUsize::new(0));
+        cx.lsp
+            .set_request_handler::<lsp::request::GotoDefinition, _, _>({
+                let requests = lsp_requests.clone();
+                move |_, _| {
+                    requests.fetch_add(1, Ordering::SeqCst);
+                    async { Ok(None) }
+                }
+            });
+        cx.lsp
+            .set_request_handler::<lsp::request::References, _, _>({
+                let requests = lsp_requests.clone();
+                move |_, _| {
+                    requests.fetch_add(1, Ordering::SeqCst);
+                    async { Ok(Some(Vec::new())) }
+                }
+            });
+        let source =
+            "package example.app\nval image = R.drawable.loˇgo\nval label = R.string.title";
+        cx.set_state(source);
+        let editor = cx.editor.clone();
+        for results in [OpenResultsIn::Picker, OpenResultsIn::MultiBuffer] {
+            cx.update_global::<settings::SettingsStore, _>(|settings, cx| {
+                settings.update_user_settings(cx, |settings| {
+                    settings.editor.lsp_results_location = Some(results);
+                });
+            });
+            cx.dispatch_action(GoToDefinition::default());
+            cx.run_until_parked();
+
+            assert!(active_picker(&mut cx).is_none(), "{results:?}");
+            cx.update_workspace(|workspace, _, cx| {
+                let image = workspace
+                    .active_item_as::<image_viewer::ImageView>(cx)
+                    .expect("Drawable definition should open the image viewer");
+                assert!(image.read(cx).tab_tooltip_text(cx).is_some_and(|path| {
+                    path.replace('\\', "/").ends_with("res/drawable/logo.png")
+                }));
+                assert_eq!(workspace.items(cx).count(), 2);
+            });
+            cx.update_workspace(|workspace, window, cx| {
+                assert!(workspace.activate_item(&editor, true, true, window, cx));
+            });
+        }
+        cx.update_global::<settings::SettingsStore, _>(|settings, cx| {
+            settings.update_user_settings(cx, |settings| {
+                settings.editor.lsp_results_location = Some(OpenResultsIn::Picker);
+            });
+        });
+        cx.set_selections_state(
+            &source
+                .replace('ˇ', "")
+                .replace("string.title", "string.tiˇtle"),
+        );
+        cx.dispatch_action(GoToDefinition::default());
+        cx.run_until_parked();
+
+        let modal =
+            active_picker(&mut cx).expect("XML qualifiers should use the definition picker");
+        cx.update(|_, cx| {
+            let delegate = &modal.read(cx).picker.read(cx).delegate;
+            assert_eq!(delegate.kind, LspPickerKind::Definition);
+            assert_eq!(delegate.all_matches.len(), 2);
+            assert!(delegate.all_matches.iter().all(|location| {
+                location
+                    .buffer
+                    .read(cx)
+                    .file()
+                    .is_some_and(|file| file.path().as_unix_str().ends_with("strings.xml"))
+            }));
+        });
+        assert_eq!(lsp_requests.load(Ordering::SeqCst), 0);
+    }
 
     #[gpui::test]
     async fn test_multiple_references_open_picker(cx: &mut TestAppContext) {

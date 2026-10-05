@@ -1547,17 +1547,22 @@ async fn build_index(
 ) -> Result<ResourceIndex> {
     let filesystem = project.read_with(cx, |project, _| project.fs.clone())?;
     let mut files = enumerate_files(&filesystem, &roots, sources).await?;
-    project.read_with(cx, |project, cx| {
+    // Keep live buffer handles, rather than searching all opened buffers for
+    // every resource. Snapshots are still captured when each file is visited.
+    let mut opened_buffers = project.read_with(cx, |project, cx| {
+        let mut opened_buffers = BTreeMap::new();
         for buffer in project.opened_buffers(cx) {
             if let Some(file) = buffer.read(cx).file()
                 && !file.disk_state().is_deleted()
             {
                 let path = project.android_file_path(file.as_ref(), cx);
                 if indexable_file(&path, &roots, sources) {
-                    files.insert(path);
+                    files.insert(path.clone());
+                    opened_buffers.entry(path).or_insert(buffer);
                 }
             }
         }
+        opened_buffers
     })?;
     let mut index = ResourceIndex {
         declarations: Vec::new(),
@@ -1593,15 +1598,7 @@ async fn build_index(
                 bytes <= MAX_RESOURCE_BYTES,
                 "Android resource scan exceeds text size limit"
             );
-            let opened = project.read_with(cx, |project, cx| {
-                project.opened_buffers(cx).into_iter().find(|buffer| {
-                    buffer
-                        .read(cx)
-                        .file()
-                        .is_some_and(|file| project.android_file_path(file.as_ref(), cx) == *path)
-                })
-            })?;
-            let buffer = if let Some(buffer) = opened {
+            let buffer = if let Some(buffer) = opened_buffers.remove(path) {
                 buffer
             } else {
                 project

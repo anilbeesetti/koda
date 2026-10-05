@@ -2438,6 +2438,26 @@ impl Editor {
         })
     }
 
+    /// Resolves non-text Android resource definitions for the current selection.
+    /// Both the editor and the definitions picker use this before text locations.
+    pub fn android_resource_file_definitions(
+        &self,
+        cx: &mut Context<Self>,
+    ) -> Option<Task<Result<Vec<PathBuf>>>> {
+        let head = self
+            .selections
+            .newest::<MultiBufferOffset>(&self.display_snapshot(cx))
+            .head();
+        let (buffer, head) = self.buffer.read(cx).text_anchor_for_position(head, cx)?;
+        self.project.as_ref()?.update(cx, |project, cx| {
+            project.android_resource_file_definitions(
+                &buffer,
+                language::ToPointUtf16::to_point_utf16(&head, buffer.read(cx)),
+                cx,
+            )
+        })
+    }
+
     pub(crate) fn go_to_definition_of_kind(
         &mut self,
         kind: GotoDefinitionKind,
@@ -2457,22 +2477,12 @@ impl Editor {
             return Task::ready(Ok(Navigated::No));
         };
         let resource_files = if kind == GotoDefinitionKind::Symbol && !split {
-            self.project.clone().and_then(|project| {
-                project.update(cx, |project, cx| {
-                    project.android_resource_file_definitions(
-                        &buffer,
-                        language::ToPointUtf16::to_point_utf16(&head, buffer.read(cx)),
-                        cx,
-                    )
-                })
-            })
+            self.android_resource_file_definitions(cx)
         } else {
             None
         };
         let workspace = self.workspace().map(|workspace| workspace.downgrade());
-        let Some(definitions) = provider.definitions(&buffer, head, kind, cx) else {
-            return Task::ready(Ok(Navigated::No));
-        };
+        let definitions = provider.definitions(&buffer, head, kind, cx);
 
         let nav_entry = self.navigation_entry(self.selections.newest_anchor().head(), cx);
 
@@ -2497,6 +2507,9 @@ impl Editor {
                     return Ok(Navigated::Yes);
                 }
             }
+            let Some(definitions) = definitions else {
+                return Ok(Navigated::No);
+            };
             let Some(definitions) = definitions.await? else {
                 return Ok(Navigated::No);
             };
