@@ -707,6 +707,14 @@ impl AndroidPanel {
         if self.running || self.syncing || self.test_operation_id.is_some() {
             return;
         }
+        if self.debug_forward.is_some() {
+            self.fail(
+                anyhow::anyhow!("Disconnect the Android debugger before starting tests."),
+                window,
+                cx,
+            );
+            return;
+        }
         let prepared = (|| {
             let root = self.trusted_root(cx)?;
             let target = self
@@ -1354,7 +1362,7 @@ mod tests {
             state
         });
         let filesystem = project::FakeFs::new(cx.executor());
-        filesystem.insert_tree("/android", serde_json::json!({"settings.gradle.kts":"", "build.gradle.kts":"// original", "gradlew":"", "app":{"src":{"test":{"java":{"Tests.kt":"class Tests {}"}}}}})).await;
+        filesystem.insert_tree("/android", serde_json::json!({"settings.gradle.kts":"", "build.gradle.kts":"// original", "gradlew":"", "app":{"src":{"test":{"java":{"Tests.kt":"class Tests {}"}},"main":{"java":{"Content.kt":"package dev\n@androidx.compose.ui.tooling.preview.Preview @androidx.compose.runtime.Composable fun Content() {}"}}}}})).await;
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
@@ -1382,7 +1390,7 @@ mod tests {
         let target = panel.selected_target.clone().unwrap();
         let variants = ["debug", "release"].map(|name| serde_json::json!({
             "name":name,"outputListing":target.output_listing,"components":[
-                {"name":name,"scope":"main","sources":[],"dependencies":[]},
+                {"name":name,"scope":"main","sources":[{"path":root.join("app/src/main/java"),"kind":"kotlin","generated":false}],"dependencies":[]},
                 {"name":format!("{name}UnitTest"),"scope":"unitTest","sources":[],"dependencies":[]},
                 {"name":format!("{name}AndroidTest"),"scope":"androidTest","sources":[],"dependencies":[]}
             ]
@@ -1784,6 +1792,136 @@ mod tests {
             assert_eq!(panel.test_panel.read(cx).cases[0].id.method, "newResult");
             panel.publish_test_progress(1, &new_token, vec![result("oldRunSameGeneration")], cx);
             assert_eq!(panel.test_panel.read(cx).cases[0].id.method, "newResult");
+        });
+    }
+
+    #[gpui::test]
+    async fn preview_requests_preserve_test_selection_and_cancellation_ownership(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        let project = panel.read_with(cx, |panel, _| panel.project.clone());
+        let buffer = project
+            .update(cx, |project, cx| {
+                project.open_local_buffer("/android/app/src/main/java/Content.kt", cx)
+            })
+            .await
+            .unwrap();
+        panel.update_in(cx, |panel, window, cx| {
+            panel
+                .workspace
+                .update(cx, |workspace, cx| {
+                    let editor =
+                        cx.new(|cx| editor::Editor::for_buffer(buffer, Some(project), window, cx));
+                    workspace.add_item(
+                        workspace.active_pane().clone(),
+                        Box::new(editor),
+                        None,
+                        true,
+                        true,
+                        window,
+                        cx,
+                    );
+                })
+                .unwrap();
+        });
+        cx.run_until_parked();
+        panel.update_in(cx, |panel, window, cx| {
+            publish_runner_model(panel, cx);
+            let request = request(panel, 1, cx);
+            panel.test_panel.update(cx, |tests, cx| {
+                tests.begin(
+                    request.root.clone(),
+                    request.target.clone(),
+                    TestKind::Unit,
+                    None,
+                    Some(request.selectors.clone()),
+                    cx,
+                );
+                tests.replace_cases(vec![result("runningMethod")]);
+                tests.selected = TestRow::Case(0);
+            });
+            let (session, _, _) = panel.build_panel.update(cx, |build, cx| {
+                build.begin(BuildTab::Output, "Tests".into(), false, window, cx)
+            });
+            panel.test_operation_id = Some(1);
+            panel.active_build_session = Some((BuildTab::Output, session));
+            panel.running = true;
+            let (cancel, mut cancelled) = oneshot::channel();
+            panel.test_cancel = Some(cancel);
+            for _ in 0..2 {
+                panel.gradle(GradleOperation::Preview, window, cx);
+                assert!(
+                    panel
+                        .preview_view
+                        .as_ref()
+                        .and_then(|view| view.upgrade())
+                        .is_some()
+                );
+                assert_eq!(panel.test_operation_id, Some(1));
+                assert_eq!(
+                    panel.active_build_session,
+                    Some((BuildTab::Output, session))
+                );
+                assert_eq!(
+                    panel.test_panel.read(cx).selected_case().unwrap().id.method,
+                    "runningMethod"
+                );
+                assert!(panel.test_cancel.is_some());
+                assert_eq!(cancelled.try_recv().unwrap(), None);
+            }
+            panel.cancel_tests(cx);
+            assert_eq!(cancelled.try_recv().unwrap(), Some(()));
+            assert_eq!(panel.test_operation_id, Some(1));
+            assert_eq!(
+                panel.active_build_session,
+                Some((BuildTab::Output, session))
+            );
+        });
+    }
+
+    #[gpui::test]
+    async fn test_reservation_blocks_competing_gradle_and_deferred_operations(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (_state, panel, cx) = runner_fixture(cx).await;
+        panel.update_in(cx, |panel, window, cx| {
+            publish_runner_model(panel, cx);
+            let mut request = request(panel, 1, cx);
+            request.waiting_for_model = true;
+            panel.pending_test = Some(request);
+            panel.test_operation_id = Some(1);
+            panel.test_panel.update(cx, |tests, _| {
+                tests.busy = false;
+                tests.waiting_for_model = true;
+            });
+            panel.kotlin_refresh_pending = Some(panel.root.clone().unwrap());
+            for operation in [
+                GradleOperation::Build,
+                GradleOperation::Run,
+                GradleOperation::Debug,
+                GradleOperation::Lint,
+                GradleOperation::Java,
+                GradleOperation::Kotlin,
+            ] {
+                panel.gradle(operation, window, cx);
+                assert!(panel.pending_gradle_operation.is_none());
+                assert!(panel.build_task.is_none());
+                assert!(!panel.running);
+            }
+            panel.kotlin_refresh_pending = None;
+            panel.pending_gradle_operation =
+                Some((panel.root.clone().unwrap(), GradleOperation::Build));
+            panel.resume_pending_gradle_operation(window, cx);
+            assert!(panel.pending_gradle_operation.is_some());
+            assert!(panel.build_task.is_none());
+            assert_eq!(panel.test_operation_id, Some(1));
+            panel.cancel_tests(cx);
+            assert!(panel.test_operation_id.is_none());
+            panel.resume_pending_gradle_operation(window, cx);
+            assert!(panel.pending_gradle_operation.is_none());
+            assert!(panel.build_task.is_some());
+            panel.cancel_build(BuildTab::Output, cx);
         });
     }
 

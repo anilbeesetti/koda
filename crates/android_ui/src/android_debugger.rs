@@ -254,6 +254,49 @@ mod tests {
     use super::*;
 
     #[gpui::test]
+    async fn tests_do_not_redeploy_an_application_owned_by_the_debugger(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let _state = cx.update(workspace::AppState::test);
+        let filesystem = project::FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree("/android", serde_json::json!({"settings.gradle.kts":""}))
+            .await;
+        let project = Project::test(filesystem, [Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        panel.update_in(cx, |panel, window, cx| {
+            panel.debug_forward = Some(Forward {
+                executor: cx.background_executor().clone(),
+                adb: PathBuf::from("/nonexistent/test-adb"),
+                serial: "test-device".into(),
+                port: 1234,
+                label: "Test debugger".into(),
+                session: None,
+            });
+            for (kind, discover_only) in [
+                (android_tools::testing::TestKind::Unit, false),
+                (android_tools::testing::TestKind::Device, false),
+                (android_tools::testing::TestKind::Unit, true),
+            ] {
+                panel.start_tests(kind, Vec::new(), discover_only, window, cx);
+                assert!(panel.debug_forward.is_some());
+                assert!(panel.test_operation_id.is_none());
+                assert!(panel.test_task.is_none());
+                assert!(panel.pending_test.is_none());
+                assert!(
+                    panel
+                        .error
+                        .as_ref()
+                        .unwrap()
+                        .contains("Disconnect the Android debugger")
+                );
+            }
+        });
+    }
+
+    #[gpui::test]
     async fn waits_for_application_process(executor: BackgroundExecutor) {
         let mut attempts = 0;
         let process = wait_for_application_process(
