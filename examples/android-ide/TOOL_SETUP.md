@@ -37,7 +37,7 @@ configuration may still override the SDK environment.
 ## Persistence, validation and updates
 
 Runtime state belongs to `android-tools` beneath the app's existing data profile:
-`~/Library/Application Support/Koda` or `Koda Nightly` on macOS. A custom
+`~/Library/Application Support/Koda`, `Koda Nightly` or `Koda Dev` on macOS. A custom
 `--user-data-dir` profile also owns its tool state. Stable, Nightly, development
 profiles and Zed do not share managed paths, Gradle caches or download archives.
 SDK/JDK selections are stored in `environment.json`, outside project settings.
@@ -169,8 +169,9 @@ feature parity.
 
 ## Companion task integration
 
-This work integrates main `f6639b1f62`, including merged PR #47 bundled previews,
-PR #50's shared variant model and the Nightly metadata fix in PR #48. It does not alter release packaging or publish a release.
+This work integrates main `82efb6696b`, including merged PR #47 bundled previews,
+PR #50's shared variant model, PR #55 Dev profile isolation and the Nightly
+metadata fix in PR #48. It does not alter release packaging or publish a release.
 
 PR #50's shared variant model and `263.4702.0+android-6` Kotlin importer
 revision/patch are preserved. Embedded recipe identities automatically change, so the managed UI
