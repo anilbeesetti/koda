@@ -18,7 +18,7 @@ import uuid
 MAX_FILES = 100_000
 MAX_BYTES = 10 * 1024**3
 ENTRYPOINTS = {"kotlin": "kotlin-server-263.4702.0/bin/intellij-server",
-              "debugger": "bin/kotlin-debug-adapter", "preview": "PreviewBridge.class"}
+              "debugger": "bin/kotlin-debug-adapter"}
 
 
 class CorruptManifest(RuntimeError):
@@ -208,7 +208,7 @@ def main():
     if sys.version_info < (3, 12):
         raise RuntimeError("Install Python 3.12 or newer (python.org or Homebrew), then retry.")
     if platform.system() != "Darwin" or platform.machine() != "arm64":
-        raise RuntimeError("Managed Kotlin, Debug and Preview provisioning supports Apple Silicon macOS only.")
+        raise RuntimeError("Managed Kotlin and Debug provisioning supports Apple Silicon macOS only.")
     root = arguments.root
     regular_directory(root)
     if arguments.operation != "install":
@@ -250,7 +250,7 @@ def main():
         bootstrap["main"]()
         if arguments.tool == "kotlin":
             return bootstrap["OFFICIAL_INSTALLATION"]
-        return staging / "compose-preview"
+        raise RuntimeError("Unknown managed runtime")
     provision(root, arguments.tool, arguments.recipe, build, ENTRYPOINTS[arguments.tool])
     print("Installed and validated. Configure Kotlin or retry the Android operation.", flush=True)
 

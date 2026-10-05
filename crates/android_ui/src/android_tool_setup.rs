@@ -146,7 +146,7 @@ impl AndroidPanel {
                 panel.running = false;
                 panel.tool_setup.operation = None;
                 let (status, message) = match result {
-                    Ok(ProcessOutput::Success(_)) => (BuildStatus::Succeeded, "Managed tool ready. Configure Kotlin or retry Run / Debug / Preview.".to_owned()),
+                    Ok(ProcessOutput::Success(_)) => (BuildStatus::Succeeded, "Managed tool ready. Configure Kotlin or retry Run / Debug.".to_owned()),
                     Ok(ProcessOutput::Cancelled) => (BuildStatus::Cancelled, "Tool setup cancelled. The previous runtime is preserved; retry when ready.".to_owned()),
                     Err(error) => {
                         let message = format!("{error:#} See Build Output for the installer error. The previous runtime is preserved; repair and retry.");
@@ -166,9 +166,9 @@ impl AndroidPanel {
     pub(super) fn render_tool_setup(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let busy = self.running || self.syncing || self.tool_setup.choosing;
         let details = v_flex().gap_2()
-            .child(Label::new("Managed Kotlin, Debug and Preview: Apple Silicon macOS. SDK and JDK are discovered or chosen below.").size(LabelSize::Small))
+            .child(Label::new("Managed Kotlin and Debug: Apple Silicon macOS. Compose preview is bundled with the app; no separate installation is needed.").size(LabelSize::Small))
             .child(Label::new("Requires JDK 21, Python 3.12+ and Apple's Command Line Tools. Install the SDK and Google's Android CLI separately; Koda does not accept SDK licenses.").size(LabelSize::Small).color(Color::Muted))
-            .child(Label::new("Verified pinned downloads: JetBrains Kotlin server, Google preview tools, fwcd debugger sources and Adoptium JDK. Debugger builds also fetch Gradle dependencies over HTTPS.").size(LabelSize::Small).color(Color::Muted))
+            .child(Label::new("Verified pinned downloads: JetBrains Kotlin server, fwcd debugger sources and Adoptium JDK. Debugger builds also fetch Gradle dependencies over HTTPS.").size(LabelSize::Small).color(Color::Muted))
             .children(self.tool_setup.lines.iter().map(|line| Label::new(line.clone()).size(LabelSize::Small).line_clamp(4)))
             .child(h_flex().gap_1().flex_wrap()
                 .child(Button::new("choose-sdk", "Choose SDK").disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::Sdk, window, cx))))

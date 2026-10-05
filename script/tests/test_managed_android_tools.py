@@ -26,23 +26,25 @@ class ManagedToolTests(unittest.TestCase):
     def build(self, staging):
         distribution = staging / "distribution"
         distribution.mkdir()
-        (distribution / "PreviewBridge.class").write_bytes(b"bridge")
+        (distribution / "bin").mkdir()
+        (distribution / "bin/kotlin-debug-adapter").write_bytes(b"bridge")
+        (distribution / "bin/kotlin-debug-adapter").chmod(0o755)
         (distribution / "renderer.jar").write_bytes(b"renderer")
         return distribution
 
     def install(self, recipe="recipe", build=None):
-        return MANAGER["provision"](self.root, "preview", recipe, build or self.build, "PreviewBridge.class")
+        return MANAGER["provision"](self.root, "debugger", recipe, build or self.build, "bin/kotlin-debug-adapter")
 
     def test_clean_install_restart_validation_and_compatible_rollback(self):
         first = self.install()
         second = self.install()
-        active = MANAGER["read_manifest"](self.root / "preview.json")
+        active = MANAGER["read_manifest"](self.root / "debugger.json")
         self.assertEqual(active["slot"], second["slot"])
         self.assertEqual(active["previous"]["slot"], first["slot"])
         MANAGER["validate"](self.root, active, "recipe")
         MANAGER["validate"](self.root, active["previous"], "recipe")
-        MANAGER["publish"](self.root / "preview.json", active["previous"])
-        self.assertEqual(MANAGER["read_manifest"](self.root / "preview.json")["slot"], first["slot"])
+        MANAGER["publish"](self.root / "debugger.json", active["previous"])
+        self.assertEqual(MANAGER["read_manifest"](self.root / "debugger.json")["slot"], first["slot"])
 
     def test_failed_download_or_build_preserves_active_runtime(self):
         first = self.install()
@@ -51,7 +53,7 @@ class ManagedToolTests(unittest.TestCase):
             raise RuntimeError("network unavailable")
         with self.assertRaisesRegex(RuntimeError, "network unavailable"):
             self.install(build=broken)
-        self.assertEqual(MANAGER["read_manifest"](self.root / "preview.json")["slot"], first["slot"])
+        self.assertEqual(MANAGER["read_manifest"](self.root / "debugger.json")["slot"], first["slot"])
         self.assertEqual(list(self.root.glob(".stage-*")), [])
 
     def test_corrupt_runtime_and_removed_files_are_detected_and_repaired(self):
@@ -62,7 +64,7 @@ class ManagedToolTests(unittest.TestCase):
             MANAGER["validate"](self.root, first, "recipe")
         repaired = self.install()
         MANAGER["validate"](self.root, repaired, "recipe")
-        (self.root / repaired["slot"] / "PreviewBridge.class").unlink()
+        (self.root / repaired["slot"] / "bin/kotlin-debug-adapter").unlink()
         with self.assertRaisesRegex(RuntimeError, "integrity"):
             MANAGER["validate"](self.root, repaired, "recipe")
 
@@ -103,7 +105,7 @@ class ManagedToolTests(unittest.TestCase):
             fcntl.flock(lock, fcntl.LOCK_EX)
             with self.assertRaisesRegex(RuntimeError, "Another Koda window"):
                 self.install()
-        self.assertEqual(MANAGER["read_manifest"](self.root / "preview.json")["slot"], first["slot"])
+        self.assertEqual(MANAGER["read_manifest"](self.root / "debugger.json")["slot"], first["slot"])
 
     def test_interrupted_process_recovers_staging_on_next_install(self):
         first = self.install()
@@ -114,7 +116,7 @@ def build(staging):
     (staging / 'entered').touch()
     print('ready', flush=True)
     time.sleep(60)
-manager['provision'](Path(sys.argv[2]), 'preview', 'recipe', build, 'PreviewBridge.class')
+manager['provision'](Path(sys.argv[2]), 'debugger', 'recipe', build, 'bin/kotlin-debug-adapter')
 """
         process = subprocess.Popen([sys.executable, "-c", code, str(SCRIPT), str(self.root)], stdout=subprocess.PIPE, text=True)
         try:
@@ -126,7 +128,7 @@ manager['provision'](Path(sys.argv[2]), 'preview', 'recipe', build, 'PreviewBrid
                 process.kill()
                 process.wait(timeout=5)
             process.stdout.close()
-        self.assertEqual(MANAGER["read_manifest"](self.root / "preview.json")["slot"], first["slot"])
+        self.assertEqual(MANAGER["read_manifest"](self.root / "debugger.json")["slot"], first["slot"])
         self.assertTrue(list(self.root.glob(".stage-*")))
         self.install()
         self.assertFalse(list(self.root.glob(".stage-*")))
@@ -134,9 +136,9 @@ manager['provision'](Path(sys.argv[2]), 'preview', 'recipe', build, 'PreviewBrid
     def test_setup_failure_stops_descendants_holding_output_open(self):
         copied = self.root / "manager"
         copied.write_bytes(SCRIPT.read_bytes())
-        installer = self.root / "install-android-preview"
+        installer = self.root / "install-android-debugger"
         installer.write_text("""import subprocess, sys
-def main():
+def main(install_kotlin=True):
     subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'])
     raise RuntimeError('simulated build failure')
 """)
@@ -147,7 +149,7 @@ platform.machine = lambda: 'arm64'
 sys.version_info = (3, 12, 0)
 original = pathlib.Path.is_file
 with patch.object(pathlib.Path, 'is_file', lambda path: True if str(path) == '/usr/bin/ditto' else original(path)):
-    sys.argv = [sys.argv[1], 'install', 'preview', sys.argv[2], 'recipe']
+    sys.argv = [sys.argv[1], 'install', 'debugger', sys.argv[2], 'recipe']
     runpy.run_path(sys.argv[0], run_name='__main__')
 """
         process = subprocess.Popen([sys.executable, "-c", wrapper, str(copied), str(self.root / "profile")],
@@ -171,7 +173,7 @@ with patch.object(pathlib.Path, 'is_file', lambda path: True if str(path) == '/u
             return directory
         with self.assertRaisesRegex(RuntimeError, "escapes"):
             self.install(build=escaped)
-        (self.root / "preview.json").symlink_to(outside)
+        (self.root / "debugger.json").symlink_to(outside)
         with self.assertRaisesRegex(RuntimeError, "Unsafe runtime manifest"):
             self.install()
         self.assertEqual(outside.read_text(), "user file")
@@ -188,20 +190,20 @@ with patch.object(pathlib.Path, 'is_file', lambda path: True if str(path) == '/u
 
     def test_corrupt_manifest_shapes_are_preserved_and_repaired(self):
         for content in ("{broken", "[]", "null", '{"schema":1}'):
-            (self.root / "preview.json").write_text(content)
+            (self.root / "debugger.json").write_text(content)
             manifest = self.install()
-            MANAGER["validate"](self.root, manifest, "recipe", "preview")
-        self.assertEqual(len(list(self.root.glob("preview.corrupt-*.json"))), 4)
-        (self.root / "preview.json").write_text('{"schema":99}')
+            MANAGER["validate"](self.root, manifest, "recipe", "debugger")
+        self.assertEqual(len(list(self.root.glob("debugger.corrupt-*.json"))), 4)
+        (self.root / "debugger.json").write_text('{"schema":99}')
         with self.assertRaisesRegex(RuntimeError, "Unsupported"):
             self.install()
 
     def test_expected_tool_entrypoint_and_slot_are_enforced(self):
         manifest = self.install()
-        for key, value in (("tool", "kotlin"), ("entrypoint", "./PreviewBridge.class"), ("slot", "install-../escape")):
+        for key, value in (("tool", "kotlin"), ("entrypoint", "./bin/kotlin-debug-adapter"), ("slot", "install-../escape")):
             modified = dict(manifest, **{key: value})
             with self.assertRaises(RuntimeError):
-                MANAGER["validate"](self.root, modified, "recipe", "preview")
+                MANAGER["validate"](self.root, modified, "recipe", "debugger")
 
     def test_interrupted_download_recovery_and_storage_budget(self):
         downloads = self.root / "downloads"

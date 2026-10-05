@@ -19,7 +19,7 @@ import time
 REPOSITORY = Path(__file__).resolve().parent.parent
 DEPENDENCIES = Path(os.environ.get("KODA_TOOL_DEPENDENCIES", REPOSITORY / "target/android-ide/dependencies"))
 OFFICIAL_VERSION = "263.4702.0"
-OFFICIAL_REVISION = OFFICIAL_VERSION + "+android-5"
+OFFICIAL_REVISION = OFFICIAL_VERSION + "+android-6"
 OFFICIAL_SHA256 = "95da3fc6d3b9092c7616345044a05edb85e5408dc648d081e4e433595c892bec"
 OFFICIAL_ARCHIVE = f"kotlin-server-{OFFICIAL_VERSION}-aarch64.sit"
 OFFICIAL_URL = f"https://download.jetbrains.com/language-server/kotlin-server/{OFFICIAL_VERSION}/{OFFICIAL_ARCHIVE}"
@@ -186,6 +186,8 @@ def patch_official(distribution, temporary):
         "-module-name", "language-server.workspace-import.gradle-plugin", f"-Xfriend-paths={module}",
         "-classpath", classpath, "-d", str(classes), str(builder / "android/androidUtils.kt"),
         str(builder / "android/collectAndroidVariants.kt"), str(builder / "android/resolveRJar.kt"),
+        str(builder / "android/resolveAndroidSourceSets.kt"),
+        str(builder.parent.parent / "utils/androidReflection.kt"),
     ], check=True)
     subprocess.run([str(java_home / "bin/javac"), "--release", "8", "-classpath", classpath,
                     "-d", str(classes), str(builder / "ExternalModuleDependencySetModuleBuilder.java")], check=True)

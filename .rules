@@ -134,6 +134,8 @@ Other entities can then register a callback to handle these events by doing `cx.
 ## Build guidelines
 
 - Use `./script/clippy` instead of `cargo clippy`
+- For every implementation change, build and run the full Koda app and exercise the affected behavior before claiming completion. For UI changes, inspect the live UI and screenshots, including relevant alignment, resizing, scrolling, keyboard focus, and loading, empty, and error states. Check for crashes, stutters, and resource cleanup problems in the affected flow.
+- Follow `.agents/skills/koda-app-validation/SKILL.md` for launch, environment, and focused test instructions. Report the checks actually performed and distinguish full-app screenshots from native surface test captures. If a live check is blocked, report the attempted command and concrete blocker; do not claim it passed.
 
 # Pull request hygiene
 

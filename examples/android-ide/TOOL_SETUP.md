@@ -1,11 +1,7 @@
 # Managed Android tool setup
 
-The downloaded app includes Koda's installer recipes, patches and preview bridge
-source. A source checkout and `script/android-ide` are no longer required to find
-or provision Koda's runtimes. Managed Kotlin language support, Android debugging
-and Compose rendering currently support **Apple Silicon macOS only**. SDK/JDK
-path selection also compiles on other platforms; it does not establish working
-Kotlin, debugging or rendering support there.
+The downloaded app includes Koda's installer recipes, patches and a bundled Compose renderer/layoutlib/Java 21 runtime. A source checkout and `script/android-ide` are no longer required to find
+or provision Koda's runtimes. Managed Kotlin language-server and debugger provisioning currently support **Apple Silicon macOS only**. Bundled Compose previews follow the platforms listed in [COMPOSE_PREVIEW.md](COMPOSE_PREVIEW.md); preview dependencies require no separate installer or project JDK for rendering. SDK/JDK path selection also compiles on other platforms; it does not establish working managed Kotlin/debugger support there.
 
 ## First project
 
@@ -24,8 +20,9 @@ Kotlin, debugging or rendering support there.
    Build Output. Install the Kotlin extension if necessary, sync the project,
    select its module/variant and choose **Configure official Kotlin**. Existing
    custom language-server preferences still require that explicit configuration.
-4. Provision the debugger or Compose preview when needed, then use the existing
-   Run/Debug/Preview actions. The debugger builds pinned fwcd sources; its
+4. Provision the debugger when needed, then use the existing Run/Debug actions.
+   Compose previews automatically validate and extract the bundled runtime on
+   first use; there is no separate preview tool installation. The debugger builds pinned fwcd sources; its
    temporary checksum-pinned JDK 11 is a build dependency, while Android setup
    and debugger execution use the discovered/chosen JDK 21. Source-based builds
    can take several minutes and need network access on their first installation.
@@ -45,7 +42,7 @@ Runtime state belongs to `android-tools` beneath the app's existing data profile
 profiles and Zed do not share managed paths, Gradle caches or download archives.
 SDK/JDK selections are stored in `environment.json`, outside project settings.
 
-Each tool's schema-1 JSON manifest records its embedded recipe SHA-256,
+Each Kotlin/debugger tool's schema-1 JSON manifest records its embedded recipe SHA-256,
 installation slot, canonical entrypoint, every file/link digest and permission
 mode, plus one previous installation. Runtime versions, upstream origins and
 licenses remain in the installed `.revision`, `zed-native-importer.json`,
@@ -60,7 +57,9 @@ or update so a project's persisted server path uses the new installation.
 **Validate** checks the complete inventory. Normal runtime resolution also checks
 the inventory before use. A process-local validation cache uses the exact file
 set, expected digests, lengths, modification times, inode/device/change times,
-permission modes and link targets; changes invalidate it. Persisted managed Kotlin
+permission modes and link targets; changes invalidate it. Non-Unix bundled preview
+runtimes are hashed on every resolution because reliable change/inode metadata
+is unavailable. Persisted managed Kotlin
 paths are checked before language-server startup and must belong to the current
 profile and active recipe. Initial hashing runs
 on a background executor. Invalid/missing files produce repair guidance instead
@@ -85,6 +84,18 @@ may refer to them. They are not automatically deleted. **Reveal managed storage*
 opens the profile location. To reclaim old slots or archive/Gradle caches, close
 all Koda windows first, remove unused versions using Finder, restart and configure
 affected projects again. Never remove an installation used by another window.
+
+Bundled Compose runtime and render requests live under the same profile's
+`android-tools/compose-preview`. First use extracts trusted embedded bytes offline,
+checks complete SHA-256/size/mode inventories and uses immutable slots with an
+atomic, fsynced `.active` selector. Same-size corruption, missing/extra files or
+changed permissions trigger a new slot. Old slots remain for active renderers.
+Aggregate managed storage is checked before extraction and publication against
+the same 24 GiB / 300,000-entry boundary. Malformed regular selectors are preserved as `.corrupt-*`; symlink selectors are
+rejected. Interrupted extraction staging is cleaned under a bounded extraction
+lock, while live render directories remain untouched. App updates select their
+new bundled identity automatically. This cache follows Stable/Nightly/custom
+profiles and needs no checkout, external preview installer or runtime download.
 
 ## Download and failure boundaries
 
@@ -158,12 +169,11 @@ feature parity.
 
 ## Companion task integration
 
-This work starts on main `c17272361e`, after the Nightly bundle metadata fix in
-PR #48. It does not alter release packaging or publish a release.
+This work integrates main `f6639b1f62`, including merged PR #47 bundled previews,
+PR #50's shared variant model and the Nightly metadata fix in PR #48. It does not alter release packaging or publish a release.
 
-PR #50's shared variant model is separate and unmerged. Its Kotlin importer
-revision changes to `263.4702.0+android-6`; retain that revision and patch when
-integrating. Embedded recipe identities automatically change, so the managed UI
+PR #50's shared variant model and `263.4702.0+android-6` Kotlin importer
+revision/patch are preserved. Embedded recipe identities automatically change, so the managed UI
 will require reinstallation. PR #49's test runner remains separate; it can use
 `managed::command_environment` for its Gradle commands without another installer
 or discovery model. Reconcile Android panel and README changes when stacking.

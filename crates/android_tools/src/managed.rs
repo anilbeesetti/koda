@@ -13,7 +13,6 @@ use std::{
 pub enum Tool {
     Kotlin,
     Debugger,
-    Preview,
 }
 
 const KOTLIN: &[u8] = include_bytes!("../../../script/install-android-kotlin");
@@ -24,18 +23,15 @@ const DEBUGGER: &[u8] = include_bytes!("../../../script/install-android-debugger
 const DEBUGGER_PATCH: &[u8] = include_bytes!("../../../script/android-kotlin-debugger.patch");
 const DEBUGGER_VERIFICATION: &[u8] =
     include_bytes!("../../../script/android-debugger-verification.xml");
-const PREVIEW: &[u8] = include_bytes!("../../../script/install-android-preview");
-const BRIDGE: &[u8] = include_bytes!("PreviewBridge.java");
 const MANAGER: &[u8] = include_bytes!("../../../script/manage-android-tools");
 
 impl Tool {
-    pub const ALL: [Self; 3] = [Self::Kotlin, Self::Debugger, Self::Preview];
+    pub const ALL: [Self; 2] = [Self::Kotlin, Self::Debugger];
 
     pub fn name(self) -> &'static str {
         match self {
             Self::Kotlin => "kotlin",
             Self::Debugger => "debugger",
-            Self::Preview => "preview",
         }
     }
 
@@ -43,7 +39,6 @@ impl Tool {
         match self {
             Self::Kotlin => "Kotlin language server",
             Self::Debugger => "Android debugger",
-            Self::Preview => "Compose preview",
         }
     }
 
@@ -51,7 +46,6 @@ impl Tool {
         match self {
             Self::Kotlin => "kotlin-server-263.4702.0/bin/intellij-server",
             Self::Debugger => "bin/kotlin-debug-adapter",
-            Self::Preview => "PreviewBridge.class",
         }
     }
 
@@ -73,10 +67,6 @@ impl Tool {
                     "script/android-debugger-verification.xml",
                     DEBUGGER_VERIFICATION,
                 ),
-            ]),
-            Self::Preview => files.extend([
-                ("script/install-android-preview", PREVIEW),
-                ("crates/android_tools/src/PreviewBridge.java", BRIDGE),
             ]),
         }
         files
@@ -141,7 +131,7 @@ fn digest_file(path: &Path) -> Result<String> {
     Ok(format!("{:x}", digest.finalize()))
 }
 
-fn validate_inventory(directory: &Path, files: &BTreeMap<String, String>) -> Result<()> {
+pub(crate) fn validate_inventory(directory: &Path, files: &BTreeMap<String, String>) -> Result<()> {
     static VERIFIED: OnceLock<Mutex<BTreeMap<PathBuf, String>>> = OnceLock::new();
     let mut paths = Vec::new();
     let mut pending = vec![directory.to_path_buf()];
@@ -231,7 +221,7 @@ fn validate_inventory(directory: &Path, files: &BTreeMap<String, String>) -> Res
         .get_or_init(Default::default)
         .lock()
         .map_err(|_| anyhow::anyhow!("Runtime validation lock failed"))?;
-    if verified.get(&canonical) == Some(&signature) {
+    if cfg!(unix) && verified.get(&canonical) == Some(&signature) {
         return Ok(());
     }
     for (name, path, metadata) in &paths {
@@ -358,17 +348,11 @@ fn resolve_at(root: &Path, tool: Tool) -> Result<PathBuf> {
             );
         }
     }
-    if tool != Tool::Preview {
-        executable(&entrypoint)?;
-    }
+    executable(&entrypoint)?;
     if tool == Tool::Kotlin {
         executable(&directory.join("kotlin-server-263.4702.0/jbr/Contents/Home/bin/java"))?;
     }
-    Ok(if tool == Tool::Preview {
-        directory
-    } else {
-        entrypoint
-    })
+    Ok(entrypoint)
 }
 
 pub fn executable(path: &Path) -> Result<()> {
@@ -504,33 +488,149 @@ fn save_dependency_at(root: &Path, dependency: Dependency, path: &Path) -> Resul
 }
 
 pub fn command_environment() -> Result<BTreeMap<String, String>> {
+    command_environment_with(std::iter::empty())
+}
+
+pub fn command_environment_with<'a>(
+    existing: impl IntoIterator<Item = (&'a String, &'a String)>,
+) -> Result<BTreeMap<String, String>> {
     let selected = environment()?;
-    let mut values = BTreeMap::new();
-    let jdk = selected
-        .jdk
-        .map(Ok)
-        .unwrap_or_else(|| match std::env::var_os("JAVA_HOME") {
-            Some(path) => Ok(PathBuf::from(path)),
-            None => super::kotlin::java_home(),
-        });
+    let mut defaults = BTreeMap::new();
+    let jdk = match std::env::var_os("JAVA_HOME") {
+        Some(path) => Ok(PathBuf::from(path)),
+        None => super::kotlin::java_home(),
+    };
     if let Ok(jdk) = jdk {
-        values.insert("JAVA_HOME".into(), jdk.to_string_lossy().into_owned());
+        defaults.insert("JAVA_HOME".into(), jdk.to_string_lossy().into_owned());
     }
-    if let Some(sdk) = selected.sdk.or_else(super::sdk_root) {
-        values.insert("ANDROID_HOME".into(), sdk.to_string_lossy().into_owned());
-        values.insert(
+    if let Some(sdk) = super::sdk_root() {
+        defaults.insert("ANDROID_HOME".into(), sdk.to_string_lossy().into_owned());
+        defaults.insert(
             "ANDROID_SDK_ROOT".into(),
             sdk.to_string_lossy().into_owned(),
         );
     }
-    Ok(values)
+    Ok(merge_command_environment(
+        existing
+            .into_iter()
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect(),
+        selected,
+        defaults,
+    ))
+}
+
+fn merge_command_environment(
+    mut existing: BTreeMap<String, String>,
+    selected: Environment,
+    defaults: BTreeMap<String, String>,
+) -> BTreeMap<String, String> {
+    if let Some(sdk) = existing
+        .get("ANDROID_HOME")
+        .or_else(|| existing.get("ANDROID_SDK_ROOT"))
+        .cloned()
+    {
+        existing.entry("ANDROID_HOME".into()).or_insert(sdk.clone());
+        existing.entry("ANDROID_SDK_ROOT".into()).or_insert(sdk);
+    }
+    for (name, value) in defaults {
+        existing.entry(name).or_insert(value);
+    }
+    if let Some(jdk) = selected.jdk {
+        existing.insert("JAVA_HOME".into(), jdk.to_string_lossy().into_owned());
+    }
+    if let Some(sdk) = selected.sdk {
+        existing.insert("ANDROID_HOME".into(), sdk.to_string_lossy().into_owned());
+        existing.insert(
+            "ANDROID_SDK_ROOT".into(),
+            sdk.to_string_lossy().into_owned(),
+        );
+    }
+    existing
+}
+
+#[cfg(feature = "bundled-preview")]
+pub(crate) fn validate_storage_budget(
+    root: &Path,
+    additional_bytes: u64,
+    additional_files: usize,
+) -> Result<()> {
+    storage_budget(
+        root,
+        additional_bytes,
+        additional_files,
+        24 * 1024 * 1024 * 1024,
+        300_000,
+    )
+}
+
+#[cfg(any(feature = "bundled-preview", test))]
+fn storage_budget(
+    root: &Path,
+    mut bytes: u64,
+    mut files: usize,
+    maximum_bytes: u64,
+    maximum_files: usize,
+) -> Result<()> {
+    let mut pending = vec![root.to_path_buf()];
+    while let Some(directory) = pending.pop() {
+        let entries = match fs::read_dir(directory) {
+            Ok(entries) => entries,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(error) => return Err(error.into()),
+        };
+        for entry in entries {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(error) => return Err(error.into()),
+            };
+            let metadata = match fs::symlink_metadata(entry.path()) {
+                Ok(metadata) => metadata,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(error) => return Err(error.into()),
+            };
+            files = files.saturating_add(1);
+            if metadata.is_file() {
+                bytes = bytes.saturating_add(metadata.len());
+            }
+            if metadata.is_dir() {
+                pending.push(entry.path());
+            }
+            ensure!(
+                bytes <= maximum_bytes && files <= maximum_files,
+                "Managed storage exceeds 24 GiB / 300,000 entries. Close all Koda windows, reveal managed storage, remove unused old slots or caches, then retry"
+            );
+        }
+    }
+    ensure!(
+        bytes <= maximum_bytes && files <= maximum_files,
+        "Managed storage exceeds its budget"
+    );
+    Ok(())
 }
 
 pub fn language_environment() -> Result<BTreeMap<String, String>> {
-    let mut values = command_environment()?;
-    if environment()?.jdk.is_none() {
+    language_environment_with(std::iter::empty())
+}
+
+pub fn language_environment_with<'a>(
+    existing: impl IntoIterator<Item = (&'a String, &'a String)>,
+) -> Result<BTreeMap<String, String>> {
+    let existing = existing
+        .into_iter()
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect::<BTreeMap<_, _>>();
+    let mut values = command_environment_with(existing.iter())?;
+    if environment()?.jdk.is_none() && !existing.contains_key("JAVA_HOME") {
         values.remove("JAVA_HOME");
     }
+    values.retain(|name, _| {
+        matches!(
+            name.as_str(),
+            "JAVA_HOME" | "ANDROID_HOME" | "ANDROID_SDK_ROOT"
+        )
+    });
     Ok(values)
 }
 
@@ -668,32 +768,69 @@ mod tests {
     use std::path::Component;
 
     #[test]
+    fn captured_environment_survives_discovery_but_explicit_selections_win() {
+        let existing = BTreeMap::from([
+            ("JAVA_HOME".into(), "/jdk17".into()),
+            ("ANDROID_HOME".into(), "/sdk-project".into()),
+        ]);
+        let defaults = BTreeMap::from([
+            ("JAVA_HOME".into(), "/jdk21".into()),
+            ("ANDROID_HOME".into(), "/sdk-default".into()),
+            ("ANDROID_SDK_ROOT".into(), "/sdk-default".into()),
+        ]);
+        let merged =
+            merge_command_environment(existing.clone(), Environment::default(), defaults.clone());
+        assert_eq!(merged["JAVA_HOME"], "/jdk17");
+        assert_eq!(merged["ANDROID_SDK_ROOT"], "/sdk-project");
+        let selected = Environment {
+            jdk: Some("/jdk-chosen".into()),
+            sdk: Some("/sdk-chosen".into()),
+            ..Default::default()
+        };
+        let merged = merge_command_environment(existing, selected, defaults);
+        assert_eq!(merged["JAVA_HOME"], "/jdk-chosen");
+        assert_eq!(merged["ANDROID_HOME"], "/sdk-chosen");
+        assert_eq!(merged["ANDROID_SDK_ROOT"], "/sdk-chosen");
+    }
+
+    #[test]
+    fn aggregate_budget_includes_retained_slots_and_pending_installation() -> Result<()> {
+        let root = tempfile::tempdir()?;
+        fs::create_dir(root.path().join("old-slot"))?;
+        fs::write(root.path().join("old-slot/library"), "12345678")?;
+        assert!(storage_budget(root.path(), 2, 1, 10, 3).is_ok());
+        assert!(storage_budget(root.path(), 3, 1, 10, 3).is_err());
+        assert!(storage_budget(root.path(), 0, 2, 10, 3).is_err());
+        Ok(())
+    }
+
+    #[test]
     fn manifest_rejects_corruption_updates_and_escaped_paths() -> Result<()> {
         let temporary = tempfile::tempdir()?;
         let root = temporary.path();
         let slot = "install-0123456789abcdef0123456789abcdef";
-        let entrypoint = root.join(slot).join(Tool::Preview.entrypoint());
+        let entrypoint = root.join(slot).join(Tool::Debugger.entrypoint());
         fs::create_dir_all(entrypoint.parent().context("Missing parent")?)?;
         fs::write(&entrypoint, "bridge")?;
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt as _;
-            fs::set_permissions(&entrypoint, fs::Permissions::from_mode(0o644))?;
+            fs::set_permissions(&entrypoint, fs::Permissions::from_mode(0o755))?;
         }
-        let mut manifest = serde_json::json!({"schema":1, "tool":"preview", "recipe":Tool::Preview.recipe(), "slot":slot, "entrypoint":Tool::Preview.entrypoint(), "files":{Tool::Preview.entrypoint(): digest_file(&entrypoint)?}, "modes":{Tool::Preview.entrypoint(): 0o644}});
-        let path = root.join("preview.json");
+        let mut manifest = serde_json::json!({"schema":1, "tool":"debugger", "recipe":Tool::Debugger.recipe(), "slot":slot, "entrypoint":Tool::Debugger.entrypoint(), "files":{Tool::Debugger.entrypoint(): digest_file(&entrypoint)?}, "modes":{Tool::Debugger.entrypoint(): 0o755}});
+        let path = root.join("debugger.json");
         fs::write(&path, manifest.to_string())?;
-        assert_eq!(resolve_at(root, Tool::Preview)?, root.join(slot));
+        assert_eq!(resolve_at(root, Tool::Debugger)?, entrypoint);
         fs::write(&entrypoint, "corrupt")?;
-        assert!(resolve_at(root, Tool::Preview).is_err());
+        assert!(resolve_at(root, Tool::Debugger).is_err());
         fs::write(&entrypoint, "bridge")?;
         manifest["recipe"] = "old".into();
         fs::write(&path, manifest.to_string())?;
-        assert!(resolve_at(root, Tool::Preview).is_err());
-        manifest["recipe"] = Tool::Preview.recipe().into();
+        assert!(resolve_at(root, Tool::Debugger).is_err());
+        manifest["recipe"] = Tool::Debugger.recipe().into();
         manifest["slot"] = "../outside".into();
         fs::write(&path, manifest.to_string())?;
-        assert!(resolve_at(root, Tool::Preview).is_err());
+        assert!(resolve_at(root, Tool::Debugger).is_err());
         Ok(())
     }
 
