@@ -1,21 +1,90 @@
-# Zed
+# Koda
 
-[![Zed](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/zed-industries/zed/main/assets/badge/v0.json)](https://zed.dev)
-[![CI](https://github.com/zed-industries/zed/actions/workflows/run_tests.yml/badge.svg)](https://github.com/zed-industries/zed/actions/workflows/run_tests.yml)
+Koda is an Android-focused IDE fork of [Zed](https://github.com/zed-industries/zed).
+It uses its own app identity (`dev.anilbeesetti.koda`), `koda` CLI, settings,
+extensions, databases, caches, logs, keychain entries, and `koda://` URL handler.
+The app uses an angular K monogram inspired by Zed’s outlined logo.
+The vector monogram is `assets/images/koda_logo.svg`. Regenerate the UI icon,
+full-bleed stable/nightly/dev SVG and PNG artwork, and platform packaging assets with
+`script/generate-koda-icons` (requires Inkscape and ImageMagick).
+Koda Nightly uses a blue NIGHTLY icon and the bundle identifier
+`dev.anilbeesetti.koda-nightly`, so both apps can be installed together.
+Koda Dev uses an amber DEV icon and `dev.anilbeesetti.koda-dev`.
 
-Welcome to Zed, a high-performance, multiplayer code editor from the creators of [Atom](https://github.com/atom/atom) and [Tree-sitter](https://github.com/tree-sitter/tree-sitter).
-
----
+Koda stores configuration in `~/.config/koda` on macOS and Linux, app data in
+`~/Library/Application Support/Koda` on macOS or `$XDG_DATA_HOME/koda` on Linux,
+and configuration/data in `%APPDATA%\Koda` / `%LOCALAPPDATA%\Koda` on Windows.
+Nightly uses `~/.config/koda-nightly`, `~/Library/Application Support/Koda Nightly`
+on macOS, `$XDG_DATA_HOME/koda-nightly` on Linux, and
+`%APPDATA%\Koda Nightly` / `%LOCALAPPDATA%\Koda Nightly` on Windows. Its caches
+and logs are also separate from stable.
+Dev uses `~/.config/koda-dev`, `~/Library/Application Support/Koda Dev` on macOS,
+`$XDG_DATA_HOME/koda-dev` on Linux, and `%APPDATA%\Koda Dev` /
+`%LOCALAPPDATA%\Koda Dev` on Windows, with its own caches and logs.
+Project settings, tasks, and Android tooling caches live in `.koda/`. Existing
+Zed settings and `.zed/` project files are left in place; copy selected settings
+into Koda's directories if you want to reuse them.
 
 ### Installation
 
-On macOS, Linux, and Windows you can [download Zed directly](https://zed.dev/download) or install Zed via your local package manager ([macOS](https://zed.dev/docs/installation#macos)/[Linux](https://zed.dev/docs/linux#installing-via-a-package-manager)/[Windows](https://zed.dev/docs/windows#package-managers)).
+Download the Apple Silicon DMG from [this fork's releases](https://github.com/anilbeesetti/koda/releases)
+and drag `Koda.app` into Applications. Install the `koda` command using the
+app's **Install CLI** action. Stable builds update from this fork's latest stable
+release. For Nightly, download the `Koda-Nightly` DMG from a prerelease and install
+`Koda Nightly.app`; its updater follows only published `nightly-` prereleases.
+Unconfigured local development builds require manual installation.
+Remote servers also come from the matching fork release and require an asset for
+the target platform, or a custom server build during development.
 
-Other platforms are not yet available:
+For the isolated macOS Android development app, run `script/android-ide`. Its local
+bundle and profile live under `target/android-ide/dev/`.
+Run `cargo run --locked -p zed --bin koda` to launch Koda Dev, with its own app
+identity and profile so it can run alongside installed Stable and Nightly apps.
+Debug builds default to Dev; an explicit `ZED_RELEASE_CHANNEL` overrides that
+default. Release builds use the repository's release channel unless overridden.
+Rust crate names and action namespaces remain
+compatible with upstream Zed.
+Signed macOS builds require this fork's certificate and `MACOS_SIGNING_IDENTITY`
+(also configurable as a GitHub Actions secret); Koda bundles do not embed Zed's
+provisioning profiles.
 
-- Web ([tracking discussion](https://github.com/zed-industries/zed/discussions/26195))
+### Releases
 
-### Developing Zed
+Stable releases require manually running **Release Koda (stable)** on `main`.
+**Release Koda Nightly (prerelease)** runs daily at midnight in Asia/Calcutta
+(18:30 UTC) and can also be run manually on `main`. GitHub may delay scheduled
+runs. It skips the build when `main` matches the commit behind the latest
+published nightly tag; drafts and failed builds do not count as a published
+nightly. Merging to `main` does not immediately publish a release.
+
+Both workflows currently build Apple Silicon macOS downloads. Stable tags use
+`year.month.day.hour.minute` in Asia/Calcutta; Nightly tags use
+`nightly-year.month.day.hour.minute`. Nightlies are marked as prereleases and
+leave GitHub's latest stable release unchanged. Failed runs can be retried with
+their reserved tag.
+
+### GitHub Actions
+
+This fork keeps five workflows:
+
+- **Fork CI** checks formatting, scripts, and every repository workflow on PRs
+  and pushes to `main`, with Linux and macOS builds/tests selected by the changed
+  files. Native jobs may intentionally skip when only scripts or docs change.
+- **GitHub release updater** tests fork updater behavior and stable/nightly
+  configuration when updater-related files change, or when run manually.
+- **Release Koda (stable)** and **Release Koda Nightly (prerelease)** are the
+  release entrypoints described above. `script/trigger-release stable|nightly`
+  dispatches them on `main`.
+- **macOS release build** is the reusable workflow called by both release
+  entrypoints.
+
+Upstream Zed CI, deployment, community, Slack, and release automation is removed
+because it targets Zed's organizations and services. The fork workflows are
+maintained directly in `.github/workflows`; `cargo xtask workflows` regenerates
+only the templates under `extensions/workflows`, which call upstream Zed's
+shared extension workflows.
+
+### Upstream development documentation
 
 - [Building Zed for macOS](./docs/src/development/macos.md)
 - [Building Zed for Linux](./docs/src/development/linux.md)
@@ -24,8 +93,6 @@ Other platforms are not yet available:
 ### Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for ways you can contribute to Zed.
-
-Also... we're hiring! Check out our [jobs](https://zed.dev/jobs) page for open roles.
 
 ### Licensing
 

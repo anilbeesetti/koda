@@ -5,19 +5,35 @@ set -euo pipefail
 : "${GITHUB_SHA:?}"
 : "${GITHUB_REPOSITORY:?}"
 
-test "$(git rev-parse "refs/tags/$RELEASE_VERSION^{commit}")" = "$GITHUB_SHA"
+channel="${RELEASE_CHANNEL:-stable}"
+tag="${RELEASE_TAG:-$RELEASE_VERSION}"
+prerelease=false
+app_name="Koda"
+asset_name="Koda"
+case "$channel" in
+    stable) test "$tag" = "$RELEASE_VERSION" ;;
+    nightly)
+        test "$tag" = "nightly-$RELEASE_VERSION"
+        prerelease=true
+        app_name="Koda Nightly"
+        asset_name="Koda-Nightly"
+        ;;
+    *) echo "Unsupported release channel: $channel" >&2; exit 1 ;;
+esac
+
+test "$(git rev-parse "refs/tags/$tag^{commit}")" = "$GITHUB_SHA"
 for architecture in aarch64; do
-    test -s "release-assets/Zed-$RELEASE_VERSION-macos-$architecture.dmg"
-    test -s "release-assets/zed-remote-server-$RELEASE_VERSION-macos-$architecture.gz"
+    test -s "release-assets/$asset_name-$RELEASE_VERSION-macos-$architecture.dmg"
+    test -s "release-assets/koda-remote-server-$tag-macos-$architecture.gz"
     (cd release-assets && sha256sum --check "SHA256SUMS-macos-$architecture.txt")
 done
 
 notes=$(mktemp)
 trap 'rm -f "$notes"' EXIT
 cat > "$notes" <<EOF
-Optimized macOS production build of commit $GITHUB_SHA.
+Optimized macOS $app_name build of commit $GITHUB_SHA.
 
-Version and tag: $RELEASE_VERSION (Asia/Calcutta).
+Version: $RELEASE_VERSION (Asia/Calcutta). Tag: $tag. Channel: $channel.
 
 Download the aarch64 DMG for Apple Silicon Macs.
 The apps are ad-hoc signed and are not Apple notarized. macOS may require
@@ -31,18 +47,19 @@ EOF
 # Publish a draft only after every asset is uploaded. A failed upload can be
 # retried with the same run and tag without exposing a partial new release.
 release_tags=$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq '.[].tag_name')
-if ! grep -Fxq "$RELEASE_VERSION" <<< "$release_tags"; then
-    gh release create "$RELEASE_VERSION" --repo "$GITHUB_REPOSITORY" \
-        --verify-tag --target "$GITHUB_SHA" --title "$RELEASE_VERSION" \
-        --notes-file "$notes" --draft
+if ! grep -Fxq "$tag" <<< "$release_tags"; then
+    gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
+        --verify-tag --target "$GITHUB_SHA" --title "$app_name $RELEASE_VERSION" \
+        --notes-file "$notes" --draft --prerelease="$prerelease"
 fi
-gh release upload "$RELEASE_VERSION" release-assets/* \
+gh release upload "$tag" release-assets/* \
     --repo "$GITHUB_REPOSITORY" --clobber
-# A slower build of an earlier push still gets its release, but must not replace
+# A slower build of an earlier commit still gets its release, but must not replace
 # the download shown as Latest once main has advanced to a newer commit.
 latest=false
-if [[ "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')" == "$GITHUB_SHA" ]]; then
+if [[ "$channel" == stable && "$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq '.object.sha')" == "$GITHUB_SHA" ]]; then
     latest=true
 fi
-gh release edit "$RELEASE_VERSION" --repo "$GITHUB_REPOSITORY" \
-    --title "$RELEASE_VERSION" --notes-file "$notes" --draft=false --latest="$latest"
+gh release edit "$tag" --repo "$GITHUB_REPOSITORY" \
+    --title "$app_name $RELEASE_VERSION" --notes-file "$notes" \
+    --draft=false --prerelease="$prerelease" --latest="$latest"

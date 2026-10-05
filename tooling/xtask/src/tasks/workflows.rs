@@ -248,7 +248,13 @@ pub fn run_workflows(args: GenerateWorkflowArgs) -> Result<()> {
         WorkflowFile::extension_shared(extensions::bump_version::bump_version),
     ];
 
-    for workflow_file in workflows {
+    // Koda's repository workflows are maintained by hand. Keep the upstream
+    // templates available for upstream merges, but only regenerate extension
+    // templates here so this command cannot restore retired Zed automation.
+    for workflow_file in workflows
+        .into_iter()
+        .filter(|file| file.r#type != WorkflowType::Zed)
+    {
         workflow_file.generate_file(&args)?;
     }
 

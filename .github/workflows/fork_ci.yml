@@ -5,7 +5,7 @@ on:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    # Packaging-only changes are checked locally and by the main release run.
+    # Packaging-only changes are checked locally and by release runs.
     # Other changes always run checks; the planner selects native test coverage.
     paths-ignore:
       - .github/workflows/main_macos_release.yml
@@ -76,8 +76,10 @@ jobs:
         run: |
           GOBIN="$RUNNER_TEMP/actionlint" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
           echo "$RUNNER_TEMP/actionlint" >> "$GITHUB_PATH"
-      - name: Check fork workflow
-        run: actionlint .github/workflows/fork_ci.yml
+      - name: Check fork workflows
+        run: actionlint
+      - name: Check packaging identity and coexistence
+        run: python3 -m unittest discover -s script/tests -p 'test_*.py'
       - name: Check Android launcher and Kotlin scripts
         run: |
           if [[ -f script/android-ide ]]; then
@@ -230,7 +232,7 @@ jobs:
             --test-threads "$CI_TEST_THREADS" --status-level=fail --final-status-level=fail
       - name: Build Zed
         if: success() || failure()
-        run: python3 script/ci-run stage 'Linux app build' -- cargo build --locked --keep-going -p zed --bin zed
+        run: python3 script/ci-run stage 'Linux app build' -- cargo build --locked --keep-going -p zed --bin koda
       - name: Stage portable Cargo sources
         id: stage-sources
         if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.prefetch-sources.outcome == 'success' && steps.source-cache.outputs.cache-hit != 'true' }}
@@ -353,7 +355,7 @@ jobs:
           xcrun clang --version
           xcrun --find metal
       - name: Check macOS Zed application
-        run: python3 script/ci-run stage 'macOS app check' -- cargo check --locked --keep-going -p zed --bin zed
+        run: python3 script/ci-run stage 'macOS app check' -- cargo check --locked --keep-going -p zed --bin koda
       - name: Save macOS build cache
         if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.build-cache.outputs.cache-hit != 'true' }}
         continue-on-error: true

@@ -1677,4 +1677,41 @@
       "shift-tab": "skill_creator::FocusPreviousField",
     },
   },
+  {
+    "context": "AndroidLogcat",
+    "bindings": {
+      "ctrl-f": "android_logcat::Find",
+      "ctrl-shift-f": "android_logcat::FocusFilter",
+      "f3": "android_logcat::FindNext",
+      "shift-f3": "android_logcat::FindPrevious",
+      "ctrl-shift-space": "android_logcat::Pause",
+      "ctrl-l": "android_logcat::Clear",
+      "ctrl-shift-r": "android_logcat::Restart",
+    },
+  },
+  {
+    "context": "AndroidLogcat && !Editor",
+    "bindings": {
+      "ctrl-c": "android_logcat::Copy",
+      "ctrl-a": "android_logcat::SelectAll",
+    },
+  },
+  {
+    "context": "AndroidLogcatFilter && showing_suggestions",
+    "bindings": {
+      "down": "android_logcat::NextSuggestion",
+      "up": "android_logcat::PreviousSuggestion",
+      "enter": "android_logcat::AcceptSuggestion",
+      "tab": "android_logcat::AcceptSuggestion",
+      "escape": "android_logcat::DismissSuggestions",
+    },
+  },
+  {
+    "context": "AndroidLogcatSearch",
+    "bindings": {
+      "escape": "android_logcat::CloseFind",
+      "enter": "android_logcat::FindNext",
+      "shift-enter": "android_logcat::FindPrevious",
+    },
+  },
 ]

@@ -30,7 +30,11 @@ fn compile_time_release_channel_name() -> String {
 
 #[cfg(not(__do_not_set_zed_release_channel))]
 fn compile_time_release_channel_name() -> String {
-    include_str!("../../zed/RELEASE_CHANNEL").trim().to_string()
+    if cfg!(debug_assertions) {
+        "dev".to_string()
+    } else {
+        include_str!("../../zed/RELEASE_CHANNEL").trim().to_string()
+    }
 }
 
 #[doc(hidden)]
@@ -43,12 +47,7 @@ pub static RELEASE_CHANNEL: LazyLock<ReleaseChannel> =
 /// The app identifier for the current release channel, Windows only.
 #[cfg(target_os = "windows")]
 pub fn app_identifier() -> &'static str {
-    match *RELEASE_CHANNEL {
-        ReleaseChannel::Dev => "Zed-Editor-Dev",
-        ReleaseChannel::Nightly => "Zed-Editor-Nightly",
-        ReleaseChannel::Preview => "Zed-Editor-Preview",
-        ReleaseChannel::Stable => "Zed-Editor-Stable",
-    }
+    RELEASE_CHANNEL.app_id()
 }
 
 /// The Git commit SHA that Zed was built at.
@@ -205,10 +204,10 @@ impl ReleaseChannel {
     /// Returns the display name for this [`ReleaseChannel`].
     pub fn display_name(&self) -> &'static str {
         match self {
-            ReleaseChannel::Dev => "Zed Dev",
-            ReleaseChannel::Nightly => "Zed Nightly",
-            ReleaseChannel::Preview => "Zed Preview",
-            ReleaseChannel::Stable => "Zed",
+            ReleaseChannel::Dev => "Koda Dev",
+            ReleaseChannel::Nightly => "Koda Nightly",
+            ReleaseChannel::Preview => "Koda Preview",
+            ReleaseChannel::Stable => "Koda",
         }
     }
 
@@ -227,10 +226,10 @@ impl ReleaseChannel {
     /// This also has to match the bundle identifier for Zed on macOS.
     pub fn app_id(&self) -> &'static str {
         match self {
-            ReleaseChannel::Dev => "dev.zed.Zed-Dev",
-            ReleaseChannel::Nightly => "dev.zed.Zed-Nightly",
-            ReleaseChannel::Preview => "dev.zed.Zed-Preview",
-            ReleaseChannel::Stable => "dev.zed.Zed",
+            ReleaseChannel::Dev => "dev.anilbeesetti.koda-dev",
+            ReleaseChannel::Nightly => "dev.anilbeesetti.koda-nightly",
+            ReleaseChannel::Preview => "dev.anilbeesetti.koda-preview",
+            ReleaseChannel::Stable => "dev.anilbeesetti.koda",
         }
     }
 
@@ -282,7 +281,28 @@ impl FromStr for ReleaseChannel {
 
 #[cfg(test)]
 mod tests {
-    use super::ReleaseChannel;
+    use super::{ReleaseChannel, compile_time_release_channel_name};
+
+    #[test]
+    fn test_compile_time_release_channel_matches_build_mode() {
+        let expected = option_env!("ZED_RELEASE_CHANNEL").unwrap_or_else(|| {
+            if cfg!(debug_assertions) {
+                "dev"
+            } else {
+                include_str!("../../zed/RELEASE_CHANNEL")
+            }
+        });
+        assert_eq!(compile_time_release_channel_name(), expected.trim());
+    }
+
+    #[test]
+    fn test_app_identifiers_are_distinct() {
+        for (index, channel) in ReleaseChannel::ALL.iter().enumerate() {
+            for other in &ReleaseChannel::ALL[index + 1..] {
+                assert_ne!(channel.app_id(), other.app_id());
+            }
+        }
+    }
 
     #[test]
     fn test_docs_url_for_release_channel() {

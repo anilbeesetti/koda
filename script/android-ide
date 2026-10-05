@@ -2,9 +2,11 @@
 set -euo pipefail
 
 repository=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+export ZED_RELEASE_CHANNEL=dev
+export RELEASE_CHANNEL=dev
 build_profile=debug
 build=true
-profile="$repository/target/android-ide/profile"
+profile="$repository/target/android-ide/dev/profile"
 kotlin_backend=${ANDROID_IDE_KOTLIN_BACKEND:-official}
 
 while [[ $# -gt 0 ]]; do
@@ -27,7 +29,7 @@ Usage: script/android-ide [--release] [--skip-build] [--profile DIR]
                           [--kotlin-backend official] [--] [PATH ...]
 
 Build and run the Android IDE development app on macOS. Paths are resolved from
-your current directory. Settings and extensions use target/android-ide/profile
+your current directory. Settings and extensions use target/android-ide/dev/profile
 unless --profile is supplied. Existing profile settings are preserved.
 
 Prerequisites: the repository's Rust toolchain, Xcode with Metal tools, Android
@@ -37,7 +39,7 @@ with its bundled Java 25 runtime. Run Android: Configure Kotlin in the project
 to apply it to existing settings. Set ANDROID_IDE_OFFICIAL_KOTLIN_SERVER to use
 a custom path to the tested official distribution.
 Run script/install-android-debugger for Java/Kotlin breakpoints and stepping.
-Run script/install-android-preview for standalone Compose previews.
+Compose preview dependencies are bundled automatically by Cargo.
 The Android Studio runtime is used for Gradle when JAVA_HOME is unset.
 
 The launcher honors CARGO_TARGET_DIR and LK_CUSTOM_WEBRTC. Set CARGO_BUILD_JOBS
@@ -56,7 +58,7 @@ case "$kotlin_backend" in
     *) echo "Unknown Kotlin backend: $kotlin_backend; only official is supported." >&2; exit 2 ;;
 esac
 export ANDROID_IDE_KOTLIN_BACKEND="$kotlin_backend"
-kotlin_official_server="$repository/target/android-ide/dependencies/kotlin-lsp-263.4702.0+android-5/kotlin-server-263.4702.0/bin/intellij-server"
+kotlin_official_server="$repository/target/android-ide/dependencies/kotlin-lsp-263.4702.0+android-6/kotlin-server-263.4702.0/bin/intellij-server"
 if [[ -z ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} && -x "$kotlin_official_server" ]]; then
     export ANDROID_IDE_OFFICIAL_KOTLIN_SERVER="$kotlin_official_server"
 fi
@@ -71,34 +73,48 @@ target_directory=${CARGO_TARGET_DIR:-"$repository/target"}
 case "$target_directory" in /*) ;; *) target_directory="$PWD/$target_directory" ;; esac
 export CARGO_TARGET_DIR="$target_directory"
 
-bundle="$repository/target/android-ide/$build_profile/Android IDE Dev.app"
-executable="$bundle/Contents/MacOS/zed"
+bundle="$repository/target/android-ide/dev/$build_profile/Koda Dev.app"
+executable="$bundle/Contents/MacOS/koda"
 if ps -axo command= | /usr/bin/grep -F "$executable" | /usr/bin/grep -v '[g]rep' >/dev/null; then
-    echo "Quit the $build_profile Android IDE Dev app before running this launcher again." >&2
+    echo "Quit the $build_profile Koda Dev app before running this launcher again." >&2
     exit 1
 fi
 
 if $build; then
-    arguments=(build --locked -p zed --bin zed)
+    arguments=(build --locked -p zed --bin koda)
     if [[ $build_profile == release ]]; then arguments+=(--release); fi
     (cd "$repository" && cargo "${arguments[@]}")
 fi
-binary="$target_directory/$build_profile/zed"
+binary="$target_directory/$build_profile/koda"
 [[ -x "$binary" ]] || { echo "Missing $binary; run again without --skip-build." >&2; exit 1; }
 
-mkdir -p "$bundle/Contents/MacOS" "$profile/config"
+# A previously built Nightly executable must not acquire a Dev bundle identity.
+# Inspect its compiled channel without runtime overrides or touching real profiles.
+binary_specs=$(
+    unset ZED_RELEASE_CHANNEL RELEASE_CHANNEL
+    "$binary" --user-data-dir "$profile" --system-specs
+) || { echo "Could not verify the development binary's channel." >&2; exit 1; }
+case "$binary_specs" in
+    *"(Koda Dev)"*|*"(Koda Dev "*) ;;
+    *) echo "Existing binary is not Koda Dev; run again without --skip-build to rebuild." >&2; exit 1 ;;
+esac
+
+mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources" "$profile/config"
 cat > "$bundle/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>dev.zed.android-ide-$build_profile</string>
-<key>CFBundleName</key><string>Android IDE Dev</string>
-<key>CFBundleExecutable</key><string>zed</string>
+<key>CFBundleIdentifier</key><string>dev.anilbeesetti.koda-dev</string>
+<key>CFBundleName</key><string>Koda Dev</string>
+<key>CFBundleDisplayName</key><string>Koda Dev</string>
+<key>CFBundleIconFile</key><string>KodaDev.icns</string>
+<key>CFBundleExecutable</key><string>koda</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleVersion</key><string>0.1</string>
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST
+cp "$repository/crates/zed/resources/KodaDev.icns" "$bundle/Contents/Resources/KodaDev.icns"
 # A real executable keeps macOS app discovery attached to this bundle.
 cp -c "$binary" "$executable" || cp "$binary" "$executable"
 
@@ -135,13 +151,7 @@ if [[ -z ${ANDROID_IDE_KOTLIN_DEBUGGER:-} && -x "$kotlin_debugger" ]]; then
     export ANDROID_IDE_KOTLIN_DEBUGGER="$kotlin_debugger"
 fi
 
-compose_preview="$repository/target/android-ide/dependencies/compose-preview"
-if [[ -z ${ANDROID_IDE_COMPOSE_PREVIEW:-} && -f "$compose_preview/PreviewBridge.class" ]]; then
-    export ANDROID_IDE_COMPOSE_PREVIEW="$compose_preview"
-fi
-
 echo "App: $bundle"
 echo "Profile: $profile"
 echo "Kotlin backend: $kotlin_backend ($kotlin_server_id)"
 exec "$executable" --user-data-dir "$profile" "$@"
-

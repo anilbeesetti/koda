@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+"""Export the Koda icon into the platform packaging formats."""
+
+from copy import deepcopy
+from pathlib import Path
+import shutil
+import struct
+import subprocess
+import xml.etree.ElementTree as ET
+
+
+repository = Path(__file__).resolve().parents[1]
+resources = repository / "crates/zed/resources"
+branding = repository / "assets/branding"
+namespace = "http://www.w3.org/2000/svg"
+ET.register_namespace("", namespace)
+
+
+def generate_source(channel):
+    background, highlight = {
+        "stable": (("#303236", "#08090b"), "#c4c6ca"),
+        "nightly": (("#075bd8", "#04142e"), "#d3eaff"),
+        "dev": (("#b96513", "#301809"), "#ffdeb8"),
+    }[channel]
+    grid = """
+      <path d="M0 128H1024M0 256H1024M0 384H1024M0 512H1024M0 640H1024M0 768H1024M0 896H1024
+               M128 0V1024M256 0V1024M384 0V1024M512 0V1024M640 0V1024M768 0V1024M896 0V1024"
+            fill="none" stroke="#45b0ff" stroke-width="2" opacity="0.22"/>
+    """ if channel == "nightly" else ""
+    badge = f"""
+      <text x="940" y="942" text-anchor="end" fill="#ffffff" font-family="sans-serif"
+            font-size="54" font-weight="900" letter-spacing="3">{channel.upper()}</text>
+    """ if channel != "stable" else ""
+    # macOS applies its own icon mask. An inset transparent tile leaves room for
+    # a second, system-provided plate around the artwork on newer macOS versions.
+    icon = ET.fromstring(f"""
+      <svg xmlns="{namespace}" width="1024" height="1024" viewBox="0 0 1024 1024">
+        <defs>
+          <linearGradient id="background" x2="0.35" y2="1">
+            <stop stop-color="{background[0]}"/>
+            <stop offset="1" stop-color="{background[1]}"/>
+          </linearGradient>
+          <linearGradient id="mark" x2="0.8" y2="1">
+            <stop stop-color="#ffffff"/>
+            <stop offset="1" stop-color="{highlight}"/>
+          </linearGradient>
+        </defs>
+        <rect width="1024" height="1024" fill="url(#background)"/>
+        {grid}
+        {badge}
+        <g transform="translate(210 197) scale(6.3)"/>
+      </svg>
+    """)
+    mark = icon.find(f"{{{namespace}}}g")
+    for element in ET.parse(repository / "assets/images/koda_logo.svg").getroot():
+        element = deepcopy(element)
+        element.set("fill", "url(#mark)")
+        mark.append(element)
+    name = "koda-icon" if channel == "stable" else f"koda-icon-{channel}"
+    source = branding / f"{name}.svg"
+    for element in icon.iter():
+        if element.text is not None and not element.text.strip():
+            element.text = None
+        element.tail = None
+    ET.indent(icon)
+    source.write_text(ET.tostring(icon, encoding="unicode") + "\n")
+    subprocess.run([
+        "inkscape", str(source), "--export-type=png",
+        f"--export-filename={branding / f'{name}.png'}",
+    ], check=True)
+    return branding / f"{name}.png"
+
+
+def export_icon(source, suffix, icns_name):
+    for size, resolution in ((512, ""), (1024, "@2x")):
+        subprocess.run([
+            "magick", str(source), "-resize", f"{size}x{size}", "-strip",
+            f"PNG24:{resources / f'app-icon{suffix}{resolution}.png'}",
+        ], check=True)
+    subprocess.run([
+        "magick", str(source), "-define", "icon:auto-resize=256,128,64,48,32,24,16", "-strip",
+        str(resources / f"windows/app-icon{suffix}.ico"),
+    ], check=True)
+    chunks = []
+    for code, resolution in ((b"ic09", ""), (b"ic10", "@2x")):
+        content = (resources / f"app-icon{suffix}{resolution}.png").read_bytes()
+        chunks.append(code + struct.pack(">I", len(content) + 8) + content)
+    body = b"".join(chunks)
+    (resources / icns_name).write_bytes(b"icns" + struct.pack(">I", len(body) + 8) + body)
+
+
+if not all(shutil.which(command) for command in ("inkscape", "magick")):
+    raise SystemExit("Generating Koda icons requires Inkscape and ImageMagick (magick).")
+
+# IconName::Koda and VectorName::KodaLogo use the same theme-tinted monogram.
+shutil.copyfile(repository / "assets/images/koda_logo.svg", repository / "assets/icons/koda.svg")
+export_icon(generate_source("stable"), "", "Koda.icns")
+export_icon(generate_source("nightly"), "-nightly", "KodaNightly.icns")
+export_icon(generate_source("dev"), "-dev", "KodaDev.icns")
+for channel in ("preview",):
+    for suffix in ("", "@2x"):
+        shutil.copyfile(resources / f"app-icon{suffix}.png", resources / f"app-icon-{channel}{suffix}.png")
+    shutil.copyfile(resources / "windows/app-icon.ico", resources / f"windows/app-icon-{channel}.ico")
+shutil.copyfile(resources / "Koda.icns", resources / "Document.icns")

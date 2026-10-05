@@ -727,11 +727,19 @@ name = "android_tools"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "dirs",
+ "flate2",
+ "fs2",
+ "regex",
  "serde",
  "serde_json",
+ "sha2",
+ "tar",
  "tempfile",
  "which",
+ "zed-reqwest",
+ "zip",
 ]
 
 [[package]]
@@ -740,20 +748,30 @@ version = "0.1.0"
 dependencies = [
  "android_tools",
  "anyhow",
+ "assets",
  "async-trait",
+ "chrono",
  "collections",
  "dap",
  "db",
+ "editor",
  "futures 0.3.34",
  "gpui",
+ "gpui_wgpu",
  "language",
+ "log",
  "lsp",
+ "menu",
  "project",
+ "serde",
  "serde_json",
  "settings",
  "task",
  "tempfile",
+ "theme_settings",
  "ui",
+ "ui_input",
+ "unicode-width 0.2.2",
  "util",
  "workspace",
  "zed_actions",
@@ -14141,6 +14159,7 @@ name = "project"
 version = "0.1.0"
 dependencies = [
  "aho-corasick",
+ "android_tools",
  "anyhow",
  "askpass",
  "async-channel 2.5.0",
@@ -18200,6 +18219,17 @@ name = "tap"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
+
+[[package]]
+name = "tar"
+version = "0.4.46"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f6221d9a6003c78398e3b239969f352578258df48c8eb051caadae0015bc840"
+dependencies = [
+ "filetime",
+ "libc",
+ "xattr",
+]
 
 [[package]]
 name = "target-lexicon"
@@ -23034,6 +23064,7 @@ dependencies = [
  "base64 0.22.1",
  "bytes 1.11.1",
  "encoding_rs",
+ "futures-channel",
  "futures-core",
  "futures-util",
  "h2 0.4.19",

@@ -47,7 +47,7 @@ print('created: ' + sys.argv[-1])
                      DMG_TEST_FAILURES=str(failures), DMG_TEST_ERROR=error),
         )
         calls = [json.loads(line) for line in self.calls.read_text().splitlines()]
-        expected_args = ["create", "-volname", "Zed", "-srcfolder", str(source), "-ov", "-format", "UDZO", str(output)]
+        expected_args = ["create", "-volname", "Koda", "-srcfolder", str(source), "-ov", "-format", "UDZO", str(output)]
         self.assertEqual(calls, [expected_args] * len(calls))
         sleeps = self.sleeps.read_text().splitlines() if self.sleeps.exists() else []
         return result, calls, sleeps, output

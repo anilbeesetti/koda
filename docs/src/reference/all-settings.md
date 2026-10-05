@@ -4044,7 +4044,7 @@ List of strings containing any combination of:
 
 - Description: Controls session restoration on startup.
 - Setting: `restore_on_startup`
-- Default: `last_session`
+- Default: `launchpad`
 
 **Options**
 
