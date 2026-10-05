@@ -112,6 +112,36 @@ def model_from_log(path):
     return json.loads(records[0])
 
 
+def check_default_variants(root, agp, sdk, gradle):
+    root = root / "default-variants"
+    write(root, "settings.gradle", "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }\ndependencyResolutionManagement { repositories { google(); mavenCentral() } }\nrootProject.name = 'defaults'; include ':app'\n")
+    write(root, "build.gradle", f"plugins {{ id 'com.android.application' version '{agp}' apply false }}\n")
+    write(root, "local.properties", f"sdk.dir={Path(sdk).resolve()}\n")
+    flavors = "flavorDimensions 'edition'; productFlavors { full { dimension 'edition' }; demo { dimension 'edition' } }"
+    cases = [
+        ("unflavored", "", "", "debug"),
+        ("flavored", flavors, "", "demoDebug"),
+        ("default-flavor", flavors + "; productFlavors.full.isDefault = true", "", "fullDebug"),
+        ("default-build-type", flavors + "; buildTypes.release.isDefault = true", "", "demoRelease"),
+        ("combined-defaults", flavors + "; productFlavors.full.isDefault = true; buildTypes.release.isDefault = true", "", "fullRelease"),
+        ("filtered-default", flavors + "; productFlavors.full.isDefault = true", "androidComponents.beforeVariants(androidComponents.selector().withName('fullDebug')) { it.enable = false }", "fullRelease"),
+        ("custom-build-type", flavors + "; buildTypes { staging { isDefault = true } }", "", "demoStaging"),
+        ("ordered-dimensions", "flavorDimensions 'edition', 'tier'; productFlavors { aB { dimension 'edition' }; a { dimension 'edition' }; z { dimension 'tier' }; b { dimension 'tier' } }", "", "aBDebug"),
+        ("without-debug", flavors, "androidComponents.beforeVariants(androidComponents.selector().withBuildType('debug')) { it.enable = false }", "demoRelease"),
+    ]
+    for name, configuration, filtering, expected in cases:
+        write(root, "app/build.gradle", f"plugins {{ id 'com.android.application' }}\nandroid {{ namespace 'dev.koda.defaults'; compileSdk 35; defaultConfig {{ applicationId 'dev.koda.defaults'; minSdk 24 }}; {configuration} }}\n{filtering}\n")
+        log = root / f"{name}.log"
+        with log.open("w") as output:
+            result = subprocess.run([gradle, "--console=plain", "--no-configuration-cache", "--parallel", "--max-workers=2", "--init-script", str(REPOSITORY / "crates/android_tools/src/project_model.gradle"), "kodaAndroidProjectModel"], cwd=root, stdout=output, stderr=subprocess.STDOUT)
+        if result.returncode:
+            raise RuntimeError(log.read_text())
+        app = next(module for module in model_from_log(log)["modules"] if module["path"] == ":app")
+        assert app["defaultVariant"] == expected, (name, expected, app)
+        assert expected in {variant["name"] for variant in app["variants"]}, app
+        print(f"Passed AGP {agp} default {name}: {expected}", flush=True)
+
+
 def test_artifact_kind(path, root):
     path = Path(path)
     if path.is_relative_to(root / "testing"):
@@ -145,10 +175,14 @@ def main():
     parser.add_argument("--sdk", required=True)
     parser.add_argument("--agp", choices=["8.9.1", "9.4.0"], required=True)
     parser.add_argument("--keep", type=Path, help="Use this directory and retain output for inspection")
+    parser.add_argument("--defaults-only", action="store_true", help="Run only default-variant exporter checks")
     args = parser.parse_args()
     temporary = tempfile.TemporaryDirectory(prefix="koda-model-") if args.keep is None else None
     root = (args.keep or Path(temporary.name)).resolve()
     root.mkdir(parents=True, exist_ok=True)
+    if args.defaults_only:
+        check_default_variants(root, args.agp, args.sdk, args.gradle)
+        return
     fixture(root, args.agp)
     write(root, "local.properties", f"sdk.dir={Path(args.sdk).resolve()}\n")
     subprocess.run(["cargo", "build", "--locked", "-p", "android_tools", "--example", "project_model_probe"], cwd=REPOSITORY, check=True)
@@ -259,6 +293,7 @@ def main():
     assert [module["path"] for module in root_model["modules"]] == [":", ":helper"]
     assert root_model["modules"][0]["variants"][0]["components"][1]["dependencies"] == [{"kind": "project", "module": ":helper", "variant": "jvm"}]
     assert root_model["diagnostics"]  # A root JVM module remains catalogued, without a runnable APK.
+    check_default_variants(root, args.agp, args.sdk, args.gradle)
     print(f"Passed AGP {args.agp}: parallel model/Java/Eclipse collection, flavors, fallback library, dynamic feature, registered generated sources, test fixtures, removed/restored variant, collector/configuration failure and recovery, included-build diagnostic, root JVM module")
 
 
