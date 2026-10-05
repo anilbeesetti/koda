@@ -14,8 +14,8 @@ script/install-android-kotlin
 script/android-ide --release examples/android-ide
 ```
 
-Trusted Android projects sync automatically on open. Select **:mobile · demoDebug**
-in the topbar and use **Configure official Kotlin** in the Android tools panel. Install the Kotlin extension from Extensions if it is
+Trusted Android projects sync automatically on open and initially select
+**:mobile · demoDebug** in the topbar. Use **Configure official Kotlin** in the Android tools panel. Install the Kotlin extension from Extensions if it is
 not already installed. Select a connected device or a stopped emulator in the topbar,
 then **Run**; a stopped emulator is booted before deployment. The app should display `dev.zed.androidsample.demo`. Repeat with
 `fullDebug`; it should display `dev.zed.androidsample.full`. Both variants should
@@ -272,6 +272,12 @@ A failed or cancelled sync leaves no selected shared snapshot; resync restores a
 previous variant only if its identity still exists in the fresh catalog. This is
 also the integration API for the separate structured Android testing UI: use the
 selected component names/scopes and dependencies; do not discover another graph.
+
+On first sync, Koda selects the first application module alphabetically and uses
+Android Studio's default-variant ordering: explicit build-type defaults, explicit
+flavor defaults in dimension order, `debug`, alphabetical flavors, then build type.
+Only enabled variants are considered. The initial choice and manual changes are
+remembered per project. An unavailable remembered variant requires a new choice.
 
 The official Kotlin server still owns Kotlin/Java semantic analysis and rename.
 The managed `263.4702.0+android-6` importer accepts the resolved variant map and

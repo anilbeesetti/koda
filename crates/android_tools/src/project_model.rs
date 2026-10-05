@@ -100,6 +100,8 @@ pub struct Module {
     pub directory: PathBuf,
     pub namespace: Option<String>,
     pub kind: ModuleKind,
+    #[serde(default)]
+    pub default_variant: Option<String>,
     pub variants: Vec<Variant>,
 }
 
@@ -122,6 +124,26 @@ pub struct SelectedProject {
 }
 
 impl ProjectModel {
+    pub fn default_target(&self) -> Option<AndroidTarget> {
+        self.modules
+            .iter()
+            .filter(|module| module.kind == ModuleKind::Application)
+            .filter_map(|module| {
+                let default = module.default_variant.as_ref()?;
+                let variant = module
+                    .variants
+                    .iter()
+                    .find(|variant| &variant.name == default)?;
+                Some((module, variant, variant.output_listing.as_ref()?))
+            })
+            .min_by_key(|(module, _, _)| &module.path)
+            .map(|(module, variant, output_listing)| AndroidTarget {
+                module: module.path.clone(),
+                variant: variant.name.clone(),
+                output_listing: output_listing.clone(),
+            })
+    }
+
     pub fn targets(&self) -> Vec<AndroidTarget> {
         let mut targets = self
             .modules
@@ -384,6 +406,16 @@ pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
             module.path
         );
         let mut variants = BTreeSet::new();
+        ensure!(
+            module.default_variant.as_ref().is_none_or(|default| {
+                module
+                    .variants
+                    .iter()
+                    .any(|variant| &variant.name == default)
+            }),
+            "Default variant is absent from Android module {}",
+            module.path
+        );
         for variant in &module.variants {
             ensure!(
                 valid_variant(&variant.name) && variants.insert(&variant.name),
@@ -653,6 +685,7 @@ mod tests {
             directory: root.join(name),
             namespace: Some(format!("dev.{name}")),
             kind,
+            default_variant: None,
             variants,
         };
         Ok(ProjectModel {
@@ -685,6 +718,50 @@ mod tests {
             "Gradle noise\n{OUTPUT}{}\nBUILD SUCCESSFUL",
             serde_json::to_string(model)?
         ))
+    }
+
+    #[test]
+    fn module_default_is_validated_and_selects_fresh_application_artifacts() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().canonicalize()?;
+        let mut model = fixture(&root)?;
+        let application = model
+            .modules
+            .iter_mut()
+            .find(|module| module.kind == ModuleKind::Application)
+            .context("Application module")?;
+        let mut release = variant("freeRelease", vec![]);
+        release.output_listing = Some(root.join("app/build/freeRelease/output-metadata.json"));
+        application.variants.push(release);
+        application.default_variant = Some("freeRelease".into());
+        let parsed = parse_model(&output(&model)?, &root)?;
+        assert_eq!(
+            parsed.default_target(),
+            Some(AndroidTarget {
+                module: ":app".into(),
+                variant: "freeRelease".into(),
+                output_listing: root.join("app/build/freeRelease/output-metadata.json"),
+            })
+        );
+        let application = model
+            .modules
+            .iter_mut()
+            .find(|module| module.kind == ModuleKind::Application)
+            .context("Application module")?;
+        application.default_variant = Some("removedRelease".into());
+        assert!(parse_model(&output(&model)?, &root).is_err());
+        let application = model
+            .modules
+            .iter_mut()
+            .find(|module| module.kind == ModuleKind::Application)
+            .context("Application module")?;
+        application.default_variant = None;
+        assert!(
+            parse_model(&output(&model)?, &root)?
+                .default_target()
+                .is_none()
+        );
+        Ok(())
     }
 
     #[test]

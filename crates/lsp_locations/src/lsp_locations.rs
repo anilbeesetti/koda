@@ -1113,6 +1113,7 @@ mod tests {
                                 directory: root.into(),
                                 namespace: Some("example.app".into()),
                                 kind: ModuleKind::Application,
+                                default_variant: None,
                                 variants: vec![Variant {
                                     name: "debug".into(),
                                     output_listing: None,
