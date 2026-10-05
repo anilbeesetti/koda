@@ -845,6 +845,8 @@ mod tests {
             namespace: "dev.app".into(),
             class_path: vec![],
             project_class_path: vec![],
+            preview_class_path: vec![],
+            source_files: vec![],
         };
         crate::preview::validate_selection(&preview, &selected)?;
         preview.namespace = "dev.previous".into();

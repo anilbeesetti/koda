@@ -205,8 +205,9 @@ Do not run builds or other performance probes during timing collection.
 
 ## Java, debugging, and preview
 
-Run `script/install-android-kotlin`, `script/install-android-debugger`, and
-`script/install-android-preview` once before launching the IDE. **Configure Java**
+Run `script/install-android-kotlin` and `script/install-android-debugger`
+once before launching the IDE. Compose preview dependencies are bundled by Cargo;
+`cargo run --locked -p zed --bin koda` needs no separate preview setup. **Configure Java**
 imports the selected variant into JDT LS. Once configured, managed official Kotlin
 setup refreshes that Java model after variant or Gradle input changes. Java model
 refresh can compile sources; failure leaves Kotlin editing available. Only JDT is
@@ -221,12 +222,13 @@ starts Android debugging, Command-Option-R continues, Shift-F8 steps out, and
 Command-F2 disconnects. `script/test-android-debugger --device emulator-5554` provides an
 explicit emulator-only smoke test after building `demoDebug`.
 
-**Compose preview** builds the selected variant and opens a rendered image beside
-the code. **Select preview…** switches between the default and large-text
-annotations. Rendering uses downloaded Google tooling, JDK 21, and the selected
-variant's resources; Android Studio and a running device are unnecessary. Refresh
-after code changes. Interactive previews and multi-value preview parameter
-galleries are not implemented.
+**Compose preview** opens all previews for the active Kotlin file beside the code,
+including multipreview annotations and parameter values. Use **Build & Refresh**
+or leave **Auto** enabled to rebuild after edits, including unsaved Kotlin changes.
+Click a preview to inspect its layout outlines, then click a component to navigate
+to its source. Rendering uses bundled Google tooling, bundled Java 21, and the selected
+variant's resources. See [Compose previews](COMPOSE_PREVIEW.md) for controls,
+implementation research, compatibility boundaries, and integration checks.
 
 ## Shared Android project model
 
@@ -263,8 +265,13 @@ configured. Language-server indexing remains asynchronous; a model sync is not
 confirmation that every server has finished indexing.
 
 Preview export retains its separate **runtime** classpath, while validating the
-selected module, variant, namespace, and model generation. Compiled runtime inputs
-are distinct from Kotlin/Java compile inputs. Resource navigation uses the selected
+selected module, variant, namespace, and model generation. The embedded gallery
+accepts files in the selected main source graph and checks that Gradle actually
+compiled the active file. Test-only dependencies and inactive flavors do not become
+preview sources. Model changes cancel rendering and source navigation, including
+A → B → A selection changes; registered generated roots do not trigger automatic
+rebuild loops. Compiled runtime inputs are distinct from Kotlin/Java compile inputs.
+Resource navigation uses the selected
 Gradle roots rather than scanning every flavor, supports custom/registered generated
 roots, and keeps locale/qualifier and overlay declarations visible. It does not
 compute the final AGP resource-merge winner. Before the first sync, the existing

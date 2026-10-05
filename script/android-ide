@@ -39,7 +39,7 @@ with its bundled Java 25 runtime. Run Android: Configure Kotlin in the project
 to apply it to existing settings. Set ANDROID_IDE_OFFICIAL_KOTLIN_SERVER to use
 a custom path to the tested official distribution.
 Run script/install-android-debugger for Java/Kotlin breakpoints and stepping.
-Run script/install-android-preview for standalone Compose previews.
+Compose preview dependencies are bundled automatically by Cargo.
 The Android Studio runtime is used for Gradle when JAVA_HOME is unset.
 
 The launcher honors CARGO_TARGET_DIR and LK_CUSTOM_WEBRTC. Set CARGO_BUILD_JOBS
@@ -140,13 +140,7 @@ if [[ -z ${ANDROID_IDE_KOTLIN_DEBUGGER:-} && -x "$kotlin_debugger" ]]; then
     export ANDROID_IDE_KOTLIN_DEBUGGER="$kotlin_debugger"
 fi
 
-compose_preview="$repository/target/android-ide/dependencies/compose-preview"
-if [[ -z ${ANDROID_IDE_COMPOSE_PREVIEW:-} && -f "$compose_preview/PreviewBridge.class" ]]; then
-    export ANDROID_IDE_COMPOSE_PREVIEW="$compose_preview"
-fi
-
 echo "App: $bundle"
 echo "Profile: $profile"
 echo "Kotlin backend: $kotlin_backend ($kotlin_server_id)"
 exec "$executable" --user-data-dir "$profile" "$@"
-
