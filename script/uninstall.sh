@@ -38,6 +38,9 @@ main() {
     if [ "$channel" = nightly ]; then
         profile_directory=koda-nightly
         profile_name="Koda Nightly"
+    elif [ "$channel" = dev ]; then
+        profile_directory=koda-dev
+        profile_name="Koda Dev"
     fi
 
     if [ "$platform" = "Darwin" ]; then
@@ -107,7 +110,7 @@ linux() {
     rm -f "$HOME/.local/share/$profile_directory/koda-$db_suffix.sock"
 
     # Remove the entire Koda directory if no installations remain
-    if [ "$channel" = nightly ] || check_remaining_installations; then
+    if [ "$channel" = nightly ] || [ "$channel" = dev ] || check_remaining_installations; then
         rm -rf "$HOME/.local/share/$profile_directory"
         prompt_remove_preferences
     fi
@@ -163,7 +166,7 @@ macos() {
     rm -rf "$HOME/Library/Saved Application State/$app_id.savedState"
 
     # Remove the entire Koda directory if no installations remain
-    if [ "$channel" = nightly ] || check_remaining_installations; then
+    if [ "$channel" = nightly ] || [ "$channel" = dev ] || check_remaining_installations; then
         rm -rf "$HOME/Library/Application Support/$profile_name"
         rm -rf "$HOME/Library/Logs/$profile_name"
 

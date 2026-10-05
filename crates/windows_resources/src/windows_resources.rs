@@ -44,7 +44,13 @@ const MANIFEST_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/resources/mani
 fn release_channel() -> String {
     std::env::var("ZED_RELEASE_CHANNEL")
         .or_else(|_| std::env::var("RELEASE_CHANNEL"))
-        .unwrap_or_else(|_| include_str!("../../zed/RELEASE_CHANNEL").trim().into())
+        .unwrap_or_else(|_| {
+            if std::env::var_os("CARGO_CFG_DEBUG_ASSERTIONS").is_some() {
+                "dev".into()
+            } else {
+                include_str!("../../zed/RELEASE_CHANNEL").trim().into()
+            }
+        })
 }
 
 pub fn compile(manifest: bool) -> Result<(), Box<dyn std::error::Error>> {

@@ -182,6 +182,7 @@ pub enum IconName {
     Info,
     Json,
     Keyboard,
+    Koda,
     LineHeight,
     Link,
     Linux,
