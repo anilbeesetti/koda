@@ -1052,10 +1052,7 @@ impl ComposePreviewView {
                         Ok::<_, anyhow::Error>((installation, java))
                     }).await?;
                     cx.background_spawn(async move {
-                        let cache = preview::prepare(&root)?;
-                        let temporary = tempfile::Builder::new()
-                            .prefix("render-")
-                            .tempdir_in(&cache)?;
+                        let temporary = preview::prepare()?;
                         let directory = temporary.path();
                         let overlay = preview::write_source_overlay(directory, &sources)?;
                         let program = if cfg!(windows) {
@@ -1070,7 +1067,7 @@ impl ComposePreviewView {
                         };
                         arguments.extend([
                             "--init-script".into(),
-                            cache.join("export.gradle").to_string_lossy().into_owned(),
+                            directory.join("export.gradle").to_string_lossy().into_owned(),
                             format!("-Dzed.android.module={}", target.module),
                             format!("-Dzed.android.variant={}", target.variant),
                             target.gradle_task("assemble", ""),

@@ -31,6 +31,15 @@ their gallery state.
 Switching files, projects, or variants cancels the previous request. The toolbar
 shows whether previews are up to date, refreshing, or failed.
 
+Render output, Gradle exporter scripts, and unsaved source copies live in isolated
+temporary directories under the OS application cache's
+`koda/compose-preview/renders` directory, beside the bundled preview runtime.
+Each request gets its own directory, so projects and app instances cannot overwrite
+one another's inputs. The directory is removed when its render fails or is
+cancelled, or when the resulting gallery is replaced or closed. Previews no longer
+create `.koda/android-preview` in the project. Older project-local preview
+directories are unused; normal Gradle build outputs remain in the project.
+
 Click a preview or select the eye button to show layout outlines. Hover
 highlights the deepest component with a project source location. Click it again
 to open its source line in the code pane. Each preview's three-dot menu provides
@@ -61,6 +70,16 @@ The investigation focused on these responsibilities:
 | [`SurfaceLayoutManagerOption.kt`](https://github.com/JetBrains/android/blob/master/preview-designer/src/com/android/tools/idea/preview/modes/SurfaceLayoutManagerOption.kt), [`GridLayoutManager.kt`](https://github.com/JetBrains/android/blob/master/designer/src/com/android/tools/idea/uibuilder/layout/option/GridLayoutManager.kt), [`GridLayoutGroup.kt`](https://github.com/JetBrains/android/blob/master/designer/src/com/android/tools/idea/uibuilder/layout/positionable/GridLayoutGroup.kt), [`SceneViewHeader.kt`](https://github.com/JetBrains/android/blob/master/designer/src/com/android/tools/idea/common/surface/organization/SceneViewHeader.kt) | Group by composable, pack proportionally scaled views into wrapping rows, and label each variant | Function headers, collapsible groups, adaptive row packing and compact variant menus |
 | `ComposeViewInfoParser.kt`, `ComposeViewInfo.kt` | Read `ComposeViewAdapter.getViewInfos*` before disposing the scene | Java bridge reflects the adapter into bounds, hierarchy depth, filename, package hash, and source line |
 | `PreviewNavigation.kt`, `SourceLocationWithVirtualFile.kt` | Resolve source locations and choose the deepest hit | Index relevant project filenames by Compose's UTF-16 package hash; deepest hit then descending source line; open the editor at that line |
+
+Studio's [`RenderResult.java`](https://github.com/JetBrains/android/blob/master/rendering/src/com/android/tools/rendering/RenderResult.java)
+holds the rendered image in a disposable in-memory image pool.
+[`ClassBinaryCacheManager.kt`](https://github.com/JetBrains/android/blob/master/rendering/src/com/android/tools/rendering/classloading/ClassBinaryCacheManager.kt)
+uses a bounded in-memory class cache, and
+[`FastPreviewManager.kt`](https://github.com/JetBrains/android/blob/master/android/src/com/android/tools/idea/editors/fast/FastPreviewManager.kt)
+creates compilation overlays with `Files.createTempDirectory("overlay")`.
+There is no project-local preview-image cache in this path. Koda follows the
+temporary request lifecycle while keeping its standalone renderer's disk protocol
+files inside the application cache.
 
 Koda uses the checksum-pinned
 [Google standalone renderer](https://android.googlesource.com/platform/tools/base/+/refs/heads/mirror-goog-studio-main/standalone-render/lib/src/com/android/tools/render/)
@@ -120,6 +139,11 @@ renderer, ten-card discovery, manual refresh, unsaved automatic rebuilds and
 restoration, skeleton selection, source cursor navigation, zoom controls, and
 divider dragging. These full-app captures are separate from the opt-in native
 surface test.
+
+Live cache checks confirmed that saved and unsaved renders use the application
+cache, source files stay unchanged, replacing a gallery removes its old request
+directory, and closing previews empties the render cache without creating a
+project-local preview directory.
 
 ## Compatibility boundaries
 
