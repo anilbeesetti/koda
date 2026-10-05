@@ -46,7 +46,7 @@ pub const APP_NAME_LOWERCASE: &str = {
     }
 };
 
-/// Platform profile name, isolated for Nightly builds.
+/// Platform profile name, isolated for Dev and Nightly builds.
 pub const PROFILE_NAME: &str = env!("KODA_PROFILE_NAME");
 
 /// Directory name used for the platform profile on XDG systems.
@@ -63,6 +63,7 @@ static CUSTOM_DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
 /// On Linux/FreeBSD, this is `$XDG_DATA_HOME/koda`.
 /// On Windows, this is `%LOCALAPPDATA%\Koda`.
 /// Nightly uses `Koda Nightly` on macOS/Windows and `koda-nightly` on XDG systems.
+/// Dev uses `Koda Dev` on macOS/Windows and `koda-dev` on XDG systems.
 static CURRENT_DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 /// The resolved config directory, combining custom override or platform defaults.
@@ -71,6 +72,7 @@ static CURRENT_DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
 /// On Linux/FreeBSD, this is `$XDG_CONFIG_HOME/koda`.
 /// On Windows, this is `%APPDATA%\Koda`.
 /// Nightly uses `Koda Nightly` on Windows and `koda-nightly` elsewhere.
+/// Dev uses `Koda Dev` on Windows and `koda-dev` elsewhere.
 static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 /// Returns the relative path to the zed_server directory on the ssh host.
@@ -651,6 +653,7 @@ mod tests {
     #[test]
     fn profile_paths_use_the_channel_directory() {
         let (name, directory) = match PROFILE_NAME {
+            "Koda Dev" => ("Koda Dev", "koda-dev"),
             "Koda Nightly" => ("Koda Nightly", "koda-nightly"),
             "Koda" => ("Koda", "koda"),
             name => panic!("unexpected profile name: {name}"),
