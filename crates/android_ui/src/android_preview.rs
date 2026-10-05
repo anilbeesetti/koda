@@ -540,6 +540,7 @@ pub(super) struct ComposePreviewView {
     source_path: PathBuf,
     root: PathBuf,
     target: AndroidTarget,
+    model_token: android_tools::project_model::ModelToken,
     focus_handle: FocusHandle,
     gallery: Option<Gallery>,
     rows: Vec<GalleryRow>,
@@ -586,6 +587,7 @@ impl ComposePreviewView {
         cx: &mut Context<Self>,
     ) -> Self {
         let source_path = buffer_path(&source, cx).unwrap_or_default();
+        let model_token = project.read(cx).android_model().token();
         let mut subscriptions =
             vec![
                 cx.subscribe_in(&project, window, |view, _, event, window, cx| {
@@ -598,7 +600,8 @@ impl ComposePreviewView {
                                     worktree.read(cx).abs_path().as_ref() == view.root
                                 })
                                 && changes.iter().any(|(path, _, change)| {
-                                    *change != project::PathChange::Loaded && preview_input(path)
+                                    *change != project::PathChange::Loaded
+                                        && view.preview_input(path, cx)
                                 })
                         }
                         _ => false,
@@ -675,6 +678,11 @@ impl ComposePreviewView {
                 });
             }
         }));
+        subscriptions.push(cx.observe_in(&project, window, |_, _, window, cx| {
+            cx.defer_in(window, |view, window, cx| {
+                view.sync_configuration(window, cx)
+            });
+        }));
         if let Some(panel) = panel.upgrade() {
             subscriptions.push(cx.observe_in(&panel, window, |_, _, window, cx| {
                 cx.defer_in(window, |view, window, cx| {
@@ -704,6 +712,7 @@ impl ComposePreviewView {
             source_path,
             root,
             target,
+            model_token,
             focus_handle: cx.focus_handle(),
             gallery: None,
             rows: Vec::new(),
@@ -772,7 +781,7 @@ impl ComposePreviewView {
         else {
             return;
         };
-        if !preview_input(&relative) {
+        if !self.preview_input(&relative, cx) {
             self.buffer_subscriptions.remove(&id);
             return;
         }
@@ -828,6 +837,10 @@ impl ComposePreviewView {
                 ))
             })
             .and_then(|result| result);
+        let configuration = configuration.and_then(|(root, target)| {
+            self.selected_model(&root, &target, cx)?;
+            Ok((root, target))
+        });
         match configuration {
             Ok((root, target)) => {
                 let recovering = self.configuration_suspended;
@@ -875,7 +888,9 @@ impl ComposePreviewView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if root != self.root || target != self.target {
+        let model_token = self.project.read(cx).android_model().token();
+        if root != self.root || target != self.target || model_token != self.model_token {
+            self.model_token = model_token;
             self.root = root;
             self.target = target;
             self.observe_buffers(window, cx);
@@ -982,6 +997,81 @@ impl ComposePreviewView {
         cx.notify();
     }
 
+    fn preview_input(&self, path: &RelPath, cx: &App) -> bool {
+        self.project
+            .read(cx)
+            .android_model()
+            .selected
+            .as_ref()
+            .and_then(|selected| {
+                let absolute = selected.model.root.join(path.as_std_path());
+                let visible = selected.visible_modules(
+                    &selected.selected.module,
+                    android_tools::project_model::SourceScope::Main,
+                );
+                selected
+                    .modules()
+                    .flat_map(|(module, variant)| {
+                        variant
+                            .components
+                            .iter()
+                            .map(move |component| (module, component))
+                    })
+                    .flat_map(|(module, component)| {
+                        component
+                            .sources
+                            .iter()
+                            .map(move |source| (module, component, source))
+                    })
+                    .filter(|(_, _, source)| absolute.starts_with(&source.path))
+                    .max_by_key(|(_, _, source)| source.path.components().count())
+                    .map(|(module, component, source)| {
+                        visible.contains(&module.path)
+                            && !source.generated
+                            && component.scope == android_tools::project_model::SourceScope::Main
+                    })
+            })
+            .unwrap_or_else(|| preview_input(path))
+    }
+
+    fn configuration_current(&self, cx: &App) -> bool {
+        self.project
+            .read(cx)
+            .android_model()
+            .is_current(&self.model_token)
+            && self
+                .panel
+                .read_with(cx, |panel, cx| {
+                    panel.trusted_root(cx).is_ok_and(|root| root == self.root)
+                        && panel.selected_target.as_ref() == Some(&self.target)
+                })
+                .unwrap_or(false)
+    }
+
+    fn selected_model(
+        &self,
+        root: &Path,
+        target: &AndroidTarget,
+        cx: &App,
+    ) -> Result<Arc<android_tools::project_model::SelectedProject>> {
+        let selected = self
+            .project
+            .read(cx)
+            .android_model()
+            .selected
+            .clone()
+            .context("Sync the Android project and select a build variant first")?;
+        selected.validate_target(target)?;
+        ensure!(
+            root == selected.model.root
+                || root
+                    .canonicalize()
+                    .is_ok_and(|root| root == selected.model.root),
+            "The preview belongs to a different Android project model"
+        );
+        Ok(selected)
+    }
+
     fn refresh(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let result = (|| {
             let (root, target) = self.panel.read_with(cx, |panel, cx| {
@@ -993,6 +1083,33 @@ impl ComposePreviewView {
                         .context("Select an Android build variant")?,
                 ))
             })??;
+            let selected = self.selected_model(&root, &target, cx)?;
+            let model_source_path = selected.model.root.join(
+                self.source_path
+                    .strip_prefix(&root)
+                    .context("The preview file belongs to a different Android project")?,
+            );
+            let visible = selected.visible_modules(
+                &selected.selected.module,
+                android_tools::project_model::SourceScope::Main,
+            );
+            ensure!(
+                selected
+                    .modules()
+                    .filter(|(module, _)| visible.contains(&module.path))
+                    .any(|(_, variant)| variant.components.iter().any(|component| {
+                        component.scope == android_tools::project_model::SourceScope::Main
+                            && component.sources.iter().any(|source| {
+                                matches!(
+                                    source.kind,
+                                    android_tools::project_model::SourceKind::Kotlin
+                                        | android_tools::project_model::SourceKind::Java
+                                ) && model_source_path.starts_with(&source.path)
+                            })
+                    })),
+                "The preview file does not belong to the selected Android variant's main sources"
+            );
+            let model_token = self.project.read(cx).android_model().token();
             self.configure(root.clone(), target.clone(), window, cx);
             ensure!(
                 self.source_path.starts_with(&root),
@@ -1051,6 +1168,11 @@ impl ComposePreviewView {
                         let java = preview::java_binary(&installation)?;
                         Ok::<_, anyhow::Error>((installation, java))
                     }).await?;
+                    ensure!(view.update_in(cx, |view, _, cx| {
+                        view.project.read(cx).android_model().is_current(&model_token)
+                            && view.configuration_current(cx)
+                            && view.revision == revision
+                    })?, "Discarded an outdated Compose preview request");
                     cx.background_spawn(async move {
                         let temporary = preview::prepare()?;
                         let directory = temporary.path();
@@ -1095,6 +1217,10 @@ impl ComposePreviewView {
                         )
                         .await?;
                         let model = preview::parse_model(&output, &root, &target)?;
+                        preview::validate_selection(&model, &selected)?;
+                        ensure!(model.source_files.iter().any(|path| path == &model_source_path
+                            || path.canonicalize().is_ok_and(|path| path == model_source_path)),
+                            "The preview file was not compiled for the selected Android variant");
                         let model_path = directory.join("model.json");
                         std::fs::write(&model_path, serde_json::to_vec(&model)?)?;
                         let previews_path = directory.join("previews.json");
@@ -1179,7 +1305,8 @@ impl ComposePreviewView {
                 view.update_in(cx, |view, window, cx| {
                     view.building = false;
                     view.render_task = None;
-                    let valid = view
+                    let valid = view.project.read(cx).android_model().is_current(&model_token)
+                        && view
                         .panel
                         .read_with(cx, |panel, cx| {
                             panel
@@ -1321,7 +1448,10 @@ impl ComposePreviewView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if self.stale || self.revision != revision || self.gallery_generation != gallery_generation
+        if self.stale
+            || self.revision != revision
+            || self.gallery_generation != gallery_generation
+            || !self.configuration_current(cx)
         {
             return;
         }
@@ -1342,28 +1472,53 @@ impl ComposePreviewView {
         self.navigation_pending = true;
         let workspace = self.workspace.clone();
         let pane = self.source_pane.clone();
+        let project = self.project.clone();
         self.source_task = Some(cx.spawn_in(window, async move |view, cx| {
-            let opened = workspace.update_in(cx, |workspace, window, cx| {
-                workspace.open_path(project_path, Some(pane), true, window, cx)
-            });
+            if !view
+                .read_with(cx, |view, cx| {
+                    view.configuration_current(cx)
+                        && view.revision == revision
+                        && view.gallery_generation == gallery_generation
+                        && !view.stale
+                })
+                .unwrap_or(false)
+            {
+                return;
+            }
+            // Load without activating a tab, then gate activation on the current model.
+            let opened = project.update(cx, |project, cx| project.open_buffer(project_path, cx));
             let result = async {
-                let item = opened?.await?;
-                if !view.read_with(cx, |view, _| {
-                    view.revision == revision
+                let buffer = opened.await?;
+                if !view.read_with(cx, |view, cx| {
+                    view.configuration_current(cx)
+                        && view.revision == revision
                         && view.gallery_generation == gallery_generation
                         && !view.stale
                 })? {
                     return Ok(());
                 }
-                if let Some(editor) = item.downcast::<Editor>() {
-                    editor.update_in(cx, |editor, window, cx| {
-                        editor.go_to_singleton_buffer_point(
-                            language::Point::new(node.line_number.saturating_sub(1) as u32, 0),
-                            window,
-                            cx,
-                        )
-                    })?;
-                }
+                let pane = pane
+                    .upgrade()
+                    .context("The preview source pane was closed")?;
+                let editor = workspace.update_in(cx, |workspace, window, cx| {
+                    workspace.open_project_item::<Editor>(
+                        Some(pane),
+                        buffer,
+                        true,
+                        true,
+                        false,
+                        true,
+                        window,
+                        cx,
+                    )
+                })?;
+                editor.update_in(cx, |editor, window, cx| {
+                    editor.go_to_singleton_buffer_point(
+                        language::Point::new(node.line_number.saturating_sub(1) as u32, 0),
+                        window,
+                        cx,
+                    )
+                })?;
                 Ok::<_, anyhow::Error>(())
             }
             .await;
@@ -2616,6 +2771,50 @@ mod tests {
         (project, buffer)
     }
 
+    fn publish_preview_test_model(
+        panel: &mut AndroidPanel,
+        target: &AndroidTarget,
+        cx: &mut Context<AndroidPanel>,
+    ) {
+        use android_tools::project_model::{SourceKind, SourceRoot, SourceScope, VariantId};
+        super::super::tests::publish_test_android_model(panel, target, cx);
+        let root = panel.root.clone().expect("Preview root");
+        panel.project.update(cx, |project, cx| {
+            let mut model = project
+                .android_model()
+                .model
+                .as_deref()
+                .expect("Published model")
+                .clone();
+            let component = model
+                .modules
+                .iter_mut()
+                .flat_map(|module| &mut module.variants)
+                .flat_map(|variant| &mut variant.components)
+                .find(|component| component.scope == SourceScope::Main)
+                .expect("Main component");
+            component
+                .sources
+                .extend(["Main.kt", "Other.kt", "New.kt"].map(|path| SourceRoot {
+                    path: root.join(path),
+                    kind: SourceKind::Kotlin,
+                    generated: false,
+                }));
+            component.sources.push(SourceRoot {
+                path: root.join("app/build/generated"),
+                kind: SourceKind::Kotlin,
+                generated: true,
+            });
+            let token = project.invalidate_android_model(Some(root), cx);
+            project
+                .publish_android_model(&token, model, cx)
+                .expect("Publish preview model");
+            project
+                .select_android_variant(Some(VariantId::from(target)), cx)
+                .expect("Select preview variant");
+        });
+    }
+
     fn add_preview(
         workspace: &mut Workspace,
         project: Entity<Project>,
@@ -2633,9 +2832,11 @@ mod tests {
             output_listing: PathBuf::from("/android/metadata.json"),
         };
         let panel = cx.new(|cx| AndroidPanel::new(workspace.weak_handle(), project.clone(), cx));
-        panel.update(cx, |panel, _| {
+        panel.update(cx, |panel, cx| {
             panel.root = Some(PathBuf::from("/android"));
+            panel.targets = vec![target.clone()];
             panel.selected_target = Some(target.clone());
+            publish_preview_test_model(panel, &target, cx);
         });
         workspace.add_panel(panel.clone(), window, cx);
         let pane = workspace.active_pane().clone();
@@ -3518,6 +3719,9 @@ mod tests {
         });
         panel.update(cx, |panel, cx| {
             panel.selected_target.as_mut().expect("Target").variant = "release".into();
+            let target = panel.selected_target.clone().expect("Target");
+            panel.targets = vec![target.clone()];
+            publish_preview_test_model(panel, &target, cx);
             cx.notify();
         });
         cx.run_until_parked();
@@ -3529,6 +3733,66 @@ mod tests {
                     && view.navigation_source.is_none()
                     && !view.navigation_pending
             );
+            assert!(view.stale && view.pending);
+        });
+    }
+
+    #[gpui::test]
+    async fn returning_to_the_same_variant_invalidates_the_previous_model_gallery(
+        cx: &mut TestAppContext,
+    ) {
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, panel, _) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project.clone(), buffer, window, cx)
+        });
+        cx.run_until_parked();
+        let original_target = panel.read_with(cx, |panel, _| {
+            panel.selected_target.clone().expect("Original target")
+        });
+        let original_token = project.read_with(cx, |project, _| project.android_model().token());
+        let original_revision = view.update(cx, |view, cx| {
+            view.gallery = Some(gallery(vec![card("sample.Content", "Day", 100, 100)]));
+            view.selected_card = Some(0);
+            view.stale = false;
+            view.building = true;
+            view.render_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+            view.source_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+            view.navigation_source = Some(PathBuf::from("/android/Other.kt"));
+            view.navigation_pending = true;
+            view.revision
+        });
+        // Coalesce both selections so the view only observes the restored identity.
+        panel.update(cx, |panel, cx| {
+            let mut intermediate = original_target.clone();
+            intermediate.variant = "release".into();
+            panel.targets = vec![intermediate.clone()];
+            panel.selected_target = Some(intermediate.clone());
+            publish_preview_test_model(panel, &intermediate, cx);
+            panel.targets = vec![original_target.clone()];
+            panel.selected_target = Some(original_target.clone());
+            publish_preview_test_model(panel, &original_target, cx);
+            cx.notify();
+        });
+        cx.run_until_parked();
+        project.read_with(cx, |project, _| {
+            assert!(!project.android_model().is_current(&original_token));
+        });
+        view.read_with(cx, |view, cx| {
+            assert_eq!(view.root, Path::new("/android"));
+            assert_eq!(view.target, original_target);
+            assert!(
+                view.project
+                    .read(cx)
+                    .android_model()
+                    .is_current(&view.model_token)
+            );
+            assert!(view.revision > original_revision);
+            assert!(view.gallery.is_none() && view.selected_card.is_none());
+            assert!(view.render_task.is_none() && !view.building);
+            assert!(view.source_task.is_none() && view.navigation_source.is_none());
+            assert!(!view.navigation_pending);
             assert!(view.stale && view.pending);
         });
     }
@@ -3549,6 +3813,194 @@ mod tests {
         ] {
             assert!(preview_input(RelPath::from_unix_str(path).expect("Path")));
         }
+    }
+
+    #[gpui::test]
+    async fn selected_source_scopes_control_automatic_preview_refresh(cx: &mut TestAppContext) {
+        use android_tools::project_model::{
+            Component, SourceKind, SourceRoot, SourceScope, VariantId,
+        };
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, panel, _) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project.clone(), buffer, window, cx)
+        });
+        let target = panel.read_with(cx, |panel, _| {
+            panel.selected_target.clone().expect("Target")
+        });
+        project.update(cx, |project, cx| {
+            let mut model = project
+                .android_model()
+                .model
+                .as_deref()
+                .expect("Model")
+                .clone();
+            // A selected build may be canonicalized while its worktree retains a symlink path.
+            let canonical_root = PathBuf::from("/canonical-android");
+            let original_root = model.root.clone();
+            model.root = canonical_root.clone();
+            for module in &mut model.modules {
+                module.directory = canonical_root.join(
+                    module
+                        .directory
+                        .strip_prefix(&original_root)
+                        .expect("Module path"),
+                );
+                for variant in &mut module.variants {
+                    for component in &mut variant.components {
+                        for source in &mut component.sources {
+                            source.path = canonical_root.join(
+                                source
+                                    .path
+                                    .strip_prefix(&original_root)
+                                    .expect("Source path"),
+                            );
+                        }
+                    }
+                    let main = variant
+                        .components
+                        .iter_mut()
+                        .find(|component| component.scope == SourceScope::Main)
+                        .expect("Main component");
+                    main.sources.extend([
+                        SourceRoot {
+                            path: canonical_root.join("code"),
+                            kind: SourceKind::Kotlin,
+                            generated: false,
+                        },
+                        SourceRoot {
+                            path: canonical_root.join("code/custom-output"),
+                            kind: SourceKind::Kotlin,
+                            generated: true,
+                        },
+                        SourceRoot {
+                            path: canonical_root.join("custom-generated"),
+                            kind: SourceKind::Kotlin,
+                            generated: true,
+                        },
+                    ]);
+                    variant.components.push(Component {
+                        name: "debugUnitTest".into(),
+                        namespace: None,
+                        scope: SourceScope::UnitTest,
+                        dependencies: Vec::new(),
+                        sources: vec![SourceRoot {
+                            path: canonical_root.join("code/tests"),
+                            kind: SourceKind::Kotlin,
+                            generated: false,
+                        }],
+                    });
+                }
+            }
+            let token = project.invalidate_android_model(Some(canonical_root), cx);
+            project
+                .publish_android_model(&token, model, cx)
+                .expect("Publish canonical model");
+            project
+                .select_android_variant(Some(VariantId::from(&target)), cx)
+                .expect("Select variant");
+        });
+        view.read_with(cx, |view, cx| {
+            for path in ["Main.kt", "code/Content.kt", "app/build.gradle.kts"] {
+                assert!(
+                    view.preview_input(RelPath::from_unix_str(path).expect("Path"), cx),
+                    "{path}"
+                );
+            }
+            for path in [
+                "code/custom-output/Generated.kt",
+                "custom-generated/Generated.kt",
+                "code/tests/Test.kt",
+            ] {
+                assert!(
+                    !view.preview_input(RelPath::from_unix_str(path).expect("Path"), cx),
+                    "{path}"
+                );
+            }
+        });
+    }
+
+    #[gpui::test]
+    async fn inactive_variant_source_is_rejected_before_starting_preview_tools(
+        cx: &mut TestAppContext,
+    ) {
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, _, _) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project, buffer, window, cx)
+        });
+        view.update_in(cx, |view, window, cx| {
+            view.source_path = PathBuf::from("/android/src/inactive/kotlin/Content.kt");
+            view.refresh(window, cx);
+            assert!(!view.building && view.render_task.is_none());
+            assert!(!view.pending && !view.pending_manual);
+            assert!(
+                view.error
+                    .as_ref()
+                    .is_some_and(|error| error.contains("selected Android variant's main sources"))
+            );
+        });
+    }
+
+    #[gpui::test]
+    async fn invalidation_while_loading_navigation_keeps_the_original_source_tab(
+        cx: &mut TestAppContext,
+    ) {
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, _, pane) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project.clone(), buffer, window, cx)
+        });
+        cx.run_until_parked();
+        let editor = view.read_with(cx, |view, _| view.editor.entity_id());
+        let loaded = Rc::new(Cell::new(false));
+        let _subscription = project.update(cx, |project, cx| {
+            let store = project.buffer_store().clone();
+            let loaded = loaded.clone();
+            cx.subscribe(&store, move |project, _, event, cx| {
+                if let project::buffer_store::BufferStoreEvent::BufferAdded(buffer) = event
+                    && buffer_path(buffer, cx).as_deref() == Some(Path::new("/android/Other.kt"))
+                {
+                    loaded.set(true);
+                    project.invalidate_android_model(Some(PathBuf::from("/android")), cx);
+                }
+            })
+        });
+        view.update_in(cx, |view, window, cx| {
+            let mut preview = card("sample.Content", "Day", 100, 100);
+            preview.nodes = Arc::new(vec![preview::ComposeNode {
+                name: "other".into(),
+                file_name: "Other.kt".into(),
+                line_number: 2,
+                package_hash: preview::package_hash("sample"),
+                bounds: [0, 0, 50, 50],
+                depth: 0,
+                source_path: Some(PathBuf::from("/android/Other.kt")),
+            }]);
+            view.gallery = Some(gallery(vec![preview]));
+            view.stale = false;
+            view.navigate(0, 0, view.revision, view.gallery_generation, window, cx);
+            assert!(view.navigation_pending && view.source_task.is_some());
+        });
+        cx.run_until_parked();
+        assert!(
+            loaded.get(),
+            "Invalidate after loading the destination buffer"
+        );
+        pane.read_with(cx, |pane, _| {
+            assert_eq!(pane.items_len(), 1);
+            assert_eq!(
+                pane.active_item().expect("Original source").item_id(),
+                editor
+            );
+        });
+        view.read_with(cx, |view, _| {
+            assert!(!view.navigation_pending);
+            assert!(view.configuration_suspended && view.gallery.is_none());
+        });
     }
 
     #[gpui::test]
@@ -3618,6 +4070,9 @@ mod tests {
                 .as_mut()
                 .expect("Target")
                 .output_listing = PathBuf::from("/other-android/metadata.json");
+            let target = panel.selected_target.clone().expect("Other root target");
+            panel.targets = vec![target.clone()];
+            publish_preview_test_model(panel, &target, cx);
             cx.notify();
         });
         cx.run_until_parked();
@@ -3652,6 +4107,7 @@ mod tests {
         });
         let target = panel.update(cx, |panel, cx| {
             let target = panel.selected_target.take();
+            panel.invalidate_model(panel.root.clone(), cx);
             cx.notify();
             target
         });
@@ -3661,6 +4117,8 @@ mod tests {
         });
         panel.update(cx, |panel, cx| {
             panel.selected_target = target;
+            let target = panel.selected_target.clone().expect("Recovered target");
+            publish_preview_test_model(panel, &target, cx);
             cx.notify();
         });
         cx.run_until_parked();
@@ -3843,6 +4301,8 @@ mod tests {
         });
         panel.update(cx, |panel, cx| {
             panel.selected_target.as_mut().expect("Target").variant = "release".into();
+            let target = panel.selected_target.clone().expect("Target");
+            publish_preview_test_model(panel, &target, cx);
             cx.notify();
         });
         cx.run_until_parked();

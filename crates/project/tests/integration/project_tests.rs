@@ -21575,3 +21575,195 @@ async fn test_android_resource_definitions_without_language_server(cx: &mut Test
         }
     }
 }
+
+#[gpui::test]
+async fn test_android_resources_follow_selected_gradle_roots_and_reject_stale_queries(
+    cx: &mut TestAppContext,
+) {
+    use android_tools::project_model::{ProjectModel, VariantId};
+    init_test(cx);
+    cx.update_global::<SettingsStore, _>(|store, cx| {
+        store.update_user_settings(cx, |settings| {
+            settings.project.worktree.file_scan_depth = Some(0)
+        });
+    });
+    let filesystem = FakeFs::new(cx.executor());
+    filesystem.insert_tree(path!("/android"), json!({
+        ".gitignore": "build/\n",
+        "app": {
+            "build": {"generated": {"res": {"values": {"strings.xml": "<resources><string name=\"title\">Generated</string></resources>"}}}},
+            "test-code": {
+                "Test.kt": "package example.app.test\nval title = R.string.title",
+                "MainR.kt": "import example.app.R\nval title = R.string.title"
+            },
+            "test-res": {"values": {"strings.xml": "<resources><string name=\"title\">Test</string></resources>"}},
+            "code": {"Activity.kt": "package example.app\nval title = R.string.title"},
+            "manifests": {"AndroidManifest.xml": "<manifest><application android:label=\"@string/title\"/></manifest>"},
+            "resources": {
+                "demo": {"values": {"strings.xml": "<resources><string name=\"title\">Demo</string></resources>"}},
+                "full": {"values": {"strings.xml": "<resources><string name=\"title\">Full</string></resources>"}}
+            }
+        }
+    })).await;
+    let project = Project::test(filesystem, [path!("/android").as_ref()], cx).await;
+    let root = std::path::PathBuf::from(path!("/android"));
+    let model: ProjectModel = serde_json::from_value(json!({
+        "version": 1, "root": root, "diagnostics": [], "modules": [{
+            "path": ":app", "directory": path!("/android/app"), "namespace": "example.app", "kind": "application",
+            "variants": (["demoDebug", "fullDebug"].iter().zip(["demo", "full"]).map(|(variant, flavor)| json!({
+                "name": variant, "outputListing": null, "components": [{
+                    "name": variant, "scope": "main", "dependencies": [], "sources": [
+                        {"path": path!("/android/app/code"), "kind": "kotlin", "generated": false},
+                        {"path": path!("/android/app/manifests/AndroidManifest.xml"), "kind": "manifest", "generated": false},
+                        {"path": root.join(format!("app/resources/{flavor}")), "kind": "resources", "generated": false},
+                        {"path": path!("/android/app/build/generated/res"), "kind": "resources", "generated": true}
+                    ]
+                }, {
+                    "name": format!("{variant}AndroidTest"), "namespace": "example.app.test", "scope": "androidTest", "dependencies": [], "sources": [
+                        {"path": path!("/android/app/test-code"), "kind": "kotlin", "generated": false},
+                        {"path": path!("/android/app/test-res"), "kind": "resources", "generated": false}
+                    ]
+                }]
+            })).collect::<Vec<_>>())
+        }]
+    })).expect("Valid fixture model");
+    project.update(cx, |project, cx| {
+        let token = project.invalidate_android_model(Some(root.clone()), cx);
+        project
+            .publish_android_model(&token, model, cx)
+            .expect("Publish model");
+        project
+            .select_android_variant(
+                Some(VariantId {
+                    module: ":app".into(),
+                    variant: "demoDebug".into(),
+                }),
+                cx,
+            )
+            .expect("Select demo");
+    });
+    let source = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer(path!("/android/app/code/Activity.kt"), cx)
+        })
+        .await
+        .expect("Open source");
+    let definitions = project
+        .update(cx, |project, cx| {
+            project.definitions(&source, Point::new(1, 23), cx)
+        })
+        .await
+        .expect("Query resources")
+        .expect("Resource definitions");
+    assert_eq!(definitions.len(), 2);
+    assert!(definitions.iter().any(|definition| {
+        definition
+            .target
+            .buffer
+            .read_with(cx, |buffer, _| buffer.text().contains("Demo"))
+    }));
+    assert!(definitions.iter().any(|definition| {
+        definition
+            .target
+            .buffer
+            .read_with(cx, |buffer, _| buffer.text().contains("Generated"))
+    }));
+    let outdated = project.update(cx, |project, cx| {
+        project.definitions(&source, Point::new(1, 23), cx)
+    });
+    project.update(cx, |project, cx| {
+        project
+            .select_android_variant(
+                Some(VariantId {
+                    module: ":app".into(),
+                    variant: "fullDebug".into(),
+                }),
+                cx,
+            )
+            .expect("Select full")
+    });
+    assert!(
+        outdated
+            .await
+            .expect("Outdated query")
+            .is_none_or(|locations| locations.is_empty())
+    );
+    let definitions = project
+        .update(cx, |project, cx| {
+            project.definitions(&source, Point::new(1, 23), cx)
+        })
+        .await
+        .expect("Query full resources")
+        .expect("Resource definitions");
+    assert_eq!(definitions.len(), 2);
+    assert!(definitions.iter().any(|definition| {
+        definition
+            .target
+            .buffer
+            .read_with(cx, |buffer, _| buffer.text().contains("Full"))
+    }));
+    let test_source = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer(path!("/android/app/test-code/Test.kt"), cx)
+        })
+        .await
+        .expect("Open test source");
+    let test_definitions = project
+        .update(cx, |project, cx| {
+            project.definitions(&test_source, Point::new(1, 23), cx)
+        })
+        .await
+        .expect("Query test resources")
+        .expect("Test resource definitions");
+    assert_eq!(test_definitions.len(), 1);
+    assert!(test_definitions.iter().any(|definition| {
+        definition
+            .target
+            .buffer
+            .read_with(cx, |buffer, _| buffer.text().contains(">Test<"))
+    }));
+    let main_r = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer(path!("/android/app/test-code/MainR.kt"), cx)
+        })
+        .await
+        .expect("Open test import of main R");
+    let definitions = project
+        .update(cx, |project, cx| {
+            project.definitions(&main_r, Point::new(1, 23), cx)
+        })
+        .await
+        .expect("Query main namespace from test")
+        .expect("Main resource definitions");
+    assert_eq!(definitions.len(), 2);
+    assert!(definitions.iter().all(|definition| {
+        definition
+            .target
+            .buffer
+            .read_with(cx, |buffer, _| !buffer.text().contains(">Test<"))
+    }));
+    let manifest = project
+        .update(cx, |project, cx| {
+            project.open_local_buffer(path!("/android/app/manifests/AndroidManifest.xml"), cx)
+        })
+        .await
+        .expect("Open manifest");
+    let definitions = project
+        .update(cx, |project, cx| {
+            project.definitions(&manifest, Point::new(0, 49), cx)
+        })
+        .await
+        .expect("Query manifest")
+        .expect("Resource definitions");
+    assert_eq!(definitions.len(), 2);
+    project.update(cx, |project, cx| {
+        project.invalidate_android_model(Some(root), cx);
+    });
+    let definitions = project
+        .update(cx, |project, cx| {
+            project.definitions(&source, Point::new(1, 23), cx)
+        })
+        .await
+        .expect("Query invalidated model");
+    assert!(definitions.is_none_or(|locations| locations.is_empty()));
+}
