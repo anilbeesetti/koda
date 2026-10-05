@@ -359,19 +359,20 @@ quiet. Full parity is ongoing work.
 
 ## Run it
 
-The optional language/debug/preview tools are installed in this checkout. To
+The optional language/debug tools are installed in this checkout. To
 reproduce their installation on Apple Silicon with JDK 21, run:
 
 ```sh
 script/install-android-kotlin
 script/install-android-debugger
-script/install-android-preview
 ```
 
 Each script verifies pinned source/artifact checksums, preserves an unmanaged
 installation, and is repeatable. Kotlin and the debugger build with a task-local
-JDK 11; execution uses JDK 21. Preview uses a separate short-lived JVM, without
-starting Android Studio or an emulator.
+JDK 11; execution uses JDK 21. Preview tools and their Java runtime are bundled
+automatically by Cargo. `cargo run --locked -p zed --bin koda` enables previews
+without an installer or launcher; rendering uses a separate short-lived JVM,
+without starting Android Studio or an emulator.
 
 From this checkout, launch the optimized app:
 

@@ -1,5 +1,5 @@
 use super::*;
-use android_tools::{kotlin, preview};
+use android_tools::preview;
 use editor::Editor;
 use gpui::{
     Bounds, Image, ImageFormat, ListState, MouseButton, Pixels, canvas, img, list, point, size,
@@ -556,8 +556,6 @@ impl ComposePreviewView {
                 self.source_path.starts_with(&root),
                 "The preview file belongs to a different Android project"
             );
-            let installation = preview::installation()?;
-            let java = kotlin::java_home()?.join("bin/java");
             let source_text = self.source.read(cx).snapshot().text();
             let source_path = self.source_path.clone();
             let package = preview::kotlin_package(&source_text);
@@ -604,8 +602,14 @@ impl ComposePreviewView {
                 let request_target = target.clone();
                 let mut environment = environment.await.unwrap_or_default();
                 environment.extend(terminal_environment);
-                let result = cx
-                    .background_spawn(async move {
+                let result = async {
+                    // Await blocking extraction separately so cancelling setup cannot start a project build.
+                    let (installation, java) = cx.background_spawn(async {
+                        let installation = preview::installation()?;
+                        let java = preview::java_binary(&installation)?;
+                        Ok::<_, anyhow::Error>((installation, java))
+                    }).await?;
+                    cx.background_spawn(async move {
                         let cache = preview::prepare(&root)?;
                         let temporary = tempfile::Builder::new()
                             .prefix("render-")
@@ -758,8 +762,8 @@ impl ComposePreviewView {
                             cards,
                             _directory: temporary,
                         })
-                    })
-                    .await;
+                    }).await
+                }.await;
                 view.update_in(cx, |view, window, cx| {
                     view.building = false;
                     view.render_task = None;

@@ -1,7 +1,13 @@
 # Compose previews
 
-Install or update the renderer with `script/install-android-preview`, relaunch
-`script/android-ide`, open a Kotlin file, and choose **Compose preview**. The
+Run `cargo run --locked -p zed --bin koda`, open a Kotlin file, and choose
+**Compose preview**. Cargo automatically fetches checksum-pinned preview build
+inputs on the first build. The renderer, native layoutlib, compiled bridge, and
+Eclipse Temurin Java 21 runtime are embedded in the executable and included in
+packaged apps. Previews require no installer, launcher, Java override, or runtime
+download. The app unpacks its bundle into a versioned application cache on first
+use; subsequent refreshes reuse it. Missing or truncated cached files are repaired
+from the app's copy, and concurrent app instances share an extraction lock. The
 gallery appears in a separate pane beside the editor. It follows the active
 Kotlin file and displays every discovered annotation, including multipreview
 annotations and each value from a preview parameter provider.
@@ -59,8 +65,15 @@ collection APIs produce an actionable build error.
 The alpha15 renderer reads only known JSON fields; source metadata stays outside
 its screenshot objects. Its relocated coroutine classes require the regular
 service loader, so the bridge disables the coroutine fast loader. Bridge protocol
-version 2 makes an older installation fail with an update instruction; rerunning
-the installer upgrades an intact managed installation without redownloading it.
+version 2 is packaged together with the renderer. The build uses a pinned Eclipse
+compiler and a host Java runtime, so bridge compilation also needs no local JDK.
+Cross-compiles select separate host and target Java distributions. Pinned inputs
+are cached under Cargo's home (or `KODA_COMPOSE_PREVIEW_ARTIFACT_CACHE`) and checked
+against `crates/android_tools/preview-bundle.json`; binaries carry no build-machine
+paths. Bundled license notices and Java's `legal` directory are preserved.
+For offline builds, keep the artifact cache and set `CARGO_NET_OFFLINE=true`.
+Build scripts cannot see Cargo's `--offline` flag; this environment setting also
+prevents preview artifact downloads and fails immediately if an input is missing.
 
 Only visible gallery rows create UI elements. Duplicate layout rectangles are
 collapsed once per render. Image assets are released when the gallery changes or
@@ -77,8 +90,9 @@ latency depends on the project and is longer than Studio's Fast Preview path.
 Preview configuration support follows the pinned standalone renderer; it does not
 offer every Studio display mode (for example, system-bar decorations).
 
-The installer currently supports Apple Silicon macOS. Integration checks also run
-with matching Linux layoutlib runtime artifacts. Navigation requires Compose
+Bundled previews support Apple Silicon and Intel macOS, Linux x86-64, and Windows
+x86-64, matching Google's available native layoutlib distributions. Android
+projects still need their normal SDK and Gradle-compatible project JDK. Navigation requires Compose
 compiler source information and project sources; framework and unavailable library
 sources are outlined but cannot be opened. Ambiguous source locations are skipped.
 Unsaved source overlays currently cover Kotlin; save resource or Java edits before
@@ -92,7 +106,7 @@ multipreview annotations, two parameter values, font scaling, and an intentional
 render failure. It should show ten cards, nine successful and one diagnostic.
 
 Use an isolated copy of the sample, a JDK accepted by its Gradle version, Android
-SDK 37, and the installed preview tools:
+SDK 37, and a preview runtime extracted from the app's application cache:
 
 ```sh
 fixture="$(mktemp -d)"
@@ -102,7 +116,7 @@ tar --exclude=build --exclude=.gradle --exclude=.kotlin --exclude=.zed \
   -C examples/android-ide -cf - . | tar -C "$fixture/project" -xf -
 script/test-android-preview --project "$fixture/project" \
   --installation /absolute/path/to/compose-preview \
-  --java-home /absolute/path/to/jdk-21 --output "$fixture/report"
+  --output "$fixture/report"
 ```
 
 The probe assembles and renders the saved file, renders an unsaved overlay, and
@@ -117,7 +131,7 @@ Compose 1.7.0 / Gradle 8.11.1 and the current sample's AGP 9.4.0 / Kotlin 2.2.10
 Compose BOM 2026.02.01 / Gradle 9.6.1. Separate Compose compiler fixtures verify
 multifile Kotlin facades, overloaded previews and coroutine rendering.
 
-Rust checks are `cargo test -p android_tools`, `cargo test -p android_ui`, and
+Rust checks are `cargo test -p android_tools --features bundled-preview`, `cargo test -p android_ui`, and
 `./script/clippy -p android_tools -p android_ui`. Editor tests cover scaled overlay
 clicks, navigation, request coalescing, variant cancellation, ignored generated
 outputs, and preserving unrelated tabs and unsaved edits when closing previews.
