@@ -829,7 +829,10 @@ mod tests {
         fs::write(&legacy_script, "legacy exporter sentinel")?;
         let request = prepare()?;
         install_selection(&root, &selected)?;
-        assert_eq!(fs::read_to_string(legacy_script)?, "legacy exporter sentinel");
+        assert_eq!(
+            fs::read_to_string(legacy_script)?,
+            "legacy exporter sentinel"
+        );
         assert_eq!(
             fs::read_to_string(request.path().join("export.gradle"))?,
             EXPORT
