@@ -8,9 +8,12 @@ packaged apps. Previews require no installer, launcher, Java override, or runtim
 download. The app unpacks its bundle into a versioned application cache on first
 use; subsequent refreshes reuse it. Missing or truncated cached files are repaired
 from the app's copy, and concurrent app instances share an extraction lock. The
-gallery appears in a separate pane beside the editor. It follows the active
-Kotlin file and displays every discovered annotation, including multipreview
-annotations and each value from a preview parameter provider.
+gallery appears beside the code inside the selected Kotlin source tab, sharing
+that tab's navigation and file identity. It displays every discovered annotation,
+including multipreview annotations and each value from a preview parameter
+provider. Drag the divider to resize the code and preview areas; double-click it
+to restore equal widths. Switching tabs preserves each file's gallery, selection,
+zoom and collapsed groups. Closing a source tab releases its preview.
 
 The preview surface uses collapsible headers for each composable function and
 compact variant titles with per-preview menus. Device sizes stay proportional at
@@ -18,11 +21,13 @@ one scale, and variants wrap into rows when the pane resizes. A blue border mark
 the selected preview. Refresh preserves selection, collapsed groups, and the
 visible composable. Only visible rows create image views.
 
-The toolbar's **Build and refresh** button rebuilds manually. The lightning
-button toggles **Auto refresh**, which refreshes after edits stop for 700 ms.
+The toolbar's **Build and refresh** button rebuilds manually. Previews always
+refresh automatically after edits stop for 700 ms.
 Unsaved Kotlin buffers are compiled from temporary copies; the editor does not
 save them. Changes during a build coalesce into one subsequent refresh. **Stop**
-cancels the current request. Inactive preview tabs pause automatic work.
+cancels the current request. Inactive source tabs and panes hidden by zoom pause
+automatic work, cancel running requests, and unload decoded images while keeping
+their gallery state.
 Switching files, projects, or variants cancels the previous request. The toolbar
 shows whether previews are up to date, refreshing, or failed.
 
@@ -49,8 +54,9 @@ The investigation focused on these responsibilities:
 
 | Upstream source | Responsibility | Koda implementation |
 | --- | --- | --- |
+| [`SourceCodeEditorProvider.kt`](https://github.com/JetBrains/android/blob/master/designer/src/com/android/tools/idea/uibuilder/editor/multirepresentation/sourcecode/SourceCodeEditorProvider.kt), [`TextEditorWithMultiRepresentationPreview.kt`](https://github.com/JetBrains/android/blob/master/designer/src/com/android/tools/idea/uibuilder/editor/multirepresentation/TextEditorWithMultiRepresentationPreview.kt), [`SplitEditor.kt`](https://github.com/JetBrains/android/blob/master/designer/src/com/android/tools/idea/common/editor/SplitEditor.kt) | Wrap code and design as one file editor, retaining the source tab and navigation identity | An editor addon wraps the source editor content with a resizable gallery; no separate preview workspace item or pane |
 | `AnnotationFilePreviewElementFinder.kt` | Find and expand previews belonging to a file | Google's bytecode `PreviewMethodFinder`; ASM `SourceFile` and package metadata identify the file even with `@file:JvmName` |
-| `ComposePreviewRepresentation.kt`, `ComposePreviewRefreshRequest.kt` | Maintain per-file models, serialize and coalesce refreshes, react to visibility | One preview view, a debounced request queue, request revisions, cancellable processes, stale-result rejection |
+| `ComposePreviewRepresentation.kt`, `ComposePreviewRefreshRequest.kt` | Maintain per-file models, serialize and coalesce refreshes, react to visibility | One preview view per source editor, a debounced request queue, request revisions, cancellable processes, stale-result rejection |
 | `PreviewDesignSurface.kt` | Display multiple scenes with selection and zoom | Virtualized grouped gallery, selection, zoom and panning, individual diagnostics |
 | [`SurfaceLayoutManagerOption.kt`](https://github.com/JetBrains/android/blob/master/preview-designer/src/com/android/tools/idea/preview/modes/SurfaceLayoutManagerOption.kt), [`GridLayoutManager.kt`](https://github.com/JetBrains/android/blob/master/designer/src/com/android/tools/idea/uibuilder/layout/option/GridLayoutManager.kt), [`GridLayoutGroup.kt`](https://github.com/JetBrains/android/blob/master/designer/src/com/android/tools/idea/uibuilder/layout/positionable/GridLayoutGroup.kt), [`SceneViewHeader.kt`](https://github.com/JetBrains/android/blob/master/designer/src/com/android/tools/idea/common/surface/organization/SceneViewHeader.kt) | Group by composable, pack proportionally scaled views into wrapping rows, and label each variant | Function headers, collapsible groups, adaptive row packing and compact variant menus |
 | `ComposeViewInfoParser.kt`, `ComposeViewInfo.kt` | Read `ComposeViewAdapter.getViewInfos*` before disposing the scene | Java bridge reflects the adapter into bounds, hierarchy depth, filename, package hash, and source line |
@@ -104,9 +110,16 @@ narrow, and skeleton-inspection screenshots to `target/compose-preview-visuals`.
 `COMPOSE_PREVIEW_VISUAL_FIXTURE` can point to a renderer output directory containing
 `previews.json`, `results.json`, and the corresponding PNGs to capture real
 Compose images instead of the default sizing fixture. The normal interaction
-suite runs without a GPU and covers resizing, collapse, keyboard navigation,
-panning, source navigation in a second column, rebuild continuity, and gallery
-virtualization.
+suite runs without a GPU and covers embedded divider resizing, control alignment,
+tab switching and moving, tab-close cleanup, collapse, keyboard navigation,
+panning, source navigation, rebuild continuity, and gallery virtualization.
+
+The full Koda application was also built and run on Linux X11 with a software
+Vulkan adapter. Live checks exercised both sample source tabs, the bundled
+renderer, ten-card discovery, manual refresh, unsaved automatic rebuilds and
+restoration, skeleton selection, source cursor navigation, zoom controls, and
+divider dragging. These full-app captures are separate from the opt-in native
+surface test.
 
 ## Compatibility boundaries
 

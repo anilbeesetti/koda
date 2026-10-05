@@ -1,16 +1,13 @@
 use super::*;
 use android_tools::preview;
-use editor::Editor;
+use editor::{Addon, Editor};
 use gpui::{
     Bounds, Image, ImageFormat, ListState, MouseButton, Pixels, canvas, img, list, point, size,
 };
 use language::Buffer;
 use std::{cell::Cell, collections::HashSet, rc::Rc};
 use ui::{ButtonLike, CommonAnimationExt, ContextMenuEntry, WithScrollbar};
-use workspace::{
-    Pane, SaveIntent, SplitDirection,
-    item::{Item, ItemEvent},
-};
+use workspace::Pane;
 
 const REFRESH_DELAY: Duration = Duration::from_millis(700);
 const GALLERY_INSET: f32 = 40.;
@@ -24,16 +21,25 @@ pub(super) fn toggle_preview(
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
-    let view = workspace
-        .panel::<AndroidPanel>(cx)
-        .and_then(|panel| panel.read(cx).preview_view.as_ref()?.upgrade());
-    if let Some(view) = view
-        && let Some(pane) = workspace.pane_for(&view)
+    if let Some(panel) = workspace.panel::<AndroidPanel>(cx)
+        && panel.read(cx).compose_preview_enabled
     {
-        let id = view.entity_id();
-        pane.update(cx, |pane, cx| {
-            pane.close_items(window, cx, SaveIntent::Skip, &move |item| item == id)
-                .detach_and_log_err(cx);
+        for editor in workspace.items_of_type::<Editor>(cx).collect::<Vec<_>>() {
+            if let Some(view) = editor
+                .read(cx)
+                .addon::<ComposePreviewAddon>()
+                .map(|addon| addon.view.clone())
+            {
+                view.update(cx, |view, cx| view.stop(cx));
+            }
+            editor.update(cx, |editor, cx| {
+                editor.unregister_addon::<ComposePreviewAddon>();
+                cx.notify();
+            });
+        }
+        panel.update(cx, |panel, _| {
+            panel.compose_preview_enabled = false;
+            panel.preview_view = None;
         });
     } else {
         with_panel(workspace, window, cx, AndroidPanel::show_compose_preview);
@@ -52,29 +58,57 @@ impl AndroidPanel {
                 if matches!(event, workspace::Event::ActiveItemChanged) {
                     // Workspace events can arrive while a pane or the workspace itself is updating.
                     cx.defer_in(window, |panel, window, cx| {
-                        let Some(view) = panel.preview_view.as_ref().and_then(WeakEntity::upgrade)
-                        else {
-                            return;
-                        };
-                        let source = panel.active_preview_source(cx);
-                        view.update(cx, |view, cx| {
-                            if let Some((buffer, pane)) = source {
-                                view.bind_source(buffer, pane, window, cx);
-                            }
-                            if view.pending && view.visible(cx) {
-                                view.queue_refresh(false, window, cx);
-                            }
+                        let view = panel.active_preview_editor(cx).and_then(|editor| {
+                            editor
+                                .read(cx)
+                                .addon::<ComposePreviewAddon>()
+                                .map(|addon| addon.view.clone())
                         });
+                        panel.preview_view = view.as_ref().map(Entity::downgrade);
+                        if view.is_none()
+                            && panel.compose_preview_enabled
+                            && panel.active_preview_source(cx).is_some()
+                        {
+                            panel.attach_compose_preview(false, window, cx).log_err();
+                        }
                     });
                 }
             },
         ));
+        self._startup_subscriptions.push(cx.observe_in(
+            &cx.entity(),
+            window,
+            |_, _, window, cx| {
+                cx.defer_in(window, |panel, window, cx| {
+                    if !panel.compose_preview_enabled || panel.selected_target.is_none() {
+                        return;
+                    }
+                    if let Some(editor) = panel.active_preview_editor(cx)
+                        && editor.read(cx).addon::<ComposePreviewAddon>().is_none()
+                        && let Some((buffer, _)) = panel.active_preview_source(cx)
+                        && panel.trusted_root(cx).is_ok_and(|root| {
+                            buffer_path(&buffer, cx).is_some_and(|path| path.starts_with(&root))
+                        })
+                    {
+                        panel.attach_compose_preview(false, window, cx).log_err();
+                    }
+                });
+            },
+        ));
+    }
+
+    fn active_preview_editor(&self, cx: &App) -> Option<Entity<Editor>> {
+        self.workspace
+            .upgrade()?
+            .read(cx)
+            .active_item(cx)?
+            .downcast::<Editor>()
     }
 
     fn active_preview_source(&self, cx: &App) -> Option<(Entity<Buffer>, WeakEntity<Pane>)> {
         let workspace = self.workspace.upgrade()?;
         let workspace = workspace.read(cx);
-        let editor = workspace.active_item(cx)?.downcast::<Editor>()?;
+        let editor = self.active_preview_editor(cx)?;
         let buffer = editor.read(cx).buffer().read(cx).as_singleton()?;
         let file = buffer.read(cx).file()?;
         if file.path().extension() != Some("kt") {
@@ -84,64 +118,67 @@ impl AndroidPanel {
     }
 
     pub(super) fn show_compose_preview(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let result = (|| {
-            let root = self.trusted_root(cx)?;
-            let target = self
-                .selected_target
-                .clone()
-                .context("Sync the Android project and select a build variant first.")?;
-            let source = self.active_preview_source(cx);
-            if let Some(view) = self.preview_view.as_ref().and_then(WeakEntity::upgrade)
-                && let Some(pane) = self
-                    .workspace
-                    .read_with(cx, |workspace, _| workspace.pane_for(&view))?
-            {
-                pane.update(cx, |pane, cx| {
-                    if let Some(index) = pane.index_for_item(&view) {
-                        pane.activate_item(index, false, false, window, cx);
-                    }
-                });
-                view.update(cx, |view, cx| {
-                    view.configure(root, target, window, cx);
-                    if let Some((buffer, pane)) = source {
-                        view.bind_source(buffer, pane, window, cx);
-                    }
-                    view.queue_refresh(true, window, cx);
-                });
-                return Ok(());
-            }
-            let (buffer, source_pane) =
-                source.context("Open a Kotlin source file to preview its composables.")?;
-            let panel = cx.weak_entity();
-            let view = cx.new(|cx| {
-                ComposePreviewView::new(
-                    panel,
-                    self.workspace.clone(),
-                    self.project.clone(),
-                    buffer,
-                    source_pane.clone(),
-                    root,
-                    target,
-                    window,
-                    cx,
-                )
-            });
-            self.preview_view = Some(view.downgrade());
-            self.workspace.update(cx, |workspace, cx| {
-                let source_pane = source_pane
-                    .upgrade()
-                    .unwrap_or_else(|| workspace.active_pane().clone());
-                let pane = workspace.split_pane(source_pane, SplitDirection::Right, window, cx);
-                pane.update(cx, |pane, cx| {
-                    pane.add_item(Box::new(view.clone()), false, false, None, window, cx)
-                });
-            })?;
-            view.update(cx, |view, cx| view.queue_refresh(true, window, cx));
-            Ok::<_, anyhow::Error>(())
-        })();
-        if let Err(error) = result {
+        self.compose_preview_enabled = true;
+        if let Err(error) = self.attach_compose_preview(true, window, cx) {
             self.fail(error, window, cx);
         }
+    }
+
+    fn attach_compose_preview(
+        &mut self,
+        manual: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
+        let root = self.trusted_root(cx)?;
+        let target = self
+            .selected_target
+            .clone()
+            .context("Sync the Android project and select a build variant first.")?;
+        let (buffer, source_pane) = self
+            .active_preview_source(cx)
+            .context("Open a Kotlin source file to preview its composables.")?;
+        ensure!(
+            buffer_path(&buffer, cx).is_some_and(|path| path.starts_with(&root)),
+            "The preview file belongs to a different Android project"
+        );
+        let editor = self
+            .active_preview_editor(cx)
+            .context("Open a source editor")?;
+        if let Some(view) = editor
+            .read(cx)
+            .addon::<ComposePreviewAddon>()
+            .map(|addon| addon.view.clone())
+        {
+            self.preview_view = Some(view.downgrade());
+            view.update(cx, |view, cx| {
+                view.configure(root, target, window, cx);
+                view.queue_refresh(manual, window, cx);
+            });
+            return Ok(());
+        }
+        let panel = cx.weak_entity();
+        let view = cx.new(|cx| {
+            ComposePreviewView::new(
+                panel,
+                self.workspace.clone(),
+                self.project.clone(),
+                buffer,
+                editor.downgrade(),
+                source_pane,
+                root,
+                target,
+                window,
+                cx,
+            )
+        });
+        self.preview_view = Some(view.downgrade());
+        editor.update(cx, |editor, cx| {
+            editor.register_addon(ComposePreviewAddon { view: view.clone() });
+            cx.notify();
+        });
+        view.update(cx, |view, cx| view.queue_refresh(manual, window, cx));
+        Ok::<_, anyhow::Error>(())
     }
 
     pub(super) fn generate_preview(
@@ -154,6 +191,117 @@ impl AndroidPanel {
         if self.selected_target.as_ref() == Some(&target) {
             self.show_compose_preview(window, cx);
         }
+    }
+}
+
+struct ComposePreviewAddon {
+    view: Entity<ComposePreviewView>,
+}
+
+impl Addon for ComposePreviewAddon {
+    fn wrap_editor_content(
+        &self,
+        content: gpui::AnyElement,
+        _: &mut Window,
+        cx: &mut App,
+    ) -> gpui::AnyElement {
+        let view = self.view.read(cx);
+        let editor_bounds = view.editor_bounds.clone();
+        let preview_fraction = view.preview_fraction;
+        let view = self.view.downgrade();
+        let resize_view = view.clone();
+        h_flex()
+            .relative()
+            .size_full()
+            .overflow_hidden()
+            .debug_selector(|| "compose-editor".into())
+            .child(div().flex_1().min_w_0().h_full().child(content))
+            .child(
+                div()
+                    .relative()
+                    .flex_none()
+                    .w(gpui::relative(preview_fraction))
+                    .h_full()
+                    .border_l_1()
+                    .border_color(cx.theme().colors().border)
+                    .child(self.view.clone())
+                    .child(
+                        div()
+                            .id("compose-preview-divider")
+                            .debug_selector(|| "compose-preview-divider".into())
+                            .absolute()
+                            .left(px(-3.))
+                            .top_0()
+                            .w(px(6.))
+                            .h_full()
+                            .cursor_col_resize()
+                            .on_mouse_down(MouseButton::Left, move |event, _, cx| {
+                                resize_view
+                                    .update(cx, |view, cx| {
+                                        view.resizing = event.click_count != 2;
+                                        if event.click_count == 2 {
+                                            view.preview_fraction = 0.5;
+                                            view.editor.update(cx, |_, cx| cx.notify()).log_err();
+                                        }
+                                    })
+                                    .log_err();
+                                cx.stop_propagation();
+                            }),
+                    ),
+            )
+            .child(
+                canvas(
+                    move |bounds, _, _| editor_bounds.set(bounds),
+                    move |_, _, window, _| {
+                        let resize_view = view.clone();
+                        window.on_mouse_event(move |event: &gpui::MouseMoveEvent, phase, _, cx| {
+                            if phase != gpui::DispatchPhase::Capture {
+                                return;
+                            }
+                            resize_view
+                                .update(cx, |view, cx| {
+                                    if !view.resizing {
+                                        return;
+                                    }
+                                    if event.pressed_button == Some(MouseButton::Left) {
+                                        let bounds = view.editor_bounds.get();
+                                        if bounds.size.width > px(0.) {
+                                            view.preview_fraction =
+                                                (f32::from(bounds.right() - event.position.x)
+                                                    / f32::from(bounds.size.width))
+                                                .clamp(0.2, 0.8);
+                                            view.editor.update(cx, |_, cx| cx.notify()).log_err();
+                                        }
+                                        cx.stop_propagation();
+                                    } else {
+                                        view.resizing = false;
+                                    }
+                                })
+                                .log_err();
+                        });
+                        window.on_mouse_event(move |event: &gpui::MouseUpEvent, phase, _, cx| {
+                            if phase == gpui::DispatchPhase::Capture
+                                && event.button == MouseButton::Left
+                            {
+                                view.update(cx, |view, cx| {
+                                    if view.resizing {
+                                        view.resizing = false;
+                                        cx.stop_propagation();
+                                    }
+                                })
+                                .log_err();
+                            }
+                        });
+                    },
+                )
+                .absolute()
+                .size_full(),
+            )
+            .into_any_element()
+    }
+
+    fn to_any(&self) -> &dyn std::any::Any {
+        self
     }
 }
 
@@ -384,6 +532,10 @@ pub(super) struct ComposePreviewView {
     workspace: WeakEntity<Workspace>,
     project: Entity<Project>,
     source: Entity<Buffer>,
+    editor: WeakEntity<Editor>,
+    editor_bounds: Rc<Cell<Bounds<Pixels>>>,
+    preview_fraction: f32,
+    resizing: bool,
     source_pane: WeakEntity<Pane>,
     source_path: PathBuf,
     root: PathBuf,
@@ -400,7 +552,6 @@ pub(super) struct ComposePreviewView {
     stale: bool,
     building: bool,
     configuration_suspended: bool,
-    auto_refresh: bool,
     inspect: bool,
     hovered: Option<(usize, usize)>,
     selected_card: Option<usize>,
@@ -427,6 +578,7 @@ impl ComposePreviewView {
         workspace: WeakEntity<Workspace>,
         project: Entity<Project>,
         source: Entity<Buffer>,
+        editor: WeakEntity<Editor>,
         source_pane: WeakEntity<Pane>,
         root: PathBuf,
         target: AndroidTarget,
@@ -458,6 +610,58 @@ impl ComposePreviewView {
                     }
                 }),
             ];
+        if let Some(workspace) = workspace.upgrade() {
+            subscriptions.push(cx.subscribe_in(
+                &workspace,
+                window,
+                |view, _, event, window, cx| {
+                    if matches!(
+                        event,
+                        workspace::Event::ActiveItemChanged | workspace::Event::ZoomChanged
+                    ) {
+                        cx.defer_in(window, |view, window, cx| {
+                            if view.visible(cx) {
+                                view.resume_if_visible(window, cx);
+                            } else {
+                                if view.building || view.debounce_task.is_some() {
+                                    let manual = view.pending_manual;
+                                    view.stop(cx);
+                                    view.pending = true;
+                                    view.pending_manual = manual;
+                                    view.status = "Previews are out of date".into();
+                                }
+                                view.release_images(window, cx);
+                            }
+                        });
+                    } else if let workspace::Event::ItemRemoved { item_id } = event
+                        && *item_id == view.editor.entity_id()
+                    {
+                        // Moving a tab emits removal before adding it to its destination pane.
+                        cx.defer_in(window, |view, window, cx| {
+                            let pane = view
+                                .workspace
+                                .read_with(cx, |workspace, _| {
+                                    workspace.pane_for_item_id(view.editor.entity_id())
+                                })
+                                .log_err()
+                                .flatten();
+                            if let Some(pane) = pane {
+                                view.set_source_pane(&pane);
+                            } else {
+                                view.stop(cx);
+                                view.release_gallery(window, cx);
+                                view.editor
+                                    .update(cx, |editor, cx| {
+                                        editor.unregister_addon::<ComposePreviewAddon>();
+                                        cx.notify();
+                                    })
+                                    .log_err();
+                            }
+                        });
+                    }
+                },
+            ));
+        }
         let store = project.read(cx).buffer_store().clone();
         subscriptions.push(cx.subscribe_in(&store, window, |_, _, event, window, cx| {
             if let project::buffer_store::BufferStoreEvent::BufferAdded(buffer)
@@ -492,6 +696,10 @@ impl ComposePreviewView {
             workspace,
             project,
             source,
+            editor,
+            editor_bounds: Rc::new(Cell::new(Bounds::default())),
+            preview_fraction: 0.5,
+            resizing: false,
             source_pane,
             source_path,
             root,
@@ -508,7 +716,6 @@ impl ComposePreviewView {
             stale: true,
             building: false,
             configuration_suspended: false,
-            auto_refresh: true,
             inspect: false,
             hovered: None,
             selected_card: None,
@@ -606,17 +813,23 @@ impl ComposePreviewView {
             .panel
             .read_with(cx, |panel, cx| {
                 Ok::<_, anyhow::Error>((
-                    panel.trusted_root(cx)?,
+                    {
+                        let root = panel.trusted_root(cx)?;
+                        ensure!(
+                            self.source_path.starts_with(&root),
+                            "The preview file belongs to a different Android project"
+                        );
+                        root
+                    },
                     panel
                         .selected_target
                         .clone()
                         .context("Select an Android build variant")?,
-                    panel.active_preview_source(cx),
                 ))
             })
             .and_then(|result| result);
         match configuration {
-            Ok((root, target, source)) => {
+            Ok((root, target)) => {
                 let recovering = self.configuration_suspended;
                 self.configuration_suspended = false;
                 let inspected_source = (root == self.root && !self.navigation_pending)
@@ -624,9 +837,6 @@ impl ComposePreviewView {
                     .flatten();
                 self.configure(root, target, window, cx);
                 self.navigation_source = inspected_source;
-                if let Some((buffer, pane)) = source {
-                    self.bind_source(buffer, pane, window, cx);
-                }
                 if recovering {
                     self.error = None;
                     self.invalidate(window, cx);
@@ -673,32 +883,6 @@ impl ComposePreviewView {
         }
     }
 
-    fn bind_source(
-        &mut self,
-        source: Entity<Buffer>,
-        pane: WeakEntity<Pane>,
-        window: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
-        let Some(path) = buffer_path(&source, cx) else {
-            return;
-        };
-        if !path.starts_with(&self.root) {
-            return;
-        }
-        self.observe_buffer(source.clone(), window, cx);
-        self.source_pane = pane;
-        if self.navigation_source.as_ref() == Some(&path) {
-            return;
-        }
-        self.navigation_source = None;
-        if source != self.source || path != self.source_path {
-            self.source = source;
-            self.source_path = path;
-            self.invalidate(window, cx);
-        }
-    }
-
     fn invalidate(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.render_task = None;
         self.debounce_task = None;
@@ -711,20 +895,52 @@ impl ComposePreviewView {
         self.pan_position = None;
         self.list_state.reset(0);
         self.queue_refresh(false, window, cx);
-        cx.emit(ItemEvent::UpdateTab);
     }
 
     fn visible(&self, cx: &Context<Self>) -> bool {
-        let id = cx.entity_id();
+        let id = self.editor.entity_id();
         self.workspace
             .read_with(cx, |workspace, cx| {
                 workspace.pane_for_item_id(id).is_some_and(|pane| {
-                    pane.read(cx)
-                        .active_item()
-                        .is_some_and(|item| item.item_id() == id)
+                    workspace
+                        .zoomed_item()
+                        .is_none_or(|zoomed| zoomed == &pane.downgrade().into())
+                        && (!workspace.is_pane_maximized() || *workspace.active_pane() == pane)
+                        && pane
+                            .read(cx)
+                            .active_item()
+                            .is_some_and(|item| item.item_id() == id)
                 })
             })
             .unwrap_or(false)
+    }
+
+    fn resume_if_visible(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.visible(cx) {
+            return;
+        }
+        if let Some(pane) = self
+            .workspace
+            .read_with(cx, |workspace, _| {
+                workspace.pane_for_item_id(self.editor.entity_id())
+            })
+            .log_err()
+            .flatten()
+        {
+            self.set_source_pane(&pane);
+        }
+        if self.pending && !self.building && self.debounce_task.is_none() {
+            self.queue_refresh(self.pending_manual, window, cx);
+        }
+    }
+
+    fn set_source_pane(&mut self, pane: &Entity<Pane>) {
+        if self.source_pane.entity_id() != pane.entity_id() && self.navigation_pending {
+            self.source_task = None;
+            self.navigation_pending = false;
+            self.navigation_source = None;
+        }
+        self.source_pane = pane.downgrade();
     }
 
     fn queue_refresh(&mut self, manual: bool, window: &mut Window, cx: &mut Context<Self>) {
@@ -740,7 +956,7 @@ impl ComposePreviewView {
             self.navigation_source = None;
         }
         self.navigation_pending = false;
-        if !manual && (!self.auto_refresh || !self.visible(cx)) {
+        if !self.visible(cx) {
             self.status = "Previews are out of date".into();
             cx.notify();
             return;
@@ -757,10 +973,7 @@ impl ComposePreviewView {
             }
             view.update_in(cx, |view, window, cx| {
                 view.debounce_task = None;
-                if view.pending
-                    && !view.building
-                    && (view.pending_manual || view.auto_refresh && view.visible(cx))
-                {
+                if view.pending && !view.building && view.visible(cx) {
                     view.refresh(window, cx);
                 }
             })
@@ -995,9 +1208,7 @@ impl ComposePreviewView {
                             }
                         }
                     }
-                    if view.pending
-                        && (view.pending_manual || view.auto_refresh && view.visible(cx))
-                    {
+                    if view.pending && view.visible(cx) {
                         cx.defer_in(window, |view, window, cx| {
                             view.queue_refresh(view.pending_manual, window, cx)
                         });
@@ -1017,21 +1228,26 @@ impl ComposePreviewView {
         cx.notify();
     }
 
-    fn release_gallery(&mut self, window: &mut Window, cx: &mut App) {
-        self.gallery_generation = self.gallery_generation.wrapping_add(1);
-        self.rows.clear();
-        self.selected_card = None;
-        self.hovered = None;
-        if let Some(gallery) = self.gallery.take() {
-            for card in gallery.cards {
-                if let Some(image) = card.rendered_image {
+    fn release_images(&mut self, window: &mut Window, cx: &mut App) {
+        if let Some(gallery) = &mut self.gallery {
+            for card in &mut gallery.cards {
+                if let Some(image) = card.rendered_image.take() {
                     window.drop_image(image).log_err();
                 }
-                if let Some(image) = card.image {
-                    image.remove_asset(cx);
+                if let Some(image) = &card.image {
+                    image.clone().remove_asset(cx);
                 }
             }
         }
+    }
+
+    fn release_gallery(&mut self, window: &mut Window, cx: &mut App) {
+        self.gallery_generation = self.gallery_generation.wrapping_add(1);
+        self.release_images(window, cx);
+        self.rows.clear();
+        self.selected_card = None;
+        self.hovered = None;
+        self.gallery = None;
     }
 
     fn replace_gallery(&mut self, gallery: Gallery, window: &mut Window, cx: &mut App) {
@@ -1713,26 +1929,6 @@ impl Focusable for ComposePreviewView {
         self.focus_handle.clone()
     }
 }
-impl EventEmitter<ItemEvent> for ComposePreviewView {}
-impl Item for ComposePreviewView {
-    type Event = ItemEvent;
-    fn tab_content_text(&self, _: usize, _: &App) -> SharedString {
-        format!(
-            "{} · Compose",
-            self.source_path
-                .file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
-        )
-        .into()
-    }
-    fn show_toolbar(&self) -> bool {
-        false
-    }
-    fn to_item_events(event: &Self::Event, callback: &mut dyn FnMut(ItemEvent)) {
-        callback(*event);
-    }
-}
 impl Render for ComposePreviewView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let maximum_width = self
@@ -1806,22 +2002,6 @@ impl Render for ComposePreviewView {
                                 .on_click(cx.listener(|view, _, _, cx| view.stop(cx))),
                         )
                     })
-                    .child(
-                        IconButton::new("compose-auto", IconName::BoltOutlined)
-                            .aria_label("Automatically refresh previews")
-                            .tooltip(Tooltip::text(
-                                "Automatically refresh previews after code changes",
-                            ))
-                            .toggle_state(self.auto_refresh)
-                            .tab_index(0isize)
-                            .on_click(cx.listener(|view, _, window, cx| {
-                                view.auto_refresh = !view.auto_refresh;
-                                if view.auto_refresh && view.pending {
-                                    view.queue_refresh(false, window, cx);
-                                }
-                                cx.notify();
-                            })),
-                    )
                     .child(
                         IconButton::new("compose-inspect", IconName::Eye)
                             .aria_label("Show component outlines")
@@ -2073,15 +2253,22 @@ impl Render for ComposePreviewView {
                             .absolute()
                             .bottom_4()
                             .right_4()
+                            .w(px(40.))
+                            .items_center()
                             .gap_1()
                             .child(
                                 div()
+                                    .w_full()
+                                    .flex()
+                                    .justify_center()
+                                    .p_0p5()
                                     .border_1()
                                     .rounded_md()
                                     .border_color(cx.theme().colors().border)
                                     .bg(cx.theme().colors().panel_background)
                                     .child(
                                         IconButton::new("compose-pan", IconName::Hand)
+                                            .full_width()
                                             .aria_label("Pan previews")
                                             .tooltip(Tooltip::text("Pan previews by dragging"))
                                             .toggle_state(self.pan_mode)
@@ -2096,13 +2283,16 @@ impl Render for ComposePreviewView {
                             )
                             .child(
                                 v_flex()
+                                    .w_full()
                                     .p_0p5()
+                                    .items_center()
                                     .rounded_md()
                                     .border_1()
                                     .border_color(cx.theme().colors().border)
                                     .bg(cx.theme().colors().panel_background)
                                     .child(
                                         IconButton::new("compose-zoom-in", IconName::Plus)
+                                            .full_width()
                                             .aria_label("Zoom in")
                                             .tooltip(Tooltip::text("Zoom in"))
                                             .disabled(empty || self.zoom >= MAXIMUM_ZOOM)
@@ -2113,6 +2303,7 @@ impl Render for ComposePreviewView {
                                     )
                                     .child(
                                         IconButton::new("compose-zoom-out", IconName::Dash)
+                                            .full_width()
                                             .aria_label("Zoom out")
                                             .tooltip(Tooltip::text("Zoom out"))
                                             .disabled(empty || self.zoom <= MINIMUM_ZOOM)
@@ -2123,6 +2314,8 @@ impl Render for ComposePreviewView {
                                     )
                                     .child(
                                         Button::new("compose-actual-size", "1:1")
+                                            .label_size(LabelSize::Small)
+                                            .full_width()
                                             .tooltip(Tooltip::text("Actual size"))
                                             .disabled(empty)
                                             .tab_index(0isize)
@@ -2132,6 +2325,7 @@ impl Render for ComposePreviewView {
                                     )
                                     .child(
                                         IconButton::new("compose-fit", IconName::MaximizeAlt)
+                                            .full_width()
                                             .aria_label("Fit previews to the pane")
                                             .tooltip(Tooltip::text("Fit previews to the pane"))
                                             .toggle_state(self.fit_to_window)
@@ -2447,30 +2641,333 @@ mod tests {
             panel.selected_target = Some(target.clone());
         });
         workspace.add_panel(panel.clone(), window, cx);
-        let source_pane = workspace.active_pane().clone();
+        let pane = workspace.active_pane().clone();
+        let editor = pane
+            .read(cx)
+            .active_item()
+            .and_then(|item| item.downcast::<Editor>())
+            .filter(|editor| {
+                editor.read(cx).buffer().read(cx).as_singleton().as_ref() == Some(&buffer)
+            })
+            .unwrap_or_else(|| {
+                let editor = cx.new(|cx| {
+                    Editor::for_buffer(buffer.clone(), Some(project.clone()), window, cx)
+                });
+                pane.update(cx, |pane, cx| {
+                    pane.add_item(Box::new(editor.clone()), true, true, None, window, cx)
+                });
+                editor
+            });
         let view = cx.new(|cx| {
             ComposePreviewView::new(
                 panel.downgrade(),
                 workspace.weak_handle(),
                 project,
                 buffer,
-                source_pane.downgrade(),
+                editor.downgrade(),
+                pane.downgrade(),
                 PathBuf::from("/android"),
                 target,
                 window,
                 cx,
             )
         });
-        view.update(cx, |view, _| {
-            view.auto_refresh = false;
-            view.fit_to_window = false;
+        view.update(cx, |view, _| view.fit_to_window = false);
+        editor.update(cx, |editor, cx| {
+            editor.register_addon(ComposePreviewAddon { view: view.clone() });
+            cx.notify();
         });
-        panel.update(cx, |panel, _| panel.preview_view = Some(view.downgrade()));
-        let pane = workspace.split_pane(source_pane, SplitDirection::Right, window, cx);
-        pane.update(cx, |pane, cx| {
-            pane.add_item(Box::new(view.clone()), false, false, None, window, cx)
+        panel.update(cx, |panel, _| {
+            panel.preview_view = Some(view.downgrade());
+            panel.compose_preview_enabled = true;
         });
         (view, panel, pane)
+    }
+
+    #[gpui::test]
+    async fn previews_belong_to_source_tabs_and_survive_tab_switches(cx: &mut TestAppContext) {
+        let (project, buffer) = test_project(cx).await;
+        let other_buffer = project
+            .update(cx, |project, cx| {
+                project.open_buffer(
+                    project
+                        .find_project_path("/android/Other.kt", cx)
+                        .expect("Other path"),
+                    cx,
+                )
+            })
+            .await
+            .expect("Other buffer");
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, panel, pane) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project.clone(), buffer, window, cx)
+        });
+        panel.update_in(cx, |panel, window, cx| {
+            panel.observe_compose_preview(window, cx)
+        });
+        let editor = view.read_with(cx, |view, _| view.editor.upgrade().expect("Owner"));
+        view.update(cx, |view, cx| {
+            view.gallery = Some(gallery(vec![
+                card("sample.Content", "Day", 100, 100),
+                card("sample.Content", "Night", 100, 100),
+            ]));
+            view.selected_card = Some(1);
+            view.stale = false;
+            view.reflow();
+            cx.notify();
+        });
+        let other = workspace.update_in(cx, |workspace, window, cx| {
+            let other = cx.new(|cx| Editor::for_buffer(other_buffer, Some(project), window, cx));
+            workspace.active_pane().update(cx, |pane, cx| {
+                pane.add_item(Box::new(other.clone()), true, true, None, window, cx)
+            });
+            other
+        });
+        cx.run_until_parked();
+        let other_view = other.read_with(cx, |editor, _| {
+            editor
+                .addon::<ComposePreviewAddon>()
+                .expect("New tab preview")
+                .view
+                .clone()
+        });
+        assert_ne!(view.entity_id(), other_view.entity_id());
+        assert_eq!(
+            other_view.read_with(cx, |view, _| view.source_path.clone()),
+            Path::new("/android/Other.kt")
+        );
+        assert_eq!(
+            view.read_with(cx, |view, _| view.source_path.clone()),
+            Path::new("/android/Main.kt")
+        );
+        pane.update_in(cx, |pane, window, cx| {
+            pane.activate_item(
+                pane.index_for_item(&editor).expect("Original tab"),
+                true,
+                true,
+                window,
+                cx,
+            )
+        });
+        cx.run_until_parked();
+        assert_eq!(
+            panel.read_with(cx, |panel, _| panel
+                .preview_view
+                .as_ref()
+                .expect("Active preview")
+                .entity_id()),
+            view.entity_id()
+        );
+        assert_eq!(view.read_with(cx, |view, _| view.selected_card), Some(1));
+        assert!(cx.debug_bounds("compose-image-1").is_some());
+        workspace.read_with(cx, |workspace, cx| {
+            assert_eq!(workspace.panes().len(), 1);
+            assert_eq!(pane.read(cx).items_len(), 2);
+        });
+        let weak = view.downgrade();
+        pane.update_in(cx, |pane, window, cx| {
+            pane.remove_item(editor.entity_id(), false, false, window, cx)
+        });
+        drop(editor);
+        drop(view);
+        cx.run_until_parked();
+        assert!(
+            weak.upgrade().is_none(),
+            "Closing the source tab releases its preview"
+        );
+        assert!(other.read_with(cx, |editor, _| {
+            editor.addon::<ComposePreviewAddon>().is_some()
+        }));
+    }
+
+    #[gpui::test]
+    async fn moving_a_source_tab_keeps_its_embedded_preview(cx: &mut TestAppContext) {
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, panel, pane) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project, buffer, window, cx)
+        });
+        panel.update_in(cx, |panel, window, cx| {
+            panel.observe_compose_preview(window, cx)
+        });
+        let editor = view.read_with(cx, |view, _| view.editor.upgrade().expect("Owner"));
+        view.update(cx, |view, cx| {
+            view.navigation_pending = true;
+            view.navigation_source = Some(PathBuf::from("/android/Other.kt"));
+            view.source_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+        });
+        let destination = workspace.update_in(cx, |workspace, window, cx| {
+            let destination =
+                workspace.split_pane(pane.clone(), workspace::SplitDirection::Right, window, cx);
+            workspace::move_item(&pane, &destination, editor.entity_id(), 0, true, window, cx);
+            destination
+        });
+        cx.run_until_parked();
+        assert_eq!(
+            editor.read_with(cx, |editor, _| editor
+                .addon::<ComposePreviewAddon>()
+                .expect("Moved tab preview")
+                .view
+                .entity_id()),
+            view.entity_id()
+        );
+        assert_eq!(
+            view.read_with(cx, |view, _| view.source_pane.entity_id()),
+            destination.entity_id()
+        );
+        assert!(view.update(cx, |view, cx| view.visible(cx)));
+        view.read_with(cx, |view, _| {
+            assert!(view.source_task.is_none());
+            assert!(!view.navigation_pending);
+            assert!(view.navigation_source.is_none());
+        });
+    }
+
+    #[gpui::test]
+    async fn hiding_a_source_tab_cancels_work_and_releases_decoded_images(cx: &mut TestAppContext) {
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, _, pane) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project, buffer, window, cx)
+        });
+        view.update(cx, |view, cx| {
+            view.gallery = Some(gallery(vec![card("sample.Content", "Day", 100, 100)]));
+            view.selected_card = Some(0);
+            view.stale = false;
+            view.reflow();
+            cx.notify();
+        });
+        cx.run_until_parked();
+        let generation = view.read_with(cx, |view, _| view.gallery_generation);
+        view.update(cx, |view, cx| {
+            view.building = true;
+            view.render_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+        });
+        pane.update_in(cx, |pane, window, cx| {
+            let item = cx.new(TestItem::new);
+            pane.add_item(Box::new(item), true, false, None, window, cx);
+        });
+        cx.run_until_parked();
+        view.read_with(cx, |view, _| {
+            assert!(!view.building && view.render_task.is_none());
+            assert!(view.pending && view.stale);
+            assert_eq!(view.selected_card, Some(0));
+            assert_eq!(view.gallery_generation, generation);
+            let gallery = view.gallery.as_ref().expect("Retained gallery");
+            assert!(gallery.cards[0].image.is_some());
+            assert!(gallery.cards[0].rendered_image.is_none());
+        });
+        view.update_in(cx, |view, window, cx| {
+            view.queue_refresh(true, window, cx);
+            assert!(view.pending && view.pending_manual);
+            assert!(view.debounce_task.is_none());
+        });
+    }
+
+    #[gpui::test]
+    async fn zooming_another_pane_pauses_hidden_previews(cx: &mut TestAppContext) {
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, _, pane) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project, buffer, window, cx)
+        });
+        let other_pane = workspace.update_in(cx, |workspace, window, cx| {
+            let pane = workspace.split_pane(pane, workspace::SplitDirection::Right, window, cx);
+            pane.update(cx, |pane, cx| {
+                let item = cx.new(TestItem::new);
+                pane.add_item(Box::new(item), true, true, None, window, cx);
+            });
+            pane
+        });
+        cx.run_until_parked();
+        assert!(view.update(cx, |view, cx| view.visible(cx)));
+        view.update(cx, |view, cx| {
+            view.building = true;
+            view.render_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+        });
+        other_pane.update_in(cx, |pane, window, cx| {
+            pane.zoom_in(&workspace::ZoomIn, window, cx)
+        });
+        cx.run_until_parked();
+        view.update(cx, |view, cx| {
+            assert!(!view.visible(cx));
+            assert!(!view.building && view.render_task.is_none());
+            assert!(view.pending);
+        });
+        other_pane.update_in(cx, |pane, window, cx| {
+            pane.zoom_out(&workspace::ZoomOut, window, cx)
+        });
+        cx.run_until_parked();
+        assert!(view.update(cx, |view, cx| view.visible(cx)));
+        view.update(cx, |view, cx| {
+            view.building = true;
+            view.render_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+        });
+        workspace.update_in(cx, |workspace, window, cx| {
+            workspace.toggle_editor_zoom(&workspace::ToggleEditorZoom, window, cx)
+        });
+        cx.run_until_parked();
+        view.update(cx, |view, cx| {
+            assert!(!view.visible(cx));
+            assert!(!view.building && view.render_task.is_none());
+            assert!(view.pending);
+        });
+        workspace.update_in(cx, |workspace, window, cx| {
+            workspace.toggle_editor_zoom(&workspace::ToggleEditorZoom, window, cx)
+        });
+        cx.run_until_parked();
+        assert!(view.update(cx, |view, cx| view.visible(cx)));
+    }
+
+    #[gpui::test]
+    async fn embedded_divider_resizes_and_bottom_controls_share_the_same_center(
+        cx: &mut TestAppContext,
+    ) {
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, _, _) = workspace.update_in(cx, |workspace, window, cx| {
+            add_preview(workspace, project, buffer, window, cx)
+        });
+        view.update(cx, |view, cx| {
+            view.gallery = Some(gallery(vec![
+                card("sample.Content", "Day", 400, 800),
+                card("sample.Content", "Night", 400, 800),
+            ]));
+            view.stale = false;
+            view.fit_to_window = true;
+            view.reflow();
+            cx.notify();
+        });
+        cx.run_until_parked();
+        assert!(cx.debug_bounds("ICON-BoltOutlined").is_none());
+        let before = view.read_with(cx, |view, _| view.viewport_width.get());
+        let bounds = cx.debug_bounds("compose-editor").expect("Embedded editor");
+        let divider = cx.debug_bounds("compose-preview-divider").expect("Divider");
+        cx.simulate_mouse_down(divider.center(), MouseButton::Left, Default::default());
+        let position = point(bounds.left() + bounds.size.width * 0.3, divider.center().y);
+        cx.simulate_mouse_move(position, Some(MouseButton::Left), Default::default());
+        cx.run_until_parked();
+        cx.simulate_mouse_up(position, MouseButton::Left, Default::default());
+        cx.run_until_parked();
+        view.read_with(cx, |view, _| {
+            assert!(!view.resizing);
+            assert!((view.preview_fraction - 0.7).abs() < 0.01);
+            assert!(view.viewport_width.get() > before);
+        });
+        let hand = cx.debug_bounds("ICON-Hand").expect("Pan");
+        for selector in ["ICON-Plus", "ICON-Dash", "ICON-MaximizeAlt"] {
+            let control = cx.debug_bounds(selector).expect("Zoom control");
+            assert!(
+                (f32::from(control.center().x - hand.center().x)).abs() < 0.1,
+                "{selector} must share the pan control's center"
+            );
+            assert_eq!(control.size.width, hand.size.width);
+        }
     }
 
     #[gpui::test]
@@ -2912,7 +3409,15 @@ mod tests {
             let (_, _, pane) = add_preview(workspace, project, buffer, window, cx);
             let other = cx.new(|cx| TestItem::new(cx).with_label("Other.kt"));
             pane.update(cx, |pane, cx| {
-                pane.add_item(Box::new(other.clone()), false, false, None, window, cx)
+                pane.add_item_inner(
+                    Box::new(other.clone()),
+                    false,
+                    false,
+                    false,
+                    None,
+                    window,
+                    cx,
+                )
             });
             (source, other, pane)
         });
@@ -2926,12 +3431,20 @@ mod tests {
             assert!(workspace.pane_for(&other).is_some());
             assert!(source.read(cx).is_dirty);
             assert_eq!(source.read(cx).save_count, 0);
-            assert_eq!(pane.read(cx).items_len(), 1);
+            assert_eq!(pane.read(cx).items_len(), 3);
+            assert_eq!(workspace.panes().len(), 1);
+            let editor = pane
+                .read(cx)
+                .active_item()
+                .expect("Source tab")
+                .downcast::<Editor>()
+                .expect("Source editor");
+            assert!(editor.read(cx).addon::<ComposePreviewAddon>().is_none());
         });
     }
 
     #[gpui::test]
-    async fn showing_existing_preview_activates_its_tab(cx: &mut TestAppContext) {
+    async fn showing_existing_preview_keeps_the_source_tab_and_pane(cx: &mut TestAppContext) {
         let (project, buffer) = test_project(cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
@@ -2940,7 +3453,7 @@ mod tests {
         });
         pane.update_in(cx, |pane, window, cx| {
             let other = cx.new(TestItem::new);
-            pane.add_item(Box::new(other), true, false, None, window, cx);
+            pane.add_item_inner(Box::new(other), false, false, false, None, window, cx);
         });
         cx.run_until_parked();
         panel.update_in(cx, |panel, window, cx| {
@@ -2952,15 +3465,14 @@ mod tests {
                 .active_item()
                 .expect("Active preview")
                 .item_id()),
-            view.entity_id()
+            view.read_with(cx, |view, _| view.editor.entity_id())
         );
         assert_eq!(pane.read_with(cx, |pane, _| pane.items_len()), 2);
+        workspace.read_with(cx, |workspace, _| assert_eq!(workspace.panes().len(), 1));
     }
 
     #[gpui::test]
-    async fn refresh_requests_coalesce_and_manual_refresh_survives_auto_off(
-        cx: &mut TestAppContext,
-    ) {
+    async fn refresh_requests_coalesce_and_preserve_manual_refresh(cx: &mut TestAppContext) {
         let (project, buffer) = test_project(cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
@@ -3053,7 +3565,6 @@ mod tests {
         cx.run_until_parked();
         view.update_in(cx, |view, window, cx| {
             assert!(view.visible(cx));
-            view.auto_refresh = true;
             view.queue_refresh(false, window, cx);
             assert!(view.debounce_task.is_some());
         });
@@ -3069,7 +3580,9 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn changing_project_rebinds_an_already_active_kotlin_editor(cx: &mut TestAppContext) {
+    async fn changing_project_creates_an_editor_owned_preview_without_rebinding_other_tabs(
+        cx: &mut TestAppContext,
+    ) {
         let (project, buffer) = test_project(cx).await;
         let other = project
             .update(cx, |project, cx| {
@@ -3111,8 +3624,21 @@ mod tests {
             cx.notify();
         });
         cx.run_until_parked();
+        view.read_with(cx, |view, _| {
+            assert_eq!(view.source_path, Path::new("/android/Main.kt"));
+            assert!(view.configuration_suspended);
+        });
+        let other_view = panel.read_with(cx, |panel, _| {
+            panel
+                .preview_view
+                .as_ref()
+                .expect("Other preview")
+                .upgrade()
+                .expect("Live preview")
+        });
+        assert_ne!(view.entity_id(), other_view.entity_id());
         assert_eq!(
-            view.read_with(cx, |view, _| view.source_path.clone()),
+            other_view.read_with(cx, |view, _| view.source_path.clone()),
             Path::new("/other-android/Main.kt")
         );
     }
