@@ -71,7 +71,7 @@ actions!(
         ConfigureJava,
         /// Builds the selected variant and renders its Compose previews beside the code.
         ComposePreview,
-        /// Shows or hides the most recently rendered Compose preview.
+        /// Shows or hides Compose previews for the active Kotlin file.
         ToggleComposePreview,
     ]
 );
@@ -301,10 +301,8 @@ pub struct AndroidPanel {
     kotlin_refresh_pending: Option<PathBuf>,
     java_task: Option<Task<()>>,
     debug_task: Option<Task<()>>,
-    preview_task: Option<Task<()>>,
-    previews: Vec<android_tools::preview::Preview>,
-    selected_preview: Option<String>,
-    rendered_preview: Option<(PathBuf, AndroidTarget)>,
+    preview_view: Option<WeakEntity<android_preview::ComposePreviewView>>,
+    compose_preview_enabled: bool,
     debug_forward: Option<android_debugger::Forward>,
     _debug_subscriptions: Vec<Subscription>,
     java_refresh: Option<(PathBuf, serde_json::Value)>,
@@ -380,10 +378,8 @@ impl AndroidPanel {
             kotlin_refresh_pending: None,
             java_task: None,
             debug_task: None,
-            preview_task: None,
-            previews: Vec::new(),
-            selected_preview: None,
-            rendered_preview: None,
+            preview_view: None,
+            compose_preview_enabled: false,
             debug_forward: None,
             _debug_subscriptions: Vec::new(),
             java_refresh: None,
@@ -395,6 +391,7 @@ impl AndroidPanel {
     }
 
     fn observe_project_open(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.observe_compose_preview(window, cx);
         self._startup_subscriptions.push(cx.subscribe_in(
             &self.build_panel,
             window,
@@ -922,6 +919,10 @@ impl AndroidPanel {
     }
 
     fn gradle(&mut self, operation: GradleOperation, window: &mut Window, cx: &mut Context<Self>) {
+        if matches!(operation, GradleOperation::Preview) {
+            self.show_compose_preview(window, cx);
+            return;
+        }
         if self.running || self.syncing {
             return;
         }
@@ -2572,7 +2573,6 @@ impl Render for AndroidPanel {
                 .disabled(self.running || self.syncing || self.selected_target.is_none()).tab_index(0isize)
                 .tooltip(Tooltip::text("Build the selected variant and render a Compose @Preview beside the code."))
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))
-            .child(self.preview_picker(cx))
             .child(Button::new("logcat", "Open Logcat").start_icon(Icon::new(IconName::Logcat))
                 .tab_index(0isize)
                 .on_click(cx.listener(|panel, _, window, cx| panel.logcat(window, cx))))
@@ -3877,7 +3877,7 @@ fi
                     panel.java_task.is_none(),
                     "must not start B's Gradle export"
                 );
-                assert!(panel.preview_task.is_none(), "must not start B's renderer");
+                assert!(panel.preview_view.is_none(), "must not start B's renderer");
                 assert!(
                     panel.emulator_task.is_none(),
                     "must not deploy in another root"

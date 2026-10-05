@@ -205,8 +205,9 @@ Do not run builds or other performance probes during timing collection.
 
 ## Java, debugging, and preview
 
-Run `script/install-android-kotlin`, `script/install-android-debugger`, and
-`script/install-android-preview` once before launching the IDE. **Configure Java**
+Run `script/install-android-kotlin` and `script/install-android-debugger`
+once before launching the IDE. Compose preview dependencies are bundled by Cargo;
+`cargo run --locked -p zed --bin koda` needs no separate preview setup. **Configure Java**
 imports the selected variant into JDT LS. Once configured, managed official Kotlin
 setup refreshes that Java model after variant or Gradle input changes. Java model
 refresh can compile sources; failure leaves Kotlin editing available. Only JDT is
@@ -221,9 +222,10 @@ starts Android debugging, Command-Option-R continues, Shift-F8 steps out, and
 Command-F2 disconnects. `script/test-android-debugger --device emulator-5554` provides an
 explicit emulator-only smoke test after building `demoDebug`.
 
-**Compose preview** builds the selected variant and opens a rendered image beside
-the code. **Select preview…** switches between the default and large-text
-annotations. Rendering uses downloaded Google tooling, JDK 21, and the selected
-variant's resources; Android Studio and a running device are unnecessary. Refresh
-after code changes. Interactive previews and multi-value preview parameter
-galleries are not implemented.
+**Compose preview** opens all previews for the active Kotlin file beside the code,
+including multipreview annotations and parameter values. Use **Build & Refresh**
+or leave **Auto** enabled to rebuild after edits, including unsaved Kotlin changes.
+Click a preview to inspect its layout outlines, then click a component to navigate
+to its source. Rendering uses bundled Google tooling, bundled Java 21, and the selected
+variant's resources. See [Compose previews](COMPOSE_PREVIEW.md) for controls,
+implementation research, compatibility boundaries, and integration checks.
