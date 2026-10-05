@@ -71,7 +71,7 @@ actions!(
         ConfigureJava,
         /// Builds the selected variant and renders its Compose previews beside the code.
         ComposePreview,
-        /// Shows or hides the most recently rendered Compose preview.
+        /// Shows or hides Compose previews for the active Kotlin file.
         ToggleComposePreview,
     ]
 );
@@ -321,10 +321,8 @@ pub struct AndroidPanel {
     kotlin_refresh_pending: Option<PathBuf>,
     java_task: Option<Task<()>>,
     debug_task: Option<Task<()>>,
-    preview_task: Option<Task<()>>,
-    previews: Vec<android_tools::preview::Preview>,
-    selected_preview: Option<String>,
-    rendered_preview: Option<(PathBuf, AndroidTarget)>,
+    preview_view: Option<WeakEntity<android_preview::ComposePreviewView>>,
+    compose_preview_enabled: bool,
     debug_forward: Option<android_debugger::Forward>,
     _debug_subscriptions: Vec<Subscription>,
     java_refresh: Option<(
@@ -420,10 +418,8 @@ impl AndroidPanel {
             kotlin_refresh_pending: None,
             java_task: None,
             debug_task: None,
-            preview_task: None,
-            previews: Vec::new(),
-            selected_preview: None,
-            rendered_preview: None,
+            preview_view: None,
+            compose_preview_enabled: false,
             debug_forward: None,
             _debug_subscriptions: Vec::new(),
             java_refresh: None,
@@ -436,6 +432,7 @@ impl AndroidPanel {
     }
 
     fn observe_project_open(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.observe_compose_preview(window, cx);
         self._startup_subscriptions.push(cx.subscribe_in(
             &self.build_panel,
             window,
@@ -663,7 +660,6 @@ impl AndroidPanel {
             if let Some((tab, _)) = self.active_build_session {
                 self.cancel_build(tab, cx);
             }
-            self.preview_task = None;
             self.deploy_task = None;
             self.debug_task = None;
             self.emulator_task = None;
@@ -717,7 +713,6 @@ impl AndroidPanel {
             self.invalidate_model(None, cx);
             self.pending_gradle_operation = None;
             self.active_operation_id = None;
-            self.preview_task = None;
             self.deploy_task = None;
             self.debug_task = None;
             self.root = None;
@@ -835,7 +830,7 @@ impl AndroidPanel {
                         is_gradle_project(&root),
                         "This folder has no Gradle wrapper. Open the project's Gradle root."
                     );
-                    let init = android_tools::project_model::prepare(&root)?;
+                    let init = android_tools::project_model::prepare()?;
                     let program = if cfg!(windows) {
                         root.join("gradlew.bat")
                     } else {
@@ -848,7 +843,10 @@ impl AndroidPanel {
                     };
                     arguments.extend([
                         "--init-script".into(),
-                        init.to_string_lossy().into_owned(),
+                        init.path()
+                            .join("export.gradle")
+                            .to_string_lossy()
+                            .into_owned(),
                         android_tools::project_model::MODEL_TASK.into(),
                         "--no-configuration-cache".into(),
                         "--console=plain".into(),
@@ -1075,6 +1073,10 @@ impl AndroidPanel {
     }
 
     fn gradle(&mut self, operation: GradleOperation, window: &mut Window, cx: &mut Context<Self>) {
+        if matches!(operation, GradleOperation::Preview) {
+            self.show_compose_preview(window, cx);
+            return;
+        }
         if self.running || self.syncing {
             return;
         }
@@ -2365,9 +2367,6 @@ impl AndroidPanel {
         }
         self.java_refresh = None;
         self.java_status_subscription = None;
-        self.rendered_preview = None;
-        self.previews.clear();
-        self.selected_preview = None;
         self.project
             .update(cx, |project, cx| project.invalidate_android_model(root, cx))
     }
@@ -2375,7 +2374,6 @@ impl AndroidPanel {
     fn cancel_model_followup(&mut self, cx: &mut Context<Self>) {
         if self.followup_model_token.take().is_some() {
             self.deploy_task = None;
-            self.preview_task = None;
             self.debug_task = None;
             self.emulator_task = None;
             self.emulator_startup = None;
@@ -2388,9 +2386,6 @@ impl AndroidPanel {
         self.pause_managed_java(cx).log_err();
         self.java_refresh = None;
         self.java_status_subscription = None;
-        self.rendered_preview = None;
-        self.previews.clear();
-        self.selected_preview = None;
         let id = self
             .selected_target
             .as_ref()
@@ -3118,7 +3113,6 @@ impl Render for AndroidPanel {
                 .disabled(self.running || self.syncing || self.selected_target.is_none()).tab_index(0isize)
                 .tooltip(Tooltip::text("Build the selected variant and render a Compose @Preview beside the code."))
                 .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))
-            .child(self.preview_picker(cx))
             .child(Button::new("logcat", "Open Logcat").start_icon(Icon::new(IconName::Logcat))
                 .tab_index(0isize)
                 .on_click(cx.listener(|panel, _, window, cx| panel.logcat(window, cx))))
@@ -3935,7 +3929,7 @@ mod tests {
     use serde_json::json;
     use workspace::AppState;
 
-    fn publish_test_android_model(
+    pub(super) fn publish_test_android_model(
         panel: &mut AndroidPanel,
         target: &AndroidTarget,
         cx: &mut Context<AndroidPanel>,
@@ -4332,8 +4326,6 @@ mod tests {
             panel.debug_task = Some(cx.spawn(async |_, _| futures::future::pending::<()>().await));
             panel.emulator_task =
                 Some(cx.spawn(async |_, _| futures::future::pending::<()>().await));
-            panel.preview_task =
-                Some(cx.spawn(async |_, _| futures::future::pending::<()>().await));
         });
         cx.run_until_parked();
         assert!(panel.read_with(cx, |panel, _| panel.running));
@@ -4347,7 +4339,6 @@ mod tests {
             assert!(panel.deploy_task.is_none());
             assert!(panel.debug_task.is_none());
             assert!(panel.emulator_task.is_none());
-            assert!(panel.preview_task.is_none());
         });
     }
 
@@ -4968,7 +4959,7 @@ fi
                     panel.java_task.is_none(),
                     "must not start B's Gradle export"
                 );
-                assert!(panel.preview_task.is_none(), "must not start B's renderer");
+                assert!(panel.preview_view.is_none(), "must not start B's renderer");
                 assert!(
                     panel.emulator_task.is_none(),
                     "must not deploy in another root"

@@ -20,130 +20,141 @@ gradle.beforeProject { project ->
     }
 }
 gradle.projectsEvaluated {
-    gradle.rootProject.tasks.register('kodaAndroidProjectModel') {
-        // AGP 8 forbids reading task-backed source providers until their producers finish.
-        androidVariants.values().flatten().each { variant ->
-            def components = [variant, optional(variant, 'unitTest'), optional(variant, 'androidTest'), optional(variant, 'testFixtures')]
-            components.addAll((optional(variant, 'hostTests') ?: [:]).values())
-            components.addAll((optional(variant, 'deviceTests') ?: [:]).values())
-            components.findAll { it != null }.unique { it.name }.each { component ->
-                ['java', 'kotlin', 'res', 'manifests'].each { kind ->
-                    def provider = optional(optional(component.sources, kind), 'all')
-                    if (provider != null) inputs.files(provider)
+    def root = gradle.rootProject
+    if (!gradle.includedBuilds.isEmpty()) throw new GradleException('Koda Android model does not yet support included builds: ' + gradle.includedBuilds*.name.join(', '))
+    def unsupported = root.allprojects.findAll { it.plugins.hasPlugin('com.android.kotlin.multiplatform.library') }
+    if (!unsupported.isEmpty()) throw new GradleException('Koda Android model does not yet support the Android multiplatform library plugin: ' + unsupported*.path.join(', '))
+    if (androidKinds.values().contains('test')) throw new GradleException('Koda Android model does not yet support standalone com.android.test modules; nested unit and device tests remain supported')
+    def attributes = { configuration ->
+        configuration.attributes.keySet().findAll { it.name == 'com.android.build.api.attributes.BuildTypeAttr' || it.name.startsWith('com.android.build.api.attributes.ProductFlavor:') }.collectEntries {
+            [(it.name): configuration.attributes.getAttribute(it).toString()]
+        }
+    }
+    def configuration = { project, component ->
+        def result = optional(component, 'compileConfiguration') ?: project.configurations.findByName(component.name + 'CompileClasspath')
+        if (result == null) throw new GradleException('No compile configuration for ' + project.path + ':' + component.name)
+        result
+    }
+    def variantCatalog = androidVariants.collectEntries { path, variants ->
+        def owner = root.project(path)
+        [(path): variants.collect { [name: it.name, attributes: attributes(configuration(owner, it))] }]
+    }
+    def projectPaths = root.allprojects*.path as Set
+    def jvmProjects = root.allprojects.findAll { !androidVariants.containsKey(it.path) && it.extensions.findByName('sourceSets') != null }
+    def jvmPaths = jvmProjects*.path as Set
+    def dependencies = { project, config ->
+        config.incoming.resolutionResult.allDependencies.collect { dependency ->
+            if (dependency instanceof UnresolvedDependencyResult) throw new GradleException('Cannot resolve ' + config.name + ': ' + dependency.attempted, dependency.failure)
+            if (!(dependency instanceof ResolvedDependencyResult)) return null
+            def id = dependency.selected.id
+            if (id instanceof ProjectComponentIdentifier) {
+                if (id.buildTreePath != id.projectPath) throw new GradleException('Koda Android model cannot import an included-build dependency: ' + id.displayName)
+                def target = id.projectPath
+                if (!projectPaths.contains(target)) throw new GradleException('Dependency is outside the selected build: ' + id.displayName)
+                if (variantCatalog.containsKey(target)) {
+                    def selectedAttributes = dependency.resolvedVariant.attributes
+                    def expected = selectedAttributes.keySet().findAll { it.name == 'com.android.build.api.attributes.BuildTypeAttr' || it.name.startsWith('com.android.build.api.attributes.ProductFlavor:') }.collectEntries { [(it.name): selectedAttributes.getAttribute(it).toString()] }
+                    def candidates = variantCatalog[target].findAll { candidate ->
+                        def actual = candidate.attributes
+                        !expected.isEmpty() && expected.every { key, value -> actual[key] == value }
+                    }
+                    if (candidates.size() != 1) throw new GradleException('Cannot map Gradle attributes ' + expected + ' to one variant of ' + target)
+                    return [kind: 'project', module: target, variant: candidates.first().name]
                 }
+                if (jvmPaths.contains(target)) return [kind: 'project', module: target, variant: 'jvm']
+                throw new GradleException('Unsupported project dependency: ' + target)
+            }
+            [kind: 'external', coordinate: id.displayName]
+        }.findAll { it != null }.unique()
+    }
+    def sources = { project, component ->
+        def result = []
+        ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources'].each { property, kind ->
+            def source = optional(component.sources, property)
+            def provider = optional(source, 'all')
+            def staticProvider = optional(source, 'static')
+            def staticPaths = staticProvider?.get()?.flatten()?.collect { it.asFile.canonicalPath } as Set
+            def buildPath = project.layout.buildDirectory.get().asFile.canonicalFile.toPath()
+            if (staticProvider != null) {
+                // AGP's static provider can omit variant-only roots; the DSL owns those directories.
+                staticPaths = staticPaths.findAll { !new File(it).toPath().startsWith(buildPath) } as Set
+                project.extensions.getByName('android').sourceSets.each { sourceSet ->
+                    def conventional = optional(sourceSet, property)
+                    if (conventional != null) staticPaths.addAll(conventional.srcDirs.collect { it.canonicalPath })
+                }
+            }
+            if (provider != null) provider.get().flatten().each { directory ->
+                def file = directory.asFile.canonicalFile
+                def generated = staticProvider != null ? !staticPaths.contains(file.path) : file.toPath().startsWith(buildPath)
+                result.add([path: file.path, kind: kind, generated: generated])
             }
         }
-        doLast {
-            def root = gradle.rootProject
-            if (!gradle.includedBuilds.isEmpty()) throw new GradleException('Koda Android model does not yet support included builds: ' + gradle.includedBuilds*.name.join(', '))
-            def unsupported = root.allprojects.findAll { it.plugins.hasPlugin('com.android.kotlin.multiplatform.library') }
-            if (!unsupported.isEmpty()) throw new GradleException('Koda Android model does not yet support the Android multiplatform library plugin: ' + unsupported*.path.join(', '))
-            if (androidKinds.values().contains('test')) throw new GradleException('Koda Android model does not yet support standalone com.android.test modules; nested unit and device tests remain supported')
-            def attributes = { configuration ->
-                configuration.attributes.keySet().findAll { it.name == 'com.android.build.api.attributes.BuildTypeAttr' || it.name.startsWith('com.android.build.api.attributes.ProductFlavor:') }.collectEntries {
-                    [(it.name): configuration.attributes.getAttribute(it).toString()]
-                }
+        // Kotlin Android before AGP 9 registers its compilation source sets in KGP.
+        def kotlin = project.extensions.findByName('kotlin')
+        def compilation = optional(optional(kotlin, 'target'), 'compilations')?.findByName(component.name)
+        if (compilation != null) compilation.allKotlinSourceSets.each { sourceSet ->
+            sourceSet.kotlin.srcDirs.each { directory ->
+                def file = directory.canonicalFile
+                result.add([path: file.path, kind: 'kotlin', generated: file.toPath().startsWith(project.layout.buildDirectory.get().asFile.canonicalFile.toPath())])
             }
-            def configuration = { project, component ->
-                def result = optional(component, 'compileConfiguration') ?: project.configurations.findByName(component.name + 'CompileClasspath')
-                if (result == null) throw new GradleException('No compile configuration for ' + project.path + ':' + component.name)
-                result
-            }
-            def dependencies = { project, config ->
-                config.incoming.resolutionResult.allDependencies.collect { dependency ->
-                    if (dependency instanceof UnresolvedDependencyResult) throw new GradleException('Cannot resolve ' + config.name + ': ' + dependency.attempted, dependency.failure)
-                    if (!(dependency instanceof ResolvedDependencyResult)) return null
-                    def id = dependency.selected.id
-                    if (id instanceof ProjectComponentIdentifier) {
-                        if (id.buildTreePath != id.projectPath) throw new GradleException('Koda Android model cannot import an included-build dependency: ' + id.displayName)
-                        def target = root.findProject(id.projectPath)
-                        if (target == null) throw new GradleException('Dependency is outside the selected build: ' + id.displayName)
-                        if (androidVariants.containsKey(target.path)) {
-                            def selectedAttributes = dependency.resolvedVariant.attributes
-                            def expected = selectedAttributes.keySet().findAll { it.name == 'com.android.build.api.attributes.BuildTypeAttr' || it.name.startsWith('com.android.build.api.attributes.ProductFlavor:') }.collectEntries { [(it.name): selectedAttributes.getAttribute(it).toString()] }
-                            def candidates = androidVariants[target.path].findAll { candidate ->
-                                def actual = attributes(configuration(target, candidate))
-                                !expected.isEmpty() && expected.every { key, value -> actual[key] == value }
-                            }
-                            if (candidates.size() != 1) throw new GradleException('Cannot map Gradle attributes ' + expected + ' to one variant of ' + target.path)
-                            return [kind: 'project', module: target.path, variant: candidates.first().name]
-                        }
-                        if (target.extensions.findByName('sourceSets') != null) return [kind: 'project', module: target.path, variant: 'jvm']
-                        throw new GradleException('Unsupported project dependency: ' + target.path)
-                    }
-                    [kind: 'external', coordinate: id.displayName]
-                }.findAll { it != null }.unique()
-            }
-            def sources = { project, component ->
-                def result = []
-                ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources'].each { property, kind ->
-                    def source = optional(component.sources, property)
-                    def provider = optional(source, 'all')
-                    def staticProvider = optional(source, 'static')
-                    def staticPaths = staticProvider?.get()?.flatten()?.collect { it.asFile.canonicalPath } as Set
-                    def buildPath = project.layout.buildDirectory.get().asFile.canonicalFile.toPath()
-                    if (staticProvider != null) {
-                        // AGP's static provider can omit variant-only roots; the DSL owns those directories.
-                        staticPaths = staticPaths.findAll { !new File(it).toPath().startsWith(buildPath) } as Set
-                        project.extensions.getByName('android').sourceSets.each { sourceSet ->
-                            def conventional = optional(sourceSet, property)
-                            if (conventional != null) staticPaths.addAll(conventional.srcDirs.collect { it.canonicalPath })
-                        }
-                    }
-                    if (provider != null) provider.get().flatten().each { directory ->
-                        def file = directory.asFile.canonicalFile
-                        def generated = staticProvider != null ? !staticPaths.contains(file.path) : file.toPath().startsWith(buildPath)
-                        result.add([path: file.path, kind: kind, generated: generated])
-                    }
-                }
-                // Kotlin Android before AGP 9 registers its compilation source sets in KGP.
-                def kotlin = project.extensions.findByName('kotlin')
-                def compilation = optional(optional(kotlin, 'target'), 'compilations')?.findByName(component.name)
-                if (compilation != null) compilation.allKotlinSourceSets.each { sourceSet ->
-                    sourceSet.kotlin.srcDirs.each { directory ->
-                        def file = directory.canonicalFile
-                        result.add([path: file.path, kind: 'kotlin', generated: file.toPath().startsWith(project.layout.buildDirectory.get().asFile.canonicalFile.toPath())])
+        }
+        def manifests = optional(optional(component.sources, 'manifests'), 'all')
+        if (manifests != null) manifests.get().each { manifest ->
+            def file = manifest.asFile.canonicalFile
+            result.add([path: file.path, kind: 'manifest', generated: file.toPath().startsWith(project.layout.buildDirectory.get().asFile.canonicalFile.toPath())])
+        }
+        result.unique()
+    }
+    def resourceModel = { project, component, scope ->
+        def layers = optional(optional(component.sources, 'res'), 'all')?.get()?.collect { layer ->
+            (layer instanceof Collection ? layer : [layer]).collect { it.asFile.canonicalPath }
+        } ?: []
+        def config = configuration(project, component)
+        def artifact = { type -> config.incoming.artifactView { view ->
+            view.attributes.attribute(org.gradle.api.attributes.Attribute.of('artifactType', String), type)
+            view.componentFilter { !(it instanceof ProjectComponentIdentifier) }
+            view.lenient true
+        }.artifacts.artifacts }
+        def publicResources = artifact('android-public-res').collectEntries { [(it.id.componentIdentifier.displayName): it.file.canonicalPath] }
+        def manifests = artifact('android-manifest').collectEntries { [(it.id.componentIdentifier.displayName): it.file] }
+        def external = artifact('android-res').collect { entry ->
+            def manifest = manifests[entry.id.componentIdentifier.displayName]
+            if (manifest == null || !manifest.isFile() || !entry.file.isDirectory()) return null
+            def packageName = new groovy.xml.XmlSlurper(false, false).parse(manifest).@package.text()
+            packageName ? [namespace: packageName, path: entry.file.canonicalPath, manifest: manifest.canonicalPath, publicResources: publicResources[entry.id.componentIdentifier.displayName]] : null
+        }.findAll { it != null }.unique()
+        def android = project.extensions.getByName('android')
+        def sdk = project.extensions.getByName('androidComponents').sdkComponents.sdkDirectory.get().asFile
+        def framework = new File(sdk, 'platforms/' + android.compileSdkVersion + '/data/res')
+        def merged = null
+        if (scope == 'main') {
+            def type = component.class.classLoader.loadClass('com.android.build.api.artifact.SingleArtifact$MERGED_MANIFEST')
+            merged = component.artifacts.get(type.getField('INSTANCE').get(null)).get().asFile.canonicalPath
+        }
+        [nonTransitiveR: project.findProperty('android.nonTransitiveRClass')?.toString() != 'false', layers: layers, dependencies: external, framework: framework.isDirectory() ? framework.canonicalPath : null, mergedManifest: merged]
+    }
+    // Under parallel execution Gradle holds the task owner's project lock only.
+    // Collect each module there, then aggregate plain data without resolving foreign configurations.
+    def models = new java.util.concurrent.ConcurrentHashMap()
+    def resourceModels = new java.util.concurrent.ConcurrentHashMap()
+    def collectors = []
+    androidVariants.each { path, variants ->
+        def project = root.project(path)
+        collectors.add(project.tasks.register('kodaAndroidModuleModel') {
+            // AGP 8 forbids reading task-backed source providers until their producers finish.
+            variants.each { variant ->
+                def components = [variant, optional(variant, 'unitTest'), optional(variant, 'androidTest'), optional(variant, 'testFixtures')]
+                components.addAll((optional(variant, 'hostTests') ?: [:]).values())
+                components.addAll((optional(variant, 'deviceTests') ?: [:]).values())
+                components.findAll { it != null }.unique { it.name }.each { component ->
+                    ['java', 'kotlin', 'res', 'manifests'].each { kind ->
+                        def provider = optional(optional(component.sources, kind), 'all')
+                        if (provider != null) inputs.files(provider)
                     }
                 }
-                def manifests = optional(optional(component.sources, 'manifests'), 'all')
-                if (manifests != null) manifests.get().each { manifest ->
-                    def file = manifest.asFile.canonicalFile
-                    result.add([path: file.path, kind: 'manifest', generated: file.toPath().startsWith(project.layout.buildDirectory.get().asFile.canonicalFile.toPath())])
-                }
-                result.unique()
             }
-            def resourceModels = [:]
-            def resourceModel = { project, component, scope ->
-                def layers = optional(optional(component.sources, 'res'), 'all')?.get()?.collect { layer ->
-                    (layer instanceof Collection ? layer : [layer]).collect { it.asFile.canonicalPath }
-                } ?: []
-                def config = configuration(project, component)
-                def artifact = { type -> config.incoming.artifactView { view ->
-                    view.attributes.attribute(org.gradle.api.attributes.Attribute.of('artifactType', String), type)
-                    view.componentFilter { !(it instanceof ProjectComponentIdentifier) }
-                    view.lenient true
-                }.artifacts.artifacts }
-                def publicResources = artifact('android-public-res').collectEntries { [(it.id.componentIdentifier.displayName): it.file.canonicalPath] }
-                def manifests = artifact('android-manifest').collectEntries { [(it.id.componentIdentifier.displayName): it.file] }
-                def external = artifact('android-res').collect { entry ->
-                    def manifest = manifests[entry.id.componentIdentifier.displayName]
-                    if (manifest == null || !manifest.isFile() || !entry.file.isDirectory()) return null
-                    def packageName = new groovy.xml.XmlSlurper(false, false).parse(manifest).@package.text()
-                    packageName ? [namespace: packageName, path: entry.file.canonicalPath, manifest: manifest.canonicalPath, publicResources: publicResources[entry.id.componentIdentifier.displayName]] : null
-                }.findAll { it != null }.unique()
-                def android = project.extensions.getByName('android')
-                def sdk = project.extensions.getByName('androidComponents').sdkComponents.sdkDirectory.get().asFile
-                def framework = new File(sdk, 'platforms/' + android.compileSdkVersion + '/data/res')
-                def merged = null
-                if (scope == 'main') {
-                    def type = component.class.classLoader.loadClass('com.android.build.api.artifact.SingleArtifact$MERGED_MANIFEST')
-                    merged = component.artifacts.get(type.getField('INSTANCE').get(null)).get().asFile.canonicalPath
-                }
-                [nonTransitiveR: project.findProperty('android.nonTransitiveRClass')?.toString() != 'false', layers: layers, dependencies: external, framework: framework.isDirectory() ? framework.canonicalPath : null, mergedManifest: merged]
-            }
-            def modules = androidVariants.collect { path, variants ->
-                def project = root.project(path)
-                [path: path, directory: project.projectDir.canonicalPath, namespace: project.extensions.getByName('android').namespace,
+            doLast {
+                models[path] = [path: path, directory: project.projectDir.canonicalPath, namespace: project.extensions.getByName('android').namespace,
                  kind: androidKinds[path], variants: variants.collect { variant ->
                     def components = [[component: variant, scope: 'main']]
                     def add = { component, scope -> if (component != null && !components.any { it.component.name == component.name }) components.add([component: component, scope: scope]) }
@@ -164,8 +175,7 @@ gradle.projectsEvaluated {
                         if (entry.scope == 'main' && androidKinds[path] == 'application') {
                             (project.extensions.getByName('android').dynamicFeatures ?: []).each { feature ->
                                 def expected = attributes(configuration(project, variant))
-                                def featureProject = root.project(feature)
-                                def candidates = (androidVariants[feature] ?: []).findAll { attributes(configuration(featureProject, it)) == expected }
+                                def candidates = (variantCatalog[feature] ?: []).findAll { it.attributes == expected }
                                 if (candidates.size() != 1) throw new GradleException('Cannot map dynamic feature ' + feature + ' to ' + path + ':' + variant.name)
                                 graph.add([kind: 'project', module: feature, variant: candidates.first().name])
                             }
@@ -175,7 +185,17 @@ gradle.projectsEvaluated {
                     }]
                  }]
             }
-            root.allprojects.findAll { !androidVariants.containsKey(it.path) && it.extensions.findByName('sourceSets') != null }.each { project ->
+        })
+    }
+    jvmProjects.each { project ->
+        collectors.add(project.tasks.register('kodaAndroidModuleModel') {
+            project.extensions.getByName('sourceSets').findAll { it.name in ['main', 'test'] }.each { sourceSet ->
+                // Source file trees carry the producer dependencies of task-backed JVM roots.
+                inputs.files(sourceSet.java)
+                def kotlin = optional(sourceSet, 'kotlin')
+                if (kotlin != null) inputs.files(kotlin)
+            }
+            doLast {
                 def sourceSets = project.extensions.getByName('sourceSets')
                 def components = sourceSets.findAll { it.name in ['main', 'test'] }.collect { sourceSet ->
                     def roots = sourceSet.java.srcDirs.collect { [path: it.canonicalPath, kind: 'java', generated: it.toPath().startsWith(project.layout.buildDirectory.get().asFile.toPath())] }
@@ -184,10 +204,17 @@ gradle.projectsEvaluated {
                     [name: sourceSet.name, scope: sourceSet.name == 'main' ? 'main' : 'unitTest', sources: roots,
                      dependencies: dependencies(project, project.configurations.getByName(sourceSet.compileClasspathConfigurationName))]
                 }
-                modules.add([path: project.path, directory: project.projectDir.canonicalPath, namespace: null, kind: 'jvm', variants: [[name: 'jvm', outputListing: null, components: components]]])
+                models[project.path] = [path: project.path, directory: project.projectDir.canonicalPath, namespace: null, kind: 'jvm', variants: [[name: 'jvm', outputListing: null, components: components]]]
             }
+        })
+    }
+    root.tasks.register('kodaAndroidProjectModel') {
+        dependsOn(collectors)
+        doLast {
+            def modules = models.entrySet().sort { it.key }.collect { it.value }
+            if (modules.size() != collectors.size()) throw new GradleException('Android module collection did not finish; sync again')
             def diagnostics = modules.any { it.kind == 'application' } ? [] : ['No runnable application module was found. Library-only builds are catalogued, but selecting an application target is currently required for language setup, build/run/debug, and previews.']
-            println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics, resourceModels: resourceModels]))
+            println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics, resourceModels: resourceModels.entrySet().sort { it.key }.collectEntries { [(it.key): it.value] }]))
         }
     }
 }
