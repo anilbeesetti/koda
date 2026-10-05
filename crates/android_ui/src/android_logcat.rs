@@ -385,6 +385,22 @@ impl LogcatView {
         self.watch_devices(cx);
     }
 
+    pub(super) fn stop_for_project_close(&mut self, cx: &mut Context<Self>) {
+        self.stream_task = None;
+        self.device_task = None;
+        self.control_task = None;
+        self.capturing = false;
+        self.stopped = true;
+        self.status = "Android project closed. Capture stopped.".into();
+        cx.notify();
+    }
+
+    pub(super) fn resume_device_discovery(&mut self, cx: &mut Context<Self>) {
+        if self.device_task.is_none() {
+            self.watch_devices(cx);
+        }
+    }
+
     fn current_targets(&self, cx: &App) -> Vec<AndroidTarget> {
         self.workspace
             .read_with(cx, |workspace, cx| {

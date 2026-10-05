@@ -642,6 +642,12 @@ impl AndroidPanel {
         window.defer(cx, move |window, cx| {
             workspace
                 .update(cx, |workspace, cx| {
+                    if workspace.project().read(cx).is_android_project(cx) {
+                        return;
+                    }
+                    if let Some(panel) = workspace.panel::<LogcatPanel>(cx) {
+                        panel.update(cx, |panel, cx| panel.stop_for_project_close(cx));
+                    }
                     let active_panels = workspace
                         .all_docks()
                         .iter()
@@ -4015,6 +4021,9 @@ mod tests {
             workspace.add_panel(panel.clone(), window, cx)
         });
         let build_panel = panel.read(cx).build_panel.clone();
+        workspace.update_in(cx, |workspace, window, cx| {
+            workspace.add_panel(build_panel.clone(), window, cx);
+        });
         let logcat_panel = workspace.update_in(cx, |workspace, window, cx| {
             let logcat_panel = cx.new(|cx| LogcatPanel::new(workspace, window, cx));
             workspace.add_panel(logcat_panel.clone(), window, cx);
@@ -4050,6 +4059,10 @@ mod tests {
             assert!(logcat_panel.read(cx).enabled(cx));
             assert!(logcat_panel.read(cx).icon(window, cx).is_some());
         });
+        workspace.update_in(cx, |workspace, window, cx| {
+            workspace.reveal_panel::<BuildPanel>(window, cx);
+            assert!(workspace.bottom_dock().read(cx).is_open());
+        });
         project.update(cx, |project, cx| {
             let id = project.visible_worktrees(cx).next().unwrap().read(cx).id();
             project.remove_worktree(id, cx);
@@ -4064,6 +4077,13 @@ mod tests {
             assert!(build_panel.read(cx).icon(window, cx).is_none());
             assert!(!logcat_panel.read(cx).enabled(cx));
             assert!(logcat_panel.read(cx).icon(window, cx).is_none());
+        });
+        workspace.update_in(cx, |workspace, window, cx| {
+            workspace.close_panel::<BuildPanel>(window, cx);
+            workspace.toggle_dock(DockPosition::Bottom, window, cx);
+            assert!(!workspace.bottom_dock().read(cx).is_open());
+            workspace.toggle_dock(DockPosition::Bottom, window, cx);
+            assert!(!workspace.bottom_dock().read(cx).is_open());
         });
     }
 
@@ -5803,7 +5823,10 @@ fi
         filesystem
             .insert_tree(
                 "/android",
-                json!({"settings.gradle.kts": "", "gradlew": ""}),
+                json!({
+                    "settings.gradle.kts": "", "gradlew": "",
+                    "app": {"build.gradle.kts": "", "src": {"main": {"AndroidManifest.xml": "<manifest/>"}}}
+                }),
             )
             .await;
         let project =

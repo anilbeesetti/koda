@@ -580,6 +580,22 @@ impl Dock {
     }
 
     fn set_open_internal(&mut self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
+        if open
+            && self
+                .active_panel_entry()
+                .is_some_and(|entry| !entry.panel.enabled(cx))
+        {
+            if let Some(panel_index) = self
+                .panel_entries
+                .iter()
+                .position(|entry| entry.panel.enabled(cx))
+            {
+                self.activate_panel_internal(panel_index, window, cx);
+            } else {
+                self.set_open_internal(false, window, cx);
+                return;
+            }
+        }
         if open != self.is_open {
             self.is_open = open;
             if let Some(active_panel) = self.active_panel_entry() {
@@ -1374,12 +1390,13 @@ impl Render for Dock {
 }
 
 impl PanelButtons {
-    pub fn new(dock: Entity<Dock>, cx: &mut Context<Self>) -> Self {
+    pub fn new(
+        dock: Entity<Dock>,
+        project: &Entity<project::Project>,
+        cx: &mut Context<Self>,
+    ) -> Self {
         cx.observe(&dock, |_, _, cx| cx.notify()).detach();
-        if let Some(workspace) = dock.read(cx).workspace.upgrade() {
-            cx.observe(workspace.read(cx).project(), |_, _, cx| cx.notify())
-                .detach();
-        }
+        cx.observe(project, |_, _, cx| cx.notify()).detach();
         let settings_subscription = cx.observe_global::<SettingsStore>(|_, cx| cx.notify());
         Self {
             dock,
