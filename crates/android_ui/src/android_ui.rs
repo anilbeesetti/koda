@@ -2441,16 +2441,30 @@ impl AndroidPanel {
                 .find(|target| &target.module == module && &target.variant == variant)
                 .cloned()
         } else {
-            let mut debug_targets = targets.iter().filter(|target| target.variant == "debug");
-            let debug_target = debug_targets.next();
-            if debug_target.is_some() && debug_targets.next().is_none() {
-                debug_target.cloned()
-            } else if targets.len() == 1 {
-                targets.first().cloned()
-            } else {
-                None
-            }
+            self.project
+                .read(cx)
+                .android_model()
+                .model
+                .as_ref()
+                .and_then(|model| model.default_target())
+                .filter(|target| targets.contains(target))
+                .or_else(|| {
+                    // Older model catalogs only expose flattened variant names.
+                    targets
+                        .iter()
+                        .min_by_key(|target| {
+                            (
+                                !(target.variant == "debug" || target.variant.ends_with("Debug")),
+                                &target.module,
+                                &target.variant,
+                            )
+                        })
+                        .cloned()
+                })
         };
+        if preferred.is_none() {
+            self.remember_target(cx);
+        }
         self.status = if preferred.is_some() && self.selected_target.is_none() {
             "The previous build variant is unavailable. Select a build variant to continue.".into()
         } else {
@@ -5721,6 +5735,182 @@ fi
         panel.read_with(cx, |panel, _| {
             assert_eq!(panel.selected_serial.as_deref(), Some("replacement"));
             assert!(panel.selected_device().is_ok());
+        });
+    }
+
+    #[gpui::test]
+    async fn default_build_variant_uses_the_gradle_model(cx: &mut TestAppContext) {
+        let _app_state = cx.update(AppState::test);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree("/gradle-default-model", json!({"settings.gradle.kts": ""}))
+            .await;
+        let project = Project::test(fs, [Path::new("/gradle-default-model")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        panel.update(cx, |panel, cx| {
+            let root = PathBuf::from("/gradle-default-model");
+            panel.root = Some(root.clone());
+            let variants = ["demoDebug", "fullRelease"].map(|name| json!({
+                "name": name, "outputListing": root.join(name).join("output.json"),
+                "components": [{"name": name, "scope": "main", "sources": [], "dependencies": []}]
+            }));
+            let model: android_tools::project_model::ProjectModel = serde_json::from_value(json!({
+                "version": 1, "root": root, "diagnostics": [], "modules": [{
+                    "path": ":mobile", "directory": root.join("mobile"),
+                    "kind": "application", "defaultVariant": "fullRelease",
+                    "variants": variants
+                }]
+            }))
+            .expect("Gradle model");
+            let targets = model.targets();
+            panel.project.update(cx, |project, cx| {
+                let token = project.invalidate_android_model(Some(root), cx);
+                project
+                    .publish_android_model(&token, model, cx)
+                    .expect("Publish model");
+            });
+            panel.apply_targets(targets, cx);
+            panel
+                .publish_selection(cx)
+                .expect("Publish default selection");
+            assert_eq!(
+                panel
+                    .selected_target
+                    .as_ref()
+                    .expect("Gradle default")
+                    .variant,
+                "fullRelease"
+            );
+            assert_eq!(
+                panel
+                    .project
+                    .read(cx)
+                    .android_model()
+                    .selected
+                    .as_ref()
+                    .expect("Shared selection")
+                    .selected
+                    .variant,
+                "fullRelease"
+            );
+        });
+        cx.run_until_parked();
+    }
+
+    #[gpui::test]
+    async fn default_build_variant_is_selected_and_remembered(cx: &mut TestAppContext) {
+        let _app_state = cx.update(AppState::test);
+        let fs = FakeFs::new(cx.executor());
+        fs.insert_tree("/android", json!({"settings.gradle.kts": ""}))
+            .await;
+        let project = Project::test(fs, [Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        for (index, (variants, expected)) in [
+            (
+                vec![
+                    (":mobile", "fullDebug"),
+                    (":mobile", "demoRelease"),
+                    (":mobile", "demoDebug"),
+                ],
+                (":mobile", "demoDebug"),
+            ),
+            (
+                vec![(":app", "release"), (":app", "debug")],
+                (":app", "debug"),
+            ),
+            (
+                vec![(":wear", "debug"), (":app", "debug")],
+                (":app", "debug"),
+            ),
+            (
+                vec![(":app", "release"), (":wear", "demoDebug")],
+                (":wear", "demoDebug"),
+            ),
+            (
+                vec![(":mobile", "fullRelease"), (":mobile", "demoRelease")],
+                (":mobile", "demoRelease"),
+            ),
+            (
+                vec![(":app", "debugger"), (":app", "aRelease")],
+                (":app", "aRelease"),
+            ),
+            (vec![(":mobile", "staging")], (":mobile", "staging")),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            panel.update(cx, |panel, cx| {
+                panel.root = Some(PathBuf::from(format!("/default-variants-{index}")));
+                panel.selected_target = None;
+                let targets = variants
+                    .into_iter()
+                    .map(|(module, variant)| AndroidTarget {
+                        module: module.into(),
+                        variant: variant.into(),
+                        output_listing: PathBuf::from("/android/fresh/output.json"),
+                    })
+                    .collect();
+                panel.apply_targets(targets, cx);
+                let selected = panel.selected_target.as_ref().expect("Default variant");
+                assert_eq!(
+                    (selected.module.as_str(), selected.variant.as_str()),
+                    expected
+                );
+            });
+        }
+        cx.run_until_parked();
+        panel.update(cx, |panel, cx| {
+            // Reopening and adding an earlier flavor must retain the original default.
+            panel.root = Some(PathBuf::from("/default-variants-0"));
+            panel.selected_target = None;
+            let targets = ["aaaDebug", "demoDebug", "demoRelease"]
+                .map(|variant| AndroidTarget {
+                    module: ":mobile".into(),
+                    variant: variant.into(),
+                    output_listing: PathBuf::from("/android/refreshed/output.json"),
+                })
+                .to_vec();
+            panel.apply_targets(targets.clone(), cx);
+            assert_eq!(
+                panel
+                    .selected_target
+                    .as_ref()
+                    .expect("Remembered default")
+                    .variant,
+                "demoDebug"
+            );
+            assert_eq!(
+                panel
+                    .selected_target
+                    .as_ref()
+                    .expect("Fresh artifacts")
+                    .output_listing,
+                Path::new("/android/refreshed/output.json")
+            );
+            panel.selected_target = targets
+                .into_iter()
+                .find(|target| target.variant == "demoRelease");
+            panel.remember_target(cx);
+        });
+        cx.run_until_parked();
+        panel.update(cx, |panel, cx| {
+            panel.selected_target = None;
+            panel.apply_targets(panel.targets.clone(), cx);
+            assert_eq!(
+                panel
+                    .selected_target
+                    .as_ref()
+                    .expect("User selection")
+                    .variant,
+                "demoRelease"
+            );
+            panel.selected_target = None;
+            panel.root = Some(PathBuf::from("/empty-variants"));
+            panel.apply_targets(Vec::new(), cx);
+            assert!(panel.selected_target.is_none());
         });
     }
 
