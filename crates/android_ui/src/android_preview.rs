@@ -21,7 +21,7 @@ pub(super) fn toggle_preview(
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
-    if let Some(panel) = workspace.panel::<AndroidPanel>(cx)
+    if let Some(panel) = controller(workspace, cx)
         && panel.read(cx).compose_preview_enabled
     {
         for editor in workspace.items_of_type::<Editor>(cx).collect::<Vec<_>>() {
@@ -2840,7 +2840,7 @@ mod tests {
             panel.selected_target = Some(target.clone());
             publish_preview_test_model(panel, &target, cx);
         });
-        workspace.add_panel(panel.clone(), window, cx);
+        register_controller(workspace, &panel, cx);
         let pane = workspace.active_pane().clone();
         let editor = pane
             .read(cx)

@@ -171,17 +171,12 @@ fn validate_installation(directory: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn java_binary(installation: &Path) -> Result<PathBuf> {
+pub fn java_binary(_installation: &Path) -> Result<PathBuf> {
     let executable = if cfg!(windows) { "java.exe" } else { "java" };
-    let bundled = installation.join("java/bin").join(executable);
-    if bundled.is_file() {
-        return Ok(bundled);
-    }
-    ensure!(
-        env::var_os("ANDROID_IDE_COMPOSE_PREVIEW").is_some(),
-        "The bundled preview Java runtime is missing"
-    );
-    Ok(crate::kotlin::java_home()?.join("bin").join(executable))
+    Ok(crate::kotlin::java_home()
+        .context("Compose Preview requires a full JDK 21. Open Android Setup to download Java or choose an existing JDK, then retry.")?
+        .join("bin")
+        .join(executable))
 }
 
 pub fn cache_directory() -> PathBuf {

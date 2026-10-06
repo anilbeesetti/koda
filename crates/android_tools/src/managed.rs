@@ -1,4 +1,5 @@
 use anyhow::{Context as _, Result, ensure};
+use fs2::FileExt as _;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest as _, Sha256};
 use std::{
@@ -6,7 +7,10 @@ use std::{
     fs,
     io::{Read as _, Write as _},
     path::{Path, PathBuf},
-    sync::{Mutex, OnceLock},
+    sync::{
+        Mutex, OnceLock,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -117,11 +121,20 @@ fn read_json<T: serde::de::DeserializeOwned>(path: &Path, maximum: u64) -> Resul
     serde_json::from_slice(&fs::read(path)?).context("Invalid managed tool manifest")
 }
 
+#[cfg(test)]
 fn digest_file(path: &Path) -> Result<String> {
+    digest_file_cancelled(path, None)
+}
+
+fn digest_file_cancelled(path: &Path, cancel: Option<&AtomicBool>) -> Result<String> {
     let mut file = fs::File::open(path)?;
     let mut digest = Sha256::new();
     let mut buffer = [0; 64 * 1024];
     loop {
+        ensure!(
+            !cancel.is_some_and(|cancel| cancel.load(Ordering::Relaxed)),
+            "Tool validation cancelled"
+        );
         let count = file.read(&mut buffer)?;
         if count == 0 {
             break;
@@ -132,12 +145,32 @@ fn digest_file(path: &Path) -> Result<String> {
 }
 
 pub(crate) fn validate_inventory(directory: &Path, files: &BTreeMap<String, String>) -> Result<()> {
+    validate_inventory_inner(directory, files, None)
+}
+
+pub(crate) fn validate_inventory_cancelled(
+    directory: &Path,
+    files: &BTreeMap<String, String>,
+    cancel: &AtomicBool,
+) -> Result<()> {
+    validate_inventory_inner(directory, files, Some(cancel))
+}
+
+fn validate_inventory_inner(
+    directory: &Path,
+    files: &BTreeMap<String, String>,
+    cancel: Option<&AtomicBool>,
+) -> Result<()> {
     static VERIFIED: OnceLock<Mutex<BTreeMap<PathBuf, String>>> = OnceLock::new();
     let mut paths = Vec::new();
     let mut pending = vec![directory.to_path_buf()];
     let mut total = 0u64;
     while let Some(parent) = pending.pop() {
         for entry in fs::read_dir(parent)? {
+            ensure!(
+                !cancel.is_some_and(|cancel| cancel.load(Ordering::Relaxed)),
+                "Tool validation cancelled"
+            );
             let entry = entry?;
             let path = entry.path();
             let metadata = fs::symlink_metadata(&path)?;
@@ -175,6 +208,10 @@ pub(crate) fn validate_inventory(directory: &Path, files: &BTreeMap<String, Stri
     let canonical = directory.canonicalize()?;
     let mut signature = Sha256::new();
     for (name, path, metadata) in &paths {
+        ensure!(
+            !cancel.is_some_and(|cancel| cancel.load(Ordering::Relaxed)),
+            "Tool validation cancelled"
+        );
         signature.update(name.as_bytes());
         signature.update(
             files
@@ -227,7 +264,7 @@ pub(crate) fn validate_inventory(directory: &Path, files: &BTreeMap<String, Stri
     for (name, path, metadata) in &paths {
         if metadata.is_file() {
             ensure!(
-                files.get(name) == Some(&digest_file(path)?),
+                files.get(name) == Some(&digest_file_cancelled(path, cancel)?),
                 "Runtime integrity check failed: {name}. Choose Install / repair"
             );
         }
@@ -240,7 +277,12 @@ pub(crate) fn validate_inventory(directory: &Path, files: &BTreeMap<String, Stri
 }
 
 pub fn resolve(tool: Tool) -> Result<PathBuf> {
-    resolve_at(&root(), tool).with_context(|| format!("{} is unavailable. Open Android tools → Tool setup, then Install / repair or Validate.", tool.label()))
+    resolve_at(&root(), tool).with_context(|| {
+        format!(
+            "{} is unavailable. Open Android → Android Setup, then Install / repair or Validate.",
+            tool.label()
+        )
+    })
 }
 
 pub fn validate_language_server_binary(path: &Path) -> Result<()> {
@@ -372,7 +414,7 @@ pub fn executable(path: &Path) -> Result<()> {
     Ok(())
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Environment {
     pub sdk: Option<PathBuf>,
@@ -384,7 +426,7 @@ pub fn environment() -> Result<Environment> {
     environment_at(&root())
 }
 
-fn environment_at(root: &Path) -> Result<Environment> {
+pub(crate) fn environment_at(root: &Path) -> Result<Environment> {
     let path = root.join("environment.json");
     match read_json(&path, 64 * 1024) {
         Ok(environment) => Ok(environment),
@@ -412,6 +454,7 @@ pub fn save_dependency(dependency: Dependency, path: &Path) -> Result<()> {
 
 fn save_dependency_at(root: &Path, dependency: Dependency, path: &Path) -> Result<()> {
     let path = path.canonicalize()?;
+    super::provision::validate_managed_path(&path)?;
     match dependency {
         Dependency::Sdk => executable(&path.join(if cfg!(windows) {
             "platform-tools/adb.exe"
@@ -419,20 +462,7 @@ fn save_dependency_at(root: &Path, dependency: Dependency, path: &Path) -> Resul
             "platform-tools/adb"
         }))?,
         Dependency::Jdk => {
-            ensure!(
-                super::kotlin::is_java_21(&path),
-                "Choose a JDK 21 home containing release and bin/java"
-            );
-            executable(&path.join(if cfg!(windows) {
-                "bin/java.exe"
-            } else {
-                "bin/java"
-            }))?;
-            executable(&path.join(if cfg!(windows) {
-                "bin/javac.exe"
-            } else {
-                "bin/javac"
-            }))?;
+            super::kotlin::validate_jdk_21(&path)?;
         }
         Dependency::AndroidCli => executable(&path)?,
     }
@@ -447,15 +477,8 @@ fn save_dependency_at(root: &Path, dependency: Dependency, path: &Path) -> Resul
         .create(true)
         .append(true)
         .open(lock_path)?;
-    #[cfg(unix)]
-    {
-        use std::os::fd::AsRawFd as _;
-        // Use the same kernel lock as the provisioning process; a crash releases it.
-        ensure!(
-            unsafe { libc::flock(lock.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0,
-            "Another Koda window is managing tools. Wait, then retry."
-        );
-    }
+    lock.try_lock_exclusive()
+        .context("Another Koda window is managing tools. Wait, then retry.")?;
     let mut environment = match environment_at(root) {
         Ok(environment) => environment,
         Err(error) if error.is::<serde_json::Error>() => {
@@ -474,6 +497,10 @@ fn save_dependency_at(root: &Path, dependency: Dependency, path: &Path) -> Resul
         Dependency::Jdk => environment.jdk = Some(path),
         Dependency::AndroidCli => environment.android_cli = Some(path),
     }
+    save_environment_unlocked(root, &environment)
+}
+
+pub(crate) fn save_environment_unlocked(root: &Path, environment: &Environment) -> Result<()> {
     let destination = root.join("environment.json");
     ensure!(
         !fs::symlink_metadata(&destination).is_ok_and(|metadata| metadata.file_type().is_symlink()),
@@ -484,6 +511,8 @@ fn save_dependency_at(root: &Path, dependency: Dependency, path: &Path) -> Resul
     temporary.write_all(b"\n")?;
     temporary.as_file().sync_all()?;
     temporary.persist(destination)?;
+    #[cfg(unix)]
+    fs::File::open(root)?.sync_all()?;
     Ok(())
 }
 
@@ -496,6 +525,43 @@ pub fn command_environment_with<'a>(
 ) -> Result<BTreeMap<String, String>> {
     let selected = environment()?;
     let mut defaults = BTreeMap::new();
+    if let Some(jdk) = &selected.jdk {
+        super::provision::validate_managed_path(jdk)?;
+        super::kotlin::validate_jdk_21(jdk)?;
+    }
+    if let Some(sdk) = &selected.sdk {
+        super::provision::validate_managed_path(sdk)?;
+        executable(&sdk.join(if cfg!(windows) {
+            "platform-tools/adb.exe"
+        } else {
+            "platform-tools/adb"
+        }))?;
+    }
+    if let Some(cli) = &selected.android_cli {
+        super::provision::validate_managed_path(cli)?;
+        executable(cli)?;
+    }
+    if selected
+        .android_cli
+        .as_ref()
+        .is_some_and(|path| path.starts_with(super::provision::root()))
+    {
+        super::provision::validate_managed_path(
+            selected
+                .android_cli
+                .as_ref()
+                .context("Managed Android CLI selection is missing")?,
+        )?;
+        defaults.insert(
+            "ANDROID_USER_HOME".into(),
+            std::env::var("ANDROID_USER_HOME").unwrap_or_else(|_| {
+                super::provision::root()
+                    .join("google-user")
+                    .to_string_lossy()
+                    .into_owned()
+            }),
+        );
+    }
     let jdk = match std::env::var_os("JAVA_HOME") {
         Some(path) => Ok(PathBuf::from(path)),
         None => super::kotlin::java_home(),
@@ -549,7 +615,6 @@ fn merge_command_environment(
     existing
 }
 
-#[cfg(feature = "bundled-preview")]
 pub(crate) fn validate_storage_budget(
     root: &Path,
     additional_bytes: u64,
@@ -564,7 +629,6 @@ pub(crate) fn validate_storage_budget(
     )
 }
 
-#[cfg(any(feature = "bundled-preview", test))]
 fn storage_budget(
     root: &Path,
     mut bytes: u64,

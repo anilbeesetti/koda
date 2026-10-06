@@ -202,9 +202,10 @@ pub(crate) fn atomic_write(path: &Path, text: &str, executable: bool) -> Result<
 
 pub fn java_home() -> Result<PathBuf> {
     if let Some(path) = super::managed::environment()?.jdk {
+        super::provision::validate_managed_path(&path)?;
         ensure!(
             is_java_21(&path),
-            "Saved JDK is missing or no longer JDK 21. Choose JDK 21 in Android tools → Tool setup."
+            "Saved JDK is missing or no longer JDK 21. Choose JDK 21 in Android → Android Setup."
         );
         return Ok(path);
     }
@@ -277,23 +278,53 @@ fn java_home_from_environment(
             }
         }
     }
-    bail!(
-        "Install JDK 21 from Adoptium or use an existing JDK 21, then choose its home in Android tools → Tool setup."
-    )
+    bail!("Open Android → Android Setup to download Java 21 or choose an existing full JDK 21.")
+}
+
+pub fn validate_jdk_21(path: &Path) -> Result<()> {
+    ensure!(
+        path.is_absolute() && path.is_dir(),
+        "Choose an existing absolute JDK 21 installation directory"
+    );
+    for binary in ["java", "javac"] {
+        let name = if cfg!(windows) {
+            format!("bin/{binary}.exe")
+        } else {
+            format!("bin/{binary}")
+        };
+        super::managed::executable(&path.join(name)).with_context(|| format!("{} is not a full JDK 21: bin/{binary} is missing or is not executable. A JRE cannot compile Android projects.", path.display()))?;
+    }
+    ensure!(
+        fs::metadata(path.join("release"))?.len() <= 64 * 1024,
+        "The selected JDK release metadata is too large"
+    );
+    let release = fs::read_to_string(path.join("release"))
+        .context("The selected JDK is missing its release metadata")?;
+    if let Some(architecture) = release.lines().find_map(|line| {
+        line.strip_prefix("OS_ARCH=\"")
+            .and_then(|value| value.strip_suffix('"'))
+    }) {
+        ensure!(
+            match std::env::consts::ARCH {
+                "x86_64" => matches!(architecture, "x86_64" | "amd64"),
+                "aarch64" => matches!(architecture, "aarch64" | "arm64"),
+                expected => architecture == expected,
+            },
+            "The selected JDK architecture does not match this computer. Choose a {} JDK 21.",
+            std::env::consts::ARCH
+        );
+    }
+    ensure!(
+        release
+            .lines()
+            .any(|line| line.starts_with("JAVA_VERSION=\"21.") || line == "JAVA_VERSION=\"21\""),
+        "Choose Java 21. The selected installation has a different Java version."
+    );
+    Ok(())
 }
 
 pub(crate) fn is_java_21(path: &Path) -> bool {
-    let java = if cfg!(windows) {
-        "bin/java.exe"
-    } else {
-        "bin/java"
-    };
-    path.join(java).is_file()
-        && fs::read_to_string(path.join("release")).is_ok_and(|release| {
-            release
-                .lines()
-                .any(|line| line.starts_with("JAVA_VERSION=\"21.") || line == "JAVA_VERSION=\"21\"")
-        })
+    validate_jdk_21(path).is_ok()
 }
 
 #[cfg(test)]
@@ -316,6 +347,20 @@ mod tests {
                 }),
                 "",
             )?;
+            fs::write(
+                path.join(if cfg!(windows) {
+                    "bin/javac.exe"
+                } else {
+                    "bin/javac"
+                }),
+                "",
+            )?;
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt as _;
+                fs::set_permissions(path.join("bin/java"), fs::Permissions::from_mode(0o755))?;
+                fs::set_permissions(path.join("bin/javac"), fs::Permissions::from_mode(0o755))?;
+            }
             fs::write(
                 path.join("release"),
                 format!("JAVA_VERSION=\"{version}\"\n"),

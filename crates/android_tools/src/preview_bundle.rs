@@ -302,14 +302,6 @@ mod tests {
             ("layoutlib.jar", "layoutlib"),
             ("layoutlib/data/framework_res.jar", "resources"),
             (".protocol", "2\n"),
-            (
-                if cfg!(windows) {
-                    "java/bin/java.exe"
-                } else {
-                    "java/bin/java"
-                },
-                "java",
-            ),
         ] {
             archive.start_file(
                 name,
@@ -403,13 +395,13 @@ mod tests {
             b"resources"
         );
         fs::set_permissions(
-            repaired.join("java/bin/java"),
+            repaired.join("renderer.jar"),
             fs::Permissions::from_mode(0o644),
         )?;
         let repaired_again = materialize(&archive, &id, cache.path())?;
         assert_ne!(repaired_again, repaired);
         assert_ne!(
-            fs::metadata(repaired_again.join("java/bin/java"))?
+            fs::metadata(repaired_again.join("renderer.jar"))?
                 .permissions()
                 .mode()
                 & 0o111,
@@ -442,7 +434,7 @@ mod tests {
     }
 
     #[test]
-    fn upgrade_preserves_prior_identity_and_missing_java_recovers() -> Result<()> {
+    fn upgrade_preserves_prior_identity_and_missing_renderer_recovers() -> Result<()> {
         let cache = tempfile::tempdir()?;
         let archive = fixture()?;
         let old_id = "1".repeat(64);
@@ -451,15 +443,10 @@ mod tests {
         let new = materialize(&archive, &new_id, cache.path())?;
         assert_ne!(old, new);
         assert_eq!(materialize(&archive, &old_id, cache.path())?, old);
-        let java = new.join(if cfg!(windows) {
-            "java/bin/java.exe"
-        } else {
-            "java/bin/java"
-        });
-        fs::remove_file(java)?;
+        fs::remove_file(new.join("renderer.jar"))?;
         let repaired = materialize(&archive, &new_id, cache.path())?;
         assert_ne!(repaired, new);
-        assert!(super::super::java_binary(&repaired)?.is_file());
+        assert!(repaired.join("renderer.jar").is_file());
         assert!(old.join("renderer.jar").is_file());
         Ok(())
     }
@@ -476,7 +463,7 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn refuses_cache_symlinks_and_preserves_java_permissions() -> Result<()> {
+    fn refuses_cache_symlinks_and_preserves_file_permissions() -> Result<()> {
         use std::os::unix::fs::{PermissionsExt as _, symlink};
         let cache = tempfile::tempdir()?;
         let unrelated = tempfile::tempdir()?;
@@ -487,27 +474,27 @@ mod tests {
         fs::remove_file(cache.path().join(format!("{id}.active")))?;
         let installed = materialize(&fixture()?, &id, cache.path())?;
         assert_ne!(
-            fs::metadata(installed.join("java/bin/java"))?
+            fs::metadata(installed.join("renderer.jar"))?
                 .permissions()
                 .mode()
                 & 0o111,
             0
         );
         fs::set_permissions(
-            installed.join("java/bin/java"),
+            installed.join("renderer.jar"),
             fs::Permissions::from_mode(0o644),
         )?;
         let repaired = materialize(&fixture()?, &id, cache.path())?;
         assert_ne!(installed, repaired);
         assert_eq!(
-            fs::metadata(installed.join("java/bin/java"))?
+            fs::metadata(installed.join("renderer.jar"))?
                 .permissions()
                 .mode()
                 & 0o111,
             0
         );
         assert_ne!(
-            fs::metadata(repaired.join("java/bin/java"))?
+            fs::metadata(repaired.join("renderer.jar"))?
                 .permissions()
                 .mode()
                 & 0o111,
@@ -518,53 +505,26 @@ mod tests {
 
     #[cfg(compose_preview_bundled)]
     #[test]
-    #[allow(
-        clippy::disallowed_methods,
-        reason = "verify the real bundled Java runtime in a synchronous test"
-    )]
-    fn real_embedded_runtime_runs_without_an_installer_or_local_jdk() -> Result<()> {
+    fn embedded_preview_contains_bridge_and_renderer_without_a_java_runtime() -> Result<()> {
+        let archive = include_bytes!(concat!(env!("OUT_DIR"), "/compose-preview.zip"));
+        let mut entries = zip::ZipArchive::new(Cursor::new(archive))?;
+        for index in 0..entries.len() {
+            let entry = entries.by_index(index)?;
+            ensure!(
+                !entry.name().starts_with("java/"),
+                "Preview must not ship a Java runtime"
+            );
+        }
         let cache = tempfile::tempdir()?;
         let installation = materialize(
-            include_bytes!(concat!(env!("OUT_DIR"), "/compose-preview.zip")),
+            archive,
             env!("KODA_COMPOSE_PREVIEW_BUNDLE_ID"),
             cache.path(),
         )?;
-        let java = super::super::java_binary(&installation)?;
-        let output = std::process::Command::new(&java)
-            .arg("-version")
-            .env_remove("JAVA_HOME")
-            .output()?;
-        ensure!(
-            output.status.success(),
-            "Bundled Java failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        assert!(String::from_utf8_lossy(&output.stderr).contains("21.0.12.1"));
-        let model = cache.path().join("model.json");
-        let output = cache.path().join("previews.json");
-        fs::write(
-            &model,
-            serde_json::to_vec(&serde_json::json!({"classPath":[],"projectClassPath":[]}))?,
-        )?;
-        let result = std::process::Command::new(java)
-            .args(super::super::bridge_arguments(
-                &installation,
-                "discover",
-                &model,
-                Some(&output),
-            )?)
-            .env_remove("JAVA_HOME")
-            .env_remove("ANDROID_IDE_COMPOSE_PREVIEW")
-            .output()?;
-        ensure!(
-            result.status.success(),
-            "Bundled bridge failed: {}",
-            String::from_utf8_lossy(&result.stderr)
-        );
-        assert_eq!(
-            serde_json::from_slice::<Vec<serde_json::Value>>(&fs::read(output)?)?.len(),
-            0
-        );
+        assert!(installation.join("PreviewBridge.class").is_file());
+        assert!(installation.join("renderer.jar").is_file());
+        assert!(installation.join("layoutlib.jar").is_file());
+        assert!(!installation.join("java").exists());
         Ok(())
     }
 }

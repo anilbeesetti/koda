@@ -114,17 +114,14 @@ impl Render for AndroidActivity {
                                     else {
                                         return;
                                     };
-                                    if let ActivityToken::Build(tab, _) = token {
-                                        build_panel.update(cx, |pane, cx| pane.select(tab, cx));
-                                    }
+                                    let tab = match token {
+                                        ActivityToken::Build(tab, _) => tab,
+                                        ActivityToken::Emulator(..) => BuildTab::Output,
+                                    };
+                                    build_panel.update(cx, |pane, cx| pane.select(tab, cx));
                                     workspace
-                                        .update(cx, |workspace, cx| match token {
-                                            ActivityToken::Build(..) => {
-                                                workspace.reveal_panel::<BuildPanel>(window, cx)
-                                            }
-                                            ActivityToken::Emulator(..) => {
-                                                workspace.reveal_panel::<AndroidPanel>(window, cx)
-                                            }
+                                        .update(cx, |workspace, cx| {
+                                            workspace.reveal_panel::<BuildPanel>(window, cx)
                                         })
                                         .log_err();
                                 }
@@ -243,9 +240,7 @@ mod tests {
         let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
         workspace.update_in(cx, |workspace, window, cx| {
             workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
-            workspace.add_panel(panel.clone(), window, cx);
-            workspace.reveal_panel::<AndroidPanel>(window, cx);
-            workspace.close_panel::<AndroidPanel>(window, cx);
+            crate::register_controller(workspace, &panel, cx);
             register(&panel, window, cx);
             let status_items =
                 ["completions", "language", "cursor"].map(|label| cx.new(|_| FixedStatus(label)));
@@ -403,12 +398,14 @@ mod tests {
         assert!(
             workspace.read_with(cx, |workspace, cx| {
                 workspace
-                    .right_dock()
+                    .bottom_dock()
                     .read(cx)
                     .visible_panel()
-                    .is_some_and(|visible| visible.panel_id() == panel.entity_id())
+                    .is_some_and(|visible| {
+                        visible.panel_id() == panel.read(cx).build_panel.entity_id()
+                    })
             }),
-            "Standalone boot wait details reveal Android tools"
+            "Standalone boot wait details reveal Build Output"
         );
         assert!(panel.read_with(cx, |panel, _| panel.running
             && panel.emulator_startup.is_some()));

@@ -388,7 +388,7 @@ impl LogcatView {
     fn current_targets(&self, cx: &App) -> Vec<AndroidTarget> {
         self.workspace
             .read_with(cx, |workspace, cx| {
-                workspace.panel::<AndroidPanel>(cx).and_then(|panel| {
+                controller(workspace, cx).and_then(|panel| {
                     let panel = panel.read(cx);
                     (panel.root.as_ref() == Some(&self.root)).then(|| {
                         panel
@@ -4009,7 +4009,7 @@ pub(super) mod tests {
             variant: "release".into(),
             output_listing: "/logcat/second/output-metadata.json".into(),
         };
-        let panel = workspace.update_in(cx, |workspace, window, cx| {
+        let panel = workspace.update_in(cx, |workspace, _window, cx| {
             let panel = cx.new(|cx| {
                 AndroidPanel::new(workspace.weak_handle(), workspace.project().clone(), cx)
             });
@@ -4018,7 +4018,7 @@ pub(super) mod tests {
                 panel.targets = vec![first.clone(), second.clone()];
                 panel.selected_target = Some(first.clone());
             });
-            workspace.add_panel(panel.clone(), window, cx);
+            register_controller(workspace, &panel, cx);
             panel
         });
         view.read_with(cx, |view, cx| {

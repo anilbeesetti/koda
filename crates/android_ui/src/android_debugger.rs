@@ -62,11 +62,12 @@ impl DebugAdapter for AndroidKotlinAdapter {
             "Android debugging requires an attach configuration"
         );
         let mut envs = user_env.unwrap_or_default();
-        envs.entry("JAVA_HOME".into()).or_insert(
-            android_tools::kotlin::java_home()?
-                .to_string_lossy()
-                .into_owned(),
-        );
+        if !envs.contains_key("JAVA_HOME") {
+            let java_home = cx
+                .background_spawn(async { android_tools::kotlin::java_home() })
+                .await?;
+            envs.insert("JAVA_HOME".into(), java_home.to_string_lossy().into_owned());
+        }
         Ok(DebugAdapterBinary {
             command: Some(executable.to_string_lossy().into_owned()),
             arguments: user_args.unwrap_or_default(),

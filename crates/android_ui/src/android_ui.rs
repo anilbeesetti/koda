@@ -21,11 +21,11 @@ use futures::{
     future::{Either, Shared, select},
 };
 use gpui::{
-    Action, App, BackgroundExecutor, Context, Entity, EventEmitter, FocusHandle, Focusable,
-    Subscription, Task, WeakEntity, actions,
+    Action, App, BackgroundExecutor, Context, Entity, EntityId, EventEmitter, FocusHandle,
+    Focusable, Global, Subscription, Task, WeakEntity, actions,
 };
 use project::{Project, TaskSourceKind, WorktreeId, trusted_worktrees::TrustedWorktrees};
-use settings::{IntoGpui, RegisterSetting, Settings};
+use settings::Settings;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -46,7 +46,7 @@ pub use zed_actions::android::Logcat;
 actions!(
     android,
     [
-        /// Opens the Android project and device tools.
+        /// Opens Android setup and managed dependencies.
         ToggleFocus,
         /// Evaluates the Android project's modules and build variants.
         SyncProject,
@@ -86,15 +86,12 @@ pub fn init(cx: &mut App) {
         panel.update(cx, |panel, cx| panel.observe_project_open(window, cx));
         workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
         android_status::register(&panel, window, cx);
-        workspace.add_panel(panel, window, cx);
+        register_controller(workspace, &panel, cx);
         let logcat_panel = cx.new(|cx| LogcatPanel::new(workspace, window, cx));
         workspace.add_panel(logcat_panel, window, cx);
         workspace
             .register_action(|workspace, _: &ToggleBuild, window, cx| {
                 workspace.toggle_panel_focus::<BuildPanel>(window, cx);
-            })
-            .register_action(|workspace, _: &ToggleFocus, window, cx| {
-                workspace.toggle_panel_focus::<AndroidPanel>(window, cx);
             })
             .register_action(|workspace, _: &SyncProject, window, cx| {
                 with_panel(workspace, window, cx, AndroidPanel::sync_project)
@@ -175,13 +172,38 @@ pub fn init(cx: &mut App) {
     .detach();
 }
 
+#[derive(Default)]
+struct AndroidControllers(HashMap<EntityId, WeakEntity<AndroidPanel>>);
+impl Global for AndroidControllers {}
+
+fn register_controller(workspace: &mut Workspace, panel: &Entity<AndroidPanel>, cx: &mut App) {
+    let controllers = cx.default_global::<AndroidControllers>();
+    controllers
+        .0
+        .retain(|_, controller| controller.upgrade().is_some());
+    controllers
+        .0
+        .insert(workspace.weak_handle().entity_id(), panel.downgrade());
+    let controller = panel.clone();
+    workspace.register_action(move |workspace, _: &ToggleFocus, window, cx| {
+        android_tool_setup::open(workspace, controller.clone(), window, cx);
+    });
+}
+
+pub fn controller(workspace: &Workspace, cx: &App) -> Option<Entity<AndroidPanel>> {
+    cx.try_global::<AndroidControllers>()?
+        .0
+        .get(&workspace.weak_handle().entity_id())?
+        .upgrade()
+}
+
 fn with_panel(
     workspace: &Workspace,
     window: &mut Window,
     cx: &mut Context<Workspace>,
     callback: impl FnOnce(&mut AndroidPanel, &mut Window, &mut Context<AndroidPanel>) + 'static,
 ) {
-    if let Some(panel) = workspace.panel::<AndroidPanel>(cx) {
+    if let Some(panel) = controller(workspace, cx) {
         // Task scheduling updates the workspace, so wait until its action handler has returned.
         window.defer(cx, move |window, cx| {
             panel.update(cx, |panel, cx| callback(panel, window, cx))
@@ -191,14 +213,12 @@ fn with_panel(
 
 pub fn toolbar(workspace: &WeakEntity<Workspace>, cx: &App) -> Option<Entity<AndroidToolbar>> {
     let workspace = workspace.upgrade()?;
-    let panel = workspace.read(cx).panel::<AndroidPanel>(cx)?;
+    let panel = controller(workspace.read(cx), cx)?;
     Some(panel.read(cx).toolbar.clone())
 }
 
 pub fn can_preview_compose(workspace: &Workspace, cx: &App) -> bool {
-    workspace
-        .panel::<AndroidPanel>(cx)
-        .is_some_and(|panel| panel.read(cx).auto_sync_candidate(cx).is_some())
+    controller(workspace, cx).is_some_and(|panel| panel.read(cx).auto_sync_candidate(cx).is_some())
 }
 
 #[derive(Clone, Copy)]
@@ -230,27 +250,6 @@ struct EmulatorStartup {
     name: String,
     ready: Shared<Task<std::result::Result<(), String>>>,
     error_reported: bool,
-}
-
-#[derive(RegisterSetting)]
-struct AndroidPanelSettings {
-    button: bool,
-    dock: DockPosition,
-    default_width: Pixels,
-}
-
-impl Settings for AndroidPanelSettings {
-    fn from_settings(content: &settings::SettingsContent) -> Self {
-        let panel = content.android_panel.clone().unwrap_or_default();
-        Self {
-            button: panel.button.unwrap_or(true),
-            dock: panel.dock.unwrap_or(settings::DockPosition::Right).into(),
-            default_width: panel
-                .default_width
-                .map(|width| width.into_gpui())
-                .unwrap_or(px(320.)),
-        }
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -291,7 +290,6 @@ pub struct AndroidPanel {
     model_input_roots: Vec<(PathBuf, bool)>,
     followup_model_token: Option<android_tools::project_model::ModelToken>,
     _build_subscription: Subscription,
-    focus_handle: FocusHandle,
     root: Option<PathBuf>,
     targets: Vec<AndroidTarget>,
     selected_target: Option<AndroidTarget>,
@@ -315,6 +313,7 @@ pub struct AndroidPanel {
     deploy_task: Option<Task<()>>,
     auto_sync_root: Option<PathBuf>,
     startup_settings_ready: bool,
+    onboarding_prompted_root: Option<PathBuf>,
     _startup_subscriptions: Vec<Subscription>,
     kotlin_task: Option<Task<()>>,
     kotlin_setup_error: Option<String>,
@@ -389,7 +388,6 @@ impl AndroidPanel {
             model_input_roots: Vec::new(),
             followup_model_token: None,
             _build_subscription: build_subscription,
-            focus_handle: cx.focus_handle(),
             root: None,
             targets: Vec::new(),
             selected_target: None,
@@ -413,6 +411,7 @@ impl AndroidPanel {
             deploy_task: None,
             auto_sync_root: None,
             startup_settings_ready: false,
+            onboarding_prompted_root: None,
             _startup_subscriptions: Vec::new(),
             kotlin_task: None,
             kotlin_setup_error: None,
@@ -432,6 +431,12 @@ impl AndroidPanel {
         };
         panel._debug_subscriptions = panel.observe_debugger(cx);
         panel.refresh_tool_setup(cx);
+        cx.on_release(|panel, _| {
+            if let Some(cancel) = panel.tool_setup.native_cancel.take() {
+                cancel.store(true, std::sync::atomic::Ordering::Release);
+            }
+        })
+        .detach();
         panel
     }
 
@@ -463,6 +468,7 @@ impl AndroidPanel {
                     panel.sync_project(window, cx);
                 } else {
                     panel.resume_pending_gradle_operation(window, cx);
+                    panel.auto_sync_project(window, cx);
                 }
             },
         ));
@@ -741,6 +747,19 @@ impl AndroidPanel {
         let Some(root) = self.auto_sync_candidate(cx) else {
             return;
         };
+        if self.tool_setup.bootstrap_root.as_ref() != Some(&root) {
+            self.refresh_tool_setup(cx);
+            return;
+        }
+        if self.tool_setup.bootstrap_ready != Some(true) {
+            if self.tool_setup.bootstrap_ready == Some(false)
+                && self.onboarding_prompted_root.as_ref() != Some(&root)
+            {
+                self.onboarding_prompted_root = Some(root);
+                self.open_setup(window, cx);
+            }
+            return;
+        }
         if self.auto_sync_root.as_ref() == Some(&root) {
             return;
         }
@@ -777,7 +796,7 @@ impl AndroidPanel {
         ensure!(!roots.is_empty(), "Open an Android Gradle project first.");
         ensure!(
             roots.len() == 1,
-            "Select a project folder in the Android panel before syncing."
+            "Select a project folder in the Android menu before syncing."
         );
         roots
             .into_iter()
@@ -785,14 +804,43 @@ impl AndroidPanel {
             .context("Open an Android Gradle project first.")
     }
 
-    fn fail(&mut self, error: anyhow::Error, window: &mut Window, cx: &mut Context<Self>) {
-        self.error = Some(format!("{error:#}"));
-        self.status = "Android operation failed".into();
+    fn open_setup(&self, window: &mut Window, cx: &mut Context<Self>) {
         let workspace = self.workspace.clone();
+        let controller = cx.entity();
         window.defer(cx, move |window, cx| {
             workspace
                 .update(cx, |workspace, cx| {
-                    workspace.open_panel::<AndroidPanel>(window, cx)
+                    if !workspace.has_active_modal(window, cx) {
+                        android_tool_setup::open(workspace, controller, window, cx);
+                    }
+                })
+                .log_err();
+        });
+    }
+
+    pub(crate) fn bootstrap_completed(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
+        self.auto_sync_root = None;
+        self.error = None;
+        self.refresh_tool_setup(cx);
+        self.refresh_devices(cx);
+        cx.notify();
+    }
+
+    fn fail(&mut self, error: anyhow::Error, window: &mut Window, cx: &mut Context<Self>) {
+        let message = format!("{error:#}");
+        self.error = Some(message.clone());
+        self.status = "Android operation failed".into();
+        let workspace = self.workspace.clone();
+        window.defer(cx, move |_, cx| {
+            workspace
+                .update(cx, |workspace, cx| {
+                    workspace.show_toast(
+                        Toast::new(NotificationId::unique::<AndroidFailure>(), message)
+                            .on_click("Android Setup", |window, cx| {
+                                window.dispatch_action(ToggleFocus.boxed_clone(), cx)
+                            }),
+                        cx,
+                    );
                 })
                 .log_err();
         });
@@ -1504,6 +1552,7 @@ impl AndroidPanel {
         label: String,
         program: PathBuf,
         args: Vec<String>,
+        environment: std::collections::BTreeMap<String, String>,
         root: PathBuf,
         model_token: android_tools::project_model::ModelToken,
         after_task: Option<AfterTask>,
@@ -1521,6 +1570,7 @@ impl AndroidPanel {
             label: label.clone(),
             command: program.to_string_lossy().into_owned(),
             args,
+            env: environment.into_iter().collect(),
             reveal: RevealStrategy::NoFocus,
             save: SaveStrategy::None,
             show_summary: true,
@@ -1766,6 +1816,7 @@ impl AndroidPanel {
                             .collect::<Vec<_>>()
                             .join(","),
                         application_id,
+                        android_tools::managed::command_environment()?,
                     ))
                 })
                 .await;
@@ -1781,7 +1832,7 @@ impl AndroidPanel {
                     }
                     panel.followup_model_token = None;
                     panel.running = false;
-                    let result = result.and_then(|(program, apks, application_id)| {
+                    let result = result.and_then(|(program, apks, application_id, environment)| {
                         let root = root.context("The Android project was closed.")?;
                         ensure!(
                             panel.trusted_root(cx)? == root,
@@ -1789,6 +1840,7 @@ impl AndroidPanel {
                         );
                         panel.validate_model_target(&target, cx)?;
                         let mut args = vec![
+                            "--no-metrics".into(),
                             "run".into(),
                             format!("--device={serial}"),
                             format!("--apks={apks}"),
@@ -1808,6 +1860,7 @@ impl AndroidPanel {
                             .into(),
                             program,
                             args,
+                            environment,
                             root,
                             model_token,
                             after,
@@ -2730,10 +2783,13 @@ impl AndroidPanel {
                         Ok(()) => {
                             let name = name.clone();
                             cx.background_spawn(async move {
+                                let environment = android_tools::managed::command_environment_with(
+                                    environment.iter(),
+                                )?;
                                 let mut command =
                                     util::command::new_std_command(android_cli_path()?);
                                 command
-                                    .args(["emulator", "start", &name])
+                                    .args(["--no-metrics", "emulator", "start", &name])
                                     .current_dir(&root)
                                     .envs(environment);
                                 emulator_start_output(command, &executor).await?;
@@ -2909,42 +2965,193 @@ impl AndroidPanel {
         if self.running || self.syncing || self.tool_setup.choosing {
             return;
         }
-        let result = (|| {
-            let root = self.trusted_root(cx)?;
-            let serial = self.selected_emulator()?.serial.clone();
-            self.schedule(
-                format!("Stop Android Emulator · {serial}"),
-                android_cli_path()?,
-                vec!["emulator".into(), "stop".into(), serial],
-                root,
-                self.project.read(cx).android_model().token(),
-                Some(AfterTask::RefreshDevices),
-                window,
-                cx,
-            )
-        })();
-        if let Err(error) = result {
-            self.fail(error, window, cx);
-        }
+        let selected = self
+            .trusted_root(cx)
+            .and_then(|root| Ok((root, self.selected_emulator()?.serial.clone())));
+        let (root, serial) = match selected {
+            Ok(selected) => selected,
+            Err(error) => {
+                self.fail(error, window, cx);
+                return;
+            }
+        };
+        let model_token = self.project.read(cx).android_model().token();
+        self.next_operation_id += 1;
+        let operation_id = self.next_operation_id;
+        self.active_operation_id = Some(operation_id);
+        self.running = true;
+        self.status = "Validating Android tools…".into();
+        self.emulator_task = Some(cx.spawn_in(window, async move |panel, cx| {
+            let result = cx
+                .background_spawn(async {
+                    Ok::<_, anyhow::Error>((
+                        android_cli_path()?,
+                        android_tools::managed::command_environment()?,
+                    ))
+                })
+                .await;
+            panel
+                .update_in(cx, |panel, window, cx| {
+                    if panel.active_operation_id != Some(operation_id) {
+                        return;
+                    }
+                    panel.active_operation_id = None;
+                    panel.running = false;
+                    let result = result.and_then(|(program, environment)| {
+                        ensure!(
+                            panel.trusted_root(cx)? == root,
+                            "The Android project changed before stopping the emulator."
+                        );
+                        ensure!(
+                            panel
+                                .project
+                                .read(cx)
+                                .android_model()
+                                .is_current(&model_token),
+                            "The Android model changed before stopping the emulator."
+                        );
+                        ensure!(
+                            panel.selected_emulator()?.serial == serial,
+                            "The selected emulator changed. Retry the stop action."
+                        );
+                        panel.schedule(
+                            format!("Stop Android Emulator · {serial}"),
+                            program,
+                            vec![
+                                "--no-metrics".into(),
+                                "emulator".into(),
+                                "stop".into(),
+                                serial,
+                            ],
+                            environment,
+                            root,
+                            model_token,
+                            Some(AfterTask::RefreshDevices),
+                            window,
+                            cx,
+                        )
+                    });
+                    if let Err(error) = result {
+                        panel.fail(error, window, cx);
+                    }
+                    cx.notify();
+                })
+                .log_err();
+        }));
+        cx.notify();
     }
 
-    fn emulator_picker(&self, cx: &Context<Self>) -> impl IntoElement {
-        let emulators = self.emulators.clone();
-        let panel = cx.weak_entity();
-        PopoverMenu::new("start-emulator")
-            .trigger(Button::new("start-emulator", "Start emulator…")
-                .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall))
-                .disabled(self.running || self.syncing || self.refreshing_devices || emulators.is_empty())
-                .tab_index(0isize)
-                .tooltip(Tooltip::text("Start an existing Android Virtual Device and refresh connected devices when it is ready.")))
+    fn project_picker(&self, cx: &Context<Self>) -> impl IntoElement {
+        let roots = self.roots(cx);
+        let controller = cx.weak_entity();
+        let label = self
+            .root
+            .as_ref()
+            .or_else(|| roots.first())
+            .and_then(|root| root.file_name())
+            .map(|name| name.to_string_lossy().into_owned())
+            .unwrap_or_else(|| "Project".into());
+        PopoverMenu::new("android-project")
+            .trigger(
+                Button::new("android-project", label)
+                    .truncate(true)
+                    .disabled(self.running || self.syncing || self.tool_setup.choosing)
+                    .tab_index(0isize),
+            )
             .menu(move |window, cx| {
                 Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                    for name in &emulators {
-                        let panel = panel.clone();
-                        let name = name.clone();
-                        menu = menu.entry(name.clone(), None, move |window, cx| {
-                            panel.update(cx, |panel, cx| panel.start_emulator(name.clone(), window, cx)).log_err();
-                        });
+                    for root in &roots {
+                        let controller = controller.clone();
+                        let root = root.clone();
+                        menu = menu.entry(
+                            root.to_string_lossy().into_owned(),
+                            None,
+                            move |window, cx| {
+                                controller
+                                    .update(cx, |controller, cx| {
+                                        if controller.running
+                                            || controller.syncing
+                                            || controller.tool_setup.choosing
+                                            || !controller.roots(cx).contains(&root)
+                                        {
+                                            return;
+                                        }
+                                        controller.kotlin_refresh_task = None;
+                                        controller.kotlin_refresh_pending = None;
+                                        controller.pending_gradle_operation = None;
+                                        controller.active_operation_id = None;
+                                        controller.invalidate_model(Some(root.clone()), cx);
+                                        controller.root = Some(root.clone());
+                                        controller.targets.clear();
+                                        controller.selected_target = None;
+                                        controller.error = None;
+                                        controller.auto_sync_root = None;
+                                        controller.sync_project(window, cx);
+                                    })
+                                    .log_err();
+                            },
+                        );
+                    }
+                    menu
+                }))
+            })
+    }
+
+    fn tools_menu(&self, cx: &Context<Self>) -> impl IntoElement {
+        let busy = self.running || self.syncing || self.tool_setup.choosing;
+        let target_unavailable = busy || self.selected_target.is_none();
+        let emulators = self.emulators.clone();
+        let controller = cx.weak_entity();
+        PopoverMenu::new("android-tools-menu")
+            .trigger(
+                Button::new("android-tools", "Android")
+                    .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall))
+                    .tab_index(0isize)
+                    .tooltip(Tooltip::text("Android setup and project actions")),
+            )
+            .menu(move |window, cx| {
+                Some(ContextMenu::build(window, cx, |menu, _, _| {
+                    let mut menu = menu
+                        .action("Android Setup…", ToggleFocus.boxed_clone())
+                        .separator()
+                        .action_disabled_when(target_unavailable, "Test", Test.boxed_clone())
+                        .action_disabled_when(target_unavailable, "Lint", Lint.boxed_clone())
+                        .action_disabled_when(
+                            target_unavailable,
+                            "Configure Kotlin",
+                            ConfigureKotlin.boxed_clone(),
+                        )
+                        .action_disabled_when(
+                            target_unavailable,
+                            "Configure Java",
+                            ConfigureJava.boxed_clone(),
+                        )
+                        .action_disabled_when(
+                            target_unavailable,
+                            "Compose Preview",
+                            ToggleComposePreview.boxed_clone(),
+                        )
+                        .action("Logcat", Logcat.boxed_clone())
+                        .separator()
+                        .action_disabled_when(busy, "Refresh devices", RefreshDevices.boxed_clone())
+                        .action_disabled_when(
+                            busy,
+                            "Stop selected emulator",
+                            StopEmulator.boxed_clone(),
+                        );
+                    if !busy && !emulators.is_empty() {
+                        menu = menu.header("Start emulator");
+                        for emulator in &emulators {
+                            let controller = controller.clone();
+                            let emulator = emulator.clone();
+                            menu = menu.entry(emulator.clone(), None, move |window, cx| {
+                                controller
+                                    .update(cx, |controller, cx| {
+                                        controller.start_emulator(emulator.clone(), window, cx)
+                                    })
+                                    .log_err();
+                            });
+                        }
                     }
                     menu
                 }))
@@ -2954,15 +3161,8 @@ impl AndroidPanel {
     fn render_toolbar(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         h_flex()
             .gap_1()
-            .child(
-                IconButton::new("android-tools", IconName::ToolHammer)
-                    .tab_index(0isize)
-                    .aria_label("Android tools")
-                    .tooltip(|_, cx| Tooltip::for_action("Android", &ToggleFocus, cx))
-                    .on_click(|_, window, cx| {
-                        window.dispatch_action(ToggleFocus.boxed_clone(), cx)
-                    }),
-            )
+            .child(self.tools_menu(cx))
+            .child(div().max_w(px(130.)).child(self.project_picker(cx)))
             .child(self.target_picker("toolbar-target", cx))
             .child(self.device_picker("toolbar-device", cx))
             .child(
@@ -2973,6 +3173,7 @@ impl AndroidPanel {
                     .disabled(
                         self.running
                             || self.syncing
+                            || self.tool_setup.choosing
                             || self.selected_target.is_none()
                             || !self.can_run_on_selected_device(),
                     )
@@ -2988,6 +3189,7 @@ impl AndroidPanel {
                     .disabled(
                         self.running
                             || self.syncing
+                            || self.tool_setup.choosing
                             || self.debug_forward.is_some()
                             || self.selected_target.is_none()
                             || !self.can_run_on_selected_device(),
@@ -3001,7 +3203,12 @@ impl AndroidPanel {
                 IconButton::new("android-build", IconName::ToolHammer)
                     .tab_index(0isize)
                     .aria_label("Build selected variant")
-                    .disabled(self.running || self.syncing || self.selected_target.is_none())
+                    .disabled(
+                        self.running
+                            || self.syncing
+                            || self.tool_setup.choosing
+                            || self.selected_target.is_none(),
+                    )
                     .tooltip(|_, cx| Tooltip::for_action("Build selected variant", &Build, cx))
                     .on_click(cx.listener(|panel, _, window, cx| {
                         panel.gradle(GradleOperation::Build, window, cx)
@@ -3011,212 +3218,10 @@ impl AndroidPanel {
                 IconButton::new("android-sync", IconName::RefreshTitle)
                     .tab_index(0isize)
                     .aria_label("Sync Android project")
-                    .disabled(self.running || self.syncing)
+                    .disabled(self.running || self.syncing || self.tool_setup.choosing)
                     .tooltip(|_, cx| Tooltip::for_action("Sync Android project", &SyncProject, cx))
                     .on_click(cx.listener(|panel, _, window, cx| panel.sync_project(window, cx))),
             )
-    }
-}
-
-impl Render for AndroidPanel {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let roots = self.roots(cx);
-        let panel = cx.weak_entity();
-        let root_label = self
-            .root
-            .as_ref()
-            .or_else(|| {
-                if roots.len() == 1 {
-                    roots.first()
-                } else {
-                    None
-                }
-            })
-            .and_then(|root| root.file_name())
-            .map(|name| name.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "Select project".into());
-        let project_picker = PopoverMenu::new("android-project")
-            .trigger(
-                Button::new("project", root_label)
-                    .disabled(self.running || self.syncing)
-                    .tab_index(0isize),
-            )
-            .menu(move |window, cx| {
-                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                    for root in &roots {
-                        let panel = panel.clone();
-                        let root = root.clone();
-                        menu =
-                            menu.entry(root.to_string_lossy().into_owned(), None, move |_, cx| {
-                                panel
-                                    .update(cx, |panel, cx| {
-                                        if panel.running
-                                            || panel.syncing
-                                            || !panel.roots(cx).contains(&root)
-                                        {
-                                            return;
-                                        }
-                                        panel.kotlin_refresh_task = None;
-                                        panel.kotlin_refresh_pending = None;
-                                        panel.pending_gradle_operation = None;
-                                        panel.active_operation_id = None;
-                                        panel.invalidate_model(Some(root.clone()), cx);
-                                        panel.root = Some(root.clone());
-                                        panel.targets.clear();
-                                        panel.selected_target = None;
-                                        panel.error = None;
-                                        panel.status =
-                                            "Sync this project to discover its build variants."
-                                                .into();
-                                        cx.notify();
-                                    })
-                                    .log_err();
-                            });
-                    }
-                    menu
-                }))
-            });
-        let commands = [
-            (GradleOperation::Build, "Build"),
-            (GradleOperation::Run, "Run"),
-            (GradleOperation::Debug, "Debug"),
-            (GradleOperation::Test, "Test"),
-            (GradleOperation::Lint, "Lint"),
-        ]
-        .into_iter()
-        .map(|(operation, label)| {
-            let is_run = matches!(operation, GradleOperation::Run | GradleOperation::Debug);
-            Button::new(label, label)
-                .when(is_run, |button| button.style(ButtonStyle::Filled))
-                .disabled(
-                    self.syncing
-                        || self.running
-                        || self.selected_target.is_none()
-                        || (is_run && !self.can_run_on_selected_device()),
-                )
-                .tab_index(0isize)
-                .on_click(
-                    cx.listener(move |panel, _, window, cx| panel.gradle(operation, window, cx)),
-                )
-        })
-        .collect::<Vec<_>>();
-        v_flex()
-            .id("android-panel")
-            .key_context("AndroidPanel")
-            .track_focus(&self.focus_handle)
-            .role(gpui::Role::Complementary)
-            .aria_label("Android tools")
-            .size_full()
-            .p_3()
-            .gap_3()
-            .overflow_y_scroll()
-            .child(h_flex().justify_between()
-                .child(Label::new("Android").size(LabelSize::Large))
-                .child(IconButton::new("close-android", IconName::Close)
-                    .tab_index(0isize).aria_label("Hide Android tools")
-                    .tooltip(Tooltip::text("Hide Android tools"))
-                    .on_click(cx.listener(|_, _, _, cx| cx.emit(PanelEvent::Close)))))
-            .child(Label::new("Project").color(Color::Muted))
-            .child(project_picker)
-            .child(self.render_tool_setup(cx))
-            .child(Button::new("sync-project", if self.syncing { "Syncing…" } else { "Sync project" })
-                .disabled(self.syncing || self.running).tab_index(0isize)
-                .on_click(cx.listener(|panel, _, window, cx| panel.sync_project(window, cx))))
-            .child(Label::new("Build variant").color(Color::Muted))
-            .child(self.target_picker("panel-target", cx))
-            .child(Label::new("Device").color(Color::Muted))
-            .child(self.device_picker("panel-device", cx))
-            .child(Button::new("refresh-devices", if self.refreshing_devices { "Refreshing…" } else { "Refresh devices" })
-                .disabled(self.refreshing_devices).tab_index(0isize)
-                .on_click(cx.listener(|panel, _, _, cx| panel.refresh_devices(cx))))
-            .when(self.devices.is_empty(), |this| {
-                this.child(div().text_sm().text_color(cx.theme().colors().text_muted)
-                    .child("Start an Android emulator or connect a device with USB debugging, then refresh."))
-            })
-            .child(h_flex().flex_wrap().gap_1()
-                .child(self.emulator_picker(cx))
-                .child(Button::new("stop-emulator", "Stop emulator")
-                    .disabled(self.running || self.syncing || self.selected_emulator().is_err())
-                    .tab_index(0isize)
-                    .tooltip(Tooltip::text("Stop the selected emulator to release its memory. The virtual device is preserved."))
-                    .on_click(cx.listener(|panel, _, window, cx| panel.stop_emulator(window, cx)))))
-            .when_some(self.emulator_error.clone(), |this, error| {
-                this.child(div().text_sm().text_color(cx.theme().status().error).child(error))
-            })
-            .child(h_flex().flex_wrap().gap_1().children(commands))
-            .child(Button::new("configure-official-kotlin", "Configure official Kotlin")
-                .disabled(self.syncing || self.running || self.selected_target.is_none())
-                .tab_index(0isize)
-                .tooltip(Tooltip::text("Use the official Kotlin server with Gradle import. Experimental until editing compatibility checks pass."))
-                .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Kotlin, window, cx))))
-            .child(Button::new("configure-java", "Configure Java")
-                .disabled(self.syncing || self.running || self.selected_target.is_none())
-                .tab_index(0isize)
-                .tooltip(Tooltip::text("Build the selected variant and configure the Java extension with Android sources, generated symbols, and dependencies."))
-                .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Java, window, cx))))
-            .child(Button::new("android-compose-preview", "Compose preview")
-                .disabled(self.running || self.syncing || self.selected_target.is_none()).tab_index(0isize)
-                .tooltip(Tooltip::text("Build the selected variant and render a Compose @Preview beside the code."))
-                .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))
-            .child(Button::new("logcat", "Open Logcat").start_icon(Icon::new(IconName::Logcat))
-                .tab_index(0isize)
-                .on_click(cx.listener(|panel, _, window, cx| panel.logcat(window, cx))))
-            .child(div().text_sm().text_color(cx.theme().colors().text_muted).child(self.status.clone()))
-            .when_some(self.error.clone().or_else(|| self.device_error.clone()), |this, error| {
-                this.child(div().text_sm().text_color(cx.theme().status().error).child(error))
-            })
-    }
-}
-
-impl EventEmitter<PanelEvent> for AndroidPanel {}
-impl Focusable for AndroidPanel {
-    fn focus_handle(&self, _: &App) -> FocusHandle {
-        self.focus_handle.clone()
-    }
-}
-impl Panel for AndroidPanel {
-    fn persistent_name() -> &'static str {
-        "Android"
-    }
-    fn panel_key() -> &'static str {
-        "android"
-    }
-    fn position(&self, _: &Window, cx: &App) -> DockPosition {
-        AndroidPanelSettings::get_global(cx).dock
-    }
-    fn position_is_valid(&self, _: DockPosition) -> bool {
-        true
-    }
-    fn set_position(&mut self, position: DockPosition, _: &mut Window, cx: &mut Context<Self>) {
-        settings::update_settings_file(
-            self.project.read(cx).fs().clone(),
-            cx,
-            move |settings, _| {
-                settings.android_panel.get_or_insert_default().dock = Some(position.into());
-            },
-        );
-    }
-    fn default_size(&self, _: &Window, cx: &App) -> Pixels {
-        AndroidPanelSettings::get_global(cx).default_width
-    }
-    fn icon(&self, _: &Window, cx: &App) -> Option<IconName> {
-        AndroidPanelSettings::get_global(cx)
-            .button
-            .then_some(IconName::ToolHammer)
-    }
-    fn icon_tooltip(&self, _: &Window, _: &App) -> Option<&'static str> {
-        Some("Android")
-    }
-    fn toggle_action(&self) -> Box<dyn gpui::Action> {
-        Box::new(ToggleFocus)
-    }
-    fn activation_priority(&self) -> u32 {
-        10
-    }
-    fn set_active(&mut self, active: bool, _: &mut Window, cx: &mut Context<Self>) {
-        if active && self.devices.is_empty() {
-            self.refresh_devices(cx);
-        }
     }
 }
 
@@ -3235,6 +3240,8 @@ impl Render for AndroidToolbar {
         )
     }
 }
+
+enum AndroidFailure {}
 
 enum JavaStatus {}
 impl lsp::notification::Notification for JavaStatus {
@@ -3715,6 +3722,9 @@ fn resolve_android_task(
         })
         .collect::<Result<_>>()?;
     template.label = template.label.replace('$', "$$");
+    for value in template.env.values_mut() {
+        *value = value.replace('$', "$$");
+    }
     template
         .resolve_task(
             id,
@@ -4004,6 +4014,109 @@ mod tests {
     };
     use serde_json::json;
     use workspace::AppState;
+
+    #[gpui::test]
+    async fn first_project_waits_for_detection_and_opens_setup_once_without_a_sidebar(
+        cx: &mut TestAppContext,
+    ) {
+        let _state = cx.update(|cx| {
+            let state = AppState::test(cx);
+            trusted_worktrees::init(Default::default(), cx);
+            init(cx);
+            state
+        });
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree(
+                "/android",
+                json!({"gradlew": "", "settings.gradle.kts": ""}),
+            )
+            .await;
+        let project =
+            Project::test_with_worktree_trust(filesystem, [Path::new("/android")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        cx.run_until_parked();
+        let panel = workspace
+            .read_with(cx, |workspace, cx| controller(workspace, cx))
+            .expect("Workspace controller");
+        let weak = panel.downgrade();
+        panel.update(cx, |panel, _| {
+            panel.tool_setup.bootstrap_root = Some("/android".into());
+            panel.tool_setup.bootstrap_ready = None;
+            panel.refreshing_devices = true;
+        });
+        drop(panel);
+        assert!(
+            weak.upgrade().is_some(),
+            "Workspace actions retain the controller"
+        );
+        let store = project.read_with(cx, |project, _| project.worktree_store());
+        cx.update(|_, cx| {
+            TrustedWorktrees::try_get_global(cx)
+                .expect("Trust store")
+                .update(cx, |trusted, cx| {
+                    trusted.trust(
+                        &store,
+                        [PathTrust::AbsPath("/android".into())]
+                            .into_iter()
+                            .collect(),
+                        cx,
+                    )
+                })
+        });
+        cx.run_until_parked();
+        workspace.read_with(cx, |workspace, cx| {
+            assert!(workspace.panel::<BuildPanel>(cx).is_some());
+        });
+        weak.update_in(cx, |panel, window, cx| {
+            assert!(panel.auto_sync_root.is_none());
+            assert!(panel.onboarding_prompted_root.is_none());
+            panel.tool_setup.bootstrap_ready = Some(false);
+            panel.auto_sync_project(window, cx);
+        })
+        .expect("Live controller");
+        cx.run_until_parked();
+        workspace.update_in(cx, |workspace, window, cx| {
+            assert!(workspace.has_active_modal(window, cx));
+        });
+        weak.update_in(cx, |panel, window, cx| {
+            assert_eq!(panel.onboarding_prompted_root, Some("/android".into()));
+            assert!(!panel.syncing && !panel.running);
+            assert!(panel.auto_sync_root.is_none());
+            panel.auto_sync_project(window, cx);
+            assert!(!panel.syncing);
+        })
+        .expect("Live controller");
+    }
+
+    #[gpui::test]
+    async fn dependency_readiness_is_refreshed_when_the_selected_root_changes(
+        cx: &mut TestAppContext,
+    ) {
+        let _state = cx.update(AppState::test);
+        let filesystem = FakeFs::new(cx.executor());
+        for root in ["/first", "/second"] {
+            filesystem
+                .insert_tree(root, json!({"gradlew": "", "settings.gradle.kts": ""}))
+                .await;
+        }
+        let project =
+            Project::test(filesystem, [Path::new("/first"), Path::new("/second")], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        panel.update_in(cx, |panel, window, cx| {
+            panel.startup_settings_ready = true;
+            panel.root = Some("/second".into());
+            panel.tool_setup.bootstrap_root = Some("/first".into());
+            panel.tool_setup.bootstrap_ready = Some(true);
+            panel.auto_sync_project(window, cx);
+            assert_eq!(panel.tool_setup.bootstrap_root, Some("/second".into()));
+            assert!(panel.auto_sync_root.is_none());
+            assert!(!panel.syncing);
+        });
+    }
 
     pub(super) fn publish_test_android_model(
         panel: &mut AndroidPanel,
@@ -4864,6 +4977,10 @@ fi
                     label: "Android Run $ZED_UNKNOWN".into(),
                     command: program.to_string_lossy().into_owned(),
                     args: arguments.clone(),
+                    env: HashMap::from_iter([
+                        ("JAVA_HOME".into(), "/Java's home/$ZED_FILE/$$".into()),
+                        ("ANDROID_HOME".into(), "/SDK/${ZED_UNKNOWN}/$HOME".into()),
+                    ]),
                     shell: task::Shell::Program(shell.into()),
                     ..Default::default()
                 },
@@ -4871,6 +4988,14 @@ fi
                 directory.path().into(),
             )?;
             assert_eq!(task.resolved.full_label, "Android Run $ZED_UNKNOWN");
+            assert_eq!(
+                task.resolved.env.get("JAVA_HOME").map(String::as_str),
+                Some("/Java's home/$ZED_FILE/$$")
+            );
+            assert_eq!(
+                task.resolved.env.get("ANDROID_HOME").map(String::as_str),
+                Some("/SDK/${ZED_UNKNOWN}/$HOME")
+            );
             let (program, arguments) = task::ShellBuilder::new(&task.resolved.shell, false)
                 .non_interactive()
                 .build_no_quote(task.resolved.command, &task.resolved.args);
@@ -6011,8 +6136,8 @@ fi
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         cx.run_until_parked();
         let panel = workspace
-            .read_with(cx, |workspace, cx| workspace.panel::<AndroidPanel>(cx))
-            .expect("Android panel should register with a new workspace");
+            .read_with(cx, |workspace, cx| controller(workspace, cx))
+            .expect("Android controller should register with a new workspace");
         panel.read_with(cx, |panel, cx| {
             assert!(panel.trusted_root(cx).is_err());
             assert!(panel.auto_sync_candidate(cx).is_none());
@@ -6154,23 +6279,9 @@ fi
             assert_eq!(panel.selected_target, Some(debug));
             panel.root = None;
         });
-        panel.update_in(cx, |panel, window, cx| {
-            panel.set_position(DockPosition::Left, window, cx)
-        });
-        cx.executor().advance_clock(Duration::from_millis(200));
-        cx.run_until_parked();
         assert!(workspace.read_with(cx, |workspace, cx| {
-            workspace
-                .left_dock()
-                .read(cx)
-                .visible_panel()
-                .is_some_and(|visible| visible.panel_id() == panel.entity_id())
+            workspace.left_dock().read(cx).visible_panel().is_none()
+                && workspace.right_dock().read(cx).visible_panel().is_none()
         }));
-        let settings_filesystem = project.read_with(cx, |project, _| project.fs().clone());
-        let saved = settings::SettingsStore::load_settings(&settings_filesystem)
-            .await
-            .expect("Panel settings should persist");
-        assert!(saved.contains("android_panel"));
-        assert!(saved.contains("left"));
     }
 }

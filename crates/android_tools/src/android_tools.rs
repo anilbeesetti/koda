@@ -2,6 +2,7 @@ pub mod logcat;
 pub mod managed;
 pub mod preview;
 pub mod project_model;
+pub mod provision;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
 pub mod kotlin;
@@ -134,8 +135,9 @@ fn sdk_tool_path(directory: &str, name: &str) -> Result<PathBuf> {
         name.to_owned()
     };
     if let Some(root) = managed::environment()?.sdk {
+        provision::validate_managed_path(&root)?;
         let path = root.join(directory).join(&executable);
-        managed::executable(&path).with_context(|| format!("Saved Android SDK is missing {directory}/{executable}. Choose SDK in Android tools → Tool setup."))?;
+        managed::executable(&path).with_context(|| format!("Saved Android SDK is missing {directory}/{executable}. Choose SDK in Android → Android Setup."))?;
         return Ok(path);
     }
     for variable in ["ANDROID_HOME", "ANDROID_SDK_ROOT"] {
@@ -165,11 +167,16 @@ fn sdk_tool_path(directory: &str, name: &str) -> Result<PathBuf> {
         }
     }
     bail!(
-        "{executable} was not found. Install Android SDK {directory} with Android Studio, then choose SDK in Android tools → Tool setup."
+        "{executable} was not found. Install Android SDK {directory} with Android Studio, then choose SDK in Android → Android Setup."
     )
 }
 
 pub fn sdk_root() -> Option<PathBuf> {
+    let selected = managed::environment().ok()?;
+    if let Some(path) = selected.sdk {
+        provision::validate_managed_path(&path).ok()?;
+        return path.is_dir().then_some(path);
+    }
     for variable in ["ANDROID_HOME", "ANDROID_SDK_ROOT"] {
         if let Some(path) = env::var_os(variable).filter(|value| !value.is_empty()) {
             return Some(PathBuf::from(path));
@@ -209,8 +216,10 @@ pub fn parse_emulators(output: &str) -> Result<Vec<String>> {
 
 pub fn android_cli_path() -> Result<PathBuf> {
     if let Some(path) = managed::environment()?.android_cli {
-        managed::executable(&path)
-            .context("Saved Android CLI is unavailable. Choose Android CLI in Tool setup.")?;
+        provision::validate_managed_path(&path)?;
+        managed::executable(&path).context(
+            "Saved Android CLI is unavailable. Choose Android CLI in Android → Android Setup.",
+        )?;
         return Ok(path);
     }
     for path in ["/opt/homebrew/bin/android", "/usr/local/bin/android"] {
@@ -221,7 +230,7 @@ pub fn android_cli_path() -> Result<PathBuf> {
         }
     }
     which::which("android").context(
-        "Install Google's Android CLI, then choose its executable in Android tools → Tool setup.",
+        "Install Google's Android CLI, then choose its executable in Android → Android Setup.",
     )
 }
 

@@ -1,195 +1,146 @@
-# Managed Android tool setup
+# Android Setup
 
-The downloaded app includes Koda's installer recipes, patches and a bundled Compose renderer/layoutlib/Java 21 runtime. A source checkout and `script/android-ide` are no longer required to find
-or provision Koda's runtimes. Managed Kotlin language-server and debugger provisioning currently support **Apple Silicon macOS only**. Bundled Compose previews follow the platforms listed in [COMPOSE_PREVIEW.md](COMPOSE_PREVIEW.md); preview dependencies require no separate installer or project JDK for rendering. SDK/JDK path selection also compiles on other platforms; it does not establish working managed Kotlin/debugger support there.
+Downloaded Koda can provision Java and Android tools from **Android → Android
+Setup…** in the title bar. A trusted first Android project opens setup if its
+Java or SDK dependencies are missing. The Android sidebar has been removed;
+project, variant and device selection remain in the title bar, with Build Output
+and Logcat in their existing docks.
 
-## First project
+## Setup flow
 
-1. Install an existing Android SDK with Android Studio, a JDK 21, Python 3.12 or
-   newer from python.org/Homebrew, Apple's Command Line Tools, and Google's
-   Android CLI. Koda detects standard SDK/JDK/Homebrew locations. It neither
-   installs SDK packages or AVDs nor accepts SDK licenses. Project-specific SDK
-   platform/build-tool/Gradle requirements remain the project's responsibility.
-2. Open the project's Gradle root and trust it. The Android panel reports missing
-   dependencies when initial sync cannot proceed. Expand **Tool setup**, use
-   **Detect dependencies**, and select **Choose SDK**, **Choose JDK 21** or
-   **Choose Android CLI** for nonstandard locations. Choose the SDK directory
-   containing `platform-tools/adb`, the JDK home containing `release` and
-   `bin/java`/`bin/javac`, and the CLI executable, respectively.
-3. Choose **Install / repair** for Kotlin. Setup streams progress and errors to
-   Build Output. Install the Kotlin extension if necessary, sync the project,
-   select its module/variant and choose **Configure official Kotlin**. Existing
-   custom language-server preferences still require that explicit configuration.
-4. Provision the debugger when needed, then use the existing Run/Debug actions.
-   Compose previews automatically validate and extract the bundled runtime on
-   first use; there is no separate preview tool installation. The debugger builds pinned fwcd sources; its
-   temporary checksum-pinned JDK 11 is a build dependency, while Android setup
-   and debugger execution use the discovered/chosen JDK 21. Source-based builds
-   can take several minutes and need network access on their first installation.
+1. **Welcome** explains the supported components and platform limits.
+2. **Components** offers Standard or Custom setup. Existing compatible full JDK
+   21 installations are reused; otherwise Koda downloads Eclipse Temurin JDK 21.
+   Choose existing SDK/JDK/Android CLI paths for nonstandard locations.
+   SDK discovery also reads the project’s existing local.properties sdk.dir. A JRE
+   without `javac` is rejected with guidance.
+3. **Verify** shows versions, publishers, source URLs, download sizes and the
+   private installation directory before anything is downloaded.
+4. **Licenses** shows the full applicable Google terms. Every agreement starts
+   unchecked and is tied to the displayed text and installation plan. Declining
+   or cancelling prevents that installation. Koda records acceptance only when
+   the user starts the corresponding installation.
+5. **Installing** shows bounded progress and error details, with cancellation.
+   Failed operations return to Components to create a fresh plan; verified cached
+   downloads can be reused. Cancellation before publication preserves the
+   previous selection. Once atomic publication starts it finishes or recovers
+   the previous selection.
+6. **Ready** lists the selected paths and remaining prerequisites. Java/SDK setup
+   alone does not install the Kotlin extension, configure language servers, add
+   an emulator or establish working Run/Debug/Preview for a project.
 
-Saved dependencies are applied to Android CLI/Gradle commands, Kotlin resource
-generation, Java model generation and language-server imports. An existing
-`JAVA_HOME` remains the general Gradle JVM unless the user selects a JDK; Kotlin
-setup still requires JDK 21. Android Studio's JDK 21 is discovered when available.
-Setting a selected SDK does not rewrite `local.properties`; Gradle's project
-configuration may still override the SDK environment.
+The automatic SDK catalog currently contains platform-tools and platform/build
+tools for API **36** and **37.0**, pinned to reviewed releases. An existing SDK
+can supply other APIs when the requested platform, `android.jar`, `adb`, `aapt2`
+and D8 are present. Koda never modifies an externally selected SDK. If it needs
+to download packages, it creates a separate private SDK. `compileSdk` detection
+is a bounded literal hint, not evaluation of Gradle: computed values and unusual
+project layouts may need manual selection. Selecting an SDK does not rewrite
+`local.properties`; fix an obsolete project SDK path there if Gradle overrides
+the saved selection.
 
-## Persistence, validation and updates
+SDK/AVD browsing, emulator images, NDK/CMake and arbitrary package management are
+outside this setup flow. Use Android Studio or Google's supported tools for those
+components. Koda can start and stop existing emulators.
 
-Runtime state belongs to `android-tools` beneath the app's existing data profile:
-`~/Library/Application Support/Koda`, `Koda Nightly` or `Koda Dev` on macOS. A custom
-`--user-data-dir` profile also owns its tool state. Stable, Nightly, development
-profiles and Zed do not share managed paths, Gradle caches or download archives.
-SDK/JDK selections are stored in `environment.json`, outside project settings.
+## Java and platforms
 
-Each Kotlin/debugger tool's schema-1 JSON manifest records its embedded recipe SHA-256,
-installation slot, canonical entrypoint, every file/link digest and permission
-mode, plus one previous installation. Runtime versions, upstream origins and
-licenses remain in the installed `.revision`, `zed-native-importer.json`,
-`SOURCE.txt` and bundled notices. `managed::Tool::{recipe, resolve}` provide the
-stable interface for runtime consumers. The recipe identity includes the
-installer, patch and relevant embedded source bytes; changing them in a Koda app
-update makes an older active runtime unavailable until **Install / repair** is
-run. The app updater continues to update the app; it never silently replaces
-tools or downloads them during startup. Configure Kotlin again after a repair
-or update so a project's persisted server path uses the new installation.
+Java 21 remains the project and Compose Preview default. Downloads use a full
+**Eclipse Temurin 21.0.12.1+1** JDK. Compatible installed JDK 21 distributions,
+including Android Studio's runtime when it is a full JDK 21, are reused. Preview
+ships its renderer, layoutlib and bridge, but **no Java runtime**. Build machines
+still use a pinned host Java to compile the bundled renderer; it is not shipped.
 
-**Validate** checks the complete inventory. Normal runtime resolution also checks
-the inventory before use. A process-local validation cache uses the exact file
-set, expected digests, lengths, modification times, inode/device/change times,
-permission modes and link targets; changes invalidate it. Non-Unix bundled preview
-runtimes are hashed on every resolution because reliable change/inode metadata
-is unavailable. Persisted managed Kotlin
-paths are checked before language-server startup and must belong to the current
-profile and active recipe. Initial hashing runs
-on a background executor. Invalid/missing files produce repair guidance instead
-of silently selecting an older runtime. Explicit legacy `ANDROID_IDE_*` runtime
-overrides remain supported and take precedence; clear an obsolete override to
-use the managed runtime.
+Running Gradle on Java 21 requires Gradle **8.5+** and compatible project plugins.
+This setup does not choose a separate older JVM for legacy Gradle wrappers.
+See [Gradle’s Java compatibility matrix](https://docs.gradle.org/current/userguide/compatibility.html).
 
-Installation builds in a private staging directory under a profile-wide
-nonblocking kernel lock. Other windows receive a retryable busy error. A complete
-distribution is moved to an immutable slot, validated, and selected by an atomic,
-fsynced manifest replacement. Failed/cancelled builds leave the previous active
-manifest intact. An interrupted process releases the kernel lock; the next
-installation removes abandoned staging and named partial downloads. Malformed
-regular manifests/settings are preserved under `.corrupt-*` backup names and
-can be repaired; symlinks and unsupported future manifest schemas are preserved
-and rejected. The active manifest retains a previous installation for **Roll
-back** when that installation passes validation and matches this app's recipe.
-An older incompatible recipe cannot be rolled back into a newer app.
+The pinned official Kotlin LSP `263.4702.0` declares Java **25** in its upstream
+`product-info.json` and includes its own private JetBrains Runtime. That runtime
+is separate from the selected project Java. This change does not reuse Java 25
+for project builds or Preview. Gradle's supported runtime version and each
+project's plugins must be checked before any future reuse policy changes.
 
-Older complete slots remain because open processes and persisted project settings
-may refer to them. They are not automatically deleted. **Reveal managed storage**
-opens the profile location. To reclaim old slots or archive/Gradle caches, close
-all Koda windows first, remove unused versions using Finder, restart and configure
-affected projects again. Never remove an installation used by another window.
+Native Java/SDK/CLI downloads have pins for **macOS Apple Silicon, macOS Intel,
+Linux x86_64 and Windows x86_64**. Other hosts can select existing compatible
+tools but cannot request unavailable automatic downloads. Cross-platform pins
+and compilation do not establish full IDE runtime support on every platform.
 
-Bundled Compose runtime and render requests live under the same profile's
-`android-tools/compose-preview`. First use extracts trusted embedded bytes offline,
-checks complete SHA-256/size/mode inventories and uses immutable slots with an
-atomic, fsynced `.active` selector. Same-size corruption, missing/extra files or
-changed permissions trigger a new slot. Old slots remain for active renderers.
-Aggregate managed storage is checked before extraction and publication against
-the same 24 GiB / 300,000-entry boundary. Malformed regular selectors are preserved as `.corrupt-*`; symlink selectors are
-rejected. Interrupted extraction staging is cleaned under a bounded extraction
-lock, while live render directories remain untouched. App updates select their
-new bundled identity automatically. This cache follows Stable/Nightly/custom
-profiles and needs no checkout, external preview installer or runtime download.
+Native Java/SDK/CLI setup needs **no Python**. The existing advanced managed
+Kotlin/debugger source installers currently support **Apple Silicon macOS** and
+still require Python **3.12+** and Apple's Command Line Tools. Their UI lists
+missing prerequisites and streams failures into Build Output. Configure Kotlin
+explicitly after installing its extension and runtime. Custom/disabled language
+server preferences are preserved until that action is selected.
 
-## Download and failure boundaries
+## Persistence, repair and updates
 
-Direct upstream archives, source files, compiler dependencies and distributions
-use embedded SHA-256 pins and HTTPS, including redirect validation. Transfers
-have a 60-second read timeout, a 15-minute deadline and a 2 GiB per-file cap.
-Installed inventories are limited to 10 GiB/100,000 files. A watchdog checks the
-whole managed profile every two seconds during installation and rejects growth
-past 24 GiB/300,000 entries, including Gradle caches and older runtime slots. The
-supervised process also has a 30-minute deadline and bounded Build Output.
+Tools belong to `android-tools` under the app's data profile. On macOS these are
+`~/Library/Application Support/Koda`, `Koda Nightly` and `Koda Dev`; a custom
+`--user-data-dir` owns its own state. Stable, Nightly, Dev and Zed remain isolated.
+Saved paths live in `environment.json`, outside project settings, and are applied
+to Android command and language-server environments without shell exports.
+Google CLI state also uses the managed profile's Android user directory.
 
-Debugger builds use a checksum-pinned Gradle distribution, private Gradle cache,
-HTTPS repository guard and no persistent daemon. The client JVM matches the
-build JVM and uses Gradle's required module opens; the Kotlin compiler runs in
-process. This prevents detached single-use/compile daemons escaping cancellation.
-Successful setup also terminates remaining children in its owned process group. The embedded, SHA-256-pinned
-Gradle verification metadata covers 217 components and 398 artifacts, including
-plugin and dependency metadata. Strict verification runs for the adapter, shared
-included build and buildSrc; unknown artifacts or checksum mismatches fail closed.
-The installed distribution preserves that metadata for provenance. Changing the
-adapter's dependency graph requires reviewing and updating this pinned metadata;
-provisioning does not trust newly generated checksums automatically. Managed
-installation builds the distribution only. The upstream adapter tests are run
-separately during development validation because their sample-project fixture
-starts another Gradle wrapper outside the managed verification boundary.
+Advanced setup exposes **Validate**, **Repair / update**, **Restore previous**,
+offline mode and managed storage. Validation checks saved dependencies and full
+managed inventories. Missing/corrupt files, incompatible recipes and another
+profile's managed paths fail with actionable guidance. Repair uses the current
+embedded manifest and new immutable installation slots. Restore requires a
+validated previous selection compatible with the running app's recipe.
 
-**Cancel tool setup** or the Build Output Stop control terminates the supervised
-process tree. Tool setup also cancels when its project closes or loses trust.
-**Rerun** retries the failed tool operation, rather than an earlier Android build.
-**Offline: on** permits only verified direct-download cache entries and uses
-Gradle's offline mode; missing artifacts explain that reconnection is needed.
-An existing valid installation works offline. Offline repair is possible only
-when all required archives and Gradle artifacts are cached. Cache corruption is
-discarded and re-fetched on retry; there is no automatic endless retry.
+An app update changes embedded runtime identities when their recipes change.
+It does not silently download or replace tools on startup. Return to setup to
+review and install the new plan, then configure affected projects again. Old
+slots remain because another window or persisted project path may use them.
+Close all Koda windows before manually reclaiming obsolete storage.
 
-No SDK license acceptance, credentials, signing changes, Gatekeeper exceptions
-or security-warning bypasses are performed. macOS execution restrictions should
-be handled through normal trusted installation guidance, rather than disabling
-the platform's protections.
+Native installs use the same nonblocking, profile-wide kernel lock as advanced
+installers. Concurrent windows receive a retryable busy error. Downloads and
+extraction happen in staging; complete files, permissions and link targets are
+inventoried before an atomic journalled selection of paths and generation.
+Restart recovers interrupted publication. Corrupt regular settings/selectors are
+preserved for diagnosis; unsafe links, unknown formats or an ambiguous corrupt
+journal produce repair guidance instead of being overwritten.
 
-## Acceptance checks
+## Download boundaries
 
-Automated backend and headless UI tests cover atomic fixture installation,
-restart, corruption/repair, failed/checksum-invalid/oversized transfers, offline
-cache behavior, interrupted process recovery, concurrent profile locking,
-manifest update/rollback compatibility, safe paths and permissions, saved
-dependency recovery, tool-specific retry and project-close cancellation.
+Native manifests contain immutable HTTPS URLs, SHA-256 hashes, publisher and
+version information. SDK pins also retain Google's repository SHA-1 checksums
+and package metadata. Redirects are limited to reviewed origins. Downloads have
+a 1 GiB per-file limit, 3-second connection timeout, 3-second read inactivity
+timeout, 180-second attempt deadline and two attempts. Extraction rejects unsafe
+paths, special files, escaping links and duplicate entries, with a 5 GiB /
+100,000-entry limit. Native storage is bounded to 12 GiB within the existing
+24 GiB / 300,000-entry managed-profile boundary.
 
-Before claiming downloaded-app runtime support is validated, test an actual
-Apple Silicon macOS installation with a fresh Nightly profile and no source
-checkout or `ANDROID_IDE_*`, `ANDROID_HOME` or `JAVA_HOME` exports:
+Offline mode uses verified cache entries only. Missing cache data explains which
+component needs a connection. Cancellation and retry do not accept licenses,
+relabel old installations or bypass integrity checks. The normal path requests
+no credentials, signing changes, Gatekeeper exceptions or security-warning
+bypasses.
 
-1. Start the downloaded app; choose existing SDK/JDK/CLI paths and provision tools.
-2. Open this fixture, sync, configure Kotlin, confirm completion and generated R
-   symbols, run on an authorized device, attach/debug/step and render a preview.
-3. Cancel an installation and interrupt a download; restart and retry. Check the
-   prior runtime still resolves and partial files are recovered.
-4. Corrupt a managed library/manifest, confirm actionable validation errors and
-   repair. Check offline launch, cached repair and missing-cache guidance.
-5. Open two windows and attempt concurrent provisioning. Update app recipe,
-   confirm update guidance, then provision and reconfigure. Check compatible
-   rollback, isolated stable/Nightly profiles and coexistence with Zed.
+The advanced Kotlin/debugger installers keep their existing pinned source and
+compiler dependencies, private caches, supervised process-tree cancellation,
+bounded output and strict Gradle verification. They may take several minutes.
+Their tool/version manifests remain the stable runtime interface:
+`managed::resolve(Tool::Kotlin/Debugger)` and `Tool::recipe`; consumers should not
+hard-code checkout paths. Debugger semantics and the test runner remain separate
+tasks. This change does not publish releases or alter signing/account settings.
 
-A separate fresh-cache Linux/JDK 11 build passed the pinned debugger's Gradle
-`:adapter:test` and `:adapter:installDist` tasks with strict verification. This
-checks the adapter dependency graph, not the macOS provisioner or device flow.
-These interactive macOS/device checks have not been run in the Linux cloud
-environment. Headless tests do not establish downloaded-app startup, completion,
-device execution, debugger behavior, rendered preview success or Android Studio
-feature parity.
+## Acceptance
 
-## Companion task integration
+Focused tests cover reused/full JDK validation, pinned manifests, safe extraction,
+synthetic SDK installation, explicit license binding, offline/cache failures,
+cancel/retry, corruption, journal recovery, concurrent locks, saved-path restart,
+rollback and profile ownership. UI tests cover setup navigation, individual
+consent, chooser errors, cancellation cleanup, focus and fixed-footer layout.
 
-This work integrates main `82efb6696b`, including merged PR #47 bundled previews,
-PR #50's shared variant model, PR #55 Dev profile isolation and the Nightly
-metadata fix in PR #48. It does not alter release packaging or publish a release.
-
-PR #50's shared variant model and `263.4702.0+android-6` Kotlin importer
-revision/patch are preserved. Embedded recipe identities automatically change, so the managed UI
-will require reinstallation. PR #49's test runner remains separate; it can use
-`managed::command_environment` for its Gradle commands without another installer
-or discovery model. Reconcile Android panel and README changes when stacking.
-
-The debugger task owns adapter semantics and patch revisions. The provisioner
-now incorporates PR #51's exact adapter patch from `84e1f6def2` and revision
-`7f05669b642d21afa46ac7b75307fa5d523a7263+android-2`, with unchanged upstream/source/JDK
-checksums. This is the runtime dependency; PR #51's debugger UI and session
-changes remain separate. The entrypoint and installation-root `.revision` layout
-are compatible. Repair builds a new immutable slot and preserves the old runtime;
-it never merely relabels an existing installation. Preserve
-`install-android-debugger`'s default repository behavior and optional
-`main(install_kotlin=False)` interface. Adapter revisions/patches automatically
-change `Tool::Debugger.recipe`; consume `managed::resolve(Tool::Debugger)` and
-the existing explicit override, not a hard-coded checkout path. Base Kotlin
-distribution-version changes must update the canonical entrypoint in both the
-Rust `Tool` and Python `ENTRYPOINTS` definitions. Do not accept a manifest with
-another tool, recipe, entrypoint or escaped installation slot.
+Before claiming complete downloaded-app support, validate a fresh Apple Silicon
+Nightly profile with no checkout or runtime environment exports: sync a real
+project, configure Kotlin and test completion/generated symbols, run on an
+authorized device, attach/step in Debug and render actual Compose previews.
+Repeat cancellation, corruption/repair, restart/upgrade, offline and concurrent
+window checks. Linux cloud checks and synthetic fixtures do not establish those
+macOS/device flows or full Android Studio parity. The PR records the checks
+actually performed and remaining runtime gaps.

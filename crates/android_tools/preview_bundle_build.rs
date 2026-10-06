@@ -30,8 +30,8 @@ struct Manifest {
     protocol: String,
     artifacts: Vec<InstalledArtifact>,
     compiler: Artifact,
-    java: BTreeMap<String, Artifact>,
-    java_source: String,
+    build_java: BTreeMap<String, Artifact>,
+    build_java_source: String,
     layoutlib: BTreeMap<String, Artifact>,
 }
 
@@ -73,13 +73,9 @@ pub fn build() -> Result<()> {
         .next()
         .context("Missing build host architecture")?;
     let host_java = manifest
-        .java
+        .build_java
         .get(&format!("{host_os}-{host_arch}"))
         .context("No pinned Java runtime for the build host")?;
-    let target_java = manifest
-        .java
-        .get(&platform)
-        .context("No pinned preview Java runtime")?;
     let output = PathBuf::from(env::var_os("OUT_DIR").context("Missing OUT_DIR")?);
     let cache = env::var_os("KODA_COMPOSE_PREVIEW_ARTIFACT_CACHE")
         .map(PathBuf::from)
@@ -114,25 +110,13 @@ pub fn build() -> Result<()> {
     ZipArchive::new(fs::File::open(download(&client, &cache, native)?)?)?
         .extract(distribution.join("layoutlib"))?;
     sources.push(native.url.clone());
+    let compiler_java = staging.path().join("host-java");
     unpack_java(
-        &download(&client, &cache, target_java)?,
-        &target_java.url,
-        &distribution.join("java"),
+        &download(&client, &cache, host_java)?,
+        &host_java.url,
+        &compiler_java,
         staging.path(),
     )?;
-    sources.push(target_java.url.clone());
-    let compiler_java = if target_java.sha256 == host_java.sha256 {
-        distribution.join("java")
-    } else {
-        let directory = staging.path().join("host-java");
-        unpack_java(
-            &download(&client, &cache, host_java)?,
-            &host_java.url,
-            &directory,
-            staging.path(),
-        )?;
-        directory
-    };
     let compiler = download(&client, &cache, &manifest.compiler)?;
     let java_name = if host_os == "windows" {
         "java.exe"
@@ -162,8 +146,8 @@ pub fn build() -> Result<()> {
     fs::write(
         distribution.join("SOURCE.txt"),
         format!(
-            "Google Android tooling: Apache-2.0; preserve JAR and layoutlib notices.\nEclipse Temurin: GPL-2.0 with Classpath Exception; licenses are in java/legal.\nCorresponding Java source: {}\nBuild compiler (not shipped): {}\n{}\n",
-            manifest.java_source,
+            "Google Android tooling: Apache-2.0; preserve JAR and layoutlib notices.\nJava 21 is selected through Android Setup and is not bundled.\nBuild-only Java source (not shipped): {}\nBuild compiler (not shipped): {}\n{}\n",
+            manifest.build_java_source,
             manifest.compiler.url,
             sources.join("\n")
         ),
