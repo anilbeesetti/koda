@@ -1,11 +1,11 @@
 ---
 title: Kotlin
-description: "Configure Kotlin language support in Zed, including language servers, formatting, and debugging."
+description: "Configure Kotlin language support in Koda, including language servers, formatting, and debugging."
 ---
 
 # Kotlin
 
-Kotlin language support in Zed is provided by the community-maintained [Kotlin extension](https://github.com/zed-extensions/kotlin).
+Kotlin syntax and language integration in Koda are provided by the community-maintained [Kotlin extension](https://github.com/zed-extensions/kotlin).
 Report issues to: [https://github.com/zed-extensions/kotlin/issues](https://github.com/zed-extensions/kotlin/issues)
 
 - Tree-sitter: [fwcd/tree-sitter-kotlin](https://github.com/fwcd/tree-sitter-kotlin)
@@ -14,9 +14,27 @@ Report issues to: [https://github.com/zed-extensions/kotlin/issues](https://gith
 
 ## Kotlin LSP
 
-[Kotlin LSP](https://github.com/kotlin/kotlin-lsp) is the official language server for Kotlin, built by JetBrains. It is used by default.
+[Kotlin LSP](https://github.com/kotlin/kotlin-lsp) is the official language server for Kotlin, built by JetBrains.
 
-It is downloaded and updated automatically. If you want to use a manually installed version instead, set the path to the `kotlin-lsp.sh` script from the release assets in your `settings.json`:
+On Apple Silicon macOS, Koda selects its pinned Kotlin server with Android patches
+(`263.4702.0+android-6`) instead of the extension's server download. If the managed
+runtime is missing or needs repair, open {#action android::Setup}, choose
+**Customize**, expand **Advanced tools**, and choose Kotlin **Install / repair**.
+The installer currently requires Python 3.12+ and Apple's Command Line Tools.
+After a successful Android project sync, Koda configures the default Kotlin
+backend for the selected build variant automatically. Explicit custom server
+settings are preserved.
+
+The Kotlin server uses its private Java 25 runtime. Android builds and Compose
+previews use the Java 21 selected in setup. Server caches are isolated by Koda
+profile and project.
+
+On other platforms, the Kotlin extension still downloads and updates its default
+server. Koda's patched runtime installer currently supports Apple Silicon macOS
+only.
+
+If you want to use a manually installed version, set the path to its launcher in
+your `settings.json`:
 
 ```json [settings]
 {

@@ -2531,6 +2531,7 @@ impl AndroidPanel {
                 panel.command_cancel = None;
                 panel.running = false;
                 panel.tool_setup.operation = None;
+                let succeeded = matches!(&result, Ok(ProcessOutput::Success(_)));
                 let (status, message) = match result {
                     Ok(ProcessOutput::Success(_)) => (BuildStatus::Succeeded, "Managed tool ready. Configure Kotlin or retry Run / Debug.".to_owned()),
                     Ok(ProcessOutput::Cancelled) => (BuildStatus::Cancelled, "Tool setup cancelled. The previous runtime is preserved; retry when ready.".to_owned()),
@@ -2542,7 +2543,11 @@ impl AndroidPanel {
                 };
                 panel.status = message.clone().into();
                 panel.build_panel.update(cx, |panel, cx| panel.finish(BuildTab::Output, session, status, message, cx));
-                panel.refresh_tool_setup(cx);
+                if succeeded {
+                    panel.managed_tool_succeeded(tool, operation, window, cx);
+                } else {
+                    panel.refresh_tool_setup(cx);
+                }
                 cx.notify();
             }).log_err();
         }));

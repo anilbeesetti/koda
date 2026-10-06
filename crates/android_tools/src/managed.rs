@@ -279,7 +279,7 @@ fn validate_inventory_inner(
 pub fn resolve(tool: Tool) -> Result<PathBuf> {
     resolve_at(&root(), tool).with_context(|| {
         format!(
-            "{} is unavailable. Run Android: Setup from the command palette, expand Change settings and Advanced tools, then choose Install / repair or Validate.",
+            "{} is unavailable. Run Android: Setup from the command palette, open Customize and Advanced tools, then choose Install / repair or Validate. Managed Kotlin and debugger installation currently supports Apple Silicon macOS.",
             tool.label()
         )
     })
@@ -322,7 +322,7 @@ fn validate_language_server_binary_at(root: &Path, path: &Path) -> Result<()> {
             current_profile,
             "This project references another Koda profile's managed Kotlin installation. Configure Kotlin to select this profile's validated runtime"
         );
-        let current = resolve_at(root, Tool::Kotlin).context("Managed Kotlin is unavailable. Run Android: Setup from the command palette, expand Change settings and Advanced tools, choose Install / repair, then run Configure Kotlin")?;
+        let current = resolve_at(root, Tool::Kotlin).context("Managed Kotlin is unavailable. Run Android: Setup from the command palette, open Customize and Advanced tools, choose Install / repair, then run Configure Kotlin")?;
         ensure!(
             path.canonicalize()? == current.canonicalize()?,
             "This project references an older managed Kotlin installation. Configure Kotlin to select this Koda version's validated runtime"

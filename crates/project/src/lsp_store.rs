@@ -483,6 +483,105 @@ pub struct LocalLspStore {
     _background_diagnostics_worker: Shared<Task<()>>,
 }
 
+struct ManagedKotlinRuntime(Arc<dyn Fn() -> Result<PathBuf> + Send + Sync>);
+
+impl gpui::Global for ManagedKotlinRuntime {}
+
+fn uses_managed_kotlin_settings(settings: &LspSettings, adapter: &CachedLspAdapter) -> bool {
+    adapter.name.0.as_ref() == "kotlin-lsp"
+        && adapter.adapter.is_extension()
+        && settings.binary.as_ref().is_some_and(|binary| {
+            binary
+                .path
+                .as_deref()
+                .is_none_or(|path| path == android_tools::kotlin::MANAGED_RUNTIME_PATH)
+                && binary
+                    .env
+                    .as_ref()
+                    .and_then(|env| env.get(android_tools::kotlin::MANAGED_RUNTIME_ENV))
+                    .is_some_and(|marker| marker == "1")
+        })
+}
+
+fn managed_kotlin_arguments(
+    arguments: Vec<std::ffi::OsString>,
+    root: &Path,
+) -> Vec<std::ffi::OsString> {
+    let mut arguments = arguments.into_iter();
+    let mut updated = Vec::new();
+    while let Some(argument) = arguments.next() {
+        if argument == "--system-path" {
+            arguments.next();
+        } else if !argument.to_string_lossy().starts_with("--system-path=") {
+            updated.push(argument);
+        }
+    }
+    if !updated.iter().any(|argument| argument == "--stdio") {
+        updated.push("--stdio".into());
+    }
+    updated.push(
+        format!(
+            "--system-path={}",
+            android_tools::kotlin::official_system_path(root).display()
+        )
+        .into(),
+    );
+    updated
+}
+
+fn refresh_managed_kotlin_options(
+    options: Option<Value>,
+    root: &Path,
+    java_home: &Path,
+) -> Result<Option<Value>> {
+    let Some(mut options) = options else {
+        return Ok(None);
+    };
+    let uri = Uri::from_file_path(root).map_err(|_| anyhow!("Invalid Kotlin project URI"))?;
+    let object = options
+        .as_object_mut()
+        .context("Managed Kotlin initialization options must be an object")?;
+    object.insert("defaultSdk".into(), serde_json::to_value(java_home)?);
+    if let Some(projects) = object.get_mut("projects") {
+        for project in projects
+            .as_array_mut()
+            .context("Managed Kotlin projects must be an array")?
+        {
+            if project
+                .get("path")
+                .and_then(Value::as_str)
+                .is_some_and(|path| {
+                    path.trim_end_matches('/') == uri.as_str().trim_end_matches('/')
+                })
+            {
+                anyhow::ensure!(
+                    project.get("type").and_then(Value::as_str) == Some("gradle"),
+                    "The managed Kotlin importer changed; configure it manually"
+                );
+                project
+                    .as_object_mut()
+                    .context("Managed Kotlin project must be an object")?
+                    .insert("java-home".into(), serde_json::to_value(java_home)?);
+            }
+        }
+    }
+    Ok(Some(options))
+}
+
+pub fn enable_managed_kotlin_runtime(cx: &mut App) {
+    if android_tools::managed::supported()
+        || std::env::var_os("ANDROID_IDE_OFFICIAL_KOTLIN_SERVER").is_some()
+    {
+        cx.set_global(ManagedKotlinRuntime(Arc::new(
+            android_tools::kotlin::official_server_binary,
+        )));
+    }
+}
+
+pub fn managed_kotlin_runtime_enabled(cx: &App) -> bool {
+    cx.try_global::<ManagedKotlinRuntime>().is_some()
+}
+
 impl LocalLspStore {
     fn virtual_document_is_current(&self, document: &VirtualDocumentId) -> bool {
         self.language_servers.contains_key(&document.server_id)
@@ -608,6 +707,8 @@ impl LocalLspStore {
         let worktree_abs_path = worktree.abs_path();
         let toolchain = key.toolchain.clone();
         let override_options = settings.initialization_options.clone();
+        let managed_android_options =
+            managed_kotlin_runtime_enabled(cx) && uses_managed_kotlin_settings(&settings, &adapter);
 
         let stderr_capture = Arc::new(Mutex::new(Some(String::new())));
 
@@ -675,6 +776,7 @@ impl LocalLspStore {
 
         let pending_server = cx.spawn({
             let adapter = adapter.clone();
+            let worktree_abs_path = worktree_abs_path.clone();
             let server_name = adapter.name.clone();
             let stderr_capture = stderr_capture.clone();
             #[cfg(any(test, feature = "test-support"))]
@@ -751,6 +853,18 @@ impl LocalLspStore {
                     )
                     .await?;
 
+                    let override_options = if managed_android_options {
+                        let java_home = cx
+                            .background_spawn(async { android_tools::kotlin::java_home() })
+                            .await?;
+                        refresh_managed_kotlin_options(
+                            override_options,
+                            &worktree_abs_path,
+                            &java_home,
+                        )?
+                    } else {
+                        override_options
+                    };
                     match (&mut initialization_options, override_options) {
                         (Some(initialization_options), Some(override_options)) => {
                             merge_json_value_into(override_options, initialization_options);
@@ -883,8 +997,10 @@ impl LocalLspStore {
         wait_until_worktree_trust: Option<watch::Receiver<bool>>,
         cx: &mut App,
     ) -> Task<Result<LanguageServerBinary>> {
+        let managed_android = uses_managed_kotlin_settings(&settings, &adapter);
         if let Some(settings) = &settings.binary
             && let Some(path) = settings.path.as_ref().map(PathBuf::from)
+            && !managed_android
         {
             let settings = settings.clone();
             return cx.background_spawn(async move {
@@ -900,6 +1016,7 @@ impl LocalLspStore {
                                 break;
                             }
                         }
+                        anyhow::ensure!(*wait_until_worktree_trust.borrow(), "The worktree was closed before it was trusted");
                         log::info!(
                             "Worktree {worktree_abs_path:?} is trusted, starting language server {}",
                             adapter.name(),
@@ -910,7 +1027,12 @@ impl LocalLspStore {
                 let mut env = delegate.shell_env().await;
                 env.extend(settings.env.unwrap_or_default());
                 let path = delegate.resolve_relative_path(path);
-                android_tools::managed::validate_language_server_binary(&path)?;
+                if adapter.name.0.as_ref() == "kotlin-lsp" {
+                    android_tools::managed::validate_language_server_binary(&path)?;
+                    if let Some((name, value)) = android_tools::kotlin::private_java_environment(&path)? {
+                        env.insert(name, value);
+                    }
+                }
 
                 Ok(LanguageServerBinary {
                     path,
@@ -940,6 +1062,7 @@ impl LocalLspStore {
                                 break;
                             }
                         }
+                        anyhow::ensure!(*wait_until_worktree_trust.borrow(), "The worktree was closed before it was trusted");
                         log::info!(
                             "Worktree {worktree_abs_path:?} is trusted, starting language server {language_server_name}",
                         );
@@ -965,6 +1088,22 @@ impl LocalLspStore {
             )));
         }
 
+        let managed_kotlin = (adapter.name.0.as_ref() == "kotlin-lsp"
+            && adapter.adapter.is_extension())
+        .then(|| {
+            cx.try_global::<ManagedKotlinRuntime>()
+                .map(|runtime| runtime.0.clone())
+        })
+        .flatten();
+        if managed_android
+            && adapter.adapter.is_extension()
+            && adapter.name.0.as_ref() == "kotlin-lsp"
+            && managed_kotlin.is_none()
+        {
+            return Task::ready(Err(anyhow!(
+                "This project uses Koda's managed Android Kotlin server, currently supported on Apple Silicon macOS. Configure an explicit compatible Kotlin binary to use another runtime."
+            )));
+        }
         let lsp_binary_options = LanguageServerBinaryOptions {
             allow_path_lookup: !settings
                 .binary
@@ -993,6 +1132,10 @@ impl LocalLspStore {
                             break;
                         }
                     }
+                    anyhow::ensure!(
+                        *wait_until_worktree_trust.borrow(),
+                        "The worktree was closed before it was trusted"
+                    );
                     log::info!(
                         "Worktree {worktree_abs_path:?} is trusted, starting language server {}",
                         adapter.name(),
@@ -1000,36 +1143,65 @@ impl LocalLspStore {
                 }
             }
 
-            let (existing_binary, maybe_download_binary) = adapter
-                .clone()
-                .get_language_server_command(delegate.clone(), toolchain, lsp_binary_options, cx)
-                .await
-                .await;
+            // The Kotlin extension supplies syntax and protocol integration, but its
+            // downloader cannot supply Koda's Android patches or validate their manifest.
+            let selected_managed_kotlin = managed_kotlin.is_some();
+            let mut binary = if let Some(resolve) = managed_kotlin {
+                let path = cx.background_spawn(async move { resolve() }).await?;
+                log::info!(
+                    "Using Koda Kotlin server {} at {}",
+                    android_tools::kotlin::OFFICIAL_REVISION,
+                    path.display()
+                );
+                LanguageServerBinary {
+                    path,
+                    arguments: vec![
+                        "--stdio".into(),
+                        format!(
+                            "--system-path={}",
+                            android_tools::kotlin::official_system_path(&worktree_abs_path)
+                                .display()
+                        )
+                        .into(),
+                    ],
+                    env: None,
+                }
+            } else {
+                let (existing_binary, maybe_download_binary) = adapter
+                    .clone()
+                    .get_language_server_command(
+                        delegate.clone(),
+                        toolchain,
+                        lsp_binary_options,
+                        cx,
+                    )
+                    .await
+                    .await;
 
-            delegate.update_status(adapter.name.clone(), BinaryStatus::None);
-
-            let mut binary = match (existing_binary, maybe_download_binary) {
-                (binary, None) => binary?,
-                (Err(_), Some(downloader)) => downloader.await?,
-                (Ok(existing_binary), Some(downloader)) => {
-                    let mut download_timeout = cx
-                        .background_executor()
-                        .timer(SERVER_DOWNLOAD_TIMEOUT)
-                        .fuse();
-                    let mut downloader = downloader.fuse();
-                    futures::select! {
-                        _ = download_timeout => {
-                            // Return existing binary and kick the existing work to the background.
-                            cx.spawn(async move |_| downloader.await).detach();
-                            Ok(existing_binary)
-                        },
-                        downloaded_or_existing_binary = downloader => {
-                            // If download fails, this results in the existing binary.
-                            downloaded_or_existing_binary
-                        }
-                    }?
+                match (existing_binary, maybe_download_binary) {
+                    (binary, None) => binary?,
+                    (Err(_), Some(downloader)) => downloader.await?,
+                    (Ok(existing_binary), Some(downloader)) => {
+                        let mut download_timeout = cx
+                            .background_executor()
+                            .timer(SERVER_DOWNLOAD_TIMEOUT)
+                            .fuse();
+                        let mut downloader = downloader.fuse();
+                        futures::select! {
+                            _ = download_timeout => {
+                                // Return existing binary and kick the existing work to the background.
+                                cx.spawn(async move |_| downloader.await).detach();
+                                Ok(existing_binary)
+                            },
+                            downloaded_or_existing_binary = downloader => {
+                                // If download fails, this results in the existing binary.
+                                downloaded_or_existing_binary
+                            }
+                        }?
+                    }
                 }
             };
+            delegate.update_status(adapter.name.clone(), BinaryStatus::None);
             let mut shell_env = delegate.shell_env().await;
 
             shell_env.extend(binary.env.unwrap_or_default());
@@ -1040,6 +1212,31 @@ impl LocalLspStore {
                 }
                 if let Some(env) = &settings.env {
                     shell_env.extend(env.iter().map(|(k, v)| (k.clone(), v.clone())));
+                }
+            }
+
+            if selected_managed_kotlin {
+                if managed_android {
+                    binary.arguments =
+                        managed_kotlin_arguments(binary.arguments, &worktree_abs_path);
+                    for name in ["JAVA_HOME", "ANDROID_HOME", "ANDROID_SDK_ROOT"] {
+                        shell_env.remove(name);
+                    }
+                    shell_env.extend(
+                        cx.background_spawn(async {
+                            android_tools::managed::language_environment()
+                        })
+                        .await?,
+                    );
+                }
+                let path = binary.path.clone();
+                if let Some((name, value)) = cx
+                    .background_spawn(async move {
+                        android_tools::kotlin::private_java_environment(&path)
+                    })
+                    .await?
+                {
+                    shell_env.insert(name, value);
                 }
             }
 
@@ -18193,6 +18390,434 @@ fn extend_formatting_transaction(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn managed_kotlin_settings_rebind_profile_paths_at_launch() {
+        let root = Path::new("/project");
+        let arguments = vec![
+            "--stdio".into(),
+            "--system-path=/other-profile/cache".into(),
+            "--custom-option".into(),
+        ];
+        let arguments = managed_kotlin_arguments(arguments, root);
+        assert_eq!(
+            arguments,
+            vec![
+                std::ffi::OsString::from("--stdio"),
+                "--custom-option".into(),
+                format!(
+                    "--system-path={}",
+                    android_tools::kotlin::official_system_path(root).display()
+                )
+                .into()
+            ]
+        );
+        let legacy = managed_kotlin_arguments(
+            vec!["--system-path".into(), "/other-profile/cache".into()],
+            root,
+        );
+        assert_eq!(legacy.len(), 2);
+        let options = serde_json::json!({
+            "defaultSdk": "/other-profile/jdk",
+            "custom": true,
+            "projects": [
+                {"type": "gradle", "path": "file:///project/", "java-home": "/other-profile/jdk"},
+                {"type": "custom", "path": "file:///another", "java-home": "/explicit/jdk"}
+            ]
+        });
+        let updated =
+            refresh_managed_kotlin_options(Some(options), root, Path::new("/current-profile/jdk"))
+                .unwrap()
+                .unwrap();
+        assert_eq!(updated["defaultSdk"], "/current-profile/jdk");
+        assert_eq!(updated["projects"][0]["java-home"], "/current-profile/jdk");
+        assert_eq!(updated["projects"][1]["java-home"], "/explicit/jdk");
+        assert_eq!(updated["custom"], true);
+    }
+
+    struct KotlinExtensionFixture {
+        name: &'static str,
+        lookups: Arc<std::sync::atomic::AtomicUsize>,
+    }
+
+    #[async_trait(?Send)]
+    impl LspAdapter for KotlinExtensionFixture {
+        fn name(&self) -> LanguageServerName {
+            self.name.into()
+        }
+
+        fn is_extension(&self) -> bool {
+            true
+        }
+    }
+
+    impl LspInstaller for KotlinExtensionFixture {
+        type BinaryVersion = ();
+
+        async fn check_if_user_installed(
+            &self,
+            _: &Arc<dyn LspAdapterDelegate>,
+            _: Option<Toolchain>,
+            _: &AsyncApp,
+        ) -> Option<LanguageServerBinary> {
+            self.lookups
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            Some(LanguageServerBinary {
+                path: "/extension/stock-kotlin-lsp".into(),
+                arguments: vec!["--stdio".into()],
+                env: None,
+            })
+        }
+
+        async fn fetch_latest_server_version(
+            &self,
+            _: &Arc<dyn LspAdapterDelegate>,
+            _: bool,
+            _: &mut AsyncApp,
+        ) -> Result<()> {
+            self.lookups
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            anyhow::bail!("Unexpected extension download")
+        }
+
+        fn fetch_server_binary(
+            &self,
+            _: (),
+            _: PathBuf,
+            _: &Arc<dyn LspAdapterDelegate>,
+        ) -> impl Send + Future<Output = Result<LanguageServerBinary>> + use<> {
+            async { anyhow::bail!("Unexpected extension download") }
+        }
+
+        async fn cached_server_binary(
+            &self,
+            _: PathBuf,
+            _: &dyn LspAdapterDelegate,
+        ) -> Option<LanguageServerBinary> {
+            None
+        }
+    }
+
+    async fn kotlin_binary_fixture(
+        cx: &mut gpui::TestAppContext,
+    ) -> (Entity<LspStore>, Entity<Worktree>) {
+        cx.update(|cx| {
+            let settings = settings::SettingsStore::test(cx);
+            cx.set_global(settings);
+            release_channel::init(semver::Version::new(0, 0, 0), cx);
+        });
+        let fs = fs::FakeFs::new(cx.executor());
+        fs.insert_tree("/project", serde_json::json!({"main.kt": "fun main() {}"}))
+            .await;
+        let project = crate::Project::test(fs, [Path::new("/project")], cx).await;
+        project.read_with(cx, |project, cx| {
+            (
+                project.lsp_store(),
+                project.visible_worktrees(cx).next().unwrap(),
+            )
+        })
+    }
+
+    fn kotlin_binary_lookup(
+        store: &Entity<LspStore>,
+        worktree: &Entity<Worktree>,
+        adapter: Arc<CachedLspAdapter>,
+        settings: LspSettings,
+        trust: Option<watch::Receiver<bool>>,
+        cx: &mut gpui::TestAppContext,
+    ) -> Task<Result<LanguageServerBinary>> {
+        store.update(cx, |store, cx| {
+            let local = store.as_local().unwrap();
+            local.get_language_server_binary(
+                worktree.read(cx).abs_path(),
+                adapter,
+                Arc::new(settings),
+                None,
+                LocalLspAdapterDelegate::from_local_lsp(local, worktree, cx),
+                true,
+                trust,
+                cx,
+            )
+        })
+    }
+
+    #[gpui::test]
+    async fn managed_kotlin_binary_bypasses_extension_lookup_and_download(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (store, worktree) = kotlin_binary_fixture(cx).await;
+        let lookups = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let adapter = CachedLspAdapter::new(Arc::new(KotlinExtensionFixture {
+            name: "kotlin-lsp",
+            lookups: lookups.clone(),
+        }));
+        cx.update(|cx| {
+            cx.set_global(ManagedKotlinRuntime(Arc::new(|| {
+                Ok("/managed/patched-server".into())
+            })));
+        });
+        let binary = kotlin_binary_lookup(
+            &store,
+            &worktree,
+            adapter.clone(),
+            LspSettings::default(),
+            None,
+            cx,
+        )
+        .await
+        .unwrap();
+        assert_eq!(binary.path, Path::new("/managed/patched-server"));
+        assert_eq!(binary.arguments[0], "--stdio");
+        assert_eq!(
+            binary.arguments[1],
+            std::ffi::OsString::from(format!(
+                "--system-path={}",
+                android_tools::kotlin::official_system_path(Path::new("/project")).display()
+            ))
+        );
+        let settings = LspSettings {
+            binary: Some(crate::project_settings::BinarySettings {
+                arguments: Some(vec!["--stdio".into(), "--custom-option".into()]),
+                env: Some(std::collections::BTreeMap::from_iter([(
+                    "KODA_TEST_SETTING".into(),
+                    "preserved".into(),
+                )])),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let binary = kotlin_binary_lookup(&store, &worktree, adapter, settings, None, cx)
+            .await
+            .unwrap();
+        assert_eq!(
+            binary.arguments,
+            vec![
+                std::ffi::OsString::from("--stdio"),
+                "--custom-option".into()
+            ]
+        );
+        assert_eq!(
+            binary
+                .env
+                .unwrap()
+                .get("KODA_TEST_SETTING")
+                .map(String::as_str),
+            Some("preserved")
+        );
+        assert_eq!(lookups.load(std::sync::atomic::Ordering::SeqCst), 0);
+    }
+
+    #[gpui::test]
+    async fn managed_kotlin_failure_never_falls_back_to_extension(cx: &mut gpui::TestAppContext) {
+        let (store, worktree) = kotlin_binary_fixture(cx).await;
+        let lookups = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let adapter = CachedLspAdapter::new(Arc::new(KotlinExtensionFixture {
+            name: "kotlin-lsp",
+            lookups: lookups.clone(),
+        }));
+        for error in [
+            "Missing Kotlin manifest; open Android: Setup",
+            "Runtime integrity check failed; repair Kotlin",
+        ] {
+            cx.update(|cx| {
+                cx.set_global(ManagedKotlinRuntime(Arc::new(move || Err(anyhow!(error)))))
+            });
+            for settings in [
+                LspSettings::default(),
+                LspSettings {
+                    binary: Some(crate::project_settings::BinarySettings {
+                        path: Some(android_tools::kotlin::MANAGED_RUNTIME_PATH.into()),
+                        env: Some(std::collections::BTreeMap::from_iter([(
+                            android_tools::kotlin::MANAGED_RUNTIME_ENV.into(),
+                            "1".into(),
+                        )])),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                },
+            ] {
+                let result =
+                    kotlin_binary_lookup(&store, &worktree, adapter.clone(), settings, None, cx)
+                        .await;
+                assert_eq!(result.err().unwrap().to_string(), error);
+            }
+        }
+        assert_eq!(lookups.load(std::sync::atomic::Ordering::SeqCst), 0);
+    }
+
+    #[gpui::test]
+    async fn managed_kotlin_respects_explicit_paths_and_application_opt_in(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (store, worktree) = kotlin_binary_fixture(cx).await;
+        let lookups = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let adapter = CachedLspAdapter::new(Arc::new(KotlinExtensionFixture {
+            name: "kotlin-lsp",
+            lookups: lookups.clone(),
+        }));
+        let binary = kotlin_binary_lookup(
+            &store,
+            &worktree,
+            adapter.clone(),
+            LspSettings::default(),
+            None,
+            cx,
+        )
+        .await
+        .unwrap();
+        assert_eq!(binary.path, Path::new("/extension/stock-kotlin-lsp"));
+        let marked_settings = LspSettings {
+            binary: Some(crate::project_settings::BinarySettings {
+                path: Some(android_tools::kotlin::MANAGED_RUNTIME_PATH.into()),
+                env: Some(std::collections::BTreeMap::from_iter([(
+                    android_tools::kotlin::MANAGED_RUNTIME_ENV.into(),
+                    "1".into(),
+                )])),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let error = kotlin_binary_lookup(
+            &store,
+            &worktree,
+            adapter.clone(),
+            marked_settings,
+            None,
+            cx,
+        )
+        .await
+        .err()
+        .unwrap();
+        assert!(
+            error
+                .to_string()
+                .contains("supported on Apple Silicon macOS")
+        );
+        assert_eq!(lookups.load(std::sync::atomic::Ordering::SeqCst), 1);
+        cx.update(|cx| {
+            cx.set_global(ManagedKotlinRuntime(Arc::new(|| {
+                Err(anyhow!("Must not replace explicit binary"))
+            })))
+        });
+        let settings = LspSettings {
+            binary: Some(crate::project_settings::BinarySettings {
+                path: Some("custom/server".into()),
+                arguments: Some(vec!["--stdio".into()]),
+                env: Some(std::collections::BTreeMap::from_iter([(
+                    android_tools::kotlin::MANAGED_RUNTIME_ENV.into(),
+                    "1".into(),
+                )])),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let binary = kotlin_binary_lookup(&store, &worktree, adapter, settings, None, cx)
+            .await
+            .unwrap();
+        assert_eq!(binary.path, Path::new("/project/custom/server"));
+        let other = CachedLspAdapter::new(Arc::new(KotlinExtensionFixture {
+            name: "other-lsp",
+            lookups: lookups.clone(),
+        }));
+        assert!(
+            kotlin_binary_lookup(
+                &store,
+                &worktree,
+                other.clone(),
+                LspSettings::default(),
+                None,
+                cx
+            )
+            .await
+            .is_ok()
+        );
+        let java = android_tools::managed::root().join("provision/generation-test/jdk/bin/java");
+        let settings = LspSettings {
+            binary: Some(crate::project_settings::BinarySettings {
+                path: Some(java.to_string_lossy().into_owned()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let binary = kotlin_binary_lookup(&store, &worktree, other, settings, None, cx)
+            .await
+            .unwrap();
+        assert_eq!(binary.path, java);
+        assert_eq!(lookups.load(std::sync::atomic::Ordering::SeqCst), 2);
+    }
+
+    #[gpui::test]
+    async fn managed_kotlin_waits_for_trust_and_revalidates_after_upgrade(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let (store, worktree) = kotlin_binary_fixture(cx).await;
+        let lookups = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let adapter = CachedLspAdapter::new(Arc::new(KotlinExtensionFixture {
+            name: "kotlin-lsp",
+            lookups: lookups.clone(),
+        }));
+        let resolutions = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        cx.update(|cx| {
+            let resolutions = resolutions.clone();
+            cx.set_global(ManagedKotlinRuntime(Arc::new(move || {
+                let generation = resolutions.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                Ok(PathBuf::from(format!(
+                    "/managed/generation-{generation}/patched-server"
+                )))
+            })));
+        });
+        let (mut trusted, trust) = watch::channel();
+        let task = kotlin_binary_lookup(
+            &store,
+            &worktree,
+            adapter.clone(),
+            LspSettings::default(),
+            Some(trust),
+            cx,
+        );
+        cx.run_until_parked();
+        assert_eq!(resolutions.load(std::sync::atomic::Ordering::SeqCst), 0);
+        assert_eq!(lookups.load(std::sync::atomic::Ordering::SeqCst), 0);
+        trusted.send(true).await.unwrap();
+        let binary = task.await.unwrap();
+        assert_eq!(
+            binary.path,
+            Path::new("/managed/generation-0/patched-server")
+        );
+        let binary =
+            kotlin_binary_lookup(&store, &worktree, adapter, LspSettings::default(), None, cx)
+                .await
+                .unwrap();
+        assert_eq!(
+            binary.path,
+            Path::new("/managed/generation-1/patched-server")
+        );
+        assert_eq!(resolutions.load(std::sync::atomic::Ordering::SeqCst), 2);
+        assert_eq!(lookups.load(std::sync::atomic::Ordering::SeqCst), 0);
+        let (closed, trust) = watch::channel::<bool>();
+        drop(closed);
+        let result = kotlin_binary_lookup(
+            &store,
+            &worktree,
+            CachedLspAdapter::new(Arc::new(KotlinExtensionFixture {
+                name: "kotlin-lsp",
+                lookups: lookups.clone(),
+            })),
+            LspSettings::default(),
+            Some(trust),
+            cx,
+        )
+        .await;
+        assert!(
+            result
+                .err()
+                .unwrap()
+                .to_string()
+                .contains("closed before it was trusted")
+        );
+        assert_eq!(resolutions.load(std::sync::atomic::Ordering::SeqCst), 2);
+        assert_eq!(lookups.load(std::sync::atomic::Ordering::SeqCst), 0);
+    }
 
     #[test]
     fn should_log_lsp_request_failure_suppresses_known_noise() {
