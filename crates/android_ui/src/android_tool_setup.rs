@@ -3,6 +3,7 @@ use android_tools::managed::{self, Dependency, Tool};
 use android_tools::provision;
 use gpui::{DismissEvent, KeyDownEvent, ScrollHandle};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::{cell::RefCell, rc::Rc};
 use ui::{ButtonSize, Checkbox, TintColor, WithScrollbar};
 use workspace::{DismissDecision, ModalView};
 
@@ -86,6 +87,12 @@ struct SetupProgress {
     details: std::collections::VecDeque<String>,
 }
 
+#[derive(Clone)]
+struct FocusReveal {
+    focus: FocusHandle,
+    previous: Rc<RefCell<Option<(FocusHandle, gpui::Size<Pixels>)>>>,
+}
+
 struct SetupWizard {
     panel: Entity<AndroidPanel>,
     focus_handle: FocusHandle,
@@ -94,8 +101,10 @@ struct SetupWizard {
     license_group_focus: Vec<FocusHandle>,
     step: SetupStep,
     rendered_step: SetupStep,
+    rendered_settings: bool,
     rendered_error: Option<String>,
     content_scroll: ScrollHandle,
+    focus_reveals: RefCell<std::collections::HashMap<&'static str, FocusReveal>>,
     license_scroll: ScrollHandle,
     show_settings: bool,
     offline: bool,
@@ -133,8 +142,10 @@ impl SetupWizard {
             license_group_focus: Vec::new(),
             step: SetupStep::Review,
             rendered_step: SetupStep::Review,
+            rendered_settings: false,
             rendered_error: None,
             content_scroll: ScrollHandle::new(),
+            focus_reveals: Default::default(),
             license_scroll: ScrollHandle::new(),
             show_settings: false,
             offline: false,
@@ -721,7 +732,79 @@ impl SetupWizard {
         true
     }
 
+    /// Reveal a newly focused control without fighting manual scrolling or the
+    /// license document's independent scroll position. Wrappers are not tab stops.
+    fn focus_row(
+        &self,
+        id: &'static str,
+        child: impl IntoElement,
+        cx: &mut App,
+    ) -> gpui::Stateful<gpui::Div> {
+        let entry = self
+            .focus_reveals
+            .borrow_mut()
+            .entry(id)
+            .or_insert_with(|| FocusReveal {
+                focus: cx.focus_handle().tab_stop(false),
+                previous: Default::default(),
+            })
+            .clone();
+        let focus = entry.focus.clone();
+        let scroll = self.content_scroll.clone();
+        div()
+            .on_children_prepainted(move |bounds, window, cx| {
+                if !entry.focus.contains_focused(window, cx) {
+                    *entry.previous.borrow_mut() = None;
+                    return;
+                }
+                let Some(focused) = window.focused(cx) else {
+                    return;
+                };
+                let viewport = scroll.bounds();
+                let current = (focused.clone(), viewport.size);
+                if entry.previous.borrow().as_ref() == Some(&current) {
+                    return;
+                }
+                *entry.previous.borrow_mut() = Some(current);
+                let Some(control) = bounds.first() else {
+                    return;
+                };
+                let top = viewport.top() + px(8.);
+                let bottom = viewport.bottom() - px(8.);
+                let delta = if control.size.height > bottom - top || control.top() < top {
+                    top - control.top()
+                } else if control.bottom() > bottom {
+                    bottom - control.bottom()
+                } else {
+                    return;
+                };
+                let scroll = scroll.clone();
+                let entry = entry.clone();
+                window.on_next_frame(move |window, cx| {
+                    // A queued reveal must not move the pane after focus or layout changes.
+                    if window.focused(cx).as_ref() != Some(&focused)
+                        || !entry.focus.contains_focused(window, cx)
+                        || entry.previous.borrow().as_ref()
+                            != Some(&(focused.clone(), viewport.size))
+                        || scroll.bounds().size != viewport.size
+                    {
+                        return;
+                    }
+                    let offset = scroll.offset();
+                    scroll.set_offset(gpui::point(
+                        offset.x,
+                        (offset.y + delta).clamp(-scroll.max_offset().y, px(0.)),
+                    ));
+                    window.refresh();
+                });
+            })
+            .id(&focus)
+            .track_focus(&focus)
+            .child(child)
+    }
+
     fn checkbox(
+        &self,
         id: &'static str,
         selected: bool,
         label: String,
@@ -729,37 +812,41 @@ impl SetupWizard {
         changed: impl Fn(&mut Self, bool, &mut Context<Self>) + 'static,
         cx: &mut Context<Self>,
     ) -> AnyElement {
-        h_flex()
-            .id(id)
-            .debug_selector(move || id.into())
-            .tab_index(0isize)
-            .tab_stop(!disabled)
-            .role(gpui::Role::CheckBox)
-            .aria_label(format!(
-                "{label}, {}",
-                if selected { "checked" } else { "unchecked" }
-            ))
-            .gap_2()
-            .items_start()
-            .p_1()
-            .rounded_md()
-            .border_1()
-            .border_color(gpui::transparent_black())
-            .hover(|style| style.bg(cx.theme().colors().element_hover))
-            .focus_visible(|style| style.border_color(cx.theme().colors().border_focused))
-            .when(!disabled, |element| element.cursor_pointer())
-            .on_click(cx.listener(move |wizard, _, _, cx| {
-                if !disabled {
-                    changed(wizard, !selected, cx);
-                }
-            }))
-            .child(
-                Checkbox::new(format!("{id}-indicator"), selected.into())
-                    .visualization_only(true)
-                    .disabled(disabled),
-            )
-            .child(Self::text(label))
-            .into_any_element()
+        self.focus_row(
+            id,
+            h_flex()
+                .id(id)
+                .debug_selector(move || id.into())
+                .tab_index(0isize)
+                .tab_stop(!disabled)
+                .role(gpui::Role::CheckBox)
+                .aria_label(format!(
+                    "{label}, {}",
+                    if selected { "checked" } else { "unchecked" }
+                ))
+                .gap_2()
+                .items_start()
+                .p_1()
+                .rounded_md()
+                .border_1()
+                .border_color(gpui::transparent_black())
+                .hover(|style| style.bg(cx.theme().colors().element_hover))
+                .focus_visible(|style| style.border_color(cx.theme().colors().border_focused))
+                .when(!disabled, |element| element.cursor_pointer())
+                .on_click(cx.listener(move |wizard, _, _, cx| {
+                    if !disabled {
+                        changed(wizard, !selected, cx);
+                    }
+                }))
+                .child(
+                    Checkbox::new(format!("{id}-indicator"), selected.into())
+                        .visualization_only(true)
+                        .disabled(disabled),
+                )
+                .child(Self::text(label)),
+            cx,
+        )
+        .into_any_element()
     }
 
     fn review(&self, cx: &mut Context<Self>) -> AnyElement {
@@ -768,9 +855,9 @@ impl SetupWizard {
             .when(!self.show_settings, |element| element.child(Label::new("Set up Java and the Android SDK to get started.").color(Color::Muted)))
             .when(self.busy, |element| element.child(Label::new("Checking installed tools…").color(Color::Muted)))
             .when(self.show_settings, |element| element
-                .child(h_flex().items_start().child(div().debug_selector(|| "android-setup-change-control".into()).child(setup_button("android-setup-change-settings", "Back to setup", cx).disabled(disabled).tab_index(0isize)
+                .child(h_flex().items_start().child(div().debug_selector(|| "android-setup-change-control".into()).child(self.focus_row("reveal-android-setup-change-settings", setup_button("android-setup-change-settings", "Back to setup", cx).disabled(disabled).tab_index(0isize)
                     .start_icon(Icon::new(IconName::ArrowLeft).size(IconSize::Small))
-                    .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_settings = false; wizard.content_scroll.set_offset(Default::default()); cx.notify(); })))))
+                    .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_settings = false; wizard.content_scroll.set_offset(Default::default()); cx.notify(); })), cx))))
                 .child(self.settings(cx)).child(self.advanced(cx)))
             .when(!self.show_settings, |element| element
             .when_some(self.plan.as_ref(), |element, plan| {
@@ -787,9 +874,9 @@ impl SetupWizard {
                         .child(ui::Divider::horizontal())
                         .child(Label::new(if plan.download_bytes > 0 { format!("Download size: {}", format_bytes(plan.download_bytes)) } else { "No downloads needed".into() }).color(Color::Muted))
                         .when(plan.sdk_is_shared, |element| element.child(Label::new("SDK shared with Android Studio").size(LabelSize::Small).color(Color::Muted))))
-                    .child(h_flex().items_start().child(div().debug_selector(|| "android-setup-summary-details-control".into()).child(setup_button("android-setup-download-details", if self.show_details { "Hide details" } else { "Details" }, cx).disabled(disabled).tab_index(0isize)
+                    .child(h_flex().items_start().child(div().debug_selector(|| "android-setup-summary-details-control".into()).child(self.focus_row("reveal-android-setup-download-details", setup_button("android-setup-download-details", if self.show_details { "Hide details" } else { "Details" }, cx).disabled(disabled).tab_index(0isize)
                         .end_icon(Icon::new(if self.show_details { IconName::ChevronUp } else { IconName::ChevronDown }).size(IconSize::Small))
-                        .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); })))))
+                        .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); })), cx))))
                     .when(self.show_details, |element| element.child(v_flex().debug_selector(|| "android-setup-runtime-details".into()).gap_2()
                         .child(Self::text(format!("Java 21: {}", plan.jdk.display())))
                         .when_some(plan.sdk.as_ref(), |element, sdk| element.child(Self::text(format!("Android SDK: {}", sdk.display()))))
@@ -807,9 +894,9 @@ impl SetupWizard {
                         && !(self.plan.as_ref().is_some_and(|plan| plan.sdk.is_some()) && issue.starts_with("No complete Android SDK found."))
                 }).map(|issue| Self::text(issue.clone())))
                 .when(!discovery.supported, |element| element.child(Self::text("Automatic downloads are unavailable on this platform. Choose existing compatible tools in Customize."))))
-            .when(!self.show_settings, |element| element.child(h_flex().items_start().child(div().debug_selector(|| "android-setup-change-control".into()).child(setup_button("android-setup-change-settings", "Customize…", cx).disabled(disabled).tab_index(0isize)
+            .when(!self.show_settings, |element| element.child(h_flex().items_start().child(div().debug_selector(|| "android-setup-change-control".into()).child(self.focus_row("reveal-android-setup-change-settings", setup_button("android-setup-change-settings", "Customize…", cx).disabled(disabled).tab_index(0isize)
                 .end_icon(Icon::new(IconName::ChevronRight).size(IconSize::Small))
-                .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_settings = true; wizard.content_scroll.set_offset(Default::default()); cx.notify(); }))))))
+                .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_settings = true; wizard.content_scroll.set_offset(Default::default()); cx.notify(); })), cx)))))
             .into_any_element()
     }
 
@@ -820,34 +907,39 @@ impl SetupWizard {
             .items_start()
             .gap_4()
             .child(
-                h_flex()
-                    .w_full()
-                    .gap_3()
-                    .justify_between()
-                    .child(
-                        v_flex()
-                            .flex_1()
-                            .min_w_0()
-                            .gap_1()
-                            .child(Label::new("Java 21"))
-                            .child(
-                                Label::new("Use an installed development kit.")
-                                    .size(LabelSize::Small)
-                                    .color(Color::Muted),
-                            ),
-                    )
-                    .child(
-                        setup_button("android-setup-choose-jdk", "Choose…", cx)
-                            .disabled(disabled)
-                            .tab_index(0isize)
-                            .end_icon(Icon::new(IconName::Folder).size(IconSize::Small))
-                            .on_click(cx.listener(|wizard, _, window, cx| {
-                                wizard.choose_path(Dependency::Jdk, window, cx)
-                            })),
-                    ),
+                self.focus_row(
+                    "jdk-choice",
+                    h_flex()
+                        .w_full()
+                        .gap_3()
+                        .justify_between()
+                        .child(
+                            v_flex()
+                                .flex_1()
+                                .min_w_0()
+                                .gap_1()
+                                .child(Label::new("Java 21"))
+                                .child(
+                                    Label::new("Use an installed development kit.")
+                                        .size(LabelSize::Small)
+                                        .color(Color::Muted),
+                                ),
+                        )
+                        .child(
+                            setup_button("android-setup-choose-jdk", "Choose…", cx)
+                                .aria_label("Choose existing JDK 21")
+                                .disabled(disabled)
+                                .tab_index(0isize)
+                                .end_icon(Icon::new(IconName::Folder).size(IconSize::Small))
+                                .on_click(cx.listener(|wizard, _, window, cx| {
+                                    wizard.choose_path(Dependency::Jdk, window, cx)
+                                })),
+                        ),
+                    cx,
+                ),
             )
             .when_some(self.jdk.as_ref(), |element, path| {
-                element.child(Self::checkbox(
+                element.child(self.checkbox(
                     "android-setup-reuse-jdk",
                     self.reuse_jdk,
                     format!("Use existing JDK: {}", path.display()),
@@ -867,7 +959,7 @@ impl SetupWizard {
                 )
             })
             .child(ui::Divider::horizontal())
-            .child(Self::checkbox(
+            .child(self.checkbox(
                 "android-setup-sdk",
                 self.install_sdk,
                 "Android SDK".into(),
@@ -887,7 +979,7 @@ impl SetupWizard {
                             .color(Color::Muted),
                     )
                     .when_some(self.sdk.as_ref(), |element, _| {
-                        element.child(Self::checkbox(
+                        element.child(self.checkbox(
                             "android-setup-reuse-sdk",
                             self.reuse_sdk,
                             "Use installed SDK".into(),
@@ -901,36 +993,43 @@ impl SetupWizard {
                         ))
                     })
                     .child(
-                        h_flex()
-                            .w_full()
-                            .gap_3()
-                            .justify_between()
-                            .child(Label::new("SDK location"))
-                            .child(
-                                div()
-                                    .debug_selector(|| {
-                                        "android-setup-summary-sdk-folder-control".into()
-                                    })
-                                    .child(
-                                        setup_button(
-                                            "android-setup-sdk-destination",
-                                            "Change…",
-                                            cx,
-                                        )
-                                        .disabled(disabled)
-                                        .tab_index(0isize)
-                                        .end_icon(Icon::new(IconName::Folder).size(IconSize::Small))
-                                        .on_click(
-                                            cx.listener(|wizard, _, window, cx| {
-                                                wizard.choose_folder(
-                                                    SetupFolder::SdkDestination,
-                                                    window,
-                                                    cx,
-                                                )
-                                            }),
+                        self.focus_row(
+                            "sdk-location",
+                            h_flex()
+                                .w_full()
+                                .gap_3()
+                                .justify_between()
+                                .child(Label::new("SDK location"))
+                                .child(
+                                    div()
+                                        .debug_selector(|| {
+                                            "android-setup-summary-sdk-folder-control".into()
+                                        })
+                                        .child(
+                                            setup_button(
+                                                "android-setup-sdk-destination",
+                                                "Change…",
+                                                cx,
+                                            )
+                                            .aria_label("Choose Android SDK folder")
+                                            .disabled(disabled)
+                                            .tab_index(0isize)
+                                            .end_icon(
+                                                Icon::new(IconName::Folder).size(IconSize::Small),
+                                            )
+                                            .on_click(
+                                                cx.listener(|wizard, _, window, cx| {
+                                                    wizard.choose_folder(
+                                                        SetupFolder::SdkDestination,
+                                                        window,
+                                                        cx,
+                                                    )
+                                                }),
+                                            ),
                                         ),
-                                    ),
-                            ),
+                                ),
+                            cx,
+                        ),
                     )
                     .child(
                         Self::text(
@@ -944,57 +1043,72 @@ impl SetupWizard {
                         .text_color(cx.theme().colors().text_muted),
                     )
                     .child(
-                        h_flex()
-                            .w_full()
-                            .gap_2()
-                            .justify_between()
-                            .flex_wrap()
-                            .child(Label::new("Android API"))
-                            .child(
-                                PopoverMenu::new("android-setup-api")
-                                    .trigger(
-                                        setup_button(
-                                            "android-setup-api-trigger",
-                                            format!("API {} ▾", self.api_level),
-                                            cx,
+                        self.focus_row(
+                            "sdk-api",
+                            h_flex()
+                                .w_full()
+                                .gap_2()
+                                .justify_between()
+                                .flex_wrap()
+                                .child(Label::new("Android API"))
+                                .child(
+                                    PopoverMenu::new("android-setup-api")
+                                        .trigger(
+                                            setup_button(
+                                                "android-setup-api-trigger",
+                                                format!("API {} ▾", self.api_level),
+                                                cx,
+                                            )
+                                            .disabled(disabled)
+                                            .tab_index(0isize),
                                         )
-                                        .disabled(disabled)
-                                        .tab_index(0isize),
+                                        .menu(move |window, cx| {
+                                            Some(ContextMenu::build(
+                                                window,
+                                                cx,
+                                                |mut menu, _, _| {
+                                                    for api_level in [36, 37] {
+                                                        let wizard = wizard.clone();
+                                                        menu = menu.entry(
+                                                            format!("Android API {api_level}"),
+                                                            None,
+                                                            move |_, cx| {
+                                                                wizard
+                                                                    .update(cx, |wizard, cx| {
+                                                                        wizard.api_level =
+                                                                            api_level;
+                                                                        wizard.invalidate_plan();
+                                                                        cx.notify();
+                                                                    })
+                                                                    .log_err();
+                                                            },
+                                                        );
+                                                    }
+                                                    menu
+                                                },
+                                            ))
+                                        }),
+                                )
+                                .child(
+                                    setup_button(
+                                        "android-setup-choose-sdk",
+                                        "Use existing SDK…",
+                                        cx,
                                     )
-                                    .menu(move |window, cx| {
-                                        Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                                            for api_level in [36, 37] {
-                                                let wizard = wizard.clone();
-                                                menu = menu.entry(
-                                                    format!("Android API {api_level}"),
-                                                    None,
-                                                    move |_, cx| {
-                                                        wizard
-                                                            .update(cx, |wizard, cx| {
-                                                                wizard.api_level = api_level;
-                                                                wizard.invalidate_plan();
-                                                                cx.notify();
-                                                            })
-                                                            .log_err();
-                                                    },
-                                                );
-                                            }
-                                            menu
-                                        }))
-                                    }),
-                            )
-                            .child(
-                                setup_button("android-setup-choose-sdk", "Use existing SDK…", cx)
                                     .disabled(disabled)
                                     .tab_index(0isize)
-                                    .on_click(cx.listener(|wizard, _, window, cx| {
-                                        wizard.choose_path(Dependency::Sdk, window, cx)
-                                    })),
-                            ),
+                                    .on_click(cx.listener(
+                                        |wizard, _, window, cx| {
+                                            wizard.choose_path(Dependency::Sdk, window, cx)
+                                        },
+                                    )),
+                                ),
+                            cx,
+                        ),
                     )
             })
             .child(ui::Divider::horizontal())
-            .child(Self::checkbox(
+            .child(self.checkbox(
                 "android-setup-offline",
                 self.offline,
                 "Use cached downloads only (offline)".into(),
@@ -1035,7 +1149,7 @@ impl SetupWizard {
         let selected = plan.licenses.get(self.selected_license);
         v_flex().gap_3()
             .child(Label::new("Review the terms before downloading.").color(Color::Muted))
-            .child(h_flex().gap_1().flex_wrap().children(plan.licenses.iter().zip(&self.license_group_focus).enumerate().map(|(index, (license, focus))| {
+            .child(self.focus_row("license-groups", h_flex().gap_1().flex_wrap().children(plan.licenses.iter().zip(&self.license_group_focus).enumerate().map(|(index, (license, focus))| {
                 let accepted = self.acceptances.contains(&(license.id.clone(), license.sha256.clone()));
                 div().debug_selector(move || format!("android-license-group-{index}"))
                     .child(setup_button(format!("android-license-{index}"), format!("{}{}", Self::license_label(&license.id), if accepted { " ✓" } else { "" }), cx)
@@ -1043,20 +1157,20 @@ impl SetupWizard {
                     .track_focus(focus)
                     .tab_index(0isize)
                     .on_click(cx.listener(move |wizard, _, _, cx| { wizard.selected_license = index; wizard.license_scroll.set_offset(Default::default()); cx.notify(); })))
-            })))
+            })), cx))
             .when_some(selected, |element, license| {
                 let key = (license.id.clone(), license.sha256.clone());
                 let accepted = self.acceptances.contains(&key);
                 element
-                    .child(div().id("android-setup-license-frame").debug_selector(|| "android-setup-license-frame".into()).h(px(260.)).track_focus(&self.license_focus).role(gpui::Role::Document).aria_label(Self::license_label(&license.id).to_owned()).aria_description("Use arrow keys, Page Up, Page Down, Home and End to read the license.").occlude().border_1().border_color(cx.theme().colors().border).focus_visible(|style| style.border_color(cx.theme().colors().border_focused)).rounded_md()
+                    .child(self.focus_row("license-document", div().id("android-setup-license-frame").debug_selector(|| "android-setup-license-frame".into()).h(px(260.)).track_focus(&self.license_focus).role(gpui::Role::Document).aria_label(Self::license_label(&license.id).to_owned()).aria_description("Use arrow keys, Page Up, Page Down, Home and End to read the license.").occlude().border_1().border_color(cx.theme().colors().border).focus_visible(|style| style.border_color(cx.theme().colors().border_focused)).rounded_md()
                         .on_click(cx.listener(|wizard, _, window, cx| wizard.license_focus.focus(window, cx)))
                         .child(div().id("android-setup-license-text").debug_selector(|| "android-setup-license-text".into()).size_full().overflow_y_scroll().track_scroll(&self.license_scroll).p_3().child(Self::text(license.text.clone()).debug_selector(|| "android-setup-license-document".into())))
-                        .custom_scrollbars(ui::Scrollbars::always_visible(ui::ScrollAxes::Vertical).tracked_scroll_handle(&self.license_scroll).tracked_entity(cx.entity_id()), window, cx))
-                    .child(h_flex().items_start().child(setup_button("android-license-source", "View license source", cx).tab_index(0isize).on_click({
+                        .custom_scrollbars(ui::Scrollbars::always_visible(ui::ScrollAxes::Vertical).tracked_scroll_handle(&self.license_scroll).tracked_entity(cx.entity_id()), window, cx), cx))
+                    .child(self.focus_row("license-source", h_flex().items_start().child(setup_button("android-license-source", "View license source", cx).tab_index(0isize).on_click({
                         let source = license.source.clone();
                         move |_, _, cx| cx.open_url(&source)
-                    })))
-                    .child(Self::checkbox("android-setup-license-accept", accepted,
+                    })), cx))
+                    .child(self.checkbox("android-setup-license-accept", accepted,
                         format!("I accept {}", Self::license_label(&license.id)), false,
                         move |wizard, selected, cx| {
                             if selected { wizard.acceptances.insert(key.clone()); } else { wizard.acceptances.remove(&key); }
@@ -1077,8 +1191,8 @@ impl SetupWizard {
             .when(progress.total_bytes > 0, |element| element
                 .child(ui::ProgressBar::new("android-setup-progress", progress.downloaded_bytes.min(progress.total_bytes) as f32, progress.total_bytes as f32, cx))
                 .child(Label::new(format!("{} / {} downloaded", format_bytes(progress.downloaded_bytes), format_bytes(progress.total_bytes))).color(Color::Muted)))
-            .child(h_flex().items_start().child(setup_button("android-setup-details", if self.show_details { "Hide details" } else { "Show details" }, cx).tab_index(0isize)
-                .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); }))))
+            .child(h_flex().items_start().child(self.focus_row("reveal-android-setup-details", setup_button("android-setup-details", if self.show_details { "Hide details" } else { "Show details" }, cx).tab_index(0isize)
+                .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); })), cx)))
             .when(self.show_details, |element| element.child(Self::text("Cancellation preserves the previous selection. Completed shared SDK packages stay installed; saving already in progress finishes atomically.")).child(v_flex().id("android-setup-install-details").gap_1().max_h(px(180.)).overflow_y_scroll().children(progress.details.iter().map(|line| Self::text(line.clone())))))
             .into_any_element()
     }
@@ -1087,8 +1201,8 @@ impl SetupWizard {
         v_flex().gap_3()
             .child(Label::new(if self.installed.as_ref().is_some_and(|installed| installed.sdk.is_some()) { "Java and Android SDK are ready." } else { "Java 21 is ready." }).size(LabelSize::Large).color(Color::Success))
             .child(Label::new("Your settings are saved for future launches.").color(Color::Muted))
-            .child(h_flex().items_start().child(setup_button("android-setup-ready-details", if self.show_details { "Hide details" } else { "Details" }, cx).tab_index(0isize)
-                .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); }))))
+            .child(h_flex().items_start().child(self.focus_row("reveal-android-setup-ready-details", setup_button("android-setup-ready-details", if self.show_details { "Hide details" } else { "Details" }, cx).tab_index(0isize)
+                .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); })), cx)))
             .when(self.show_details, |element| element.when_some(self.installed.as_ref(), |element, installed| {
                 element
                     .child(Self::text(format!("Java 21: {}", installed.jdk.display())))
@@ -1104,14 +1218,14 @@ impl SetupWizard {
         let expanded = self.panel.read(cx).tool_setup.expanded;
         let disabled = self.busy || self.choosing;
         v_flex().gap_3()
-            .child(self.panel.update(cx, |panel, cx| panel.render_tool_setup(cx).into_any_element()))
+            .child(self.panel.update(cx, |panel, cx| panel.render_tool_setup(self, cx).into_any_element()))
             .when(expanded, |element| element.child(v_flex().gap_2()
                 .child(Label::new("Managed Java and Android SDK"))
                 .child(Self::text("Validate checks the saved files. Repair and update creates a new download summary. Restore previous restores the last verified selection; shared SDK packages are retained."))
                 .child(h_flex().gap_1().flex_wrap()
-                    .child(setup_button("android-native-validate", "Validate installation", cx).disabled(disabled).tab_index(0isize)
-                        .on_click(cx.listener(|wizard, _, window, cx| wizard.maintenance(Maintenance::Validate, window, cx))))
-                    .child(setup_button("android-native-repair", "Repair / update…", cx).disabled(disabled).tab_index(0isize)
+                    .child(self.focus_row("reveal-android-native-validate", setup_button("android-native-validate", "Validate installation", cx).disabled(disabled).tab_index(0isize)
+                        .on_click(cx.listener(|wizard, _, window, cx| wizard.maintenance(Maintenance::Validate, window, cx))), cx))
+                    .child(self.focus_row("reveal-android-native-repair", setup_button("android-native-repair", "Repair / update…", cx).disabled(disabled).tab_index(0isize)
                         .on_click(cx.listener(|wizard, _, _, cx| {
                             wizard.reuse_jdk = false;
                             wizard.reuse_sdk = false;
@@ -1120,9 +1234,9 @@ impl SetupWizard {
                             wizard.step = SetupStep::Review;
                             wizard.error = None;
                             cx.notify();
-                        })))
-                    .child(setup_button("android-native-rollback", "Restore previous installation", cx).disabled(disabled).tab_index(0isize)
-                        .on_click(cx.listener(|wizard, _, window, cx| wizard.maintenance(Maintenance::Rollback, window, cx)))))))
+                        })), cx))
+                    .child(self.focus_row("reveal-android-native-rollback", setup_button("android-native-rollback", "Restore previous installation", cx).disabled(disabled).tab_index(0isize)
+                        .on_click(cx.listener(|wizard, _, window, cx| wizard.maintenance(Maintenance::Rollback, window, cx))), cx)))))
             .into_any_element()
     }
 }
@@ -1157,6 +1271,13 @@ impl ModalView for SetupWizard {
 
 impl Render for SetupWizard {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if self.rendered_step != self.step || self.rendered_settings != self.show_settings {
+            // Page changes invalidate deferred reveals and retained focus memos.
+            for entry in self.focus_reveals.borrow().values() {
+                *entry.previous.borrow_mut() = None;
+            }
+            self.rendered_settings = self.show_settings;
+        }
         if self.rendered_step != self.step {
             self.content_scroll.set_offset(Default::default());
             self.license_scroll.set_offset(Default::default());
@@ -1240,7 +1361,7 @@ impl Render for SetupWizard {
                 .when_some(self.error.clone(), |element, error| element.child(v_flex().id("android-setup-error").debug_selector(|| "android-setup-error".into()).role(gpui::Role::Alert).aria_label("Setup failed").aria_description(error.clone()).p_3().gap_2().rounded_md().border_1().border_color(cx.theme().status().error.opacity(0.2)).bg(cx.theme().status().error.opacity(0.08))
                     .child(Self::text(error).text_color(cx.theme().status().error))
                     .child(Self::text("Your previous selection is preserved. Resolve the error, then retry."))
-                    .when(self.step == SetupStep::Review, |element| element.child(div().debug_selector(|| "android-setup-retry-control".into()).child(setup_button("android-setup-retry-detection", "Retry detection", cx).disabled(busy).tab_index(0isize).on_click(cx.listener(|wizard, _, window, cx| wizard.detect(window, cx))))))))
+                    .when(self.step == SetupStep::Review, |element| element.child(div().debug_selector(|| "android-setup-retry-control".into()).child(self.focus_row("reveal-android-setup-retry-detection", setup_button("android-setup-retry-detection", "Retry detection", cx).disabled(busy).tab_index(0isize).on_click(cx.listener(|wizard, _, window, cx| wizard.detect(window, cx))), cx))))))
                 .child(content))
                 .custom_scrollbars(ui::Scrollbars::always_visible(ui::ScrollAxes::Vertical).tracked_scroll_handle(&self.content_scroll).tracked_entity(cx.entity_id()), window, cx))
             .child(h_flex().debug_selector(|| "android-setup-footer".into()).flex_shrink_0().p_4().when(compact_height, |element| element.p_2()).gap_2().flex_wrap().justify_between().border_t_1().border_color(cx.theme().colors().border)
@@ -1340,7 +1461,15 @@ mod tests {
             prefer_character_input: false,
         });
         cx.run_until_parked();
+        cx.update(|window, cx| {
+            window.simulate_next_frame(cx);
+        });
+        cx.run_until_parked();
         cx.simulate_event(KeyUpEvent { keystroke });
+        cx.run_until_parked();
+        cx.update(|window, cx| {
+            window.simulate_next_frame(cx);
+        });
         cx.run_until_parked();
     }
 
@@ -2023,6 +2152,100 @@ mod tests {
     }
 
     #[gpui::test]
+    async fn tab_reveals_narrow_license_consent_and_customize_options(cx: &mut TestAppContext) {
+        let (_state, _workspace, panel) = fixture(cx).await;
+        let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
+        wizard.update_in(cx, |wizard, window, cx| {
+            wizard.plan = Some(plan(vec![license("android-sdk-license")]));
+            wizard.step = SetupStep::Licenses;
+            wizard.focus_handle.focus(window, cx);
+            cx.notify();
+        });
+        cx.simulate_resize(gpui::size(px(360.), px(600.)));
+        cx.run_until_parked();
+        for _ in 0..12 {
+            press_key(cx, "tab");
+            cx.run_until_parked();
+            if wizard.update_in(cx, |wizard, window, cx| {
+                wizard
+                    .focus_reveals
+                    .borrow()
+                    .get("android-setup-license-accept")
+                    .is_some_and(|entry| entry.focus.contains_focused(window, cx))
+            }) {
+                break;
+            }
+        }
+        assert!(wizard.update_in(cx, |wizard, window, cx| {
+            wizard
+                .focus_reveals
+                .borrow()
+                .get("android-setup-license-accept")
+                .is_some_and(|entry| entry.focus.contains_focused(window, cx))
+        }));
+        let consent = cx
+            .debug_bounds("android-setup-license-accept")
+            .expect("Consent");
+        let viewport = wizard.read_with(cx, |wizard, _| wizard.content_scroll.bounds());
+        assert!(
+            consent.top() >= viewport.top() && consent.bottom() <= viewport.bottom(),
+            "Consent visible before activation: {consent:?} in {viewport:?}"
+        );
+        wizard.read_with(cx, |wizard, _| assert!(wizard.acceptances.is_empty()));
+        press_key(cx, "space");
+        cx.run_until_parked();
+        wizard.read_with(cx, |wizard, _| {
+            assert_eq!(wizard.acceptances.len(), 1);
+            assert_eq!(wizard.step, SetupStep::Licenses);
+            assert!(wizard.can_advance());
+        });
+        // Redraws preserve manual scrolling while the same control remains focused.
+        wizard.update(cx, |wizard, cx| {
+            wizard.content_scroll.set_offset(Default::default());
+            cx.notify();
+        });
+        cx.run_until_parked();
+        wizard.read_with(cx, |wizard, _| {
+            assert_eq!(wizard.content_scroll.offset(), Default::default())
+        });
+        wizard.update_in(cx, |wizard, window, cx| {
+            wizard.step = SetupStep::Review;
+            wizard.show_settings = true;
+            wizard.focus_handle.focus(window, cx);
+            cx.notify();
+        });
+        cx.run_until_parked();
+        for _ in 0..16 {
+            press_key(cx, "tab");
+            cx.run_until_parked();
+            if wizard.update_in(cx, |wizard, window, cx| {
+                wizard
+                    .focus_reveals
+                    .borrow()
+                    .get("android-setup-offline")
+                    .is_some_and(|entry| entry.focus.contains_focused(window, cx))
+            }) {
+                break;
+            }
+        }
+        assert!(wizard.update_in(cx, |wizard, window, cx| {
+            wizard
+                .focus_reveals
+                .borrow()
+                .get("android-setup-offline")
+                .is_some_and(|entry| entry.focus.contains_focused(window, cx))
+        }));
+        let option = cx
+            .debug_bounds("android-setup-offline")
+            .expect("Offline option");
+        let viewport = wizard.read_with(cx, |wizard, _| wizard.content_scroll.bounds());
+        assert!(
+            option.top() >= viewport.top() && option.bottom() <= viewport.bottom(),
+            "Focused Customize option visible"
+        );
+    }
+
+    #[gpui::test]
     async fn keyboard_reads_complete_terms_scrolls_details_and_keeps_focus_inside_setup(
         cx: &mut TestAppContext,
     ) {
@@ -2323,7 +2546,7 @@ impl AndroidPanel {
         cx.notify();
     }
 
-    pub(super) fn render_tool_setup(&self, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render_tool_setup(&self, wizard: &SetupWizard, cx: &mut Context<Self>) -> impl IntoElement {
         let busy = self.running || self.syncing || self.tool_setup.choosing;
         let details = v_flex().gap_2()
             .child(Label::new("Advanced Kotlin and debugger tools: Apple Silicon macOS. Preview uses the configured Java 21 runtime.").size(LabelSize::Small))
@@ -2331,41 +2554,45 @@ impl AndroidPanel {
             .child(Label::new("Verified pinned downloads: JetBrains Kotlin server, fwcd debugger sources and Adoptium JDK. Debugger builds also fetch Gradle dependencies over HTTPS.").size(LabelSize::Small).color(Color::Muted))
             .children(self.tool_setup.lines.iter().map(|line| Label::new(line.clone()).size(LabelSize::Small).line_clamp(4)))
             .child(h_flex().gap_1().flex_wrap()
-                .child(setup_button("choose-sdk", "Choose SDK", cx).disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::Sdk, window, cx))))
-                .child(setup_button("choose-jdk", "Choose JDK 21", cx).disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::Jdk, window, cx))))
+                .child(wizard.focus_row("advanced-choose-sdk", setup_button("choose-sdk", "Choose SDK", cx).disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::Sdk, window, cx))), cx))
+                .child(wizard.focus_row("advanced-choose-jdk", setup_button("choose-jdk", "Choose JDK 21", cx).disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::Jdk, window, cx))), cx))
                 )
             .child(h_flex().gap_1().flex_wrap()
-                .child(setup_button("check-tool-setup", "Detect dependencies", cx).tab_index(0isize).on_click(cx.listener(|panel, _, _, cx| panel.refresh_tool_setup(cx))))
-                .child(setup_button("tool-storage", "Reveal managed storage", cx).tab_index(0isize).on_click(|_, _, cx| cx.reveal_path(&managed::root())))
-                .child(setup_button("offline-tools", if self.tool_setup.offline { "Offline: on" } else { "Offline: off" }, cx).tab_index(0isize).disabled(busy).on_click(cx.listener(|panel, _, _, cx| { panel.tool_setup.offline = !panel.tool_setup.offline; cx.notify(); }))))
+                .child(wizard.focus_row("advanced-check-tool-setup", setup_button("check-tool-setup", "Detect dependencies", cx).tab_index(0isize).on_click(cx.listener(|panel, _, _, cx| panel.refresh_tool_setup(cx))), cx))
+                .child(wizard.focus_row("advanced-tool-storage", setup_button("tool-storage", "Reveal managed storage", cx).tab_index(0isize).on_click(|_, _, cx| cx.reveal_path(&managed::root())), cx))
+                .child(wizard.focus_row("advanced-offline-tools", setup_button("offline-tools", if self.tool_setup.offline { "Offline: on" } else { "Offline: off" }, cx).tab_index(0isize).disabled(busy).on_click(cx.listener(|panel, _, _, cx| { panel.tool_setup.offline = !panel.tool_setup.offline; cx.notify(); })), cx)))
             .children(Tool::ALL.into_iter().map(|tool| {
-                v_flex().gap_1().child(Label::new(tool.label())).child(h_flex().gap_1().flex_wrap().children([
+                v_flex().gap_1().child(Label::new(tool.label())).child(wizard.focus_row(tool.name(), h_flex().gap_1().flex_wrap().children([
                     ("install", "Install / repair"), ("validate", "Validate"), ("rollback", "Roll back"),
                 ].into_iter().map(|(operation, label)| {
                     setup_button(format!("{}-{operation}", tool.name()), label, cx).tab_index(0isize).disabled(busy || !managed::supported())
                         .on_click(cx.listener(move |panel, _, window, cx| panel.manage_tool(tool, operation, window, cx)))
-                })))
+                })), cx))
             }))
-            .when(self.tool_setup.operation.is_some(), |element| element.child(
+            .when(self.tool_setup.operation.is_some(), |element| element.child(wizard.focus_row("advanced-cancel-tool-setup",
                 setup_button("cancel-tool-setup", "Cancel tool setup", cx).tab_index(0isize).on_click(cx.listener(|panel, _, _, cx| panel.cancel_build(BuildTab::Output, cx)))
-            ));
+            , cx)));
         v_flex()
             .gap_2()
             .child(
-                setup_button(
-                    "toggle-tool-setup",
-                    if self.tool_setup.expanded {
-                        "Advanced tools ▾"
-                    } else {
-                        "Advanced tools ▸"
-                    },
+                wizard.focus_row(
+                    "advanced-toggle-tool-setup",
+                    setup_button(
+                        "toggle-tool-setup",
+                        if self.tool_setup.expanded {
+                            "Advanced tools ▾"
+                        } else {
+                            "Advanced tools ▸"
+                        },
+                        cx,
+                    )
+                    .tab_index(0isize)
+                    .on_click(cx.listener(|panel, _, _, cx| {
+                        panel.tool_setup.expanded = !panel.tool_setup.expanded;
+                        cx.notify();
+                    })),
                     cx,
-                )
-                .tab_index(0isize)
-                .on_click(cx.listener(|panel, _, _, cx| {
-                    panel.tool_setup.expanded = !panel.tool_setup.expanded;
-                    cx.notify();
-                })),
+                ),
             )
             .when(self.tool_setup.expanded, |element| element.child(details))
     }
