@@ -939,11 +939,11 @@ impl SetupWizard {
                 )
                 .w_full(),
             )
-            .when_some(self.jdk.as_ref(), |element, path| {
+            .when_some(self.jdk.as_ref(), |element, _| {
                 element.child(self.checkbox(
                     "android-setup-reuse-jdk",
                     self.reuse_jdk,
-                    format!("Use existing JDK: {}", path.display()),
+                    "Use installed JDK".into(),
                     disabled,
                     |wizard, selected, cx| {
                         wizard.reuse_jdk = selected;
