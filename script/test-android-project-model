@@ -169,6 +169,118 @@ def assert_eclipse_test_entries(path, expected_libraries, expected_sources):
             assert any(attribute.get("name") == "test" and attribute.get("value") == "true" for attribute in matches[0].findall("attributes/attribute")), (path, expected_path)
 
 
+def check_multiplatform(root, agp, sdk, gradle, probe):
+    root = root / "multiplatform"
+    write(root, "settings.gradle", """pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+rootProject.name = 'koda-multiplatform-probe'; include ':app', ':sharedLogic', ':sharedUtil'
+""")
+    write(root, "build.gradle", f"""plugins {{
+ id 'com.android.application' version '{agp}' apply false
+ id 'com.android.kotlin.multiplatform.library' version '{agp}' apply false
+ id 'org.jetbrains.kotlin.multiplatform' version '2.2.10' apply false
+}}
+""")
+    write(root, "local.properties", f"sdk.dir={Path(sdk).resolve()}\n")
+    write(root, "app/build.gradle", """plugins { id 'com.android.application' }
+android { namespace 'dev.koda.app'; compileSdk 35; defaultConfig { applicationId 'dev.koda.app'; minSdk 24 } }
+dependencies { implementation project(':sharedLogic') }
+""")
+    write(root, "app/src/main/AndroidManifest.xml", '<manifest xmlns:android="http://schemas.android.com/apk/res/android"/>')
+    write(root, "app/src/main/java/UseShared.java", "package dev.koda.app; public class UseShared { dev.koda.shared.Shared value; }\n")
+    write(root, "sharedLogic/build.gradle", """plugins { id 'org.jetbrains.kotlin.multiplatform'; id 'com.android.kotlin.multiplatform.library' }
+kotlin {
+ androidLibrary {
+  namespace = 'dev.koda.shared'; compileSdk = 35; minSdk = 24
+  androidResources { enable = true }
+  withHostTestBuilder {}; withDeviceTestBuilder { sourceSetTreeName = 'test' }
+ }
+ jvm()
+ sourceSets {
+  sharedMain { dependsOn commonMain; dependencies { api project(':sharedUtil') } }
+  androidMain { dependsOn sharedMain }
+  commonTest.dependencies { implementation 'org.jetbrains.kotlin:kotlin-test:2.2.10' }
+ }
+}
+abstract class GenerateKotlin extends DefaultTask {
+ @OutputDirectory abstract DirectoryProperty getOutputDirectory()
+ @TaskAction void generate() {
+  def source = outputDirectory.file('Generated.kt').get().asFile
+  source.parentFile.mkdirs(); source.text = 'package dev.koda.shared; class Generated'
+ }
+}
+androidComponents.onVariants(androidComponents.selector().all()) { variant ->
+ def generator = tasks.register('generateSharedKotlin', GenerateKotlin) { outputDirectory.set(layout.projectDirectory.dir('generated/kotlin')) }
+ variant.sources.kotlin.addGeneratedSourceDirectory(generator) { it.outputDirectory }
+}
+""")
+    write(root, "sharedUtil/build.gradle", """plugins { id 'org.jetbrains.kotlin.multiplatform'; id 'com.android.kotlin.multiplatform.library' }
+kotlin { androidLibrary { namespace = 'dev.koda.util'; compileSdk = 35; minSdk = 24; withJava() }; jvm() }
+""")
+    for directory in ["commonMain", "sharedMain", "androidMain", "commonTest", "androidHostTest", "androidDeviceTest", "jvmMain"]:
+        write(root, f"sharedLogic/src/{directory}/kotlin/{directory}.kt", f"package dev.koda.shared\nclass {directory[0].upper() + directory[1:]}\n")
+    write(root, "sharedLogic/src/commonMain/kotlin/Shared.kt", "package dev.koda.shared\nclass Shared\n")
+    write(root, "sharedLogic/src/androidMain/res/values/strings.xml", '<resources><string name="title">Shared</string></resources>')
+    write(root, "sharedUtil/src/commonMain/kotlin/KotlinHelper.kt", "package dev.koda.util\nclass KotlinHelper\n")
+    write(root, "sharedUtil/src/androidMain/java/Helper.java", "package dev.koda.util; public class Helper { KotlinHelper kotlin; }\n")
+
+    def run(log, *arguments, success=True):
+        with (root / log).open("w") as output:
+            result = subprocess.run([gradle, "--console=plain", "--no-configuration-cache", "--parallel", "--max-workers=2", *arguments], cwd=root, stdout=output, stderr=subprocess.STDOUT)
+        if success and result.returncode:
+            raise RuntimeError((root / log).read_text())
+        return result.returncode
+
+    export = REPOSITORY / "crates/android_tools/src/project_model.gradle"
+    run("model.log", "--init-script", str(export), "kodaAndroidProjectModel")
+    model = model_from_log(root / "model.log")
+    shared = next(module for module in model["modules"] if module["path"] == ":sharedLogic")
+    assert shared["kind"] == "library" and shared["namespace"] == "dev.koda.shared", shared
+    assert shared["defaultVariant"] == "androidMain" and len(shared["variants"]) == 1, shared
+    components = {component["scope"]: component for component in shared["variants"][0]["components"]}
+    assert set(components) == {"main", "unitTest", "androidTest"}, components
+    for scope, expected in [("main", {"commonMain", "sharedMain", "androidMain"}), ("unitTest", {"commonTest", "androidHostTest"}), ("androidTest", {"commonTest", "androidDeviceTest"})]:
+        roots = components[scope]["sources"]
+        found = {directory for directory in expected if any(Path(source["path"]) == root / f"sharedLogic/src/{directory}/kotlin" for source in roots)}
+        assert found == expected, (scope, roots)
+        assert not any(source["generated"] for source in roots if any(Path(source["path"]) == root / f"sharedLogic/src/{directory}/kotlin" for directory in expected)), (scope, roots)
+        assert not any("jvmMain" in source["path"] for source in roots), roots
+    assert not any("commonTest" in source["path"] for source in components["main"]["sources"]), components
+    assert {"kind": "project", "module": ":sharedUtil", "variant": "androidMain"} in components["main"]["dependencies"], components
+    assert any(source["kind"] == "resources" and Path(source["path"]) == root / "sharedLogic/src/androidMain/res" for source in components["main"]["sources"]), components
+    assert any(source["generated"] and Path(source["path"]) == root / "sharedLogic/generated/kotlin" for source in components["main"]["sources"]), components
+    assert (root / "sharedLogic/generated/kotlin/Generated.kt").is_file()
+    assert not any("kotlin-test" in dependency.get("coordinate", "") for dependency in components["main"]["dependencies"]), components
+    for selected in ["debug", "release"]:
+        graph = json.loads(subprocess.check_output([probe, root, root / "model.log", ":app", selected]))
+        assert graph["variants"] == {":app": selected, ":sharedLogic": "androidMain", ":sharedUtil": "androidMain"}, graph
+        run("java.log", "--init-script", graph["javaExport"], f'-Dkoda.android.selection={graph["javaSelection"]}', "zedAndroidJavaModel")
+        subprocess.run([probe, root, root / "model.log", ":app", selected, root / "java.log"], check=True, stdout=subprocess.DEVNULL)
+        java = json.loads((root / ".koda/android-java/model.json").read_text())
+        shared_java = next(module for module in java if module["project"] == ":sharedLogic")
+        assert str(root / "sharedLogic/src/commonMain/kotlin") in shared_java["sources"], shared_java
+        assert str(root / "sharedLogic/src/commonTest/kotlin") in shared_java["testSources"], shared_java
+        assert not any("kotlin-test" in path for path in shared_java["libraries"]), shared_java
+        assert any("kotlin-test" in path for path in shared_java["testLibraries"]), shared_java
+        util_java = next(module for module in java if module["project"] == ":sharedUtil")
+        assert str(root / "sharedUtil/src/androidMain/java") in util_java["sources"], util_java
+        assert any((Path(path) / "dev/koda/util/KotlinHelper.class").is_file() for path in util_java["libraries"]), util_java
+        assert (root / "sharedUtil/build/intermediates/javac/androidMain/compileAndroidMainJavaWithJavac/classes/dev/koda/util/Helper.class").is_file()
+        run("eclipse.log", "--init-script", str(root / ".koda/android-java/import.gradle"), f'-Dzed.android.javaModel={root / ".koda/android-java/model.json"}', ":sharedLogic:eclipseClasspath", ":sharedUtil:eclipseClasspath")
+        assert_eclipse_test_entries(root / "sharedLogic/.classpath", [], [Path(path).relative_to(shared_java["directory"]).as_posix() for path in shared_java["testSources"] if path not in shared_java["sources"]])
+        assert "without an exclusive lock" not in (root / "java.log").read_text()
+    # A failed KMP collector must never publish a partial catalog.
+    original = (root / "sharedLogic/build.gradle").read_text()
+    write(root, "sharedLogic/build.gradle", original + "\nconfigurations.androidCompileClasspath.incoming.beforeResolve { throw new GradleException('Intentional KMP resolution failure') }\n")
+    assert run("failed.log", "--init-script", str(export), "kodaAndroidProjectModel", "--continue", success=False) != 0
+    assert "Intentional KMP resolution failure" in (root / "failed.log").read_text()
+    assert "KODA_ANDROID_PROJECT_MODEL=" not in (root / "failed.log").read_text()
+    write(root, "sharedLogic/build.gradle", original)
+    run("recovered.log", "--init-script", str(export), "kodaAndroidProjectModel")
+    assert len(model_from_log(root / "recovered.log")["modules"]) == 3
+    print(f"Passed AGP {agp}: KMP app dependencies, transitive Android libraries, common/intermediate/platform sources, generated roots, host/device scopes, Kotlin-only and Java-enabled projections, failure/recovery", flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gradle", required=True)
@@ -176,7 +288,10 @@ def main():
     parser.add_argument("--agp", choices=["8.9.1", "9.4.0"], required=True)
     parser.add_argument("--keep", type=Path, help="Use this directory and retain output for inspection")
     parser.add_argument("--defaults-only", action="store_true", help="Run only default-variant exporter checks")
+    parser.add_argument("--multiplatform-only", action="store_true", help="Run only Android multiplatform model/Java/Eclipse checks (AGP 9)")
     args = parser.parse_args()
+    if args.multiplatform_only and args.agp.startswith("8."):
+        parser.error("The multiplatform fixture requires AGP 9")
     temporary = tempfile.TemporaryDirectory(prefix="koda-model-") if args.keep is None else None
     root = (args.keep or Path(temporary.name)).resolve()
     root.mkdir(parents=True, exist_ok=True)
@@ -188,6 +303,9 @@ def main():
     subprocess.run(["cargo", "build", "--locked", "-p", "android_tools", "--example", "project_model_probe"], cwd=REPOSITORY, check=True)
     metadata = json.loads(subprocess.check_output(["cargo", "metadata", "--no-deps", "--format-version", "1"], cwd=REPOSITORY))
     probe = Path(metadata["target_directory"]) / "debug/examples/project_model_probe"
+    if args.multiplatform_only:
+        check_multiplatform(root, args.agp, args.sdk, args.gradle, probe)
+        return
 
     def gradle(log, *arguments, success=True, project=root):
         with (project / log).open("w") as output:
@@ -294,6 +412,8 @@ def main():
     assert root_model["modules"][0]["variants"][0]["components"][1]["dependencies"] == [{"kind": "project", "module": ":helper", "variant": "jvm"}]
     assert root_model["diagnostics"]  # A root JVM module remains catalogued, without a runnable APK.
     check_default_variants(root, args.agp, args.sdk, args.gradle)
+    if not args.agp.startswith("8."):
+        check_multiplatform(root, args.agp, args.sdk, args.gradle, probe)
     print(f"Passed AGP {args.agp}: parallel model/Java/Eclipse collection, flavors, fallback library, dynamic feature, registered generated sources, test fixtures, removed/restored variant, collector/configuration failure and recovery, included-build diagnostic, root JVM module")
 
 
