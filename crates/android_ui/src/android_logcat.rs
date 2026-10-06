@@ -20,7 +20,7 @@ use theme_settings::ThemeSettings;
 use ui::{ButtonLike, ScrollAxes, ScrollableHandle, Scrollbars, WithScrollbar};
 use ui_input::{ErasedEditorEvent, InputField};
 use unicode_width::UnicodeWidthStr as _;
-use util::command::Stdio;
+use util::command::{Stdio, new_command};
 use workspace::{
     SplitDirection,
     item::{Item, ItemEvent},

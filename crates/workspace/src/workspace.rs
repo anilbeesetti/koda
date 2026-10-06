@@ -8594,6 +8594,10 @@ impl Workspace {
         div
     }
 
+    pub fn modal_layer(&self) -> &Entity<ModalLayer> {
+        &self.modal_layer
+    }
+
     pub fn has_active_modal(&self, _: &mut Window, cx: &mut App) -> bool {
         self.modal_layer.read(cx).has_active_modal()
     }

@@ -1,4 +1,4 @@
-use crate::{kotlin, managed};
+use crate::{kotlin, managed, shared_sdk};
 use anyhow::{Context as _, Result, bail, ensure};
 use fs2::FileExt as _;
 use serde::{Deserialize, Serialize};
@@ -16,13 +16,15 @@ const MAX_DOWNLOAD: u64 = 1024 * 1024 * 1024;
 const MAX_EXPANDED: u64 = 5 * 1024 * 1024 * 1024;
 const MAX_STORAGE: u64 = 12 * 1024 * 1024 * 1024;
 const MAX_FILES: usize = 100_000;
+const DOWNLOAD_ATTEMPT_LIMIT: Duration = Duration::from_secs(30 * 60);
+const STORAGE_HEADROOM: u64 = 128 * 1024 * 1024;
 const RECIPE: &[u8] = include_bytes!("../provision-manifest.json");
 
 #[derive(Clone, Debug)]
 pub struct Discovery {
     pub jdk: Option<PathBuf>,
     pub sdk: Option<PathBuf>,
-    pub android_cli: Option<PathBuf>,
+    pub sdk_api_level: Option<u32>,
     pub compile_sdk: Option<u32>,
     pub issues: Vec<String>,
     pub supported: bool,
@@ -32,10 +34,11 @@ pub struct Discovery {
 pub struct Options {
     pub jdk: Option<PathBuf>,
     pub sdk: Option<PathBuf>,
-    pub android_cli: Option<PathBuf>,
+    /// A selected shared SDK destination for additive installation, separate from reuse.
+    #[serde(default)]
+    pub sdk_destination: Option<PathBuf>,
     pub api_level: u32,
     pub install_sdk: bool,
-    pub install_cli: bool,
     pub offline: bool,
 }
 
@@ -44,10 +47,9 @@ impl Default for Options {
         Self {
             jdk: None,
             sdk: None,
-            android_cli: None,
+            sdk_destination: None,
             api_level: 36,
             install_sdk: true,
-            install_cli: true,
             offline: false,
         }
     }
@@ -79,7 +81,7 @@ pub struct SetupPlan {
     pub provenance: Vec<String>,
     pub jdk: PathBuf,
     pub sdk: Option<PathBuf>,
-    pub android_cli: Option<PathBuf>,
+    pub sdk_is_shared: bool,
     pub downloads: Vec<Download>,
     pub supported_platform: String,
     slot: String,
@@ -87,6 +89,8 @@ pub struct SetupPlan {
     artifacts: Vec<Artifact>,
     environment_digest: String,
     recipe: String,
+    sdk_destination: Option<shared_sdk::Destination>,
+    sdk_packages: Vec<Artifact>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -110,6 +114,8 @@ pub struct Progress {
 pub struct Installed {
     pub jdk: PathBuf,
     pub sdk: Option<PathBuf>,
+    // Decode inventories written before Android CLI retirement. Never selected or executed.
+    #[serde(default)]
     pub android_cli: Option<PathBuf>,
 }
 
@@ -158,6 +164,8 @@ struct Generation {
     artifacts: Vec<Artifact>,
     accepted_licenses: Vec<License>,
     api_level: u32,
+    #[serde(default)]
+    sdk_is_shared: bool,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -177,6 +185,25 @@ struct Journal {
 
 pub fn root() -> PathBuf {
     managed::root().join("provision")
+}
+
+pub fn default_sdk_directory() -> Result<PathBuf> {
+    if cfg!(windows) {
+        let local = std::env::var_os("LOCALAPPDATA")
+            .context("Windows has no LOCALAPPDATA directory. Choose an SDK destination.")?;
+        ensure!(
+            Path::new(&local).is_absolute(),
+            "LOCALAPPDATA must be an absolute directory"
+        );
+        return Ok(PathBuf::from(local).join("Android/Sdk"));
+    }
+    let home = dirs::home_dir()
+        .context("Your home directory is unavailable. Choose an SDK destination.")?;
+    Ok(home.join(if cfg!(target_os = "macos") {
+        "Library/Android/sdk"
+    } else {
+        "Android/Sdk"
+    }))
 }
 
 pub fn platform_label() -> &'static str {
@@ -261,25 +288,34 @@ pub fn discover(project: Option<&Path>) -> Result<Discovery> {
             issues.push("The selected SDK differs from sdk.dir in project local.properties. Gradle uses that project setting; update it explicitly if you want to use the selected SDK.".into());
         }
     }
-    let sdk = selected
-        .sdk
-        .or(project_sdk)
-        .or_else(crate::sdk_root)
-        .filter(|sdk| {
-            match validate_managed_path(sdk).and_then(|()| match compile_sdk {
-                Some(api) => validate_sdk(sdk, api),
-                None => validate_sdk(sdk, existing_sdk_api(sdk)?),
-            }) {
-                Ok(()) => true,
-                Err(error) => {
-                    issues.push(format!("Android SDK: {error:#}"));
-                    false
-                }
+    let persisted_api = selected.sdk_api_level;
+    let sdk_candidate = selected.sdk.or(project_sdk).or_else(crate::sdk_root);
+    let inspection_path = sdk_candidate
+        .clone()
+        .map(Ok)
+        .unwrap_or_else(default_sdk_directory);
+    match inspection_path.and_then(|path| shared_sdk::recovery_notice(&path)) {
+        Ok(Some(notice)) => issues.push(notice),
+        Ok(None) => {}
+        Err(error) => issues.push(format!("Shared SDK staging: {error:#}")),
+    }
+    let mut sdk_api_level = None;
+    let sdk = sdk_candidate.filter(|sdk| {
+        match validate_managed_path(sdk)
+            .and_then(|()| discovered_sdk_api(sdk, persisted_api, compile_sdk))
+        {
+            Ok(api) => {
+                sdk_api_level = Some(api);
+                true
             }
-        });
-    let android_cli = crate::android_cli_path().ok();
+            Err(error) => {
+                issues.push(format!("Android SDK: {error:#}"));
+                false
+            }
+        }
+    });
     if sdk.is_none() {
-        issues.push("No Android SDK found. Choose an existing SDK or install the selected packages in Koda storage.".into());
+        issues.push("No complete Android SDK found. Choose an existing SDK or add the selected missing packages to the shared Android Studio SDK location.".into());
     }
     if !supported() {
         issues.push(format!("Automatic installation is unavailable on this platform. {}. Select existing tools instead.", platform_label()));
@@ -290,7 +326,7 @@ pub fn discover(project: Option<&Path>) -> Result<Discovery> {
     Ok(Discovery {
         jdk,
         sdk,
-        android_cli,
+        sdk_api_level,
         compile_sdk,
         issues,
         supported: supported(),
@@ -530,6 +566,122 @@ pub fn validate_sdk(path: &Path, api_level: u32) -> Result<()> {
     sdk_layout(path, api_level).map(|_| ())
 }
 
+fn shared_sdk_selection(root: &Path, sdk: Option<&Path>) -> Result<bool> {
+    let canonical_root = match root.canonicalize() {
+        Ok(root) => root,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => root.to_path_buf(),
+        Err(error) => return Err(error.into()),
+    };
+    let sdk = sdk
+        .map(|sdk| -> Result<PathBuf> {
+            ensure!(sdk.is_absolute(), "Saved SDK paths must be absolute");
+            match sdk.canonicalize() {
+                Ok(path) => Ok(path),
+                // Install records are canonical. Classify an unavailable SDK by
+                // that recorded path; SDK access errors are reported at SDK use,
+                // and cannot invalidate independent private Java provenance.
+                Err(_) => Ok(sdk.to_path_buf()),
+            }
+        })
+        .transpose()?;
+    Ok(sdk.is_some_and(|sdk| !sdk.starts_with(&canonical_root)))
+}
+
+pub(crate) fn validate_selected_sdk(path: &Path, api_level: Option<u32>) -> Result<()> {
+    validate_sdk(
+        path,
+        api_level
+            .map(Ok)
+            .unwrap_or_else(|| existing_sdk_api(path))?,
+    )
+}
+
+fn sdk_package_relative(artifact: &Artifact) -> Result<PathBuf> {
+    let relative = artifact
+        .destination
+        .strip_prefix("sdk/")
+        .context("The SDK package has no SDK destination")?;
+    safe_relative(Path::new(relative))?;
+    ensure!(
+        relative == artifact.name.replace(';', "/"),
+        "The SDK package destination changed"
+    );
+    Ok(PathBuf::from(relative))
+}
+
+fn validate_sdk_package(path: &Path, artifact: &Artifact, pinned_revision: bool) -> Result<()> {
+    let metadata = fs::symlink_metadata(path)?;
+    ensure!(
+        metadata.is_dir() && !metadata.file_type().is_symlink(),
+        "SDK packages must be regular directories"
+    );
+    let properties = String::from_utf8(regular_file(&path.join("source.properties"), 64 * 1024)?)?;
+    let property = |key: &str| {
+        properties.lines().find_map(|line| {
+            let (name, value) = line.split_once('=')?;
+            (name.trim() == key).then(|| value.trim())
+        })
+    };
+    let version = |text: &str| -> Result<Vec<u32>> {
+        ensure!(!text.is_empty(), "SDK package revision is empty");
+        text.split('.')
+            .map(|part| {
+                part.parse::<u32>()
+                    .context("SDK package revision is not a stable numeric version")
+            })
+            .collect()
+    };
+    let revision = property("Pkg.Revision").context("SDK package revision metadata is missing")?;
+    let expected = artifact
+        .revision
+        .as_deref()
+        .context("The pinned SDK revision is missing")?;
+    let mut actual_version = version(revision)?;
+    ensure!(
+        actual_version.len() <= 4,
+        "SDK package revision is too long"
+    );
+    ensure!(
+        actual_version.iter().any(|part| *part > 0),
+        "SDK package revision must be positive"
+    );
+    if pinned_revision {
+        let mut expected_version = version(expected)?;
+        let width = actual_version.len().max(expected_version.len());
+        actual_version.resize(width, 0);
+        expected_version.resize(width, 0);
+        ensure!(
+            actual_version == expected_version,
+            "The downloaded SDK revision does not match its pin"
+        );
+    }
+    if artifact.name == "platform-tools" {
+        managed::executable(&path.join(if cfg!(windows) { "adb.exe" } else { "adb" }))?;
+    } else if artifact.name.starts_with("build-tools;") {
+        ensure!(
+            revision == expected,
+            "SDK build-tools metadata does not match its directory"
+        );
+        managed::executable(&path.join(if cfg!(windows) { "aapt2.exe" } else { "aapt2" }))?;
+        ensure!(
+            path.join("lib/d8.jar").is_file(),
+            "SDK build-tools are missing lib/d8.jar"
+        );
+    } else if artifact.name.starts_with("platforms;") {
+        ensure!(
+            property("AndroidVersion.ApiLevel") == artifact.sdk_api_level.as_deref(),
+            "SDK platform API metadata does not match the selected platform"
+        );
+        ensure!(
+            path.join("android.jar").is_file(),
+            "SDK platform is missing android.jar"
+        );
+    } else {
+        bail!("Unsupported SDK package");
+    }
+    Ok(())
+}
+
 pub fn plan(options: Options, cancel: &AtomicBool) -> Result<SetupPlan> {
     plan_at(&root(), options, cancel)
 }
@@ -542,8 +694,10 @@ pub fn plan_at(root: &Path, mut options: Options, cancel: &AtomicBool) -> Result
     );
     let recipe = recipe()?;
     let mut artifacts = Vec::new();
+    let mut sdk_destination = None;
+    let mut sdk_artifacts = Vec::new();
     if let Some(jdk) = &options.jdk {
-        validate_managed_path(jdk)?;
+        validate_managed_path_at(root, jdk, cancel)?;
         kotlin::validate_jdk_21(jdk)?;
         options.jdk = Some(jdk.canonicalize()?);
     } else {
@@ -573,47 +727,52 @@ pub fn plan_at(root: &Path, mut options: Options, cancel: &AtomicBool) -> Result
     };
     if options.install_sdk {
         if let Some(sdk) = &options.sdk {
-            validate_managed_path(sdk)?;
+            validate_managed_path_at(root, sdk, cancel)?;
             validate_sdk(sdk, options.api_level)?;
             options.sdk = Some(sdk.canonicalize()?);
+            options.sdk_destination = None;
         } else {
             let host = host().context("Automatic SDK installation is unavailable on this platform. Choose an existing SDK.")?;
+            let destination = options
+                .sdk_destination
+                .clone()
+                .map(Ok)
+                .unwrap_or_else(default_sdk_directory)?;
+            let destination = shared_sdk::prepare_destination(&destination)?;
+            ensure!(
+                !destination.path.starts_with(root)
+                    && !destination.path.ancestors().any(|ancestor| {
+                        ancestor.file_name().is_some_and(|name| name == "provision")
+                            && ancestor.parent().is_some_and(|parent| {
+                                parent
+                                    .file_name()
+                                    .is_some_and(|name| name == "android-tools")
+                            })
+                    }),
+                "Choose a shared SDK directory outside Koda's private managed-tool storage"
+            );
+            options.sdk_destination = Some(destination.path.clone());
             for package in &packages {
-                artifacts.push(
-                    recipe
-                        .sdk
-                        .iter()
-                        .find(|artifact| &artifact.name == package && artifact.host == host)
-                        .with_context(|| format!("No pinned SDK archive for {package} on {host}"))?
-                        .clone(),
-                );
+                let artifact = recipe
+                    .sdk
+                    .iter()
+                    .find(|artifact| &artifact.name == package && artifact.host == host)
+                    .with_context(|| format!("No pinned SDK archive for {package} on {host}"))?
+                    .clone();
+                let package_path = destination.path.join(sdk_package_relative(&artifact)?);
+                if package_path.try_exists()? {
+                    validate_sdk_package(&package_path, &artifact, false).with_context(|| format!(
+                        "The existing shared SDK package {} is incomplete or incompatible. Repair it with Android Studio's SDK Manager or choose another SDK destination; Koda will not overwrite it.", package_path.display()))?;
+                } else {
+                    artifacts.push(artifact.clone());
+                }
+                sdk_artifacts.push(artifact);
             }
+            sdk_destination = Some(destination);
         }
     } else {
         options.sdk = None;
-    }
-    if options.install_cli {
-        ensure!(
-            options.install_sdk,
-            "The Android CLI needs an SDK. Select SDK setup before installing the CLI."
-        );
-        if let Some(cli) = &options.android_cli {
-            validate_managed_path(cli)?;
-            managed::executable(cli)?;
-            options.android_cli = Some(cli.canonicalize()?);
-        } else {
-            let host = host().context("Automatic Android CLI installation is unavailable on this platform. Choose an existing Android CLI executable.")?;
-            artifacts.push(
-                recipe
-                    .cli
-                    .iter()
-                    .find(|artifact| artifact.host == host)
-                    .context("No pinned Android CLI for this platform")?
-                    .clone(),
-            );
-        }
-    } else {
-        options.android_cli = None;
+        options.sdk_destination = None;
     }
     let mut download_bytes = 0;
     for artifact in &artifacts {
@@ -669,21 +828,21 @@ pub fn plan_at(root: &Path, mut options: Options, cancel: &AtomicBool) -> Result
             "jdk"
         })
     });
-    let sdk = options.install_sdk.then(|| {
-        options
-            .sdk
-            .clone()
-            .unwrap_or_else(|| root.join(&slot).join("sdk"))
-    });
-    let android_cli = options.install_cli.then(|| {
-        options.android_cli.clone().unwrap_or_else(|| {
-            root.join(&slot).join(if cfg!(windows) {
-                "android-cli.exe"
-            } else {
-                "android-cli"
-            })
-        })
-    });
+    let sdk = if options.install_sdk {
+        Some(
+            options
+                .sdk
+                .clone()
+                .or_else(|| {
+                    sdk_destination
+                        .as_ref()
+                        .map(|destination| destination.path.clone())
+                })
+                .context("No SDK destination was selected")?,
+        )
+    } else {
+        None
+    };
     let downloads = artifacts
         .iter()
         .map(|artifact| Download {
@@ -701,6 +860,7 @@ pub fn plan_at(root: &Path, mut options: Options, cancel: &AtomicBool) -> Result
             bytes: artifact.bytes,
         })
         .collect();
+    let sdk_is_shared = shared_sdk_selection(root, sdk.as_deref())?;
     let mut plan = SetupPlan {
         id: String::new(),
         jdk_version: recipe.java_version,
@@ -717,7 +877,7 @@ pub fn plan_at(root: &Path, mut options: Options, cancel: &AtomicBool) -> Result
         ],
         jdk,
         sdk,
-        android_cli,
+        sdk_is_shared,
         downloads,
         supported_platform: platform_label().into(),
         slot,
@@ -725,7 +885,17 @@ pub fn plan_at(root: &Path, mut options: Options, cancel: &AtomicBool) -> Result
         artifacts,
         environment_digest,
         recipe: recipe_digest(),
+        sdk_destination,
+        sdk_packages: sdk_artifacts,
     };
+    if plan.sdk_is_shared {
+        plan.provenance.push("The Android SDK is shared with Android Studio. Existing compatible packages are reused; published packages remain after cancellation or rollback. SDK Manager updates are validated as shared tools rather than immutable Koda files.".into());
+        if let Some(sdk) = &plan.sdk {
+            if let Some(notice) = shared_sdk::recovery_notice(sdk)? {
+                plan.provenance.push(notice);
+            }
+        }
+    }
     plan.id = digest(&serde_json::to_vec(&plan)?);
     if plan.options.offline {
         for artifact in &plan.artifacts {
@@ -962,14 +1132,14 @@ fn download(
             loop {
                 cancelled(cancel)?;
                 ensure!(
-                    started.elapsed() < Duration::from_secs(180),
-                    "The download exceeded its three-minute attempt limit. Retry when the connection improves."
+                    started.elapsed() < DOWNLOAD_ATTEMPT_LIMIT,
+                    "The download exceeded its thirty-minute attempt limit. Retry when the connection improves."
                 );
                 let count = response.read(&mut buffer)?;
                 cancelled(cancel)?;
                 ensure!(
-                    started.elapsed() < Duration::from_secs(180),
-                    "The download exceeded its three-minute attempt limit. Retry when the connection improves."
+                    started.elapsed() < DOWNLOAD_ATTEMPT_LIMIT,
+                    "The download exceeded its thirty-minute attempt limit. Retry when the connection improves."
                 );
                 if count == 0 {
                     break;
@@ -1036,7 +1206,7 @@ fn storage_budget(root: &Path, planned: u64) -> Result<()> {
         }
     }
     ensure_free_space(
-        planned.saturating_add(128 * 1024 * 1024),
+        planned.saturating_add(STORAGE_HEADROOM),
         fs2::available_space(root)?,
     )?;
     Ok(())
@@ -1051,6 +1221,66 @@ fn ensure_free_space(required: u64, available: u64) -> Result<()> {
         available / MIB
     );
     Ok(())
+}
+
+struct StorageReservations {
+    profile: u64,
+    sdk: u64,
+}
+
+fn installation_reservations(artifacts: &[Artifact]) -> Result<StorageReservations> {
+    let mut downloads = 0u64;
+    let mut java = 0u64;
+    let mut sdk = 0u64;
+    for artifact in artifacts {
+        downloads = downloads
+            .checked_add(artifact.bytes)
+            .context("Download reservation overflow")?;
+        if artifact.destination == "jdk" {
+            java = java
+                .checked_add(artifact.bytes)
+                .context("Java reservation overflow")?;
+        } else {
+            sdk_package_relative(artifact)?;
+            sdk = sdk
+                .checked_add(artifact.bytes)
+                .context("SDK reservation overflow")?;
+        }
+    }
+    Ok(StorageReservations {
+        // All verified archive caches stay profile-private. Only Java extracts here.
+        profile: downloads.saturating_add(java.saturating_mul(6).min(MAX_EXPANDED)),
+        // SDK package staging is on the selected SDK's filesystem.
+        sdk: sdk.saturating_mul(6).min(MAX_EXPANDED),
+    })
+}
+
+fn ensure_installation_space(
+    reservation: &StorageReservations,
+    profile_available: u64,
+    sdk_available: Option<(u64, bool)>,
+) -> Result<()> {
+    if let Some((sdk_available, same_filesystem)) = sdk_available {
+        if same_filesystem {
+            return ensure_free_space(
+                reservation
+                    .profile
+                    .saturating_add(reservation.sdk)
+                    .saturating_add(STORAGE_HEADROOM),
+                profile_available.min(sdk_available),
+            );
+        }
+        ensure_free_space(
+            reservation.sdk.saturating_add(STORAGE_HEADROOM),
+            sdk_available,
+        )
+        .context("The shared Android SDK filesystem needs more free space")?;
+    }
+    ensure_free_space(
+        reservation.profile.saturating_add(STORAGE_HEADROOM),
+        profile_available,
+    )
+    .context("Koda's private archive cache and Java filesystem needs more free space")
 }
 
 fn archive_relative(path: &Path) -> Result<PathBuf> {
@@ -1506,6 +1736,15 @@ fn validate_generation_cancelled(
     slot: &str,
     cancel: &AtomicBool,
 ) -> Result<Installed> {
+    validate_generation_payload(root, slot, cancel, true)
+}
+
+fn validate_generation_payload(
+    root: &Path,
+    slot: &str,
+    cancel: &AtomicBool,
+    include_shared_sdk: bool,
+) -> Result<Installed> {
     cancelled(cancel)?;
     slot_name(slot)?;
     let directory = root.join(slot);
@@ -1514,7 +1753,7 @@ fn validate_generation_cancelled(
         metadata.is_dir() && !metadata.file_type().is_symlink(),
         "The managed installation must be a regular directory"
     );
-    let generation: Generation = read_json(&root.join(format!("{slot}.json")))?;
+    let mut generation: Generation = read_json(&root.join(format!("{slot}.json")))?;
     ensure!(
         generation.schema == 1,
         "Unsupported managed runtime inventory"
@@ -1523,15 +1762,34 @@ fn validate_generation_cancelled(
         generation.recipe == recipe_digest(),
         "The managed tools need an update for this Koda version. Run setup again."
     );
-    managed::validate_inventory_cancelled(&directory, &generation.files, cancel)?;
+    if generation.sdk_is_shared {
+        let sdk = generation
+            .installed
+            .sdk
+            .as_ref()
+            .context("The shared SDK selection is missing")?;
+        ensure!(
+            !sdk.starts_with(root) && !generation.files.keys().any(|name| name.starts_with("sdk/")),
+            "Shared SDK provenance conflicts with a private installation"
+        );
+    }
     ensure!(
         generation.modes.keys().eq(generation.files.keys()),
         "The managed permissions manifest is incomplete"
     );
+    let retired = retired_cli_component(&directory, &generation)?;
+    if let Some(retired) = &retired {
+        validate_retained_components(&directory, &generation.files, retired, cancel)?;
+    } else {
+        managed::validate_inventory_cancelled(&directory, &generation.files, cancel)?;
+    }
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt as _;
         for (name, expected) in &generation.modes {
+            if retired.as_ref() == Some(name) {
+                continue;
+            }
             cancelled(cancel)?;
             ensure!(
                 fs::symlink_metadata(directory.join(name))?
@@ -1544,13 +1802,100 @@ fn validate_generation_cancelled(
         }
     }
     kotlin::validate_jdk_21(&generation.installed.jdk)?;
-    if let Some(sdk) = &generation.installed.sdk {
-        validate_sdk(sdk, generation.api_level)?;
+    let shared = generation.sdk_is_shared
+        || shared_sdk_selection(root, generation.installed.sdk.as_deref())?;
+    if include_shared_sdk || !shared {
+        if let Some(sdk) = &generation.installed.sdk {
+            validate_sdk(sdk, generation.api_level)?;
+        }
     }
-    if let Some(cli) = &generation.installed.android_cli {
-        managed::executable(cli)?;
-    }
+    generation.installed.android_cli = None;
     Ok(generation.installed)
+}
+
+// Catalog bytes intentionally remain unchanged: older selected Java/SDK installations
+// retain their recipe identity. Only this exact, no-longer-executed historical component
+// can be retired; Java and SDK inventories are still complete and strictly verified.
+fn retired_cli_component(directory: &Path, generation: &Generation) -> Result<Option<String>> {
+    let mut retired = None;
+    for artifact in &generation.artifacts {
+        if artifact.format != "executable"
+            && !matches!(
+                artifact.destination.as_str(),
+                "android-cli" | "android-cli.exe"
+            )
+        {
+            continue;
+        }
+        ensure!(retired.is_none(), "Duplicate retired Android CLI component");
+        ensure!(
+            recipe()?.cli.iter().any(|pinned| pinned == artifact),
+            "Unrecognized retired Android CLI provenance"
+        );
+        ensure!(
+            generation.files.get(&artifact.destination) == Some(&artifact.sha256)
+                && generation.installed.android_cli.as_ref()
+                    == Some(&directory.join(&artifact.destination)),
+            "The retired Android CLI inventory does not match its publisher pin"
+        );
+        #[cfg(unix)]
+        ensure!(
+            generation.modes.get(&artifact.destination) == Some(&0o755),
+            "The retired Android CLI permissions record is invalid"
+        );
+        retired = Some(artifact.destination.clone());
+    }
+    Ok(retired)
+}
+
+fn validate_retained_components(
+    directory: &Path,
+    files: &BTreeMap<String, String>,
+    retired: &str,
+    cancel: &AtomicBool,
+) -> Result<()> {
+    let mut components: BTreeMap<&str, BTreeMap<String, String>> = BTreeMap::new();
+    for (name, hash) in files {
+        safe_relative(Path::new(name))?;
+        if name == retired {
+            continue;
+        }
+        let (component, relative) = name
+            .split_once('/')
+            .context("Unexpected retained runtime inventory entry")?;
+        ensure!(
+            matches!(component, "jdk" | "sdk"),
+            "Unexpected retained runtime component"
+        );
+        components
+            .entry(component)
+            .or_default()
+            .insert(relative.into(), hash.clone());
+    }
+    for entry in fs::read_dir(directory)? {
+        cancelled(cancel)?;
+        let entry = entry?;
+        let name = entry.file_name();
+        let name = name.to_str().context("Non-Unicode managed component")?;
+        let metadata = fs::symlink_metadata(entry.path())?;
+        if name == retired {
+            ensure!(metadata.is_file(), "Unsafe retired Android CLI file type");
+            continue;
+        }
+        ensure!(
+            matches!(name, "jdk" | "sdk")
+                && metadata.is_dir()
+                && !metadata.file_type().is_symlink(),
+            "Unexpected managed component: {name}"
+        );
+        components
+            .entry(if name == "jdk" { "jdk" } else { "sdk" })
+            .or_default();
+    }
+    for (component, files) in components {
+        managed::validate_inventory_cancelled(&directory.join(component), &files, cancel)?;
+    }
+    Ok(())
 }
 
 pub fn validate() -> Result<Installed> {
@@ -1593,11 +1938,28 @@ fn existing_sdk_api(sdk: &Path) -> Result<u32> {
     api.context("The selected SDK has no complete Android platform (android.jar). Run setup to repair or choose another SDK.")
 }
 
+fn discovered_sdk_api(sdk: &Path, persisted: Option<u32>, project: Option<u32>) -> Result<u32> {
+    if let Some(api) = project {
+        validate_sdk(sdk, api)?;
+        return Ok(api);
+    }
+    if let Some(api) = persisted {
+        // Studio can remove a previously selected platform. Suggest an available
+        // complete platform for explicit setup review when that saved API is gone.
+        if validate_sdk(sdk, api).is_ok() {
+            return Ok(api);
+        }
+    }
+    let api = existing_sdk_api(sdk)?;
+    validate_sdk(sdk, api)?;
+    Ok(api)
+}
+
 fn validate_selected_at(root: &Path, cancel: &AtomicBool) -> Result<Installed> {
     cancelled(cancel)?;
     let active = active_at(root)?
         .context("No managed installation is selected. Open Android setup to choose tools.")?;
-    let mut installed = validate_generation_cancelled(root, &active.slot, cancel)?;
+    let mut installed = validate_generation_payload(root, &active.slot, cancel, false)?;
     let selected =
         managed::environment_at(root.parent().context("Managed storage has no profile")?)?;
     if let Some(jdk) = selected.jdk {
@@ -1607,15 +1969,11 @@ fn validate_selected_at(root: &Path, cancel: &AtomicBool) -> Result<Installed> {
     }
     if let Some(sdk) = selected.sdk {
         validate_managed_path_at(root, &sdk, cancel)?;
-        if installed.sdk.as_ref() != Some(&sdk) {
-            validate_sdk(&sdk, existing_sdk_api(&sdk)?)?;
-        }
+        validate_selected_sdk(&sdk, selected.sdk_api_level)?;
         installed.sdk = Some(sdk);
-    }
-    if let Some(cli) = selected.android_cli {
-        validate_managed_path_at(root, &cli, cancel)?;
-        managed::executable(&cli)?;
-        installed.android_cli = Some(cli);
+    } else if let Some(sdk) = &installed.sdk {
+        let generation: Generation = read_json(&root.join(format!("{}.json", active.slot)))?;
+        validate_sdk(sdk, generation.api_level)?;
     }
     cancelled(cancel)?;
     Ok(installed)
@@ -1644,7 +2002,9 @@ fn validate_managed_path_at(root: &Path, path: &Path, cancel: &AtomicBool) -> Re
             .next()
             .and_then(|component| component.as_os_str().to_str())
             .context("Managed tool path has no installation slot")?;
-        validate_generation_cancelled(root, slot, cancel)?;
+        // A shared SDK is maintained independently by Studio. Its readiness is
+        // checked at SDK use; changes there never invalidate private JDK bytes.
+        validate_generation_payload(root, slot, cancel, false)?;
     } else if canonical_path.ancestors().any(|ancestor| {
         ancestor.file_name().is_some_and(|name| name == "provision")
             && ancestor.parent().is_some_and(|parent| {
@@ -1711,27 +2071,46 @@ fn install_at_with_recipe(
         );
     }
     if plan.options.install_sdk && plan.options.sdk.is_none() {
+        let destination = plan
+            .sdk_destination
+            .as_ref()
+            .context("The shared SDK destination is missing")?;
+        let mut expected_packages = Vec::new();
         for package in sdk_packages(plan.options.api_level)? {
-            expected_artifacts.push(
-                recipe
-                    .sdk
-                    .iter()
-                    .find(|artifact| {
-                        artifact.name == package && Some(artifact.host.as_str()) == current_host
-                    })
-                    .context("No SDK download for this platform")?
-                    .clone(),
-            );
-        }
-    }
-    if plan.options.install_cli && plan.options.android_cli.is_none() {
-        expected_artifacts.push(
-            recipe
-                .cli
+            let artifact = recipe
+                .sdk
                 .iter()
-                .find(|artifact| Some(artifact.host.as_str()) == current_host)
-                .context("No Android CLI download for this platform")?
-                .clone(),
+                .find(|artifact| {
+                    artifact.name == package && Some(artifact.host.as_str()) == current_host
+                })
+                .context("No SDK download for this platform")?
+                .clone();
+            if plan.artifacts.contains(&artifact) {
+                expected_artifacts.push(artifact.clone());
+            } else {
+                validate_sdk_package(
+                    &destination.path.join(sdk_package_relative(&artifact)?),
+                    &artifact,
+                    false,
+                )
+                .context(
+                    "A shared SDK package changed after review. Repair it or review a fresh plan.",
+                )?;
+            }
+            expected_packages.push(artifact);
+        }
+        ensure!(
+            expected_packages == plan.sdk_packages,
+            "The selected SDK packages changed. Review a new plan."
+        );
+        ensure!(
+            plan.options.sdk_destination.as_ref() == Some(&destination.path),
+            "The SDK destination changed. Review a new plan."
+        );
+    } else {
+        ensure!(
+            plan.sdk_destination.is_none() && plan.sdk_packages.is_empty(),
+            "Unexpected shared SDK publication plan"
         );
     }
     ensure!(
@@ -1760,22 +2139,16 @@ fn install_at_with_recipe(
         })
     });
     let expected_sdk = plan.options.install_sdk.then(|| {
-        plan.options
-            .sdk
-            .clone()
-            .unwrap_or_else(|| root.join(&plan.slot).join("sdk"))
-    });
-    let expected_cli = plan.options.install_cli.then(|| {
-        plan.options.android_cli.clone().unwrap_or_else(|| {
-            root.join(&plan.slot).join(if cfg!(windows) {
-                "android-cli.exe"
-            } else {
-                "android-cli"
-            })
+        plan.options.sdk.clone().or_else(|| {
+            plan.sdk_destination
+                .as_ref()
+                .map(|destination| destination.path.clone())
         })
     });
     ensure!(
-        plan.jdk == expected_jdk && plan.sdk == expected_sdk && plan.android_cli == expected_cli,
+        plan.jdk == expected_jdk
+            && plan.sdk == expected_sdk.flatten()
+            && plan.sdk_is_shared == shared_sdk_selection(root, plan.sdk.as_deref())?,
         "The setup destination changed. Review a new plan."
     );
     ensure!(
@@ -1797,15 +2170,8 @@ fn install_at_with_recipe(
     }
     let _lock = profile_lock(root)?;
     recover(root)?;
-    for path in [
-        &plan.options.jdk,
-        &plan.options.sdk,
-        &plan.options.android_cli,
-    ]
-    .into_iter()
-    .flatten()
-    {
-        validate_managed_path(path)?;
+    for path in [&plan.options.jdk, &plan.options.sdk].into_iter().flatten() {
+        validate_managed_path_at(root, path, cancel)?;
     }
     let profile = root.parent().context("Managed storage has no profile")?;
     ensure!(
@@ -1818,16 +2184,28 @@ fn install_at_with_recipe(
         "This installation already exists. Refresh setup before retrying."
     );
     kotlin::ensure_directory(&root.join("downloads"))?;
-    let reservation = plan
-        .download_bytes
-        .saturating_mul(6)
-        .min(MAX_EXPANDED)
-        .saturating_add(plan.download_bytes);
-    storage_budget(root, reservation)?;
-    managed::validate_storage_budget(profile, reservation, MAX_FILES)?;
+    let reservation = installation_reservations(&plan.artifacts)?;
+    storage_budget(root, reservation.profile)?;
+    managed::validate_storage_budget(profile, reservation.profile, MAX_FILES)?;
     let stage = tempfile::Builder::new()
         .prefix(".staging-")
         .tempdir_in(root)?;
+    let sdk_stage = plan
+        .sdk_destination
+        .as_ref()
+        .map(shared_sdk::create_stage)
+        .transpose()?;
+    if let Some(sdk_stage) = &sdk_stage {
+        fs::create_dir(sdk_stage.path().join("sdk"))?;
+        ensure_installation_space(
+            &reservation,
+            fs2::available_space(root)?,
+            Some((
+                fs2::available_space(sdk_stage.path())?,
+                shared_sdk::same_filesystem(root, sdk_stage.path())?,
+            )),
+        )?;
+    }
     let mut expanded = 0u64;
     let mut entries = 0usize;
     let mut preceding = 0u64;
@@ -1850,8 +2228,16 @@ fn install_at_with_recipe(
             total_bytes: plan.download_bytes,
         });
         safe_relative(Path::new(&artifact.destination))?;
-        let destination = stage.path().join(&artifact.destination);
-        parent_directories(stage.path(), Path::new(&artifact.destination))?;
+        let artifact_stage = if artifact.destination.starts_with("sdk/") {
+            sdk_stage
+                .as_ref()
+                .context("The shared SDK staging directory is missing")?
+                .path()
+        } else {
+            stage.path()
+        };
+        let destination = artifact_stage.join(&artifact.destination);
+        parent_directories(artifact_stage, Path::new(&artifact.destination))?;
         if artifact.format == "executable" {
             let mut input = fs::File::open(&archive)?;
             let mut file = fs::OpenOptions::new()
@@ -1882,7 +2268,9 @@ fn install_at_with_recipe(
             }
         }
     }
-    license_receipts(stage.path(), &plan.licenses)?;
+    if let Some(sdk_stage) = &sdk_stage {
+        license_receipts(sdk_stage.path(), &plan.licenses)?;
+    }
     let staged_jdk = if let Some(jdk) = &plan.options.jdk {
         jdk.clone()
     } else {
@@ -1893,19 +2281,66 @@ fn install_at_with_recipe(
         })
     };
     kotlin::validate_jdk_21(&staged_jdk)?;
-    if plan.options.install_sdk {
-        let staged_sdk = plan
-            .options
-            .sdk
-            .clone()
-            .unwrap_or_else(|| stage.path().join("sdk"));
-        validate_sdk(&staged_sdk, plan.options.api_level)?;
+    if let Some(destination) = &plan.sdk_destination {
+        let sdk_stage = sdk_stage
+            .as_ref()
+            .context("The shared SDK staging directory is missing")?;
+        let packages = plan
+            .artifacts
+            .iter()
+            .filter(|artifact| artifact.destination.starts_with("sdk/"))
+            .map(|artifact| {
+                Ok(shared_sdk::Package {
+                    relative: sdk_package_relative(artifact)?,
+                    revision: artifact
+                        .revision
+                        .clone()
+                        .context("The SDK revision is missing")?,
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        let receipts = plan
+            .licenses
+            .iter()
+            .filter(|license| license.id == "android-sdk-license")
+            .map(|license| shared_sdk::LicenseReceipt {
+                id: license.id.clone(),
+                hash: format!("{:x}", sha1::Sha1::digest(license.text.as_bytes())),
+            })
+            .collect::<Vec<_>>();
+        cancelled(cancel)?;
+        progress(Progress {
+            finishing: false,
+            message: "Adding verified missing packages to the shared Android SDK. Completed packages remain available to Android Studio.".into(),
+            downloaded_bytes: plan.download_bytes, total_bytes: plan.download_bytes,
+        });
+        shared_sdk::publish(
+            destination,
+            &sdk_stage.path().join("sdk"),
+            &packages,
+            &receipts,
+            cancel,
+            |path, package| {
+                let artifact = plan
+                    .sdk_packages
+                    .iter()
+                    .find(|artifact| {
+                        artifact.destination.strip_prefix("sdk/").map(Path::new)
+                            == Some(package.relative.as_path())
+                    })
+                    .context("Unrecognized shared SDK package")?;
+                validate_sdk_package(path, artifact, path.starts_with(sdk_stage.path()))
+            },
+        )?;
+    }
+    if let Some(sdk) = &plan.sdk {
+        validate_sdk(sdk, plan.options.api_level)?;
     }
     let (files, modes) = inventory(stage.path(), cancel)?;
     let installed = Installed {
         jdk: plan.jdk.clone(),
         sdk: plan.sdk.clone(),
-        android_cli: plan.android_cli.clone(),
+        android_cli: None,
     };
     let generation = Generation {
         schema: 1,
@@ -1916,6 +2351,7 @@ fn install_at_with_recipe(
         artifacts: plan.artifacts.clone(),
         accepted_licenses: plan.licenses.clone(),
         api_level: plan.options.api_level,
+        sdk_is_shared: plan.sdk_is_shared,
     };
     cancelled(cancel)?;
     progress(Progress {
@@ -1952,10 +2388,12 @@ fn install_at_with_recipe(
         let environment = managed::Environment {
             jdk: Some(installed.jdk.clone()),
             sdk: installed.sdk.clone().or(old_environment.sdk),
-            android_cli: installed
-                .android_cli
-                .clone()
-                .or(old_environment.android_cli),
+            sdk_api_level: if installed.sdk.is_some() {
+                Some(plan.options.api_level)
+            } else {
+                old_environment.sdk_api_level
+            },
+            android_cli: old_environment.android_cli,
         };
         managed::save_environment_unlocked(profile, &environment)?;
         fs::remove_file(root.join("journal.json"))?;
@@ -1998,10 +2436,8 @@ fn rollback_at_cancelled(root: &Path, cancel: &AtomicBool) -> Result<Installed> 
         .previous
         .context("No previous installation is available")?;
     let installed = validate_generation_cancelled(root, &previous, cancel)?;
-    for path in std::iter::once(&installed.jdk)
-        .chain(installed.sdk.iter())
-        .chain(installed.android_cli.iter())
-    {
+    let previous_generation: Generation = read_json(&root.join(format!("{previous}.json")))?;
+    for path in std::iter::once(&installed.jdk).chain(installed.sdk.iter()) {
         validate_managed_path_at(root, path, cancel)?;
     }
     let profile = root.parent().context("Managed storage has no profile")?;
@@ -2020,7 +2456,10 @@ fn rollback_at_cancelled(root: &Path, cancel: &AtomicBool) -> Result<Installed> 
     )?;
     environment.jdk = Some(installed.jdk.clone());
     environment.sdk = installed.sdk.clone();
-    environment.android_cli = installed.android_cli.clone();
+    environment.sdk_api_level = installed
+        .sdk
+        .as_ref()
+        .map(|_| previous_generation.api_level);
     write_json(
         &root.join("active.json"),
         &Active {
@@ -2061,7 +2500,6 @@ mod tests {
         Options {
             jdk: Some(jdk),
             install_sdk: false,
-            install_cli: false,
             ..Options::default()
         }
     }
@@ -2219,11 +2657,13 @@ mod tests {
             &root,
             Options {
                 jdk: Some(home),
+                sdk_destination: Some(temporary.path().canonicalize()?.join("shared-sdk")),
                 ..Default::default()
             },
             &cancel,
         )?;
-        assert_eq!(plan.licenses.len(), 2);
+        assert_eq!(plan.licenses.len(), 1);
+        assert_eq!(plan.licenses[0].id, "android-sdk-license");
         assert!(install_at(&root, &plan, &[], &cancel, |_| {}).is_err());
         let acceptances = plan
             .licenses
@@ -2314,6 +2754,7 @@ mod tests {
                 &root,
                 Options {
                     jdk: Some(home),
+                    sdk_destination: Some(temporary.path().canonicalize()?.join("shared-sdk")),
                     offline: true,
                     ..Default::default()
                 },
@@ -2399,7 +2840,7 @@ mod tests {
             root,
             Options {
                 jdk: Some(home),
-                install_cli: false,
+                sdk_destination: Some(parent.canonicalize()?.join("shared-sdk")),
                 ..Default::default()
             },
             &cancel,
@@ -2428,6 +2869,22 @@ mod tests {
                 )?;
                 archive.write_all(b"synthetic test SDK component")?;
             }
+            let selected = &plan.artifacts[index];
+            archive.start_file(
+                "root/source.properties",
+                zip::write::FileOptions::default().unix_permissions(0o644),
+            )?;
+            archive.write_all(
+                format!(
+                    "Pkg.Revision={}\nAndroidVersion.ApiLevel={}\n",
+                    selected
+                        .revision
+                        .as_deref()
+                        .context("Missing fixture revision")?,
+                    selected.sdk_api_level.as_deref().unwrap_or("")
+                )
+                .as_bytes(),
+            )?;
             let bytes = archive.finish()?.into_inner();
             let artifact = plan
                 .artifacts
@@ -2440,6 +2897,7 @@ mod tests {
         }
         let mut recipe = recipe()?;
         recipe.sdk = plan.artifacts.clone();
+        plan.sdk_packages = plan.artifacts.clone();
         plan.options.offline = true;
         plan.download_bytes = plan.artifacts.iter().map(|artifact| artifact.bytes).sum();
         plan.id.clear();
@@ -2670,7 +3128,6 @@ mod tests {
                 jdk: Some(home.clone()),
                 sdk: Some(sdk.clone()),
                 api_level: 34,
-                install_cli: false,
                 ..Default::default()
             },
             &cancel,
@@ -2863,6 +3320,7 @@ mod tests {
                 artifacts: Vec::new(),
                 accepted_licenses: Vec::new(),
                 api_level: 36,
+                sdk_is_shared: false,
             };
             write_json(&root.join(format!("{slot}.json")), &generation)?;
         }
@@ -2906,6 +3364,511 @@ mod tests {
         assert!(error.contains("5 MiB is available"));
         assert!(error.contains("select fewer components"));
         ensure_free_space(10 * MIB, 10 * MIB)?;
+        Ok(())
+    }
+
+    #[test]
+    fn large_sdk_stages_reserve_the_sdk_filesystem_and_shared_volume_space_is_combined()
+    -> Result<()> {
+        const MIB: u64 = 1024 * 1024;
+        let recipe = recipe()?;
+        let mut platform = recipe
+            .sdk
+            .iter()
+            .find(|artifact| artifact.name == "platforms;android-36")
+            .context("Missing SDK artifact")?
+            .clone();
+        let mut java = recipe
+            .jdk
+            .into_iter()
+            .next()
+            .context("Missing Java artifact")?;
+        // A large SDK can be installed while the existing Java is reused and
+        // profile cache capacity is limited; extracted packages belong elsewhere.
+        platform.bytes = 300 * MIB;
+        let sdk_only = installation_reservations(&[platform.clone()])?;
+        ensure_installation_space(&sdk_only, 500 * MIB, Some((2200 * MIB, false)))?;
+        assert!(
+            ensure_installation_space(&sdk_only, 500 * MIB, Some((1500 * MIB, false))).is_err()
+        );
+        assert!(ensure_installation_space(&sdk_only, 500 * MIB, Some((2200 * MIB, true))).is_err());
+        // Java extraction still needs private-profile space even when the SDK
+        // filesystem has ample room. On one volume both staged trees coexist.
+        java.bytes = 100 * MIB;
+        let both = installation_reservations(&[java, platform])?;
+        assert!(ensure_installation_space(&both, 500 * MIB, Some((4000 * MIB, false))).is_err());
+        ensure_installation_space(&both, 1200 * MIB, Some((2200 * MIB, false)))?;
+        assert!(ensure_installation_space(&both, 2200 * MIB, Some((2200 * MIB, true))).is_err());
+        ensure_installation_space(&both, 3200 * MIB, Some((3200 * MIB, true)))?;
+        // Filesystem classification is based on device/volume identity rather
+        // than coincidentally equal free-space values or profile path prefixes.
+        let first = tempfile::tempdir()?;
+        let second = tempfile::tempdir()?;
+        assert!(shared_sdk::same_filesystem(
+            &first.path().canonicalize()?,
+            &second.path().canonicalize()?
+        )?);
+        Ok(())
+    }
+
+    #[test]
+    fn large_java_download_attempt_allows_slow_progress_with_a_finite_deadline() {
+        // 200 MiB over 2 Mbps exceeds the previous three-minute cutoff, while
+        // still fitting a bounded attempt. Stalled reads retain their own timeout.
+        let seconds = 200 * 1024 * 1024 * 8 / 2_000_000;
+        assert!(Duration::from_secs(seconds) < DOWNLOAD_ATTEMPT_LIMIT);
+        assert!(DOWNLOAD_ATTEMPT_LIMIT <= Duration::from_secs(30 * 60));
+    }
+
+    fn legacy_cli_fixture(root: &Path, slot: &str) -> Result<Generation> {
+        let directory = root.join(slot);
+        let jdk = jdk_fixture(&directory, "jdk")?;
+        let library = jdk.join("lib/server/libjvm.fixture");
+        fs::create_dir_all(library.parent().context("Missing library directory")?)?;
+        fs::write(library, "verified private JVM bytes")?;
+        let artifact = recipe()?
+            .cli
+            .into_iter()
+            .find(|artifact| Some(artifact.host.as_str()) == host())
+            .context("No historical CLI fixture for this platform")?;
+        let cli = directory.join(&artifact.destination);
+        fs::write(&cli, "retired CLI bytes are never executed")?;
+        file_permissions(&cli, 0o755)?;
+        let (mut files, modes) = inventory(&directory, &AtomicBool::new(false))?;
+        // The legacy receipt must bind to the real publisher pin, regardless of
+        // whether that now-retired physical component is present or corrupted.
+        files.insert(artifact.destination.clone(), artifact.sha256.clone());
+        Ok(Generation {
+            schema: 1,
+            recipe: recipe_digest(),
+            installed: Installed {
+                jdk,
+                sdk: None,
+                android_cli: Some(cli),
+            },
+            files,
+            modes,
+            artifacts: vec![artifact],
+            accepted_licenses: Vec::new(),
+            api_level: 36,
+            sdk_is_shared: false,
+        })
+    }
+
+    #[test]
+    fn retired_cli_is_unnecessary_but_java_integrity_and_unknown_files_remain_strict() -> Result<()>
+    {
+        if !supported() {
+            return Ok(());
+        }
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("android-tools/provision");
+        let slot = "generation-00000000000000000000000000000004";
+        let generation = legacy_cli_fixture(&root, slot)?;
+        let cli = generation
+            .installed
+            .android_cli
+            .as_ref()
+            .context("Missing fixture CLI")?;
+        write_json(&root.join(format!("{slot}.json")), &generation)?;
+        assert!(validate_generation(&root, slot)?.android_cli.is_none());
+        fs::remove_file(cli)?;
+        assert_eq!(
+            validate_generation(&root, slot)?.jdk,
+            generation.installed.jdk
+        );
+        let unexpected = root.join(slot).join("unrecognized-payload");
+        fs::write(&unexpected, "unverified")?;
+        assert!(validate_generation(&root, slot).is_err());
+        fs::remove_file(unexpected)?;
+        fs::write(
+            generation.installed.jdk.join("lib/server/libjvm.fixture"),
+            "corrupted JVM",
+        )?;
+        assert!(validate_generation(&root, slot).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn cli_retirement_rejects_forged_provenance_and_inventory() -> Result<()> {
+        if !supported() {
+            return Ok(());
+        }
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("android-tools/provision");
+        let slot = "generation-00000000000000000000000000000005";
+        let mut generation = legacy_cli_fixture(&root, slot)?;
+        let directory = root.join(slot);
+        generation.artifacts[0].destination = "jdk/bin/java".into();
+        assert!(retired_cli_component(&directory, &generation).is_err());
+        let mut generation = legacy_cli_fixture(&root, slot)?;
+        generation
+            .files
+            .insert(generation.artifacts[0].destination.clone(), "0".repeat(64));
+        assert!(retired_cli_component(&directory, &generation).is_err());
+        generation.files.insert(
+            generation.artifacts[0].destination.clone(),
+            generation.artifacts[0].sha256.clone(),
+        );
+        generation.installed.android_cli = Some(temporary.path().join("unrelated"));
+        assert!(retired_cli_component(&directory, &generation).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn legacy_private_sdk_keeps_strict_integrity_after_cli_retirement() -> Result<()> {
+        if !supported() {
+            return Ok(());
+        }
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("android-tools/provision");
+        let slot = "generation-00000000000000000000000000000006";
+        let mut generation = legacy_cli_fixture(&root, slot)?;
+        let sdk = root.join(slot).join("sdk");
+        for (relative, executable) in [
+            (
+                if cfg!(windows) {
+                    "platform-tools/adb.exe"
+                } else {
+                    "platform-tools/adb"
+                },
+                true,
+            ),
+            (
+                if cfg!(windows) {
+                    "build-tools/36.0.0/aapt2.exe"
+                } else {
+                    "build-tools/36.0.0/aapt2"
+                },
+                true,
+            ),
+            ("build-tools/36.0.0/lib/d8.jar", false),
+            ("platforms/android-36/android.jar", false),
+        ] {
+            let path = sdk.join(relative);
+            fs::create_dir_all(path.parent().context("Missing SDK parent")?)?;
+            fs::write(&path, "verified legacy SDK bytes")?;
+            file_permissions(&path, if executable { 0o755 } else { 0o644 })?;
+        }
+        generation.installed.sdk = Some(sdk.clone());
+        let (mut files, modes) = inventory(&root.join(slot), &AtomicBool::new(false))?;
+        files.insert(
+            generation.artifacts[0].destination.clone(),
+            generation.artifacts[0].sha256.clone(),
+        );
+        generation.files = files;
+        generation.modes = modes;
+        write_json(&root.join(format!("{slot}.json")), &generation)?;
+        validate_generation(&root, slot)?;
+        fs::write(
+            sdk.join("build-tools/36.0.0/lib/d8.jar"),
+            "corrupted SDK bytecode",
+        )?;
+        assert!(validate_generation(&root, slot).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn shared_sdk_survives_studio_updates_and_does_not_poison_private_java() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("android-tools/provision");
+        let (plan, recipe) = sdk_fixture_plan(&root, temporary.path())?;
+        let accepted = plan
+            .licenses
+            .iter()
+            .map(|license| LicenseAcceptance {
+                id: license.id.clone(),
+                sha256: license.sha256.clone(),
+                plan_id: plan.id.clone(),
+            })
+            .collect::<Vec<_>>();
+        install_at_with_recipe(
+            &root,
+            &plan,
+            &accepted,
+            &AtomicBool::new(false),
+            |_| {},
+            recipe,
+        )?;
+        let java = jdk_fixture(&root.join(&plan.slot), "jdk")?;
+        let mut generation: Generation = read_json(&root.join(format!("{}.json", plan.slot)))?;
+        generation.installed.jdk = java.clone();
+        let (files, modes) = inventory(&root.join(&plan.slot), &AtomicBool::new(false))?;
+        generation.files = files;
+        generation.modes = modes;
+        write_json(&root.join(format!("{}.json", plan.slot)), &generation)?;
+        let sdk = plan.sdk.context("Missing SDK")?;
+        fs::write(
+            sdk.join("platform-tools")
+                .join(if cfg!(windows) { "adb.exe" } else { "adb" }),
+            "legitimate updated adb",
+        )?;
+        validate_at(&root)?;
+        fs::remove_file(sdk.join("platforms/android-36/android.jar"))?;
+        validate_managed_path_at(&root, &java, &AtomicBool::new(false))?;
+        assert!(validate_at(&root).is_err());
+        fs::write(java.join("release"), "JAVA_VERSION=\"25\"\n")?;
+        assert!(validate_managed_path_at(&root, &java, &AtomicBool::new(false)).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn sdk_cancel_after_publication_keeps_shared_packages_and_previous_profile_selection()
+    -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("android-tools/provision");
+        let cancel = AtomicBool::new(false);
+        let previous = jdk_fixture(temporary.path(), "previous-jdk")?;
+        let previous_plan = plan_at(&root, java_options(previous.clone()), &cancel)?;
+        install_at(&root, &previous_plan, &[], &cancel, |_| {})?;
+        let (plan, recipe) = sdk_fixture_plan(&root, temporary.path())?;
+        let accepted = plan
+            .licenses
+            .iter()
+            .map(|license| LicenseAcceptance {
+                id: license.id.clone(),
+                sha256: license.sha256.clone(),
+                plan_id: plan.id.clone(),
+            })
+            .collect::<Vec<_>>();
+        let old_pointer = fs::read(root.join("active.json"))?;
+        assert!(
+            install_at_with_recipe(
+                &root,
+                &plan,
+                &accepted,
+                &cancel,
+                |progress| {
+                    if progress.message == "Saving validated tools and paths" {
+                        cancel.store(true, Ordering::Release);
+                    }
+                },
+                recipe
+            )
+            .is_err()
+        );
+        validate_sdk(plan.sdk.as_ref().context("Missing shared SDK")?, 36)?;
+        assert_eq!(fs::read(root.join("active.json"))?, old_pointer);
+        assert_eq!(
+            managed::environment_at(root.parent().context("Missing profile")?)?.jdk,
+            Some(previous)
+        );
+        assert!(!root.join(&plan.slot).exists());
+        Ok(())
+    }
+
+    #[test]
+    fn shared_sdk_replanning_reuses_complete_packages_without_downloads_or_new_consent()
+    -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("android-tools/provision");
+        let (plan, recipe) = sdk_fixture_plan(&root, temporary.path())?;
+        let accepted = plan
+            .licenses
+            .iter()
+            .map(|license| LicenseAcceptance {
+                id: license.id.clone(),
+                sha256: license.sha256.clone(),
+                plan_id: plan.id.clone(),
+            })
+            .collect::<Vec<_>>();
+        install_at_with_recipe(
+            &root,
+            &plan,
+            &accepted,
+            &AtomicBool::new(false),
+            |_| {},
+            recipe,
+        )?;
+        let next = plan_at(
+            &root,
+            Options {
+                jdk: Some(plan.jdk.clone()),
+                sdk_destination: plan.sdk.clone(),
+                offline: true,
+                ..Default::default()
+            },
+            &AtomicBool::new(false),
+        )?;
+        assert!(next.artifacts.is_empty());
+        assert!(next.licenses.is_empty());
+        install_at(&root, &next, &[], &AtomicBool::new(false), |_| {})?;
+        rollback_at(&root)?;
+        validate_sdk(plan.sdk.as_ref().context("Missing SDK")?, 36)?;
+        Ok(())
+    }
+
+    #[test]
+    fn sdk_discovery_suggests_existing_studio_api_and_preserves_project_precedence() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let sdk = temporary.path().join("studio-sdk");
+        for (relative, executable) in [
+            (
+                if cfg!(windows) {
+                    "platform-tools/adb.exe"
+                } else {
+                    "platform-tools/adb"
+                },
+                true,
+            ),
+            (
+                if cfg!(windows) {
+                    "build-tools/37.0.0/aapt2.exe"
+                } else {
+                    "build-tools/37.0.0/aapt2"
+                },
+                true,
+            ),
+            ("build-tools/37.0.0/lib/d8.jar", false),
+            ("platforms/android-37.0/android.jar", false),
+            ("platforms/android-37.0/source.properties", false),
+        ] {
+            let path = sdk.join(relative);
+            fs::create_dir_all(path.parent().context("Missing SDK fixture parent")?)?;
+            fs::write(
+                &path,
+                if relative.ends_with("source.properties") {
+                    "Pkg.Revision=1\nAndroidVersion.ApiLevel=37.0\n"
+                } else {
+                    "Studio SDK fixture"
+                },
+            )?;
+            file_permissions(&path, if executable { 0o755 } else { 0o644 })?;
+        }
+        assert_eq!(discovered_sdk_api(&sdk, None, None)?, 37);
+        assert_eq!(discovered_sdk_api(&sdk, Some(36), None)?, 37);
+        assert!(discovered_sdk_api(&sdk, None, Some(36)).is_err());
+        fs::create_dir_all(sdk.join("platforms/android-36"))?;
+        fs::write(
+            sdk.join("platforms/android-36/android.jar"),
+            "Studio SDK API36",
+        )?;
+        assert_eq!(discovered_sdk_api(&sdk, Some(36), None)?, 36);
+        fs::write(
+            temporary.path().join("build.gradle.kts"),
+            "android {\n compileSdk = 36\n}\n",
+        )?;
+        let project = compile_sdk_hint(temporary.path());
+        assert_eq!(project, Some(36));
+        assert_eq!(discovered_sdk_api(&sdk, Some(37), project)?, 36);
+        Ok(())
+    }
+
+    #[test]
+    fn reused_external_sdk_changes_and_reselection_leave_managed_java_valid() -> Result<()> {
+        if !supported() {
+            return Ok(());
+        }
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("android-tools/provision");
+        let make_sdk = |name: &str, api: u32| -> Result<PathBuf> {
+            let sdk = temporary.path().join(name);
+            for (relative, executable) in [
+                (
+                    if cfg!(windows) {
+                        "platform-tools/adb.exe".into()
+                    } else {
+                        "platform-tools/adb".into()
+                    },
+                    true,
+                ),
+                (
+                    if cfg!(windows) {
+                        "build-tools/36.0.0/aapt2.exe".into()
+                    } else {
+                        "build-tools/36.0.0/aapt2".into()
+                    },
+                    true,
+                ),
+                ("build-tools/36.0.0/lib/d8.jar".into(), false),
+                (format!("platforms/android-{api}/android.jar"), false),
+            ] {
+                let path = sdk.join(relative);
+                fs::create_dir_all(path.parent().context("Missing SDK fixture parent")?)?;
+                fs::write(&path, "existing Studio SDK component")?;
+                file_permissions(&path, if executable { 0o755 } else { 0o644 })?;
+            }
+            Ok(sdk)
+        };
+        let old_sdk = make_sdk("studio-sdk", 34)?;
+        let cancel = AtomicBool::new(false);
+        let mut plan = plan_at(
+            &root,
+            Options {
+                sdk: Some(old_sdk.clone()),
+                api_level: 34,
+                ..Default::default()
+            },
+            &cancel,
+        )?;
+        assert!(plan.sdk_is_shared);
+        assert_eq!(plan.artifacts.len(), 1);
+        let mut archive = zip::ZipWriter::new(std::io::Cursor::new(Vec::new()));
+        let home = if cfg!(target_os = "macos") {
+            "root/Contents/Home/"
+        } else {
+            "root/"
+        };
+        for (name, contents, mode) in [
+            (
+                if cfg!(windows) {
+                    "bin/java.exe"
+                } else {
+                    "bin/java"
+                },
+                "fixture java",
+                0o755,
+            ),
+            (
+                if cfg!(windows) {
+                    "bin/javac.exe"
+                } else {
+                    "bin/javac"
+                },
+                "fixture javac",
+                0o755,
+            ),
+            ("release", "JAVA_VERSION=\"21.0.12.1\"\n", 0o644),
+        ] {
+            archive.start_file(
+                format!("{home}{name}"),
+                zip::write::FileOptions::default().unix_permissions(mode),
+            )?;
+            archive.write_all(contents.as_bytes())?;
+        }
+        let bytes = archive.finish()?.into_inner();
+        plan.artifacts[0].format = "zip".into();
+        plan.artifacts[0].sha256 = digest(&bytes);
+        plan.artifacts[0].bytes = bytes.len() as u64;
+        fs::create_dir_all(root.join("downloads"))?;
+        fs::write(download_path(&root, &plan.artifacts[0]), bytes)?;
+        let mut recipe = recipe()?;
+        recipe.jdk = plan.artifacts.clone();
+        plan.options.offline = true;
+        plan.download_bytes = plan.artifacts[0].bytes;
+        plan.id.clear();
+        plan.id = digest(&serde_json::to_vec(&plan)?);
+        let installed = install_at_with_recipe(&root, &plan, &[], &cancel, |_| {}, recipe)?;
+        fs::remove_file(old_sdk.join("platforms/android-34/android.jar"))?;
+        validate_managed_path_at(&root, &installed.jdk, &cancel)?;
+        assert!(validate_at(&root).is_err());
+        let replacement = make_sdk("replacement-sdk", 35)?;
+        let profile = root.parent().context("Missing profile")?;
+        let mut environment = managed::environment_at(profile)?;
+        environment.sdk = Some(replacement.clone());
+        environment.sdk_api_level = Some(35);
+        managed::save_environment_unlocked(profile, &environment)?;
+        assert_eq!(validate_at(&root)?.sdk, Some(replacement));
+        let reused = plan_at(&root, java_options(installed.jdk.clone()), &cancel)?;
+        assert!(reused.artifacts.is_empty());
+        validate_managed_path_at(&root, &installed.jdk, &cancel)?;
+        // Compatibility also protects inventories saved before this flag existed.
+        let manifest = root.join(format!("{}.json", plan.slot));
+        let mut generation: Generation = read_json(&manifest)?;
+        generation.sdk_is_shared = false;
+        write_json(&manifest, &generation)?;
+        validate_managed_path_at(&root, &installed.jdk, &cancel)?;
+        validate_at(&root)?;
         Ok(())
     }
 }

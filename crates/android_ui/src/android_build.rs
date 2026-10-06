@@ -1256,6 +1256,38 @@ pub(crate) async fn command_output(
     .await
 }
 
+pub(crate) async fn command_output_combined(
+    command: Command,
+    executor: &BackgroundExecutor,
+    timeout: Duration,
+    sender: mpsc::Sender<OutputLine>,
+    cancel: oneshot::Receiver<()>,
+) -> Result<ProcessOutput> {
+    command_output_native_client(command, executor, timeout, sender, cancel, true).await
+}
+
+pub(crate) async fn command_output_native_client(
+    command: Command,
+    executor: &BackgroundExecutor,
+    timeout: Duration,
+    sender: mpsc::Sender<OutputLine>,
+    cancel: oneshot::Receiver<()>,
+    capture_stderr: bool,
+) -> Result<ProcessOutput> {
+    command_output_capture_policy(
+        command,
+        timeout,
+        sender,
+        cancel,
+        true,
+        capture_stderr,
+        executor.timer(timeout),
+        true,
+        ProcessPolicy::NativeClient,
+    )
+    .await
+}
+
 /// Managed setup owns all children, including after a successful installation.
 pub(crate) async fn command_output_with_cleanup(
     command: Command,
@@ -1292,10 +1324,41 @@ async fn command_output_policy(
     command: Command,
     timeout: Duration,
     sender: mpsc::Sender<OutputLine>,
-    mut cancel: oneshot::Receiver<()>,
+    cancel: oneshot::Receiver<()>,
     capture: bool,
     deadline: impl std::future::Future<Output = ()> + Send,
     preserve_descendants: bool,
+) -> Result<ProcessOutput> {
+    command_output_capture_policy(
+        command,
+        timeout,
+        sender,
+        cancel,
+        capture,
+        false,
+        deadline,
+        preserve_descendants,
+        ProcessPolicy::ManagedTree,
+    )
+    .await
+}
+
+#[derive(Clone, Copy)]
+enum ProcessPolicy {
+    ManagedTree,
+    NativeClient,
+}
+
+async fn command_output_capture_policy(
+    command: Command,
+    timeout: Duration,
+    sender: mpsc::Sender<OutputLine>,
+    mut cancel: oneshot::Receiver<()>,
+    capture: bool,
+    capture_stderr: bool,
+    deadline: impl std::future::Future<Output = ()> + Send,
+    preserve_descendants: bool,
+    process_policy: ProcessPolicy,
 ) -> Result<ProcessOutput> {
     if cancel.try_recv()?.is_some() {
         return Ok(ProcessOutput::Cancelled);
@@ -1305,16 +1368,28 @@ async fn command_output_policy(
         child: util::process::Child::spawn(command, Stdio::null(), Stdio::piped(), Stdio::piped())
             .with_context(|| format!("Could not start {program}"))?,
         completed: false,
+        process_policy,
     };
+    if matches!(process_policy, ProcessPolicy::NativeClient) {
+        process.child.preserve_descendants()?;
+    }
     let child = &mut process.child;
     let stdout = child.stdout.take().context("Missing command stdout")?;
     let stderr = child.stderr.take().context("Missing command stderr")?;
     let run = async {
         let read = async {
-            let (stdout, _) = futures::try_join!(
+            let (mut stdout, stderr) = futures::try_join!(
                 read_output(stdout, false, sender.clone(), capture),
-                read_output(stderr, true, sender, false)
+                read_output(stderr, true, sender, capture_stderr)
             )?;
+            if capture_stderr && !stderr.is_empty() {
+                ensure!(
+                    stdout.len() + stderr.len() < MAX_MODEL_BYTES,
+                    "Android command output exceeded 16 MiB"
+                );
+                stdout.push('\n');
+                stdout.push_str(&stderr);
+            }
             anyhow::Ok(stdout)
         };
         let (stdout, status) = if preserve_descendants {
@@ -1355,11 +1430,15 @@ async fn command_output_policy(
 struct BuildProcess {
     child: util::process::Child,
     completed: bool,
+    process_policy: ProcessPolicy,
 }
 impl Drop for BuildProcess {
     fn drop(&mut self) {
         if !self.completed {
-            self.child.kill().log_err();
+            match self.process_policy {
+                ProcessPolicy::ManagedTree => self.child.kill().log_err(),
+                ProcessPolicy::NativeClient => self.child.kill_process_only().log_err(),
+            };
         }
     }
 }
@@ -1369,6 +1448,180 @@ mod tests {
     use super::*;
     use futures::{executor::block_on, future, io::Cursor};
     use util::command::new_std_command as new_command;
+
+    #[cfg(unix)]
+    #[test]
+    fn native_launch_validation_catches_zero_exit_errors_on_stderr() -> Result<()> {
+        block_on(async {
+            let mut command = new_command("/bin/sh");
+            command.args(["-c", "printf 'Starting: Intent { cmp=com.example/.Launcher }\\n'; printf 'Error type 3\\nError: Activity class does not exist.\\n' >&2; exit 0"]);
+            let (sender, mut receiver) = mpsc::channel::<OutputLine>(2);
+            let (cancel, cancelled) = oneshot::channel();
+            let drain = async { while receiver.next().await.is_some() {} };
+            let (result, ()) = futures::join!(
+                command_output_capture_policy(
+                    command,
+                    Duration::from_secs(5),
+                    sender,
+                    cancelled,
+                    true,
+                    true,
+                    future::pending(),
+                    true,
+                    ProcessPolicy::NativeClient
+                ),
+                drain
+            );
+            drop(cancel);
+            let output = result?.stdout()?;
+            assert!(output.contains("Starting: Intent"));
+            assert!(output.contains("Error type 3"));
+            assert!(android_tools::deployment::validate_start_output(&output).is_err());
+            Ok(())
+        })
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn project_model_capture_keeps_stderr_out_of_json_stdout() -> Result<()> {
+        block_on(async {
+            let mut command = new_command("/bin/sh");
+            command.args([
+                "-c",
+                "printf '{\"modules\":[]}'; printf 'A Gradle warning\\n' >&2",
+            ]);
+            let (sender, mut receiver) = mpsc::channel::<OutputLine>(2);
+            let (cancel, cancelled) = oneshot::channel();
+            let drain = async { while receiver.next().await.is_some() {} };
+            let (result, ()) = futures::join!(
+                command_output_inner(
+                    command,
+                    Duration::from_secs(5),
+                    sender,
+                    cancelled,
+                    true,
+                    future::pending()
+                ),
+                drain
+            );
+            drop(cancel);
+            let output = result?.stdout()?;
+            assert_eq!(
+                serde_json::from_str::<serde_json::Value>(&output)?,
+                serde_json::json!({"modules":[]})
+            );
+            Ok(())
+        })
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn native_machine_reply_preserves_numeric_stdout_and_logs_daemon_stderr() -> Result<()> {
+        block_on(async {
+            let mut command = new_command("/bin/sh");
+            command.args(["-c", "printf '31345\\n'; printf '* daemon not running; starting now at tcp:5037\\n* daemon started successfully\\n' >&2"]);
+            let (sender, mut receiver) = mpsc::channel::<OutputLine>(2);
+            let (cancel, cancelled) = oneshot::channel();
+            let drain = async {
+                let mut stderr = Vec::new();
+                while let Some(line) = receiver.next().await {
+                    if line.stderr {
+                        stderr.push(line.text);
+                    }
+                }
+                stderr
+            };
+            let (result, stderr) = futures::join!(
+                command_output_capture_policy(
+                    command,
+                    Duration::from_secs(5),
+                    sender,
+                    cancelled,
+                    true,
+                    false,
+                    future::pending(),
+                    true,
+                    ProcessPolicy::NativeClient
+                ),
+                drain
+            );
+            drop(cancel);
+            let output = result?.stdout()?;
+            assert_eq!(output.trim().parse::<u16>()?, 31345);
+            assert!(
+                stderr
+                    .iter()
+                    .any(|line| line.contains("daemon not running"))
+            );
+            assert!(
+                stderr
+                    .iter()
+                    .any(|line| line.contains("daemon started successfully"))
+            );
+            Ok(())
+        })
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn native_client_cancellation_preserves_its_shared_server_descendant() -> Result<()> {
+        block_on(async {
+            let mut command = new_command("/bin/sh");
+            command.args([
+                "-c",
+                "sleep 60 >/dev/null 2>&1 & server=$!; printf '%s\\n' \"$server\"; exec sleep 60",
+            ]);
+            let (sender, mut receiver) = mpsc::channel::<OutputLine>(2);
+            let (cancel, cancelled) = oneshot::channel();
+            let receive = async {
+                let server = receiver
+                    .next()
+                    .await
+                    .context("The mock ADB server did not start.")?
+                    .text;
+                cancel
+                    .send(())
+                    .map_err(|_| anyhow::anyhow!("The SDK client exited before cancellation."))?;
+                while receiver.next().await.is_some() {}
+                Ok::<_, anyhow::Error>(server)
+            };
+            let (result, server) = futures::join!(
+                command_output_capture_policy(
+                    command,
+                    Duration::from_secs(5),
+                    sender,
+                    cancelled,
+                    true,
+                    true,
+                    future::pending(),
+                    true,
+                    ProcessPolicy::NativeClient
+                ),
+                receive
+            );
+            let server = server?;
+            let state = util::command::new_command("ps")
+                .args(["-o", "stat=", "-p", &server])
+                .output()
+                .await?;
+            let alive = state.status.success()
+                && String::from_utf8_lossy(&state.stdout)
+                    .split_whitespace()
+                    .next()
+                    .is_some_and(|state| !state.starts_with('Z'));
+            let status = util::command::new_command("/bin/kill")
+                .args(["-TERM", &server])
+                .status()
+                .await?;
+            ensure!(status.success(), "Could not clean up the mock ADB server.");
+            assert!(matches!(result?, ProcessOutput::Cancelled));
+            assert!(
+                alive,
+                "Cancelling a native SDK client must preserve its shared server."
+            );
+            Ok(())
+        })
+    }
 
     #[gpui::test]
     async fn pane_renders_empty_and_split_output_and_keeps_both_sessions(

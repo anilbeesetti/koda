@@ -4,9 +4,12 @@ This small Compose app tests a module named `mobile`, two product flavors,
 generated `R` and `BuildConfig` symbols, a Kotlin call into Java, and an Android
 library dependency named `greeting`.
 
-Downloaded Koda apps open **Android Setup** when a project needs Java or an SDK.
+Downloaded Koda apps open **Android Setup** on first launch. You can defer it and
+reopen it with **Android: Setup** in the command palette; missing project
+dependencies also lead back to setup.
 The wizard can download a full Temurin JDK 21 and selected Android SDK packages
-into application storage, or reuse validated installations. A source checkout
+with Java in application storage and SDK packages in Android Studio's usual SDK
+folder, or reuse validated installations. A source checkout
 and shell-exported runtime paths are unnecessary. Kotlin/debugger source
 installation is available under advanced tools. See [Managed tool setup](TOOL_SETUP.md) for prerequisites, repair,
 updates, platform limits and acceptance checks.
@@ -22,13 +25,16 @@ script/android-ide --release examples/android-ide
 ```
 
 Trusted Android projects sync automatically on open and initially select
-**:mobile · demoDebug** in the topbar. Use **Configure Kotlin** in the titlebar Android menu. Install the Kotlin extension from Extensions if it is
+**:mobile · demoDebug** in the topbar. Use **Configure Kotlin** from the command palette. Install the Kotlin extension from Extensions if it is
 not already installed. Select a connected device or a stopped emulator in the topbar,
 then **Run**; a stopped emulator is booted before deployment. The app should display `dev.zed.androidsample.demo`. Repeat with
 `fullDebug`; it should display `dev.zed.androidsample.full`. Both variants should
 also display `Android library connected`. Generated symbols refresh automatically
 after switching variants.
-Use **Stop emulator** when finished to release the VM's memory.
+Run and Debug use the selected SDK's `adb` directly. Authorize the device when
+prompted. Existing emulators require the SDK emulator package and an AVD; setup
+does not download emulator images or create virtual devices. Use **Stop emulator**
+when finished to release the VM's memory.
 
 Use **Open Logcat** for the structured device log viewer. See [Logcat](LOGCAT.md)
 for filtering syntax, capture controls, saved files, and validation steps.
@@ -37,7 +43,7 @@ The official JetBrains Kotlin backend is the only supported backend. If you used
 the community backend before, relaunch the IDE and configure Kotlin once to switch
 your existing project settings.
 
-Use **Configure Kotlin** in the titlebar Android menu. The pinned
+Use **Configure Kotlin** from the command palette. The pinned
 `263.4702.0+android-6` build includes a source-built native importer patch for
 selected dependency variants, exact library sources, and dynamic features, plus
 semantic Compose completion and naming fixes. It prepares the focused Kotlin

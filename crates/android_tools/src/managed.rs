@@ -279,7 +279,7 @@ fn validate_inventory_inner(
 pub fn resolve(tool: Tool) -> Result<PathBuf> {
     resolve_at(&root(), tool).with_context(|| {
         format!(
-            "{} is unavailable. Open Android → Android Setup, then Install / repair or Validate.",
+            "{} is unavailable. Run Android: Setup from the command palette, expand Change settings and Advanced tools, then choose Install / repair or Validate.",
             tool.label()
         )
     })
@@ -322,7 +322,7 @@ fn validate_language_server_binary_at(root: &Path, path: &Path) -> Result<()> {
             current_profile,
             "This project references another Koda profile's managed Kotlin installation. Configure Kotlin to select this profile's validated runtime"
         );
-        let current = resolve_at(root, Tool::Kotlin).context("Managed Kotlin is unavailable. Open Android → Tool setup and Install / repair, then Configure Kotlin")?;
+        let current = resolve_at(root, Tool::Kotlin).context("Managed Kotlin is unavailable. Run Android: Setup from the command palette, expand Change settings and Advanced tools, choose Install / repair, then run Configure Kotlin")?;
         ensure!(
             path.canonicalize()? == current.canonicalize()?,
             "This project references an older managed Kotlin installation. Configure Kotlin to select this Koda version's validated runtime"
@@ -418,7 +418,10 @@ pub fn executable(path: &Path) -> Result<()> {
 #[serde(deny_unknown_fields)]
 pub struct Environment {
     pub sdk: Option<PathBuf>,
+    #[serde(default)]
+    pub sdk_api_level: Option<u32>,
     pub jdk: Option<PathBuf>,
+    // Retained solely to read and preserve settings from before Android CLI retirement.
     pub android_cli: Option<PathBuf>,
 }
 
@@ -445,7 +448,6 @@ pub(crate) fn environment_at(root: &Path) -> Result<Environment> {
 pub enum Dependency {
     Sdk,
     Jdk,
-    AndroidCli,
 }
 
 pub fn save_dependency(dependency: Dependency, path: &Path) -> Result<()> {
@@ -464,7 +466,6 @@ fn save_dependency_at(root: &Path, dependency: Dependency, path: &Path) -> Resul
         Dependency::Jdk => {
             super::kotlin::validate_jdk_21(&path)?;
         }
-        Dependency::AndroidCli => executable(&path)?,
     }
     fs::create_dir_all(root)?;
     super::kotlin::ensure_directory(&root)?;
@@ -493,9 +494,11 @@ fn save_dependency_at(root: &Path, dependency: Dependency, path: &Path) -> Resul
         Err(error) => return Err(error),
     };
     match dependency {
-        Dependency::Sdk => environment.sdk = Some(path),
+        Dependency::Sdk => {
+            environment.sdk = Some(path);
+            environment.sdk_api_level = None;
+        }
         Dependency::Jdk => environment.jdk = Some(path),
-        Dependency::AndroidCli => environment.android_cli = Some(path),
     }
     save_environment_unlocked(root, &environment)
 }
@@ -525,43 +528,7 @@ pub fn command_environment_with<'a>(
 ) -> Result<BTreeMap<String, String>> {
     let selected = environment()?;
     let mut defaults = BTreeMap::new();
-    if let Some(jdk) = &selected.jdk {
-        super::provision::validate_managed_path(jdk)?;
-        super::kotlin::validate_jdk_21(jdk)?;
-    }
-    if let Some(sdk) = &selected.sdk {
-        super::provision::validate_managed_path(sdk)?;
-        executable(&sdk.join(if cfg!(windows) {
-            "platform-tools/adb.exe"
-        } else {
-            "platform-tools/adb"
-        }))?;
-    }
-    if let Some(cli) = &selected.android_cli {
-        super::provision::validate_managed_path(cli)?;
-        executable(cli)?;
-    }
-    if selected
-        .android_cli
-        .as_ref()
-        .is_some_and(|path| path.starts_with(super::provision::root()))
-    {
-        super::provision::validate_managed_path(
-            selected
-                .android_cli
-                .as_ref()
-                .context("Managed Android CLI selection is missing")?,
-        )?;
-        defaults.insert(
-            "ANDROID_USER_HOME".into(),
-            std::env::var("ANDROID_USER_HOME").unwrap_or_else(|_| {
-                super::provision::root()
-                    .join("google-user")
-                    .to_string_lossy()
-                    .into_owned()
-            }),
-        );
-    }
+    validate_command_dependencies(&selected)?;
     let jdk = match std::env::var_os("JAVA_HOME") {
         Some(path) => Ok(PathBuf::from(path)),
         None => super::kotlin::java_home(),
@@ -584,6 +551,18 @@ pub fn command_environment_with<'a>(
         selected,
         defaults,
     ))
+}
+
+fn validate_command_dependencies(selected: &Environment) -> Result<()> {
+    if let Some(jdk) = &selected.jdk {
+        super::provision::validate_managed_path(jdk)?;
+        super::kotlin::validate_jdk_21(jdk)?;
+    }
+    if let Some(sdk) = &selected.sdk {
+        super::provision::validate_managed_path(sdk)?;
+        super::provision::validate_selected_sdk(sdk, selected.sdk_api_level)?;
+    }
+    Ok(())
 }
 
 fn merge_command_environment(
@@ -810,7 +789,6 @@ pub fn status() -> Vec<String> {
         ("Python 3.12+", python()),
         ("JDK 21", super::kotlin::java_home()),
         ("SDK / adb", super::adb_path()),
-        ("Android CLI", super::android_cli_path()),
     ] {
         lines.push(match value {
             Ok(path) => format!("{name}: {}", path.display()),
@@ -917,31 +895,6 @@ mod tests {
         let temporary = tempfile::tempdir()?;
         let root = temporary.path().join("profile");
         fs::create_dir(&root)?;
-        let cli = temporary.path().join(if cfg!(windows) {
-            "android.exe"
-        } else {
-            "android"
-        });
-        fs::write(&cli, "cli")?;
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt as _;
-            fs::set_permissions(&cli, fs::Permissions::from_mode(0o755))?;
-        }
-        fs::write(root.join("environment.json"), "{corrupt")?;
-        save_dependency_at(&root, Dependency::AndroidCli, &cli)?;
-        assert_eq!(
-            environment_at(&root)?.android_cli.as_deref(),
-            Some(cli.as_path())
-        );
-        assert!(
-            fs::read_dir(&root)?
-                .filter_map(|entry| entry.ok())
-                .any(|entry| entry
-                    .file_name()
-                    .to_string_lossy()
-                    .starts_with("environment.corrupt-"))
-        );
         let sdk = temporary.path().join("sdk");
         let adb = sdk.join(if cfg!(windows) {
             "platform-tools/adb.exe"
@@ -955,10 +908,42 @@ mod tests {
             use std::os::unix::fs::PermissionsExt as _;
             fs::set_permissions(&adb, fs::Permissions::from_mode(0o755))?;
         }
+        fs::write(root.join("environment.json"), "{corrupt")?;
+        save_dependency_at(&root, Dependency::Sdk, &sdk)?;
+        assert!(
+            fs::read_dir(&root)?
+                .filter_map(|entry| entry.ok())
+                .any(|entry| entry
+                    .file_name()
+                    .to_string_lossy()
+                    .starts_with("environment.corrupt-"))
+        );
+        let cli = temporary.path().join("retired-and-missing-android-cli");
+        save_environment_unlocked(
+            &root,
+            &Environment {
+                sdk: Some(sdk.clone()),
+                android_cli: Some(cli.clone()),
+                ..Default::default()
+            },
+        )?;
         save_dependency_at(&root, Dependency::Sdk, &sdk)?;
         let saved = environment_at(&root)?;
         assert_eq!(saved.sdk.as_deref(), Some(sdk.as_path()));
         assert_eq!(saved.android_cli.as_deref(), Some(cli.as_path()));
+        Ok(())
+    }
+
+    #[test]
+    fn retired_cli_settings_decode_and_never_block_command_dependencies() -> Result<()> {
+        let selected: Environment = serde_json::from_str(
+            r#"{"sdk":null,"jdk":null,"android_cli":"/missing/nightly/android-tools/provision/retired-cli"}"#,
+        )?;
+        assert!(selected.sdk_api_level.is_none());
+        validate_command_dependencies(&selected)?;
+        let mut invalid_java = selected;
+        invalid_java.jdk = Some(PathBuf::from("/missing/full-jdk-21"));
+        assert!(validate_command_dependencies(&invalid_java).is_err());
         Ok(())
     }
 

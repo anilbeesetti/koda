@@ -11,7 +11,7 @@ use dap::{
 use gpui::AsyncApp;
 use project::debugger::dap_store::DapStoreEvent;
 use serde_json::{Value, json};
-use task::{DebugScenario, ZedDebugConfig};
+use task::{DebugScenario, TaskContext, ZedDebugConfig};
 
 pub(super) const ADAPTER: &str = "Android Kotlin";
 
@@ -141,6 +141,30 @@ fn positive_number<T: std::str::FromStr + PartialEq + Default>(
     Ok(value)
 }
 
+fn forward_from_reply(
+    executor: BackgroundExecutor,
+    adb: PathBuf,
+    serial: String,
+    application_id: &str,
+    process: u32,
+    reply: &str,
+) -> Result<Forward> {
+    let mut ports = reply
+        .lines()
+        .filter_map(|line| positive_number::<u16>(line, "debugger port").ok());
+    let port = ports.next().filter(|_| ports.next().is_none());
+    let forward = port.map(|port| Forward {
+        executor,
+        adb,
+        serial,
+        port,
+        label: format!("Android · {application_id} · {process}:{port}").into(),
+        session: None,
+    });
+    positive_number::<u16>(reply, "debugger port")?;
+    forward.context("ADB did not return an unambiguous debugger forwarding port")
+}
+
 async fn wait_for_application_process<ReadProcess: Future<Output = Result<String>>>(
     mut read_process: impl FnMut() -> ReadProcess,
     executor: &BackgroundExecutor,
@@ -154,11 +178,49 @@ async fn wait_for_application_process<ReadProcess: Future<Output = Result<String
                 if attempts == 20 {
                     return Err(error.context("The Android app did not start a debuggable process"));
                 }
-                // Android CLI can return before ActivityManager has created the process.
+                // ActivityManager can return before the application process exists.
                 executor.timer(Duration::from_millis(250)).await;
             }
         }
     }
+}
+
+async fn debugger_command_output(
+    panel: &WeakEntity<AndroidPanel>,
+    cx: &mut gpui::AsyncWindowContext,
+    deployment: &DebugDeployment,
+    arguments: Vec<String>,
+    label: &'static str,
+    timeout: Duration,
+) -> Result<String> {
+    let (cancel, cancelled) = oneshot::channel();
+    panel.update_in(cx, |panel, _, cx| {
+        panel.validate_device_operation(&deployment.operation, cx)?;
+        panel.command_cancel = Some(cancel);
+        panel.status = label.into();
+        cx.notify();
+        Ok::<_, anyhow::Error>(())
+    })??;
+    let deployment = deployment.clone();
+    let executor = cx.background_executor().clone();
+    cx.background_spawn(async move {
+        let mut command = util::command::new_std_command(&deployment.adb);
+        command
+            .args(arguments)
+            .current_dir(&deployment.operation.root)
+            .envs(deployment.environment.iter());
+        android_build::command_output_native_client(
+            command,
+            &executor,
+            timeout,
+            deployment.output.clone(),
+            cancelled,
+            false,
+        )
+        .await?
+        .stdout()
+    })
+    .await
 }
 
 impl AndroidPanel {
@@ -213,24 +275,46 @@ impl AndroidPanel {
         self.running = true;
         self.status = "Attaching Android debugger…".into();
         let executor = cx.background_executor().clone();
+        let deployment = self.debug_deployment.clone();
         self.debug_task = Some(cx.spawn_in(window, async move |panel, cx| {
-            let result = cx.background_spawn({
-                let root = root.clone();
-                async move {
-                    let adb = adb_path()?;
-                    let process = wait_for_application_process(
-                        || tool_output(adb.clone(), vec!["-s".into(), serial.clone(), "shell".into(), "pidof".into(), "-s".into(), application_id.clone()], &root, &executor, Duration::from_secs(1)),
-                        &executor,
-                    ).await?;
-                    let output = tool_output(adb.clone(), vec!["-s".into(), serial.clone(), "forward".into(), "tcp:0".into(), format!("jdwp:{process}")], &root, &executor, Duration::from_secs(10)).await?;
-                    let port: u16 = positive_number(&output, "debugger port")?;
-                    Ok::<_, anyhow::Error>(Forward { executor, adb, serial, port,
-                        label: format!("Android · {application_id} · {process}:{port}").into(), session: None })
-                }
-            }).await;
+            let result = if let Some(deployment) = &deployment {
+                async {
+                    let process = wait_for_application_process(|| {
+                        let panel = panel.clone();
+                        let deployment = deployment.clone();
+                        let mut cx = cx.clone();
+                        let application_id = application_id.clone();
+                        async move {
+                            debugger_command_output(&panel, &mut cx, &deployment,
+                                vec!["-s".into(), deployment.operation.serial.clone(), "shell".into(), "pidof".into(), "-s".into(), application_id],
+                                "Waiting for the application process…", Duration::from_secs(1)).await
+                        }
+                    }, &executor).await?;
+                    let output = debugger_command_output(&panel, cx, deployment,
+                        vec!["-s".into(), serial.clone(), "forward".into(), "tcp:0".into(), format!("jdwp:{process}")],
+                        "Opening the debugger connection…", Duration::from_secs(10)).await?;
+                    forward_from_reply(executor.clone(), deployment.adb.clone(), serial.clone(), &application_id, process, &output)
+                }.await
+            } else {
+                cx.background_spawn({
+                    let root = root.clone();
+                    async move {
+                        let adb = adb_path()?;
+                        let process = wait_for_application_process(
+                            || tool_output(adb.clone(), vec!["-s".into(), serial.clone(), "shell".into(), "pidof".into(), "-s".into(), application_id.clone()], &root, &executor, Duration::from_secs(1)),
+                            &executor,
+                        ).await?;
+                        let output = tool_output(adb.clone(), vec!["-s".into(), serial.clone(), "forward".into(), "tcp:0".into(), format!("jdwp:{process}")], &root, &executor, Duration::from_secs(10)).await?;
+                        forward_from_reply(executor, adb, serial, &application_id, process, &output)
+                    }
+                }).await
+            };
             panel.update_in(cx, |panel, window, cx| {
-                panel.running = false;
+                panel.running = deployment.is_some();
                 let result = result.and_then(|forward| {
+                    if let Some(deployment) = &deployment {
+                        panel.validate_device_operation(&deployment.operation, cx)?;
+                    }
                     ensure!(panel.trusted_root(cx)? == root, "The Android project changed during debugger attachment");
                     let worktree = panel.project.read(cx).visible_worktrees(cx)
                         .find(|worktree| worktree.read(cx).abs_path().as_ref() == root)
@@ -255,6 +339,50 @@ impl AndroidPanel {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn malformed_forward_reply_cleans_up_its_unambiguous_allocation() -> Result<()> {
+        use std::os::unix::fs::PermissionsExt as _;
+        let directory = tempfile::tempdir()?;
+        let adb = directory.path().join("adb");
+        std::fs::write(
+            &adb,
+            "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"${0%/*}/removed.tmp\"\nmv \"${0%/*}/removed.tmp\" \"${0%/*}/removed\"\n",
+        )?;
+        std::fs::set_permissions(&adb, std::fs::Permissions::from_mode(0o755))?;
+        let executor = BackgroundExecutor::new(Arc::new(gpui::ThreadedDispatcher::new()));
+        let result = forward_from_reply(
+            executor.clone(),
+            adb,
+            "owned-forward".into(),
+            "com.example",
+            123,
+            "31345\nunexpected diagnostic\n",
+        );
+        assert!(result.is_err());
+        futures::executor::block_on(async {
+            let wait = async {
+                while !directory.path().join("removed").exists() {
+                    executor.timer(Duration::from_millis(10)).await;
+                }
+            };
+            match select(
+                Box::pin(wait),
+                Box::pin(executor.timer(Duration::from_secs(5))),
+            )
+            .await
+            {
+                Either::Left(_) => Ok::<_, anyhow::Error>(()),
+                Either::Right(_) => bail!("The malformed forward allocation was not cleaned up."),
+            }
+        })?;
+        assert_eq!(
+            std::fs::read_to_string(directory.path().join("removed"))?,
+            "-s\nowned-forward\nforward\n--remove\ntcp:31345\n"
+        );
+        Ok(())
+    }
 
     #[gpui::test]
     async fn waits_for_application_process(executor: BackgroundExecutor) {

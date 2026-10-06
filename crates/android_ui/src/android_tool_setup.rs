@@ -40,14 +40,14 @@ pub(super) fn open(
         wizard.focus_handle(cx).focus(window, cx);
         return;
     }
-    workspace.toggle_modal(window, cx, move |_, cx| SetupWizard::new(panel, cx));
+    workspace.toggle_modal(window, cx, move |window, cx| {
+        SetupWizard::new(panel, window, cx)
+    });
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum SetupStep {
-    Welcome,
-    Components,
-    Verify,
+    Review,
     Licenses,
     Installing,
     Ready,
@@ -59,13 +59,18 @@ enum Maintenance {
     Rollback,
 }
 
+#[derive(Clone, Copy)]
+enum SetupFolder {
+    Jdk,
+    ExistingSdk,
+    SdkDestination,
+}
+
 impl SetupStep {
     fn title(self) -> &'static str {
         match self {
-            Self::Welcome => "Welcome to Android setup",
-            Self::Components => "Choose your components",
-            Self::Verify => "Verify settings",
-            Self::Licenses => "Review licenses",
+            Self::Review => "Review downloads",
+            Self::Licenses => "Read Android SDK terms",
             Self::Installing => "Installing components",
             Self::Ready => "Setup complete",
         }
@@ -92,16 +97,15 @@ struct SetupWizard {
     rendered_error: Option<String>,
     content_scroll: ScrollHandle,
     license_scroll: ScrollHandle,
-    custom: bool,
+    show_settings: bool,
     offline: bool,
     install_sdk: bool,
-    install_cli: bool,
     reuse_jdk: bool,
     reuse_sdk: bool,
     api_level: u32,
     jdk: Option<PathBuf>,
     sdk: Option<PathBuf>,
-    android_cli: Option<PathBuf>,
+    sdk_destination: Option<PathBuf>,
     discovery: Option<provision::Discovery>,
     plan: Option<provision::SetupPlan>,
     installed: Option<provision::Installed>,
@@ -119,7 +123,7 @@ struct SetupWizard {
 }
 
 impl SetupWizard {
-    fn new(panel: Entity<AndroidPanel>, cx: &mut Context<Self>) -> Self {
+    fn new(panel: Entity<AndroidPanel>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let mut wizard = Self {
             _panel_subscription: cx.observe(&panel, |_, _, cx| cx.notify()),
             panel,
@@ -127,21 +131,20 @@ impl SetupWizard {
             content_focus: cx.focus_handle().tab_index(0).tab_stop(true),
             license_focus: cx.focus_handle().tab_index(0).tab_stop(true),
             license_group_focus: Vec::new(),
-            step: SetupStep::Welcome,
-            rendered_step: SetupStep::Welcome,
+            step: SetupStep::Review,
+            rendered_step: SetupStep::Review,
             rendered_error: None,
             content_scroll: ScrollHandle::new(),
             license_scroll: ScrollHandle::new(),
-            custom: false,
+            show_settings: false,
             offline: false,
             install_sdk: true,
-            install_cli: true,
             reuse_jdk: true,
             reuse_sdk: true,
             api_level: 36,
             jdk: None,
             sdk: None,
-            android_cli: None,
+            sdk_destination: None,
             discovery: None,
             plan: None,
             installed: None,
@@ -156,18 +159,19 @@ impl SetupWizard {
             error: None,
             show_details: false,
         };
-        wizard.detect(cx);
+        wizard.detect(window, cx);
         wizard
     }
 
-    fn detect(&mut self, cx: &mut Context<Self>) {
+    fn detect(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.rendered_error = None;
         #[cfg(test)]
         {
+            self.focus_handle.focus(window, cx);
             self.discovery = Some(provision::Discovery {
                 jdk: None,
                 sdk: None,
-                android_cli: None,
+                sdk_api_level: None,
                 compile_sdk: Some(36),
                 issues: Vec::new(),
                 supported: true,
@@ -186,26 +190,46 @@ impl SetupWizard {
                 .or_else(|| self.panel.read(cx).auto_sync_candidate(cx));
             self.busy = true;
             self.error = None;
-            self.task = Some(cx.spawn(async move |wizard, cx| {
-                let result = cx
-                    .background_spawn(async move { provision::discover(root.as_deref()) })
+            self.task = Some(cx.spawn_in(window, async move |wizard, cx| {
+                let (result, destination) = cx
+                    .background_spawn(async move {
+                        (
+                            provision::discover(root.as_deref()),
+                            provision::default_sdk_directory(),
+                        )
+                    })
                     .await;
                 wizard
-                    .update(cx, |wizard, cx| {
+                    .update_in(cx, |wizard, window, cx| {
                         wizard.busy = false;
                         wizard.task = None;
                         match result {
                             Ok(discovery) => {
                                 wizard.jdk = discovery.jdk.clone();
                                 wizard.sdk = discovery.sdk.clone();
-                                wizard.android_cli = discovery.android_cli.clone();
-                                wizard.api_level = discovery.compile_sdk.unwrap_or(36);
+                                wizard.api_level = discovery
+                                    .compile_sdk
+                                    .or(discovery.sdk_api_level)
+                                    .unwrap_or(36);
                                 wizard.discovery = Some(discovery);
+                                if wizard.sdk_destination.is_none() {
+                                    match destination {
+                                        Ok(destination) => {
+                                            wizard.sdk_destination = Some(destination)
+                                        }
+                                        Err(error) if wizard.sdk.is_none() => {
+                                            wizard.error = Some(format!("{error:#}"))
+                                        }
+                                        Err(_) => {}
+                                    }
+                                }
                             }
                             Err(error) => wizard.error = Some(format!("{error:#}")),
                         }
                         if wizard.close_requested {
-                            cx.emit(DismissEvent);
+                            wizard.dismiss_deferred(cx);
+                        } else if wizard.error.is_none() {
+                            wizard.prepare_plan(window, cx);
                         }
                         cx.notify();
                     })
@@ -275,10 +299,9 @@ impl SetupWizard {
         let options = provision::Options {
             jdk: self.reuse_jdk.then(|| self.jdk.clone()).flatten(),
             sdk: self.reuse_sdk.then(|| self.sdk.clone()).flatten(),
-            android_cli: self.android_cli.clone(),
+            sdk_destination: self.sdk_destination.clone(),
             api_level: self.api_level,
             install_sdk: self.install_sdk,
-            install_cli: self.install_cli && self.install_sdk,
             offline: self.offline,
         };
         let cancel = self.cancel.clone();
@@ -299,13 +322,13 @@ impl SetupWizard {
                     match result {
                         Ok(plan) => {
                             wizard.plan = Some(plan);
-                            wizard.step = SetupStep::Verify;
+                            wizard.step = SetupStep::Review;
                             wizard.selected_license = 0;
                         }
                         Err(error) => wizard.error = Some(format!("{error:#}")),
                     }
                     if wizard.close_requested {
-                        cx.emit(DismissEvent);
+                        wizard.dismiss_deferred(cx);
                     }
                     cx.notify();
                 })
@@ -408,12 +431,12 @@ impl SetupWizard {
                         Err(error) => {
                             wizard.plan = None;
                             wizard.acceptances.clear();
-                            wizard.step = SetupStep::Components;
+                            wizard.step = SetupStep::Review;
                             wizard.error = Some(format!("{error:#}\nReview the settings again to retry. Verified cached downloads can be reused."));
                         }
                     }
                     if wizard.close_requested {
-                        cx.emit(DismissEvent);
+                        wizard.dismiss_deferred(cx);
                     }
                     cx.notify();
                 })
@@ -424,6 +447,14 @@ impl SetupWizard {
     }
 
     fn choose_path(&mut self, dependency: Dependency, window: &mut Window, cx: &mut Context<Self>) {
+        let folder = match dependency {
+            Dependency::Jdk => SetupFolder::Jdk,
+            Dependency::Sdk => SetupFolder::ExistingSdk,
+        };
+        self.choose_folder(folder, window, cx);
+    }
+
+    fn choose_folder(&mut self, folder: SetupFolder, window: &mut Window, cx: &mut Context<Self>) {
         let previous_error = self.error.clone();
         if !self.begin_work(cx) {
             return;
@@ -437,11 +468,12 @@ impl SetupWizard {
             directories: true,
             multiple: false,
             prompt: Some(
-                match dependency {
-                    Dependency::Jdk => {
+                match folder {
+                    SetupFolder::Jdk => {
                         "Choose a full Java 21 JDK (contains bin/java and bin/javac)"
                     }
-                    _ => "Choose an existing Android SDK folder",
+                    SetupFolder::ExistingSdk => "Choose an existing Android SDK folder",
+                    SetupFolder::SdkDestination => "Choose the folder for Android SDK downloads",
                 }
                 .into(),
             ),
@@ -458,14 +490,18 @@ impl SetupWizard {
                     match result {
                         Ok(Some(paths)) => {
                             if let Some(path) = paths.into_iter().next() {
-                                match dependency {
-                                    Dependency::Jdk => {
+                                match folder {
+                                    SetupFolder::Jdk => {
                                         wizard.jdk = Some(path);
                                         wizard.reuse_jdk = true;
                                     }
-                                    _ => {
+                                    SetupFolder::ExistingSdk => {
                                         wizard.sdk = Some(path);
                                         wizard.reuse_sdk = true;
+                                    }
+                                    SetupFolder::SdkDestination => {
+                                        wizard.sdk_destination = Some(path);
+                                        wizard.reuse_sdk = false;
                                     }
                                 }
                                 wizard.error = None;
@@ -477,7 +513,7 @@ impl SetupWizard {
                         Err(error) => wizard.error = Some(format!("{error:#}")),
                     }
                     if wizard.close_requested {
-                        cx.emit(DismissEvent);
+                        wizard.dismiss_deferred(cx);
                     }
                     cx.notify();
                 })
@@ -532,7 +568,7 @@ impl SetupWizard {
                                 .update(cx, |panel, cx| panel.bootstrap_completed(window, cx));
                         }
                         Err(error) => {
-                            wizard.step = SetupStep::Welcome;
+                            wizard.step = SetupStep::Review;
                             wizard.error = Some(format!("{error:#}"));
                             wizard
                                 .panel
@@ -540,7 +576,7 @@ impl SetupWizard {
                         }
                     }
                     if wizard.close_requested {
-                        cx.emit(DismissEvent);
+                        wizard.dismiss_deferred(cx);
                     }
                     cx.notify();
                 })
@@ -556,8 +592,18 @@ impl SetupWizard {
             self.cancel.store(true, Ordering::Release);
             cx.notify();
         } else {
-            cx.emit(DismissEvent);
+            self.dismiss_deferred(cx);
         }
+    }
+
+    fn dismiss_deferred(&mut self, cx: &mut Context<Self>) {
+        super::defer_first_launch_setup(cx);
+        cx.emit(DismissEvent);
+    }
+
+    fn invalidate_plan(&mut self) {
+        self.plan = None;
+        self.acceptances.clear();
     }
 
     fn next(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -565,9 +611,8 @@ impl SetupWizard {
             return;
         }
         match self.step {
-            SetupStep::Welcome => self.step = SetupStep::Components,
-            SetupStep::Components => self.prepare_plan(window, cx),
-            SetupStep::Verify => {
+            SetupStep::Review if self.plan.is_none() => self.prepare_plan(window, cx),
+            SetupStep::Review => {
                 if self
                     .plan
                     .as_ref()
@@ -579,7 +624,10 @@ impl SetupWizard {
                 }
             }
             SetupStep::Licenses => self.install(window, cx),
-            SetupStep::Ready => self.close(cx),
+            SetupStep::Ready => {
+                super::finish_first_launch_setup(cx);
+                cx.emit(DismissEvent);
+            }
             SetupStep::Installing => {}
         }
         cx.notify();
@@ -589,33 +637,26 @@ impl SetupWizard {
         !self.busy
             && !self.choosing
             && self.step != SetupStep::Installing
+            && (self.step != SetupStep::Ready || self.installed.is_some())
             && (self.step != SetupStep::Licenses || self.licenses_accepted())
-            && (self.step != SetupStep::Welcome || self.discovery.is_some())
-            && (self.step != SetupStep::Components
+            && (self.step != SetupStep::Review || self.discovery.is_some())
+            && (self.step != SetupStep::Review
                 || self
                     .discovery
                     .as_ref()
                     .is_some_and(|discovery| discovery.supported)
                 || (self.reuse_jdk
                     && self.jdk.is_some()
-                    && (!self.install_sdk || (self.reuse_sdk && self.sdk.is_some()))
-                    && (!(self.install_cli && self.install_sdk) || self.android_cli.is_some())))
+                    && (!self.install_sdk || (self.reuse_sdk && self.sdk.is_some()))))
     }
 
     fn back(&mut self, cx: &mut Context<Self>) {
         if self.busy || self.choosing {
             return;
         }
-        self.step = match self.step {
-            SetupStep::Components => SetupStep::Welcome,
-            SetupStep::Verify => {
-                self.plan = None;
-                self.acceptances.clear();
-                SetupStep::Components
-            }
-            SetupStep::Licenses => SetupStep::Verify,
-            step => step,
-        };
+        if self.step == SetupStep::Licenses {
+            self.step = SetupStep::Review;
+        }
         cx.notify();
     }
 
@@ -700,7 +741,9 @@ impl SetupWizard {
             .p_1()
             .rounded_md()
             .border_1()
-            .border_color(gpui::transparent_black())
+            .border_color(cx.theme().colors().border)
+            .bg(cx.theme().colors().element_background)
+            .hover(|style| style.bg(cx.theme().colors().element_hover))
             .focus_visible(|style| style.border_color(cx.theme().colors().border_focused))
             .when(!disabled, |element| element.cursor_pointer())
             .on_click(cx.listener(move |wizard, _, _, cx| {
@@ -717,36 +760,50 @@ impl SetupWizard {
             .into_any_element()
     }
 
-    fn welcome(&self, cx: &mut Context<Self>) -> AnyElement {
-        v_flex()
-            .gap_4()
-            .child(Self::text("Set up Java 21 and the Android SDK for building Android projects and rendering previews. Koda stores downloaded tools in its own app storage."))
-            .child(Self::text("Existing tools are detected first. You can reuse them or choose a private managed installation; your Android Studio and Zed installations stay separate."))
-            .child(h_flex().gap_2().flex_wrap()
-                .child(Button::new("android-setup-standard", "Standard")
-                    .style(if self.custom { ButtonStyle::Subtle } else { ButtonStyle::Filled })
-                    .disabled(self.busy).tab_index(0isize)
-                    .on_click(cx.listener(|wizard, _, _, cx| { wizard.custom = false; cx.notify(); })))
-                .child(div().debug_selector(|| "android-setup-custom-control".into()).child(Button::new("android-setup-custom", "Custom")
-                    .style(if self.custom { ButtonStyle::Filled } else { ButtonStyle::Subtle })
-                    .disabled(self.busy).tab_index(0isize)
-                    .on_click(cx.listener(|wizard, _, _, cx| { wizard.custom = true; cx.notify(); })))))
-            .child(Self::text(if self.custom { "Custom setup lets you choose existing Java and SDK folders and the Android API level." } else { "Standard setup reuses a compatible JDK and SDK and downloads missing required components." }))
-            .when(self.busy, |element| element.child(Label::new("Detecting installed tools…").color(Color::Muted)))
-            .when_some(self.discovery.as_ref(), |element, discovery| {
+    fn review(&self, cx: &mut Context<Self>) -> AnyElement {
+        let disabled = self.busy || self.choosing;
+        v_flex().gap_4()
+            .child(Self::text("Review the downloads for Android development. Compatible installed tools are reused."))
+            .when(self.busy, |element| element.child(Label::new("Checking installed tools and preparing your download summary…").color(Color::Muted)))
+            .when_some(self.plan.as_ref(), |element, plan| {
                 element
-                    .child(Self::text(format!("Java 21: {}", self.jdk.as_ref().map(|path| path.display().to_string()).unwrap_or_else(|| "Download required".into()))))
-                    .child(Self::text(format!("Android SDK: {}", self.sdk.as_ref().map(|path| path.display().to_string()).unwrap_or_else(|| "Download required".into()))))
-                    .children(discovery.issues.iter().map(|issue| Self::text(issue.clone())))
-                    .when(!discovery.supported, |element| element.child(Self::text("Managed downloads are unavailable on this platform. Choose existing tools in Advanced tools or use a supported platform.")))
+                    .child(v_flex().debug_selector(|| "android-setup-download-summary".into()).p_3().gap_2().rounded_md().border_1().border_color(cx.theme().colors().border)
+                        .child(h_flex().gap_3().flex_wrap().justify_between()
+                            .child(Label::new(if plan.downloads.is_empty() { "Your tools are already installed" } else { "Components to download" }).size(LabelSize::Large))
+                            .child(Label::new(format!("Total: {}", format_bytes(plan.download_bytes)))))
+                        .child(v_flex().gap_1().children(plan.downloads.iter().map(|download| h_flex().gap_3().justify_between()
+                            .child(v_flex().flex_1().min_w_0().child(Label::new(format!("{} {}", download.label, download.version)).line_clamp(2)))
+                            .child(Label::new(format_bytes(download.bytes))))))
+                        .child(v_flex().gap_1()
+                            .child(Self::text(format!("Java 21: {}", plan.jdk.display())))
+                            .when_some(plan.sdk.as_ref(), |element, sdk| element
+                                .child(Self::text(format!("Android SDK: {}", sdk.display())))
+                                .child(div().debug_selector(|| "android-setup-summary-sdk-folder-control".into()).child(setup_button("android-setup-summary-sdk-folder", "Change SDK folder…").disabled(disabled).tab_index(0isize)
+                                    .on_click(cx.listener(|wizard, _, window, cx| wizard.choose_folder(SetupFolder::SdkDestination, window, cx)))))))
+                        .when(plan.sdk_is_shared, |element| element.child(Self::text("This SDK folder is shared with Android Studio. Only missing packages are added; completed packages remain available if setup is cancelled or restored.")))
+                        .child(Self::text(format!("Supported platform: {}", plan.supported_platform))))
+                    .child(setup_button("android-setup-download-details", if self.show_details { "Hide download details" } else { "Show download details" }).disabled(disabled).tab_index(0isize)
+                        .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); })))
+                    .when(self.show_details, |element| element.child(v_flex().gap_2()
+                        .children(plan.downloads.iter().map(|download| Self::text(format!("{} · {}", download.publisher, download.url)).text_color(cx.theme().colors().text_muted)))
+                        .children(plan.provenance.iter().map(|provenance| Self::text(provenance.clone())))
+                        .children(plan.packages.iter().map(|package| Self::text(package.clone())))))
             })
-            .child(Self::text(format!("Managed storage: {}", managed::root().display())))
+            .when(self.plan.is_none() && !self.busy, |element| element
+                .child(Self::text("Review the detected locations below, then refresh the download summary."))
+                .child(Self::text(format!("Java 21: {}", self.jdk.as_ref().filter(|_| self.reuse_jdk).map(|path| path.display().to_string()).unwrap_or_else(|| "Download to Koda's application storage".into()))))
+                .child(Self::text(format!("Android SDK: {}", self.sdk.as_ref().filter(|_| self.reuse_sdk).or(self.sdk_destination.as_ref()).map(|path| path.display().to_string()).unwrap_or_else(|| "Choose an SDK destination in Change settings".into())))))
+            .when_some(self.discovery.as_ref(), |element, discovery| element
+                .children(discovery.issues.iter().map(|issue| Self::text(issue.clone())))
+                .when(!discovery.supported, |element| element.child(Self::text("Automatic downloads are unavailable on this platform. Choose existing compatible tools in Change settings."))))
             .child(Self::text(provision::platform_label()))
-            .child(self.advanced(cx))
+            .child(div().debug_selector(|| "android-setup-change-control".into()).child(setup_button("android-setup-change-settings", if self.show_settings { "Hide settings" } else { "Change settings…" }).disabled(disabled).tab_index(0isize)
+                .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_settings = !wizard.show_settings; cx.notify(); }))))
+            .when(self.show_settings, |element| element.child(self.settings(cx)).child(self.advanced(cx)))
             .into_any_element()
     }
 
-    fn components(&self, cx: &mut Context<Self>) -> AnyElement {
+    fn settings(&self, cx: &mut Context<Self>) -> AnyElement {
         let disabled = self.busy || self.choosing;
         let wizard = cx.weak_entity();
         v_flex().gap_4()
@@ -755,81 +812,55 @@ impl SetupWizard {
             .when_some(self.jdk.as_ref(), |element, path| {
                 element.child(Self::checkbox("android-setup-reuse-jdk", self.reuse_jdk,
                     format!("Use existing JDK: {}", path.display()), disabled,
-                    |wizard, selected, cx| { wizard.reuse_jdk = selected; cx.notify(); }, cx))
+                    |wizard, selected, cx| { wizard.reuse_jdk = selected; wizard.invalidate_plan(); cx.notify(); }, cx))
             })
             .when(self.jdk.is_none() || !self.reuse_jdk, |element| element.child(Self::text("Download Java 21 into Koda's managed storage.")))
-            .when(self.custom, |element| element.child(Button::new("android-setup-choose-jdk", "Choose existing JDK…")
+            .when(self.show_settings, |element| element.child(setup_button("android-setup-choose-jdk", "Choose existing JDK…")
                 .disabled(disabled).tab_index(0isize)
                 .on_click(cx.listener(|wizard, _, window, cx| wizard.choose_path(Dependency::Jdk, window, cx)))))
             .child(Label::new("Android SDK").size(LabelSize::Large))
             .child(Self::checkbox("android-setup-sdk", self.install_sdk,
-                "Prepare the Android SDK for this project".into(), disabled,
-                |wizard, selected, cx| { wizard.install_sdk = selected; cx.notify(); }, cx))
+                "Set up Android SDK tools for building and running apps".into(), disabled,
+                |wizard, selected, cx| { wizard.install_sdk = selected; wizard.invalidate_plan(); cx.notify(); }, cx))
             .when(self.install_sdk, |element| {
                 element
-                    .child(Self::text("Includes Android Platform, Build Tools and Platform Tools. Existing complete SDKs are reused; missing components are installed in Koda's private SDK."))
+                    .child(Self::text("Includes Android Platform, Build Tools and Platform Tools (adb). Existing complete SDKs are reused; only missing packages are downloaded to the chosen SDK folder."))
                     .child(Self::text(format!("Android API level: {}", self.api_level)))
                     .child(Self::text("This Koda version downloads Android API 36 and 37. Other API levels require a complete existing SDK; selecting an API does not change the project's compileSdk."))
                     .when_some(self.sdk.as_ref(), |element, path| element
                         .child(Self::checkbox("android-setup-reuse-sdk", self.reuse_sdk,
                             format!("Use existing SDK: {}", path.display()), disabled,
-                            |wizard, selected, cx| { wizard.reuse_sdk = selected; cx.notify(); }, cx)))
-                    .when(self.sdk.is_none() || !self.reuse_sdk, |element| element.child(Self::text("Install a private Android SDK in Koda's managed storage.")))
-                    .when(self.custom, |element| element
+                            |wizard, selected, cx| { wizard.reuse_sdk = selected; wizard.invalidate_plan(); cx.notify(); }, cx)))
+                    .when(self.sdk.is_none() || !self.reuse_sdk, |element| element
+                        .child(Self::text(format!("SDK download folder: {}", self.sdk_destination.as_ref().map(|path| path.display().to_string()).unwrap_or_else(|| "Choose a folder".into()))))
+                        .child(setup_button("android-setup-sdk-destination", "Change SDK download folder…").disabled(disabled).tab_index(0isize)
+                            .on_click(cx.listener(|wizard, _, window, cx| wizard.choose_folder(SetupFolder::SdkDestination, window, cx)))))
+                    .when(self.show_settings, |element| element
                         .child(h_flex().gap_2().flex_wrap()
                             .child(PopoverMenu::new("android-setup-api")
-                                .trigger(Button::new("android-setup-api-trigger", format!("API {} ▾", self.api_level)).disabled(disabled).tab_index(0isize))
+                                .trigger(setup_button("android-setup-api-trigger", format!("Android API {} ▾", self.api_level)).disabled(disabled).tab_index(0isize))
                                 .menu(move |window, cx| Some(ContextMenu::build(window, cx, |mut menu, _, _| {
                                     for api_level in [36, 37] {
                                         let wizard = wizard.clone();
                                         menu = menu.entry(format!("Android API {api_level}"), None, move |_, cx| {
-                                            wizard.update(cx, |wizard, cx| { wizard.api_level = api_level; cx.notify(); }).log_err();
+                                            wizard.update(cx, |wizard, cx| { wizard.api_level = api_level; wizard.invalidate_plan(); cx.notify(); }).log_err();
                                         });
                                     }
                                     menu
                                 }))))
-                            .child(Button::new("android-setup-choose-sdk", "Choose existing SDK…").disabled(disabled).tab_index(0isize)
+                            .child(setup_button("android-setup-choose-sdk", "Choose existing SDK…").disabled(disabled).tab_index(0isize)
                                 .on_click(cx.listener(|wizard, _, window, cx| wizard.choose_path(Dependency::Sdk, window, cx))))))
             })
-            .child(Self::checkbox("android-setup-cli", self.install_cli && self.install_sdk,
-                "Prepare Google's Android CLI for Run and Debug".into(), disabled || !self.install_sdk,
-                |wizard, selected, cx| { wizard.install_cli = selected; cx.notify(); }, cx))
-            .when_some(self.android_cli.as_ref(), |element, path| element.child(Self::text(format!("Existing Android CLI: {}", path.display()))))
-            .when(self.install_cli && self.install_sdk, |element| element.child(Self::text("Google's Android CLI distribution includes its own Java runtime. Koda's build and preview runtime remains the Java 21 JDK selected above.")))
             .child(Self::checkbox("android-setup-offline", self.offline,
                 "Use cached downloads only (offline)".into(), disabled,
-                |wizard, selected, cx| { wizard.offline = selected; cx.notify(); }, cx))
-            .child(Self::text("The next page shows exact versions, download size, destination and required licenses before installation."))
-            .into_any_element()
-    }
-
-    fn verify(&self, cx: &mut Context<Self>) -> AnyElement {
-        let Some(plan) = &self.plan else {
-            return Self::text("No installation plan is available. Go back to choose components.")
-                .into_any_element();
-        };
-        v_flex().gap_3()
-            .child(Self::text("Review these settings before downloading. Use Back to change your selection."))
-            .child(Self::text(format!("Java version: {}", plan.jdk_version)))
-            .child(Self::text(format!("Supported platform: {}", plan.supported_platform)))
-            .child(Self::text(format!("Java destination: {}", plan.jdk.display())))
-            .when_some(plan.sdk.as_ref(), |element, sdk| element.child(Self::text(format!("SDK destination: {}", sdk.display()))))
-            .when_some(plan.android_cli.as_ref(), |element, cli| element.child(Self::text(format!("Android CLI destination: {}", cli.display()))))
-            .child(Self::text(format!("Total download: {}", format_bytes(plan.download_bytes))))
-            .child(Self::text(format!("Managed storage: {}", managed::root().display())))
-            .children(plan.downloads.iter().map(|download| v_flex().gap_1()
-                .child(Self::text(format!("{} {} · {} · {}", download.label, download.version, download.publisher, format_bytes(download.bytes))))
-                .child(Self::text(download.url.clone()).text_color(cx.theme().colors().text_muted))))
-            .children(plan.provenance.iter().map(|provenance| Self::text(provenance.clone())))
-            .children(plan.packages.iter().map(|package| Self::text(package.clone())))
-            .child(Self::text(if plan.licenses.is_empty() { "No new SDK license acceptance is required for this plan." } else { "Read and explicitly accept each required license on the next page. Nothing is accepted automatically." }))
+                |wizard, selected, cx| { wizard.offline = selected; wizard.invalidate_plan(); cx.notify(); }, cx))
+            .child(Self::text("Refresh the download summary after changing these settings. Nothing is downloaded until you approve the summary and any required SDK terms."))
             .into_any_element()
     }
 
     fn license_label(id: &str) -> &str {
         match id {
             "android-sdk-license" => "Android SDK license",
-            "android-cli-terms-2026-04-28" => "Android CLI terms (28 Apr 2026)",
             id => id,
         }
     }
@@ -848,8 +879,8 @@ impl SetupWizard {
             .child(h_flex().gap_1().flex_wrap().children(plan.licenses.iter().zip(&self.license_group_focus).enumerate().map(|(index, (license, focus))| {
                 let accepted = self.acceptances.contains(&(license.id.clone(), license.sha256.clone()));
                 div().debug_selector(move || format!("android-license-group-{index}"))
-                    .child(Button::new(format!("android-license-{index}"), format!("{}{}", Self::license_label(&license.id), if accepted { " ✓" } else { "" }))
-                    .style(if self.selected_license == index { ButtonStyle::Filled } else { ButtonStyle::Subtle })
+                    .child(setup_button(format!("android-license-{index}"), format!("{}{}", Self::license_label(&license.id), if accepted { " ✓" } else { "" }))
+                    .style(if self.selected_license == index { ButtonStyle::Filled } else { ButtonStyle::Outlined })
                     .track_focus(focus)
                     .tab_index(0isize)
                     .on_click(cx.listener(move |wizard, _, _, cx| { wizard.selected_license = index; wizard.license_scroll.set_offset(Default::default()); cx.notify(); })))
@@ -862,7 +893,7 @@ impl SetupWizard {
                         .on_click(cx.listener(|wizard, _, window, cx| wizard.license_focus.focus(window, cx)))
                         .child(div().id("android-setup-license-text").debug_selector(|| "android-setup-license-text".into()).size_full().overflow_y_scroll().track_scroll(&self.license_scroll).p_3().child(Self::text(license.text.clone()).debug_selector(|| "android-setup-license-document".into())))
                         .custom_scrollbars(ui::Scrollbars::always_visible(ui::ScrollAxes::Vertical).tracked_scroll_handle(&self.license_scroll).tracked_entity(cx.entity_id()), window, cx))
-                    .child(Button::new("android-license-source", "View publisher's license source").tab_index(0isize).on_click({
+                    .child(setup_button("android-license-source", "View publisher's license source").tab_index(0isize).on_click({
                         let source = license.source.clone();
                         move |_, _, cx| cx.open_url(&source)
                     }))
@@ -887,8 +918,8 @@ impl SetupWizard {
             .when(progress.total_bytes > 0, |element| element
                 .child(ui::ProgressBar::new("android-setup-progress", progress.downloaded_bytes.min(progress.total_bytes) as f32, progress.total_bytes as f32, cx))
                 .child(Label::new(format!("{} / {} downloaded", format_bytes(progress.downloaded_bytes), format_bytes(progress.total_bytes))).color(Color::Muted)))
-            .child(Self::text("Tools become active only after validation. Cancellation before publication preserves the previous working installation; publication already in progress finishes atomically."))
-            .child(Button::new("android-setup-details", if self.show_details { "Hide details" } else { "Show details" }).tab_index(0isize)
+            .child(Self::text("Koda saves the selected paths only after validation. Cancellation keeps the previous selection; saving already in progress finishes atomically. Completed packages in a shared SDK remain installed for Android Studio and other tools."))
+            .child(setup_button("android-setup-details", if self.show_details { "Hide details" } else { "Show details" }).tab_index(0isize)
                 .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); })))
             .when(self.show_details, |element| element.child(v_flex().id("android-setup-install-details").gap_1().max_h(px(180.)).overflow_y_scroll().children(progress.details.iter().map(|line| Self::text(line.clone())))))
             .into_any_element()
@@ -901,11 +932,10 @@ impl SetupWizard {
                 element
                     .child(Self::text(format!("Java 21: {}", installed.jdk.display())))
                     .when_some(installed.sdk.as_ref(), |element, sdk| element.child(Self::text(format!("Android SDK: {}", sdk.display()))))
-                    .when_some(installed.android_cli.as_ref(), |element, cli| element.child(Self::text(format!("Android CLI: {}", cli.display()))))
                     .when(installed.sdk.is_none(), |element| element.child(Self::text("An Android SDK is still required to build, run and debug Android projects.")))
             })
             .child(Self::text("Paths are saved for future launches. Preview uses this Java 21 installation; no bundled Java runtime is required."))
-            .child(Self::text("Run and Debug also require Google's Android CLI and a connected device. Kotlin server and debugger provisioning currently supports Apple Silicon macOS; advanced installers list their additional requirements below."))
+            .child(Self::text("Run uses Android SDK platform-tools (adb) and an authorized device. Debug also needs Koda's debugger runtime. Existing emulators need the SDK emulator package and an AVD. Kotlin server and debugger provisioning currently supports Apple Silicon macOS."))
             .child(self.advanced(cx))
             .into_any_element()
     }
@@ -917,22 +947,21 @@ impl SetupWizard {
             .child(self.panel.update(cx, |panel, cx| panel.render_tool_setup(cx).into_any_element()))
             .when(expanded, |element| element.child(v_flex().gap_2()
                 .child(Label::new("Managed Java and Android SDK"))
-                .child(Self::text("Validate checks the saved files. Repair and update creates a reviewed installation plan. Restore previous switches back to the last verified generation."))
+                .child(Self::text("Validate checks the saved files. Repair and update creates a new download summary. Restore previous restores the last verified selection; shared SDK packages are retained."))
                 .child(h_flex().gap_1().flex_wrap()
-                    .child(Button::new("android-native-validate", "Validate installation").disabled(disabled).tab_index(0isize)
+                    .child(setup_button("android-native-validate", "Validate installation").disabled(disabled).tab_index(0isize)
                         .on_click(cx.listener(|wizard, _, window, cx| wizard.maintenance(Maintenance::Validate, window, cx))))
-                    .child(Button::new("android-native-repair", "Repair / update…").disabled(disabled).tab_index(0isize)
+                    .child(setup_button("android-native-repair", "Repair / update…").disabled(disabled).tab_index(0isize)
                         .on_click(cx.listener(|wizard, _, _, cx| {
                             wizard.reuse_jdk = false;
                             wizard.reuse_sdk = false;
-                            wizard.android_cli = None;
                             wizard.plan = None;
                             wizard.acceptances.clear();
-                            wizard.step = SetupStep::Components;
+                            wizard.step = SetupStep::Review;
                             wizard.error = None;
                             cx.notify();
                         })))
-                    .child(Button::new("android-native-rollback", "Restore previous installation").disabled(disabled).tab_index(0isize)
+                    .child(setup_button("android-native-rollback", "Restore previous installation").disabled(disabled).tab_index(0isize)
                         .on_click(cx.listener(|wizard, _, window, cx| wizard.maintenance(Maintenance::Rollback, window, cx)))))))
             .into_any_element()
     }
@@ -956,6 +985,7 @@ impl ModalView for SetupWizard {
             self.close(cx);
             DismissDecision::Pending
         } else {
+            super::defer_first_launch_setup(cx);
             DismissDecision::Dismiss(true)
         }
     }
@@ -983,7 +1013,9 @@ impl Render for SetupWizard {
         }
         let viewport = window.viewport_size();
         let width = (viewport.width - px(64.)).min(px(780.)).max(px(280.));
-        let height = (viewport.height - px(100.)).min(px(640.)).max(px(240.));
+        let compact_height = viewport.height < px(400.);
+        let compact_width = viewport.width < px(620.);
+        let height = (viewport.height - px(100.)).min(px(640.)).max(px(120.));
         let busy = self.busy || self.choosing;
         let finishing = self.step == SetupStep::Installing
             && self
@@ -991,28 +1023,27 @@ impl Render for SetupWizard {
                 .lock()
                 .is_ok_and(|progress| progress.finishing);
         let content = match self.step {
-            SetupStep::Welcome => self.welcome(cx),
-            SetupStep::Components => self.components(cx),
-            SetupStep::Verify => self.verify(cx),
+            SetupStep::Review => self.review(cx),
             SetupStep::Licenses => self.licenses(window, cx),
             SetupStep::Installing => self.installing(cx),
             SetupStep::Ready => self.ready(cx),
         };
         let next_label = match self.step {
-            SetupStep::Components if self.busy => "Resolving components…",
-            SetupStep::Verify
+            SetupStep::Review if self.busy => "Resolving components…",
+            SetupStep::Review if self.plan.is_none() => "Refresh download summary",
+            SetupStep::Review
                 if self
                     .plan
                     .as_ref()
                     .is_some_and(|plan| plan.licenses.is_empty()) =>
             {
-                "Install"
+                "Set up tools"
             }
-            SetupStep::Licenses => "Accept and install",
-            SetupStep::Ready => "Finish",
+            SetupStep::Licenses => "Accept and download",
+            SetupStep::Ready => "Finish setup",
             SetupStep::Installing if finishing => "Finishing…",
             SetupStep::Installing => "Installing…",
-            _ => "Next",
+            SetupStep::Review => "Review SDK terms",
         };
         let next_disabled = !self.can_advance();
         v_flex().id("android-setup-wizard").debug_selector(|| "android-setup-wizard".into()).key_context("AndroidSetupWizard").tab_group()
@@ -1037,26 +1068,30 @@ impl Render for SetupWizard {
                     wizard.next(window, cx); window.prevent_default(); cx.stop_propagation();
                 }
             }))
-            .child(v_flex().flex_shrink_0().p_5().gap_1().border_b_1().border_color(cx.theme().colors().border)
-                .child(Label::new("Koda Android Setup").color(Color::Muted))
+            .child(v_flex().flex_shrink_0().p_5().when(compact_height, |element| element.p_2()).gap_1().border_b_1().border_color(cx.theme().colors().border)
+                .when(!compact_height, |element| element.child(Label::new("Koda Android Setup").color(Color::Muted)))
                 .child(Label::new(self.step.title()).size(LabelSize::Large))
-                .child(Label::new("Java • Android SDK • Validation").size(LabelSize::Small).color(Color::Muted)))
+                .when(!compact_height, |element| element.child(Label::new("Java • Android SDK • Validation").size(LabelSize::Small).color(Color::Muted))))
             .child(div().id("android-setup-content-frame").flex_1().min_h_0().track_focus(&self.content_focus).role(gpui::Role::Pane).aria_label("Setup details").aria_description("Use arrow keys, Page Up, Page Down, Home and End to scroll setup details.").border_1().border_color(gpui::transparent_black()).focus_visible(|style| style.border_color(cx.theme().colors().border_focused))
                 .child(v_flex().id("android-setup-content").size_full().overflow_y_scroll().track_scroll(&self.content_scroll).p_5().gap_3()
                 .when_some(self.error.clone(), |element, error| element.child(v_flex().id("android-setup-error").debug_selector(|| "android-setup-error".into()).role(gpui::Role::Alert).aria_label("Setup failed").aria_description(error.clone()).p_3().gap_2().rounded_md().border_1().border_color(cx.theme().status().error.opacity(0.2)).bg(cx.theme().status().error.opacity(0.08))
                     .child(Self::text(error).text_color(cx.theme().status().error))
-                    .child(Self::text("Your previous tools are preserved. Check the connection, chosen paths and available disk space, then retry."))
-                    .when(self.step == SetupStep::Welcome, |element| element.child(div().debug_selector(|| "android-setup-retry-control".into()).child(Button::new("android-setup-retry-detection", "Retry detection").disabled(busy).tab_index(0isize).on_click(cx.listener(|wizard, _, _, cx| wizard.detect(cx))))))))
+                    .child(Self::text("Your previous selection is preserved. Completed shared SDK packages remain installed. Check the connection, paths and disk space, then retry."))
+                    .when(self.step == SetupStep::Review, |element| element.child(div().debug_selector(|| "android-setup-retry-control".into()).child(setup_button("android-setup-retry-detection", "Retry detection").disabled(busy).tab_index(0isize).on_click(cx.listener(|wizard, _, window, cx| wizard.detect(window, cx))))))))
                 .child(content))
                 .custom_scrollbars(ui::Scrollbars::always_visible(ui::ScrollAxes::Vertical).tracked_scroll_handle(&self.content_scroll).tracked_entity(cx.entity_id()), window, cx))
-            .child(h_flex().debug_selector(|| "android-setup-footer".into()).flex_shrink_0().p_4().gap_2().justify_between().border_t_1().border_color(cx.theme().colors().border)
-                .child(Button::new("android-setup-cancel", if self.close_requested && finishing { "Finishing…" } else if self.close_requested { "Cancelling…" } else if finishing { "Close when finished" } else { "Cancel" })
+            .child(h_flex().debug_selector(|| "android-setup-footer".into()).flex_shrink_0().p_4().when(compact_height, |element| element.p_2()).gap_2().flex_wrap().justify_between().border_t_1().border_color(cx.theme().colors().border)
+                .child(div().debug_selector(|| "android-setup-cancel-control".into()).child(setup_button("android-setup-cancel", if self.close_requested && finishing { "Finishing…" } else if self.close_requested { "Cancelling…" } else if finishing { "Close when finished" } else if busy { "Cancel setup" } else { "Not now" })
                     .disabled(self.close_requested).tab_index(0isize)
-                    .on_click(cx.listener(|wizard, _, _, cx| wizard.close(cx))))
-                .child(h_flex().gap_2()
-                    .child(div().debug_selector(|| "android-setup-back-control".into()).child(Button::new("android-setup-back", "Back").disabled(busy || matches!(self.step, SetupStep::Welcome | SetupStep::Installing | SetupStep::Ready)).tab_index(0isize).on_click(cx.listener(|wizard, _, _, cx| wizard.back(cx)))))
-                    .child(Button::new("android-setup-next", next_label).style(ButtonStyle::Filled).disabled(next_disabled).tab_index(0isize).on_click(cx.listener(|wizard, _, window, cx| wizard.next(window, cx))))))
+                    .on_click(cx.listener(|wizard, _, _, cx| wizard.close(cx)))))
+                .when(!compact_width, |element| element.child(div().flex_1()))
+                .when(self.step == SetupStep::Licenses, |element| element.child(div().debug_selector(|| "android-setup-back-control".into()).child(setup_button("android-setup-back", "Back to summary").disabled(busy).tab_index(0isize).on_click(cx.listener(|wizard, _, _, cx| wizard.back(cx))))))
+                .child(div().debug_selector(|| "android-setup-next-control".into()).child(setup_button("android-setup-next", next_label).style(ButtonStyle::Filled).disabled(next_disabled).tab_index(0isize).on_click(cx.listener(|wizard, _, window, cx| wizard.next(window, cx))))))
     }
+}
+
+fn setup_button(id: impl Into<gpui::ElementId>, label: impl Into<SharedString>) -> Button {
+    Button::new(id, label).style(ButtonStyle::Outlined)
 }
 
 fn format_bytes(bytes: u64) -> String {
@@ -1097,9 +1132,9 @@ mod tests {
         serde_json::from_value(json!({
             "id": "fixture-plan", "jdk_version": "21", "packages": [], "download_bytes": 0,
             "licenses": licenses, "installation_directory": "/managed/generation", "provenance": [],
-            "jdk": "/managed/jdk", "sdk": null, "android_cli": null, "downloads": [],
+            "jdk": "/managed/jdk", "sdk": null, "sdk_is_shared": false, "downloads": [],
             "supported_platform": "Test", "slot": "fixture", "options": provision::Options::default(),
-            "artifacts": [], "environment_digest": "fixture", "recipe": "fixture"
+            "artifacts": [], "environment_digest": "fixture", "recipe": "fixture", "sdk_destination": null, "sdk_packages": []
         })).expect("Wizard fixture plan")
     }
 
@@ -1135,7 +1170,7 @@ mod tests {
         fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
             div()
                 .child(
-                    Button::new("background-control", "Background control")
+                    setup_button("background-control", "Background control")
                         .track_focus(&self.background_focus)
                         .tab_index(0isize),
                 )
@@ -1144,13 +1179,46 @@ mod tests {
     }
 
     #[gpui::test]
+    async fn license_actions_stay_inside_narrow_and_short_setup_windows(cx: &mut TestAppContext) {
+        let (_state, _workspace, panel) = fixture(cx).await;
+        let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
+        wizard.update(cx, |wizard, cx| {
+            wizard.plan = Some(plan(vec![license("android-sdk-license")]));
+            wizard.step = SetupStep::Licenses;
+            cx.notify();
+        });
+        for (width, height) in [(360., 600.), (480., 400.), (360., 240.)] {
+            cx.simulate_resize(gpui::size(px(width), px(height)));
+            cx.run_until_parked();
+            let bounds = cx
+                .debug_bounds("android-setup-wizard")
+                .expect("Setup bounds");
+            for selector in [
+                "android-setup-cancel-control",
+                "android-setup-back-control",
+                "android-setup-next-control",
+            ] {
+                let action = cx.debug_bounds(selector).expect("Setup action");
+                assert!(
+                    action.left() >= bounds.left() && action.right() <= bounds.right(),
+                    "{selector} fits width {width}"
+                );
+                assert!(
+                    action.top() >= bounds.top() && action.bottom() <= bounds.bottom(),
+                    "{selector} fits height {height}"
+                );
+            }
+        }
+    }
+
+    #[gpui::test]
     async fn licenses_require_individual_consent_and_changed_text_invalidates_it(
         cx: &mut TestAppContext,
     ) {
         let (_state, _workspace, panel) = fixture(cx).await;
-        let (wizard, cx) = cx.add_window_view(|_, cx| SetupWizard::new(panel, cx));
+        let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
         wizard.update_in(cx, |wizard, window, cx| {
-            wizard.plan = Some(plan(vec![license("sdk"), license("cli")]));
+            wizard.plan = Some(plan(vec![license("android-sdk-license")]));
             wizard.step = SetupStep::Licenses;
             wizard.focus_handle.focus(window, cx);
             cx.notify();
@@ -1165,7 +1233,7 @@ mod tests {
             .debug_bounds("android-setup-license-accept")
             .expect("License consent control");
         cx.simulate_click(accept.center(), Default::default());
-        wizard.read_with(cx, |wizard, _| assert!(!wizard.can_advance()));
+        wizard.read_with(cx, |wizard, _| assert!(wizard.can_advance()));
         for key in ["space", "enter"] {
             let before = wizard.read_with(cx, |wizard, _| wizard.acceptances.len());
             let keystroke = Keystroke::parse(key).expect("Activation key");
@@ -1188,23 +1256,13 @@ mod tests {
             });
         }
         wizard.update(cx, |wizard, cx| {
-            wizard.selected_license = 1;
-            cx.notify();
-        });
-        cx.run_until_parked();
-        let accept = cx
-            .debug_bounds("android-setup-license-accept")
-            .expect("Second license consent control");
-        cx.simulate_click(accept.center(), Default::default());
-        wizard.read_with(cx, |wizard, _| assert!(wizard.can_advance()));
-        wizard.update(cx, |wizard, cx| {
             let license = wizard
                 .plan
                 .as_mut()
                 .expect("Plan")
                 .licenses
-                .get_mut(1)
-                .expect("Second license");
+                .get_mut(0)
+                .expect("SDK license");
             license.sha256 = "changed-terms".into();
             cx.notify();
         });
@@ -1216,15 +1274,15 @@ mod tests {
         cx: &mut TestAppContext,
     ) {
         let (_state, _workspace, panel) = fixture(cx).await;
-        let (wizard, cx) = cx.add_window_view(|_, cx| SetupWizard::new(panel, cx));
+        let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
         cx.run_until_parked();
         // ButtonLike preserves the existing focus on mouse-down. Use actual
-        // tab input to reach the details pane, Standard and then Custom.
+        // tab input to reach the details pane and Change settings.
         wizard.update_in(cx, |wizard, window, cx| {
             wizard.focus_handle.focus(window, cx);
         });
         cx.run_until_parked();
-        for _ in 0..3 {
+        for _ in 0..2 {
             press_key(cx, "tab");
             cx.run_until_parked();
         }
@@ -1238,16 +1296,17 @@ mod tests {
         wizard.update(cx, |_, cx| cx.notify());
         cx.run_until_parked();
         wizard.read_with(cx, |wizard, _| {
-            assert!(!wizard.custom);
-            assert_eq!(wizard.step, SetupStep::Welcome);
+            assert!(!wizard.show_settings);
+            assert_eq!(wizard.step, SetupStep::Review);
         });
         cx.simulate_event(KeyUpEvent { keystroke });
         wizard.read_with(cx, |wizard, _| {
-            assert!(wizard.custom);
-            assert_eq!(wizard.step, SetupStep::Welcome);
+            assert!(wizard.show_settings);
+            assert_eq!(wizard.step, SetupStep::Review);
         });
         wizard.update(cx, |wizard, cx| {
-            wizard.step = SetupStep::Components;
+            wizard.step = SetupStep::Licenses;
+            wizard.plan = Some(plan(vec![license("android-sdk-license")]));
             cx.notify();
         });
         cx.run_until_parked();
@@ -1255,10 +1314,9 @@ mod tests {
             wizard.focus_handle.focus(window, cx);
         });
         cx.run_until_parked();
-        for _ in 0..2 {
-            press_key(cx, "shift-tab");
-            cx.run_until_parked();
-        }
+        // Download is disabled until consent, so the last enabled control is Back.
+        press_key(cx, "shift-tab");
+        cx.run_until_parked();
         let keystroke = Keystroke::parse("enter").expect("Enter");
         cx.simulate_event(KeyDownEvent {
             keystroke: keystroke.clone(),
@@ -1267,11 +1325,9 @@ mod tests {
         });
         wizard.update(cx, |_, cx| cx.notify());
         cx.run_until_parked();
-        wizard.read_with(cx, |wizard, _| {
-            assert_eq!(wizard.step, SetupStep::Components)
-        });
+        wizard.read_with(cx, |wizard, _| assert_eq!(wizard.step, SetupStep::Licenses));
         cx.simulate_event(KeyUpEvent { keystroke });
-        wizard.read_with(cx, |wizard, _| assert_eq!(wizard.step, SetupStep::Welcome));
+        wizard.read_with(cx, |wizard, _| assert_eq!(wizard.step, SetupStep::Review));
     }
 
     #[gpui::test]
@@ -1279,17 +1335,18 @@ mod tests {
         cx: &mut TestAppContext,
     ) {
         let (_state, _workspace, panel) = fixture(cx).await;
-        let (wizard, cx) = cx.add_window_view(|_, cx| SetupWizard::new(panel, cx));
+        let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
         wizard.update(cx, |wizard, cx| {
-            wizard.step = SetupStep::Components;
+            wizard.step = SetupStep::Review;
+            wizard.show_settings = true;
             wizard.jdk = Some("/existing/jdk".into());
             wizard.sdk = Some("/existing/sdk".into());
-            wizard.android_cli = Some("/existing/android".into());
             wizard.api_level = 34;
             wizard.discovery.as_mut().expect("Discovery").supported = false;
             cx.notify();
         });
         cx.run_until_parked();
+        assert!(cx.debug_bounds("android-setup-cli").is_none());
         wizard.read_with(cx, |wizard, _| assert!(wizard.can_advance()));
         let reuse_jdk = cx
             .debug_bounds("android-setup-reuse-jdk")
@@ -1299,12 +1356,25 @@ mod tests {
         cx.simulate_click(reuse_jdk.center(), Default::default());
         wizard.update(cx, |wizard, cx| {
             wizard.sdk = None;
-            wizard.android_cli = None;
             cx.notify();
         });
         cx.run_until_parked();
         wizard.read_with(cx, |wizard, _| assert!(!wizard.can_advance()));
         let sdk = cx.debug_bounds("android-setup-sdk").expect("SDK component");
+        let viewport = wizard.read_with(cx, |wizard, _| wizard.content_scroll.bounds());
+        cx.simulate_event(gpui::ScrollWheelEvent {
+            position: viewport.center(),
+            delta: gpui::ScrollDelta::Pixels(gpui::point(
+                px(0.),
+                (viewport.bottom() - sdk.bottom() - px(24.)).min(px(0.)),
+            )),
+            ..Default::default()
+        });
+        cx.run_until_parked();
+        let sdk = cx
+            .debug_bounds("android-setup-sdk")
+            .expect("Visible SDK component");
+        assert!(sdk.bottom() <= viewport.bottom());
         cx.simulate_click(sdk.center(), Default::default());
         wizard.read_with(cx, |wizard, _| {
             assert!(!wizard.install_sdk);
@@ -1314,13 +1384,93 @@ mod tests {
     }
 
     #[gpui::test]
+    async fn download_summary_goes_directly_to_sdk_terms_and_folder_changes_require_a_new_review(
+        cx: &mut TestAppContext,
+    ) {
+        let (_state, _workspace, panel) = fixture(cx).await;
+        let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
+        wizard.update_in(cx, |wizard, window, cx| {
+            let mut downloads = plan(vec![license("android-sdk-license")]);
+            downloads.sdk = Some("/shared/Android/Sdk".into());
+            downloads.sdk_is_shared = true;
+            downloads.download_bytes = 300 * 1024 * 1024;
+            downloads.downloads = vec![
+                provision::Download {
+                    label: "Temurin JDK".into(),
+                    version: "21".into(),
+                    publisher: "Eclipse Adoptium".into(),
+                    url: "https://github.com/adoptium/temurin21-binaries/releases/download/fixture/jdk.tar.gz".into(),
+                    bytes: 200 * 1024 * 1024,
+                },
+                provision::Download {
+                    label: "Android SDK Platform".into(),
+                    version: "36".into(),
+                    publisher: "Google".into(),
+                    url: "https://dl.google.com/android/repository/fixture-platform.zip".into(),
+                    bytes: 100 * 1024 * 1024,
+                },
+            ];
+            wizard.plan = Some(downloads);
+            wizard.sdk_destination = Some("/shared/Android/Sdk".into());
+            wizard.focus_handle.focus(window, cx);
+            cx.notify();
+        });
+        cx.simulate_resize(gpui::size(px(900.), px(700.)));
+        cx.run_until_parked();
+        let summary = cx
+            .debug_bounds("android-setup-download-summary")
+            .expect("Download summary");
+        let footer = cx
+            .debug_bounds("android-setup-footer")
+            .expect("Visible actions");
+        assert!(summary.bottom() <= footer.top());
+        assert!(
+            cx.debug_bounds("android-setup-sdk").is_none(),
+            "Advanced choices start collapsed"
+        );
+        press_key(cx, "enter");
+        wizard.read_with(cx, |wizard, _| {
+            assert_eq!(wizard.step, SetupStep::Licenses);
+            assert!(wizard.acceptances.is_empty());
+            assert_eq!(
+                wizard.plan.as_ref().expect("Reviewed plan").licenses.len(),
+                1
+            );
+        });
+        wizard.update(cx, |wizard, cx| wizard.back(cx));
+        cx.run_until_parked();
+        let choose = cx
+            .debug_bounds("android-setup-summary-sdk-folder-control")
+            .expect("Change SDK folder button");
+        assert!(choose.bottom() <= footer.top());
+        cx.simulate_click(choose.center(), Default::default());
+        wizard.read_with(cx, |wizard, _| assert!(wizard.choosing));
+        cx.simulate_path_prompt_response(|_| Some(vec![PathBuf::from("/another/Android/Sdk")]));
+        cx.run_until_parked();
+        wizard.read_with(cx, |wizard, _| {
+            assert_eq!(
+                wizard.sdk_destination.as_deref(),
+                Some(Path::new("/another/Android/Sdk"))
+            );
+            assert!(!wizard.reuse_sdk);
+            assert!(
+                wizard.plan.is_none(),
+                "A changed destination requires a fresh summary before downloading"
+            );
+            assert!(wizard.acceptances.is_empty());
+            assert_eq!(wizard.step, SetupStep::Review);
+        });
+    }
+
+    #[gpui::test]
     async fn folder_choice_cancellation_preserves_error_and_success_clears_it(
         cx: &mut TestAppContext,
     ) {
         let (_state, _workspace, panel) = fixture(cx).await;
-        let (wizard, cx) = cx.add_window_view(|_, cx| SetupWizard::new(panel.clone(), cx));
+        let (wizard, cx) =
+            cx.add_window_view(|window, cx| SetupWizard::new(panel.clone(), window, cx));
         wizard.update_in(cx, |wizard, window, cx| {
-            wizard.step = SetupStep::Components;
+            wizard.step = SetupStep::Review;
             wizard.error = Some("Previous invalid JDK".into());
             wizard.choose_path(Dependency::Jdk, window, cx);
         });
@@ -1348,7 +1498,8 @@ mod tests {
         cx: &mut TestAppContext,
     ) {
         let (_state, _workspace, panel) = fixture(cx).await;
-        let (wizard, cx) = cx.add_window_view(|_, cx| SetupWizard::new(panel.clone(), cx));
+        let (wizard, cx) =
+            cx.add_window_view(|window, cx| SetupWizard::new(panel.clone(), window, cx));
         wizard.update_in(cx, |wizard, window, cx| {
             wizard.choose_path(Dependency::Jdk, window, cx);
             assert!(matches!(
@@ -1389,7 +1540,7 @@ mod tests {
                 .collect();
             cx.notify();
         });
-        let (wizard, cx) = cx.add_window_view(|_, cx| SetupWizard::new(panel, cx));
+        let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
         wizard.update(cx, |wizard, cx| {
             let mut reviewed_plan = plan(Vec::new());
             reviewed_plan.provenance = (0..20)
@@ -1400,12 +1551,13 @@ mod tests {
                 })
                 .collect();
             wizard.plan = Some(reviewed_plan);
-            wizard.custom = true;
+            wizard.show_settings = true;
+            wizard.show_details = true;
             cx.notify();
         });
         cx.simulate_resize(gpui::size(px(900.), px(700.)));
         cx.run_until_parked();
-        for step in [SetupStep::Welcome, SetupStep::Components, SetupStep::Verify] {
+        for planned in [true, false] {
             wizard.update(cx, |wizard, cx| {
                 wizard.step = SetupStep::Installing;
                 wizard.error = None;
@@ -1413,7 +1565,8 @@ mod tests {
             });
             cx.run_until_parked();
             wizard.update(cx, |wizard, cx| {
-                wizard.step = step;
+                wizard.step = SetupStep::Review;
+                if !planned { wizard.plan = None; }
                 wizard.error = Some("Runtime integrity check failed: sdk/platform-tools/source.properties. Choose Install / repair.".into());
                 cx.notify();
             });
@@ -1429,7 +1582,7 @@ mod tests {
             assert!(error.top() >= viewport.top());
             assert!(
                 error.bottom() <= viewport.bottom(),
-                "The actionable error is visible on {step:?}"
+                "The actionable error is visible with a reviewed plan: {planned}"
             );
             assert!(wizard.update_in(cx, |wizard, window, _| {
                 wizard.content_focus.is_focused(window)
@@ -1449,7 +1602,7 @@ mod tests {
             press_key(cx, "end");
             wizard.update_in(cx, |wizard, window, cx| {
                 let repeated_error = wizard.error.clone();
-                wizard.detect(cx);
+                wizard.detect(window, cx);
                 assert!(wizard.error.is_none());
                 wizard.error = repeated_error;
                 wizard.focus_handle.focus(window, cx);
@@ -1485,7 +1638,7 @@ mod tests {
         }
 
         wizard.update(cx, |wizard, cx| {
-            wizard.step = SetupStep::Welcome;
+            wizard.step = SetupStep::Review;
             wizard.error = Some("Dependency detection failed: chosen Java folder is unavailable. Choose another folder or retry detection.".into());
             cx.notify();
         });
@@ -1504,13 +1657,13 @@ mod tests {
                 "Keyboard retry invokes dependency detection"
             );
             assert!(wizard.discovery.is_some());
-            assert_eq!(wizard.step, SetupStep::Welcome);
+            assert_eq!(wizard.step, SetupStep::Review);
         });
         assert!(cx.debug_bounds("android-setup-error").is_none());
 
         wizard.update_in(cx, |wizard, window, cx| {
             wizard.panel.update(cx, |panel, _| panel.running = true);
-            wizard.step = SetupStep::Components;
+            wizard.step = SetupStep::Review;
             wizard.focus_handle.focus(window, cx);
             cx.notify();
         });
@@ -1548,9 +1701,9 @@ mod tests {
     #[gpui::test]
     async fn long_license_keeps_navigation_footer_outside_scroll_content(cx: &mut TestAppContext) {
         let (_state, _workspace, panel) = fixture(cx).await;
-        let (wizard, cx) = cx.add_window_view(|_, cx| SetupWizard::new(panel, cx));
+        let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
         wizard.update(cx, |wizard, cx| {
-            wizard.plan = Some(plan(vec![license("sdk")]));
+            wizard.plan = Some(plan(vec![license("android-sdk-license")]));
             wizard.step = SetupStep::Licenses;
             cx.notify();
         });
@@ -1573,12 +1726,9 @@ mod tests {
         cx: &mut TestAppContext,
     ) {
         let (_state, _workspace, panel) = fixture(cx).await;
-        let (wizard, cx) = cx.add_window_view(|_, cx| SetupWizard::new(panel, cx));
+        let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
         wizard.update(cx, |wizard, cx| {
-            wizard.plan = Some(plan(vec![
-                license("android-sdk-license"),
-                license("android-cli-terms-2026-04-28"),
-            ]));
+            wizard.plan = Some(plan(vec![license("android-sdk-license")]));
             wizard.step = SetupStep::Licenses;
             cx.notify();
         });
@@ -1602,20 +1752,20 @@ mod tests {
             assert!(wizard.license_scroll.offset().y < px(0.));
             assert_eq!(wizard.content_scroll.offset(), outer_offset);
         });
-        let cli_group = cx
-            .debug_bounds("android-license-group-1")
-            .expect("CLI license group");
-        cx.simulate_click(cli_group.center(), Default::default());
+        let sdk_group = cx
+            .debug_bounds("android-license-group-0")
+            .expect("SDK license group");
+        cx.simulate_click(sdk_group.center(), Default::default());
         cx.run_until_parked();
         wizard.read_with(cx, |wizard, _| {
-            assert_eq!(wizard.selected_license, 1);
+            assert_eq!(wizard.selected_license, 0);
             assert_eq!(wizard.license_scroll.offset(), Default::default());
             assert_eq!(wizard.content_scroll.offset(), outer_offset);
             assert!(wizard.acceptances.is_empty());
         });
         let license_bounds = cx
             .debug_bounds("android-setup-license-frame")
-            .expect("CLI terms scrollbar frame");
+            .expect("SDK terms scrollbar frame");
         let thumb = gpui::point(
             license_bounds.right() - px(7.),
             license_bounds.top() + px(10.),
@@ -1643,17 +1793,14 @@ mod tests {
         cx: &mut TestAppContext,
     ) {
         let (_state, _workspace, panel) = fixture(cx).await;
-        let (fixture, cx) = cx.add_window_view(|_, cx| KeyboardFixture {
-            wizard: cx.new(|cx| SetupWizard::new(panel, cx)),
+        let (fixture, cx) = cx.add_window_view(|window, cx| KeyboardFixture {
+            wizard: cx.new(|cx| SetupWizard::new(panel, window, cx)),
             background_focus: cx.focus_handle().tab_index(0).tab_stop(true),
         });
         let wizard = fixture.read_with(cx, |fixture, _| fixture.wizard.clone());
         let background_focus = fixture.read_with(cx, |fixture, _| fixture.background_focus.clone());
         wizard.update_in(cx, |wizard, window, cx| {
-            wizard.plan = Some(plan(vec![
-                license("android-sdk-license"),
-                license("android-cli-terms-2026-04-28"),
-            ]));
+            wizard.plan = Some(plan(vec![license("android-sdk-license")]));
             wizard.step = SetupStep::Licenses;
             wizard.focus_handle.focus(window, cx);
             cx.notify();
@@ -1710,12 +1857,12 @@ mod tests {
         press_key(cx, "shift-tab");
         cx.run_until_parked();
         wizard.update_in(cx, |wizard, window, cx| {
-            assert!(wizard.license_group_focus.get(1).is_some_and(|focus| focus.is_focused(window)), "Shift Tab from terms focuses CLI group; current focus {:?}, groups {:?}, document {:?}, details {:?}", window.focused(cx), wizard.license_group_focus, wizard.license_focus, wizard.content_focus);
+            assert!(wizard.license_group_focus.get(0).is_some_and(|focus| focus.is_focused(window)), "Shift Tab from terms focuses SDK group; current focus {:?}, groups {:?}, document {:?}, details {:?}", window.focused(cx), wizard.license_group_focus, wizard.license_focus, wizard.content_focus);
         });
         press_key(cx, "enter");
         cx.run_until_parked();
         wizard.read_with(cx, |wizard, _| {
-            assert_eq!(wizard.selected_license, 1);
+            assert_eq!(wizard.selected_license, 0);
             assert_eq!(wizard.license_scroll.offset(), Default::default());
             assert_eq!(wizard.content_scroll.offset(), outer_offset);
             assert!(wizard.acceptances.is_empty());
@@ -1731,8 +1878,8 @@ mod tests {
             }
         }
         wizard.update_in(cx, |wizard, window, cx| {
-            wizard.step = SetupStep::Components;
-            wizard.custom = true;
+            wizard.step = SetupStep::Review;
+            wizard.show_settings = true;
             wizard.focus_handle.focus(window, cx);
             cx.notify();
         });
@@ -1818,14 +1965,13 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let files = matches!(dependency, Dependency::AndroidCli);
         if self.running || self.syncing || self.tool_setup.choosing {
             return;
         }
         self.tool_setup.choosing = true;
         let selected = cx.prompt_for_paths(gpui::PathPromptOptions {
-            files,
-            directories: !files,
+            files: false,
+            directories: true,
             multiple: false,
             prompt: Some(
                 match dependency {
@@ -1833,7 +1979,6 @@ impl AndroidPanel {
                     Dependency::Jdk => {
                         "Choose a full JDK 21 home (contains bin/java and bin/javac)"
                     }
-                    Dependency::AndroidCli => "Choose Google's Android CLI executable",
                 }
                 .into(),
             ),
@@ -1948,32 +2093,32 @@ impl AndroidPanel {
         let busy = self.running || self.syncing || self.tool_setup.choosing;
         let details = v_flex().gap_2()
             .child(Label::new("Advanced Kotlin and debugger tools: Apple Silicon macOS. Preview uses the configured Java 21 runtime.").size(LabelSize::Small))
-            .child(Label::new("These advanced installers require Python 3.12+ and Apple's Command Line Tools. Java and Android SDK setup above uses Koda's native installer.").size(LabelSize::Small).color(Color::Muted))
+            .child(Label::new("These advanced installers require Python 3.12+ and Apple's Command Line Tools. Java and Android SDK setup uses Koda's native installer.").size(LabelSize::Small).color(Color::Muted))
             .child(Label::new("Verified pinned downloads: JetBrains Kotlin server, fwcd debugger sources and Adoptium JDK. Debugger builds also fetch Gradle dependencies over HTTPS.").size(LabelSize::Small).color(Color::Muted))
             .children(self.tool_setup.lines.iter().map(|line| Label::new(line.clone()).size(LabelSize::Small).line_clamp(4)))
             .child(h_flex().gap_1().flex_wrap()
-                .child(Button::new("choose-sdk", "Choose SDK").disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::Sdk, window, cx))))
-                .child(Button::new("choose-jdk", "Choose JDK 21").disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::Jdk, window, cx))))
-                .child(Button::new("choose-android-cli", "Choose Android CLI").disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::AndroidCli, window, cx)))))
+                .child(setup_button("choose-sdk", "Choose SDK").disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::Sdk, window, cx))))
+                .child(setup_button("choose-jdk", "Choose JDK 21").disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::Jdk, window, cx))))
+                )
             .child(h_flex().gap_1().flex_wrap()
-                .child(Button::new("check-tool-setup", "Detect dependencies").tab_index(0isize).on_click(cx.listener(|panel, _, _, cx| panel.refresh_tool_setup(cx))))
-                .child(Button::new("tool-storage", "Reveal managed storage").tab_index(0isize).on_click(|_, _, cx| cx.reveal_path(&managed::root())))
-                .child(Button::new("offline-tools", if self.tool_setup.offline { "Offline: on" } else { "Offline: off" }).tab_index(0isize).disabled(busy).on_click(cx.listener(|panel, _, _, cx| { panel.tool_setup.offline = !panel.tool_setup.offline; cx.notify(); }))))
+                .child(setup_button("check-tool-setup", "Detect dependencies").tab_index(0isize).on_click(cx.listener(|panel, _, _, cx| panel.refresh_tool_setup(cx))))
+                .child(setup_button("tool-storage", "Reveal managed storage").tab_index(0isize).on_click(|_, _, cx| cx.reveal_path(&managed::root())))
+                .child(setup_button("offline-tools", if self.tool_setup.offline { "Offline: on" } else { "Offline: off" }).tab_index(0isize).disabled(busy).on_click(cx.listener(|panel, _, _, cx| { panel.tool_setup.offline = !panel.tool_setup.offline; cx.notify(); }))))
             .children(Tool::ALL.into_iter().map(|tool| {
                 v_flex().gap_1().child(Label::new(tool.label())).child(h_flex().gap_1().flex_wrap().children([
                     ("install", "Install / repair"), ("validate", "Validate"), ("rollback", "Roll back"),
                 ].into_iter().map(|(operation, label)| {
-                    Button::new(format!("{}-{operation}", tool.name()), label).tab_index(0isize).disabled(busy || !managed::supported())
+                    setup_button(format!("{}-{operation}", tool.name()), label).tab_index(0isize).disabled(busy || !managed::supported())
                         .on_click(cx.listener(move |panel, _, window, cx| panel.manage_tool(tool, operation, window, cx)))
                 })))
             }))
             .when(self.tool_setup.operation.is_some(), |element| element.child(
-                Button::new("cancel-tool-setup", "Cancel tool setup").tab_index(0isize).on_click(cx.listener(|panel, _, _, cx| panel.cancel_build(BuildTab::Output, cx)))
+                setup_button("cancel-tool-setup", "Cancel tool setup").tab_index(0isize).on_click(cx.listener(|panel, _, _, cx| panel.cancel_build(BuildTab::Output, cx)))
             ));
         v_flex()
             .gap_2()
             .child(
-                Button::new(
+                setup_button(
                     "toggle-tool-setup",
                     if self.tool_setup.expanded {
                         "Advanced tools ▾"

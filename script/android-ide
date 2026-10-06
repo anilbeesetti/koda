@@ -33,7 +33,7 @@ your current directory. Settings and extensions use target/android-ide/dev/profi
 unless --profile is supplied. Existing profile settings are preserved.
 
 Prerequisites: the repository's Rust toolchain, Xcode with Metal tools, Android
-CLI, Android SDK, and a Gradle-compatible JDK. Kotlin setup additionally needs
+SDK, and a Gradle-compatible JDK. Kotlin setup additionally needs
 JDK 21. Run script/install-android-kotlin for the pinned JetBrains Kotlin server
 with its bundled Java 25 runtime. Run Android: Configure Kotlin in the project
 to apply it to existing settings. Set ANDROID_IDE_OFFICIAL_KOTLIN_SERVER to use

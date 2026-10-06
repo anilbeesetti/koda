@@ -205,7 +205,7 @@ pub fn java_home() -> Result<PathBuf> {
         super::provision::validate_managed_path(&path)?;
         ensure!(
             is_java_21(&path),
-            "Saved JDK is missing or no longer JDK 21. Choose JDK 21 in Android → Android Setup."
+            "Saved JDK is missing or no longer JDK 21. Run Android: Setup from the command palette, then choose a full JDK 21 in Change settings."
         );
         return Ok(path);
     }
@@ -278,7 +278,9 @@ fn java_home_from_environment(
             }
         }
     }
-    bail!("Open Android → Android Setup to download Java 21 or choose an existing full JDK 21.")
+    bail!(
+        "Run Android: Setup from the command palette to download Java 21 or choose an existing full JDK 21."
+    )
 }
 
 pub fn validate_jdk_21(path: &Path) -> Result<()> {
