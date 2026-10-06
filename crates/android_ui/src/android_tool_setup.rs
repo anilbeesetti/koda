@@ -936,7 +936,8 @@ impl SetupWizard {
                                 })),
                         ),
                     cx,
-                ),
+                )
+                .w_full(),
             )
             .when_some(self.jdk.as_ref(), |element, path| {
                 element.child(self.checkbox(
@@ -1029,7 +1030,8 @@ impl SetupWizard {
                                         ),
                                 ),
                             cx,
-                        ),
+                        )
+                        .w_full(),
                     )
                     .child(
                         Self::text(
@@ -1104,7 +1106,8 @@ impl SetupWizard {
                                     )),
                                 ),
                             cx,
-                        ),
+                        )
+                        .w_full(),
                     )
             })
             .child(ui::Divider::horizontal())
