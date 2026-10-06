@@ -2370,19 +2370,37 @@ fn install_at_with_recipe(
     fs::rename(stage.path(), root.join(&plan.slot))?;
     write_json(&root.join(format!("{}.json", plan.slot)), &generation)?;
     let old_active = active_for_repair(root, &progress, plan.download_bytes)?;
+    let previous = old_active.as_ref().and_then(|active| {
+        let unchanged = read_json::<Generation>(&root.join(format!("{}.json", active.slot)))
+            .is_ok_and(|current| {
+                current.schema == generation.schema
+                    && current.recipe == generation.recipe
+                    && current.installed.jdk == generation.installed.jdk
+                    && current.installed.sdk == generation.installed.sdk
+                    && current.api_level == generation.api_level
+                    && current.sdk_is_shared == generation.sdk_is_shared
+            });
+        // Reconfirming the same tools must not consume the useful rollback target.
+        // Unreadable old metadata still permits repair and is checked on rollback.
+        if unchanged {
+            active.previous.clone()
+        } else {
+            Some(active.slot.clone())
+        }
+    });
     let old_environment = managed::environment_at(profile)?;
     write_json(
         &root.join("journal.json"),
         &Journal {
             environment: old_environment.clone(),
-            active: old_active.clone(),
+            active: old_active,
         },
     )?;
     let commit = (|| -> Result<()> {
         let active = Active {
             schema: 1,
             slot: plan.slot.clone(),
-            previous: old_active.map(|active| active.slot),
+            previous,
         };
         write_json(&root.join("active.json"), &active)?;
         let environment = managed::Environment {
@@ -2616,6 +2634,47 @@ mod tests {
             managed::environment_at(root.parent().context("No profile")?)?.jdk,
             Some(first)
         );
+        Ok(())
+    }
+
+    #[test]
+    fn confirming_unchanged_tools_preserves_the_previous_selection() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("android-tools/provision");
+        let cancel = AtomicBool::new(false);
+        let first = jdk_fixture(temporary.path(), "first")?;
+        let second = jdk_fixture(temporary.path(), "second")?;
+        for home in [&first, &second, &second, &second] {
+            let plan = plan_at(&root, java_options(home.clone()), &cancel)?;
+            assert!(plan.artifacts.is_empty());
+            install_at(&root, &plan, &[], &cancel, |_| {})?;
+        }
+        assert_eq!(rollback_at(&root)?.jdk, first);
+        assert_eq!(rollback_at(&root)?.jdk, second);
+        let plan = plan_at(&root, java_options(second), &cancel)?;
+        install_at(&root, &plan, &[], &cancel, |_| {})?;
+        assert_eq!(rollback_at(&root)?.jdk, first);
+        Ok(())
+    }
+
+    #[test]
+    fn confirming_the_first_selection_does_not_create_a_rollback_target() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("android-tools/provision");
+        let cancel = AtomicBool::new(false);
+        let home = jdk_fixture(temporary.path(), "first")?;
+        for _ in 0..2 {
+            let plan = plan_at(&root, java_options(home.clone()), &cancel)?;
+            install_at(&root, &plan, &[], &cancel, |_| {})?;
+        }
+        assert!(
+            active_at(&root)?
+                .context("No selected installation")?
+                .previous
+                .is_none()
+        );
+        assert!(rollback_at(&root).is_err());
+        assert_eq!(validate_at(&root)?.jdk, home);
         Ok(())
     }
 
@@ -3662,6 +3721,10 @@ mod tests {
     -> Result<()> {
         let temporary = tempfile::tempdir()?;
         let root = temporary.path().join("android-tools/provision");
+        let cancel = AtomicBool::new(false);
+        let home = jdk_fixture(temporary.path(), "existing-jdk")?;
+        let previous = plan_at(&root, java_options(home), &cancel)?;
+        install_at(&root, &previous, &[], &cancel, |_| {})?;
         let (plan, recipe) = sdk_fixture_plan(&root, temporary.path())?;
         let accepted = plan
             .licenses
@@ -3693,7 +3756,7 @@ mod tests {
         assert!(next.artifacts.is_empty());
         assert!(next.licenses.is_empty());
         install_at(&root, &next, &[], &AtomicBool::new(false), |_| {})?;
-        rollback_at(&root)?;
+        assert!(rollback_at(&root)?.sdk.is_none());
         validate_sdk(plan.sdk.as_ref().context("Missing SDK")?, 36)?;
         Ok(())
     }
