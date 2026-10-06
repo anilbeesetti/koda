@@ -5,11 +5,14 @@ import org.gradle.api.artifacts.result.UnresolvedDependencyResult
 // Providers stay live until all plugins have registered their generated directories.
 def androidVariants = [:]
 def androidKinds = [:]
+def multiplatformPaths = [] as Set
 def optional = { object, name -> object != null && object.hasProperty(name) ? object."$name" : null }
 gradle.beforeProject { project ->
     ['com.android.application': 'application', 'com.android.library': 'library',
-     'com.android.dynamic-feature': 'dynamicFeature', 'com.android.test': 'test'].each { plugin, kind ->
+     'com.android.dynamic-feature': 'dynamicFeature', 'com.android.test': 'test',
+     'com.android.kotlin.multiplatform.library': 'library'].each { plugin, kind ->
         project.plugins.withId(plugin) {
+            if (plugin == 'com.android.kotlin.multiplatform.library') multiplatformPaths.add(project.path)
             androidKinds[project.path] = kind
             androidVariants[project.path] = []
             def components = project.extensions.getByName('androidComponents')
@@ -22,8 +25,6 @@ gradle.beforeProject { project ->
 gradle.projectsEvaluated {
     def root = gradle.rootProject
     if (!gradle.includedBuilds.isEmpty()) throw new GradleException('Koda Android model does not yet support included builds: ' + gradle.includedBuilds*.name.join(', '))
-    def unsupported = root.allprojects.findAll { it.plugins.hasPlugin('com.android.kotlin.multiplatform.library') }
-    if (!unsupported.isEmpty()) throw new GradleException('Koda Android model does not yet support the Android multiplatform library plugin: ' + unsupported*.path.join(', '))
     if (androidKinds.values().contains('test')) throw new GradleException('Koda Android model does not yet support standalone com.android.test modules; nested unit and device tests remain supported')
     def attributes = { configuration ->
         configuration.attributes.keySet().findAll { it.name == 'com.android.build.api.attributes.BuildTypeAttr' || it.name.startsWith('com.android.build.api.attributes.ProductFlavor:') }.collectEntries {
@@ -56,7 +57,10 @@ gradle.projectsEvaluated {
                     def expected = selectedAttributes.keySet().findAll { it.name == 'com.android.build.api.attributes.BuildTypeAttr' || it.name.startsWith('com.android.build.api.attributes.ProductFlavor:') }.collectEntries { [(it.name): selectedAttributes.getAttribute(it).toString()] }
                     def candidates = variantCatalog[target].findAll { candidate ->
                         def actual = candidate.attributes
-                        !expected.isEmpty() && expected.every { key, value -> actual[key] == value }
+                        // KMP Android libraries publish one variant without build-type/flavor attributes.
+                        multiplatformPaths.contains(target) ?
+                            selectedAttributes.keySet().any { it.name == 'org.jetbrains.kotlin.platform.type' && selectedAttributes.getAttribute(it).toString() == 'androidJvm' } :
+                            !expected.isEmpty() && expected.every { key, value -> actual[key] == value }
                     }
                     if (candidates.size() != 1) throw new GradleException('Cannot map Gradle attributes ' + expected + ' to one variant of ' + target)
                     return [kind: 'project', module: target, variant: candidates.first().name]
@@ -69,14 +73,26 @@ gradle.projectsEvaluated {
     }
     def sources = { project, component ->
         def result = []
+        def kotlin = project.extensions.findByName('kotlin')
+        def compilation = multiplatformPaths.contains(project.path) ?
+            kotlin.targets.getByName('android').compilations.find { it.defaultSourceSet.name == component.name } :
+            optional(optional(kotlin, 'target'), 'compilations')?.findByName(component.name)
         ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources'].each { property, kind ->
             def source = optional(component.sources, property)
             def provider = optional(source, 'all')
             def staticProvider = optional(source, 'static')
             def staticPaths = staticProvider?.get()?.flatten()?.collect { it.asFile.canonicalPath } as Set
             def buildPath = project.layout.buildDirectory.get().asFile.canonicalFile.toPath()
+            if (multiplatformPaths.contains(project.path) && staticProvider != null && property in ['java', 'kotlin']) {
+                // AGP's KMP adapter exposes KGP roots in `all`, but omits them from `static`.
+                compilation.allKotlinSourceSets.each { sourceSet ->
+                    staticPaths.addAll(sourceSet.kotlin.srcDirs.collect { directory ->
+                        (property == 'java' ? new File(directory.parentFile, 'java') : directory).canonicalPath
+                    }.findAll { !new File(it).toPath().startsWith(buildPath) })
+                }
+            }
             def legacy = project.extensions.getByName('androidComponents').pluginVersion.major < 9
-            if (legacy && staticProvider != null) {
+            if (legacy && staticProvider != null && !multiplatformPaths.contains(project.path)) {
                 // Older AGP omits variant-only static roots and includes res-value producers.
                 staticPaths = staticPaths.findAll { !new File(it).toPath().startsWith(buildPath) } as Set
                 project.extensions.getByName('android').sourceSets.each { sourceSet ->
@@ -91,9 +107,7 @@ gradle.projectsEvaluated {
             }
         }
         // Kotlin Android before AGP 9 registers its compilation source sets in KGP.
-        def kotlin = project.extensions.findByName('kotlin')
-        def compilation = optional(optional(kotlin, 'target'), 'compilations')?.findByName(component.name)
-        if (compilation != null) compilation.allKotlinSourceSets.each { sourceSet ->
+        if (compilation != null && !multiplatformPaths.contains(project.path)) compilation.allKotlinSourceSets.each { sourceSet ->
             sourceSet.kotlin.srcDirs.each { directory ->
                 def file = directory.canonicalFile
                 result.add([path: file.path, kind: 'kotlin', generated: file.toPath().startsWith(project.layout.buildDirectory.get().asFile.canonicalFile.toPath())])
@@ -108,6 +122,7 @@ gradle.projectsEvaluated {
     }
     def defaultVariant = { project, variants ->
         if (variants.isEmpty()) return null
+        if (multiplatformPaths.contains(project.path)) return variants.first().name
         def android = project.extensions.getByName('android')
         def isDefault = { entry ->
             def value = optional(entry, 'isDefault')
@@ -153,7 +168,7 @@ gradle.projectsEvaluated {
                 }
             }
             doLast {
-                models[path] = [path: path, directory: project.projectDir.canonicalPath, namespace: project.extensions.getByName('android').namespace,
+                models[path] = [path: path, directory: project.projectDir.canonicalPath, namespace: multiplatformPaths.contains(path) ? variants.first().namespace.get() : project.extensions.getByName('android').namespace,
                  kind: androidKinds[path], defaultVariant: defaultVariant(project, variants), variants: variants.collect { variant ->
                     def components = [[component: variant, scope: 'main']]
                     def add = { component, scope -> if (component != null && !components.any { it.component.name == component.name }) components.add([component: component, scope: scope]) }

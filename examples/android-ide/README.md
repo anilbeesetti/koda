@@ -317,9 +317,15 @@ Supported boundaries:
 - The picker still selects application APK targets. Library/dynamic-feature and
   JVM modules are imported as part of that selected graph; library-only projects
   are catalogued but cannot currently be selected for language setup/build/preview.
-- Included builds, external module/source directories, standalone `com.android.test`
-  modules, and `com.android.kotlin.multiplatform.library` have explicit sync
-  diagnostics. Nested unit/device tests are distinct from standalone test modules.
+- Android multiplatform libraries (`com.android.kotlin.multiplatform.library`) are
+  imported as libraries with their single `androidMain` variant. Common,
+  intermediate, and Android source sets, registered generated roots, resources,
+  and enabled host/device tests are included. App debug/release variants resolve
+  to that same Android variant. Java setup handles Kotlin-only compilations and
+  libraries that enable `withJava()`.
+- Included builds, external module/source directories, and standalone
+  `com.android.test` modules have explicit sync diagnostics. Nested unit/device
+  tests are distinct from standalone test modules.
 - A graph requiring two active variants of one module is rejected, including
   conflicting main/test requirements. Ordinary resolution failures fail sync;
   partial catalogs are not published. Sync resolves the catalog's variants, so an
@@ -339,13 +345,17 @@ The real Gradle model/Java/Eclipse probe creates isolated fixtures with flavors,
 variant fallbacks, a dynamic feature, JVM test dependencies, registered generated roots,
 and library test fixtures. AGP 9 retains generator output outside `build/`; AGP 8
 relocates this registered output into its managed generated directory. It verifies removal/restoration of a selected
-variant, failed sync/recovery, and included-build diagnostics:
+variant, failed sync/recovery, and included-build diagnostics. AGP 9 also checks
+Android multiplatform dependencies and model/Java/Eclipse projections:
 
 ```sh
 script/test-android-project-model --gradle /path/to/gradle-8.11.1/bin/gradle \
   --sdk /path/to/android-sdk --agp 8.9.1
 script/test-android-project-model --gradle /path/to/gradle-9.7.1/bin/gradle \
   --sdk /path/to/android-sdk --agp 9.4.0
+# Run only the multiplatform regression fixture:
+script/test-android-project-model --gradle /path/to/gradle-9.7.1/bin/gradle \
+  --sdk /path/to/android-sdk --agp 9.4.0 --multiplatform-only
 cargo test --locked -p android_tools --lib
 cargo test --locked -p android_ui --lib
 cargo test --locked -p project --features test-support --test integration test_android_resource

@@ -23,6 +23,13 @@ gradle.projectsEvaluated {
         def project = gradle.rootProject.project(model.project)
         if (project.projectDir.canonicalPath != new File(model.directory).canonicalPath) throw new GradleException('Android module directory changed; sync again: ' + model.project)
         def entries = model.components.collect { component ->
+            if (project.plugins.hasPlugin('com.android.kotlin.multiplatform.library')) {
+                def target = project.extensions.getByName('kotlin').targets.getByName('android')
+                def compilation = target.compilations.find { it.defaultSourceSet.name == component.name }
+                if (compilation == null) throw new GradleException('Android Kotlin compilation changed; sync again: ' + model.project + ':' + component.name)
+                def javaTask = project.tasks.findByName('compile' + component.name.capitalize() + 'JavaWithJavac')
+                return [component: component, task: compilation.compileTaskProvider, compilation: compilation, javaTask: javaTask]
+            }
             def name = model.kind == 'jvm' ? (component.scope == 'main' ? 'compileJava' : 'compileTestJava') :
                 'compile' + component.name.substring(0, 1).toUpperCase(java.util.Locale.ROOT) + component.name.substring(1) + 'JavaWithJavac'
             [component: component, task: project.tasks.named(name)]
@@ -30,17 +37,21 @@ gradle.projectsEvaluated {
         // Compilation classpaths must be resolved while the owning project's task holds its lock.
         project.tasks.register('kodaAndroidJavaModuleModel') {
             dependsOn(entries.collect { it.task })
+            dependsOn(entries.collect { it.javaTask }.findAll { it != null })
             doLast {
-                def main = entries.find { it.component.scope == 'main' }.task.get()
+                def mainEntry = entries.find { it.component.scope == 'main' }
+                def main = mainEntry.javaTask ?: mainEntry.task.get()
                 def libraries = { entriesToExport -> entriesToExport.collectMany { entry ->
-                    def compile = entry.task.get()
+                    if (entry.compilation != null && entry.javaTask == null) return entry.compilation.compileDependencyFiles.files.findAll { it.exists() }*.absolutePath
+                    def compile = entry.javaTask ?: entry.task.get()
                     (compile.classpath.files + (compile.options.bootstrapClasspath?.files ?: [])).findAll { it.exists() }*.absolutePath
                 }.unique() }
                 def roots = { scope -> entries.findAll { (it.component.scope != 'main') == scope }.collectMany { entry ->
                     entry.component.sources.findAll { it.kind in ['java', 'kotlin'] }.collect { new File(it.path) }.findAll { it.isDirectory() }*.absolutePath
                 }.unique() }
+                def compatibility = mainEntry.compilation != null && mainEntry.javaTask == null ? main.compilerOptions.jvmTarget.get().target : null
                 models[model.project] = [project: model.project, variant: model.variant, directory: model.directory,
-                 sourceCompatibility: main.sourceCompatibility, targetCompatibility: main.targetCompatibility,
+                 sourceCompatibility: compatibility ?: main.sourceCompatibility, targetCompatibility: compatibility ?: main.targetCompatibility,
                  sources: roots(false), testSources: roots(true),
                  libraries: libraries(entries.findAll { it.component.scope == 'main' }),
                  testLibraries: libraries(entries.findAll { it.component.scope != 'main' })]
