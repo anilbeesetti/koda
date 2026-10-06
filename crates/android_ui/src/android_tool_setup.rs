@@ -89,6 +89,7 @@ struct SetupWizard {
     license_group_focus: Vec<FocusHandle>,
     step: SetupStep,
     rendered_step: SetupStep,
+    rendered_error: Option<String>,
     content_scroll: ScrollHandle,
     license_scroll: ScrollHandle,
     custom: bool,
@@ -128,6 +129,7 @@ impl SetupWizard {
             license_group_focus: Vec::new(),
             step: SetupStep::Welcome,
             rendered_step: SetupStep::Welcome,
+            rendered_error: None,
             content_scroll: ScrollHandle::new(),
             license_scroll: ScrollHandle::new(),
             custom: false,
@@ -159,6 +161,7 @@ impl SetupWizard {
     }
 
     fn detect(&mut self, cx: &mut Context<Self>) {
+        self.rendered_error = None;
         #[cfg(test)]
         {
             self.discovery = Some(provision::Discovery {
@@ -215,6 +218,7 @@ impl SetupWizard {
         if self.busy || self.choosing {
             return false;
         }
+        self.rendered_error = None;
         let cancel = Arc::new(AtomicBool::new(false));
         let acquired = self.panel.update(cx, |panel, cx| {
             if panel.running
@@ -968,6 +972,15 @@ impl Render for SetupWizard {
             self.license_scroll.set_offset(Default::default());
             self.rendered_step = self.step;
         }
+        if self.rendered_error != self.error {
+            if self.error.is_some() {
+                self.content_scroll.set_offset(Default::default());
+                if !self.busy && !self.choosing {
+                    self.content_focus.focus(window, cx);
+                }
+            }
+            self.rendered_error = self.error.clone();
+        }
         let viewport = window.viewport_size();
         let width = (viewport.width - px(64.)).min(px(780.)).max(px(280.));
         let height = (viewport.height - px(100.)).min(px(640.)).max(px(240.));
@@ -1030,11 +1043,11 @@ impl Render for SetupWizard {
                 .child(Label::new("Java • Android SDK • Validation").size(LabelSize::Small).color(Color::Muted)))
             .child(div().id("android-setup-content-frame").flex_1().min_h_0().track_focus(&self.content_focus).role(gpui::Role::Pane).aria_label("Setup details").aria_description("Use arrow keys, Page Up, Page Down, Home and End to scroll setup details.").border_1().border_color(gpui::transparent_black()).focus_visible(|style| style.border_color(cx.theme().colors().border_focused))
                 .child(v_flex().id("android-setup-content").size_full().overflow_y_scroll().track_scroll(&self.content_scroll).p_5().gap_3()
-                .child(content)
-                .when_some(self.error.clone(), |element, error| element.child(v_flex().gap_2()
+                .when_some(self.error.clone(), |element, error| element.child(v_flex().id("android-setup-error").debug_selector(|| "android-setup-error".into()).role(gpui::Role::Alert).aria_label("Setup failed").aria_description(error.clone()).p_3().gap_2().rounded_md().border_1().border_color(cx.theme().status().error.opacity(0.2)).bg(cx.theme().status().error.opacity(0.08))
                     .child(Self::text(error).text_color(cx.theme().status().error))
                     .child(Self::text("Your previous tools are preserved. Check the connection, chosen paths and available disk space, then retry."))
-                    .when(self.step == SetupStep::Welcome, |element| element.child(Button::new("android-setup-retry-detection", "Retry detection").disabled(busy).tab_index(0isize).on_click(cx.listener(|wizard, _, _, cx| wizard.detect(cx))))))))
+                    .when(self.step == SetupStep::Welcome, |element| element.child(div().debug_selector(|| "android-setup-retry-control".into()).child(Button::new("android-setup-retry-detection", "Retry detection").disabled(busy).tab_index(0isize).on_click(cx.listener(|wizard, _, _, cx| wizard.detect(cx))))))))
+                .child(content))
                 .custom_scrollbars(ui::Scrollbars::always_visible(ui::ScrollAxes::Vertical).tracked_scroll_handle(&self.content_scroll).tracked_entity(cx.entity_id()), window, cx))
             .child(h_flex().debug_selector(|| "android-setup-footer".into()).flex_shrink_0().p_4().gap_2().justify_between().border_t_1().border_color(cx.theme().colors().border)
                 .child(Button::new("android-setup-cancel", if self.close_requested && finishing { "Finishing…" } else if self.close_requested { "Cancelling…" } else if finishing { "Close when finished" } else { "Cancel" })
@@ -1358,6 +1371,178 @@ mod tests {
         assert!(panel.read_with(cx, |panel, _| panel.tool_setup.choosing));
         cx.update(|_, cx| SetupWizard::release_native_job(&panel, &current, cx));
         assert!(!panel.read_with(cx, |panel, _| panel.tool_setup.choosing));
+    }
+
+    #[gpui::test]
+    async fn setup_failures_expose_actionable_error_before_long_content_and_allow_keyboard_retry(
+        cx: &mut TestAppContext,
+    ) {
+        let (_state, _workspace, panel) = fixture(cx).await;
+        panel.update(cx, |panel, cx| {
+            panel.tool_setup.expanded = true;
+            panel.tool_setup.lines = (0..20)
+                .map(|index| {
+                    format!(
+                        "Tool {index}: Runtime integrity check failed. Choose Install / repair."
+                    )
+                })
+                .collect();
+            cx.notify();
+        });
+        let (wizard, cx) = cx.add_window_view(|_, cx| SetupWizard::new(panel, cx));
+        wizard.update(cx, |wizard, cx| {
+            let mut reviewed_plan = plan(Vec::new());
+            reviewed_plan.provenance = (0..20)
+                .map(|index| {
+                    format!(
+                        "Reviewed package {index}: Publisher checksum and destination verified."
+                    )
+                })
+                .collect();
+            wizard.plan = Some(reviewed_plan);
+            wizard.custom = true;
+            cx.notify();
+        });
+        cx.simulate_resize(gpui::size(px(900.), px(700.)));
+        cx.run_until_parked();
+        for step in [SetupStep::Welcome, SetupStep::Components, SetupStep::Verify] {
+            wizard.update(cx, |wizard, cx| {
+                wizard.step = SetupStep::Installing;
+                wizard.error = None;
+                cx.notify();
+            });
+            cx.run_until_parked();
+            wizard.update(cx, |wizard, cx| {
+                wizard.step = step;
+                wizard.error = Some("Runtime integrity check failed: sdk/platform-tools/source.properties. Choose Install / repair.".into());
+                cx.notify();
+            });
+            cx.run_until_parked();
+            let error = cx
+                .debug_bounds("android-setup-error")
+                .expect("Visible integrity error");
+            let viewport = wizard.read_with(cx, |wizard, _| {
+                assert!(wizard.content_scroll.max_offset().y > px(0.));
+                assert_eq!(wizard.content_scroll.offset(), Default::default());
+                wizard.content_scroll.bounds()
+            });
+            assert!(error.top() >= viewport.top());
+            assert!(
+                error.bottom() <= viewport.bottom(),
+                "The actionable error is visible on {step:?}"
+            );
+            assert!(wizard.update_in(cx, |wizard, window, _| {
+                wizard.content_focus.is_focused(window)
+            }));
+
+            press_key(cx, "end");
+            wizard.read_with(cx, |wizard, _| {
+                assert!(wizard.content_scroll.offset().y < px(0.))
+            });
+            press_key(cx, "home");
+            let error = cx
+                .debug_bounds("android-setup-error")
+                .expect("Error after keyboard Home");
+            assert!(error.top() >= viewport.top());
+            assert!(error.bottom() <= viewport.bottom());
+
+            press_key(cx, "end");
+            wizard.update_in(cx, |wizard, window, cx| {
+                let repeated_error = wizard.error.clone();
+                wizard.detect(cx);
+                assert!(wizard.error.is_none());
+                wizard.error = repeated_error;
+                wizard.focus_handle.focus(window, cx);
+                cx.notify();
+            });
+            cx.run_until_parked();
+            let error = cx
+                .debug_bounds("android-setup-error")
+                .expect("Repeated error without an intermediate frame");
+            assert!(error.top() >= viewport.top());
+            assert!(error.bottom() <= viewport.bottom());
+            assert!(wizard.update_in(cx, |wizard, window, _| {
+                wizard.content_focus.is_focused(window)
+            }));
+
+            press_key(cx, "end");
+            wizard.update(cx, |wizard, cx| {
+                wizard.error = Some("Download failed: insufficient disk space. Free storage and retry the reviewed installation.".into());
+                cx.notify();
+            });
+            cx.run_until_parked();
+            let error = cx
+                .debug_bounds("android-setup-error")
+                .expect("New error on the same page");
+            assert!(error.top() >= viewport.top());
+            assert!(
+                error.bottom() <= viewport.bottom(),
+                "A new same-page error returns to view"
+            );
+            wizard.read_with(cx, |wizard, _| {
+                assert_eq!(wizard.content_scroll.offset(), Default::default())
+            });
+        }
+
+        wizard.update(cx, |wizard, cx| {
+            wizard.step = SetupStep::Welcome;
+            wizard.error = Some("Dependency detection failed: chosen Java folder is unavailable. Choose another folder or retry detection.".into());
+            cx.notify();
+        });
+        cx.run_until_parked();
+        let retry = cx
+            .debug_bounds("android-setup-retry-control")
+            .expect("Retry is visible beside the error");
+        let viewport = wizard.read_with(cx, |wizard, _| wizard.content_scroll.bounds());
+        assert!(retry.top() >= viewport.top());
+        assert!(retry.bottom() <= viewport.bottom());
+        press_key(cx, "tab");
+        press_key(cx, "enter");
+        wizard.read_with(cx, |wizard, _| {
+            assert!(
+                wizard.error.is_none(),
+                "Keyboard retry invokes dependency detection"
+            );
+            assert!(wizard.discovery.is_some());
+            assert_eq!(wizard.step, SetupStep::Welcome);
+        });
+        assert!(cx.debug_bounds("android-setup-error").is_none());
+
+        wizard.update_in(cx, |wizard, window, cx| {
+            wizard.panel.update(cx, |panel, _| panel.running = true);
+            wizard.step = SetupStep::Components;
+            wizard.focus_handle.focus(window, cx);
+            cx.notify();
+        });
+        cx.run_until_parked();
+        press_key(cx, "enter");
+        let previous_error = wizard.read_with(cx, |wizard, _| wizard.error.clone());
+        assert!(
+            previous_error
+                .as_ref()
+                .is_some_and(|error| error.contains("Finish the current Android operation"))
+        );
+        press_key(cx, "end");
+        wizard.read_with(cx, |wizard, _| {
+            assert!(wizard.content_scroll.offset().y < px(0.))
+        });
+        wizard.update_in(cx, |wizard, window, cx| {
+            wizard.focus_handle.focus(window, cx)
+        });
+        cx.run_until_parked();
+        press_key(cx, "enter");
+        let error = cx
+            .debug_bounds("android-setup-error")
+            .expect("Repeated blocked operation");
+        let viewport = wizard.read_with(cx, |wizard, _| {
+            assert_eq!(wizard.error, previous_error);
+            wizard.content_scroll.bounds()
+        });
+        assert!(error.top() >= viewport.top());
+        assert!(error.bottom() <= viewport.bottom());
+        wizard.update(cx, |wizard, cx| {
+            wizard.panel.update(cx, |panel, _| panel.running = false)
+        });
     }
 
     #[gpui::test]
