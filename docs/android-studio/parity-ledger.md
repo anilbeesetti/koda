@@ -12,8 +12,11 @@ The inspected foundation slice now catalogs eight `DefaultVariantsTest` methods,
 nine `GradleModuleImportTest` methods and fourteen `AndroidProjectViewTest`
 methods, plus three selected model-sync methods and one separate resource-conversion
 method. These 35 source-defined method cases are a partial inventory; the
-exhaustive baseline total remains unknown. The 27 import/project-view/model-sync
-and resource-conversion rows remain `unported/not_run`. The bounded
+exhaustive baseline total remains unknown. Fresh combined-source captures credit nine import methods as `ported/passing`
+and nine project-view policy methods as `adapted/passing`. Together with the eight
+default-variant cases, 26 named reference ports pass. Five logical-tree methods
+and four model-sync/resource-conversion methods remain `unported/not_run`. These
+backend ports do not complete desktop import or Android tree workflows. The bounded
 [model-sync inventory](ports/model-sync-inventory.json) records normal and generated
 target membership, runner inheritance, fixture hashes and runtime verification
 limits. The suite leak finalizer is identified separately and remains uncredited
