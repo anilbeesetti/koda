@@ -1,3 +1,4 @@
+pub mod gradle_import;
 pub mod logcat;
 pub mod preview;
 pub mod project_model;
