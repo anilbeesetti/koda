@@ -16,6 +16,7 @@ cargo_metadata.workspace = true
 cargo_toml.workspace = true
 clap = { workspace = true, features = ["derive"] }
 compliance = { workspace = true, features = ["octo-client"] }
+flate2 = "1.1.8"
 gh-workflow.workspace = true
 guppy = "0.18"
 indoc.workspace = true
@@ -27,6 +28,7 @@ serde_json.workspace = true
 sha2.workspace = true
 serde_yaml = "0.9.34"
 strum.workspace = true
+tar = "0.4.46"
 thiserror.workspace = true
 tokio = { workspace = true, features = ["rt", "rt-multi-thread"] }
 toml.workspace = true

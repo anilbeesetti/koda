@@ -1,4 +1,5 @@
 pub mod android_parity;
+pub mod android_reference_census;
 pub mod clippy;
 pub mod compliance;
 pub mod gpui;
