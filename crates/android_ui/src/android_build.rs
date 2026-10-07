@@ -1,3 +1,4 @@
+use crate::tabbed_toolbar::TabbedToolbar;
 use anyhow::{Context as _, Result, bail, ensure};
 use futures::{
     AsyncRead, AsyncReadExt as _, FutureExt as _, SinkExt as _, StreamExt as _,
@@ -5,7 +6,7 @@ use futures::{
     future::{Either, select},
 };
 use gpui::{
-    App, BackgroundExecutor, ClipboardItem, Context, EventEmitter, FocusHandle, Focusable,
+    App, BackgroundExecutor, ClipboardItem, Context, Entity, EventEmitter, FocusHandle, Focusable,
     FontWeight, ListHorizontalSizingBehavior, ScrollStrategy, Task, UniformListScrollHandle,
     WeakEntity, uniform_list,
 };
@@ -443,6 +444,8 @@ pub struct BuildPanel {
     focus_handle: FocusHandle,
     sessions: [Option<BuildSession>; 2],
     selected: BuildTab,
+    toolbar: Entity<TabbedToolbar>,
+    toolbar_statuses: [Option<BuildStatus>; 2],
     next_id: u64,
     clock_task: Option<Task<()>>,
     notification_task: Option<Task<()>>,
@@ -450,11 +453,46 @@ pub struct BuildPanel {
 
 impl BuildPanel {
     pub(crate) fn new(workspace: WeakEntity<Workspace>, cx: &mut Context<Self>) -> Self {
+        let panel = cx.entity().downgrade();
+        let title = cx.new(|_| BuildToolbarTitle);
+        let toolbar = cx.new(|cx| {
+            let mut toolbar = TabbedToolbar::new(title, cx);
+            for tab in [BuildTab::Sync, BuildTab::Output] {
+                let panel = panel.clone();
+                toolbar.add_tab(
+                    tab.label(),
+                    cx,
+                    move |_, cx| {
+                        if let Some(panel) = panel.upgrade() {
+                            panel.update(cx, |panel, cx| {
+                                panel.selected = tab;
+                                cx.notify();
+                            });
+                        }
+                    },
+                    None,
+                );
+            }
+            toolbar.add_action(
+                Icon::new(IconName::Dash),
+                "Hide Build window",
+                cx,
+                move |_, cx| {
+                    if let Some(panel) = panel.upgrade() {
+                        panel.update(cx, |_, cx| cx.emit(PanelEvent::Close));
+                    }
+                },
+            );
+            toolbar.set_active_tab(BuildTab::Sync.index(), cx).log_err();
+            toolbar
+        });
         Self {
             workspace,
             focus_handle: cx.focus_handle(),
             sessions: [None, None],
             selected: BuildTab::Sync,
+            toolbar,
+            toolbar_statuses: [None, None],
             next_id: 0,
             clock_task: None,
             notification_task: None,
@@ -515,7 +553,7 @@ impl BuildPanel {
             stderr: false,
         });
         self.sessions[tab.index()] = Some(session);
-        self.selected = tab;
+        self.select(tab, cx);
         let workspace = self.workspace.clone();
         window.defer(cx, move |window, cx| {
             workspace
@@ -666,6 +704,9 @@ impl BuildPanel {
 
     pub(crate) fn select(&mut self, tab: BuildTab, cx: &mut Context<Self>) {
         self.selected = tab;
+        self.toolbar.update(cx, |toolbar, cx| {
+            toolbar.set_active_tab(tab.index(), cx).log_err()
+        });
         cx.notify();
     }
 
@@ -1096,9 +1137,36 @@ impl Panel for BuildPanel {
         5
     }
 }
+struct BuildToolbarTitle;
+
+impl Render for BuildToolbarTitle {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .debug_selector(|| "build-toolbar-title".into())
+            .child(Label::new("Build").weight(FontWeight::BOLD))
+    }
+}
+
 impl Render for BuildPanel {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let content = self.render_session(cx);
+        for tab in [BuildTab::Sync, BuildTab::Output] {
+            let status = self.sessions[tab.index()]
+                .as_ref()
+                .map(BuildSession::activity_status);
+            if self.toolbar_statuses[tab.index()] != status {
+                self.toolbar_statuses[tab.index()] = status;
+                self.toolbar.update(cx, |toolbar, cx| {
+                    toolbar
+                        .set_tab_icon(
+                            tab.index(),
+                            status.map(|status| Icon::new(status.icon()).color(status.color())),
+                            cx,
+                        )
+                        .log_err();
+                });
+            }
+        }
         v_flex()
             .id("android-build-panel")
             .track_focus(&self.focus_handle)
@@ -1106,37 +1174,11 @@ impl Render for BuildPanel {
             .min_h_0()
             .bg(cx.theme().colors().panel_background)
             .child(
-                h_flex()
-                    .h_9()
+                div()
                     .px_2()
-                    .gap_2()
                     .border_b_1()
                     .border_color(cx.theme().colors().border_variant)
-                    .child(
-                        div()
-                            .font_weight(FontWeight::BOLD)
-                            .child(Label::new("Build")),
-                    )
-                    .children([BuildTab::Sync, BuildTab::Output].into_iter().map(|tab| {
-                        let status = self.sessions[tab.index()]
-                            .as_ref()
-                            .map(BuildSession::activity_status);
-                        Button::new(tab.label(), tab.label())
-                            .tab_index(0isize)
-                            .toggle_state(self.selected == tab)
-                            .when_some(status, |button, status| {
-                                button.start_icon(Icon::new(status.icon()).color(status.color()))
-                            })
-                            .on_click(cx.listener(move |panel, _, _, cx| panel.select(tab, cx)))
-                    }))
-                    .child(div().flex_1())
-                    .child(
-                        IconButton::new("hide-build", IconName::Dash)
-                            .tab_index(0isize)
-                            .aria_label("Hide Build window")
-                            .tooltip(Tooltip::text("Hide Build window"))
-                            .on_click(cx.listener(|_, _, _, cx| cx.emit(PanelEvent::Close))),
-                    ),
+                    .child(self.toolbar.clone()),
             )
             .child(content)
     }
@@ -1356,6 +1398,16 @@ mod tests {
             }
         });
         cx.run_until_parked();
+        assert_eq!(
+            pane.read_with(cx, |pane, _| pane.selected),
+            BuildTab::Output
+        );
+        assert!(
+            cx.debug_bounds("tabbed-toolbar-active-1").is_some(),
+            "Starting output activates its real toolbar tab"
+        );
+        assert!(cx.debug_bounds("tabbed-toolbar-tab-icon-0").is_some());
+        assert!(cx.debug_bounds("tabbed-toolbar-tab-icon-1").is_some());
         let tree = cx
             .debug_bounds("build-tree")
             .expect("Task tree should render");
@@ -1439,6 +1491,40 @@ mod tests {
         pane.read_with(cx, |pane, _| {
             assert!(pane.sessions.iter().all(Option::is_some))
         });
+        let output = cx
+            .debug_bounds("tabbed-toolbar-label-Build Output")
+            .expect("Output tab");
+        cx.simulate_click(output.center(), Default::default());
+        cx.run_until_parked();
+        assert_eq!(
+            pane.read_with(cx, |pane, _| pane.selected),
+            BuildTab::Output
+        );
+        assert!(cx.debug_bounds("tabbed-toolbar-active-1").is_some());
+        let sync = cx
+            .debug_bounds("tabbed-toolbar-label-Sync")
+            .expect("Sync tab");
+        cx.simulate_click(sync.center(), Default::default());
+        cx.run_until_parked();
+        assert_eq!(pane.read_with(cx, |pane, _| pane.selected), BuildTab::Sync);
+        assert!(cx.debug_bounds("tabbed-toolbar-active-0").is_some());
+        assert!(pane.read_with(cx, |pane, _| pane.sessions.iter().all(Option::is_some)));
+        let closes = std::rc::Rc::new(std::cell::Cell::new(0));
+        let _close_subscription = cx.update(|_, cx| {
+            cx.subscribe(&pane, {
+                let closes = closes.clone();
+                move |_, event, _| {
+                    if matches!(event, PanelEvent::Close) {
+                        closes.set(closes.get() + 1);
+                    }
+                }
+            })
+        });
+        let hide = cx
+            .debug_bounds("tabbed-toolbar-action-0")
+            .expect("Hide Build action");
+        cx.simulate_click(hide.center(), Default::default());
+        assert_eq!(closes.get(), 1);
     }
 
     #[test]

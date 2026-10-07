@@ -1,0 +1,437 @@
+{
+  "schema_version": 1,
+  "task": "foundation-tabbed-toolbar",
+  "branch": "android-studio-task/1-tabbed-toolbar",
+  "base_commit": "cbf8c0ec26057913f62c8dc9f494cf2baf27945d",
+  "status": "failing_escalated_after_three_runtime_fix_rounds",
+  "scope": "Reusable production GPUI embedded toolbar plus real BuildPanel Sync/Build Output header consumer. This does not claim editor-tab or full Android Studio shell parity.",
+  "reference_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+  "original_test_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+  "original_production_sha256": "7e9b312394b5419b446880151f83cfb04f01f9acb7364b1ab3e01baa93c4e59f",
+  "fixtures": [
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/CommonButton.java",
+      "sha256": "045a1a33fab2d4b122c61c8ec14a6421a10918b0f00124e487e76b1ac7f20070",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/CommonButtonUI.java",
+      "sha256": "21608dbf7fcb189f9ab509521a18f337cccbe04899e4c85302386431f3ef0d3c",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/HorizontalScrollView.kt",
+      "sha256": "61a532527f1f2588354d253958183781c43bfff819a78fb4b96f26b4cc394628",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/StudioColors.kt",
+      "sha256": "67c76be7769a1738235034bb8d5e3fc1c6d516d884fb8ba54d2a6b6c498aaff3",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/TabbedToolbar.java",
+      "sha256": "7e9b312394b5419b446880151f83cfb04f01f9acb7364b1ab3e01baa93c4e59f",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/TabbedToolbarTest.kt",
+      "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/TabularLayout.kt",
+      "sha256": "e37ba39e6331a828d2d01a7ad1d23657c65772ced5d3c683e5faf52d354c528e",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/add.svg",
+      "sha256": "90ea35fe93f58db441ccf12778af7b56f91897b3d44651b3801ec530a9dd9ba8",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/add_dark.svg",
+      "sha256": "0869e8a2e80878011514360353b0d9e845a865bb65e30fce5a6bab57623043b9",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/close.svg",
+      "sha256": "b720c5641b67d33efb0ef3feb5c11a7c49f9d89d26909776ae99a28358c6194a",
+      "unchanged_reference_bytes": true
+    },
+    {
+      "path": "crates/android_ui/test_data/tabbed_toolbar/close_dark.svg",
+      "sha256": "d9b4cdec69b34c7f88e07f701b37da02def1b59a5a455592cb85052e343c7716",
+      "unchanged_reference_bytes": true
+    }
+  ],
+  "selected_cases": [
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "componentIsAddedElement",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 33,
+      "end_line": 38,
+      "declaration": "fun componentIsAddedElement() {",
+      "declaration_sha256": "9f9ce33ac8d7c5f1c2298abc0bbbdf4e1a59c0cf774dd8d53d0bd7c5e728baa1",
+      "method_region_sha256": "f3c25c6b75e9539610ac8411ec0b782e8fd1a0401880ccdcb40d2fff9ee100f3",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "pass_in_group_capture_not_immutable_exact_manifest_bound_capture",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Supplied JLabel is present in the toolbar descendant tree."
+      ],
+      "rust_crate": "android_ui",
+      "rust_source": "crates/android_ui/src/tabbed_toolbar.rs",
+      "rust_test": "tabbed_toolbar::tests::component_is_added_element",
+      "status": "implemented_reference_assertions_pass_pending_final_gates",
+      "assertions_preserved": true,
+      "adaptation": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained."
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "tabIsAdded",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 41,
+      "end_line": 49,
+      "declaration": "fun tabIsAdded() {",
+      "declaration_sha256": "1f437b355379b117a5077b837f2f8796cccd161556746b871f9bf74fbc0505f7",
+      "method_region_sha256": "29299f5d7aee0b8a9fa362197e654a0fe4eb9cb2ace3ec39eecc562a08502a54",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "pass_in_group_capture_not_immutable_exact_manifest_bound_capture",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Adding First creates a descendant JLabel with that text."
+      ],
+      "rust_crate": "android_ui",
+      "rust_source": "crates/android_ui/src/tabbed_toolbar.rs",
+      "rust_test": "tabbed_toolbar::tests::tab_is_added",
+      "status": "implemented_reference_assertions_pass_pending_final_gates",
+      "assertions_preserved": true,
+      "adaptation": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained."
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "closedIsCalledWhenClicked",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 52,
+      "end_line": 64,
+      "declaration": "fun closedIsCalledWhenClicked() {",
+      "declaration_sha256": "ebe510c6e1c3b5d5c4e39d00be3467ac3f6c1944acd38048764bc7f313783257",
+      "method_region_sha256": "583cdf43fbb48efa136ad37ea87ddb6ae4dcf0404198e3f26d17dbb1a14bd464",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "pass_in_group_capture_not_immutable_exact_manifest_bound_capture",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Clicking each listener-bearing CommonButton in tabsPanel invokes the supplied close callback."
+      ],
+      "rust_crate": "android_ui",
+      "rust_source": "crates/android_ui/src/tabbed_toolbar.rs",
+      "rust_test": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+      "status": "implemented_reference_assertions_pass_pending_final_gates",
+      "assertions_preserved": true,
+      "adaptation": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained."
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "noCloseButtonWhenNoListener",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 67,
+      "end_line": 77,
+      "declaration": "fun noCloseButtonWhenNoListener() {",
+      "declaration_sha256": "091309fc9126b10aa26f393ed032176dcc25d7f215903bbf7ececfbe9ce03b24",
+      "method_region_sha256": "ce84ec508acab3a56b25f889d30f36e3e4da840d0585d0ca10c50c3a8dbff8df",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "pass_in_group_capture_not_immutable_exact_manifest_bound_capture",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Adding a tab without a close callback creates no listener-bearing CommonButton in tabsPanel."
+      ],
+      "rust_crate": "android_ui",
+      "rust_source": "crates/android_ui/src/tabbed_toolbar.rs",
+      "rust_test": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+      "status": "implemented_reference_assertions_pass_pending_final_gates",
+      "assertions_preserved": true,
+      "adaptation": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained."
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "iconButtonsCallbackWhenClicked",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 80,
+      "end_line": 92,
+      "declaration": "fun iconButtonsCallbackWhenClicked() {",
+      "declaration_sha256": "071fa468d1803e502390a310ebb93c11157362e29694a84324f194daa9a966a1",
+      "method_region_sha256": "248755a2149c89a2b4ef61449e72511418de3ce1e3455e6c8c99bb7f3a284147",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "pass_in_group_capture_not_immutable_exact_manifest_bound_capture",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Clicking listener-bearing CommonButtons invokes the ADD icon action callback."
+      ],
+      "rust_crate": "android_ui",
+      "rust_source": "crates/android_ui/src/tabbed_toolbar.rs",
+      "rust_test": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+      "status": "implemented_reference_assertions_pass_pending_final_gates",
+      "assertions_preserved": true,
+      "adaptation": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained."
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "can select tab by index",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 95,
+      "end_line": 112,
+      "declaration": "fun `can select tab by index`() {",
+      "declaration_sha256": "be04e13d569e9f50a3744246a19e2cd8530e97e6611c23da0239ae54d977c266",
+      "method_region_sha256": "309332389ee40c0ccbb28f978ac896a2f0068556ab5b1299f2fdff193e1d41d1",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "pass_in_group_capture_not_immutable_exact_manifest_bound_capture",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Three tabs count as three; selecting index 1 invokes Second. After clearTabs and adding Fourth/Fifth, count is two and index 1 invokes Fifth."
+      ],
+      "rust_crate": "android_ui",
+      "rust_source": "crates/android_ui/src/tabbed_toolbar.rs",
+      "rust_test": "tabbed_toolbar::tests::can_select_tab_by_index",
+      "status": "implemented_reference_assertions_pass_pending_final_gates",
+      "assertions_preserved": true,
+      "adaptation": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained."
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "adding tab should not trigger select listener",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 115,
+      "end_line": 121,
+      "declaration": "fun `adding tab should not trigger select listener`() {",
+      "declaration_sha256": "a52cfa4aa958d90468c83c2db1c85bfd03c1fdb6ac16bc3b85295fb328de8c53",
+      "method_region_sha256": "19c5ccce8197ad0c7a2a28d59d988e44af4f1113aa08f95163b2384d091b8ed7",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "pass_in_group_capture_not_immutable_exact_manifest_bound_capture",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Adding First does not invoke its selection callback; the selected sentinel remains nope."
+      ],
+      "rust_crate": "android_ui",
+      "rust_source": "crates/android_ui/src/tabbed_toolbar.rs",
+      "rust_test": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+      "status": "implemented_reference_assertions_pass_pending_final_gates",
+      "assertions_preserved": true,
+      "adaptation": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained."
+    }
+  ],
+  "supplementary_tests": [
+    "tabbed_toolbar::tests::pointer_space_middle_close_and_invalid_selection_use_production_callbacks",
+    "tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs",
+    "android_build::tests::pane_renders_empty_and_split_output_and_keeps_both_sessions",
+    "tabbed_toolbar::tests::title_tabs_and_multiple_actions_retain_reference_geometry",
+    "tabbed_toolbar::tests::callbacks_can_rebuild_toolbar_after_selection_and_middle_close"
+  ],
+  "adaptations": [
+    "Invalid Java tab indices throw IndexOutOfBoundsException; the Rust production API returns Err without invoking any selection listener.",
+    "Pinned toolbar hover/selected colors use Zed theme tokens; a fixed 36px BuildPanel header preserves the existing consumer layout. Complete Android Studio theme/palette parity is not established.",
+    "GPUI provides native wheel pixel/line conversion; explicit arrow buttons retain the pinned 30px scroll step.",
+    "BuildPanel tabs have no close listeners, while its separate hide action retains PanelEvent::Close. Status icons are a consumer extension; creating tabs does not invoke their selection listeners.",
+    "Selection and middle-close listeners run through Window::defer after the toolbar entity borrow ends, allowing consumers to clear/rebuild tabs. Programmatic selection assertions flush the GPUI event queue before inspecting the same callback values."
+  ],
+  "reviews": {
+    "code": {
+      "status": "prior_static_pass_final_snapshot_and_runtime_review_pending",
+      "fix_rounds": 1,
+      "finding": "Middle closure must be a matching click rather than any middle release; fixed with on_aux_click and regression."
+    },
+    "ui": {
+      "status": "prior_static_pass_final_snapshot_and_runtime_review_pending",
+      "fix_rounds": 1
+    },
+    "ux": {
+      "status": "prior_static_pass_final_snapshot_and_runtime_review_pending",
+      "fix_rounds": 1
+    },
+    "performance": {
+      "status": "prior_static_pass_final_snapshot_and_runtime_review_pending"
+    },
+    "quality": {
+      "status": "prior_static_pass_final_snapshot_and_runtime_review_pending",
+      "fix_rounds": 1
+    }
+  },
+  "validation": {
+    "format": "pass",
+    "diff_check": "pass",
+    "test_compile": "pass",
+    "focused_tests": "10 pass /1 fail /0 ignored",
+    "reference_methods": "all7 assertions pass in group capture; no canonical credit yet",
+    "consumer_regression": "1 pass /0 fail /0 ignored",
+    "all_android_ui": "115 pass /1 fail /1 pre-existing ignored native capture; failed overflow regression unchanged",
+    "clippy": "not_run_root_capacity_coordination_pending",
+    "full_app_build": "not_run_runtime_gate_failed",
+    "full_app_live": "not_run_runtime_gate_failed",
+    "full_workspace_suite": "not_run_final_integration_pending"
+  },
+  "completion_blockers": [
+    "Required resize overflow regression fails after three fix rounds; lead investigation required.",
+    "Final five reviewer verdicts, repository Clippy, full-app build/live screenshots and final integration full suite remain pending.",
+    "No exact immutable per-method manifest-bound captures or canonical ledger credits have been produced."
+  ],
+  "attribution": "Adapted behavioral source and reused original tests/artwork retain Apache-2.0 copyright/license notices. IDE production logic is Rust; retained Java/Kotlin are reference data, not runtime components. CommonButtonUI source geometry is retained unchanged alongside the twelve fixture/license files.",
+  "counts": {
+    "reference_methods": 7,
+    "reference_methods_passing_in_focused_run": 7,
+    "focused_production_tests": 11,
+    "focused_passed": 10,
+    "focused_failed": 1,
+    "focused_ignored": 0,
+    "canonical_parity_credit": 0
+  },
+  "runtime_fix_rounds": [
+    {
+      "round": 0,
+      "result": "9 passed, 2 failed, 0 ignored",
+      "failures": [
+        "Incomplete close-button Space press: test helper emitted only KeyDown; release callback assertion failed.",
+        "Left scroll arrow remains visible after resize to1000px."
+      ]
+    },
+    {
+      "round": 1,
+      "result": "9 passed, 2 failed, 0 ignored",
+      "changes": "Add explicit control focus handles; change geometry state update. All failed assertions retained."
+    },
+    {
+      "round": 2,
+      "result": "10 passed, 1 failed, 0 ignored",
+      "changes": "Complete real Space press with KeyUp, matching GPUI and Swing release activation; use post-frame geometry notifications and deliver native frames in test driver."
+    },
+    {
+      "round": 3,
+      "result": "10 passed, 1 failed, 0 ignored",
+      "changes": "Require two consecutive idle frame deliveries to account for App draw after the update closure. Preserve endpoint/resize assertions and add exact state diagnostics.",
+      "remaining_failure": {
+        "test": "tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs",
+        "resize_width": 1000,
+        "observed_offset_x": "-0px",
+        "observed_maximum_offset_x": "0px",
+        "observed_left_visible": true,
+        "observed_right_visible": false,
+        "required_left_visible": false
+      },
+      "escalation": "Root notified; lead reported blocker to user. Owner stopped further behavior fix rounds; task is held out of merge."
+    }
+  ],
+  "driver_facts": [
+    {
+      "source": "crates/gpui/src/window.rs",
+      "method": "Window::dispatch_keystroke",
+      "behavior": "TestContext.simulate_keystrokes sends KeyDown only; ButtonLike native activation requires matching KeyUp."
+    },
+    {
+      "source": "crates/gpui/src/window.rs",
+      "method": "Window::simulate_next_frame",
+      "behavior": "GPUI test windows have no platform frame loop; the supplemental driver delivers actual production post-frame callbacks."
+    }
+  ],
+  "preliminary_evidence": [
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/first-compile.log",
+      "sha256": "d2b4b037ea33772a144591998a2d289552822015616be05b463fa29bbad2c517",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/second-compile.log",
+      "sha256": "a0ff4e65396360414682a5baad9e4c57303060850fd55e7ea676f3332233a0dc",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/third-compile.log",
+      "sha256": "09fddd68a8792caea2ded2cb2f9ffb705282c050b3f58991aa551caac2af43c9",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/toolbar-first-tests.log",
+      "sha256": "70c2cc31887fba2dbe44442f659e68fbf8800041c46adb6a4a5ac13b032674c1",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/runtime-fix1-compile.log",
+      "sha256": "5bf24a076e88de91703120a4aba73e02c9bedfcb5334433c3b98da3dfebfaeea",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/toolbar-runtime-fix1-tests.log",
+      "sha256": "087f0249919a5b24d6bae5e29adc06f20e7397e880eeada5a752d8b1834431ea",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/runtime-fix2-compile.log",
+      "sha256": "343cce8ede3f91749aa42fc8bb4533aa9e04d4ec4a87123d957a73ac31a25ac9",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/toolbar-runtime-fix2-tests.log",
+      "sha256": "456ad04f2cb265553786bd45a0adc88d17d6136ae3a705a88b67f61025ebaedf",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/runtime-fix3-compile.log",
+      "sha256": "6221040e9f184a549e329ca342b6191b881dcf3308d25a5178105c659443d778",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/toolbar-runtime-fix3-tests.log",
+      "sha256": "9ab426c12856b71f6d984893d9031cbb46b75d5edd4b88639a944fa505ab96af",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/buildpanel-first-tests.log",
+      "sha256": "5085b25e72cce5cb8fb04aef8165697edb14927fe96bd1c0d810bee725e48f8b",
+      "immutable_manifest_bound": false
+    },
+    {
+      "path": "docs/android-studio/evidence/tabbed-toolbar-failing-snapshot/all-android-ui-after-round3.log",
+      "sha256": "e5ff1f18df5972b50255b908e590ec5782abb77c104ec8019f106a6dc65ad6a9",
+      "immutable_manifest_bound": false
+    }
+  ],
+  "tested_source_files": [
+    {
+      "path": "crates/android_ui/src/tabbed_toolbar.rs",
+      "sha256": "1bbacb9f005d68465c09426e461696afb6495963c51e043698de6acc5304f8de"
+    },
+    {
+      "path": "crates/android_ui/src/android_build.rs",
+      "sha256": "b54fc43d2c4875e4052af22bff2bf81029da96900d26564533232ce1f763ef8b"
+    },
+    {
+      "path": "crates/android_ui/src/android_ui.rs",
+      "sha256": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8"
+    }
+  ]
+}
