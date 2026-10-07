@@ -234,8 +234,8 @@ impl<'a> Lexer<'a> {
                 self.offset += 1;
             } else if remaining.starts_with("//") {
                 self.offset += remaining.find(['\r', '\n']).unwrap_or(remaining.len());
-            } else if remaining.starts_with("/*") {
-                let end = remaining[2..]
+            } else if let Some(comment) = remaining.strip_prefix("/*") {
+                let end = comment
                     .find("*/")
                     .ok_or_else(|| error(JavaFactsErrorKind::UnterminatedComment, self.offset))?;
                 self.offset += end + 4;
