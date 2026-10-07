@@ -1,0 +1,52 @@
+{
+  "base_fixture_files": [
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/build.gradle",
+      "sha256": "25f01c0db7bee9a4a8b7034430ba852e1a0665d10f37c7d8f15b439e08aeccc5"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/custom-manifest/AndroidManifest.xml",
+      "sha256": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/flavor-assets/demo.txt",
+      "sha256": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/main/resources/resources.properties",
+      "sha256": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/provider-res/layout/sample.xml",
+      "sha256": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/unrelated-assets/sample.txt",
+      "sha256": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke/build.gradle",
+      "sha256": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke/gradle.properties",
+      "sha256": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke/settings.gradle",
+      "sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c"
+    }
+  ],
+  "new_fixture": "crates/android_tools/test_data/source_providers/gradle-smoke-generation",
+  "original_fixture_unchanged": true,
+  "acceptance": [
+    "Late static asset directories outside and under build remain non-generated even if missing",
+    "Variant-only Java/Kotlin/res/assets folders remain non-generated even if missing",
+    "Generated task outputs outside build remain generated",
+    "Only evaluated all source roots emit in unchanged encounter order for Java/Kotlin/res/assets",
+    "Configured missing/custom/variant-only roots retained",
+    "Inactive flavor asset root excluded from emitted active component sources"
+  ],
+  "exception": "Minimal JVM Gradle bridge reads official SDK DirectoryEntry.isGenerated provenance. Rust owns project model decoding and IDE features; AGP objects cannot be introspected by Rust without this in-process bridge.",
+  "runtime_status": "Actual Gradle round4 passed,4 tasks executed; captured JSON matches normalized portable fixture exactly;95 standalone all-feature Rust tests passed;strictClippy/workspacefmt passed. Full app/native/fullworkspace pending."
+}

@@ -1,0 +1,8 @@
+{
+  "raw_model": "raw-model-round3.json",
+  "raw_sha256": "4495284fc28ac956867fd99deaa07a65e38d7bf5eaec2e756479f80c2211b9fd",
+  "fixture_sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+  "only_normalization": "Replace exact absolute isolated project prefix in JSON string values with ${project_root}; preserve all flags,keys,values,order and dependencies.",
+  "runtime": "AGP9.4/Gradle9.6.1/JDK21/SDK37 supplemental, no pinned helper or parity credit.",
+  "round2_failure": "Actual flat directories expose both covariant method and JVM bridge; method lookup now explicitly excludes bridge methods."
+}
