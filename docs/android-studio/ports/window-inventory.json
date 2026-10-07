@@ -1,0 +1,2206 @@
+{
+  "schema_version": 1,
+  "task": "1-window-inventory",
+  "branch": "android-studio-task/1-window-inventory",
+  "base_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+  "inherited_evidence_commit": "cbf8c0ec26057913f62c8dc9f494cf2baf27945d",
+  "scope": "Complete source-declared methods in TabbedToolbarTest and AttachedToolWindowTest only, under their named normal adt-ui target. Metadata only; no product Rust, test assertions, validator or frozen-input changes.",
+  "status": "source_inventory_verified_for_lead_review",
+  "global_census_complete": false,
+  "mirror_omissions_resolved": false,
+  "counts": {
+    "selected_declared_methods": 57,
+    "toolbar_methods": 7,
+    "attached_workbench_methods": 50,
+    "source_defined_leaf_cases": 57,
+    "runtime_executed_cases": null,
+    "new_ported_tests": 0,
+    "new_applicable_unported_rows": 57,
+    "catalog_cases_after_task": 92,
+    "fixture_data_files_added": 0,
+    "original_sources_redistributed_in_repository": 0
+  },
+  "runner_resolution": {
+    "status": "resolved_from_source_for_named_normal_target_not_executed",
+    "normal_execution_assumptions": [
+      "Pinned //tools/adt/idea/adt-ui:intellij.android.adt.ui_tests target without caller-supplied test_filter/test_exclude_filter/ignored.tests.only/repeat overrides.",
+      "Both concrete Kotlin classes have implicit Object superclass, no interface/test superclass, RunWith/Parameters/factory/dynamic declaration or Ignore annotations. Ordinary JUnit4 chooses one child per Test-annotated method; callbacks/event listener iteration/private helpers are not additional test invocations.",
+      "Compiled jar membership, actual JVM descriptions, runtime execution and infrastructure repeats were not run or inferred. No full module/global test census is claimed."
+    ],
+    "toolbar_rule": "RunsInEdt(writeIntent=false) with a single EdtRule. Matching-tag FixtureRule.kt resolves annotation and wraps one base.evaluate in runInEdtAndWait(false); it does not generate parameters.",
+    "attached_rule": "RunsInEdt defaults writeIntent=true. IntelliJ RuleChain order is EdtRule -> ProjectRule -> DisposableRule -> ActionPopupMenuRule -> FlagRule(DETACHABLE_ATTACHED_TOOLWINDOWS,true). Each wraps one statement; JUnit Before setUp runs once per method within the rule wrappers. The flag-off method overrides false within that invocation; FlagRule clears it afterward.",
+    "shared_setup": "setUp replaces application PropertiesComponent and WorkBenchManager and project DetachedToolWindowManager; creates WorkBench(project,DESIGNER,null,disposable,0), AttachedToolWindow(PALETTE definition, mocked drag listener/model,false), then FakeUi(createFakeWindow=true,parentDisposable=disposable). ProjectRule and helper fake services are harness adaptations, not extra test methods.",
+    "environment_inputs": [
+      "getActionMask maps macOS to META_DOWN_MASK and other platforms to CTRL_DOWN_MASK; testCommandFStartsFiltering computes its input at runtime. Host OS is not a declared parameter provider.",
+      "Production includes NewUI.isEnabled-dependent painting/search preferred height. Selected suites do not declare NewUI parameterization; no old/new UI visual snapshots or platform-expanded execution are claimed.",
+      "Global suite/platform initialization, UI look-and-feel, localized action labels, icons, keymap and prebuilt Android Studio SDK affect these Swing tests. Matching-tag IntelliJ source is supplementary build-family evidence, not proof of byte-identical SDK dependency sources."
+    ]
+  },
+  "target_inventory": [
+    {
+      "target": "//tools/adt/idea/adt-ui:intellij.android.adt.ui_tests",
+      "suite": "com.android.tools.adtui.AdtUiTestSuite",
+      "test_jar": "intellij.android.adt.ui_test.jar",
+      "leaf_classes": [
+        "com.android.tools.adtui.TabbedToolbarTest",
+        "com.android.tools.adtui.workbench.AttachedToolWindowTest"
+      ],
+      "selected_source_leaf_invocations": 57,
+      "split_target_configuration": null,
+      "declared_shard_count": null,
+      "generated_input_variants": "The complete adt-ui BUILD contains one iml_module and no explicit split_test_targets, shard count, old-AGP target generation or version-property overrides. Default iml_module/_gen_tests dispatch creates this single normal target. Arbitrary global/user configuration or other modules importing this jar remain outside this bounded claim.",
+      "status": "source_resolved_not_executed"
+    }
+  ],
+  "uncredited_suite_infrastructure": [
+    {
+      "suite": "com.android.tools.tests.LastInIdeaTestSuite",
+      "method": "checkForLeaks",
+      "source_path": "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+      "declaration_line": 30,
+      "source_sha256": "67b883002362195992b7111d0e8d88cda30ccfeeae355a2ada761bb83f95c274",
+      "execution_condition": "Inherited IdeaTestSuiteBase finalizer runs after successful JarTestSuiteRunner suite; method assumes idea.leak.check.enabled=true. It is not inherited by either leaf class or executed once per selected method.",
+      "status": "identified_outside_selected_leaf_scope_uncredited",
+      "reason": "Tracked for the later exhaustive module/infrastructure census; no N/A classification or full target coverage claimed."
+    }
+  ],
+  "fixture_provenance": {
+    "data_files": [],
+    "reason": "Selected complete methods and setUp do not read test-data or snapshot files. PalettePanelToolContent and PropertiesComponentMock are test-helper component/property fixtures; they are retained as unchanged source artifacts below, not misrepresented as data files. Icons, Swing, toolkit, keymap, application/project services and FakeUi are harness/library dependencies.",
+    "helper_fixture_paths": [
+      "adt-ui/src/test/java/com/android/tools/adtui/workbench/PalettePanelToolContent.java",
+      "adt-ui/src/test/java/com/android/tools/adtui/workbench/PropertiesComponentMock.java"
+    ],
+    "literal_inputs": "Labels, callbacks, context strings, property values, points, key events, search strings and expected history are inline in the original cited method bytes."
+  },
+  "behavioral_limits": [
+    "TabbedToolbar is an embedded tool-window-like tab bar; AttachedToolWindow belongs to designer WorkBench. These inventories do not establish the IDE main window, editor tabs or IntelliJ global ToolWindow fidelity.",
+    "The selected tests assert component presence, labels, callbacks, property state and workflows. They are not visual screenshot/golden tests; full-app resizing, focus, accessibility, scrolling, rendering and performance still require separate ports and live checks.",
+    "Future Rust ports must retain assertions and distinguish a GPUI replacement of Swing/IntelliJ services from removal of user-facing behavior. No inapplicable classifications are justified solely by using GPUI.",
+    "The button-popup floating test verifies DETACHED after its second toggle; the header-gear test verifies FLOATING. These source expectations are retained exactly; a future behavioral implementation must investigate any discrepancy rather than silently harmonizing, skipping or weakening either assertion.",
+    "Existing 35 canonical rows and fresh source-bound run evidence remain unchanged from the inherited evidence snapshot. This task adds only unported/not_run cases and no new run credit."
+  ],
+  "selected_cases": [
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "componentIsAddedElement",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 33,
+      "end_line": 38,
+      "declaration": "fun componentIsAddedElement() {",
+      "declaration_sha256": "9f9ce33ac8d7c5f1c2298abc0bbbdf4e1a59c0cf774dd8d53d0bd7c5e728baa1",
+      "method_region_sha256": "f3c25c6b75e9539610ac8411ec0b782e8fd1a0401880ccdcb40d2fff9ee100f3",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Supplied JLabel is present in the toolbar descendant tree."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "tabIsAdded",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 41,
+      "end_line": 49,
+      "declaration": "fun tabIsAdded() {",
+      "declaration_sha256": "1f437b355379b117a5077b837f2f8796cccd161556746b871f9bf74fbc0505f7",
+      "method_region_sha256": "29299f5d7aee0b8a9fa362197e654a0fe4eb9cb2ace3ec39eecc562a08502a54",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Adding First creates a descendant JLabel with that text."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "closedIsCalledWhenClicked",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 52,
+      "end_line": 64,
+      "declaration": "fun closedIsCalledWhenClicked() {",
+      "declaration_sha256": "ebe510c6e1c3b5d5c4e39d00be3467ac3f6c1944acd38048764bc7f313783257",
+      "method_region_sha256": "583cdf43fbb48efa136ad37ea87ddb6ae4dcf0404198e3f26d17dbb1a14bd464",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Clicking each listener-bearing CommonButton in tabsPanel invokes the supplied close callback."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "noCloseButtonWhenNoListener",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 67,
+      "end_line": 77,
+      "declaration": "fun noCloseButtonWhenNoListener() {",
+      "declaration_sha256": "091309fc9126b10aa26f393ed032176dcc25d7f215903bbf7ececfbe9ce03b24",
+      "method_region_sha256": "ce84ec508acab3a56b25f889d30f36e3e4da840d0585d0ca10c50c3a8dbff8df",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Adding a tab without a close callback creates no listener-bearing CommonButton in tabsPanel."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "iconButtonsCallbackWhenClicked",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 80,
+      "end_line": 92,
+      "declaration": "fun iconButtonsCallbackWhenClicked() {",
+      "declaration_sha256": "071fa468d1803e502390a310ebb93c11157362e29694a84324f194daa9a966a1",
+      "method_region_sha256": "248755a2149c89a2b4ef61449e72511418de3ce1e3455e6c8c99bb7f3a284147",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Clicking listener-bearing CommonButtons invokes the ADD icon action callback."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "can select tab by index",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 95,
+      "end_line": 112,
+      "declaration": "fun `can select tab by index`() {",
+      "declaration_sha256": "be04e13d569e9f50a3744246a19e2cd8530e97e6611c23da0239ae54d977c266",
+      "method_region_sha256": "309332389ee40c0ccbb28f978ac896a2f0068556ab5b1299f2fdff193e1d41d1",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Three tabs count as three; selecting index 1 invokes Second. After clearTabs and adding Fourth/Fifth, count is two and index 1 invokes Fifth."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "adding tab should not trigger select listener",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "source_sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "declaration_line": 115,
+      "end_line": 121,
+      "declaration": "fun `adding tab should not trigger select listener`() {",
+      "declaration_sha256": "a52cfa4aa958d90468c83c2db1c85bfd03c1fdb6ac16bc3b85295fb328de8c53",
+      "method_region_sha256": "19c5ccce8197ad0c7a2a28d59d988e44af4f1113aa08f95163b2384d091b8ed7",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Adding First does not invoke its selection callback; the selected sentinel remains nope."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefault",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDefault",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 104,
+      "end_line": 107,
+      "declaration": "fun testDefault() {",
+      "declaration_sha256": "db2a319ce37219d179dbab0d2f03e38cdf3e7e6f5e2c2875ef825e037ede71a2",
+      "method_region_sha256": "2df4e3d923599379b9234fe8128ad2ef8e562e69ec1d672681ff7a5821e8cc64",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Tool name is PALETTE; definition is the same PalettePanelToolContent definition instance."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToolOrder",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToolOrder",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 110,
+      "end_line": 115,
+      "declaration": "fun testToolOrder() {",
+      "declaration_sha256": "e385ecd42646a057fdfefab8442961e4e88151242666ab0dca72df6659aad64d",
+      "method_region_sha256": "1ec26307639fa62f5fce586f42395658744efb2b361489ff098f90f1c66ae7c5",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Setting tool order to 77 then 3 is reflected by the getter."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testContext",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testContext",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 118,
+      "end_line": 121,
+      "declaration": "fun testContext() {",
+      "declaration_sha256": "de7ed0b2a5690e1e13b8988a263f5026933ba62ccd3d160e5e30d5c733c20c37",
+      "method_region_sha256": "df82b03d386906bd12db17c19a932a2e2454fa29f7a161036ad43c63b5293efc",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Context getter returns the mocked SideModel context Studio."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testContentContext",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testContentContext",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 124,
+      "end_line": 131,
+      "declaration": "fun testContentContext() {",
+      "declaration_sha256": "6133480f22ce108418ef93c4c7e8214469210dd9e1ca892ef23767e8dedb94b0",
+      "method_region_sha256": "6068ced746c02e518d29a6e6bd97389e46dda887a650dc990a7808e8d5a33a04",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Content is PalettePanelToolContent; setting Android then Google propagates to its tool context."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefaultPropertyValues",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDefaultPropertyValues",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 134,
+      "end_line": 146,
+      "declaration": "fun testDefaultPropertyValues() {",
+      "declaration_sha256": "6ef8e3fea20ca829d9786503a7421e14edb532dc3943566c35f440fd22f87a45",
+      "method_region_sha256": "2a9e02971f6c6533b56986669907ef69eaf7ae362417c6f5455f0d945ef08ad8",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Defaults are left=true, minimized/split/auto-hide/floating=false, and corresponding DESIGNER.PALETTE persisted booleans match."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testFloatingAndDetachedIgnoredWhenFlagIsOff",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testFloatingAndDetachedIgnoredWhenFlagIsOff",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 149,
+      "end_line": 157,
+      "declaration": "fun testFloatingAndDetachedIgnoredWhenFlagIsOff() {",
+      "declaration_sha256": "cdc607abcd53c3216ee333fa17461adf4cada769fceff9c14e331df51849cb24",
+      "method_region_sha256": "f6e6ca05374008f96b19c533321b6aacd54359f889e2039e7c92fb7f88cc9fcb",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Persist FLOATING and DETACHED true, then disable DETACHABLE_ATTACHED_TOOLWINDOWS; both getters return false."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testGettersAndSetters",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testGettersAndSetters",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 160,
+      "end_line": 180,
+      "declaration": "fun testGettersAndSetters() {",
+      "declaration_sha256": "97d158c75cb4a25e345a0b24415c63498c4fedbb4aa633c6f67d90843b1292b7",
+      "method_region_sha256": "e69bf84661b9db21137f8fe24ab7a1e92af1df43f2e0d24be2038febddfdba35",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Setting left=false, minimized/split/auto-hide/floating=true is reflected in getters and matching persisted property keys."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefinitionContext",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDefinitionContext",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 183,
+      "end_line": 201,
+      "declaration": "fun testDefinitionContext() {",
+      "declaration_sha256": "16a71af5c1b4785faa6298662ddcbff59144796f5ae2033e85e77e02b3f48eab",
+      "method_region_sha256": "35acc65c278d3fc88d266f3329d297d432b894e710953ef5170a54d6ab4d25ed",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Minimized state persists separately for empty and SPLIT workbench contexts; changing SPLIT leaves the empty-context state true."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSetPropertyAndUpdateWillNotifyModelAndChangeContent",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSetPropertyAndUpdateWillNotifyModelAndChangeContent",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 204,
+      "end_line": 234,
+      "declaration": "fun testSetPropertyAndUpdateWillNotifyModelAndChangeContent() {",
+      "declaration_sha256": "6fe78fe280b87eda60c04b997244ac3910e72f2f86867e67c2f4ee440b24ab76",
+      "method_region_sha256": "e99bbd304128865791febb0e2f763df8631c7809418d18ff6cb1dfb8def1b94c",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "LEFT=false, MINIMIZED/SPLIT/AUTO_HIDE=true update persisted properties and retain content; SideModel receives each corresponding update. FLOATING=true leaves content null and notifies DETACHED."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testMinimizeDefaultSetInConstructor",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testMinimizeDefaultSetInConstructor",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 237,
+      "end_line": 245,
+      "declaration": "fun testMinimizeDefaultSetInConstructor() {",
+      "declaration_sha256": "2906debbd9da20c000410158cf1c91b51c3f633148e2f42dc11c36384486c8d5",
+      "method_region_sha256": "a3e1554e882e1b9fc01ea980d429f5a86481322d4d9f0762c87559cf486c632a",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Initial minimized=false; a fresh workbench context and constructor minimizedByDefault=true produce minimized=true."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testMinimizeAutoHideIsNotGlobal",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testMinimizeAutoHideIsNotGlobal",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 248,
+      "end_line": 256,
+      "declaration": "fun testMinimizeAutoHideIsNotGlobal() {",
+      "declaration_sha256": "9557ebb8255ae5bfc0f5ec466c05192c5ace296d95ca1b2ef44d463e16880304",
+      "method_region_sha256": "f75622ccfb8d1c03992fa2804c3a470f815d486e19b30c0c1af0fdf8c9a3cbb9",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "With auto-hide enabled, repeated minimized toggles do not persist global DESIGNER.PALETTE.MINIMIZED; it remains false."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAutoClose",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testAutoClose",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 259,
+      "end_line": 266,
+      "declaration": "fun testAutoClose() {",
+      "declaration_sha256": "b0a498021c294b4314f0b37c97d9694ed2b4f43e9f287666a67922f821734bed",
+      "method_region_sha256": "1001a465858a819c16a294591367aa48c79f4550612f6ff080ff7fe2eb05a84c",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Content auto-hide close callback sets minimized=true and notifies MINIMIZED."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testRestore",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testRestore",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 269,
+      "end_line": 275,
+      "declaration": "fun testRestore() {",
+      "declaration_sha256": "28965802af18760051db6ffae7301ff1fab6e1362b93f56a1d45dd0442681bb3",
+      "method_region_sha256": "510c97270d1f77a1a29439210794423189df66fcd9573daf70817adb93078f56",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Content restore callback sets minimized=false and notifies MINIMIZED."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testRestoreDefaultLayout",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testRestoreDefaultLayout",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 278,
+      "end_line": 290,
+      "declaration": "fun testRestoreDefaultLayout() {",
+      "declaration_sha256": "e461560866887fa168cc20f14811d06f5a1dc3d2f6e211339775501704d1721a",
+      "method_region_sha256": "d592bd6ff985c320eb2c12ef5c47cf9901d4343c83ea12b0657c285b3a851494",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "After altering minimized/left/split/auto-hide, restore yields false/true/false/false."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testStoreAndRestoreDefaultLayout",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testStoreAndRestoreDefaultLayout",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 293,
+      "end_line": 312,
+      "declaration": "fun testStoreAndRestoreDefaultLayout() {",
+      "declaration_sha256": "70831a10af45321c86a189348a47611634b5af72f4c48656e4f11298f412df12",
+      "method_region_sha256": "bd9819ac90d71f0e51a086c183c0832e7e180ec4fe91af516cad3753c631daf6",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Store minimized=true,left=false,split=true,auto-hide=true; later mutations and restore recover exactly those four asserted values. Floating is changed but not asserted by this method."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDraggedEvent",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDraggedEvent",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 315,
+      "end_line": 329,
+      "declaration": "fun testDraggedEvent() {",
+      "declaration_sha256": "bf012dbd720beb8c7f60942010647ee8c83d4bd1044ccfafc32dbcc106746257",
+      "method_region_sha256": "3feeb232e02c9d8d91dc714d418f241923b55a71d5ec573fedd08a0a193dbaf4",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Dragging at (20,150) on a 20x50 minimized button calls buttonDragged with dragPoint/mousePoint=(20,150) and a JLabel drag image with a non-null icon."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDropEvent",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDropEvent",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 332,
+      "end_line": 348,
+      "declaration": "fun testDropEvent() {",
+      "declaration_sha256": "26656848a68e39699ea73e5dfdff4d99d137c3f146e0a6ec63e5978ae194c167",
+      "method_region_sha256": "e62ea41631ef72efcbe013603a33b951c53011c12bdb30559a802f74d2f33c55",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Drag at (20,150), release at (800,450): buttonDropped retains the initial dragPoint and reports release mousePoint, with a JLabel/icon drag image."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testButtonClickTogglesMinimizedState",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testButtonClickTogglesMinimizedState",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 351,
+      "end_line": 364,
+      "declaration": "fun testButtonClickTogglesMinimizedState() {",
+      "declaration_sha256": "8b28ff79d0c47ad7a88d5528dbbe7cb8f35bff0f83195fc193dbfe011e838a9c",
+      "method_region_sha256": "048d43de2c6cad98e12de1f2febce4ee2e5eafd323d8807c69ebaaaa3bf73798",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Two button clicks toggle minimized false->true->false and notify MINIMIZED exactly twice."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAddedGearActionFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testAddedGearActionFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 367,
+      "end_line": 374,
+      "declaration": "fun testAddedGearActionFromButtonRightClick() {",
+      "declaration_sha256": "5b0bc048c74fd38d7bf8135000adfc061d78bddfecdc4801fbcc7f8160986d87",
+      "method_region_sha256": "01db114a9adf70e40980100cbdc570efd2fc0a4f75216f9e0d00c725f2c200ca",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Right-click popup contains GearAction; invoking it sets content gear-action-performed=true."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftTopFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftTopFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 377,
+      "end_line": 379,
+      "declaration": "fun testSelectLeftTopFromButtonRightClick() {",
+      "declaration_sha256": "52654e1088e4a78a08e4f43f3c46e11c5d22ce8b35af7191dbe3b8c9dc56612f",
+      "method_region_sha256": "48e4b672c418c306b8ff7faf6b3802ec69cda25fdb403912896e336322ed47b9",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Shared location helper selects LeftTop from opposite left/split state and verifies left=true,split=false and SPLIT model update."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftBottomFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftBottomFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 382,
+      "end_line": 384,
+      "declaration": "fun testSelectLeftBottomFromButtonRightClick() {",
+      "declaration_sha256": "d3f6aa67d9164a87c486b6bb203567f769c2d989c5db45963bea0ef95ed8a68a",
+      "method_region_sha256": "4b9971c92a9d2ae5379130f4a8c3a39760c3e7467c42ed6155ba33fae28b629e",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Shared location helper selects LeftBottom from opposite state and verifies left=true,split=true and SPLIT model update."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightTopFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightTopFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 387,
+      "end_line": 389,
+      "declaration": "fun testSelectRightTopFromButtonRightClick() {",
+      "declaration_sha256": "eb893f7e1d597abba5c149e6c2e1e6ef3a400e025454aadf8f132abc0f93b082",
+      "method_region_sha256": "85fc5a9733396bc1438b926ecdaa84d7e36b1d91de8729acb87afa8af8c19237",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Shared location helper selects RightTop from opposite state and verifies left=false,split=false and SPLIT model update."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightBottomFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightBottomFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 392,
+      "end_line": 394,
+      "declaration": "fun testSelectRightBottomFromButtonRightClick() {",
+      "declaration_sha256": "b2c4a29c0c8ef0c7122c842f5f54f453d7790df014d85fde8b47677114ac1810",
+      "method_region_sha256": "6d87f061da7c411f3f79d84a4e9dff61f9d4d00d9e1e7c8de9539ec5e9dacec3",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Shared location helper selects RightBottom from opposite state and verifies left=false,split=true and SPLIT model update."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 410,
+      "end_line": 418,
+      "declaration": "fun testSelectLeftFromButtonRightClick() {",
+      "declaration_sha256": "68347714c825cd8827fe0c5363df3d0963a849e9a07b94397bf6fefcba72162e",
+      "method_region_sha256": "2ea0f2cbb879e42011165f50f1ef184f76e6955d32f863e4683939d62f2f8235",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Selecting Left Top from right side sets left=true and split=false."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 421,
+      "end_line": 429,
+      "declaration": "fun testSelectRightFromButtonRightClick() {",
+      "declaration_sha256": "0c18a892146f2bcf3af38a009a32a3ba90c1835bd61feb1569468c603f9a5a12",
+      "method_region_sha256": "cbfa22d98408821157d95d5e1fff7751e19e5b35a43ac54c4ce7b8ae8756337e",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Selecting Right Top from left side sets left=false and split=false."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectSwapFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectSwapFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 432,
+      "end_line": 440,
+      "declaration": "fun testSelectSwapFromButtonRightClick() {",
+      "declaration_sha256": "4fa95aa81ff7f0912fc8da0c0b8fbaa97371df9579deb2d71706f76bdf7bc4c6",
+      "method_region_sha256": "e0780fde0af8d9e902075650ef8a3857ddacea06eabd779fcf4719d7c4842cee",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Selecting Swap from button popup invokes SideModel.swap."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleDockModeFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToggleDockModeFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 443,
+      "end_line": 457,
+      "declaration": "fun testToggleDockModeFromButtonRightClick() {",
+      "declaration_sha256": "347d7dee9a37626cdd6aa9950a3f65751002f7d7243387ff2e5d7972700f50bb",
+      "method_region_sha256": "967c07a0f68ae696e170d4ffee98a75fda6ae2538600d29a6e5a963942ab386d",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Invoking Docked Mode twice toggles auto-hide false->true->false and notifies AUTO_HIDE exactly twice."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleFloatingModeFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToggleFloatingModeFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 460,
+      "end_line": 476,
+      "declaration": "fun testToggleFloatingModeFromButtonRightClick() {",
+      "declaration_sha256": "a7351d99a2108ec3b6e31e22a7c242f6a176198ce640d8e34fa54e2e5d253a32",
+      "method_region_sha256": "d7eefbfcce74126225fbbb4cc70c738bf3d54cf94f450aa2a5ee84be99090ffd",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Floating Mode first sets floating=true,detached=true and notifies DETACHED; second sets floating=false,detached=true and again verifies DETACHED, exactly as written upstream."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleAttachedModeFromButtonRightClick",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToggleAttachedModeFromButtonRightClick",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 479,
+      "end_line": 487,
+      "declaration": "fun testToggleAttachedModeFromButtonRightClick() {",
+      "declaration_sha256": "891b0b021f2988cc4c3b77b4aece032f433c08d12a13d46ad35e7c09e65af069",
+      "method_region_sha256": "acc14330be326dcd545d99dfe7bf3331a29b7c97dcc8482e9ec90895d2ad9f44",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Selecting None sets detached=true,floating=false and notifies DETACHED."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testHideFromButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testHideFromButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 490,
+      "end_line": 499,
+      "declaration": "fun testHideFromButtonInHeader() {",
+      "declaration_sha256": "c592b146dcf8c71c973d46a51939964089978cf15bf6f9b24cc1a996f47b203c",
+      "method_region_sha256": "df486b0dbdc65ec9f133219b5fc45fe92ec43c02109095d9e9fa5786daf4bdf3",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Header Hide click sets minimized=true and notifies MINIMIZED."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAdditionalActionFromButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testAdditionalActionFromButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 502,
+      "end_line": 509,
+      "declaration": "fun testAdditionalActionFromButtonInHeader() {",
+      "declaration_sha256": "b131f0d1e9db905d8fdacff7a30e93fb248c15fe9dc1c6419095b3a6b6375988",
+      "method_region_sha256": "e5b6de5bcb5dc9e5b595aca313ab145d77163e941bb22bccfdf78e15babbc67b",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Header AdditionalAction click sets content additional-action-performed=true."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftTopFromGearButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftTopFromGearButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 512,
+      "end_line": 514,
+      "declaration": "fun testSelectLeftTopFromGearButtonInHeader() {",
+      "declaration_sha256": "acc4a885e6ad00e2e0d86816aa691e59e9249ca269f6d1de0152da16ac7a3690",
+      "method_region_sha256": "66d4099fc543b6100aa7a148c85741cf9551a7f304d950349df21f6464500dcc",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Shared gear helper selects LeftTop from opposite state and verifies left=true,split=false and SPLIT model update."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftBottomFromGearButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftBottomFromGearButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 517,
+      "end_line": 519,
+      "declaration": "fun testSelectLeftBottomFromGearButtonInHeader() {",
+      "declaration_sha256": "92c5be9f923a6d5e91063c9e3ffe70c219f7d6d71bd66f00fe40db5f70aef3c2",
+      "method_region_sha256": "27bb88a15081afe5973d471427f2f30a2527d372d6af8e5e3b5e9f05e2534708",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Shared gear helper selects LeftBottom from opposite state and verifies left=true,split=true and SPLIT model update."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightTopFromGearButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightTopFromGearButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 522,
+      "end_line": 524,
+      "declaration": "fun testSelectRightTopFromGearButtonInHeader() {",
+      "declaration_sha256": "47bb320a682668c42faa986e097afe9b5c360a963aeedb0a476b3a3a2a18f43f",
+      "method_region_sha256": "2143821dc5662f39557d0b0773899dce639adc768aa216e55cf8a768863893d0",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Shared gear helper selects RightTop from opposite state and verifies left=false,split=false and SPLIT model update."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightBottomFromGearButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightBottomFromGearButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 527,
+      "end_line": 529,
+      "declaration": "fun testSelectRightBottomFromGearButtonInHeader() {",
+      "declaration_sha256": "b3db6670d4b434fa720e6da33b5a2c2c2dff464614df7043cd0e59fa68f3bc2e",
+      "method_region_sha256": "ce2ed635ee16dee5d778e5cb7a3c115bad7763ebba14c465563a7fbab9195f37",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Shared gear helper selects RightBottom from opposite state and verifies left=false,split=true and SPLIT model update."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftFromGearButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftFromGearButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 545,
+      "end_line": 553,
+      "declaration": "fun testSelectLeftFromGearButtonInHeader() {",
+      "declaration_sha256": "7815652bc64c2875022ae4d680e4316c63128b32be82ed215e83794c9c99aae6",
+      "method_region_sha256": "103ee23080316cec4296dc5e4ca8e8639c46abdb1dcac07de2ad6a4a7853b234",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Selecting Left Top in header gear popup sets left=true,split=false."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightFromGearButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightFromGearButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 556,
+      "end_line": 563,
+      "declaration": "fun testSelectRightFromGearButtonInHeader() {",
+      "declaration_sha256": "3d8db80487090f5c1a0da0e7ce4470329e62cfa0d62a0feea9cf3afedf93b2b6",
+      "method_region_sha256": "1bd4799497a533ba9c65738f50dc63dc9ff23c36c221be656aa3e1548fbb0f8b",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Selecting Right Top in header gear popup sets left=false,split=false."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectSwapFromGearButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectSwapFromGearButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 566,
+      "end_line": 574,
+      "declaration": "fun testSelectSwapFromGearButtonInHeader() {",
+      "declaration_sha256": "53e900dd7f40bba78427d8f726287f9accbf94f9922e0b27fe0ac80e9b7fd9a6",
+      "method_region_sha256": "136fcc544ad746334501adaaa5f8f462009460e1bc9e90b93c95daf2a746f352",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Selecting Swap in header gear popup invokes SideModel.swap."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleDockModeFromGearButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToggleDockModeFromGearButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 577,
+      "end_line": 591,
+      "declaration": "fun testToggleDockModeFromGearButtonInHeader() {",
+      "declaration_sha256": "bd3421efd33e1390c6352ec17df0407009ea34fed64f2b129b62f48500946f00",
+      "method_region_sha256": "feb102babf27044aabec45f673b3cd2297faefe9360b57a40959f919bff86bd7",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Invoking Docked Mode in header popup twice toggles auto-hide false->true->false and notifies AUTO_HIDE exactly twice."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleFloatingModeFromGearButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToggleFloatingModeFromGearButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 594,
+      "end_line": 610,
+      "declaration": "fun testToggleFloatingModeFromGearButtonInHeader() {",
+      "declaration_sha256": "5a3a6dbf77a697fee3971c87a053256ddb8da4c194df6fb43cbd6a53e6571dd7",
+      "method_region_sha256": "47880ce543a2d5f7e20a26c83d44541e81595181d76bf6d9aa6688224c435075",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Floating Mode first sets floating=true,detached=true and notifies DETACHED; second sets floating=false,detached=true and verifies FLOATING, exactly as written upstream."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSearchButtonInHeader",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSearchButtonInHeader",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 613,
+      "end_line": 643,
+      "declaration": "fun testSearchButtonInHeader() {",
+      "declaration_sha256": "c2ed386441aab2381bd40cd9fe8f5ac8a8772e16391f0b0f99132ea437a3bf89",
+      "method_region_sha256": "26f6caf50daeec88cb82f9bb97457df78bd0bb47a676cbaa0cd053e1773df81d",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Header starts visible/search hidden; search button enabled tracks isFilteringActive false/true; click hides header/shows search, and focus loss with empty text restores header/hides search."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSearchTextChangesAreSentToContent",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSearchTextChangesAreSentToContent",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 646,
+      "end_line": 655,
+      "declaration": "fun testSearchTextChangesAreSentToContent() {",
+      "declaration_sha256": "ea9ebac442aa3826977f96c75fb222a246c722ba769377e0c939b007b676d525",
+      "method_region_sha256": "cb789f5808b63c1052c32a63d29a6aae3440ef6cc7d339109acc532e64e4f9a6",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "After opening search, text el propagates as the content filter."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAcceptedSearchesAreStoredInHistory",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testAcceptedSearchesAreStoredInHistory",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 658,
+      "end_line": 675,
+      "declaration": "fun testAcceptedSearchesAreStoredInHistory() {",
+      "declaration_sha256": "dc347d68cb91a2b14762097745344bae17d63b7633b6903602f664abd13cf10d",
+      "method_region_sha256": "720b70dc60d3884c29b17e49b5161bbcb02aef63fc5793afaadd80ed2f2bbbe6",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "After three staged text sequences and focus loss, persisted DESIGNER.TEXT_SEARCH_HISTORY equals contex newline visible newline eleva."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testStartSearching",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testStartSearching",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 678,
+      "end_line": 685,
+      "declaration": "fun testStartSearching() {",
+      "declaration_sha256": "d6ad41eccf934f7cf846ded1d345c60eb7c8c36c3cc9565180a0fab887cd988a",
+      "method_region_sha256": "d976bb7792ab139b52126ea8093bbc2132b0cb5c52316d8634ee922003adfb2e",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Content.startFiltering(b) opens the field with text b."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testStopSearching",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testStopSearching",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 688,
+      "end_line": 697,
+      "declaration": "fun testStopSearching() {",
+      "declaration_sha256": "073821d8ab11730b1830e5b403ebc03b58bf69f96551a05e130bb5cc0db3796c",
+      "method_region_sha256": "51ff443d57f6527bd553443a1e41c160a77ce15983fa375faab91d02f9516c2e",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Content.stopFiltering hides the field and clears prior width text."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testEscapeClosesSearchFieldIfTextIsEmpty",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testEscapeClosesSearchFieldIfTextIsEmpty",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 700,
+      "end_line": 706,
+      "declaration": "fun testEscapeClosesSearchFieldIfTextIsEmpty() {",
+      "declaration_sha256": "ec55d0fc3655e9556ef07e2686f13bf03884bde71e03a1e7b523864a14bb9718",
+      "method_region_sha256": "8ee6fdd74bb5bfbac1110d1bde0c14764bfe92af37818a295a10a6ac82a67bcb",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Escape dispatched to the empty search editor hides the field."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testContentIsDisposed",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testContentIsDisposed",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 709,
+      "end_line": 713,
+      "declaration": "fun testContentIsDisposed() {",
+      "declaration_sha256": "bd8a54d4174d0fe9267ad2bdc21f246bcabda5888b0c1d6868397580c9cbdfa8",
+      "method_region_sha256": "2a5904264d96d4e8aea87ef381c29a174eac113b835a5bea98246d25368e8972",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Disposing the tool window disposes PalettePanelToolContent."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefaultValueDoesNotOverrideActualValue",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDefaultValueDoesNotOverrideActualValue",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 716,
+      "end_line": 726,
+      "declaration": "fun testDefaultValueDoesNotOverrideActualValue() {",
+      "declaration_sha256": "b8749d12c857dab2d2ea45e39f15ee4f7371fe2a9171fad6b19145e7f0710f11",
+      "method_region_sha256": "1627d350618600dfbc21e997755e8ab60a37f179be871c8db90fff8f3ec9ad11",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Reapplying either default SPLIT value never overwrites an explicitly set opposite current value."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testCommandFStartsFiltering",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testCommandFStartsFiltering",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 729,
+      "end_line": 741,
+      "declaration": "fun testCommandFStartsFiltering() {",
+      "declaration_sha256": "f2eb3728edbba3c7f95f2471b69ef6126b1c91e37ea81629479426f8734f9da0",
+      "method_region_sha256": "b9de7e9ac78b10c28035e9aaa81741001c5d15d3420be62df8f92fccf5e6196d",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "With fake focus on content, platform action-mask+F through IdeKeyEventDispatcher opens search."
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testActionsEnabledAtStartup",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testActionsEnabledAtStartup",
+      "source_path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "source_sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "declaration_line": 744,
+      "end_line": 753,
+      "declaration": "fun testActionsEnabledAtStartup() {",
+      "declaration_sha256": "7bfee1f501c628ba0975bec1a88d8476dc502edc8ceb63caeb4a1fa7edf81efa",
+      "method_region_sha256": "8dfe41a18a8981111e82598af95b5395c6b1a415cdceb2ce98fb45b30b259667",
+      "hash_boundary": "Exact UTF-8 method lines from declaration indentation through closing brace and terminal newline; annotations excluded.",
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "While project runs synchronously in dumb mode, updating actions leaves More Options enabled."
+      ]
+    }
+  ],
+  "source_provenance": {
+    "path": "/workspace/android-studio-references/samples/window-source-provenance.json",
+    "sha256": "b9c01315e66959bcd61fa4951fd39e71dc2c55f75c11643a9de209f73406d130",
+    "initial_missing_path_resolution": [
+      {
+        "attempted": "adt-ui/src/main/java/com/android/tools/adtui/TabbedToolbar.kt",
+        "actual": "adt-ui/src/main/java/com/android/tools/adtui/TabbedToolbar.java"
+      },
+      {
+        "attempted": "adt-ui/src/main/java/com/android/tools/adtui/workbench/AttachedToolWindow.kt",
+        "actual": "adt-ui/src/main/java/com/android/tools/adtui/workbench/AttachedToolWindow.java"
+      }
+    ]
+  },
+  "source_artifacts": [
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "bytes": 4201,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "bytes": 34058,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/BUILD",
+      "sha256": "6be1f61c6600348939ad8058441de095447a8b4debba4b740c26785e249b6d92",
+      "bytes": 2403,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/BUILD",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/intellij.android.adt.ui.iml",
+      "sha256": "0b286f42e3176f753cb0cbb10594e4df4cb8c50074ecf9e9551e7f98e401a76c",
+      "bytes": 2564,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/intellij.android.adt.ui.iml",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/TabbedToolbar.java",
+      "sha256": "7e9b312394b5419b446880151f83cfb04f01f9acb7364b1ab3e01baa93c4e59f",
+      "bytes": 8195,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/TabbedToolbar.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/AttachedToolWindow.java",
+      "sha256": "c9283da2c41a4255cce0c4cf3e0afaa8303d562ec5547a9c0a43bf2d0f486760",
+      "bytes": 34048,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/workbench/AttachedToolWindow.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/TreeWalker.java",
+      "sha256": "5bc0f1e0b69822d9d73eef70989ae1976b0107af76fa0e635454242809d67dc2",
+      "bytes": 6534,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/TreeWalker.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/WorkBench.java",
+      "sha256": "aff811cc12e7f7ab7b76985210fafb39c6196e9a328d5807c478262d9ab10398",
+      "bytes": 37009,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/workbench/WorkBench.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/WorkBenchManager.java",
+      "sha256": "aba982212cc0e9638e723d72ae58387a2d4ad50c206ed4b31cbfc0f5d5bb4bbe",
+      "bytes": 4902,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/workbench/WorkBenchManager.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/SideModel.java",
+      "sha256": "951e15b09bba3c5febcbb0edd39a611d0cb0f83f333c71504d941f12b5f416e4",
+      "bytes": 8930,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/workbench/SideModel.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/ToolWindowDefinition.java",
+      "sha256": "919d551e6670e66e04d30ec6333eca9cd0e808dc7ad0eee29a274aa682d49879",
+      "bytes": 8612,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/workbench/ToolWindowDefinition.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/AttachedLocation.java",
+      "sha256": "da3eb481dd15a03d1c491a230ee5557f5c1f764bd314917b8cb1a97a1da9eae6",
+      "bytes": 1583,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/workbench/AttachedLocation.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/ToolContent.java",
+      "sha256": "a6a37a3f5b9e7436cf268939ff8833cee9d839aef11541f54efc3a54289e8393",
+      "bytes": 3731,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/workbench/ToolContent.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/ToolWindowCallback.java",
+      "sha256": "672d9b470de104939c90f18f1fbdeb908fb165c97468bde5285f7eae192a19c4",
+      "bytes": 1467,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/workbench/ToolWindowCallback.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/PalettePanelToolContent.java",
+      "sha256": "f3dfbc49b97a5f908c0e3c60dfb42d7bc697b9da76902697f38647a949993d35",
+      "bytes": 6880,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/test/java/com/android/tools/adtui/workbench/PalettePanelToolContent.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/PropertiesComponentMock.java",
+      "sha256": "09ade01e48e87329be4113d448570bd8bd04d198403fcf8e19005e38f6a25d62",
+      "bytes": 3885,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/test/java/com/android/tools/adtui/workbench/PropertiesComponentMock.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/swing/popup/ActionPopupMenuRule.kt",
+      "sha256": "61e195e9d27488f6fa31ee5d036adc2068a5a61757291edeeb9d9a307effe9cc",
+      "bytes": 4449,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/test/java/com/android/tools/adtui/swing/popup/ActionPopupMenuRule.kt",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/swing/FakeUi.kt",
+      "sha256": "954a9ebda0a116c6acce17fac589643f3e0b132587ab17a12b8a4d844efc398d",
+      "bytes": 12264,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/test/java/com/android/tools/adtui/swing/FakeUi.kt",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/swing/FakeKeyboardFocusManager.kt",
+      "sha256": "9be9fd48be3066f897b4afff187341b9b62a3525327d09c7e227e490eeb27fb5",
+      "bytes": 3240,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/test/java/com/android/tools/adtui/swing/FakeKeyboardFocusManager.kt",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5",
+      "bytes": 879,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/common/AdtUiUtils.kt",
+      "sha256": "341bda6a6a2b8b938990115acdde1464d19ed963870a5efaaddebc40219fa819",
+      "bytes": 9958,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/common/AdtUiUtils.kt",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/stdui/CommonButton.java",
+      "sha256": "045a1a33fab2d4b122c61c8ec14a6421a10918b0f00124e487e76b1ac7f20070",
+      "bytes": 1239,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/stdui/CommonButton.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/DetachedToolWindowManager.java",
+      "sha256": "f979ae8e14ee319ecd30ee42d912f691aac144807e36aaa0443ddb5efd27876e",
+      "bytes": 8994,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-ui/src/main/java/com/android/tools/adtui/workbench/DetachedToolWindowManager.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+      "sha256": "26cd53f9592d29bc21f531c7e22c142e29922b412a31bd3937a71d720b0614c4",
+      "bytes": 9419,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+      "sha256": "67b883002362195992b7111d0e8d88cda30ccfeeae355a2ada761bb83f95c274",
+      "bytes": 2053,
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": ".idea/libraries/intellij_test_framework.xml",
+      "sha256": "26bf92c000019dedf6664478e6c9fb227cd7cc0169c0db9e42aa662ec093dcd2",
+      "bytes": 408,
+      "local_path": "/workspace/android-studio-references/samples/idea/.idea/libraries/intellij_test_framework.xml",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": ".idea/libraries/junit4.xml",
+      "sha256": "92b9cdcfd1301c969eb9e9541fd9496b2d1a8d452e16cefeb446c85f99c52dae",
+      "bytes": 707,
+      "local_path": "/workspace/android-studio-references/samples/idea/.idea/libraries/junit4.xml",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "studio-flags/src/com/android/tools/idea/flags/StudioFlags.java",
+      "sha256": "4c9a90ed65ef7bea04f68d9797de5be012b087104ba0d79bac21725385536f39",
+      "bytes": 167343,
+      "local_path": "/workspace/android-studio-references/samples/idea/studio-flags/src/com/android/tools/idea/flags/StudioFlags.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "bazel/bazel.bzl",
+      "sha256": "f2d3850c522a794e8ced96915624a7fb0b7fde3c12e862e9e53a067e1279553b",
+      "bytes": 47058,
+      "local_path": "/workspace/android-studio-references/samples/base/bazel/bazel.bzl",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+      "sha256": "da503cfd8096ae4be970e29f5a96d882bbc6eeb31f0c1ec8a47bed9a7d2abc3a",
+      "bytes": 10038,
+      "local_path": "/workspace/android-studio-references/samples/base/testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+      "bytes": 10390,
+      "local_path": "/workspace/android-studio-references/samples/base/testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/DelegatingRunnerBuilder.java",
+      "sha256": "b5b0f2c7f33fcf61e109dc3fb4972f7f3356cd9800c08c42c21a9a905bcc8ce7",
+      "bytes": 1399,
+      "local_path": "/workspace/android-studio-references/samples/base/testutils/src/main/java/com/android/testutils/DelegatingRunnerBuilder.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "flags/src/test/java/com/android/flags/junit/FlagRule.java",
+      "sha256": "6c5a5718ce0703eec28c273564d88911124288354bb0944a14cbebf075055435",
+      "bytes": 1676,
+      "local_path": "/workspace/android-studio-references/samples/base/flags/src/test/java/com/android/flags/junit/FlagRule.java",
+      "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+    }
+  ],
+  "source_findings": [
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/BUILD",
+      "sha256": "6be1f61c6600348939ad8058441de095447a8b4debba4b740c26785e249b6d92",
+      "lines": {
+        "start": 1,
+        "end": 57
+      },
+      "finding": "Complete module BUILD: one iml_module, AdtUiTestSuite, src/test/java and module-level test-data dependencies; no split/version/shard overrides."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "bazel/bazel.bzl",
+      "sha256": "f2d3850c522a794e8ced96915624a7fb0b7fde3c12e862e9e53a067e1279553b",
+      "lines": {
+        "start": 450,
+        "end": 459
+      },
+      "finding": "Module defaults: test enabled, no split/shards."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "bazel/bazel.bzl",
+      "sha256": "f2d3850c522a794e8ced96915624a7fb0b7fde3c12e862e9e53a067e1279553b",
+      "lines": {
+        "start": 630,
+        "end": 658
+      },
+      "finding": "Jar and suite jar property wired into generated target."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "bazel/bazel.bzl",
+      "sha256": "f2d3850c522a794e8ced96915624a7fb0b7fde3c12e862e9e53a067e1279553b",
+      "lines": {
+        "start": 915,
+        "end": 973
+      },
+      "finding": "No split configuration emits one name_tests target."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5",
+      "lines": {
+        "start": 1,
+        "end": 24
+      },
+      "finding": "JarTestSuiteRunner dispatch; IdeaTestSuiteBase inheritance."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+      "sha256": "da503cfd8096ae4be970e29f5a96d882bbc6eeb31f0c1ec8a47bed9a7d2abc3a",
+      "lines": {
+        "start": 1,
+        "end": 238
+      },
+      "finding": "Named jar scanning, class filters, separate successful-suite finalizer; no selected leaf discovery in IDE when suite jar property absent."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+      "lines": {
+        "start": 222,
+        "end": 227
+      },
+      "finding": "Public Test annotations or RunWith identify concrete JUnit4 classes; inherited public methods considered."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/DelegatingRunnerBuilder.java",
+      "sha256": "b5b0f2c7f33fcf61e109dc3fb4972f7f3356cd9800c08c42c21a9a905bcc8ce7",
+      "lines": {
+        "start": 1,
+        "end": 39
+      },
+      "finding": "Normal mode delegates selection; ignored.tests.only is a separate override."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+      "sha256": "26cd53f9592d29bc21f531c7e22c142e29922b412a31bd3937a71d720b0614c4",
+      "lines": {
+        "start": 38,
+        "end": 55
+      },
+      "finding": "Inherited finalizer, Gradle daemon rule, global initialization are suite infrastructure."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+      "sha256": "67b883002362195992b7111d0e8d88cda30ccfeeae355a2ada761bb83f95c274",
+      "lines": {
+        "start": 28,
+        "end": 43
+      },
+      "finding": "Uncredited finalizer checkForLeaks assumes enabled leak checking."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "lines": {
+        "start": 28,
+        "end": 31
+      },
+      "finding": "Concrete class, EDT writeIntent=false and one EdtRule; no test superclass."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+      "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835",
+      "lines": {
+        "start": 66,
+        "end": 102
+      },
+      "finding": "Concrete class, ordered rule chain and Before setup of inline/mock/component fixtures and fake window."
+    },
+    {
+      "source": "platform",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "path": "platform/testFramework/src/com/intellij/testFramework/FixtureRule.kt",
+      "sha256": "5f8face2cca18e298c98106a16c85efa8faeb66e3410406ba23c2e9b2ca17f99",
+      "lines": {
+        "start": 56,
+        "end": 79
+      },
+      "finding": "ApplicationRule wraps exactly one base.evaluate."
+    },
+    {
+      "source": "platform",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "path": "platform/testFramework/src/com/intellij/testFramework/FixtureRule.kt",
+      "sha256": "5f8face2cca18e298c98106a16c85efa8faeb66e3410406ba23c2e9b2ca17f99",
+      "lines": {
+        "start": 202,
+        "end": 236
+      },
+      "finding": "ProjectRule inherits ApplicationRule; no parameter provider."
+    },
+    {
+      "source": "platform",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "path": "platform/testFramework/src/com/intellij/testFramework/FixtureRule.kt",
+      "sha256": "5f8face2cca18e298c98106a16c85efa8faeb66e3410406ba23c2e9b2ca17f99",
+      "lines": {
+        "start": 245,
+        "end": 268
+      },
+      "finding": "RuleChain reverse composition preserves outer/inner order; EdtRule wraps one evaluation using writeIntent annotation."
+    },
+    {
+      "source": "platform",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "path": "platform/testFramework/src/com/intellij/testFramework/FixtureRule.kt",
+      "sha256": "5f8face2cca18e298c98106a16c85efa8faeb66e3410406ba23c2e9b2ca17f99",
+      "lines": {
+        "start": 596,
+        "end": 618
+      },
+      "finding": "DisposableRule cleanup."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "flags/src/test/java/com/android/flags/junit/FlagRule.java",
+      "sha256": "6c5a5718ce0703eec28c273564d88911124288354bb0944a14cbebf075055435",
+      "lines": {
+        "start": 1,
+        "end": 59
+      },
+      "finding": "Override before, clear flag afterward; ExternalResource."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/swing/popup/ActionPopupMenuRule.kt",
+      "sha256": "61e195e9d27488f6fa31ee5d036adc2068a5a61757291edeeb9d9a307effe9cc",
+      "lines": {
+        "start": 1,
+        "end": 123
+      },
+      "finding": "Installs/disposes fake-popup ActionManager; popup iterates action updates, not additional JUnit cases."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/PalettePanelToolContent.java",
+      "sha256": "f3dfbc49b97a5f908c0e3c60dfb42d7bc697b9da76902697f38647a949993d35",
+      "lines": {
+        "start": 1,
+        "end": 228
+      },
+      "finding": "Inline shared fixture: PALETTE left/top/docked ALLOW_ALL width310, Swing component/action/filter/disposal callbacks."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/PropertiesComponentMock.java",
+      "sha256": "09ade01e48e87329be4113d448570bd8bd04d198403fcf8e19005e38f6a25d62",
+      "lines": {
+        "start": 1,
+        "end": 139
+      },
+      "finding": "In-memory properties fixture; no test-data reads."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/swing/FakeUi.kt",
+      "sha256": "954a9ebda0a116c6acce17fac589643f3e0b132587ab17a12b8a4d844efc398d",
+      "lines": {
+        "start": 1,
+        "end": 325
+      },
+      "finding": "Fake window creation requires parent disposable and initializes toolbars. Update helpers may poll/dispatch events; no repeated test-statement execution."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/swing/FakeKeyboardFocusManager.kt",
+      "sha256": "9be9fd48be3066f897b4afff187341b9b62a3525327d09c7e227e490eeb27fb5",
+      "lines": {
+        "start": 76,
+        "end": 84
+      },
+      "finding": "Restores original focus manager on parent disposal."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/common/AdtUiUtils.kt",
+      "sha256": "341bda6a6a2b8b938990115acdde1464d19ed963870a5efaaddebc40219fa819",
+      "lines": {
+        "start": 197,
+        "end": 206
+      },
+      "finding": "Action mask Mac Meta, otherwise Ctrl; runtime host input, not parameter provider."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "studio-flags/src/com/android/tools/idea/flags/StudioFlags.java",
+      "sha256": "4c9a90ed65ef7bea04f68d9797de5be012b087104ba0d79bac21725385536f39",
+      "lines": {
+        "start": 506,
+        "end": 508
+      },
+      "finding": "Exact detachable-attached-toolwindow flag declaration."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/TabbedToolbar.java",
+      "sha256": "7e9b312394b5419b446880151f83cfb04f01f9acb7364b1ab3e01baa93c4e59f",
+      "lines": {
+        "start": 1,
+        "end": 248
+      },
+      "finding": "Complete production: title/tabs/actions, delayed selection, optional close callback, middle click/Space and hover/active painting. Selected tests are not exhaustive production visual coverage."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/AttachedToolWindow.java",
+      "sha256": "c9283da2c41a4255cce0c4cf3e0afaa8303d562ec5547a9c0a43bf2d0f486760",
+      "lines": {
+        "start": 1,
+        "end": 1045
+      },
+      "finding": "Complete production: embedded designer WorkBench window; contextual/default/current properties, transient auto-hide, flag-gated detach/floating, content cleanup, menu locations, model updates, drag/drop, search/history/focus/Find. NewUI branches are not declared leaf parameterization."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": ".idea/libraries/intellij_test_framework.xml",
+      "sha256": "26bf92c000019dedf6664478e6c9fb227cd7cc0169c0db9e42aa662ec093dcd2",
+      "lines": {
+        "start": 1,
+        "end": 11
+      },
+      "finding": "References prebuilt AI SDK testFramework.jar/android-studio-sources.zip. Matching-tag source does not establish exact dependency bytes."
+    }
+  ],
+  "supplementary_framework_sources": {
+    "repository": "https://github.com/JetBrains/intellij-community",
+    "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+    "tag": "idea/262.9437.185",
+    "baseline_relationship": "Matching build-family tag only. The pinned AOSP idea library XML references the prebuilt AI SDK testFramework.jar/android-studio-sources.zip; those exact archives are not retained here. Supplementary source does not establish SDK byte equivalence or resolve global census.",
+    "artifacts": [
+      {
+        "source": "platform",
+        "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+        "path": "platform/testFramework/src/com/intellij/testFramework/FixtureRule.kt",
+        "sha256": "5f8face2cca18e298c98106a16c85efa8faeb66e3410406ba23c2e9b2ca17f99",
+        "bytes": 20873,
+        "local_path": "/workspace/android-studio-references/samples/platform/platform/testFramework/src/com/intellij/testFramework/FixtureRule.kt",
+        "preservation": "Unchanged original bytes; any existing license/copyright notices retained. No upstream source redistributed in product repository."
+      }
+    ],
+    "license": "Apache-2.0; original JetBrains notice retained"
+  },
+  "supplementary_junit_sources": {
+    "version": "4.13.2",
+    "source_jar": "/workspace/android-studio-references/samples/junit4/junit-4.13.2-sources.jar",
+    "sha256": "34181df6482d40ea4c046b063cb53c7ffae94bdf1b1d62695bdf3adf9dea7e3a",
+    "license": "EPL-1.0",
+    "files": [
+      {
+        "path": "org/junit/internal/builders/AllDefaultPossibilitiesBuilder.java",
+        "sha256": "c2e5a35ff12f34162b5248c09e48330291bba6f31fcc0c0ffdc5cb42898f1193",
+        "bytes": 1726
+      },
+      {
+        "path": "org/junit/internal/builders/JUnit4Builder.java",
+        "sha256": "aab4c9a420dc515ca4d7f5d80760262ae66143cf38c225f35606ef9297b6cc40",
+        "bytes": 333
+      },
+      {
+        "path": "org/junit/runners/JUnit4.java",
+        "sha256": "8aa2d062383f2a4a8faf25ea71b89ac8d0ea401c8853508d2140b169e5a64f79",
+        "bytes": 938
+      },
+      {
+        "path": "org/junit/runners/BlockJUnit4ClassRunner.java",
+        "sha256": "218ac2f796567bcc7fb53a133e8fb675e037cbbc534900c0541a91c8c077ad12",
+        "bytes": 18113
+      },
+      {
+        "path": "org/junit/runners/model/TestClass.java",
+        "sha256": "48bce8f1ff282dce30cd654b4de17fc8f223ef4b726d20bd71224b588e22ec2c",
+        "bytes": 13005
+      },
+      {
+        "path": "org/junit/internal/runners/statements/InvokeMethod.java",
+        "sha256": "dbfd34c3cd7496d039e69dc674c2b6bbf24f27c6b3304789e61c7c5266a514b2",
+        "bytes": 522
+      },
+      {
+        "path": "org/junit/rules/ExternalResource.java",
+        "sha256": "2530d94988c1409b1dc439d65ecccb2d82b109b52a329ab6ee845c7c733a143c",
+        "bytes": 2192
+      }
+    ],
+    "findings": [
+      {
+        "path": "org/junit/internal/builders/AllDefaultPossibilitiesBuilder.java",
+        "lines": {
+          "start": 27,
+          "end": 42
+        },
+        "finding": "Defaults fall through to JUnit4 for these unannotated non-JUnit3 classes."
+      },
+      {
+        "path": "org/junit/runners/BlockJUnit4ClassRunner.java",
+        "lines": {
+          "start": 130,
+          "end": 144
+        },
+        "finding": "Annotated Test methods are children."
+      },
+      {
+        "path": "org/junit/runners/model/TestClass.java",
+        "lines": {
+          "start": 63,
+          "end": 72
+        },
+        "finding": "Scans class/superclass annotations; Object contributes no inherited cases."
+      },
+      {
+        "path": "org/junit/runners/BlockJUnit4ClassRunner.java",
+        "lines": {
+          "start": 303,
+          "end": 336
+        },
+        "finding": "Per-method instance wrapped with Before/After/rules; leaf invoked once."
+      },
+      {
+        "path": "org/junit/rules/ExternalResource.java",
+        "lines": {
+          "start": 43,
+          "end": 70
+        },
+        "finding": "One before/base.evaluate/after statement; no parameter generation."
+      }
+    ]
+  },
+  "reviews": {
+    "code": {
+      "reviewer": "/root/parity_ledger/code_review",
+      "verdict": "pass",
+      "scope": "Independent static metadata correctness; complete selected suites and Java production, 57 declarations/region hashes/assertions, 33 archive artifact bytes, target/rule evidence, immutable prior35/frozen inputs. No Cargo, JVM test execution or app UI claims.",
+      "findings": [],
+      "round": 1
+    },
+    "quality": {
+      "reviewer": "/root/parity_ledger/quality_review",
+      "verdict": "pass",
+      "scope": "Independent static quality/documentation review: 57 citations/method hashes, 33 source artifact hashes, 27 findings, supplementary provenance, original notices, prior35, unchanged validator/frozen inputs and actual CLI log limits. git diff --check passed; no Cargo, edits, app UI/runtime/performance claims.",
+      "findings": [],
+      "round": 1
+    },
+    "performance": {
+      "reviewer": "/root/parity_ledger/performance_review",
+      "verdict": "pass",
+      "scope": "Independent static performance review: canonical catalog/ledger about250KiB, 57 new references to two small source files, no added data fixtures or app hooks/compile inputs, streaming archive hashing. No benchmarks/Cargo/edits; full-census throughput remains unmeasured.",
+      "findings": [],
+      "round": 1
+    },
+    "ui": {
+      "reviewer": "/root/parity_ledger/ui_review",
+      "verdict": "pass",
+      "scope": "Independent static UI inventory review: 57 declarations/region hashes and functional requirements preserve callbacks, placement menus, state, drag/drop, search/history, shortcuts and disposal, including notification discrepancy. Embedded designer controls are distinguished from main-window/editor/screenshot/NewUI visual parity. No GUI, Cargo, screenshots or implemented-UI credit.",
+      "findings": [],
+      "round": 1
+    },
+    "ux": {
+      "reviewer": "/root/parity_ledger/ux_review",
+      "verdict": "pass",
+      "scope": "Independent static workflow inventory review: original assertions, floating notification discrepancy, search-history order, flag conditions, platform shortcut masks, helper fixtures and future adaptation requirements retained. Prior35 unchanged; discovery/CLI validation/runtime/full-app fidelity kept distinct. No Cargo, GUI, screenshots or runtime workflows exercised.",
+      "findings": [],
+      "round": 1
+    }
+  },
+  "validation": {
+    "archive_member_preservation": {
+      "status": "passing",
+      "artifact_count": 33,
+      "method": "Streamed each pinned archive once; selected member bytes equal retained source artifacts and recorded SHA-256. Byte preservation, not a census/runtime check.",
+      "members": [
+        {
+          "source": "idea",
+          "path": ".idea/libraries/intellij_test_framework.xml",
+          "sha256": "26bf92c000019dedf6664478e6c9fb227cd7cc0169c0db9e42aa662ec093dcd2"
+        },
+        {
+          "source": "idea",
+          "path": ".idea/libraries/junit4.xml",
+          "sha256": "92b9cdcfd1301c969eb9e9541fd9496b2d1a8d452e16cefeb446c85f99c52dae"
+        },
+        {
+          "source": "idea",
+          "path": "adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+          "sha256": "26cd53f9592d29bc21f531c7e22c142e29922b412a31bd3937a71d720b0614c4"
+        },
+        {
+          "source": "idea",
+          "path": "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+          "sha256": "67b883002362195992b7111d0e8d88cda30ccfeeae355a2ada761bb83f95c274"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/BUILD",
+          "sha256": "6be1f61c6600348939ad8058441de095447a8b4debba4b740c26785e249b6d92"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/intellij.android.adt.ui.iml",
+          "sha256": "0b286f42e3176f753cb0cbb10594e4df4cb8c50074ecf9e9551e7f98e401a76c"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/TabbedToolbar.java",
+          "sha256": "7e9b312394b5419b446880151f83cfb04f01f9acb7364b1ab3e01baa93c4e59f"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/TreeWalker.java",
+          "sha256": "5bc0f1e0b69822d9d73eef70989ae1976b0107af76fa0e635454242809d67dc2"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/common/AdtUiUtils.kt",
+          "sha256": "341bda6a6a2b8b938990115acdde1464d19ed963870a5efaaddebc40219fa819"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/stdui/CommonButton.java",
+          "sha256": "045a1a33fab2d4b122c61c8ec14a6421a10918b0f00124e487e76b1ac7f20070"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/AttachedLocation.java",
+          "sha256": "da3eb481dd15a03d1c491a230ee5557f5c1f764bd314917b8cb1a97a1da9eae6"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/AttachedToolWindow.java",
+          "sha256": "c9283da2c41a4255cce0c4cf3e0afaa8303d562ec5547a9c0a43bf2d0f486760"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/DetachedToolWindowManager.java",
+          "sha256": "f979ae8e14ee319ecd30ee42d912f691aac144807e36aaa0443ddb5efd27876e"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/SideModel.java",
+          "sha256": "951e15b09bba3c5febcbb0edd39a611d0cb0f83f333c71504d941f12b5f416e4"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/ToolContent.java",
+          "sha256": "a6a37a3f5b9e7436cf268939ff8833cee9d839aef11541f54efc3a54289e8393"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/ToolWindowCallback.java",
+          "sha256": "672d9b470de104939c90f18f1fbdeb908fb165c97468bde5285f7eae192a19c4"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/ToolWindowDefinition.java",
+          "sha256": "919d551e6670e66e04d30ec6333eca9cd0e808dc7ad0eee29a274aa682d49879"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/WorkBench.java",
+          "sha256": "aff811cc12e7f7ab7b76985210fafb39c6196e9a328d5807c478262d9ab10398"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/WorkBenchManager.java",
+          "sha256": "aba982212cc0e9638e723d72ae58387a2d4ad50c206ed4b31cbfc0f5d5bb4bbe"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+          "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+          "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/swing/FakeKeyboardFocusManager.kt",
+          "sha256": "9be9fd48be3066f897b4afff187341b9b62a3525327d09c7e227e490eeb27fb5"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/swing/FakeUi.kt",
+          "sha256": "954a9ebda0a116c6acce17fac589643f3e0b132587ab17a12b8a4d844efc398d"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/swing/popup/ActionPopupMenuRule.kt",
+          "sha256": "61e195e9d27488f6fa31ee5d036adc2068a5a61757291edeeb9d9a307effe9cc"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+          "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/PalettePanelToolContent.java",
+          "sha256": "f3dfbc49b97a5f908c0e3c60dfb42d7bc697b9da76902697f38647a949993d35"
+        },
+        {
+          "source": "idea",
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/PropertiesComponentMock.java",
+          "sha256": "09ade01e48e87329be4113d448570bd8bd04d198403fcf8e19005e38f6a25d62"
+        },
+        {
+          "source": "idea",
+          "path": "studio-flags/src/com/android/tools/idea/flags/StudioFlags.java",
+          "sha256": "4c9a90ed65ef7bea04f68d9797de5be012b087104ba0d79bac21725385536f39"
+        },
+        {
+          "source": "base",
+          "path": "bazel/bazel.bzl",
+          "sha256": "f2d3850c522a794e8ced96915624a7fb0b7fde3c12e862e9e53a067e1279553b"
+        },
+        {
+          "source": "base",
+          "path": "flags/src/test/java/com/android/flags/junit/FlagRule.java",
+          "sha256": "6c5a5718ce0703eec28c273564d88911124288354bb0944a14cbebf075055435"
+        },
+        {
+          "source": "base",
+          "path": "testutils/src/main/java/com/android/testutils/DelegatingRunnerBuilder.java",
+          "sha256": "b5b0f2c7f33fcf61e109dc3fb4972f7f3356cd9800c08c42c21a9a905bcc8ce7"
+        },
+        {
+          "source": "base",
+          "path": "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+          "sha256": "da503cfd8096ae4be970e29f5a96d882bbc6eeb31f0c1ec8a47bed9a7d2abc3a"
+        },
+        {
+          "source": "base",
+          "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+          "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a"
+        }
+      ]
+    },
+    "prior_35_rows": {
+      "status": "unchanged",
+      "evidence": "Compared first35 canonical manifest and ledger objects against inherited fresh-evidence HEAD; exact equality."
+    },
+    "canonical_progress_cli": {
+      "status": "passing",
+      "command": [
+        "/workspace/.cache/zed/target/debug/xtask",
+        "android-parity",
+        "--repository",
+        "/workspace/android-studio-window-inventory",
+        "--reference-root",
+        "/workspace/android-studio-references"
+      ],
+      "exit_code": 0,
+      "log": {
+        "path": "/workspace/android-studio-artifacts/window-inventory/parity-cli.log",
+        "sha256": "c502683411d6da45b79f009d37f06557d9bc1e7beb83faada91a04231f55c41f"
+      },
+      "summary": {
+        "census": "PARTIAL",
+        "catalog_cases": 92,
+        "ported": 17,
+        "adapted": 9,
+        "unported": 66,
+        "passing": 26,
+        "not_run": 66,
+        "mirror": "UNVERIFIED"
+      },
+      "scope": "Existing unchanged Rust validator binary checks current canonical metadata, pinned archive bytes, source declarations, unchanged existing fixture mappings and inherited exact-run evidence. No Cargo process or new UI test execution."
+    },
+    "completion_gate": {
+      "status": "expected_rejection",
+      "command": [
+        "/workspace/.cache/zed/target/debug/xtask",
+        "android-parity",
+        "--repository",
+        "/workspace/android-studio-window-inventory",
+        "--reference-root",
+        "/workspace/android-studio-references",
+        "--complete"
+      ],
+      "exit_code": 1,
+      "reason": "completion blocked: reference test census is incomplete",
+      "log": {
+        "path": "/workspace/android-studio-artifacts/window-inventory/parity-completion-gate.log",
+        "sha256": "9a15b1e74c856425a8c11711f9df00d71dcc479422872aeedfa86d51ed7df7a9"
+      }
+    },
+    "implementation_checks": {
+      "product_rust_changed": false,
+      "cargo_build_or_tests_for_this_task": false,
+      "gui_or_screenshot_checks_for_this_task": false,
+      "full_phase_complete": false,
+      "reason": "Metadata-only source inventory; parent owns combined implementation build/test/live checks. Canonical passing rows were captured by parent on tested_commit f8114bfafa, not executed by this task."
+    },
+    "git_diff_check": {
+      "status": "passing",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "scope": "Four metadata files only; no product or validator changes."
+    },
+    "task_checks_complete": true,
+    "completion_scope": "Bounded static source inventory and metadata checks only. All five scoped reviewers passed; no new reference port, app build, full workspace suite, GUI or phase-completion claim."
+  },
+  "date": "2026-10-07",
+  "validator": {
+    "source_changed": false,
+    "cargo_compilation_for_this_task": false,
+    "source": {
+      "path": "tooling/xtask/src/tasks/android_parity.rs",
+      "sha256": "7f2a3b263bc57ed7dd0635756425e643477e56c79d7d6909f5382bb47df779f7"
+    },
+    "frozen_fixtures": [
+      {
+        "path": "tooling/xtask/test_data/android_parity/reference-manifest.json",
+        "sha256": "89c88ae7300f928fe78c2d754a815e8e8d9e4e5d50dbf7913315f47e15b50139"
+      },
+      {
+        "path": "tooling/xtask/test_data/android_parity/test-parity.json",
+        "sha256": "25f483cd6b65bebf23d13bd327c394a3c3e353a53d61a9e827860b7abc76092b"
+      }
+    ],
+    "binary": {
+      "path": "/workspace/.cache/zed/target/debug/xtask",
+      "sha256": "24279a94c8adbd6a710780c0ada7a69ca01209571e038a935ec2fe0e15ffce42"
+    }
+  },
+  "uncredited_neighbor_suites": [
+    {
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/toolwindow/splittingtabs/SplittingTabsToolWindowFactoryTest.kt",
+      "sha256": "95aad68fcc60f75590f6ad4320ec1c5e06f1d2feb365ac690dfd736f9e70b37b",
+      "status": "retained_but_outside_selected_suites_not_censused"
+    },
+    {
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/DetachedToolWindowManagerTest.java",
+      "sha256": "6cdbc250e86c9876deeb4a6eee5777096b8e7d3b97bac3feed2581c50e2a9147",
+      "status": "retained_but_outside_selected_suites_not_censused"
+    }
+  ],
+  "production_attribution": [
+    {
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/TabbedToolbar.java",
+      "notice": "Copyright (C) 2019 The Android Open Source Project; Apache-2.0"
+    },
+    {
+      "path": "adt-ui/src/main/java/com/android/tools/adtui/workbench/AttachedToolWindow.java",
+      "notice": "Copyright 2000-2018 JetBrains s.r.o.; Apache-2.0"
+    }
+  ]
+}
