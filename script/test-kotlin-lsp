@@ -10,9 +10,11 @@ import os
 from pathlib import Path
 import platform
 import queue
+import re
 import resource
 import statistics
 import subprocess
+import tempfile
 import threading
 import time
 import zipfile
@@ -23,6 +25,61 @@ class ProbeError(Exception):
     def __init__(self, outcome, message):
         super().__init__(message)
         self.outcome = outcome
+
+
+def load_shared_model(path, root, module, variant):
+    with path.open("rb") as model:
+        contents = model.read(16 * 1024 * 1024 + 1)
+    if len(contents) > 16 * 1024 * 1024:
+        raise ValueError("Shared model exceeds 16 MiB")
+    records = json.loads(contents)
+    if not isinstance(records, list) or not records:
+        raise ValueError("Shared model must contain a nonempty array of selected modules")
+    selected = {}
+    for record in records:
+        if not isinstance(record, dict):
+            raise ValueError("Each shared model module must be an object")
+        project, name, kind = record.get("project"), record.get("variant"), record.get("kind")
+        if not isinstance(project, str) or not re.fullmatch(r":(?:[A-Za-z0-9_.$-]+(?::[A-Za-z0-9_.$-]+)*)?", project):
+            raise ValueError("Shared model contains an invalid Gradle module path")
+        if project in selected:
+            raise ValueError(f"Shared model repeats module {project}")
+        if not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9_-]+", name):
+            raise ValueError(f"Shared model contains an invalid variant for {project}")
+        if kind not in ("application", "library", "dynamicFeature", "test", "jvm"):
+            raise ValueError(f"Shared model contains an invalid kind for {project}")
+        directory = record.get("directory")
+        if not isinstance(directory, str) or not Path(directory).is_absolute() or not Path(directory).resolve().is_relative_to(root):
+            raise ValueError(f"Shared model directory for {project} must be inside the isolated project")
+        components = record.get("components")
+        if not isinstance(components, list):
+            raise ValueError(f"Shared model components for {project} must be an array")
+        for component in components:
+            if not isinstance(component, dict) or not isinstance(component.get("sources"), list):
+                raise ValueError(f"Shared model component for {project} must contain a sources array")
+            for source in component["sources"]:
+                if not isinstance(source, dict) or source.get("kind") not in ("java", "kotlin", "resources", "manifest") or not isinstance(source.get("generated"), bool):
+                    raise ValueError(f"Shared model contains an invalid source for {project}")
+                source_path = source.get("path")
+                if not isinstance(source_path, str) or not Path(source_path).is_absolute() or not Path(source_path).resolve().is_relative_to(root):
+                    raise ValueError(f"Shared model source for {project} must be inside the isolated project")
+        selected[project] = (name, kind)
+    if module not in selected or selected[module] != (variant, "application"):
+        raise ValueError(f"Shared model must select application {module}/{variant}")
+    variants = ";".join(f"{project}={name}" for project, (name, kind) in sorted(selected.items()) if kind != "jvm")
+    return contents, variants
+
+
+def selection_environment(environment, module, variant, shared_model=None):
+    environment = dict(environment)
+    # Inherited selections can otherwise import a different fixture than the one being measured.
+    environment.pop("LSP_ANDROID_MODEL", None)
+    environment.pop("LSP_ANDROID_VARIANTS", None)
+    environment.update(LSP_ANDROID_MODULE=module, LSP_ANDROID_VARIANT=variant)
+    if shared_model:
+        path, variants = shared_model
+        environment.update(LSP_ANDROID_MODEL=str(path), LSP_ANDROID_VARIANTS=variants)
+    return environment
 
 
 def position(text, offset):
@@ -868,6 +925,61 @@ def run(probe, args, source):
 
 
 def self_test():
+    with tempfile.TemporaryDirectory(prefix="koda-lsp-shared-model-") as temporary:
+        root = Path(temporary).resolve()
+        model_path = root / "selected.json"
+        records = [
+            {"project": ":shared", "variant": "androidMain", "directory": str(root / "shared"), "kind": "library", "components": [{"sources": [{"path": str(root / "shared/src/commonMain/kotlin"), "kind": "kotlin", "generated": False}]}]},
+            {"project": ":app", "variant": "debug", "directory": str(root / "app"), "kind": "application", "components": []},
+            {"project": ":utility", "variant": "main", "directory": str(root / "utility"), "kind": "jvm", "components": []},
+        ]
+        model_path.write_text(json.dumps(records))
+        contents, variants = load_shared_model(model_path, root, ":app", "debug")
+        assert json.loads(contents) == records and variants == ":app=debug;:shared=androidMain"
+        inherited = {"LSP_ANDROID_MODEL": "/other/selected.json", "LSP_ANDROID_VARIANTS": ":other=release", "LSP_ANDROID_MODULE": ":other", "LSP_ANDROID_VARIANT": "release", "JAVA_HOME": "/jdk"}
+        environment = selection_environment(inherited, ":app", "debug")
+        assert "LSP_ANDROID_MODEL" not in environment and "LSP_ANDROID_VARIANTS" not in environment
+        assert environment["LSP_ANDROID_MODULE"] == ":app" and environment["LSP_ANDROID_VARIANT"] == "debug"
+        assert inherited["LSP_ANDROID_MODEL"] == "/other/selected.json" and environment["JAVA_HOME"] == "/jdk"
+        environment = selection_environment(inherited, ":app", "debug", (model_path, variants))
+        assert environment["LSP_ANDROID_MODEL"] == str(model_path) and environment["LSP_ANDROID_VARIANTS"] == variants
+        invalid_models = [[], {}, [None], records + [records[0]], records[:1]]
+        for field, value in (("variant", "release"), ("variant", "debug;:other=release"), ("project", ":app;:other"), ("directory", str(root.parent)), ("kind", "unknown"), ("components", {})):
+            invalid = json.loads(json.dumps(records))
+            invalid[1][field] = value
+            invalid_models.append(invalid)
+        for field, value in (("path", str(root.parent / "outside.kt")), ("path", "relative.kt"), ("generated", "true")):
+            invalid = json.loads(json.dumps(records))
+            invalid[0]["components"][0]["sources"][0][field] = value
+            invalid_models.append(invalid)
+        (root / "outside").symlink_to(root.parent, target_is_directory=True)
+        invalid = json.loads(json.dumps(records))
+        invalid[0]["components"][0]["sources"][0]["path"] = str(root / "outside/source.kt")
+        invalid_models.append(invalid)
+        for invalid in invalid_models:
+            model_path.write_text(json.dumps(invalid))
+            try:
+                load_shared_model(model_path, root, ":app", "debug")
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("Invalid shared model was accepted")
+        model_path.write_text("{")
+        try:
+            load_shared_model(model_path, root, ":app", "debug")
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Malformed shared model JSON was accepted")
+        with model_path.open("wb") as model:
+            model.seek(16 * 1024 * 1024)
+            model.write(b" ")
+        try:
+            load_shared_model(model_path, root, ":app", "debug")
+        except ValueError as error:
+            assert "16 MiB" in str(error)
+        else:
+            raise AssertionError("Oversized shared model was accepted")
     for before, after in [("", "hello"), ("a😀b\n", "a😀c\n"), ("hello", ""), ("same", "same"), ("a\nb", "a\n😀b")]:
         change = incremental_change(before, after)
         assert apply_edits(before, [{"range": change["range"], "newText": change["text"]}]) == after
@@ -967,6 +1079,7 @@ def main():
     parser.add_argument("--java-home", type=Path, default=os.environ.get("JAVA_HOME"), help="Project JDK, separate from the bundled server runtime")
     parser.add_argument("--variant", default="demoDebug", help="Selected application variant")
     parser.add_argument("--module", default=":mobile", help="Selected Gradle application module; full suite requires :mobile")
+    parser.add_argument("--shared-model", type=Path, help="Koda selected-project projection JSON; validate and snapshot it, and import every selected Android module variant")
     parser.add_argument("--model-only", action="store_true", help="Check import/index readiness and native exported model for any isolated Gradle project")
     parser.add_argument("--expected-module", action="append", default=[], help="Require this exact exported module name; repeat for each expected module")
     parser.add_argument("--expected-library-variant", help="Expected greeting variant for a custom application build type; default derives debug/release")
@@ -1014,7 +1127,17 @@ def main():
     if args.model_only and (args.extended or args.performance_samples or args.warmup != "none" or args.require_original_sources):
         parser.error("--model-only cannot run document, source or performance checks")
     root, output = args.project.resolve(), args.output.resolve()
+    shared_model = None
+    if args.shared_model:
+        try:
+            shared_contents, shared_variants = load_shared_model(args.shared_model.resolve(), root, args.module, args.variant)
+        except (OSError, ValueError) as error:
+            parser.error(f"Invalid --shared-model: {error}")
     output.mkdir(parents=True, exist_ok=True)
+    if args.shared_model:
+        shared_path = output / "shared-selection.json"
+        shared_path.write_bytes(shared_contents)
+        shared_model = (shared_path, shared_variants)
     source_file = None if args.model_only else (root / args.navigation_source).resolve()
     if source_file and (not source_file.is_relative_to(root) or source_file.suffix != ".kt"):
         parser.error("--navigation-source must be a Kotlin file inside the isolated project")
@@ -1034,6 +1157,8 @@ def main():
     results["runtime_module_sha256"] = {name: hashlib.sha256(path.read_bytes()).hexdigest() for name in ("language-server.workspace-import.gradle-plugin.jar", "language-server.api.features.impl.kotlin.jar") if (path := distribution / "plugins/kotlin.lsp/lib/modules" / name).is_file()}
     results["runtime_additional_module_sha256"] = {name: hashlib.sha256((distribution / name).read_bytes()).hexdigest() for name in results.get("runtime_patch_manifest", {}).get("additional_modules", {})}
     results["requested_module"] = args.module
+    if shared_model:
+        results["shared_model"] = {"source": str(args.shared_model.resolve()), "snapshot": str(shared_model[0]), "sha256": hashlib.sha256(shared_contents).hexdigest(), "variants": shared_variants}
     results["expected_modules"] = args.expected_module
     results["model_only"] = args.model_only
     results["require_compose"] = args.require_compose
@@ -1042,7 +1167,8 @@ def main():
     results["wire_logging"] = "memory until process exit" if args.buffer_wire else "synchronous file writes"
     system_path = (args.system_path or output / "system").resolve()
     results["system_path"] = str(system_path)
-    environment = dict(os.environ, JAVA_HOME=str(args.java_home), LSP_ANDROID_MODULE=args.module, LSP_ANDROID_VARIANT=args.variant, IJ_JAVA_OPTIONS=f"-Didea.config.path={output / 'config'} -Didea.log.path={output / 'logs'} -Dintellij.server.eula.persistence=false")
+    environment = selection_environment(os.environ, args.module, args.variant, shared_model)
+    environment.update(JAVA_HOME=str(args.java_home), IJ_JAVA_OPTIONS=f"-Didea.config.path={output / 'config'} -Didea.log.path={output / 'logs'} -Dintellij.server.eula.persistence=false")
     if args.generate_resources:
         setup = (Path(__file__).resolve().parent.parent / "crates/android_tools/src/kotlin.rs").read_text()
         guard = setup.split('const RESOURCE_GENERATION_GUARD: &str = r#"', 1)[1].split('"#;', 1)[0]

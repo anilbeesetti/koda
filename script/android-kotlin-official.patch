@@ -1,8 +1,8 @@
 --- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/androidUtils.kt
 +++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/androidUtils.kt
-@@ -2,30 +2,87 @@
+@@ -2,30 +2,88 @@
  package com.jetbrains.ls.imports.gradle.model.builder.android
- 
+
  import com.jetbrains.ls.imports.gradle.utils.AndroidVariantReflection
 +import org.gradle.api.GradleException
  import org.gradle.api.Project
@@ -10,27 +10,25 @@
 +import org.gradle.api.artifacts.Configuration
 +import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 +import org.gradle.api.artifacts.result.ResolvedDependencyResult
- 
+
  const val SELECTED_ANDROID_VARIANT_KEY: String = "lsp.android.variant"
  const val SELECTED_ANDROID_VARIANT_ENV_KEY: String = "LSP_ANDROID_VARIANT"
- 
+
 -/**
 - * Android's buildType and flavors will form a matrix of 'variants' (e.g. debug, release, debugPaidGermany, ...)
 - * Resolving sources, however, requires selecting one 'active' variant.
 - *
 - */
--internal fun Iterable<AndroidVariantReflection>.selectActiveVariant(): AndroidVariantReflection? {
++private fun Project.selection(key: String, environment: String): String? =
++    providers.gradleProperty(key).orElse(providers.systemProperty(key))
++        .orElse(providers.environmentVariable(environment)).orNull
++
+ internal fun Iterable<AndroidVariantReflection>.selectActiveVariant(): AndroidVariantReflection? {
 -    val selected = firstOrNull { variant ->
 -        val selectedVariant = variant.project.providers.gradleProperty(SELECTED_ANDROID_VARIANT_KEY)
 -            .orElse(variant.project.providers.systemProperty(SELECTED_ANDROID_VARIANT_KEY))
 -            .orElse(variant.project.providers.environmentVariable(SELECTED_ANDROID_VARIANT_ENV_KEY))
 -            .orNull
-+private fun Project.selection(key: String, environment: String): String? =
-+    providers.gradleProperty(key).orElse(providers.systemProperty(key))
-+        .orElse(providers.environmentVariable(environment)).orNull
- 
--        selectedVariant != null && variant.name == selectedVariant
-+internal fun Iterable<AndroidVariantReflection>.selectActiveVariant(): AndroidVariantReflection? {
 +    val variants = toList()
 +    val project = variants.firstOrNull()?.project ?: return null
 +    val sharedSelection = project.selection("lsp.android.variants", "LSP_ANDROID_VARIANTS")
@@ -48,7 +46,7 @@
 +    val selectedProject = selectedModule?.let { module ->
 +        project.rootProject.findProject(module)
 +            ?: throw GradleException("The selected Android module $module does not exist")
-     }
++    }
 +    if (selectedProject != null && selectedName != null) {
 +        val selectedVariant = selectedProject.androidVariants.orEmpty().singleOrNull { it.name == selectedName }
 +            ?: throw GradleException("Android variant $selectedName does not exist in ${selectedProject.path}")
@@ -78,14 +76,14 @@
 +    return variants.firstOrNull { it.name == selectedName }
 +        ?: variants.sortedBy { if ("debug" in it.name.orEmpty()) 0 else 1 }.minByOrNull { it.name?.length ?: 0 }
 +}
- 
--    return selected ?: sortedBy { if ("debug" in it.name.orEmpty()) 0 else 1 }.minByOrNull { it.name?.length ?: 0 }
+
+-        selectedVariant != null && variant.name == selectedVariant
 +fun Project.selectedAndroidConfigurations(): List<Configuration> {
 +    val variant = androidVariants?.selectActiveVariant() ?: return emptyList()
 +    return (listOfNotNull(variant.compileConfiguration) +
 +        variant.nestedComponents.orEmpty().mapNotNull { it.compileConfiguration }).distinct()
- }
- 
++}
++
 +fun Project.selectedAndroidGenerationTasks(): List<Task> {
 +    val variant = androidVariants?.selectActiveVariant() ?: return emptyList()
 +    val names = (listOfNotNull(variant.name) + variant.nestedComponents.orEmpty().mapNotNull { it.name }).toSet()
@@ -93,18 +91,21 @@
 +    return tasks.filter { task ->
 +        task.hasProperty("variantName") && task.property("variantName") in names &&
 +            generateSequence<Class<*>>(task.javaClass) { it.superclass }.any { it.name in generators }
-+    }
-+}
-+
+     }
+-
+-    return selected ?: sortedBy { if ("debug" in it.name.orEmpty()) 0 else 1 }.minByOrNull { it.name?.length ?: 0 }
+ }
+
  fun Project.isAndroidProject(): Boolean {
      return pluginManager.hasPlugin("com.android.application") ||
 -            pluginManager.hasPlugin("com.android.library")
 +        pluginManager.hasPlugin("com.android.library") ||
-+        pluginManager.hasPlugin("com.android.dynamic-feature")
++        pluginManager.hasPlugin("com.android.dynamic-feature") ||
++        pluginManager.hasPlugin("com.android.kotlin.multiplatform.library")
  }
 --- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/collectAndroidVariants.kt
 +++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/collectAndroidVariants.kt
-@@ -43,6 +43,10 @@
+@@ -43,6 +43,14 @@
          project.plugins.withId("com.android.library") {
              project.collectAndroidVariants()
          }
@@ -112,9 +113,13 @@
 +        project.plugins.withId("com.android.dynamic-feature") {
 +            project.collectAndroidVariants()
 +        }
++
++        project.plugins.withId("com.android.kotlin.multiplatform.library") {
++            project.collectAndroidVariants()
++        }
      }
  }
- 
+
 --- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/ExternalModuleDependencySetModuleBuilder.java
 +++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/ExternalModuleDependencySetModuleBuilder.java
 @@ -38,7 +38,6 @@
@@ -122,11 +127,11 @@
  import java.util.Set;
  import java.util.function.Consumer;
 -import java.util.stream.Collectors;
- 
+
  @SuppressWarnings("IO_FILE_USAGE")
  public final class ExternalModuleDependencySetModuleBuilder implements ToolingModelBuilder {
 @@ -59,9 +58,16 @@
- 
+
      @Override
      public @Nullable Object buildAll(@NotNull String modelName, @NotNull Project project) {
 -        /* Generically resolving dependencies in Android Projects is not allowed */
@@ -143,7 +148,7 @@
 +            }
 +            return new ExternalModuleDependencySetImpl(result);
          }
- 
+
          ExtensionContainer extensions = project.getExtensions();
 @@ -102,21 +108,18 @@
              @NotNull Set<@NotNull ResolvedArtifactResult> binaries,
@@ -175,7 +180,7 @@
 +        }
 +        return result;
      }
- 
+
      private static @NotNull Set<@NotNull ResolvedArtifactResult> resolveConfiguration(@NotNull Configuration configuration) {
 --- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/resolveRJar.kt
 +++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/resolveRJar.kt
@@ -199,7 +204,7 @@
 +    }
 +    return null
  }
- 
+
  private class LinkApplicationAndroidResourcesTaskReflection(val project: Project, val reflected: Reflected.Instance) {
 --- a/workspace-import/src/com/jetbrains/ls/imports/gradle/SourceSetDependencyResolver.kt
 +++ b/workspace-import/src/com/jetbrains/ls/imports/gradle/SourceSetDependencyResolver.kt
@@ -222,7 +227,7 @@
 +++ b/features-impl/java-base/src/com/jetbrains/ls/api/features/impl/javaBase/LSJavaBaseLanguageConfiguration.kt
 @@ -2,20 +2,29 @@
  package com.jetbrains.ls.api.features.impl.javaBase
- 
+
  import com.intellij.psi.PsiElement
 +import com.intellij.psi.PsiFile
 +import com.intellij.psi.PsiClassOwner
@@ -235,7 +240,7 @@
  import com.jetbrains.ls.api.core.util.TargetKind
  import com.jetbrains.ls.api.features.language.LSConfigurationPiece
  import com.jetbrains.lsp.protocol.URI
- 
+
  val LSJavaBaseLanguageConfiguration: LSConfigurationPiece = LSConfigurationPiece(
      entries = listOf(
 +        LSCommonReferencesProvider(setOf(LSJavaLanguage), TargetKind.ALL),
@@ -272,7 +277,7 @@
 +            val buildDirectories = gradleProjectData.includedProjects.flatMap { it.modules }
 +                .map { it.gradleProject.buildDirectory.toPath().toAbsolutePath().normalize() }
 +            markGeneratedSources(buildDirectories, sharedGeneratedSources(parameters, gradleProjectData))
-@@ -152,0 +168,55 @@
+@@ -152,0 +168,60 @@
 +
 +
 +private fun MutableEntityStorage.markGeneratedSources(buildDirectories: List<Path>, sharedSources: Map<Path, Boolean>) {
@@ -294,7 +299,7 @@
 +    val path = (parameters.options.systemProperties["lsp.android.model"]
 +        ?: parameters.options.environment["LSP_ANDROID_MODEL"] ?: System.getenv("LSP_ANDROID_MODEL"))
 +        ?.takeIf { it.isNotBlank() } ?: return emptyMap()
-+    fun invalid(): Nothing = throw IllegalArgumentException("Invalid shared Android generated-source model; sync Koda again")
++    fun invalid(reason: String = "malformed record"): Nothing = throw IllegalArgumentException("Invalid shared Android generated-source model ($reason); sync Koda again")
 +    fun JsonObject.string(key: String): String = (this[key] as? JsonPrimitive)?.contentOrNull ?: invalid()
 +    val root = parameters.projectDirectory.toFile().canonicalFile.toPath()
 +    val records = Json.parseToJsonElement(File(path).readText()) as? JsonArray ?: invalid()
@@ -310,8 +315,13 @@
 +            it.gradleProject.path == modulePath && it.gradleProject.projectDirectory.canonicalFile == directory
 +        } ?: invalid()
 +        if (module.string("kind") != "jvm") {
-+            val android = metadata.androidProjects.values.singleOrNull { it.buildTreePath == imported.gradleProject.buildTreePath }
-+            if (android?.activeVariant != module.string("variant")) invalid()
++            // Older Gradle tooling models can omit buildTreePath; Android metadata uses the imported module name.
++            val android = metadata.androidProjects[imported.name]
++                ?: invalid("Android module $modulePath was not imported")
++            val selectedVariant = module.string("variant")
++            if (android.activeVariant != selectedVariant) {
++                invalid("Android variant mismatch in $modulePath: Koda selected $selectedVariant, LSP imported ${android.activeVariant ?: "none"}")
++            }
 +        }
 +        for (entry in module["components"] as? JsonArray ?: invalid()) {
 +            val component = entry as? JsonObject ?: invalid()
@@ -331,7 +341,7 @@
 --- a/features-impl/common/src/com/jetbrains/ls/api/features/impl/common/processors/LSRenameProcessor.kt
 +++ b/features-impl/common/src/com/jetbrains/ls/api/features/impl/common/processors/LSRenameProcessor.kt
 @@ -3,6 +3,7 @@
- 
+
  import com.intellij.openapi.diagnostic.Logger
  import com.intellij.openapi.project.Project
 +import com.intellij.openapi.roots.ProjectFileIndex
@@ -749,10 +759,23 @@
 +class AndroidNestedComponentReflection(project: Project, reflected: Reflected.Instance) : AndroidComponentReflection(project, reflected)
 --- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/resolveAndroidSourceSets.kt
 +++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/resolveAndroidSourceSets.kt
-@@ -16,0 +17,2 @@
+@@ -12,8 +12,12 @@
+ import com.jetbrains.ls.imports.gradle.utils.AndroidComponentReflection
+ import com.jetbrains.ls.imports.gradle.utils.AndroidVariantReflection
+ import com.jetbrains.ls.imports.gradle.utils.KotlinCompileTaskReflection
++import com.jetbrains.ls.imports.gradle.utils.KotlinCompilationReflection
++import com.jetbrains.ls.imports.gradle.utils.reflected
+ import com.jetbrains.ls.imports.gradle.utils.androidComponents
+ import com.jetbrains.ls.imports.gradle.utils.kotlin
 +import groovy.json.JsonSlurper
 +import org.gradle.api.GradleException
-@@ -31 +33,6 @@
+ import org.gradle.api.Project
+ import org.gradle.api.Task
+ import org.gradle.api.artifacts.type.ArtifactTypeDefinition
+@@ -28,18 +32,23 @@
+ }
+
+ private fun resolveAndroidVariant(variant: AndroidVariantReflection): Set<ModuleSourceSet>? {
 -    val main = variant.resolveToModuleSourceSet() ?: return null
 +    val sharedSources = variant.project.sharedAndroidSources(variant.name)
 +    val components = listOf(variant) + variant.nestedComponents.orEmpty()
@@ -760,19 +783,49 @@
 +        throw GradleException("Shared Android components changed in ${variant.project.path}; sync Koda again")
 +    }
 +    val main = variant.resolveToModuleSourceSet(sharedSources?.get(variant.name)) ?: return null
-@@ -33 +40 @@
+     val nested = variant.nestedComponents.orEmpty()
 -        .mapNotNull { nested -> nested.resolveToModuleSourceSet() }
 +        .mapNotNull { nested -> nested.resolveToModuleSourceSet(sharedSources?.get(nested.name)) }
-@@ -38 +45 @@
+
+     return setOf(main, *nested.toTypedArray())
+ }
+
 -private fun AndroidComponentReflection.resolveToModuleSourceSet(): ModuleSourceSet? {
 +private fun AndroidComponentReflection.resolveToModuleSourceSet(sharedSources: SharedAndroidSources?): ModuleSourceSet? {
-@@ -76 +83 @@
+     val mainComponent = project.androidVariants?.selectActiveVariant() ?: return null
+
+     val name = name ?: return null
+-    val kotlinCompilation = project.kotlin?.target?.getCompilation(name)
++    val kotlinCompilation = project.androidKotlinCompilation(name)
+     val kotlinCompileTask = kotlinCompilation?.compileTask
+     val javaCompileTask = kotlinCompilation?.javaCompileTask
+     val javaExtension = project.extensions.findByType(JavaPluginExtension::class.java)
+@@ -73,11 +82,11 @@
+
+     return ModuleSourceSetImpl(
+         /* name = */ name,
 -        /* sources = */ buildMutableSet {
 +        /* sources = */ sharedSources?.sources ?: buildMutableSet {
-@@ -80 +87 @@
+             addAll(sources?.kotlin?.get().orEmpty().map { it.asFile })
+             addAll(sources?.java?.get().orEmpty().map { it.asFile })
+         },
 -        /* resources = */sources?.resources?.get().orEmpty().map { it.asFile }.toMutableSet(),
 +        /* resources = */ sharedSources?.resources ?: sources?.resources?.get().orEmpty().map { it.asFile }.toMutableSet(),
-@@ -107 +114,38 @@
+         /* excludes = */emptySet(),
+         /* runtimeClasspath = */emptySet(),
+         /* compileClasspath = */buildSet {
+@@ -87,7 +96,7 @@
+         },
+         /* outputDirs = */emptySet(),
+         /* producedArchives = */emptySet(),
+-        /* friendSourceSets =*/  kotlinCompilation?.allAssociatedCompilations?.mapNotNull { it.name }.orEmpty().toSet() +
++        /* friendSourceSets =*/  kotlinCompilation?.allAssociatedCompilations?.mapNotNull { it.androidSourceSetName() }.orEmpty().toSet() +
+                 listOfNotNull(mainComponent.name.takeIf { it != name }),
+         /* hasUnresolvedDependencies = */false,
+         /* javaSettings = */ javaSettings,
+@@ -105,3 +114,64 @@
+     val instance = reflected.instance as? Task ?: return null
+     return KotlinMetadataModelBuilder.readCompilerSettings(instance)
 -}
 \ No newline at end of file
 +}
@@ -812,4 +865,28 @@
 +        if (name.isBlank() || result.put(name, SharedAndroidSources(sourceFiles, resourceFiles)) != null) invalid()
 +    }
 +    return result
++}
++
++private fun KotlinCompilationReflection.androidSourceSetName(): String? =
++    if (project.pluginManager.hasPlugin("com.android.kotlin.multiplatform.library")) {
++        reflected.call("getDefaultSourceSet")?.call("getName")?.unwrapAs<String>()
++            ?: throw GradleException("Cannot map Android Kotlin compilation in ${project.path}; sync Koda again")
++    } else name
++
++private fun Project.androidKotlinCompilation(component: String): KotlinCompilationReflection? {
++    val extension = kotlin ?: return null
++    if (!pluginManager.hasPlugin("org.jetbrains.kotlin.multiplatform")) {
++        return extension.target?.getCompilation(component)
++    }
++    // A multiplatform extension has no single target; only its Android compilation belongs in this model.
++    val targets = extension.reflected.call("getTargets")?.unwrapAs<Iterable<*>>()
++        ?: throw GradleException("Cannot read Kotlin targets in $path; sync Koda again")
++    val compilations = targets.filterNotNull().filter {
++        it.reflected.call("getPlatformType")?.instance?.toString() == "androidJvm"
++    }.flatMap {
++        it.reflected.call("getCompilations")?.unwrapAs<Iterable<*>>()?.filterNotNull()
++            ?: throw GradleException("Cannot read Android Kotlin compilations in $path; sync Koda again")
++    }.map { KotlinCompilationReflection(this, it.reflected) }
++    return compilations.singleOrNull { it.androidSourceSetName() == component }
++        ?: throw GradleException("Cannot uniquely map Android Kotlin component $component in $path; sync Koda again")
 +}

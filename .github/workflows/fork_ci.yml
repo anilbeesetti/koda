@@ -91,6 +91,46 @@ jobs:
           if [[ -f script/test-kotlin-lsp ]]; then
             python3 script/test-kotlin-lsp --self-test
           fi
+      - name: Check production Kotlin Android import validator
+        timeout-minutes: 10
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path, PurePosixPath
+          import runpy
+          import stat
+          import subprocess
+          import tempfile
+          import zipfile
+
+          with tempfile.TemporaryDirectory(prefix="koda-import-contract-", dir=os.environ["RUNNER_TEMP"]) as temporary:
+              temporary = Path(temporary)
+              os.environ["KODA_TOOL_DOWNLOADS"] = str(temporary / "downloads")
+              installer = runpy.run_path("script/install-android-kotlin")
+              download = installer["download"]
+              download.__globals__.update(MAX_DOWNLOAD_BYTES=256 * 1024**2, DOWNLOAD_SECONDS=180)
+              archive = download(
+                  "gradle-9.6.1-bin.zip", "https://services.gradle.org/distributions/gradle-9.6.1-bin.zip",
+                  "9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14",
+              )
+              with zipfile.ZipFile(archive) as distribution:
+                  entries = distribution.infolist()
+                  if len(entries) > 10_000 or sum(entry.file_size for entry in entries) > 1024**3:
+                      raise RuntimeError("Gradle distribution exceeds extraction limits")
+                  for entry in entries:
+                      path = PurePosixPath(entry.filename)
+                      mode = stat.S_IFMT(entry.external_attr >> 16)
+                      if (path.is_absolute() or not path.parts or path.parts[0] != "gradle-9.6.1"
+                              or ".." in path.parts or "\\" in entry.filename
+                              or mode not in (0, stat.S_IFREG, stat.S_IFDIR)):
+                          raise RuntimeError(f"Unsafe Gradle archive member: {entry.filename}")
+                  distribution.extractall(temporary)
+              subprocess.run([
+                  "python3", "script/test-android-kotlin-importer",
+                  "--gradle-home", str(temporary / "gradle-9.6.1"),
+                  "--java-home", os.environ["JAVA_HOME_21_X64"],
+              ], check=True, timeout=240)
+          PY
 
   linux:
     name: Linux build and workspace tests
