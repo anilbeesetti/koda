@@ -872,19 +872,14 @@ impl SetupWizard {
                             .child(v_flex().flex_1().min_w_0().gap_1().child(Label::new("Android SDK")).child(Label::new(format!("Platform {} · Build and device tools", self.api_level)).size(LabelSize::Small).color(Color::Muted)))
                             .child(Label::new(if sdk_bytes > 0 { format_bytes(sdk_bytes) } else { "Installed".into() }).color(if sdk_bytes > 0 { Color::Muted } else { Color::Success }))))
                         .child(ui::Divider::horizontal())
-                        .child(Label::new(if plan.download_bytes > 0 { format!("Download size: {}", format_bytes(plan.download_bytes)) } else { "No downloads needed".into() }).color(Color::Muted))
-                        .when(plan.sdk_is_shared, |element| element.child(Label::new("SDK shared with Android Studio").size(LabelSize::Small).color(Color::Muted))))
+                        .child(Label::new(if plan.download_bytes > 0 { format!("Download size: {}", format_bytes(plan.download_bytes)) } else { "No downloads needed".into() }).color(Color::Muted)))
                     .child(h_flex().items_start().child(div().debug_selector(|| "android-setup-summary-details-control".into()).child(self.focus_row("reveal-android-setup-download-details", setup_button("android-setup-download-details", if self.show_details { "Hide details" } else { "Details" }, cx).disabled(disabled).tab_index(0isize)
                         .end_icon(Icon::new(if self.show_details { IconName::ChevronUp } else { IconName::ChevronDown }).size(IconSize::Small))
                         .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); })), cx))))
                     .when(self.show_details, |element| element.child(v_flex().debug_selector(|| "android-setup-runtime-details".into()).gap_2()
                         .child(Self::text(format!("Java 21: {}", plan.jdk.display())))
                         .when_some(plan.sdk.as_ref(), |element, sdk| element.child(Self::text(format!("Android SDK: {}", sdk.display()))))
-                        .when(plan.sdk_is_shared, |element| element.child(Self::text("Shared with Android Studio. Only missing packages are added; completed packages remain installed if setup is cancelled or restored.")))
-                        .child(Self::text(format!("Supported platforms: {}", plan.supported_platform)))
-                        .children(plan.downloads.iter().map(|download| Self::text(format!("{} · {}", download_label(download), format_bytes(download.bytes)))))
-                        .children(plan.downloads.iter().map(|download| Self::text(format!("{} · {}", download.publisher, download.url)).text_color(cx.theme().colors().text_muted)))
-                        .children(plan.provenance.iter().map(|provenance| Self::text(provenance.clone())))))
+                        .children(plan.downloads.iter().map(|download| Self::text(format!("{} · {}", download_label(download), format_bytes(download.bytes)))))))
             })
             .when(self.plan.is_none() && !self.busy, |element| element
                 .child(Self::text("Refresh the summary to review the components before downloading."))))
@@ -975,7 +970,7 @@ impl SetupWizard {
             .when(self.install_sdk, |element| {
                 element
                     .child(
-                        Label::new("Reuse your Android Studio SDK or add missing packages.")
+                        Label::new("Use an installed SDK or download missing packages.")
                             .size(LabelSize::Small)
                             .color(Color::Muted),
                     )
@@ -1188,15 +1183,68 @@ impl SetupWizard {
             return Self::text("Installation is running. Waiting for the next progress update…")
                 .into_any_element();
         };
-        v_flex().gap_3()
-            .child(Label::new(if progress.finishing { "Finishing setup…" } else if self.close_requested { "Cancelling safely…" } else { "Preparing your development tools" }).size(LabelSize::Large))
+        v_flex()
+            .gap_3()
+            .child(
+                Label::new(if progress.finishing {
+                    "Finishing setup…"
+                } else if self.close_requested {
+                    "Cancelling safely…"
+                } else {
+                    "Preparing your development tools"
+                })
+                .size(LabelSize::Large),
+            )
             .child(Self::text(progress.message.clone()))
-            .when(progress.total_bytes > 0, |element| element
-                .child(ui::ProgressBar::new("android-setup-progress", progress.downloaded_bytes.min(progress.total_bytes) as f32, progress.total_bytes as f32, cx))
-                .child(Label::new(format!("{} / {} downloaded", format_bytes(progress.downloaded_bytes), format_bytes(progress.total_bytes))).color(Color::Muted)))
-            .child(h_flex().items_start().child(self.focus_row("reveal-android-setup-details", setup_button("android-setup-details", if self.show_details { "Hide details" } else { "Show details" }, cx).tab_index(0isize)
-                .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); })), cx)))
-            .when(self.show_details, |element| element.child(Self::text("Cancellation preserves the previous selection. Completed shared SDK packages stay installed; saving already in progress finishes atomically.")).child(v_flex().id("android-setup-install-details").gap_1().max_h(px(180.)).overflow_y_scroll().children(progress.details.iter().map(|line| Self::text(line.clone())))))
+            .when(progress.total_bytes > 0, |element| {
+                element
+                    .child(ui::ProgressBar::new(
+                        "android-setup-progress",
+                        progress.downloaded_bytes.min(progress.total_bytes) as f32,
+                        progress.total_bytes as f32,
+                        cx,
+                    ))
+                    .child(
+                        Label::new(format!(
+                            "{} / {} downloaded",
+                            format_bytes(progress.downloaded_bytes),
+                            format_bytes(progress.total_bytes)
+                        ))
+                        .color(Color::Muted),
+                    )
+            })
+            .child(
+                h_flex().items_start().child(
+                    self.focus_row(
+                        "reveal-android-setup-details",
+                        setup_button(
+                            "android-setup-details",
+                            if self.show_details {
+                                "Hide details"
+                            } else {
+                                "Show details"
+                            },
+                            cx,
+                        )
+                        .tab_index(0isize)
+                        .on_click(cx.listener(|wizard, _, _, cx| {
+                            wizard.show_details = !wizard.show_details;
+                            cx.notify();
+                        })),
+                        cx,
+                    ),
+                ),
+            )
+            .when(self.show_details, |element| {
+                element.child(
+                    v_flex()
+                        .id("android-setup-install-details")
+                        .gap_1()
+                        .max_h(px(180.))
+                        .overflow_y_scroll()
+                        .children(progress.details.iter().map(|line| Self::text(line.clone()))),
+                )
+            })
             .into_any_element()
     }
 
@@ -1224,7 +1272,7 @@ impl SetupWizard {
             .child(self.panel.update(cx, |panel, cx| panel.render_tool_setup(self, cx).into_any_element()))
             .when(expanded, |element| element.child(v_flex().gap_2()
                 .child(Label::new("Managed Java and Android SDK"))
-                .child(Self::text("Validate checks the saved files. Repair and update creates a new download summary. Restore previous restores the last verified selection; shared SDK packages are retained."))
+                .child(Self::text("Validate saved files, repair missing tools or restore the previous installation."))
                 .child(h_flex().gap_1().flex_wrap()
                     .child(self.focus_row("reveal-android-native-validate", setup_button("android-native-validate", "Validate installation", cx).disabled(disabled).tab_index(0isize)
                         .on_click(cx.listener(|wizard, _, window, cx| wizard.maintenance(Maintenance::Validate, window, cx))), cx))
@@ -1908,15 +1956,7 @@ mod tests {
         });
         let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
         wizard.update(cx, |wizard, cx| {
-            let mut reviewed_plan = plan(Vec::new());
-            reviewed_plan.provenance = (0..20)
-                .map(|index| {
-                    format!(
-                        "Reviewed package {index}: Publisher checksum and destination verified."
-                    )
-                })
-                .collect();
-            wizard.plan = Some(reviewed_plan);
+            wizard.plan = Some(plan(Vec::new()));
             wizard.show_settings = true;
             wizard.show_details = true;
             cx.notify();
