@@ -1,0 +1,16 @@
+{
+  "source": "/workspace/.cache/zed/target/debug/build/android_tools-c2b682dc71378360/out",
+  "target": "/tmp/tree-input-adapter-build-output",
+  "previous_output": {
+    "compose-preview.zip": {
+      "sha256": "ac08fa033ccf6c659106355703725cdd8aa4ad69f2bf2059158918e35e9d14a9",
+      "bytes": 289704452
+    }
+  },
+  "wholefile_inventory_matches_after_relocation": true,
+  "previous_zip_retained": "/tmp/tree-input-adapter-build-output/previous-compose-preview.zip",
+  "previous_zip_sha256": "ac08fa033ccf6c659106355703725cdd8aa4ad69f2bf2059158918e35e9d14a9",
+  "command_and_flags_unchanged": true,
+  "source_checkout_mutations": false,
+  "original_failure_retained": "all-features-tests.log"
+}

@@ -1,0 +1,28 @@
+{
+  "fix_rounds": 1,
+  "source_before": {
+    "crates/android_tools/src/android_tools.rs": "f4b033f8aa13b8141f706a1f24455c1d5500940ef5e4adffa46edd8baf1f2891",
+    "crates/android_tools/src/project_tree_adapter.rs": "67dbb26617d07caee7db19047aa0cdb82c8572e34de305e97847b7af32549c09",
+    "crates/android_tools/tests/project_tree_adapter.rs": "eeaaaa01809c3dabebbcdca3f84b3ad22b02db6060de54db4ffb858c4314133e"
+  },
+  "source_after": {
+    "crates/android_tools/src/android_tools.rs": "f4b033f8aa13b8141f706a1f24455c1d5500940ef5e4adffa46edd8baf1f2891",
+    "crates/android_tools/src/project_tree_adapter.rs": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+    "crates/android_tools/tests/project_tree_adapter.rs": "1fa2f0e7eedf5bf6cf2cbdbdcd5a1df8604325956cf6bfce78a9626872f6f69d"
+  },
+  "findings": [
+    "Disabled shared roots moved before global built-in dedup.",
+    "Unknown Kotlin capability rejected shadowed common roots.",
+    "Module directory Missing/Unknown/File could publish a ready tree."
+  ],
+  "new_regressions": 4,
+  "new_test_count": 27,
+  "newly_wrong_fixture_setup": {
+    "test": "missing_presentation_never_uses_directory_or_module_basename",
+    "reason": "Its newly written finite-world capture helper explicitly declared module directory Missing. The presentation assertions remain unchanged; the successful module presentation setup now includes the actual synthetic directory.",
+    "other_setup_adjustment": "absent_inventory_without_presence_is_unknown_not_missing now supplies its actual module directory so it continues testing the unknown assets root."
+  },
+  "original_guard_count": 97,
+  "original_guard_changes": [],
+  "runtime_checks": "not run; no Cargo lease"
+}

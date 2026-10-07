@@ -1,0 +1,51 @@
+{
+  "lease": "exclusive_root_granted",
+  "attempts": [
+    {
+      "label": "all-features-tests",
+      "exit_code": 101,
+      "reason": "bundled-preview staging ENOSPC before tests",
+      "source_unchanged": true
+    }
+  ],
+  "required_queue": [
+    [
+      "all-features-tests-retry1",
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "android_tools",
+      "--all-features",
+      "--message-format=json"
+    ],
+    [
+      "strict-clippy",
+      "./script/clippy",
+      "--locked",
+      "-p",
+      "android_tools"
+    ],
+    [
+      "format-check",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    [
+      "library-build",
+      "cargo",
+      "build",
+      "--locked",
+      "-p",
+      "android_tools",
+      "--all-features",
+      "--message-format=json"
+    ]
+  ],
+  "source_fix_rounds": 2,
+  "no_canonical_test_credit": true,
+  "capacity_recovery": "coordinate exact ephemeral cache placement with Root before mutating shared generated artifacts"
+}

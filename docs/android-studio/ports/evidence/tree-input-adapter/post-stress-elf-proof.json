@@ -1,0 +1,10 @@
+{
+  "path": "/tmp/tree-input-adapter-verified-binaries/project_tree_adapter-tests27",
+  "sha256": "766efb129744a5851c2b10e1db1d706ee2a9257b779d60ddb6447c89d6714de6",
+  "bytes": 6480040,
+  "after_completed_receipts": [
+    "stress-20000-per-pid.json",
+    "stress-java-budget-per-pid.json"
+  ],
+  "measurement_note": "Exact runner records ELF hash before launch. This separate record rehashes after both runs; performance reviewer also independently rehashed afterward."
+}

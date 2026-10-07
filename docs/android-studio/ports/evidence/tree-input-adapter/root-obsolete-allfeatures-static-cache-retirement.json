@@ -1,0 +1,36 @@
+{
+  "retired_generated_static_cache_only": true,
+  "all_source_tests_fixtures_raw_evidence_current_f2_app_Root114_and_current_UI_ELFs_preserved": true,
+  "no_active_Cargo_or_rustc": true,
+  "owner_lease_idle_and_coordinated": true,
+  "files": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-12b798ab3d74a304.rlib",
+      "bytes": 308805390,
+      "sha256": "b331c715f2d4436797c5fc1756f69895bb119961b3084d149cb65f0f4c1e7386",
+      "inode": 1076637,
+      "links": 1,
+      "mtime": 1791393309.8057952,
+      "scope": "Rebuildable generated static all-feature library cache; no source or test executable."
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-6d8abc02ff6a24e4.rlib",
+      "bytes": 309088186,
+      "sha256": "bea7d6c1cef5987d66fbce6521eea7c1fae317982dcff9b70de475493136a112",
+      "inode": 1080020,
+      "links": 1,
+      "mtime": 1791401500.8005288,
+      "scope": "Rebuildable generated static all-feature library cache; no source or test executable."
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+      "bytes": 308750514,
+      "sha256": "489c6b1682e921d5c67718d3aeb172da7feac226205913a357760f1310ba449b",
+      "inode": 1076579,
+      "links": 1,
+      "mtime": 1791393138.2861514,
+      "scope": "Rebuildable generated static all-feature library cache; no source or test executable."
+    }
+  ],
+  "reclaimed_bytes": 926644090
+}

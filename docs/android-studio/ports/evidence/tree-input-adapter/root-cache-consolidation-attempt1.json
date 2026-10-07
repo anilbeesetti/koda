@@ -1,0 +1,7 @@
+{
+  "status": "FAILED preparation only",
+  "reason": "Primary OUT_DIR was concurrently relocated to tmpfs by owner, so atomic hardlink creation returned EXDEV before any archive replacement.",
+  "owned_old_default_UI_retirement_completed_and_recorded": true,
+  "source_tests_fixtures_and_archive_bytes_changed": false,
+  "next_attempt": "Choose a primary on each filesystem; match SHA256 and bytes before atomic hardlink replacement."
+}

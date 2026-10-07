@@ -1,0 +1,20 @@
+{
+  "status": "raw_evidence_whitespace_preservation",
+  "failed_command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "exit_code": 2,
+  "diagnostics": [
+    "all-features-tests-retry2.log:443: new blank line at EOF",
+    "stress-20000-per-pid.log:6: new blank line at EOF",
+    "stress-20000.log:6: new blank line at EOF",
+    "stress-java-budget-per-pid.log:6: new blank line at EOF",
+    "stress-java-budget.log:6: new blank line at EOF"
+  ],
+  "resolution": "Scoped evidence-folder .gitattributes marks exact captured *.log output -whitespace. Captured bytes and SHA256 remain unchanged. Source/test whitespace rules remain unchanged.",
+  "source_or_test_change": false,
+  "product_fix_round": false
+}

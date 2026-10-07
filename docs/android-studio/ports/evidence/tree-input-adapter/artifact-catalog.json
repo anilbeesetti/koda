@@ -1,0 +1,427 @@
+{
+  "source_commit": "c5d6eff7b32a86cd37614bf744b0ed94089b4d25",
+  "artifacts": [
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/actual-checks-summary.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/actual-checks-summary.json",
+      "sha256": "af019ffc6649b526b7af383e5a6d2ef0c6e561a48cfea6631aad360575ceb1fb",
+      "bytes": 2285
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/all-features-tests-retry1.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/all-features-tests-retry1.json",
+      "sha256": "0c9f3244b757c6c8698d2c87071061d0ef3a6c9f79aa23d5c050ad636fc99d74",
+      "bytes": 27007
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/all-features-tests-retry1.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/all-features-tests-retry1.log",
+      "sha256": "7f4cd4c112e429f8d4fa6b5695b74fb190ca1539a00d14d5ed0bfef383c589cb",
+      "bytes": 163803
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/all-features-tests-retry2.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/all-features-tests-retry2.json",
+      "sha256": "1196ab53ab163f1fcc1456ff150e7ea2a95e11e4aacaaffe232ef4a3ad9efb42",
+      "bytes": 27005
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/all-features-tests-retry2.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/all-features-tests-retry2.log",
+      "sha256": "2d7354a883b7383d13c02a966b974cc9168f2e8492ed0a319d3570cdd854302b",
+      "bytes": 169478
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/all-features-tests.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/all-features-tests.json",
+      "sha256": "be041fce1109d5767216e115795596a48854ec0bc61ee892660acc5b7d091203",
+      "bytes": 27007
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/all-features-tests.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/all-features-tests.log",
+      "sha256": "69b6266154bb1d75be9f140d6c7b2a93315a66cc946e31b99700cc8fc43c21a7",
+      "bytes": 145047
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/capacity-blocked-git-guard.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/capacity-blocked-git-guard.json",
+      "sha256": "0f4bbcfd32e6fb28d182bbe2dd2a167a061acdfab4a42405c164d16f8e65eb77",
+      "bytes": 687
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/check-queue.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/check-queue.json",
+      "sha256": "3c3e48417ddcbc81cda22c929c630ad16b32f5090266473c19896d09eb624857",
+      "bytes": 1014
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/code-review-round1.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/code-review-round1.md",
+      "sha256": "a1d967c2c1a85a40c5399290b540400bd7a3bcc588752ae7cc6e6bbd00abb9f7",
+      "bytes": 8141
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/code-review-round2.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/code-review-round2.md",
+      "sha256": "64f43e9628265a1c814eb9aed0656eed83601e6d3b5a7047846859f9578d6620",
+      "bytes": 5800
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/code-review-round3.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/code-review-round3.md",
+      "sha256": "2f89537e0b1e24dfe3edbd541ecf6bc5c776a0ce08891536c7ad978edc8c889a",
+      "bytes": 7186
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/compiler-source-elf-proof.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/compiler-source-elf-proof.json",
+      "sha256": "dd24b7209a6304b6cd51c5f81513bcc84f9aac510af25b7d8f512a75df31e3f6",
+      "bytes": 12257
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/fix-round1.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/fix-round1.json",
+      "sha256": "e97cae70b2cc2fc80cb176199f851f5816aca2e26577d0330bd13536652ce6cd",
+      "bytes": 1719
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/fix-round2.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/fix-round2.json",
+      "sha256": "8c60371b5f303c8a51d9cc5fb910b6110f3a329b0e2d508eb95823093d60f55a",
+      "bytes": 417
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/fix-round3.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/fix-round3.json",
+      "sha256": "1228b30311ec6388c17fd00dd2be755d1082eec4ee8623345a2b8be86b46edbe",
+      "bytes": 1865
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/format-check-final.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/format-check-final.json",
+      "sha256": "e4777785853b19daea6317f9ef73e48dbe4dfc09477a3bae3aa6a5ff2e50998b",
+      "bytes": 26944
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/format-check-final.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/format-check-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/format-check.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/format-check.json",
+      "sha256": "701b2902b341be02b84e99044a9100670ab02962372d3159fde21fbd5a5b21e4",
+      "bytes": 26944
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/format-check.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/format-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/immutable-inputs-before.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/immutable-inputs-before.json",
+      "sha256": "9b029e46dbdfc6be71201094ac966ada07bd94bba58e4cb3f13d3241213ed5d1",
+      "bytes": 17645
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/library-build.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/library-build.json",
+      "sha256": "e8d0d29069c1ee838c383cdb970f1278d62de10294834d47a24659d79986857e",
+      "bytes": 27006
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/library-build.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/library-build.log",
+      "sha256": "89cb259e216d17dda7aaafcdf1cd1cba2a051fa14832d746c8bd29d717d66c5f",
+      "bytes": 145151
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/measure-exact-test.py",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/measure-exact-test.py.txt",
+      "sha256": "46ba260b79aaf7a45b9243ab626e8e5f8e15f4c4b4f71f981b7bb08d1953f7e4",
+      "bytes": 2095
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/out-dir-relocation.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/out-dir-relocation.json",
+      "sha256": "d124fb4e36e13fa8f54fd529e0f1f96459b017e62d2e43f0163a6253e5c65196",
+      "bytes": 697
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/performance-review-round1.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/performance-review-round1.md",
+      "sha256": "83f8e81e7f3049a90278d1a1f5019f36d8b5ee4e46e8ee1ae856c672a2593e7a",
+      "bytes": 6091
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/performance-review-round2.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/performance-review-round2.md",
+      "sha256": "b39de224e3146e48d00d3d7ce93974efaf576b9519eed469ca28628c66add2fa",
+      "bytes": 5846
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/performance-review-round3.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/performance-review-round3.md",
+      "sha256": "c4231b57015b6f92573d3e073ae7c24e3de42f41fb851cde3dfa71f0d1ec2802",
+      "bytes": 5514
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/post-stress-elf-proof.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/post-stress-elf-proof.json",
+      "sha256": "9a72243b120bf7c4cde321ccdb466261e4479d3191968fa715b6e75e643ca61c",
+      "bytes": 472
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/pre-cargo-freshness.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/pre-cargo-freshness.json",
+      "sha256": "e58eb4ac1e735fd61a1160da95bba112b322e95a64402606446a02dbd5aa1173",
+      "bytes": 1172
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/quality-review-round1.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/quality-review-round1.md",
+      "sha256": "c2a85d8e8862fe10909786ac0e1b4a0315782c1cc4290f3701eea3d916493589",
+      "bytes": 5846
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/quality-review-round2.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/quality-review-round2.md",
+      "sha256": "7ff1687b11f7fccfd7695d5a3942b6e9cf94d8ada64462087d8387e1075d8274",
+      "bytes": 6137
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/quality-review-round3.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/quality-review-round3.md",
+      "sha256": "329005e224577c4fcbce0d527332e0fe5016b9349626097c989a6d1d9a596ba9",
+      "bytes": 3458
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/quality-review-round4.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/quality-review-round4.md",
+      "sha256": "32beaa2934230c3eaa2d52979090543f6ebb5ff82e57f304ecb1102d80e687c2",
+      "bytes": 7642
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/review-source-final.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/review-source-final.json",
+      "sha256": "387bcfe57a243e7f1d2710812f69d9e43c2414011bd77e4fe8dca43c76c38ae3",
+      "bytes": 573
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/review-source-round1.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/review-source-round1.json",
+      "sha256": "b29066e59c07d33f3681568faf5038b65283ae98e1a0443b2fdb4752afa80f30",
+      "bytes": 364
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/review-source-round2.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/review-source-round2.json",
+      "sha256": "355df4712dd46f1e940f32e48997a423213b96411f3cb1ad1db324a577b65a8e",
+      "bytes": 364
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/review-source-round3.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/review-source-round3.json",
+      "sha256": "0884865d19495b48e68c2ae3af0a09bde33757d60295dc786543b5ec4765c560",
+      "bytes": 364
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/root-cache-consolidation-attempt1.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/root-cache-consolidation-attempt1.json",
+      "sha256": "1689c93f8074a06e5420c46a46cd6de593359953cb8202a3b384280a627b0432",
+      "bytes": 437
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/root-generated-archive-byte-exact-consolidation.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/root-generated-archive-byte-exact-consolidation.json",
+      "sha256": "b83ab0e4a33fe78b0e674ed9270d55ff2d6601cd5c53443430a5223ce47a554e",
+      "bytes": 2209
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/root-obsolete-allfeatures-static-cache-retirement.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/root-obsolete-allfeatures-static-cache-retirement.json",
+      "sha256": "5b2a0edc91843375acda6533fd93f145dc5886ff24ad1bde5188d91ec349e4ec",
+      "bytes": 1479
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/root-superseded-default-ui-retirement.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/root-superseded-default-ui-retirement.json",
+      "sha256": "c944207b55d3db7fb708828a0a30a3014c78980beebfbed6e1ae2b924b05bb87",
+      "bytes": 695
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/round1-source/project_tree_adapter.rs",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/round1-source/project_tree_adapter.rs.txt",
+      "sha256": "eeaaaa01809c3dabebbcdca3f84b3ad22b02db6060de54db4ffb858c4314133e",
+      "bytes": 35500
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/round1-source/src-project_tree_adapter.rs",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/round1-source/src-project_tree_adapter.rs.txt",
+      "sha256": "67dbb26617d07caee7db19047aa0cdb82c8572e34de305e97847b7af32549c09",
+      "bytes": 24392
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/round1-source/tests-project_tree_adapter.rs",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/round1-source/tests-project_tree_adapter.rs.txt",
+      "sha256": "eeaaaa01809c3dabebbcdca3f84b3ad22b02db6060de54db4ffb858c4314133e",
+      "bytes": 35500
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/round1-source-restoration.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/round1-source-restoration.json",
+      "sha256": "060c85a32aba8fb83ff5dd3c5653681a3d4934742a770531a4be382fde9f0c3b",
+      "bytes": 923
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/round3-before-fixture-correction/src-project_tree_adapter.rs",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/round3-before-fixture-correction/src-project_tree_adapter.rs.txt",
+      "sha256": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+      "bytes": 26230
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/round3-before-fixture-correction/tests-project_tree_adapter.rs",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/round3-before-fixture-correction/tests-project_tree_adapter.rs.txt",
+      "sha256": "98453f194d39b1d7129f35732c76f0718c5b5f072d5904d6004442b942efd047",
+      "bytes": 39256
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/run-check.py",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/run-check.py.txt",
+      "sha256": "fd0983bdc2049bd7e5de95109cfacf62baab480f841d0b6882f5b8ff28192529",
+      "bytes": 1467
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/runtime-status-final.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/runtime-status-final.json",
+      "sha256": "c460fcfd94c09d0d6754f56f9a04c36482798ac3214deedaab1ecfa8ab4f00ac",
+      "bytes": 2351
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/runtime-status.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/runtime-status.json",
+      "sha256": "f90db803509a15aae205dff7ca85d53286788d80c3934f9c4c2a6263f8c737d2",
+      "bytes": 1353
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/source-commit.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/source-commit.json",
+      "sha256": "75146835484c97138139a0cf3a3cf6171433f0e8998ccbd8c3466c4391dc3765",
+      "bytes": 716
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/stress-20000-per-pid.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/stress-20000-per-pid.json",
+      "sha256": "63f5689142ac01442cbb961f82212c1f8c5e26d8218b74ed0829b32e32d01399",
+      "bytes": 1297
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/stress-20000-per-pid.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/stress-20000-per-pid.log",
+      "sha256": "18cb1a121724f4e10339e7269c7c3d70283de00dea6b7bf14f8cf5fae14fcd75",
+      "bytes": 192
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/stress-20000-timed.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/stress-20000-timed.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/stress-20000.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/stress-20000.json",
+      "sha256": "86d8b4d2aae2fd5084d4fa3bbc576618074a1092a0f81f394c5881d4d45729b3",
+      "bytes": 27067
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/stress-20000.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/stress-20000.log",
+      "sha256": "1c8824e80e6c19442b8dacae4fba1cb906dba9b4cb18f85ba85f84911c593bf3",
+      "bytes": 192
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/stress-java-budget-per-pid.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/stress-java-budget-per-pid.json",
+      "sha256": "d57db9750bad9fa3a74e5216d9bcd48fcd774bc5ca13a906dda144ebfee4e07c",
+      "bytes": 1292
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/stress-java-budget-per-pid.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/stress-java-budget-per-pid.log",
+      "sha256": "2522c0b7661872dc404085ed0c2724cae0fb0f510ad8de19109001552b745539",
+      "bytes": 196
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/stress-java-budget-timed.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/stress-java-budget-timed.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/stress-java-budget.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/stress-java-budget.json",
+      "sha256": "d0c0e8bd4ac370c7fbf59e6dd103086c3a7a3c4504b53613d03ec25120c40aeb",
+      "bytes": 27072
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/stress-java-budget.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/stress-java-budget.log",
+      "sha256": "2522c0b7661872dc404085ed0c2724cae0fb0f510ad8de19109001552b745539",
+      "bytes": 196
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/strict-clippy.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/strict-clippy.json",
+      "sha256": "30fcff03e550000057cfc6c1e9ecce24ab2e504403d343e2b5cb5d162a58a336",
+      "bytes": 26952
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/strict-clippy.log",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/strict-clippy.log",
+      "sha256": "87398404a7358c62c0b5eb854f7eded8408e098a056133592de17e60a8b16591",
+      "bytes": 319
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/time-tool-unavailable.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/time-tool-unavailable.json",
+      "sha256": "14112eb7a474c7676c6f25d2cc464f2f484e83e3f0c648597097a8055a2e5d59",
+      "bytes": 580
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/ui-review-round1.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/ui-review-round1.md",
+      "sha256": "deab28b27860d60778dfc4146d6e857cbddddc4a4d68752a19790dbb8c74abbd",
+      "bytes": 4752
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/ui-review-round2.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/ui-review-round2.md",
+      "sha256": "ce6a7eb0a3d10a296f4470421d1e06cc0a518e6bf4f434fc0795eca6fcf95166",
+      "bytes": 4888
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/ux-review-round1.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/ux-review-round1.md",
+      "sha256": "e2aa04e2bb393c75f7f3c46426a1c55b80f6a0a4612f87931b7199cfca135962",
+      "bytes": 7108
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/ux-review-round2.md",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/ux-review-round2.md",
+      "sha256": "67e57f724e1c2d57e961af8d80b9a81a1cd3dff59d6d706c5e82d54ad1b0c724",
+      "bytes": 6403
+    },
+    {
+      "external_path": "/workspace/android-studio-artifacts/tree-input-adapter/raw-evidence-whitespace-preservation.json",
+      "portable_path": "docs/android-studio/ports/evidence/tree-input-adapter/raw-evidence-whitespace-preservation.json",
+      "sha256": "b75020bf519dd3ff1c24804c32f0e05a148245ab63e62443a78dee18d1e4e392",
+      "bytes": 723
+    }
+  ],
+  "exact_bytes_preserved": true,
+  "inert_helper_and_snapshot_extensions": "External Python measurement/orchestration helpers and historical Rust snapshots have .txt suffixes; their bytes are preserved as evidence."
+}
