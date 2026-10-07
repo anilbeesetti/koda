@@ -100,9 +100,112 @@
   ],
   "canonical_original_test_credit": 0,
   "original_ports": [],
-  "all_runtime_checks": "pending",
-  "all_five_reviews": "pending",
+  "all_runtime_checks": {
+    "all_features_tests": {
+      "passed": 221,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "new_supplemental_passed": 20
+    },
+    "library_build": "passing",
+    "strict_repository_clippy": "passing",
+    "cargo_fmt_all_check": "passing",
+    "actual_evidence": "docs/android-studio/evidence/module-presentation/actual-checks-summary.json"
+  },
+  "all_five_reviews": [
+    {
+      "area": "code",
+      "static_and_runtime": [
+        {
+          "path": "docs/android-studio/evidence/module-presentation/code-review-round1.log",
+          "sha256": "72605c30b6b446a9d0555489ece894601c58dd86a092bbfde9531835a93be633",
+          "verdict": "PASS"
+        },
+        {
+          "path": "docs/android-studio/evidence/module-presentation/code-review-runtime-addendum.log",
+          "sha256": "bc49b6ae37ce11c6c69992684f94160dd45d8c3506bb105e2099d672a11f4c31",
+          "verdict": "PASS"
+        }
+      ],
+      "blocking_findings": []
+    },
+    {
+      "area": "ui",
+      "static_and_runtime": [
+        {
+          "path": "docs/android-studio/evidence/module-presentation/ui-review-round1.log",
+          "sha256": "5c09b6d9ab109d039c52316c4127ea6fe9d8a02dbd48c59f930d72b3a913218c",
+          "verdict": "PASS"
+        },
+        {
+          "path": "docs/android-studio/evidence/module-presentation/ui-review-runtime-addendum.log",
+          "sha256": "3c590395a20901839de4205182bf145ed3e769ab3197dfe553072c0e831be90e",
+          "verdict": "PASS"
+        }
+      ],
+      "blocking_findings": []
+    },
+    {
+      "area": "ux",
+      "static_and_runtime": [
+        {
+          "path": "docs/android-studio/evidence/module-presentation/ux-review-round1.log",
+          "sha256": "fa621cea6fcfbf7cdd5dd088a831e8033e3827133db36f90e0747b05b76eb84a",
+          "verdict": "PASS"
+        },
+        {
+          "path": "docs/android-studio/evidence/module-presentation/ux-review-runtime-addendum.log",
+          "sha256": "47682fa020f824a8703bbebc3e60a84c57cda449ad9ccf1039d9fac884007cdc",
+          "verdict": "PASS"
+        }
+      ],
+      "blocking_findings": []
+    },
+    {
+      "area": "performance",
+      "static_and_runtime": [
+        {
+          "path": "docs/android-studio/evidence/module-presentation/performance-review-round1.log",
+          "sha256": "8d1b9a400c29ecb70453080c36da1bebc2f3c30f513643515c5ccab2deadedb0",
+          "verdict": "PASS"
+        },
+        {
+          "path": "docs/android-studio/evidence/module-presentation/performance-review-runtime-addendum.log",
+          "sha256": "fc5a98906407de853e38cec812ae2f840d4260436e432c05751418a1ab7e5754",
+          "verdict": "PASS"
+        }
+      ],
+      "blocking_findings": []
+    },
+    {
+      "area": "quality",
+      "static_and_runtime": [
+        {
+          "path": "docs/android-studio/evidence/module-presentation/quality-review-round1.log",
+          "sha256": "18287f1dfba43e657fb215e849b4749f5dd791610c34c7126587f252dd37f821",
+          "verdict": "PASS"
+        },
+        {
+          "path": "docs/android-studio/evidence/module-presentation/quality-review-runtime-addendum.log",
+          "sha256": "d64273fb9d22b1430f4424aac93d0c0eb48fc5615639ee3b7d433b011dc70101",
+          "verdict": "PASS"
+        }
+      ],
+      "blocking_findings": []
+    }
+  ],
   "complete_original_tree_behavior": false,
   "phase_complete": false,
-  "ide_complete": false
+  "ide_complete": false,
+  "tested_source_commit": "5e4b752a057bff25d9e281a43ce4b71a8598406f",
+  "whole_source_guard": {
+    "binding_count": 4717,
+    "exact_root_pathspec_equivalence": true,
+    "nested_ports_evidence_visible": true,
+    "source_git_index_status_unchanged_during_checks": true
+  },
+  "source_fixes": 0,
+  "local_component_checks_complete": true,
+  "root_full_app_native_full_ci": "pending lead integration"
 }

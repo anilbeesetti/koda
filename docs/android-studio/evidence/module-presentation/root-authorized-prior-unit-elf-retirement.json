@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "authorization": "Root explicit runtime lease and exact one generated ELF retirement instruction",
+  "retired_path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+  "sha256": "1f206c099eca9788f7b314fa21220c3b195a3d01c2cbf4fed567dac0603829d5",
+  "bytes": 303989152,
+  "nlink": 1,
+  "live_pid_or_fd_references_observed": [],
+  "uninspectable_proc_links": [
+    "/proc/198/exe",
+    "/proc/249/exe"
+  ],
+  "root_preserved_evidence": [
+    "/workspace/android-studio-artifacts/v2-artifact-integration/tooling-all-features-tests.log",
+    "/workspace/android-studio-artifacts/v2-artifact-integration/tooling-all-features-verified.json"
+  ],
+  "owner_source_sha256": "0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c",
+  "owner_source_commit": "5e4b752a05",
+  "retired_at": "2026-10-07T22:08:39.691276+00:00",
+  "retirement_scope": "one explicitly authorized generated unit executable only; all source/fixtures/raw logs/frozen binaries preserved",
+  "root_artifact_binding": {
+    "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+    "bytes": 303989152,
+    "sha256": "1f206c099eca9788f7b314fa21220c3b195a3d01c2cbf4fed567dac0603829d5"
+  },
+  "root_record_sha256": "28d55fc4d85e2c5f7264da11f04867549ffb4d486f41e358e95446ff50126f1f",
+  "root_source_commit": "12e31299d04b0a021d75c39184f6fa26690da269",
+  "root_preserved_total": 229
+}

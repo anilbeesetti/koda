@@ -1,0 +1,16 @@
+{
+  "root_exact_patterns": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "binding_count": 4717,
+  "actual_runtime_guard_equals_exact_git_pathspec": true,
+  "before_runtime_source_hashes_match_current_exact_root_pathspec": true,
+  "nested_ports_evidence_remain_visible": 103,
+  "no_pattern_widening": true
+}

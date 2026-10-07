@@ -68,6 +68,8 @@ assertions remain unported/not_run until actual import, file refresh, projection
 and UI flows are implemented. The original Kotlin import/fixture/snapshot tests
 are not ported by these supplemental display cases.
 
-Local runtime gates and all five scoped reviews are initially pending. Passing
-this bounded policy cannot establish full IDE, Android tree UI, or phase
-completion. The final evidence report must state actual results and blockers.
+Local runtime gates and all five scoped static/runtime reviews passed for
+source commit `5e4b752a057bff25d9e281a43ce4b71a8598406f`. See
+`module-presentation-task-report.md` for actual counts, hashes and limits.
+Root's full-app/native/full-workspace gates remain pending. This bounded policy
+does not establish Android tree UI, phase or IDE completion.

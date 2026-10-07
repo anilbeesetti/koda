@@ -1,0 +1,47 @@
+{
+  "reason": "Shared relative dependency paths require fresh current-worktree roots; source bytes and Git state remain unchanged.",
+  "roots": [
+    {
+      "path": "/workspace/android-studio-module-presentation/crates/android_tools/src/android_tools.rs",
+      "sha256": "203b59ed4c1f45e136d0656a8760f0e99f8358e8a69f31fd8fdd59f240292fb7",
+      "before_mtime_ns": 1791410451432235700,
+      "after_mtime_ns": 1791410934537447009
+    },
+    {
+      "path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/gradle_import_reference.rs",
+      "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+      "before_mtime_ns": 1791410234669676133,
+      "after_mtime_ns": 1791410934537447009
+    },
+    {
+      "path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/module_presentation.rs",
+      "sha256": "9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924",
+      "before_mtime_ns": 1791410489163678996,
+      "after_mtime_ns": 1791410934537447009
+    },
+    {
+      "path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/project_tree_adapter.rs",
+      "sha256": "5e5927568f42cdc1247d88d16f3fdf1dcbb7b427e24b4d6240928378b6e5f79e",
+      "before_mtime_ns": 1791410234670143868,
+      "after_mtime_ns": 1791410934537447009
+    },
+    {
+      "path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/project_tree_component.rs",
+      "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22",
+      "before_mtime_ns": 1791410234670143868,
+      "after_mtime_ns": 1791410934537447009
+    },
+    {
+      "path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/project_tree_facts.rs",
+      "sha256": "7d032f41e790d19a7a3f2f7cb38ea91cf19181c3427c4531f3126d6a2b6542fc",
+      "before_mtime_ns": 1791410234670143868,
+      "after_mtime_ns": 1791410934537447009
+    },
+    {
+      "path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/project_view_preferences_reference.rs",
+      "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+      "before_mtime_ns": 1791410234670143868,
+      "after_mtime_ns": 1791410934537447009
+    }
+  ]
+}
