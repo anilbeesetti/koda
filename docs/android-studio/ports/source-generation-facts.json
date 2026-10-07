@@ -1,0 +1,237 @@
+{
+  "task": "Correct evaluated Android source generation provenance",
+  "branch": "android-studio-task/1-assets-generation-facts",
+  "base_commit": "787488e59f",
+  "implementation_snapshot": {
+    "crates/android_tools/src/project_model.gradle": "7c8a928444c502d880be3a1a0c92b28254084f3e2e69f1f12d0f59f6be14acb6",
+    "crates/android_tools/src/project_model.rs": "533df8ef101df1d3ba6c8163cd2e4eaa3d5105307518fed21162d6bfed35ef2c"
+  },
+  "problem": "AGP static provider can omit variant-layer static directories, causing them to be marked generated. Path names also cannot determine task-produced source provenance.",
+  "result": "Read non-generated DirectoryEntry metadata through the SDK model converter; retain all provider enumeration order and missing configured roots. Applies to Java,Kotlin,Android res,and assets.",
+  "supersedes_prior_behavior_description": "source-providers.json describes the prior frozen asset static+DSL workaround and unchanged Java/Kotlin/res behavior. This follow-up changes generation classification for all four kinds; prior validation history remains intact.",
+  "non_rust_exception": {
+    "component": "Minimal in-process Gradle/AGP JVM source metadata bridge",
+    "reason": "Official AGP DirectoryEntry objects are owned by the isolated Gradle JVM. Rust cannot inspect them directly; the bridge only exports evaluated SDK metadata. Rust owns model decoding and IDE logic.",
+    "capability_failure": "Explicit Gradle error; no path-based guess when SDK source provenance is unavailable."
+  },
+  "reference_credit": {
+    "canonical_new_tests": 0,
+    "testGeneratedAssets": "unported",
+    "runtime_is_pinned_Studio_helper": false
+  },
+  "validation": {
+    "focused_rust_regression": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    "all_features_rust": {
+      "library": 56,
+      "gradle_module_import": 20,
+      "preferences": 19,
+      "total": 95,
+      "failed": 0,
+      "ignored": 0
+    },
+    "strict_clippy": "PASS release/all-targets/all-features/deny-warnings",
+    "workspace_format": "PASS",
+    "gradle_round4": "PASS;4tasks executed;both named producers and model export;normalizedmodel identical to fixture",
+    "rust_probe": "PASS;current-source executable decoded actualround4output and flagsverified",
+    "original_assertions_and_9_fixture_files": "byte-identical",
+    "runtime_compatibility": "Only AGP9.4.0 with Gradle9.6.1/JDK21/SDK37 was exercised; other SDK versions are not validated by this smoke."
+  },
+  "reviews": {
+    "code": {
+      "verdict": "PASS",
+      "scope": "source/model only;full app/native/full CI separate",
+      "reviewer": "/root/sdk_provenance_code_review",
+      "findings": [],
+      "implementation_snapshot": {
+        "crates/android_tools/src/project_model.gradle": "7c8a928444c502d880be3a1a0c92b28254084f3e2e69f1f12d0f59f6be14acb6",
+        "crates/android_tools/src/project_model.rs": "533df8ef101df1d3ba6c8163cd2e4eaa3d5105307518fed21162d6bfed35ef2c"
+      },
+      "model_fixture_sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8"
+    },
+    "ui": {
+      "verdict": "PASS",
+      "scope": "source/model only;full app/native/full CI separate",
+      "reviewer": "/root/sdk_provenance_ui_review",
+      "findings": [],
+      "implementation_snapshot": {
+        "crates/android_tools/src/project_model.gradle": "7c8a928444c502d880be3a1a0c92b28254084f3e2e69f1f12d0f59f6be14acb6",
+        "crates/android_tools/src/project_model.rs": "533df8ef101df1d3ba6c8163cd2e4eaa3d5105307518fed21162d6bfed35ef2c"
+      },
+      "model_fixture_sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8"
+    },
+    "ux": {
+      "verdict": "PASS",
+      "scope": "source/model only;full app/native/full CI separate",
+      "reviewer": "/root/sdk_provenance_ux_review",
+      "findings": [],
+      "implementation_snapshot": {
+        "crates/android_tools/src/project_model.gradle": "7c8a928444c502d880be3a1a0c92b28254084f3e2e69f1f12d0f59f6be14acb6",
+        "crates/android_tools/src/project_model.rs": "533df8ef101df1d3ba6c8163cd2e4eaa3d5105307518fed21162d6bfed35ef2c"
+      },
+      "model_fixture_sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8"
+    },
+    "performance": {
+      "verdict": "PASS",
+      "scope": "source/model only;full app/native/full CI separate",
+      "reviewer": "/root/sdk_provenance_performance_review",
+      "findings": [],
+      "implementation_snapshot": {
+        "crates/android_tools/src/project_model.gradle": "7c8a928444c502d880be3a1a0c92b28254084f3e2e69f1f12d0f59f6be14acb6",
+        "crates/android_tools/src/project_model.rs": "533df8ef101df1d3ba6c8163cd2e4eaa3d5105307518fed21162d6bfed35ef2c"
+      },
+      "model_fixture_sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8"
+    },
+    "quality": {
+      "verdict": "PASS",
+      "scope": "source/model only;full app/native/full CI separate",
+      "reviewer": "/root/toolbar_lead_quality_review",
+      "findings": [],
+      "implementation_snapshot": {
+        "crates/android_tools/src/project_model.gradle": "7c8a928444c502d880be3a1a0c92b28254084f3e2e69f1f12d0f59f6be14acb6",
+        "crates/android_tools/src/project_model.rs": "533df8ef101df1d3ba6c8163cd2e4eaa3d5105307518fed21162d6bfed35ef2c"
+      },
+      "model_fixture_sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8"
+    }
+  },
+  "pending_gates": [
+    "Final app build and native flow validation",
+    "Fresh immutable-source exact parity captures",
+    "Full workspace CI",
+    "Lead review/main/conflict guards",
+    "Protected branch merge"
+  ],
+  "failed_attempts": [
+    {
+      "round": 2,
+      "result": "Real Gradle invocation failed before source model emission because both covariant and JVM bridge methods matched; exclusion of bridge methods corrected lookup. Log retained."
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/task-plan.json",
+      "bytes": 2950,
+      "sha256": "6b23658bac3da83ec852c83f12b4b2d30b2db661f0be0339f83e4f253413187d"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/source-snapshot.json",
+      "bytes": 2861,
+      "sha256": "6cd92fdfd1ced1de8b4a109584f3236b3538df89f7f996b6492c3bc235cb32a0"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/model-fixture-provenance.json",
+      "bytes": 630,
+      "sha256": "b825ad82ed5fb8b44a29e6b0cc1114e40466e0c334638d329ce0873fda13cf7f"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/gradle-round1.log",
+      "bytes": 45304,
+      "sha256": "aa60c3eeb3c6d1688340e666a5d6f456139417a6ea77079c6788a91c6ef89bb3"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/gradle-round1-exit.json",
+      "bytes": 17,
+      "sha256": "e89df0eae5ec7db81135aed16463968955c578bcc4f2ec43172eff351f080c17"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/gradle-round2.log",
+      "bytes": 1945,
+      "sha256": "1794e2e958929b866f2e42d5f365f0a599d6c1d96e6b88655fae04d2f7cdb4b1"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/gradle-round2-exit.json",
+      "bytes": 17,
+      "sha256": "5cc319f54b05a38799195a491c303aa686eab7caccfdbbf1e8b8c07405cb7392"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/gradle-round3.log",
+      "bytes": 45355,
+      "sha256": "f2c387f6f3bd8c850dcc49e635830fd80b9fc5fd6f5a1f24ee31def3e497a884"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/gradle-round3-exit.json",
+      "bytes": 17,
+      "sha256": "e89df0eae5ec7db81135aed16463968955c578bcc4f2ec43172eff351f080c17"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/gradle-round4.log",
+      "bytes": 45319,
+      "sha256": "2e11a9ee2798cd9d3f9b1d162a7c5c8aee77c0d6f256a53da763fff18a9de881"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/gradle-round4-exit.json",
+      "bytes": 376,
+      "sha256": "f01301c933149281b1042543cc042a3da09639c9b7a70f72d983e0bc71f172c2"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/raw-model-round4.json",
+      "bytes": 43950,
+      "sha256": "307b96583763863aceee769cf991ab15cf65babb2843ec4fc22d1e62454ac431"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/rust-generation-regression-round1.log",
+      "bytes": 489,
+      "sha256": "b70ebcb26f9397aa6493447d96bd915eea571541b09734bd2da5bac2dc178265"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/rust-generation-regression-round1-exit.json",
+      "bytes": 448,
+      "sha256": "7d8f9b643cfa1664f7fb9d567fd777754cf70d107beb0d201c57789e22991154"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/rust-all-features.log",
+      "bytes": 8246,
+      "sha256": "d7ba2f944d64e326cc3aaa33a87ab28aab4af17062efb91c871408531aa24c1f"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/rust-all-features-exit.json",
+      "bytes": 173,
+      "sha256": "8ad9c732d4c8370ca49e3c0a3541914d876200c42f6c2af80daa816a879e3103"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/strict-clippy.log",
+      "bytes": 316,
+      "sha256": "8c9b40b541b880a6eb90aaf41a00944d8a2789d3254d1385c3f6b8589482c731"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/strict-clippy-exit.json",
+      "bytes": 150,
+      "sha256": "343cc61423a886db67ee2bdc834149d7db681b0dc2adc8908b45037d8d85e6c9"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/workspace-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/workspace-format-exit.json",
+      "bytes": 143,
+      "sha256": "92241febad6f7ed49b42b79cee9c5c6f5807306e8f6579486d10a413b262f72a"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/rust-probe-round4.json",
+      "bytes": 70607,
+      "sha256": "2592e9e91deef6a54522c43309a2951372c52f048dce0dd45a4e985fbd33d662"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/rust-probe-round4.log",
+      "bytes": 298,
+      "sha256": "8736222e13a79dc5d3a89758c4071ad377fd909cddb636d94afbb4d409d1e14e"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-generation-facts/rust-probe-round4-exit.json",
+      "bytes": 537,
+      "sha256": "2eab85bb2ae45dc4e5ced41f6c576914003e008ba0a5ac4583cf7d55b1d4071f"
+    }
+  ],
+  "fixture_provenance": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/provenance.json",
+  "report_state": "Component source/code/fixture validation only. This is not task completion; lead integration and native/workspace gates remain pending.",
+  "all_five_scoped_reviews_pass": true,
+  "task_complete": false,
+  "source_commit": "8322e29b45311fd146a51c7220733507c288920a",
+  "validated_source_identity": "Execution occurred on hash-bound uncommitted snapshot before source commit; commit contains the exact validated production bytes. No retroactive tested_commit claim.",
+  "raw_log_whitespace": "Byte-exact Gradle/compiler evidence is retained. It may contain trailing whitespace; source-only diff checks pass without normalizing raw evidence."
+}
