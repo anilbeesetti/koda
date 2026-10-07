@@ -43,6 +43,27 @@ gradle.projectsEvaluated {
     def projectPaths = root.allprojects*.path as Set
     def jvmProjects = root.allprojects.findAll { !androidVariants.containsKey(it.path) && it.extensions.findByName('sourceSets') != null }
     def jvmPaths = jvmProjects*.path as Set
+    def variantStaticDirectories = { source, project, component, kind ->
+        // AGP can omit variant-layer entries from its static provider. Read the
+        // same DirectoryEntry provenance used by its model converter instead.
+        def methods = source.class.methods.findAll {
+            it.name == 'variantSourcesForModel$gradle_core' && !it.isBridge() && it.parameterCount == 1 &&
+                it.parameterTypes[0].name == 'kotlin.jvm.functions.Function1'
+        }
+        if (methods.size() != 1) throw new GradleException('Cannot determine ' + kind + ' source provenance for ' + project.path + ':' + component.name + ': AGP DirectoryEntry metadata is unavailable')
+        def method = methods.first()
+        def predicateType = method.parameterTypes[0]
+        // Use the SDK's interface class loader; Gradle and AGP may isolate Kotlin.
+        def predicate = java.lang.reflect.Proxy.newProxyInstance(predicateType.classLoader, [predicateType] as Class[],
+            { proxy, invoked, arguments ->
+                if (invoked.name == 'invoke' && arguments?.length == 1) return !arguments[0].isGenerated()
+                if (invoked.name == 'toString') return 'Koda non-generated DirectoryEntry metadata filter'
+                if (invoked.name == 'hashCode') return System.identityHashCode(proxy)
+                if (invoked.name == 'equals') return proxy.is(arguments[0])
+                throw new IllegalStateException('Unexpected AGP DirectoryEntry predicate method: ' + invoked.name)
+            } as java.lang.reflect.InvocationHandler)
+        method.invoke(source, predicate).collect { it.canonicalPath } as Set
+    }
     def dependencies = { project, config ->
         config.incoming.resolutionResult.allDependencies.collect { dependency ->
             if (dependency instanceof UnresolvedDependencyResult) throw new GradleException('Cannot resolve ' + config.name + ': ' + dependency.attempted, dependency.failure)
@@ -107,9 +128,13 @@ gradle.projectsEvaluated {
                 staticPaths = staticPaths ?: [] as Set
                 staticPaths.addAll(declaredAssetPaths)
             }
+            if (provider != null) {
+                staticPaths = staticPaths ?: [] as Set
+                staticPaths.addAll(variantStaticDirectories(source, project, component, kind))
+            }
             if (provider != null) provider.get().flatten().each { directory ->
                 def file = directory.asFile.canonicalFile
-                def generated = staticProvider != null || declaredAssets ? !staticPaths.contains(file.path) : file.toPath().startsWith(buildPath)
+                def generated = !staticPaths.contains(file.path)
                 result.add([path: file.path, kind: kind, generated: generated])
             }
         }

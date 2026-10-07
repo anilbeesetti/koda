@@ -1,0 +1,48 @@
+// AssetGenerator registration adapted from AndroidProjectViewTest.testGeneratedAssets,
+// Copyright (C) 2019 The Android Open Source Project, licensed under Apache-2.0.
+// The original source and license notice are identified in ../../README.md and the task report.
+apply plugin: 'com.android.application'
+android {
+    namespace 'dev.koda.sourceproviders'
+    compileSdk 37
+    buildToolsVersion '37.0.0'
+    defaultConfig {
+        applicationId 'dev.koda.sourceproviders'
+        minSdk 26
+        targetSdk 37
+        versionCode 1
+        versionName '1'
+    }
+    flavorDimensions += 'edition'
+    productFlavors { demo { dimension 'edition' }; inactive { dimension 'edition' } }
+    sourceSets {
+        main {
+            manifest.srcFile 'custom-manifest/AndroidManifest.xml'
+            assets.setSrcDirs(['unrelated-assets'])
+            res.setSrcDirs(['provider-res', 'main/resources'])
+        }
+        debug { assets.setSrcDirs(['unrelated-assets', 'unrelated-assets/nested']) }
+        demo { assets.setSrcDirs(['flavor-assets']) }
+        inactive { assets.setSrcDirs(['inactive-assets']) }
+    }
+}
+abstract class AssetGenerator extends DefaultTask {
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDirectory()
+    @TaskAction
+    void run() {
+        def raw = new File(getOutputDirectory().get().asFile, 'raw')
+        raw.mkdirs()
+        new File(raw, 'createAssets').write('source-provider smoke asset\n')
+    }
+}
+androidComponents {
+    beforeVariants(selector().withFlavor('edition', 'inactive')) { it.enable = false }
+    onVariants(selector().all()) { variant ->
+        def writeAssetTask = tasks.register('createAssets' + variant.name.capitalize(), AssetGenerator)
+        variant.sources.assets.addGeneratedSourceDirectory(writeAssetTask, { it.outputDirectory })
+        writeAssetTask.configure { outputDirectory.set(project.layout.projectDirectory.dir('generated-outside-build/' + variant.name)) }
+        variant.sources.assets.addStaticSourceDirectory('late-static-assets')
+        variant.sources.assets.addStaticSourceDirectory('build/late-static-assets')
+    }
+}

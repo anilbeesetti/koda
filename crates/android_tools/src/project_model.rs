@@ -1242,6 +1242,134 @@ mod tests {
     }
 
     #[test]
+    fn evaluated_variant_sources_retain_sdk_generation_flags_and_order() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().canonicalize()?;
+        fs::create_dir(root.join("app"))?;
+        let mut captured: serde_json::Value = serde_json::from_str(include_str!(
+            "../test_data/source_providers/gradle-smoke-generation/model.json"
+        ))?;
+        fn relocate(value: &mut serde_json::Value, root: &Path) {
+            match value {
+                serde_json::Value::String(path) => {
+                    if let Some(relative) = path.strip_prefix("${project_root}") {
+                        *path = root
+                            .join(relative.trim_start_matches('/'))
+                            .to_string_lossy()
+                            .into_owned();
+                    }
+                }
+                serde_json::Value::Array(values) => {
+                    for value in values {
+                        relocate(value, root);
+                    }
+                }
+                serde_json::Value::Object(values) => {
+                    for value in values.values_mut() {
+                        relocate(value, root);
+                    }
+                }
+                _ => {}
+            }
+        }
+        relocate(&mut captured, &root);
+        let parsed = parse_model(&format!("{OUTPUT}{captured}"), &root)?;
+        let application = parsed.modules.first().context("Captured app module")?;
+        assert_eq!(
+            application
+                .variants
+                .iter()
+                .map(|variant| variant.name.as_str())
+                .collect::<Vec<_>>(),
+            ["demoDebug", "demoRelease"]
+        );
+        for variant in &application.variants {
+            let main = variant
+                .components
+                .iter()
+                .find(|component| component.scope == SourceScope::Main)
+                .context("Captured main component")?;
+            for (kind, suffix) in [
+                (SourceKind::Java, "java"),
+                (SourceKind::Kotlin, "kotlin"),
+                (SourceKind::Resources, "res"),
+                (SourceKind::Assets, "assets"),
+            ] {
+                let path = root.join(format!("app/src/{}/{suffix}", variant.name));
+                assert!(!path.exists());
+                let source = main
+                    .sources
+                    .iter()
+                    .find(|source| source.kind == kind && source.path == path)
+                    .context("Missing variant-only configured root")?;
+                assert!(!source.generated, "Configured {kind:?} root: {path:?}");
+            }
+            let assets = main
+                .sources
+                .iter()
+                .filter(|source| source.kind == SourceKind::Assets)
+                .map(|source| {
+                    assert!(!source.path.exists());
+                    Ok((
+                        source.path.strip_prefix(&root)?.to_path_buf(),
+                        source.generated,
+                    ))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let mut expected = vec![
+                (
+                    format!("app/generated-outside-build/{}", variant.name),
+                    true,
+                ),
+                (format!("app/src/{}/assets", variant.name), false),
+                ("app/late-static-assets".into(), false),
+                ("app/build/late-static-assets".into(), false),
+            ];
+            if variant.name == "demoDebug" {
+                expected.extend([
+                    ("app/unrelated-assets".into(), false),
+                    ("app/unrelated-assets/nested".into(), false),
+                    ("app/flavor-assets".into(), false),
+                ]);
+            } else {
+                expected.extend([
+                    ("app/src/release/assets".into(), false),
+                    ("app/flavor-assets".into(), false),
+                    ("app/unrelated-assets".into(), false),
+                ]);
+            }
+            assert_eq!(
+                assets,
+                expected
+                    .into_iter()
+                    .map(|(path, generated)| (PathBuf::from(path), generated))
+                    .collect::<Vec<_>>()
+            );
+            assert!(
+                main.sources
+                    .iter()
+                    .all(|source| !source.path.starts_with(root.join("app/inactive-assets")))
+            );
+        }
+        let inactive = application
+            .source_providers
+            .as_ref()
+            .context("Captured configured provider catalog")?
+            .providers
+            .iter()
+            .find(|provider| provider.name == "inactive")
+            .context("Disabled flavor retained in configured catalog")?;
+        assert!(
+            inactive
+                .roots
+                .iter()
+                .any(|source| source.kind == SourceProviderRootKind::Assets
+                    && source.path == root.join("app/inactive-assets"))
+        );
+        Ok(())
+    }
+
+    #[test]
     fn legacy_provider_metadata_stays_unknown_and_assets_retain_missing_roots() -> Result<()> {
         let temporary = tempfile::tempdir()?;
         let root = temporary.path().canonicalize()?;
