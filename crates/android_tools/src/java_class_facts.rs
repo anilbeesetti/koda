@@ -403,6 +403,8 @@ impl<'a> Lexer<'a> {
 struct Parser<'a> {
     lexer: Lexer<'a>,
     lookahead: Option<Token<'a>>,
+    // Annotation arguments inside generic headers share the same nesting budget.
+    delimiter_depth: usize,
 }
 
 impl<'a> Parser<'a> {
@@ -410,6 +412,7 @@ impl<'a> Parser<'a> {
         Self {
             lexer: Lexer { source, offset: 0 },
             lookahead: None,
+            delimiter_depth: 0,
         }
     }
 
@@ -697,17 +700,17 @@ impl<'a> Parser<'a> {
     }
 
     fn angles(&mut self, opening: Token<'a>) -> FactsResult<()> {
+        self.begin_delimiter(opening)?;
         let mut depth = 1;
         let mut any_content = false;
         while let Some(token) = self.next()? {
             match token.text {
                 "<" => {
+                    self.begin_delimiter(token)?;
                     depth += 1;
-                    if depth > MAX_DELIMITER_DEPTH {
-                        return Err(error(JavaFactsErrorKind::NestingTooDeep, token.byte_offset));
-                    }
                 }
                 ">" => {
+                    self.delimiter_depth -= 1;
                     depth -= 1;
                     if depth == 0 {
                         if !any_content {
@@ -725,14 +728,22 @@ impl<'a> Parser<'a> {
                 }
                 "?" => any_content = true,
                 "," | "." | "&" | "extends" | "super" => {}
-                "[" => {
-                    let closing = self.required(opening.byte_offset)?;
-                    if closing.text != "]" {
+                "[" => self.array_dimension(token)?,
+                "boolean" | "byte" | "char" | "short" | "int" | "long" | "float" | "double" => {
+                    let mut dimension = self.required(token.byte_offset)?;
+                    while dimension.text == "@" {
+                        let annotation = self.required(token.byte_offset)?;
+                        self.annotation(annotation)?;
+                        dimension = self.required(token.byte_offset)?;
+                    }
+                    if dimension.text != "[" {
                         return Err(error(
                             JavaFactsErrorKind::MalformedDeclaration,
-                            closing.byte_offset,
+                            token.byte_offset,
                         ));
                     }
+                    self.array_dimension(dimension)?;
+                    any_content = true;
                 }
                 _ if token.is_identifier() => any_content = true,
                 _ => {
@@ -749,7 +760,32 @@ impl<'a> Parser<'a> {
         ))
     }
 
+    fn array_dimension(&mut self, opening: Token<'a>) -> FactsResult<()> {
+        self.begin_delimiter(opening)?;
+        let closing = self.required(opening.byte_offset)?;
+        if closing.text != "]" {
+            return Err(error(
+                JavaFactsErrorKind::MalformedDeclaration,
+                closing.byte_offset,
+            ));
+        }
+        self.delimiter_depth -= 1;
+        Ok(())
+    }
+
+    fn begin_delimiter(&mut self, opening: Token<'a>) -> FactsResult<()> {
+        if self.delimiter_depth == MAX_DELIMITER_DEPTH {
+            return Err(error(
+                JavaFactsErrorKind::NestingTooDeep,
+                opening.byte_offset,
+            ));
+        }
+        self.delimiter_depth += 1;
+        Ok(())
+    }
+
     fn balanced(&mut self, opening: Token<'a>) -> FactsResult<()> {
+        self.begin_delimiter(opening)?;
         let mut delimiters = vec![opening];
         while let Some(token) = self.next()? {
             if token.literal {
@@ -757,9 +793,7 @@ impl<'a> Parser<'a> {
             }
             match token.text {
                 "{" | "(" | "[" => {
-                    if delimiters.len() == MAX_DELIMITER_DEPTH {
-                        return Err(error(JavaFactsErrorKind::NestingTooDeep, token.byte_offset));
-                    }
+                    self.begin_delimiter(token)?;
                     delimiters.push(token);
                 }
                 "}" | ")" | "]" => {
@@ -778,6 +812,7 @@ impl<'a> Parser<'a> {
                             token.byte_offset,
                         ));
                     }
+                    self.delimiter_depth -= 1;
                     if delimiters.is_empty() {
                         return Ok(());
                     }
@@ -1000,6 +1035,63 @@ mod tests {
     fn generic_supertypes_and_records_accept_type_annotations_and_wildcards() -> Result<()> {
         let source = b"class Actual extends @Annotation(values={1,2}) Outer<String>.@InnerAnnotation Inner<java.util.List<? extends Number[]>> {} record Pair<T>(@Annotation T left, T right) implements Comparable<Pair<T>> {}";
         assert_eq!(names(&parse_java_class_facts(source)?), ["Actual", "Pair"]);
+        Ok(())
+    }
+
+    #[test]
+    fn primitive_arrays_are_reference_type_arguments_including_annotated_dimensions() -> Result<()>
+    {
+        let source = b"class Actual extends Holder<boolean[], byte[], char[], short[], int[], long[][], float[], double[], @TypeAnnotation int @FirstDimension [] @SecondDimension []> {}";
+        assert_eq!(names(&parse_java_class_facts(source)?), ["Actual"]);
+        for source in [
+            b"class A extends Holder<int> {}".as_slice(),
+            b"class A extends Holder<void[]> {}",
+        ] {
+            assert_eq!(
+                parse_java_class_facts(source)
+                    .expect_err("Primitive is not a reference type")
+                    .kind,
+                JavaFactsErrorKind::MalformedDeclaration
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn annotation_and_array_delimiters_share_the_enclosing_generic_depth_budget() -> Result<()> {
+        let prefix = format!(
+            "class Actual extends Holder<{}",
+            "Nested<".repeat(MAX_DELIMITER_DEPTH - 2)
+        );
+        let suffix = format!("{} {{}}", ">".repeat(MAX_DELIMITER_DEPTH - 1));
+        let boundary = format!("{prefix}@Annotation(0) Value{suffix}");
+        assert_eq!(
+            names(&parse_java_class_facts(boundary.as_bytes())?),
+            ["Actual"]
+        );
+        let excessive = format!("{prefix}@Annotation((0)) Value{suffix}");
+        assert_eq!(
+            parse_java_class_facts(excessive.as_bytes())
+                .expect_err("Annotation exceeds combined depth budget")
+                .kind,
+            JavaFactsErrorKind::NestingTooDeep
+        );
+        let boundary = format!("{prefix}int[]{suffix}");
+        assert_eq!(
+            names(&parse_java_class_facts(boundary.as_bytes())?),
+            ["Actual"]
+        );
+        let excessive = format!(
+            "class Actual extends Holder<{}int[]{} {{}}",
+            "Nested<".repeat(MAX_DELIMITER_DEPTH - 1),
+            ">".repeat(MAX_DELIMITER_DEPTH)
+        );
+        assert_eq!(
+            parse_java_class_facts(excessive.as_bytes())
+                .expect_err("Array exceeds combined depth budget")
+                .kind,
+            JavaFactsErrorKind::NestingTooDeep
+        );
         Ok(())
     }
 
