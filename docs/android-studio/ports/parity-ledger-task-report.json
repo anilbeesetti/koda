@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "task": "1-parity-ledger",
+  "branch": "android-studio-task/1-parity-ledger",
+  "date": "2026-10-07",
+  "status": "verified_for_lead_integration_check",
+  "scope": "Rust developer tooling and the initial reference catalog; no app UI, project-model, LSP or runtime changes.",
+  "tested_snapshot": {
+    "base_commit": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+    "worktree_changes_present": true,
+    "source_files": [
+      {
+        "path": "tooling/xtask/src/tasks/android_parity.rs",
+        "sha256": "579a908c5be209de6008bcb3d1f4d255b24d86194c7c5abbe3d5e0bae44b52f5"
+      },
+      {
+        "path": "tooling/xtask/src/main.rs",
+        "sha256": "01e32fb04c0673898e0e9fb00305dee553a0135c1ba8957ea13bf97e1b21a5a8"
+      },
+      {
+        "path": "tooling/xtask/src/tasks.rs",
+        "sha256": "c744ee10daa4f9c12a09d4842194eecd56bbd31de1539797b1480a6cecca5ea9"
+      },
+      {
+        "path": "tooling/xtask/Cargo.toml",
+        "sha256": "3ae3df5669d5f23d279da6d2c38c6c97124561f5987fabe8b38e1b3f234a9e4c"
+      },
+      {
+        "path": "Cargo.lock",
+        "sha256": "8b8fa07d44a4151a5c75935510eb686728e79f10bb3a6f375efdeaa8837a9c88"
+      },
+      {
+        "path": "docs/android-studio/reference-manifest.json",
+        "sha256": "89c88ae7300f928fe78c2d754a815e8e8d9e4e5d50dbf7913315f47e15b50139"
+      },
+      {
+        "path": "docs/android-studio/test-parity.json",
+        "sha256": "25f483cd6b65bebf23d13bd327c394a3c3e353a53d61a9e827860b7abc76092b"
+      }
+    ],
+    "note": "Checks ran against this exact worktree snapshot before the task commit existed. These hashes identify tested bytes; the base commit alone is not a tested implementation claim."
+  },
+  "checks": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "xtask",
+        "android_parity",
+        "--bin",
+        "xtask"
+      ],
+      "status": "passing",
+      "passed": 21,
+      "failed": 0,
+      "ignored": 0,
+      "note": "21 parity invariants passed in 0.07 seconds."
+    },
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "xtask"
+      ],
+      "status": "passing",
+      "passed": 41,
+      "failed": 0,
+      "ignored": 0,
+      "log": {
+        "path": "/workspace/android-studio-artifacts/parity-ledger/xtask-tests.log",
+        "sha256": "83307d2ecfbaf3a097120f55b1b1a3539d3c70309797bc3a13be6972d7376cc0"
+      }
+    },
+    {
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "xtask"
+      ],
+      "status": "passing",
+      "note": "Repository wrapper checked release profile, all targets and all features with warnings denied. Completed in 1 minute.",
+      "log": {
+        "path": "/workspace/android-studio-artifacts/parity-ledger/clippy.log",
+        "sha256": "52e514bf0f09d3f2648f12ab525fc45230bb9566ac2418721f0cc0d852446bf7"
+      }
+    },
+    {
+      "command": [
+        "cargo",
+        "run",
+        "--locked",
+        "-p",
+        "xtask",
+        "--",
+        "android-parity",
+        "--reference-root",
+        "/workspace/android-studio-references"
+      ],
+      "status": "passing",
+      "archive_hashes_verified": 3,
+      "reference_citations_verified": 8,
+      "log": {
+        "path": "/workspace/android-studio-artifacts/parity-ledger/parity-cli.log",
+        "sha256": "f4c72c911ef19ade01dee32c81f6e23390e62f346247af5c66e528c5d0b1d369"
+      }
+    },
+    {
+      "command": [
+        "/workspace/.cache/zed/target/debug/xtask",
+        "android-parity",
+        "--complete"
+      ],
+      "status": "expected_rejection",
+      "actual_exit_code": 1,
+      "reason": "completion blocked: reference test census is incomplete",
+      "log": {
+        "path": "/workspace/android-studio-artifacts/parity-ledger/parity-completion-gate.log",
+        "sha256": "4a60eb6942fa39cb5a70b14cbd7ee67d500205c278fced0855776e1fd24735a5"
+      }
+    },
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "status": "passing"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "status": "passing"
+    }
+  ],
+  "reviewers": [
+    {
+      "area": "code_review",
+      "verdict": "pass",
+      "scope": "Static review of this developer-tooling task. No reviewer claims to have run Cargo or validated Android app UI."
+    },
+    {
+      "area": "ui_review",
+      "verdict": "pass",
+      "scope": "Static review of this developer-tooling task. No reviewer claims to have run Cargo or validated Android app UI."
+    },
+    {
+      "area": "ux_review",
+      "verdict": "pass",
+      "scope": "Static review of this developer-tooling task. No reviewer claims to have run Cargo or validated Android app UI."
+    },
+    {
+      "area": "performance_review",
+      "verdict": "pass",
+      "scope": "Static review of this developer-tooling task. No reviewer claims to have run Cargo or validated Android app UI."
+    },
+    {
+      "area": "quality_review",
+      "verdict": "pass",
+      "scope": "Static review of this developer-tooling task. No reviewer claims to have run Cargo or validated Android app UI."
+    }
+  ],
+  "fixes": {
+    "rounds": 3,
+    "findings_resolved": [
+      "Bind exact Cargo test commands to the recorded hashed manifest and validate the enabled libtest product.",
+      "Cover completion reruns, failure propagation, deduplication and positive/mutated census and mirror attestations.",
+      "Bind evidence to an immutable tested commit, independently check index and working tree, and preserve nested fixture checks with precise metadata path exclusions."
+    ]
+  },
+  "matrix": {
+    "identified_reference_tests": 8,
+    "unported": 8,
+    "ported": 0,
+    "adapted": 0,
+    "not_applicable": 0,
+    "not_run": 8,
+    "passing": 0,
+    "failing": 0,
+    "blocked": 0,
+    "census_complete": false,
+    "exhaustive_total": null,
+    "jetbrains_mirror_omissions": "UNVERIFIED",
+    "note": "Sibling default-variant task ports are not integrated into this branch; supplemental reports do not alter canonical rows."
+  },
+  "integration_gate": {
+    "full_workspace_suite": "blocked",
+    "reason": "Lead reported its full-workspace attempt exited 101 during linking after the 32 GB overlay filled; no tests executed. Focused task checks passed. No full-suite or phase-completion claim is made.",
+    "full_app_live_check": "not_performed_by_this_task",
+    "note": "This task adds no app runtime code. Lead owns full-app build/live verification, protected-branch integrity, final full-suite checks, integration and any remote publication."
+  },
+  "limitations": [
+    "Census attestations and mirror comparisons must be established by actual source inspection and review; the validator does not prove exhaustive discovery or semantic parity.",
+    "Stored logs are reviewable records. The completion gate independently reruns every unique mapped Rust test in the current checkout.",
+    "Large-census performance remains unmeasured.",
+    "Task checks use Git only for engineering source-control provenance. New ledger implementation and tests are Rust."
+  ],
+  "non_rust_product_components_added": []
+}
+

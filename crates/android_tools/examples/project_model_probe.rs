@@ -9,11 +9,18 @@ fn main() -> Result<()> {
     let mut arguments = env::args().skip(1);
     let root = PathBuf::from(arguments.next().context("Expected project root")?).canonicalize()?;
     let output = fs::read_to_string(arguments.next().context("Expected Gradle output file")?)?;
+    let module = arguments
+        .next()
+        .context("Expected module path or --model-only")?;
+    let model = Arc::new(project_model::parse_model(&output, &root)?);
+    if module == "--model-only" {
+        println!("{}", serde_json::to_string_pretty(&model)?);
+        return Ok(());
+    }
     let selected = VariantId {
-        module: arguments.next().context("Expected module path")?,
+        module,
         variant: arguments.next().context("Expected variant name")?,
     };
-    let model = Arc::new(project_model::parse_model(&output, &root)?);
     let graph = model.select(selected)?;
     let (export, selection) = java::prepare_selected(&root, &graph)?;
     if let Some(java_output) = arguments.next() {

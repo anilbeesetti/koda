@@ -5,6 +5,7 @@ use crate::{
 use anyhow::{Context as _, Result, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
+    cmp::Ordering,
     collections::{BTreeMap, BTreeSet},
     fs,
     path::{Component as PathComponent, Path, PathBuf},
@@ -112,6 +113,141 @@ pub struct ProjectModel {
     pub root: PathBuf,
     pub modules: Vec<Module>,
     pub diagnostics: Vec<String>,
+}
+
+#[derive(Deserialize)]
+struct ExportedProjectModel {
+    version: u32,
+    root: PathBuf,
+    modules: Vec<ExportedModule>,
+    diagnostics: Vec<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ExportedModule {
+    path: String,
+    directory: PathBuf,
+    namespace: Option<String>,
+    kind: ModuleKind,
+    #[serde(default)]
+    default_variant: Option<String>,
+    variants: Vec<Variant>,
+    #[serde(default)]
+    default_variant_selection: Option<DefaultVariantSelection>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct DefaultVariantSelection {
+    multiplatform: bool,
+    preferred_build_types: BTreeSet<String>,
+    preferred_product_flavors: BTreeSet<String>,
+    variants: Vec<VariantDefinition>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct VariantDefinition {
+    name: String,
+    build_type: Option<String>,
+    product_flavors: Vec<String>,
+}
+
+// Adapted from AOSP DefaultVariants.kt, Copyright (C) 2022 The Android Open
+// Source Project, Apache-2.0. Original source and notices are retained in
+// test_data/default_variants; provenance is in docs/android-studio/ports/default-variants.json.
+fn default_variant<'a>(
+    variants: &'a [VariantDefinition],
+    preferred_build_types: &BTreeSet<String>,
+    preferred_product_flavors: &BTreeSet<String>,
+) -> Option<&'a str> {
+    let dimensions = variants
+        .iter()
+        .map(|variant| variant.product_flavors.len())
+        .min()?;
+    let compare_flavors = |left: &VariantDefinition, right: &VariantDefinition, preferred: bool| {
+        left.product_flavors
+            .iter()
+            .zip(&right.product_flavors)
+            .take(dimensions)
+            .map(|(left, right)| {
+                if preferred {
+                    (!preferred_product_flavors.contains(left))
+                        .cmp(&!preferred_product_flavors.contains(right))
+                } else {
+                    left.encode_utf16().cmp(right.encode_utf16())
+                }
+            })
+            .find(|ordering| *ordering != Ordering::Equal)
+            .unwrap_or(Ordering::Equal)
+    };
+    variants
+        .iter()
+        .reduce(|left, right| {
+            let preferred_build_type = |variant: &VariantDefinition| {
+                variant
+                    .build_type
+                    .as_ref()
+                    .is_some_and(|build_type| preferred_build_types.contains(build_type))
+            };
+            let ordering = (!preferred_build_type(left))
+                .cmp(&!preferred_build_type(right))
+                .then_with(|| compare_flavors(left, right, true))
+                .then_with(|| {
+                    (left.build_type.as_deref() != Some("debug"))
+                        .cmp(&(right.build_type.as_deref() != Some("debug")))
+                })
+                .then_with(|| compare_flavors(left, right, false))
+                .then_with(|| match (&left.build_type, &right.build_type) {
+                    (Some(left), Some(right)) => left.encode_utf16().cmp(right.encode_utf16()),
+                    _ => left.build_type.is_some().cmp(&right.build_type.is_some()),
+                });
+            if ordering == Ordering::Greater {
+                right
+            } else {
+                left
+            }
+        })
+        .map(|variant| variant.name.as_str())
+}
+
+impl ExportedModule {
+    fn into_module(self) -> Result<Module> {
+        let mut module = Module {
+            path: self.path,
+            directory: self.directory,
+            namespace: self.namespace,
+            kind: self.kind,
+            default_variant: self.default_variant,
+            variants: self.variants,
+        };
+        if let Some(selection) = self.default_variant_selection {
+            ensure!(
+                module
+                    .variants
+                    .iter()
+                    .map(|variant| &variant.name)
+                    .eq(selection.variants.iter().map(|variant| &variant.name)),
+                "Default variant metadata does not match Android module {}",
+                module.path
+            );
+            module.default_variant = if selection.multiplatform {
+                selection
+                    .variants
+                    .first()
+                    .map(|variant| variant.name.clone())
+            } else {
+                default_variant(
+                    &selection.variants,
+                    &selection.preferred_build_types,
+                    &selection.preferred_product_flavors,
+                )
+                .map(str::to_owned)
+            };
+        }
+        Ok(module)
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -372,7 +508,7 @@ fn valid_variant(name: &str) -> bool {
 
 pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
     let mut records = output.lines().filter_map(|line| line.strip_prefix(OUTPUT));
-    let model: ProjectModel = serde_json::from_str(
+    let exported: ExportedProjectModel = serde_json::from_str(
         records
             .next()
             .context("Gradle returned no Android project model")?,
@@ -381,6 +517,16 @@ pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
         records.next().is_none(),
         "Gradle returned multiple Android project models"
     );
+    let model = ProjectModel {
+        version: exported.version,
+        root: exported.root,
+        modules: exported
+            .modules
+            .into_iter()
+            .map(ExportedModule::into_module)
+            .collect::<Result<_>>()?,
+        diagnostics: exported.diagnostics,
+    };
     ensure!(
         model.version == 1,
         "Unsupported Android project model version {}",
@@ -535,6 +681,232 @@ pub fn install_selection(root: &Path, selected: &SelectedProject) -> Result<Path
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // These eight cases are adapted from AOSP DefaultVariantsTest.kt,
+    // Copyright (C) 2022 The Android Open Source Project, Apache-2.0.
+    // The original inline fixtures and assertions are retained in test_data/default_variants.
+    fn default_variant_fixture(build_type: Option<&str>, flavors: &[&str]) -> VariantDefinition {
+        let mut name = String::new();
+        for part in flavors.iter().copied().chain(build_type) {
+            if name.is_empty() {
+                name.push_str(part);
+            } else {
+                let mut characters = part.chars();
+                if let Some(first) = characters.next() {
+                    name.extend(first.to_uppercase());
+                    name.extend(characters);
+                }
+            }
+        }
+        VariantDefinition {
+            name,
+            build_type: build_type.map(str::to_owned),
+            product_flavors: flavors.iter().map(|flavor| (*flavor).to_owned()).collect(),
+        }
+    }
+
+    fn assert_reference_default_variant(test: &str) -> Result<()> {
+        #[derive(Deserialize)]
+        struct Cases {
+            cases: Vec<Case>,
+        }
+        #[derive(Deserialize)]
+        struct Case {
+            test: String,
+            variants: Vec<ReferenceVariant>,
+            user_preferred_build_types: BTreeSet<String>,
+            user_preferred_product_flavors: BTreeSet<String>,
+            expected: Option<String>,
+        }
+        #[derive(Deserialize)]
+        struct ReferenceVariant {
+            name: String,
+            build_type: Option<String>,
+            product_flavors: Vec<String>,
+        }
+        let cases: Cases = serde_json::from_str(include_str!(
+            "../test_data/default_variants/DefaultVariantsTest.cases.json"
+        ))?;
+        let case = cases
+            .cases
+            .into_iter()
+            .find(|case| case.test == test)
+            .with_context(|| format!("Missing upstream DefaultVariantsTest case {test}"))?;
+        let variants = case
+            .variants
+            .into_iter()
+            .map(|variant| VariantDefinition {
+                name: variant.name,
+                build_type: variant.build_type,
+                product_flavors: variant.product_flavors,
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            default_variant(
+                &variants,
+                &case.user_preferred_build_types,
+                &case.user_preferred_product_flavors,
+            ),
+            case.expected.as_deref(),
+            "upstream DefaultVariantsTest.{test}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn default_variants_one_variant() -> Result<()> {
+        assert_reference_default_variant("oneVariant")
+    }
+
+    #[test]
+    fn default_variants_debug_preferred() -> Result<()> {
+        assert_reference_default_variant("debugPreferred")
+    }
+
+    #[test]
+    fn default_variants_preferred_build_type() -> Result<()> {
+        assert_reference_default_variant("preferredBuildType")
+    }
+
+    #[test]
+    fn default_variants_preferred_product_flavor_over_debug_build_type() -> Result<()> {
+        assert_reference_default_variant("preferredProductFlavorOverDebugBuildType")
+    }
+
+    #[test]
+    fn default_variants_preferred_flavors_in_two_dimensions() -> Result<()> {
+        assert_reference_default_variant("preferredFlavorsInTwoDimensions")
+    }
+
+    #[test]
+    fn default_variants_preferred_flavor_in_second_dimension_only() -> Result<()> {
+        assert_reference_default_variant("preferredFlavorInSecondDimensionOnly")
+    }
+
+    #[test]
+    fn default_variants_mismatched_product_flavour_length() -> Result<()> {
+        assert_reference_default_variant("mismatchedProductFlavourLength")
+    }
+
+    #[test]
+    fn default_variants_on_empty() -> Result<()> {
+        assert_reference_default_variant("onEmpty")
+    }
+
+    #[test]
+    fn default_variant_ties_null_types_and_lexical_fallbacks() {
+        let variants = [
+            default_variant_fixture(Some("release"), &["aB", "a"]),
+            default_variant_fixture(Some("release"), &["a", "z"]),
+            default_variant_fixture(Some("staging"), &["a", "a"]),
+            default_variant_fixture(Some("release"), &["a", "a"]),
+        ];
+        assert_eq!(
+            default_variant(&variants, &BTreeSet::new(), &BTreeSet::new()),
+            Some("aARelease")
+        );
+        let variants = [
+            default_variant_fixture(Some("release"), &["foo"]),
+            default_variant_fixture(None, &["foo"]),
+        ];
+        assert_eq!(
+            default_variant(&variants, &BTreeSet::new(), &BTreeSet::new()),
+            Some("foo")
+        );
+        let variants = [
+            default_variant_fixture(Some("release"), &["\u{e000}"]),
+            default_variant_fixture(Some("release"), &["\u{10000}"]),
+        ];
+        assert_eq!(
+            default_variant(&variants, &BTreeSet::new(), &BTreeSet::new()),
+            Some("\u{10000}Release")
+        );
+        let variants = [
+            default_variant_fixture(Some("\u{e000}"), &["foo"]),
+            default_variant_fixture(Some("\u{10000}"), &["foo"]),
+        ];
+        assert_eq!(
+            default_variant(&variants, &BTreeSet::new(), &BTreeSet::new()),
+            Some("foo\u{10000}")
+        );
+        let mut tied = default_variant_fixture(None, &["foo"]);
+        tied.name = "other".into();
+        let variants = [default_variant_fixture(None, &["foo"]), tied];
+        assert_eq!(
+            default_variant(&variants, &BTreeSet::new(), &BTreeSet::new()),
+            Some("foo")
+        );
+    }
+
+    #[test]
+    fn exported_default_variant_metadata_is_selected_in_rust_and_validated() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().canonicalize()?;
+        let mut model = fixture(&root)?;
+        let application = model
+            .modules
+            .iter_mut()
+            .find(|module| module.kind == ModuleKind::Application)
+            .context("Application module")?;
+        application.variants = vec![variant("fooDebug", vec![]), variant("barRelease", vec![])];
+        for variant in &mut application.variants {
+            variant.output_listing = Some(
+                root.join("app/build")
+                    .join(&variant.name)
+                    .join("output-metadata.json"),
+            );
+        }
+        model
+            .modules
+            .retain(|module| module.kind == ModuleKind::Application);
+        let mut exported = serde_json::to_value(&model)?;
+        let application = exported
+            .get_mut("modules")
+            .and_then(serde_json::Value::as_array_mut)
+            .and_then(|modules| modules.first_mut())
+            .and_then(serde_json::Value::as_object_mut)
+            .context("Exported application")?;
+        application.insert(
+            "defaultVariantSelection".into(),
+            serde_json::json!({
+                "multiplatform": false,
+                "preferredBuildTypes": [],
+                "preferredProductFlavors": ["bar"],
+                "variants": [
+                    {"name": "fooDebug", "buildType": "debug", "productFlavors": ["foo"]},
+                    {"name": "barRelease", "buildType": "release", "productFlavors": ["bar"]}
+                ]
+            }),
+        );
+        let record = |exported: &serde_json::Value| format!("{OUTPUT}{exported}");
+        let parsed = parse_model(&record(&exported), &root)?;
+        assert_eq!(
+            parsed.default_target().context("Default target")?.variant,
+            "barRelease"
+        );
+        assert!(!serde_json::to_string(&parsed)?.contains("defaultVariantSelection"));
+        let application = exported
+            .get_mut("modules")
+            .and_then(serde_json::Value::as_array_mut)
+            .and_then(|modules| modules.first_mut())
+            .context("Exported application")?;
+        application["defaultVariantSelection"]["multiplatform"] = true.into();
+        assert_eq!(
+            parse_model(&record(&exported), &root)?
+                .default_target()
+                .context("Multiplatform target")?
+                .variant,
+            "fooDebug"
+        );
+        let application = exported
+            .get_mut("modules")
+            .and_then(serde_json::Value::as_array_mut)
+            .and_then(|modules| modules.first_mut())
+            .context("Exported application")?;
+        application["defaultVariantSelection"]["variants"][0]["name"] = "removedDebug".into();
+        assert!(parse_model(&record(&exported), &root).is_err());
+        Ok(())
+    }
 
     fn component(
         name: &str,

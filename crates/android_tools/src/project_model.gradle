@@ -120,33 +120,20 @@ gradle.projectsEvaluated {
         }
         result.unique()
     }
-    def defaultVariant = { project, variants ->
-        if (variants.isEmpty()) return null
-        if (multiplatformPaths.contains(project.path)) return variants.first().name
-        def android = project.extensions.getByName('android')
+    def defaultVariantSelection = { project, variants ->
+        def multiplatform = multiplatformPaths.contains(project.path)
+        def android = multiplatform ? null : project.extensions.getByName('android')
         def isDefault = { entry ->
             def value = optional(entry, 'isDefault')
             value instanceof org.gradle.api.provider.Provider ? value.getOrElse(false) : value == true
         }
-        def buildTypes = android.buildTypes.findAll { isDefault(it) }*.name as Set
-        def flavors = android.productFlavors.findAll { isDefault(it) }*.name as Set
-        def dimensions = (0..<variants.collect { it.productFlavors.size() }.min())
-        // Match Android Studio's DefaultVariants.kt using AGP metadata, including DSL defaults.
-        variants.min { left, right ->
-            def result = (buildTypes.contains(left.buildType) ? 0 : 1) <=> (buildTypes.contains(right.buildType) ? 0 : 1)
-            if (result != 0) return result
-            for (dimension in dimensions) {
-                result = (flavors.contains(left.productFlavors[dimension].second) ? 0 : 1) <=> (flavors.contains(right.productFlavors[dimension].second) ? 0 : 1)
-                if (result != 0) return result
-            }
-            result = (left.buildType == 'debug' ? 0 : 1) <=> (right.buildType == 'debug' ? 0 : 1)
-            if (result != 0) return result
-            for (dimension in dimensions) {
-                result = left.productFlavors[dimension].second <=> right.productFlavors[dimension].second
-                if (result != 0) return result
-            }
-            left.buildType <=> right.buildType
-        }?.name
+        [multiplatform: multiplatform,
+         preferredBuildTypes: multiplatform ? [] : android.buildTypes.findAll { isDefault(it) }*.name,
+         preferredProductFlavors: multiplatform ? [] : android.productFlavors.findAll { isDefault(it) }*.name,
+         variants: variants.collect { variant ->
+             [name: variant.name, buildType: optional(variant, 'buildType'),
+              productFlavors: (optional(variant, 'productFlavors') ?: []).collect { it.second }]
+         }]
     }
     // Under parallel execution Gradle holds the task owner's project lock only.
     // Collect each module there, then aggregate plain data without resolving foreign configurations.
@@ -169,7 +156,7 @@ gradle.projectsEvaluated {
             }
             doLast {
                 models[path] = [path: path, directory: project.projectDir.canonicalPath, namespace: multiplatformPaths.contains(path) ? variants.first().namespace.get() : project.extensions.getByName('android').namespace,
-                 kind: androidKinds[path], defaultVariant: defaultVariant(project, variants), variants: variants.collect { variant ->
+                 kind: androidKinds[path], defaultVariantSelection: defaultVariantSelection(project, variants), variants: variants.collect { variant ->
                     def components = [[component: variant, scope: 'main']]
                     def add = { component, scope -> if (component != null && !components.any { it.component.name == component.name }) components.add([component: component, scope: scope]) }
                     add(optional(variant, 'unitTest'), 'unitTest')

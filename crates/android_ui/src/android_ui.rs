@@ -42,6 +42,9 @@ use workspace::{
 };
 pub use zed_actions::android::Logcat;
 
+const UNAVAILABLE_BUILD_VARIANT_STATUS: &str =
+    "The previous build variant is unavailable. Select a build variant to continue.";
+
 actions!(
     android,
     [
@@ -2436,7 +2439,7 @@ impl AndroidPanel {
             self.remember_target(cx);
         }
         self.status = if preferred.is_some() && self.selected_target.is_none() {
-            "The previous build variant is unavailable. Select a build variant to continue.".into()
+            UNAVAILABLE_BUILD_VARIANT_STATUS.into()
         } else {
             format!("Sync complete · {} build variants", targets.len()).into()
         };
@@ -2444,8 +2447,6 @@ impl AndroidPanel {
     }
 
     fn target_picker(&self, id: &'static str, cx: &Context<Self>) -> impl IntoElement {
-        let targets = self.targets.clone();
-        let root = self.root.clone();
         let panel = cx.weak_entity();
         let label = self
             .selected_target
@@ -2464,49 +2465,62 @@ impl AndroidPanel {
                 Button::new("target", label)
                     .label_size(LabelSize::Small)
                     .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall))
-                    .disabled(self.syncing || self.running || targets.is_empty())
+                    .disabled(self.syncing || self.running || self.targets.is_empty())
                     .tab_index(0isize),
             )
-            .menu(move |window, cx| {
-                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                    for target in &targets {
-                        let panel = panel.clone();
-                        let target = target.clone();
-                        let root = root.clone();
-                        menu = menu.entry(target.label(), None, move |window, cx| {
-                            panel
-                                .update(cx, |panel, cx| {
-                                    if panel.running
-                                        || panel.syncing
-                                        || panel.root != root
-                                        || !panel.targets.contains(&target)
-                                    {
-                                        return;
-                                    }
-                                    let changed = panel.selected_target.as_ref() != Some(&target);
-                                    panel.selected_target = Some(target.clone());
-                                    if changed && let Err(error) = panel.publish_selection(cx) {
-                                        panel.selected_target = None;
-                                        panel.fail(error, window, cx);
-                                        return;
-                                    }
-                                    panel.remember_target(cx);
-                                    if changed && panel.official_kotlin_state(cx).is_some() {
-                                        panel.configure_official_kotlin(target.clone(), window, cx);
-                                    } else if changed
-                                        && let Some(root) = &panel.root
-                                        && android_tools::java::is_configured(root)
-                                    {
-                                        panel.configure_java(target.clone(), window, cx);
-                                    }
-                                    cx.notify();
-                                })
-                                .log_err();
-                        });
-                    }
-                    menu
-                }))
-            })
+            .menu(move |window, cx| Some(Self::target_menu(panel.upgrade()?, window, cx)))
+    }
+
+    fn target_menu(panel: Entity<Self>, window: &mut Window, cx: &mut App) -> Entity<ContextMenu> {
+        let targets = panel.read(cx).targets.clone();
+        let root = panel.read(cx).root.clone();
+        let panel = panel.downgrade();
+        ContextMenu::build(window, cx, |mut menu, _, _| {
+            for target in &targets {
+                let panel = panel.clone();
+                let target = target.clone();
+                let root = root.clone();
+                menu = menu.entry(target.label(), None, move |window, cx| {
+                    panel
+                        .update(cx, |panel, cx| {
+                            if panel.running
+                                || panel.syncing
+                                || panel.root != root
+                                || !panel.targets.contains(&target)
+                            {
+                                return;
+                            }
+                            let changed = panel.selected_target.as_ref() != Some(&target);
+                            panel.selected_target = Some(target.clone());
+                            if changed && let Err(error) = panel.publish_selection(cx) {
+                                panel.selected_target = None;
+                                panel.fail(error, window, cx);
+                                return;
+                            }
+                            // Clear the resolved selection diagnostic while preserving other errors.
+                            if panel.status.as_ref() == UNAVAILABLE_BUILD_VARIANT_STATUS {
+                                panel.status = format!(
+                                    "Sync complete · {} build variants",
+                                    panel.targets.len()
+                                )
+                                .into();
+                            }
+                            panel.remember_target(cx);
+                            if changed && panel.official_kotlin_state(cx).is_some() {
+                                panel.configure_official_kotlin(target.clone(), window, cx);
+                            } else if changed
+                                && let Some(root) = &panel.root
+                                && android_tools::java::is_configured(root)
+                            {
+                                panel.configure_java(target.clone(), window, cx);
+                            }
+                            cx.notify();
+                        })
+                        .log_err();
+                });
+            }
+            menu
+        })
     }
 
     fn device_picker(&self, id: &'static str, cx: &Context<Self>) -> impl IntoElement {
@@ -5648,6 +5662,97 @@ fi
                     .variant,
                 "fullRelease"
             );
+        });
+        cx.run_until_parked();
+    }
+
+    #[gpui::test]
+    async fn build_variant_menu_recovers_from_removed_selection(cx: &mut TestAppContext) {
+        let _app_state = cx.update(AppState::test);
+        let fs = FakeFs::new(cx.executor());
+        let root = PathBuf::from("/removed-build-variant");
+        fs.insert_tree(&root, json!({"settings.gradle.kts": ""}))
+            .await;
+        let project = Project::test(fs, [root.as_path()], cx).await;
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let model = |names: &[&str]| {
+            let variants = names.iter().map(|name| json!({
+                "name": name, "outputListing": root.join(name).join("output.json"),
+                "components": [{"name": name, "scope": "main", "sources": [], "dependencies": []}]
+            })).collect::<Vec<_>>();
+            serde_json::from_value::<android_tools::project_model::ProjectModel>(json!({
+                "version": 1, "root": root, "diagnostics": [], "modules": [{
+                    "path": ":mobile", "directory": root.join("mobile"),
+                    "kind": "application", "defaultVariant": "fullRelease",
+                    "variants": variants
+                }]
+            }))
+            .expect("Gradle model")
+        };
+        panel.update(cx, |panel, cx| {
+            panel.root = Some(root.clone());
+            let previous = model(&["demoDebug", "fullRelease"]);
+            panel.selected_target = previous
+                .targets()
+                .into_iter()
+                .find(|target| target.variant == "demoDebug");
+            panel.remember_target(cx);
+            let refreshed = model(&["fullRelease"]);
+            let targets = refreshed.targets();
+            panel.project.update(cx, |project, cx| {
+                let token = project.invalidate_android_model(Some(root.clone()), cx);
+                project
+                    .publish_android_model(&token, refreshed, cx)
+                    .expect("Publish refreshed model");
+            });
+            panel.apply_targets(targets, cx);
+            panel
+                .publish_selection(cx)
+                .expect("Clear removed selection");
+            assert!(panel.selected_target.is_none());
+            assert_eq!(panel.status.as_ref(), UNAVAILABLE_BUILD_VARIANT_STATUS);
+        });
+        let menu = cx.update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+        menu.update_in(cx, |menu, window, cx| {
+            menu.select_first(&Default::default(), window, cx);
+            menu.confirm(&Default::default(), window, cx);
+        });
+        panel.read_with(cx, |panel, cx| {
+            assert_eq!(
+                panel
+                    .selected_target
+                    .as_ref()
+                    .expect("Recovered variant")
+                    .variant,
+                "fullRelease"
+            );
+            assert_eq!(
+                panel
+                    .project
+                    .read(cx)
+                    .android_model()
+                    .selected
+                    .as_ref()
+                    .expect("Published selection")
+                    .selected
+                    .variant,
+                "fullRelease"
+            );
+            assert_eq!(panel.status.as_ref(), "Sync complete · 1 build variants");
+        });
+        // Selecting a variant must not hide an unrelated operation failure.
+        panel.update(cx, |panel, _| {
+            panel.status = "Build failed: compiler error".into()
+        });
+        let menu = cx.update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+        menu.update_in(cx, |menu, window, cx| {
+            menu.select_first(&Default::default(), window, cx);
+            menu.confirm(&Default::default(), window, cx);
+        });
+        panel.read_with(cx, |panel, _| {
+            assert_eq!(panel.status.as_ref(), "Build failed: compiler error");
         });
         cx.run_until_parked();
     }

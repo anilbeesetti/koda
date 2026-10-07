@@ -112,7 +112,11 @@ def model_from_log(path):
     return json.loads(records[0])
 
 
-def check_default_variants(root, agp, sdk, gradle):
+def normalized_model(probe, root, log):
+    return json.loads(subprocess.check_output([probe, root, log, "--model-only"]))
+
+
+def check_default_variants(root, agp, sdk, gradle, probe):
     root = root / "default-variants"
     write(root, "settings.gradle", "pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }\ndependencyResolutionManagement { repositories { google(); mavenCentral() } }\nrootProject.name = 'defaults'; include ':app'\n")
     write(root, "build.gradle", f"plugins {{ id 'com.android.application' version '{agp}' apply false }}\n")
@@ -136,7 +140,7 @@ def check_default_variants(root, agp, sdk, gradle):
             result = subprocess.run([gradle, "--console=plain", "--no-configuration-cache", "--parallel", "--max-workers=2", "--init-script", str(REPOSITORY / "crates/android_tools/src/project_model.gradle"), "kodaAndroidProjectModel"], cwd=root, stdout=output, stderr=subprocess.STDOUT)
         if result.returncode:
             raise RuntimeError(log.read_text())
-        app = next(module for module in model_from_log(log)["modules"] if module["path"] == ":app")
+        app = next(module for module in normalized_model(probe, root, log)["modules"] if module["path"] == ":app")
         assert app["defaultVariant"] == expected, (name, expected, app)
         assert expected in {variant["name"] for variant in app["variants"]}, app
         print(f"Passed AGP {agp} default {name}: {expected}", flush=True)
@@ -233,7 +237,7 @@ kotlin { androidLibrary { namespace = 'dev.koda.util'; compileSdk = 35; minSdk =
 
     export = REPOSITORY / "crates/android_tools/src/project_model.gradle"
     run("model.log", "--init-script", str(export), "kodaAndroidProjectModel")
-    model = model_from_log(root / "model.log")
+    model = normalized_model(probe, root, root / "model.log")
     shared = next(module for module in model["modules"] if module["path"] == ":sharedLogic")
     assert shared["kind"] == "library" and shared["namespace"] == "dev.koda.shared", shared
     assert shared["defaultVariant"] == "androidMain" and len(shared["variants"]) == 1, shared
@@ -295,14 +299,14 @@ def main():
     temporary = tempfile.TemporaryDirectory(prefix="koda-model-") if args.keep is None else None
     root = (args.keep or Path(temporary.name)).resolve()
     root.mkdir(parents=True, exist_ok=True)
-    if args.defaults_only:
-        check_default_variants(root, args.agp, args.sdk, args.gradle)
-        return
-    fixture(root, args.agp)
-    write(root, "local.properties", f"sdk.dir={Path(args.sdk).resolve()}\n")
     subprocess.run(["cargo", "build", "--locked", "-p", "android_tools", "--example", "project_model_probe"], cwd=REPOSITORY, check=True)
     metadata = json.loads(subprocess.check_output(["cargo", "metadata", "--no-deps", "--format-version", "1"], cwd=REPOSITORY))
     probe = Path(metadata["target_directory"]) / "debug/examples/project_model_probe"
+    if args.defaults_only:
+        check_default_variants(root, args.agp, args.sdk, args.gradle, probe)
+        return
+    fixture(root, args.agp)
+    write(root, "local.properties", f"sdk.dir={Path(args.sdk).resolve()}\n")
     if args.multiplatform_only:
         check_multiplatform(root, args.agp, args.sdk, args.gradle, probe)
         return
@@ -411,7 +415,7 @@ def main():
     assert [module["path"] for module in root_model["modules"]] == [":", ":helper"]
     assert root_model["modules"][0]["variants"][0]["components"][1]["dependencies"] == [{"kind": "project", "module": ":helper", "variant": "jvm"}]
     assert root_model["diagnostics"]  # A root JVM module remains catalogued, without a runnable APK.
-    check_default_variants(root, args.agp, args.sdk, args.gradle)
+    check_default_variants(root, args.agp, args.sdk, args.gradle, probe)
     if not args.agp.startswith("8."):
         check_multiplatform(root, args.agp, args.sdk, args.gradle, probe)
     print(f"Passed AGP {args.agp}: parallel model/Java/Eclipse collection, flavors, fallback library, dynamic feature, registered generated sources, test fixtures, removed/restored variant, collector/configuration failure and recovery, included-build diagnostic, root JVM module")
