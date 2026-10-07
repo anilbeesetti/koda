@@ -1,0 +1,13 @@
+{
+  "verdict": "PASS",
+  "all_source_hashes_checked": 4717,
+  "before_after_equal": true,
+  "current_exact_root_path_set_equal": true,
+  "current_full_git_index_and_status_equal": true,
+  "compiler_json_own_fresh_test_artifacts": 7,
+  "exact_supplementary_test_names_passed": 20,
+  "preliminary_reviewer_assertion": {
+    "result": "failed due to wrong receipt interpretation",
+    "reason": "Reviewer initially compared a pathspec-limited index against the retained full Git index; run-checks.py explicitly captures full index. Correct full-index comparison passes. No source/runtime failure occurred."
+  }
+}

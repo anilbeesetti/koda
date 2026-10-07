@@ -1,0 +1,75 @@
+# UX runtime evidence addendum — captured module display policy
+
+Verdict: **PASS for the bounded naming policy and its component evidence**.
+No blocking UX findings. The round-1 static UX verdict remains valid; no
+production or test fix was made.
+
+Source commit: `5e4b752a057bff25d9e281a43ce4b71a8598406f`.
+Production SHA-256:
+`0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c`.
+Test SHA-256:
+`9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924`.
+Both are unchanged from the independently reviewed round-1 snapshot.
+
+## Independently checked runtime evidence
+
+- The byte-exact `all-features-tests.log` matches its receipt SHA-256
+  `f0ece135ca7cf77f8bc916dc4266bb3045c7fc387f800b871e2bdf9deeae9e38`.
+  Its seven real Rust test summaries total **221 passed, 0 failed, 0 ignored,
+  0 measured, 0 filtered out**. The invocation is normal locked unfiltered
+  `cargo test --locked -p android_tools --all-features --message-format=json`.
+  The 20 policy test names in the actual `module_presentation` execution block
+  match the attributed supplementary selection exactly.
+- The seven own-worktree test artifact records in
+  `compiler-source-elf-proof.json` match the raw compiler JSON, all with
+  `fresh: false`, current module-presentation worktree source paths, the correct
+  package/manifest, and test profiles. Their shared-cache executable paths are
+  historical identities recorded at execution time; this review does not treat
+  those shared paths as permanently belonging to this task.
+- The separately retained policy executable
+  `/tmp/module-presentation-verified-binaries/module-presentation-tests20`
+  was read without running it. Its size is 1,642,216 bytes and its SHA-256 is
+  `6dcbba6ac91c0318aaa8cc7a459fd599a1d61eacbdd4ba4444b50b133f4726e4`,
+  matching the fresh compiler artifact and frozen-executable receipt.
+- Normal locked all-features library build, repository strict `./script/clippy
+  --locked -p android_tools`, and workspace formatting receipts report exit 0.
+  All four check logs match their recorded SHA-256; the raw library log ends
+  with successful build completion, the Clippy log records release compilation
+  and successful exit, and the formatting log is empty as recorded.
+- Whole-product before/after receipts are equal. All **4,717** recorded file
+  hashes match current bytes. The exact seven Root Git pathspecs produce the
+  same complete source path set as the hash guard, without widened exclusions.
+  The full Git index and empty status match the receipts, using the retained
+  runner's actual snapshot recipe. Source and test hashes, fixture bytes, and
+  the canonical parity matrix remain unchanged.
+- The owned-process closure and runtime-lease release receipts explicitly
+  record completed checks, no remaining task compiler/check process, no Gradle
+  or app launched by this task, and unrelated processes left untouched. These
+  are retained owner observations, not a new process experiment by this reviewer.
+
+A preliminary reviewer assertion compared a pathspec-limited index with a
+receipt of the full index. Inspecting `run-checks.py` established the correct
+recipe; the full-index comparison passes. This verification setup mistake and
+its correction are retained in `ux-runtime-review-verification.json`.
+
+## UX scope and remaining work
+
+The tested policy retains the reviewed source-set/root/nonroot naming rules,
+null-versus-empty distinction, unknown-versus-non-Gradle distinction, and separate
+display/holder/sort identities. It preserves imported names, reported paths,
+Unicode, whitespace, delimiters, and collision suffixes without filesystem or
+folder guesses. Empty labels are preserved instead of silently normalized.
+
+An authoritative getter/import identity producer, imported name construction,
+holder lookup, Kotlin facet/capability producer, revision-bound publication,
+project-panel wiring, and adapter support for empty labels remain absent.
+There is no new user-visible naming workflow or live tree screenshot proved
+by these component tests. The five original generated-tree methods and original
+Kotlin tests remain unported/not_run; **new original-reference parity credit is
+zero**. This addendum does not certify full app build, native/live UX,
+full-workspace tests, full CI, protected integration, phase completion, or IDE
+completion. Those remain pending lead integration gates.
+
+This reviewer ran no executable, Cargo, Gradle, app, compiler, SDK probe, or
+cache operation, and changed no repository source, fixture, matrix, main, or
+protected branch. Only external review evidence was written.

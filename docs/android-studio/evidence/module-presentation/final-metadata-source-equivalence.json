@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "tested_source_commit": "5e4b752a057bff25d9e281a43ce4b71a8598406f",
+  "actual_fixed_source_bindings": 4717,
+  "metadata_update_product_source_equivalent": true,
+  "exact_root_patterns": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "all_original_159_paths_preserved_with_only_export": true,
+  "current_source_sha256": "0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c",
+  "current_tests_sha256": "9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924",
+  "local_reviews": [
+    "code",
+    "ui",
+    "ux",
+    "performance",
+    "quality"
+  ],
+  "local_reviews_all_pass": true,
+  "new_canonical_credit": 0,
+  "root_combined_gates_pending": true
+}
