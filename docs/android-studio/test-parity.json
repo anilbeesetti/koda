@@ -3,74 +3,362 @@
   "entries": [
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_one_variant",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_one_variant",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-default-variants-oneVariant.log",
+              "sha256": "ce790634ce30e90cf871eac13e4454e9f42fa59bb20e70a9914438bb1efda4a5"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_debug_preferred",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_debug_preferred",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-default-variants-debugPreferred.log",
+              "sha256": "01f23e28421df077bad505f11d98e8aee48c51c0234eba2f6d7221fc0e92655a"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_build_type",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_build_type",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-default-variants-preferredBuildType.log",
+              "sha256": "c013a0d6582f918080e373f7b851259b91c5d1ec37515f64bf410bf51c4e6bef"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-default-variants-preferredProductFlavorOverDebugBuildType.log",
+              "sha256": "2ce02140a95b45d1ad35dc30a53301d816b551c20128a74cadd09ab86a0883a3"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-default-variants-preferredFlavorsInTwoDimensions.log",
+              "sha256": "99764b81dd3b87e85309e388c5ff10b1fd714856c50086012db23a235990dac2"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-default-variants-preferredFlavorInSecondDimensionOnly.log",
+              "sha256": "26a7ef7f54b5944ed94a587ec733b85e9bda57aeb3c3f8ccf343aab71c440eaa"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_mismatched_product_flavour_length",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-default-variants-mismatchedProductFlavourLength.log",
+              "sha256": "75401fbeee3198cc87789b62a6757a0901a36c07198c55124a498101d74c78ff"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_on_empty",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_on_empty",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-default-variants-onEmpty.log",
+              "sha256": "70ffddc2ffd1b87ac6fc3b4754cef9459edb61b506a8476370ab1f80ac1743a2"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {

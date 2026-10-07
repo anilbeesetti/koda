@@ -22,6 +22,7 @@ Map every upstream assertion and fixture adaptation before implementation.
 The lead must clear prerequisites before implementation. The current full-suite
 build is blocked by the 32 GB filesystem. All five reviewers, the full app build,
 the complete existing suite and applicable reference tests must pass before
-merge. Keep `main` untouched and GitHub writes blocked. Never mark deferred or
+merge. Keep `main` untouched. GitHub pushes are authorized; merges still require
+every verification gate. Never mark deferred or
 unfinished behavior not applicable. This brief authorizes preparation within
 the accepted foundation scope; it does not waive any verification gate.
