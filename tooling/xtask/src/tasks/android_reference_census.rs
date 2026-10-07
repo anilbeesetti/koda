@@ -304,6 +304,7 @@ fn discover_archive(reference_root: &Path, output: &Path, source: Source) -> Res
     let reader = verified_decoder(&archive_path)?;
     let mut archive = tar::Archive::new(reader);
     let mut paths = BTreeSet::new();
+    let mut global_metadata_paths = BTreeSet::new();
     let mut member_kinds = BTreeMap::new();
     let mut candidate_kinds = BTreeMap::new();
     let mut method_candidates = 0;
@@ -347,8 +348,13 @@ fn discover_archive(reference_root: &Path, output: &Path, source: Source) -> Res
             };
             safe_path(relative, kind == "directory")?
         };
+        let namespace = if global_metadata {
+            &mut global_metadata_paths
+        } else {
+            &mut paths
+        };
         ensure!(
-            paths.insert(path.clone()),
+            namespace.insert(path.clone()),
             "duplicate normalized archive path: {path}"
         );
         let bytes = entry.size();
@@ -2055,8 +2061,15 @@ abstract class Outer : InheritedSuite() {
         let output = tempfile::tempdir()?;
         let child = "android-132bc7c3cf52598117590637d00e81b929444bde/tests/GitTest.kt";
         let content = b"class GitTest { fun testPinnedArchive() {} }";
+        let mut child_builder = tar::Builder::new(Vec::new());
+        let mut child_header = tar::Header::new_gnu();
+        child_header.set_entry_type(tar::EntryType::Regular);
+        child_header.set_size(content.len() as u64);
+        child_header.set_mode(0o644);
+        child_header.set_cksum();
+        child_builder.append_data(&mut child_header, child, &content[..])?;
         let mut tar = prefix;
-        tar.extend_from_slice(&archive_bytes(&[(child, content)])?);
+        tar.extend_from_slice(&child_builder.into_inner()?);
         let mut source = write_archive(directory.path(), &tar)?;
         source.id = "jetbrains-android".to_owned();
         source.revision = "132bc7c3cf52598117590637d00e81b929444bde".to_owned();
@@ -2207,6 +2220,42 @@ abstract class Outer : InheritedSuite() {
             let source = mirror_fixture_archive(directory.path(), &entries)?;
             assert!(discover_archive(directory.path(), output.path(), source).is_err());
         }
+        Ok(())
+    }
+
+    #[test]
+    fn global_metadata_and_anchored_regular_file_have_distinct_namespaces() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let output = tempfile::tempdir()?;
+        let comment = b"52 comment=132bc7c3cf52598117590637d00e81b929444bde\n";
+        let file_path = "android-132bc7c3cf52598117590637d00e81b929444bde/pax_global_header";
+        let file_payload = b"a real regular file with the same relative spelling";
+        let source = mirror_fixture_archive(
+            directory.path(),
+            &[
+                ("pax_global_header", tar::EntryType::XGlobalHeader, comment),
+                (file_path, tar::EntryType::Regular, file_payload),
+            ],
+        )?;
+        let summary = discover_archive(directory.path(), output.path(), source)?;
+        assert_eq!(summary.member_kinds["global_pax_metadata"], 1);
+        assert_eq!(summary.member_kinds["file"], 1);
+        assert_eq!(summary.unclassified_regular_members, 1);
+        assert_eq!(summary.physical_member_types.values().sum::<usize>(), 2);
+        let members = fs::read_to_string(output.path().join("jetbrains-android-members.jsonl"))?
+            .lines()
+            .map(serde_json::from_str::<Value>)
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        assert_eq!(members.len(), 2);
+        assert_eq!(members[0]["path"], "pax_global_header");
+        assert_eq!(members[0]["kind"], "global_pax_metadata");
+        assert_eq!(members[1]["path"], "pax_global_header");
+        assert_eq!(members[1]["kind"], "file");
+        assert_eq!(members[1]["archive_path"], file_path);
+        assert_eq!(
+            members[1]["sha256"],
+            format!("{:x}", Sha256::digest(file_payload))
+        );
         Ok(())
     }
 
