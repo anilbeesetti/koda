@@ -2,6 +2,7 @@ pub mod generated_artifacts;
 pub mod gradle_import;
 pub mod java_class_facts;
 pub mod logcat;
+pub mod module_presentation;
 pub mod preview;
 pub mod project_model;
 pub mod project_tree;
