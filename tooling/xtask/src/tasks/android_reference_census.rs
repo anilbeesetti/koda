@@ -2143,7 +2143,7 @@ abstract class Outer : InheritedSuite() {
             run(AndroidReferenceCensusArgs {
                 repository: repository.path().to_owned(),
                 reference_root: references.path().to_owned(),
-                output: output.clone(),
+                output,
                 check: false
             })
             .is_err()
