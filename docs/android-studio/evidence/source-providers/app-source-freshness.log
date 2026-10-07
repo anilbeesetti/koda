@@ -1,0 +1,8 @@
+2026-10-07 13:37:00.467778792 +0000 crates/android_tools/src/android_tools.rs
+2026-10-07 13:37:00.467778792 +0000 crates/android_tools/src/project_model.rs
+52fa6207155f99d8d91197968af5c97ce8a57f5acc79c270f20a2374dcc32b5e  crates/android_tools/src/android_tools.rs
+f7a3fd3161b25c0ddaecce76f58da7a7dbd57451614f5723dc00184e09bf8ef6  crates/android_tools/src/project_model.rs
+f0fdac17431fed5367249f567895b73d521bf1164fea85a08c3a84d327d54107  crates/android_tools/src/project_model.gradle
+Filesystem      Size  Used Avail Use% Mounted on
+overlay          32G   28G  2.5G  92% /
+none            8.8G  723M  8.1G   9% /tmp
