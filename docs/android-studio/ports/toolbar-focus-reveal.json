@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "task": "foundation-toolbar-focus-reveal",
+  "branch": "android-studio-task/1-toolbar-focus-reveal",
+  "base_commit": "65055461bb17273fd41e1408cb4ad854280adafd",
+  "implementation_commit": "1f79e48740a1face751d0c48b188793838e5a737",
+  "status": "component_validated_pending_combined_full_app_native_and_lead_gates",
+  "problem": "In the prior combined native app at 230 px, plain Tab focused a fully clipped Build Output tab; Space subsequently selected and revealed it. Keyboard focus should be visible before activation.",
+  "scope": "Reveal the actual tab or close control after toolbar Tab/ShiftTab traversal. Retain window-wide focus traversal, selection/callback behavior, modified-shortcut routing, manual scrolling and stable tab lifetime checks.",
+  "plan": {
+    "files": [
+      "crates/android_ui/src/tabbed_toolbar.rs",
+      "docs/android-studio/ports/toolbar-focus-reveal.json",
+      "docs/android-studio/evidence/toolbar-focus-reveal/"
+    ],
+    "dependencies": [
+      "Validated toolbar focus registration and scroll-reveal design at 65055461bb",
+      "GPUI FocusHandle/window traversal/ScrollHandle layout geometry",
+      "Lead combined app build and affected native keyboard flow"
+    ],
+    "acceptance_criteria": [
+      "Existing 16 tests and frame driver remain byte-identical",
+      "Actual narrow Tab/ShiftTab reveal focused controls without invoking callbacks or changing selection",
+      "Oversized close control is measured and visible before Space activation, including fractional scale",
+      "Departed focus, clear/rebuild and manual scrolling do not execute stale reveals",
+      "20 focused tests, 125 all-feature UI tests, strict repository Clippy and workspace formatting pass",
+      "Five independent scoped reviewers pass; combined full app/native/exact parity/fullworkspace remain lead gates"
+    ]
+  },
+  "implementation": {
+    "source_path": "crates/android_ui/src/tabbed_toolbar.rs",
+    "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+    "pending_reveal": "Stable tab IDs with separate focused-tab/focused-close requests; queued frame checks actual current focus",
+    "close_geometry": "Optional per-close bounds cell populated by production prepaint; measured coordinates normalized to the current scroll handle",
+    "selection": "Focus traversal does not select tabs or invoke listeners; existing activation behavior is retained",
+    "manual_scroll": "Existing wheel and arrow actions cancel pending automatic reveals"
+  },
+  "preservation": {
+    "prior_test_count": 16,
+    "prior_test_driver_prefix_bytes": 28325,
+    "prior_test_driver_prefix_sha256": "6e790070326c848437ed0698e43ed5f8603738bc292f73a23627fab2ee4c7c00",
+    "prior_tests_byte_identical": true,
+    "reference_fixtures_unchanged": true,
+    "new_tests": 4,
+    "tests_deleted_skipped_or_weakened_by_this_task": 0,
+    "reference_fixtures": [
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/CommonButton.java",
+        "sha256": "045a1a33fab2d4b122c61c8ec14a6421a10918b0f00124e487e76b1ac7f20070",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/CommonButtonUI.java",
+        "sha256": "21608dbf7fcb189f9ab509521a18f337cccbe04899e4c85302386431f3ef0d3c",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/HorizontalScrollView.kt",
+        "sha256": "61a532527f1f2588354d253958183781c43bfff819a78fb4b96f26b4cc394628",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/StudioColors.kt",
+        "sha256": "67c76be7769a1738235034bb8d5e3fc1c6d516d884fb8ba54d2a6b6c498aaff3",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/TabbedToolbar.java",
+        "sha256": "7e9b312394b5419b446880151f83cfb04f01f9acb7364b1ab3e01baa93c4e59f",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/TabbedToolbarTest.kt",
+        "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/TabularLayout.kt",
+        "sha256": "e37ba39e6331a828d2d01a7ad1d23657c65772ced5d3c683e5faf52d354c528e",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/add.svg",
+        "sha256": "90ea35fe93f58db441ccf12778af7b56f91897b3d44651b3801ec530a9dd9ba8",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/add_dark.svg",
+        "sha256": "0869e8a2e80878011514360353b0d9e845a865bb65e30fce5a6bab57623043b9",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/close.svg",
+        "sha256": "b720c5641b67d33efb0ef3feb5c11a7c49f9d89d26909776ae99a28358c6194a",
+        "unchanged": true
+      },
+      {
+        "path": "crates/android_ui/test_data/tabbed_toolbar/close_dark.svg",
+        "sha256": "d9b4cdec69b34c7f88e07f701b37da02def1b59a5a455592cb85052e343c7716",
+        "unchanged": true
+      }
+    ]
+  },
+  "new_tests": [
+    "tabbed_toolbar::tests::narrow_tab_traversal_reveals_focus_before_selection",
+    "tabbed_toolbar::tests::oversized_tab_close_focus_reveals_the_control_without_callbacks",
+    "tabbed_toolbar::tests::pending_focus_reveal_ignores_departed_focus_and_rebuilt_tabs",
+    "tabbed_toolbar::tests::manual_scroll_cancels_a_pending_keyboard_focus_reveal"
+  ],
+  "reference_parity": {
+    "new_reference_credits": 0,
+    "existing_reference_methods": 7,
+    "existing_canonical_rows_changed": false,
+    "reason": "This is a focused-control usability correction motivated by observed native behavior. Pinned CommonButton focusGained changes hover treatment; it does not establish the complete Studio focus/scroll policy. The four regressions are supplementary Rust tests, with no invented original-reference assertions."
+  },
+  "validation": {
+    "focused_default": {
+      "passed": 20,
+      "failed": 0,
+      "ignored": 0,
+      "log": "docs/android-studio/evidence/toolbar-focus-reveal/focused-tests.log"
+    },
+    "allfeature_ui": {
+      "passed": 125,
+      "failed": 0,
+      "ignored": 1,
+      "ignore_reason": "Pre-existing opt-in native capture; no new ignored tests",
+      "log": "docs/android-studio/evidence/toolbar-focus-reveal/full-ui-tests.log"
+    },
+    "focused_scheduler_sweep": {
+      "reported_tests": 20,
+      "passed": 20,
+      "failed": 0,
+      "ignored": 0,
+      "iterations_per_gpui_test": 20,
+      "command": "ITERATIONS=20 target/cloud-tests/android-ui-focus-allfeatures-1f79 tabbed_toolbar::tests::",
+      "log": "docs/android-studio/evidence/toolbar-focus-reveal/focused20-seeds.log"
+    },
+    "clippy": {
+      "status": "pass",
+      "command": "./script/clippy --locked -p android_ui",
+      "effective_flags": "--release --all-targets --all-features -- --deny warnings",
+      "log": "docs/android-studio/evidence/toolbar-focus-reveal/clippy.log"
+    },
+    "format": {
+      "status": "pass",
+      "command": "cargo fmt --all -- --check",
+      "log": "docs/android-studio/evidence/toolbar-focus-reveal/fmt.log"
+    },
+    "full_app_build": "pending_combined_lead",
+    "native_keyboard_visuals": "pending_combined_lead",
+    "current_source_native_performance": "pending_combined_lead",
+    "exact_manifest_bound_reference_captures": "pending_combined_lead",
+    "full_workspace_suite": "pending_combined_lead"
+  },
+  "reviews": {
+    "code": {
+      "status": "pass_component_scope",
+      "reviewer": "/root/toolbar_lead_quality_review/focus_reveal_code_review",
+      "source_commit": "1f79e48740a1face751d0c48b188793838e5a737",
+      "source_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+      "blocking_findings": []
+    },
+    "ui": {
+      "status": "pass_component_scope",
+      "reviewer": "/root/toolbar_lead_quality_review/focus_reveal_ui_review",
+      "source_commit": "1f79e48740a1face751d0c48b188793838e5a737",
+      "source_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+      "blocking_findings": []
+    },
+    "ux": {
+      "status": "pass_component_scope",
+      "reviewer": "/root/toolbar_lead_quality_review/focus_reveal_ux_review",
+      "source_commit": "1f79e48740a1face751d0c48b188793838e5a737",
+      "source_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+      "blocking_findings": []
+    },
+    "performance": {
+      "status": "pass_component_scope",
+      "reviewer": "/root/toolbar_lead_quality_review/focus_reveal_performance_review",
+      "source_commit": "1f79e48740a1face751d0c48b188793838e5a737",
+      "source_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+      "blocking_findings": []
+    },
+    "quality": {
+      "status": "pass_component_scope",
+      "reviewer": "/root/toolbar_lead_quality_review/focus_reveal_quality_review",
+      "source_commit": "1f79e48740a1face751d0c48b188793838e5a737",
+      "source_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+      "blocking_findings": [],
+      "strict_clippy_verified": true
+    }
+  },
+  "fix_rounds": {
+    "behavioral_fixes_after_initial_candidate": 0,
+    "infrastructure_retry": 1,
+    "history": "The prior owner failure rounds and native finding at 65055461bb remain retained. The first current all-feature link failed with SIGBUS before tests; a Root-authorized exact-byte rlib relocation permitted an unchanged successful retry. No assertions or source were changed for the retry."
+  },
+  "attribution": "Original Apache-2.0 source/tests/artwork and attribution remain retained in crates/android_ui/test_data/tabbed_toolbar. The focus visibility correction uses Rust GPUI logic and earns no new reference test credit.",
+  "evidence": [
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/all-feature-compile.log",
+      "sha256": "be0eafa1f8f0222bff51f116dbee390ef2c50b7f4701fd8ae4899c5d73dc9b02"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/all-feature-retry-compile.log",
+      "sha256": "1d5e367cb659d9c419b532566952fef411126758590e1af068c4fd832375687c"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/allfeature-executable.json",
+      "sha256": "0ea3b37c3c63b524365f913beadbf0e7d926244ea919501a73815a0c258c4a48"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/allfeature-first-link-error.log",
+      "sha256": "f16f790e2beccf9dbc063ef29d27a6f473c8ec564e0c32a5d48754a0b48dfc3f"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/allfeature-first-link-failure.json",
+      "sha256": "54b933c91ba882173ce6abd51dcd76c10e6e532f7a2e637c509575ab9ebd9f76"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/bundled-rlib-relocation.json",
+      "sha256": "0c7d868f5b76393f7e631ea3c241034f5613ee5ef139eaa7c2810598a88c062d"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/clippy.log",
+      "sha256": "cd843524d9f383073336f570c74fa6d05dd9c31c42b7fd957df92c5c28b68b1a"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/compile.log",
+      "sha256": "10491706372a9fed8eb72040b0b968736ffdeafe46a4e33e499ee33ed06fb448"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/compiled-executable.json",
+      "sha256": "f0e6a1d98bee31d43823eecb8057534e28f0b8b40bf5279a892064299f034624"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/default-executable-relocation.json",
+      "sha256": "f621e5f50fac2aa754373fc3f12796f9276d54759b4f21ad582d77a4f2a3e404"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/focused-tests.log",
+      "sha256": "68f9a770df7a559e13038e358d0323b0d1e4a4057b4637f648ffe5da27651ca2"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/focused20-seeds.log",
+      "sha256": "e5bad80d76e443327e97a08df6d381351d4337b1397efe00132b6832d7387616"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/freshness-recovery.json",
+      "sha256": "ab9a9de52093d1e02fadf9132badab807ff33ba928b4b3a20925f8dbf37e67bf"
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-focus-reveal/full-ui-tests.log",
+      "sha256": "554e4b00c391a9dd4c0bd0efc5a1fca18564a3a0160c2ce35fb50f1928701c8e"
+    }
+  ]
+}

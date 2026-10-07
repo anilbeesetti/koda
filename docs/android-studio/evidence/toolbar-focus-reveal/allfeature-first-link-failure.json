@@ -1,0 +1,18 @@
+{
+  "source_commit": "1f79e48740a1face751d0c48b188793838e5a737",
+  "command": "cargo test --locked -p android_ui --lib --all-features --no-run --message-format=json",
+  "exit_code": 101,
+  "tests_run": 0,
+  "failure": "Actual ld terminated with SIGBUS before tests; available overlay capacity666MB was smaller than prior same-feature739939696byte UI ELF. Preserve failure as infrastructure blocker, not a passing build.",
+  "source_or_assertions_changed": false,
+  "logs": [
+    {
+      "path": "/workspace/android-studio-artifacts/toolbar-focus-reveal/all-feature-test-artifacts.jsonl",
+      "sha256": "5aec2f3ef48cd5e86c6dea81338da0494432713cd5ede738f0109122c04754f0"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/toolbar-focus-reveal/all-feature-compile.log",
+      "sha256": "be0eafa1f8f0222bff51f116dbee390ef2c50b7f4701fd8ae4899c5d73dc9b02"
+    }
+  ]
+}

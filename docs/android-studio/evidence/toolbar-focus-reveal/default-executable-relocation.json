@@ -1,0 +1,13 @@
+{
+  "reason": "Move only this task owned completed default-test ELF to separate tmpfs to make room for all-feature test link; retain exact bytes, logs and all source/tests",
+  "head": "1f79e48740a1face751d0c48b188793838e5a737",
+  "sha256": "e1ae797ec3cb7b73656975233ef7332c6006d2563cede5a6a0a9c65129efd22b",
+  "bytes": 450242992,
+  "destination": "/tmp/android-studio-frozen-executables/android-ui-focus-1f79-default20",
+  "replaced_generated_paths": [
+    "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+    "/workspace/android-studio-toolbar-scroll-lead/target/cloud-tests/android-ui-focus-reveal-1f79e487"
+  ],
+  "status": "completed_exact_bytes_preserved",
+  "destination_sha256_after": "e1ae797ec3cb7b73656975233ef7332c6006d2563cede5a6a0a9c65129efd22b"
+}

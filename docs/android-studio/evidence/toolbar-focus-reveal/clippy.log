@@ -1,0 +1,12 @@
++ cargo clippy --locked -p android_ui --release --all-targets --all-features -- --deny warnings
+    Checking android_tools v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/android_tools)
+    Checking project v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/project)
+    Checking agent_settings v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/agent_settings)
+    Checking workspace v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/workspace)
+    Checking breadcrumbs v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/breadcrumbs)
+    Checking editor v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/editor)
+    Checking android_ui v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/android_ui)
+    Finished `release` profile [optimized + debuginfo] target(s) in 38.03s
++ [[ -z '' ]]
++ which cargo-shear
++ exit 0
