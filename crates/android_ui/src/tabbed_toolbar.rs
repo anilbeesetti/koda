@@ -3,12 +3,18 @@
 // tests, artwork and license are retained in ../test_data/tabbed_toolbar.
 
 use anyhow::{Context as _, Result};
-use gpui::{AnyView, App, Context, FocusHandle, MouseButton, ScrollHandle, canvas, point};
-use std::rc::Rc;
+use gpui::{AnyView, App, Context, FocusHandle, MouseButton, ScrollHandle, point};
+use std::{cell::Cell, rc::Rc};
 use ui::{ButtonLike, Tooltip, prelude::*};
 use util::ResultExt as _;
 
 pub type ToolbarListener = Rc<dyn Fn(&mut Window, &mut App)>;
+
+#[derive(Clone, Copy)]
+enum TabReveal {
+    End,
+    Selected(usize),
+}
 
 struct ToolbarTab {
     id: usize,
@@ -33,8 +39,10 @@ pub struct TabbedToolbar {
     tabs: Vec<ToolbarTab>,
     actions: Vec<ToolbarAction>,
     active_tab: Option<usize>,
+    pending_reveal: Option<TabReveal>,
     next_tab_id: usize,
     scroll: ScrollHandle,
+    scroll_update_scheduled: Cell<bool>,
     scroll_left_visible: bool,
     scroll_right_visible: bool,
     scroll_left_focus: FocusHandle,
@@ -48,8 +56,10 @@ impl TabbedToolbar {
             tabs: Vec::new(),
             actions: Vec::new(),
             active_tab: None,
+            pending_reveal: None,
             next_tab_id: 0,
             scroll: ScrollHandle::new(),
+            scroll_update_scheduled: Cell::new(false),
             scroll_left_visible: false,
             scroll_right_visible: false,
             scroll_left_focus: cx.focus_handle(),
@@ -75,7 +85,7 @@ impl TabbedToolbar {
             closed,
             focus: cx.focus_handle(),
         });
-        self.scroll.scroll_to_item(self.tabs.len() - 1);
+        self.pending_reveal = Some(TabReveal::End);
         cx.notify();
     }
 
@@ -102,6 +112,7 @@ impl TabbedToolbar {
     pub fn clear_tabs(&mut self, cx: &mut Context<Self>) {
         self.tabs.clear();
         self.active_tab = None;
+        self.pending_reveal = None;
         self.scroll = ScrollHandle::new();
         self.scroll_left_visible = false;
         self.scroll_right_visible = false;
@@ -137,7 +148,7 @@ impl TabbedToolbar {
         let id = Some(tab.id);
         if self.active_tab != id {
             self.active_tab = id;
-            self.scroll.scroll_to_item(index);
+            self.pending_reveal = id.map(TabReveal::Selected);
             cx.notify();
         }
         Ok(())
@@ -170,13 +181,73 @@ impl TabbedToolbar {
     }
 
     fn scroll_by(&mut self, amount: Pixels, cx: &mut Context<Self>) {
+        self.pending_reveal = None;
         let maximum = self.scroll.max_offset().x;
         let offset = self.scroll.offset().x;
         let offset = (offset - amount).clamp(-maximum, px(0.));
         self.scroll.set_offset(point(offset, px(0.)));
-        self.scroll_left_visible = offset < px(0.);
-        self.scroll_right_visible = -offset < maximum;
+        // Pixels uses total float ordering, so a signed zero is not an edge.
+        // Use the same precision as GPUI's clamped scroll geometry.
+        self.scroll_left_visible = -offset > px(0.01);
+        self.scroll_right_visible = maximum + offset > px(0.01);
         cx.notify();
+    }
+
+    fn reveal_pending_tab(&mut self, measured_visibility: (bool, bool)) -> bool {
+        let Some(request) = self.pending_reveal else {
+            return false;
+        };
+        let viewport = self.scroll.bounds();
+        if viewport.size.width <= px(0.) || self.scroll.children_count() != self.tabs.len() {
+            return false;
+        }
+        // GPUI rounds maximum scrolling to two logical decimal places.
+        let tolerance = px(0.01);
+        let id = match request {
+            TabReveal::End => {
+                let maximum = self.scroll.max_offset().x;
+                // Showing an arrow narrows the viewport. Keep the request until
+                // the layout containing those arrows has also reached its end.
+                if (self.scroll.offset().x + maximum).abs() <= tolerance
+                    && measured_visibility == (maximum > tolerance, false)
+                {
+                    self.pending_reveal = None;
+                    return false;
+                }
+                self.scroll.set_offset(point(-maximum, px(0.)));
+                return true;
+            }
+            TabReveal::Selected(id) => id,
+        };
+        let Some(index) = self.tabs.iter().position(|tab| tab.id == id) else {
+            self.pending_reveal = None;
+            return false;
+        };
+        let Some(tab_bounds) = self.scroll.bounds_for_item(index) else {
+            return false;
+        };
+        let offset = self.scroll.offset().x;
+        let visible = if tab_bounds.size.width > viewport.size.width {
+            (tab_bounds.left() + offset - viewport.left()).abs() <= tolerance
+        } else {
+            tab_bounds.left() + offset >= viewport.left() - tolerance
+                && tab_bounds.right() + offset <= viewport.right() + tolerance
+        };
+        if visible {
+            let visibility = (
+                -offset > tolerance,
+                self.scroll.max_offset().x + offset > tolerance,
+            );
+            if measured_visibility == visibility {
+                self.pending_reveal = None;
+                return false;
+            }
+            return true;
+        }
+        // GPUI consumes a reveal before initializing a fresh viewport's geometry.
+        // Keep the stable tab ID until a later layout confirms it is visible.
+        self.scroll.scroll_to_item(index);
+        true
     }
 }
 
@@ -186,7 +257,6 @@ impl Render for TabbedToolbar {
         let accent = cx.theme().colors().text_accent;
         let scroll = self.scroll.clone();
         let toolbar = cx.entity().downgrade();
-        let previous_visibility = (self.scroll_left_visible, self.scroll_right_visible);
         h_flex()
             .id("tabbed-toolbar")
             .debug_selector(|| "tabbed-toolbar".into())
@@ -224,6 +294,58 @@ impl Render for TabbedToolbar {
                     })
                     .child(
                         h_flex()
+                            .on_children_prepainted(move |_, window, cx| {
+                                let offset = scroll.offset().x;
+                                let left = -offset > px(0.01);
+                                let right = scroll.max_offset().x + offset > px(0.01);
+                                let Some(current_toolbar) = toolbar.upgrade() else {
+                                    return;
+                                };
+                                let current_toolbar = current_toolbar.read(cx);
+                                let reveal_ready = current_toolbar.pending_reveal.is_some()
+                                    && scroll.bounds().size.width > px(0.);
+                                if !reveal_ready
+                                    && (left, right)
+                                        == (
+                                            current_toolbar.scroll_left_visible,
+                                            current_toolbar.scroll_right_visible,
+                                        )
+                                {
+                                    return;
+                                }
+                                if current_toolbar.scroll_update_scheduled.replace(true) {
+                                    return;
+                                }
+                                let measured_visibility = (
+                                    current_toolbar.scroll_left_visible,
+                                    current_toolbar.scroll_right_visible,
+                                );
+                                let toolbar = toolbar.clone();
+                                // The viewport hook also runs when resize reuses this view.
+                                // Notify after the frame so its invalidation is not consumed
+                                // by the frame that measured the clamped scroll geometry.
+                                window.on_next_frame(move |_, cx| {
+                                    if let Some(toolbar) = toolbar.upgrade() {
+                                        toolbar.update(cx, |toolbar, cx| {
+                                            toolbar.scroll_update_scheduled.set(false);
+                                            let reveal_requested =
+                                                toolbar.reveal_pending_tab(measured_visibility);
+                                            let offset = toolbar.scroll.offset().x;
+                                            let left = -offset > px(0.01);
+                                            let right =
+                                                toolbar.scroll.max_offset().x + offset > px(0.01);
+                                            if toolbar.scroll_left_visible != left
+                                                || toolbar.scroll_right_visible != right
+                                                || reveal_requested
+                                            {
+                                                toolbar.scroll_left_visible = left;
+                                                toolbar.scroll_right_visible = right;
+                                                cx.notify();
+                                            }
+                                        });
+                                    }
+                                });
+                            })
                             .id("tabbed-toolbar-tabs")
                             .debug_selector(|| "tabbed-toolbar-tabs".into())
                             .relative()
@@ -232,6 +354,9 @@ impl Render for TabbedToolbar {
                             .h_full()
                             .overflow_x_scroll()
                             .track_scroll(&self.scroll)
+                            .on_scroll_wheel(cx.listener(|toolbar, _, _, _| {
+                                toolbar.pending_reveal = None;
+                            }))
                             .role(gpui::Role::TabList)
                             .children(self.tabs.iter().map(|tab| {
                                 let id = tab.id;
@@ -381,44 +506,7 @@ impl Render for TabbedToolbar {
                                             }
                                         },
                                     ))
-                            }))
-                            .child(
-                                canvas(
-                                    move |_, window, _| {
-                                        let offset = scroll.offset().x;
-                                        let maximum = scroll.max_offset().x;
-                                        let left = offset < px(0.);
-                                        let right = -offset < maximum;
-                                        if (left, right) == previous_visibility {
-                                            return;
-                                        }
-                                        let toolbar = toolbar.clone();
-                                        let scroll = scroll.clone();
-                                        // Layout can clamp the offset or change overflow. Notify
-                                        // after the frame, when invalidation cannot be consumed
-                                        // by the frame that measured these bounds.
-                                        window.on_next_frame(move |_, cx| {
-                                            let offset = scroll.offset().x;
-                                            let left = offset < px(0.);
-                                            let right = -offset < scroll.max_offset().x;
-                                            if let Some(toolbar) = toolbar.upgrade() {
-                                                toolbar.update(cx, |toolbar, cx| {
-                                                    if toolbar.scroll_left_visible != left
-                                                        || toolbar.scroll_right_visible != right
-                                                    {
-                                                        toolbar.scroll_left_visible = left;
-                                                        toolbar.scroll_right_visible = right;
-                                                        cx.notify();
-                                                    }
-                                                });
-                                            }
-                                        });
-                                    },
-                                    |_, _, _, _| {},
-                                )
-                                .absolute()
-                                .size_full(),
-                            ),
+                            })),
                     )
                     .when(self.scroll_right_visible, |this| {
                         this.child(
@@ -933,5 +1021,101 @@ mod tests {
             ))
         );
         assert!(cx.debug_bounds("tabbed-toolbar-scroll-right").is_none());
+    }
+
+    #[gpui::test]
+    fn appended_tabs_reveal_the_tail_on_initial_layout_and_after_rebuild(cx: &mut TestAppContext) {
+        let (toolbar, cx) = toolbar(cx);
+        cx.simulate_resize(size(px(250.), px(100.)));
+        for (rebuild, selector) in [
+            (false, "tabbed-toolbar-tab-6"),
+            (true, "tabbed-toolbar-tab-13"),
+        ] {
+            toolbar.update(cx, |toolbar, cx| {
+                if rebuild {
+                    toolbar.clear_tabs(cx);
+                }
+                for label in [
+                    "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh",
+                ] {
+                    toolbar.add_tab(label, cx, |_, _| {}, None);
+                }
+            });
+            settle_frames(cx);
+            let last = cx.debug_bounds(selector).expect("Last appended tab");
+            let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
+            assert!(last.left() >= viewport.left(), "Last tab's leading edge");
+            assert!(last.right() <= viewport.right(), "Last tab's trailing edge");
+            assert!(cx.debug_bounds("tabbed-toolbar-scroll-right").is_none());
+        }
+    }
+
+    #[gpui::test]
+    fn clearing_before_frame_delivery_does_not_restore_old_scroll_arrows(cx: &mut TestAppContext) {
+        let (toolbar, cx) = toolbar(cx);
+        cx.simulate_resize(size(px(250.), px(100.)));
+        toolbar.update(cx, |toolbar, cx| {
+            for label in [
+                "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh",
+            ] {
+                toolbar.add_tab(label, cx, |_, _| {}, None);
+            }
+        });
+        settle_frames(cx);
+        toolbar.update(cx, |toolbar, cx| toolbar.scroll_by(px(-10_000.), cx));
+        settle_frames(cx);
+        let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
+        cx.simulate_event(gpui::ScrollWheelEvent {
+            position: viewport.center(),
+            delta: gpui::ScrollDelta::Pixels(point(px(-60.), px(0.))),
+            ..Default::default()
+        });
+        cx.run_until_parked();
+        assert!(toolbar.read_with(cx, |toolbar, _| toolbar.scroll.offset().x < px(0.)));
+        toolbar.update(cx, |toolbar, cx| toolbar.clear_tabs(cx));
+        cx.update(|window, cx| window.simulate_next_frame(cx));
+        cx.run_until_parked();
+        assert!(cx.debug_bounds("tabbed-toolbar-scroll-left").is_none());
+        assert!(cx.debug_bounds("tabbed-toolbar-scroll-right").is_none());
+        assert!(cx.debug_bounds("tabbed-toolbar-label-First").is_none());
+        settle_frames(cx);
+    }
+
+    #[gpui::test]
+    fn fractional_scale_reveals_converge_for_tail_and_oversized_selection(cx: &mut TestAppContext) {
+        let (toolbar, cx) = toolbar(cx);
+        cx.simulate_scale_factor_change(1.5);
+        cx.simulate_resize(size(px(250.), px(100.)));
+        toolbar.update(cx, |toolbar, cx| {
+            for label in [
+                "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh",
+            ] {
+                toolbar.add_tab(label, cx, |_, _| {}, None);
+            }
+        });
+        settle_frames(cx);
+        let last = cx.debug_bounds("tabbed-toolbar-tab-6").expect("Tail tab");
+        let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
+        assert!(last.right() <= viewport.right() + px(0.01));
+        assert_eq!(cx.update(|window, cx| window.simulate_next_frame(cx)), 0);
+        toolbar.update(cx, |toolbar, cx| {
+            toolbar.clear_tabs(cx);
+            toolbar.add_tab(
+                "An oversized tab with a much longer title than the viewport",
+                cx,
+                |_, _| {},
+                None,
+            );
+            toolbar.set_active_tab(0, cx).expect("Valid selection");
+        });
+        settle_frames(cx);
+        let tab = cx.debug_bounds("tabbed-toolbar-tab-7").expect("Wide tab");
+        let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
+        assert!(tab.size.width > viewport.size.width);
+        assert!((tab.left() - viewport.left()).abs() <= px(0.01));
+        for _ in 0..3 {
+            assert_eq!(cx.update(|window, cx| window.simulate_next_frame(cx)), 0);
+            cx.run_until_parked();
+        }
     }
 }
