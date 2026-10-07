@@ -241,6 +241,10 @@ mod tests {
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        panel.update(cx, |panel, _| {
+            // Keep host ADB processes out of this deterministic status test.
+            panel.refreshing_devices = true;
+        });
         workspace.update_in(cx, |workspace, window, cx| {
             workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
             workspace.add_panel(panel.clone(), window, cx);
