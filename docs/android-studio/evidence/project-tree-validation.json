@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+  "git_tree": "a980f358b7a10c5055e71c3b80c5fc086ddb5e39",
+  "scope": "Component and android_tools crate only; no original Gradle tree parity credit.",
+  "source_snapshot": {
+    "path": "docs/android-studio/evidence/project-tree-crate-source-snapshot.json",
+    "sha256": "e147538a249dcb2cbcb9fd6cfabb0b6e48acb13641277101e0f405a0edc3e6d3"
+  },
+  "full_crate": {
+    "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "android_tools",
+      "--all-features"
+    ],
+    "exit_code": 0,
+    "log": {
+      "path": "docs/android-studio/evidence/project-tree-immutable-all-features-tests-rerun.log",
+      "sha256": "443d9601e34a0b38a31494bdc78d3c8417303089dd3e76d9e914d9dc55dd7548"
+    },
+    "log_sha256": "443d9601e34a0b38a31494bdc78d3c8417303089dd3e76d9e914d9dc55dd7548",
+    "summaries": [
+      "test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.90s",
+      "test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+      "test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s",
+      "test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ],
+    "status": "PASS",
+    "passed": 112,
+    "failed": 0,
+    "ignored": 0
+  },
+  "checks": [
+    {
+      "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": {
+        "path": "docs/android-studio/evidence/project-tree-immutable-format.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "PASS"
+    },
+    {
+      "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools"
+      ],
+      "exit_code": 0,
+      "log": {
+        "path": "docs/android-studio/evidence/project-tree-immutable-clippy.log",
+        "sha256": "25821ba96d6835a623964d471089e4b936041cced3ce04ffb4ae54016455f6b3"
+      },
+      "log_sha256": "25821ba96d6835a623964d471089e4b936041cced3ce04ffb4ae54016455f6b3",
+      "status": "PASS"
+    }
+  ],
+  "retained_initial_failure": {
+    "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "android_tools",
+      "--all-features"
+    ],
+    "exit_code": 101,
+    "log": {
+      "path": "docs/android-studio/evidence/project-tree-immutable-all-features-tests.log",
+      "sha256": "89a92031305eceeaacc875b9b308e3919c21ba5ac80549182f741a3b22faf70d"
+    },
+    "log_sha256": "89a92031305eceeaacc875b9b308e3919c21ba5ac80549182f741a3b22faf70d",
+    "summaries": [],
+    "status": "FAIL",
+    "reason": "Shared-target relative dep-info reused a newer library from another worktree that lacked project_tree. Source bytes were correct; refreshing this task crate-root mtime forced recompilation. The failed attempt is retained."
+  },
+  "freshness_recovery": [
+    {
+      "path": "docs/android-studio/evidence/project-tree-shared-target-freshness-recovery.json",
+      "sha256": "77c7eb2e886852dc2f1dc44b6c450902e680b895539a59030659d2632e762a1d"
+    },
+    {
+      "path": "docs/android-studio/evidence/project-tree-shared-target-clippy-freshness-recovery.json",
+      "sha256": "73b03603ca81cc5d138df6ee065e5dcc2903840aeba6993e2ffba3fa378359da"
+    }
+  ],
+  "components": {
+    "targets": {
+      "path": "docs/android-studio/evidence/project-tree-component-targets.json",
+      "sha256": "d6cb1dc53d46f6a0fd15707444ac9a789dd009efb28bde4019c7714e0f71583c"
+    },
+    "passed_exact_captures": 21,
+    "reference_parity_credit": false
+  },
+  "environment": {
+    "script": "/workspace/cloud-environment/env.sh",
+    "cargo_build_jobs": 4,
+    "cargo_incremental": 0,
+    "cargo_profile_dev_debug": 0,
+    "rust_toolchain": "1.98.1"
+  },
+  "lead_gates": {
+    "app_build": "pending",
+    "full_workspace_suite": "pending",
+    "live_app": "pending; no visible Android tree wiring in this component"
+  }
+}

@@ -1,0 +1,805 @@
+{
+  "schema_version": 1,
+  "scope": "Supplemental component tests, not reference-test ports.",
+  "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+  "targets": [
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_fixture_package_manifest_and_class_navigation",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_fixture_package_manifest_and_class_navigation",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_fixture_package_manifest_and_class_navigation.log",
+          "sha256": "fa606eda406bdcda019d3de1503bed8a13774dd350fa228effeb692f4b2f9449"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_fixture_resource_variants_preserve_every_file_target",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_fixture_resource_variants_preserve_every_file_target",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_fixture_resource_variants_preserve_every_file_target.log",
+          "sha256": "dab2902124a406728357a93f02f5c6cbd37460dbc1caf35432ee8614f9ea03be"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_generated_groups_keep_explicit_facts_and_literal_assets",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_generated_groups_keep_explicit_facts_and_literal_assets",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_generated_groups_keep_explicit_facts_and_literal_assets.log",
+          "sha256": "2a3d47e1f1a7fd172b3411f6f7b09ddc1c438168509cbd9930c60c869b9e8e36"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_properties_main_annotation_is_separate_from_visual_text",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_properties_main_annotation_is_separate_from_visual_text",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_properties_main_annotation_is_separate_from_visual_text.log",
+          "sha256": "76b4fadd751cbc8fc65c0b68e058d5022c6cad2056745a22740549e7dfe87b68"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_properties_use_first_physical_main_root_without_fallback",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_properties_use_first_physical_main_root_without_fallback",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_properties_use_first_physical_main_root_without_fallback.log",
+          "sha256": "fc3aa8ffe2ebffbfe80ef69cecdcf42dd22f3b41989bc8cf4ac788040b4c0056"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_properties_do_not_infer_physical_main_from_provider_name",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_properties_do_not_infer_physical_main_from_provider_name",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_properties_do_not_infer_physical_main_from_provider_name.log",
+          "sha256": "6c7477f182beab14e81a389de4044f0e2ee383f7e6cc2de4a2d15f654d9f5859"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_google_services_requires_a_direct_module_file",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_google_services_requires_a_direct_module_file",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_google_services_requires_a_direct_module_file.log",
+          "sha256": "0dc07ed9efdaf0b1e05a233241a95044fdd0e72140b8c659368af43bece902c0"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_input_reordering_preserves_snapshot_and_stable_keys",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_input_reordering_preserves_snapshot_and_stable_keys",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_input_reordering_preserves_snapshot_and_stable_keys.log",
+          "sha256": "b2c3cb9098e36bdfc55c01012da84e142e339e5722f10e1de243bcb5e2b91f68"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_overlapping_roots_have_distinct_occurrence_keys",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_overlapping_roots_have_distinct_occurrence_keys",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_overlapping_roots_have_distinct_occurrence_keys.log",
+          "sha256": "02f125aeb5e20c41a922a87649b1fd2b69b0aebcf1e092b9322cbf6328d0006a"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_identical_roots_follow_builtin_type_priority",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_identical_roots_follow_builtin_type_priority",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_identical_roots_follow_builtin_type_priority.log",
+          "sha256": "75856ef2dd678f1db2a63ee1373aff251a0fe8d70428de394865c64011fc7b53"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_empty_and_missing_roots_are_distinct",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_empty_and_missing_roots_are_distinct",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_empty_and_missing_roots_are_distinct.log",
+          "sha256": "f1010c1254d11bd2995ccf732f3b1ce600b04153102369f99266f2fbed7b4b57"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_empty_resource_types_survive_and_unknown_folders_are_excluded",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_empty_resource_types_survive_and_unknown_folders_are_excluded",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_empty_resource_types_survive_and_unknown_folders_are_excluded.log",
+          "sha256": "cd867176ac8bb07d835fc393a6ff012c51147560a6dfb29a0f13209300827f34"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_missing_class_metadata_keeps_filename_and_given_offsets",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_missing_class_metadata_keeps_filename_and_given_offsets",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_missing_class_metadata_keeps_filename_and_given_offsets.log",
+          "sha256": "ffbe51a42c1f9e5c2da3b6f87163b659ba5fbc10aae83912326f15b14c0bab8c"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_disabling_package_compaction_and_asset_hierarchy",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_disabling_package_compaction_and_asset_hierarchy",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_disabling_package_compaction_and_asset_hierarchy.log",
+          "sha256": "72595a5d90026e6753b140252f356dd9407763f7b6030532b8f29fd82a0ee8ba"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_obsolete_file_facts_and_unknown_provider_are_rejected",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_obsolete_file_facts_and_unknown_provider_are_rejected",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_obsolete_file_facts_and_unknown_provider_are_rejected.log",
+          "sha256": "40b9604d53f1390c9575baf67db5f694932ff609f6d7ed5f626400712016a5e5"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_conflicting_file_provider_and_module_facts_are_rejected",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_conflicting_file_provider_and_module_facts_are_rejected",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_conflicting_file_provider_and_module_facts_are_rejected.log",
+          "sha256": "e724704628ddfcd54db7f852eb89514850d741633339b44b3f90e2ed038616b9"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_file_ancestor_contradictions_are_rejected",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_file_ancestor_contradictions_are_rejected",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_file_ancestor_contradictions_are_rejected.log",
+          "sha256": "0c060cea428abf4ec1dd1cc875eb6bc1ec97e165977b0d7b6b2381148560e2e0"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_invalid_source_kind_and_unsafe_paths_are_rejected",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_invalid_source_kind_and_unsafe_paths_are_rejected",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_invalid_source_kind_and_unsafe_paths_are_rejected.log",
+          "sha256": "284930b5b785e8e497e3a052b3828ed001018e6a6b0c8a3b61495c9f425580ab"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_deep_hierarchy_builds_and_drops_without_recursive_nodes",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_deep_hierarchy_builds_and_drops_without_recursive_nodes",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_deep_hierarchy_builds_and_drops_without_recursive_nodes.log",
+          "sha256": "aa46cc34ef7321e684218b61dabb17e4b736c64a7c457c1762e589ac0820079c"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_large_flat_project_preserves_targets_with_unique_keys",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_large_flat_project_preserves_targets_with_unique_keys",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_large_flat_project_preserves_targets_with_unique_keys.log",
+          "sha256": "010ea9424f99e872601116584dd27d38dd9d626fb208ff9ee27627c32a1b6744"
+        }
+      }
+    },
+    {
+      "component_only": true,
+      "reference_parity_credit": false,
+      "package": "android_tools",
+      "integration_target": "project_tree_component",
+      "test_name": "component_original_sample_intentional_failure_is_preserved",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_tree_component.rs",
+        "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+      },
+      "run": {
+        "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_tree_component",
+          "component_original_sample_intentional_failure_is_preserved",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/project-tree-component_original_sample_intentional_failure_is_preserved.log",
+          "sha256": "22adb0640842d1c515439d4f4af22ea261354dc09796b4b2e41d786bfe0c969c"
+        }
+      }
+    }
+  ]
+}
