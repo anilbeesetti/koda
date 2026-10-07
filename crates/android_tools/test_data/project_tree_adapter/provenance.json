@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "kind": "supplemental official SDK model capture; zero original test parity credit",
+  "source_capture": "followup-integration/gradle-generation.log",
+  "capture_sha256": "ef384b2aaeedddc0d2a38a4f0e1d3640d408379e64fb32ec1b29b1794f16e6e0",
+  "model_record_sha256": "dc9055879f22b42c0d12016894499151379c147bd9b4824ef1eb5497afbd42c9",
+  "exporter_sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+  "agp": "9.4.0",
+  "normalization": "Only JSON string values equal to the actual project root or under its slash-delimited prefix are replaced with ${project_root}; all remaining values retained. No source roots/provider facts are added.",
+  "normalized_path_values": 425,
+  "fixture_sha256": "69dc1298842c340e278a48b898f3157d5c301fbdbb2a7aa292ed5481bd696c7f",
+  "license_attribution": "Official AGP output is supplemental captured data. SDK fixture code and Apache 2.0 attribution remain in the unchanged sibling source_providers/gradle-smoke-generation and project_tree_facts/reference directories. This task adds no original reference code.",
+  "language_capability": "Absent from SDK capture; tests supply an explicitly synthetic capability, without asserting a live producer.",
+  "generated_build_config": "Not established; source collection has no generated Java root in this capture."
+}
