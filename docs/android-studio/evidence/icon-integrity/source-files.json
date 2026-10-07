@@ -1,0 +1,27 @@
+[
+  {
+    "path": "crates/icons/src/icons.rs",
+    "bytes": 6528,
+    "sha256": "f312b115ffb6bc0c7f7cef8c6fdf44681a88edb3b5a0acc7d58426829e81911d"
+  },
+  {
+    "path": "assets/icons/android-studio-add.svg",
+    "bytes": 939,
+    "sha256": "90ea35fe93f58db441ccf12778af7b56f91897b3d44651b3801ec530a9dd9ba8"
+  },
+  {
+    "path": "assets/icons/android-studio-close.svg",
+    "bytes": 961,
+    "sha256": "b720c5641b67d33efb0ef3feb5c11a7c49f9d89d26909776ae99a28358c6194a"
+  },
+  {
+    "path": "assets/android-studio-attribution.md",
+    "bytes": 11701,
+    "sha256": "dc15b514499662727de8c7ae8a7c0c62977bbe2d4a50d7aebf31cd6058deb32f"
+  },
+  {
+    "path": "crates/android_ui/src/tabbed_toolbar.rs",
+    "bytes": 56591,
+    "sha256": "e412121cd4e11274f76ecd8e450e3f7087ae13b3ff8101a064b4c65813462c5c"
+  }
+]
