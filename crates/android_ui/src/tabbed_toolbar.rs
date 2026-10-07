@@ -263,6 +263,24 @@ impl Render for TabbedToolbar {
             .h(px(36.))
             .w_full()
             .flex_none()
+            .on_key_down(cx.listener(|_, event: &gpui::KeyDownEvent, window, cx| {
+                let modifiers = event.keystroke.modifiers;
+                if event.keystroke.key == "tab"
+                    && !modifiers.control
+                    && !modifiers.alt
+                    && !modifiers.platform
+                    && !modifiers.function
+                {
+                    // GPUI registers tab stops but does not bind Tab to focus traversal.
+                    // Handle events from focused controls without changing shortcut routing.
+                    cx.stop_propagation();
+                    if modifiers.shift {
+                        window.focus_prev(cx);
+                    } else {
+                        window.focus_next(cx);
+                    }
+                }
+            }))
             .child(div().flex_none().mr(px(5.)).child(self.title.clone()))
             .child(
                 h_flex()
@@ -1117,5 +1135,145 @@ mod tests {
             assert_eq!(cx.update(|window, cx| window.simulate_next_frame(cx)), 0);
             cx.run_until_parked();
         }
+    }
+
+    #[gpui::test]
+    fn tab_and_shift_tab_traverse_controls_before_space_selects(cx: &mut TestAppContext) {
+        let (toolbar, cx) = toolbar(cx);
+        let selected = Rc::new(Cell::new(0));
+        toolbar.update(cx, |toolbar, cx| {
+            for (name, value) in [("First", 1), ("Second", 2)] {
+                let selected = selected.clone();
+                toolbar.add_tab(name, cx, move |_, _| selected.set(value), None);
+            }
+        });
+        settle_frames(cx);
+        let first = cx
+            .debug_bounds("tabbed-toolbar-label-First")
+            .expect("First");
+        cx.simulate_click(first.center(), Default::default());
+        cx.run_until_parked();
+        assert_eq!(selected.get(), 1);
+        cx.simulate_keystrokes("tab");
+        cx.update(|window, cx| {
+            assert!(
+                toolbar
+                    .read(cx)
+                    .tabs
+                    .get(1)
+                    .expect("Second")
+                    .focus
+                    .is_focused(window)
+            );
+        });
+        assert_eq!(selected.get(), 1, "Traversal does not select a tab");
+        cx.simulate_keystrokes("space");
+        cx.run_until_parked();
+        assert_eq!(selected.get(), 2);
+        cx.simulate_keystrokes("shift-tab");
+        cx.update(|window, cx| {
+            assert!(
+                toolbar
+                    .read(cx)
+                    .tabs
+                    .first()
+                    .expect("First")
+                    .focus
+                    .is_focused(window)
+            );
+        });
+        cx.simulate_keystrokes("ctrl-tab");
+        cx.update(|window, cx| {
+            assert!(
+                toolbar
+                    .read(cx)
+                    .tabs
+                    .first()
+                    .expect("First")
+                    .focus
+                    .is_focused(window)
+            );
+        });
+        assert_eq!(selected.get(), 2);
+        cx.simulate_keystrokes("space");
+        cx.run_until_parked();
+        assert_eq!(selected.get(), 1);
+    }
+
+    #[gpui::test]
+    fn tab_traversal_reaches_close_and_action_without_selecting_the_tab(cx: &mut TestAppContext) {
+        let (toolbar, cx) = toolbar(cx);
+        let selected = Rc::new(Cell::new(0));
+        let closed = Rc::new(Cell::new(0));
+        let clicked = Rc::new(Cell::new(0));
+        toolbar.update(cx, |toolbar, cx| {
+            toolbar.add_tab(
+                "First",
+                cx,
+                {
+                    let selected = selected.clone();
+                    move |_, _| selected.set(selected.get() + 1)
+                },
+                Some({
+                    let closed = closed.clone();
+                    Rc::new(move |_, _| closed.set(closed.get() + 1))
+                }),
+            );
+            toolbar.add_action(
+                Icon::from_path("icons/android-studio-add.svg"),
+                "Add",
+                cx,
+                {
+                    let clicked = clicked.clone();
+                    move |_, _| clicked.set(clicked.get() + 1)
+                },
+            );
+        });
+        settle_frames(cx);
+        let first = cx
+            .debug_bounds("tabbed-toolbar-label-First")
+            .expect("First");
+        cx.simulate_click(first.center(), Default::default());
+        cx.run_until_parked();
+        assert_eq!(selected.get(), 1);
+        cx.simulate_keystrokes("tab");
+        cx.update(|window, cx| {
+            let close = toolbar
+                .read(cx)
+                .tabs
+                .first()
+                .expect("First")
+                .close_focus
+                .as_ref()
+                .expect("Close");
+            assert!(close.is_focused(window));
+        });
+        cx.simulate_keystrokes("space");
+        cx.simulate_event(gpui::KeyUpEvent {
+            keystroke: gpui::Keystroke::parse("space").expect("Space key"),
+        });
+        cx.run_until_parked();
+        assert_eq!(closed.get(), 1);
+        assert_eq!(selected.get(), 1);
+        cx.simulate_keystrokes("tab");
+        cx.update(|window, cx| {
+            assert!(
+                toolbar
+                    .read(cx)
+                    .actions
+                    .first()
+                    .expect("Add")
+                    .focus
+                    .is_focused(window)
+            );
+        });
+        cx.simulate_keystrokes("space");
+        cx.simulate_event(gpui::KeyUpEvent {
+            keystroke: gpui::Keystroke::parse("space").expect("Space key"),
+        });
+        cx.run_until_parked();
+        assert_eq!(clicked.get(), 1);
+        assert_eq!(closed.get(), 1);
+        assert_eq!(selected.get(), 1);
     }
 }
