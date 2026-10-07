@@ -1,0 +1,28 @@
+{
+  "observed_utc": "2026-10-07T18:42:21.462095+00:00",
+  "module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+  "build_source_path": "/workspace/android-studio-junit4-declarations/tooling/xtask/src/main.rs",
+  "freeze_method": "same-filesystem hardlink; no byte copy/replacement",
+  "links": [
+    {
+      "purpose": "normal CLI",
+      "generated": "/workspace/.cache/zed/target/release/xtask",
+      "frozen": "/tmp/android-studio-junit4-declarations/xtask-68bfab0",
+      "bytes": 77379264,
+      "sha256": "0f7ced36c8eccbc11b6bc4e64850b87b6d6cac9d3a54ce75e6aac5c4f854232f",
+      "same_inode_device": true,
+      "hardlinks_after": 3
+    },
+    {
+      "purpose": "actual114 test executable",
+      "generated": "/workspace/.cache/zed/target/release/deps/xtask-ab9e3b7b145fa54b",
+      "frozen": "/tmp/android-studio-junit4-declarations/xtask-tests-68bfab0",
+      "bytes": 34985904,
+      "sha256": "96a6783ad0b63be984b067b5d309779f12d2dfc6bc0befa8b38ab98a12325a0c",
+      "same_inode_device": true,
+      "hardlinks_after": 2
+    }
+  ],
+  "compiler_artifact_fresh": false,
+  "normal_build_recompiled": true
+}

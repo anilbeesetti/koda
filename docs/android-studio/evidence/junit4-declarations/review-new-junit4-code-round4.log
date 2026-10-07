@@ -1,0 +1,65 @@
+# JUnit4 declaration task: code review round 4
+
+Verdict: **PASS**, scoped to the bounded source-declaration implementation and
+affected recheck after owner fix round 3. No blocking code findings remain in
+the reviewed snapshot. This is separate from the SDK provenance review and
+the preceding reference-archive census task.
+
+Reviewed worktree: `/workspace/android-studio-junit4-declarations`
+
+Reviewed module: `tooling/xtask/src/tasks/android_junit4_declarations.rs`
+
+Reviewed module SHA-256:
+`dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed`
+
+## Affected findings verified
+
+- Class header tokens now retain both `Test` and `org` shadowing. The Java and
+  Kotlin `class Suite<org>` cases cannot confirm the exact qualified annotation.
+  The existing generic `Test` shadow remains blocked. Owner/header/annotation
+  facts and unresolved method candidates remain retained.
+- A generic Java method/type-use annotation prefix following `>` explicitly
+  blocks confirmation. The added `public <org> @org.junit.Test void actual()`
+  negative preserves the annotation and method candidate without a runtime
+  count.
+- Java triple-quoted text blocks honor escapes; Kotlin raw triples retain their
+  separate non-escaping behavior. The earlier phantom annotation/method
+  negative remains present.
+- Java enum types participate in simple and qualified prefix shadowing;
+  Kotlin enum ownership remains retained.
+- Effective import names include Kotlin aliases and Java static imports for
+  conflicts and qualified-prefix ambiguity. Alias/wildcard candidates remain
+  unresolved instead of acquiring inferred framework identity.
+- Missing, reserved, dollar-containing ordinary, and empty escaped Kotlin alias
+  negatives disable confirmation. Java `as` imports are unsupported and also
+  disable qualified confirmation. Their import and method evidence is retained.
+- The corrected mirror regression retains exact pinned line pairs 33/38 for
+  DefaultVariants and 41/41 for TabbedToolbar, unequal fixture bytes, distinct
+  source hashes, method names and declaration counts. Its wrong initial premise
+  remains explicitly recorded in review history.
+
+## Snapshot and boundaries
+
+- All 16 selected original files match supplied hashes and byte counts:
+  100,711 bytes total. Selection SHA-256 is
+  `e87a079f5564a47cb975b5d065ca3a77b5b26eeb949ac249f782ad07371db523`.
+- The frozen discovery module and canonical manifest/ledger are byte-identical
+  to base `7b2bd3e7ffc07156c7193baf156c5041bef256c1`:
+  discovery `87e5e808b3e8a9e76ad65f681594b737ab666233e1790c1ab5e077f5a48d5beb`,
+  manifest `e23b942ee6e3e39ac869de13ad762ce4f8cb75eb6233695e90036d8b3f3dc1c2`,
+  ledger `9c5f15bd43293281d9ef38c550a9699db9c884db0287154eb09793f1aab700d6`.
+- Runtime cases remain null, applicability unreviewed, completeness false,
+  selected archive membership revalidation false, and new behavioral parity
+  credit zero. Distinct AOSP/JetBrains identities are not collapsed into aliases.
+- Publication remains bounded and outside the checkout, using a non-replacing
+  hard link. Selection/source hash verification remains separate from archive
+  capture proof and classpath/build/runner reconciliation.
+- `git diff --check` passed for the current tracked changes. There are 34 authored
+  tests in the new module; this review does not claim that they execute or pass.
+
+Review was static and read-only for repository files. No Cargo, shared-cache
+mutation, test execution, source edit, or additional subagent launch occurred.
+Only this owner-requested external report was written. Required locked tests,
+Clippy, formatting, matching CLI execution, the remaining four reviews and lead
+full-app/full-workspace validation remain pending. Any subsequent failure after
+the third owner fix requires escalation before further source/test corrections.

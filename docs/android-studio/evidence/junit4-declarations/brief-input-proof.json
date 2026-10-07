@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "task": "1-junit4-declarations",
+  "base_commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+  "effective_test_census_complete": false,
+  "new_parity_credit": 0,
+  "sha256": {
+    "lexical-evidence-survey.json": "6d0270968835ee638ef5811231c2c5cc2d0dc20296606e59b74a63aee57926c7",
+    "source-declaration-evidence.json": "e0d2e5889cb0edb6274041f6ccc52cff3f288a8d672eb31152245e3893aa17b6",
+    "archive-identity-survey.json": "2c9c17a505039ef7457843232ea48051aa46ee412fd9dbfcaf0b75b523a3e090",
+    "canonical/reference-manifest.json": "e23b942ee6e3e39ac869de13ad762ce4f8cb75eb6233695e90036d8b3f3dc1c2",
+    "canonical/test-parity.json": "9c5f15bd43293281d9ef38c550a9699db9c884db0287154eb09793f1aab700d6"
+  }
+}

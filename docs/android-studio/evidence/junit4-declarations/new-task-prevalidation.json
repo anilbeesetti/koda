@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "task": "1-junit4-declarations",
+  "branch": "android-studio-task/1-junit4-declarations",
+  "worktree": "/workspace/android-studio-junit4-declarations",
+  "base_commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+  "source_snapshot_sha256": "9977721ce60cd61ef52c055ac480058c36f321571a3db5eaa3c9f4b9f19f30c6",
+  "selection_sha256": "e87a079f5564a47cb975b5d065ca3a77b5b26eeb949ac249f782ad07371db523",
+  "selected_archive_membership_capture_proof_sha256": "e0d2e5889cb0edb6274041f6ccc52cff3f288a8d672eb31152245e3893aa17b6",
+  "selected_original_files": 16,
+  "selected_source_bytes": 100711,
+  "fixture_bytes_hashes_and_capture_membership_verified": true,
+  "sparse_scope": [
+    "tooling/xtask",
+    "docs/android-studio",
+    ".agents/skills/koda-app-validation",
+    "script",
+    ".cargo",
+    "cone root files"
+  ],
+  "runtime_validation": "not run; no exclusive Cargo lease; normal full workspace dependency closure pending",
+  "authored_regression_tests": 28,
+  "executed_new_tests": 0,
+  "prior_census_source_sha256": "87e5e808b3e8a9e76ad65f681594b737ab666233e1790c1ab5e077f5a48d5beb",
+  "canonical_manifest_sha256": "e23b942ee6e3e39ac869de13ad762ce4f8cb75eb6233695e90036d8b3f3dc1c2",
+  "canonical_parity_sha256": "9c5f15bd43293281d9ef38c550a9699db9c884db0287154eb09793f1aab700d6",
+  "new_behavioral_parity_credit": 0,
+  "effective_test_census_complete": false,
+  "review": "code round1 active; all five final verdicts and validation pending",
+  "static_findings_pending": [
+    "Java enum member Test shadowing is not recognized by initial class pass",
+    "New mirror regression incorrectly assumes differing bytes imply differing second method lines; actual toolbar line41 is equal"
+  ],
+  "prior_discovery_history": "Separate prior task retained three owner static rounds and three lead runtime corrections in reference-census-validation evidence; history is not reset by this new independent task"
+}

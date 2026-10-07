@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "task": "1-junit4-declarations",
+  "branch": "android-studio-task/1-junit4-declarations",
+  "base_commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+  "source_commit": "9ff731ef9c7ee4ab97df0080fe5efff945b8502a",
+  "module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+  "selection_sha256": "e87a079f5564a47cb975b5d065ca3a77b5b26eeb949ac249f782ad07371db523",
+  "original_fixture_count": 16,
+  "original_fixture_bytes": 100711,
+  "all_fixture_hashes_and_bytes_preserved": true,
+  "original74_xtask_tests_preserved": true,
+  "prior34_new_test_helper_region_preserved": true,
+  "authored_new_component_tests": 40,
+  "actual_tests": {
+    "status": "PASS actual complete normal locked release xtask suite",
+    "passed": 114,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0,
+    "new_component_cases": 40,
+    "prior_cases_preserved": 74,
+    "log": "xtask-tests-68bfab0.log",
+    "measurement": "xtask-tests-68bfab0.measurement.json"
+  },
+  "strict_clippy": "PASS actual ./script/clippy --locked -p xtask; release/alltargets/allfeatures/denywarnings",
+  "full_workspace_fmt": "PASS actual current snapshot",
+  "normal_release_cli_build": {
+    "status": "PASS",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "-p",
+      "xtask",
+      "--release",
+      "--message-format=json"
+    ],
+    "log": "docs/android-studio/evidence/junit4-declarations/xtask-build-68bfab0.log",
+    "executable_bytes": 77379264,
+    "executable_sha256": "0f7ced36c8eccbc11b6bc4e64850b87b6d6cac9d3a54ce75e6aac5c4f854232f",
+    "frozen_external_path": "/tmp/android-studio-junit4-declarations/xtask-68bfab0"
+  },
+  "actual_cli": {
+    "status": "PASS8 expected successful/rejection flows",
+    "output_bytes": 301972,
+    "output_sha256": "81df6c8d6eb0d167d89410f898d7de8d9279ee175fbd637a1ca68bb2dc0ed88f",
+    "original_selected_files": 16,
+    "retained_source_method_candidates": 111,
+    "confirmed_direct_source_annotation_declarations": 71,
+    "effective_runtime_cases": null,
+    "actual_amplification_shape": {
+      "package_bytes": 1048576,
+      "declared_methods": 512,
+      "result": "explicit metadata budget exhaustion before staging; existing output preserved",
+      "wall_seconds": 0.011581162994843908,
+      "peak_process_rss_kib": 21596,
+      "measurement": "Linux wait4 per-process rusage, includes child launch; no compiler",
+      "coverage": "one synthetic failure shape only; not corpus-wide or memory ceiling"
+    }
+  },
+  "five_independent_reviews": {
+    "code": {
+      "verdict": "PASS scoped static",
+      "path": "reviews/new-junit4-code-round5.md",
+      "sha256": "41e21c01c79af83f2144d70a9757500680d196170bb7b74febe54d65804bfee6",
+      "current_module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+      "portable_path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-code-round5.log"
+    },
+    "UI": {
+      "verdict": "PASS scoped static",
+      "path": "reviews/new-junit4-ui-round2.md",
+      "sha256": "a8b714789e0d1ed7334032c502f1ae71bff8bd4fa1ebe8e6cea9123cf282c663",
+      "current_module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+      "portable_path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-ui-round2.log"
+    },
+    "UX": {
+      "verdict": "PASS scoped static",
+      "path": "reviews/new-junit4-ux-round2.md",
+      "sha256": "dc9e9cb7b459e8de9b19f251d53a672f430c51ae04f8823e38aeb0af358320a1",
+      "current_module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+      "portable_path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-ux-round2.log"
+    },
+    "performance": {
+      "verdict": "PASS scoped static",
+      "path": "reviews/new-junit4-performance-round2.md",
+      "sha256": "adbec0e96fb434888573bee0bdc1abd78551fe7a3a271e49b04f2a4e9b4da428",
+      "current_module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+      "portable_path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-performance-round2.log"
+    },
+    "quality": {
+      "verdict": "PASS scoped static",
+      "path": "reviews/new-junit4-quality-round1.md",
+      "sha256": "be1d5c5a84fd666fed0c27e6d95d8e5476115503bc2cf4ee3974d52086a64336",
+      "current_module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+      "portable_path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-quality-round1.log"
+    }
+  },
+  "fix_history": {
+    "owner_fix_rounds": 3,
+    "lead_test_helper_corrections": 2,
+    "lead_reviewed_production_correction": 1,
+    "all_failures_escalations_and_wrong_new_test_reasons_retained": true,
+    "historical_formatting_rusage_peak_not_a_memory_claim": true
+  },
+  "source_closure_guard": {
+    "status": "PASS identical sourcefiles/index before and after current tests/build/CLI; subsequent source commit advances index/HEAD only",
+    "source_files_digest": "b716e9b33b56c6a5a4a210f33448b1811fa7e6790575dfea2f65f37f3c72fefb",
+    "fixed_exclusions": "directdocsmd/reference-manifest/test-parity/directportsjson/evidencejsonlogONLY",
+    "source_file_count": 4544
+  },
+  "evidence_manifest": "docs/android-studio/evidence/junit4-declarations/evidence-manifest.json",
+  "reference_test_status": {
+    "canonical_92_case_ledger_unchanged_in_task_branch": true,
+    "reference_manifest_unchanged": true,
+    "prior_discovery_unchanged": true,
+    "new_behavioral_tests_ported": 0,
+    "new_behavioral_parity_credit": 0,
+    "selected_archive_membership_reverified": false,
+    "effective_test_census_complete": false,
+    "declaration_coverage_complete": false,
+    "effective_runtime_cases": null,
+    "unsupported_and_unselected_cases_remain_unported": true
+  },
+  "non_rust_exceptions_added": [],
+  "ready_for_lead_combined_validation": true,
+  "combined_full_app_and_workspace_validation": "pending lead combinedcandidate, not inferred from scope checks",
+  "task_complete": false,
+  "merged_into_android_studio": false,
+  "main_modified": false,
+  "independent_actual_runtime_evidence_addenda": {
+    "quality": {
+      "verdict": "PASS independent actual-evidence sanity review",
+      "module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-quality-runtime-addendum.log",
+      "sha256": "1c937e2572f2597692d28f46dd17e23efba0dd3b800f35c2c4b8049844ff948c",
+      "no_new_commands_executed": true
+    },
+    "performance": {
+      "verdict": "PASS independent actual-evidence sanity review",
+      "module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-performance-runtime-addendum.log",
+      "sha256": "8856ffbf531e6d1314934c29570ead7aa38674fa10e1a58ce4b7ba399d402d51",
+      "no_new_commands_executed": true
+    }
+  }
+}

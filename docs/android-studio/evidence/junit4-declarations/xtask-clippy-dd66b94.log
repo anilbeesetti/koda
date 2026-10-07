@@ -1,0 +1,26 @@
++ cargo clippy --locked -p xtask --release --all-targets --all-features -- --deny warnings
+    Checking aws-lc-sys v0.42.0
+    Checking aws-lc-rs v1.17.1
+    Checking rustls-webpki v0.103.13
+    Checking jsonwebtoken v10.3.0
+    Checking rustls v0.23.40
+    Checking tokio-rustls v0.26.4
+    Checking hyper-rustls v0.27.9
+    Checking octocrab v0.49.7
+    Checking compliance v0.1.0 (/workspace/android-studio-junit4-declarations/tooling/compliance)
+    Checking xtask v0.1.0 (/workspace/android-studio-junit4-declarations/tooling/xtask)
+error: redundant clone
+    --> tooling/xtask/src/tasks/android_junit4_declarations.rs:2158:60
+     |
+2158 |             original["files"] = serde_json::json!([selected.clone()]);
+     |                                                            ^^^^^^^^ help: remove this
+     |
+note: cloned value is neither consumed nor mutated
+    --> tooling/xtask/src/tasks/android_junit4_declarations.rs:2158:52
+     |
+2158 |             original["files"] = serde_json::json!([selected.clone()]);
+     |                                                    ^^^^^^^^^^^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#redundant_clone
+     = note: requested on the command line with `-D clippy::redundant-clone`
+
+error: could not compile `xtask` (bin "xtask" test) due to 1 previous error

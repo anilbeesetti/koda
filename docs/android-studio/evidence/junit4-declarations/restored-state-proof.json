@@ -1,0 +1,119 @@
+{
+  "observed_utc": "2026-10-07T18:26:50.394080+00:00",
+  "base_commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+  "module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+  "fixture_count": 16,
+  "fixture_bytes": 100711,
+  "selection_sha256": "e87a079f5564a47cb975b5d065ca3a77b5b26eeb949ac249f782ad07371db523",
+  "fixtures": [
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/base/apkparser/analyzer/src/test/java/com/android/tools/apk/analyzer/PathUtilsTest.java",
+      "bytes": 2533,
+      "sha256": "7ff6be795341e7ecd7b68f2f93291db882fedce11e9709e2cf8f714b58bd6a82"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/base/build-system/aaptcompiler/src/test/java/com/android/aaptcompiler/FloatParsingTest.kt",
+      "bytes": 10743,
+      "sha256": "63773368c6e7c381bf91f4e4f53f45ff331962adea69c91c596dfbc10ee01413"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/base/build-system/gradle-api/src/main/java/com/android/build/api/instrumentation/AsmClassVisitorFactory.kt",
+      "bytes": 3173,
+      "sha256": "aa1c2f1fcdf6ee6e4db97cd69bd9ce57618b59c3b8891829ac8f83c42316692f"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/base/build-system/gradle-core/src/test/java/com/android/build/api/artifact/impl/AbstractMultipleArtifactTest.kt",
+      "bytes": 15790,
+      "sha256": "e1034120d26bf31de9e7abe7de26a2342d04bd91c16ae56dbd4d4a6641f0be30"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "bytes": 879,
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "bytes": 4201,
+      "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "bytes": 2911,
+      "sha256": "bb33303f2050fc9d86f1ae04d355a3c4e6779aa89ae5c19cfc36973057fe2e12"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+      "bytes": 5447,
+      "sha256": "33d296249b80ad61a7de3dd25abdf44779cd2bd6ade5847024d0b30b2cb6d09e"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/visualtests/VisualTest.java",
+      "bytes": 5495,
+      "sha256": "6fb03861a6996eacced7b796f02d41f589fe9b48879c9a7b3269af9ad890c253"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/idea/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "bytes": 16649,
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "bytes": 4006,
+      "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "bytes": 879,
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "bytes": 4236,
+      "sha256": "f524898eb42526b57242d0c79db1ecf88ead8105a623eb7c64d57cea45d47bb6"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "bytes": 2923,
+      "sha256": "bb4496f6f969e846da2b1970fb79067148ddb44f881fee95980ccd18bcf5cddc"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/jetbrains-android/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "bytes": 16649,
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+    },
+    {
+      "path": "tooling/xtask/test_data/reference_declarations/sources/jetbrains-android/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "bytes": 4197,
+      "sha256": "e79c781a5e7f96a24a1f55278351cb708d8f2a5417ad676f78b925b47430544a"
+    }
+  ],
+  "unchanged_canonical_and_workspace": [
+    {
+      "path": "docs/android-studio/reference-manifest.json",
+      "sha256": "e23b942ee6e3e39ac869de13ad762ce4f8cb75eb6233695e90036d8b3f3dc1c2",
+      "byte_identical_base": true
+    },
+    {
+      "path": "docs/android-studio/test-parity.json",
+      "sha256": "9c5f15bd43293281d9ef38c550a9699db9c884db0287154eb09793f1aab700d6",
+      "byte_identical_base": true
+    },
+    {
+      "path": "tooling/xtask/src/tasks/android_reference_census.rs",
+      "sha256": "87e5e808b3e8a9e76ad65f681594b737ab666233e1790c1ab5e077f5a48d5beb",
+      "byte_identical_base": true
+    },
+    {
+      "path": "Cargo.toml",
+      "sha256": "b790b8de721d0849783583a2d1a7d21542488fc7d8d06ca3cc642271f297c782",
+      "byte_identical_base": true
+    },
+    {
+      "path": "Cargo.lock",
+      "sha256": "fa8b5e7ac95efb90768bdb6fbc0a4b5cac0a30f773d243d7e2d4402c25a8bbd3",
+      "byte_identical_base": true
+    }
+  ],
+  "Cargo_executed_after_restart": false,
+  "task_complete": false
+}

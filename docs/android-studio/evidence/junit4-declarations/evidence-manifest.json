@@ -1,0 +1,517 @@
+{
+  "schema_version": 1,
+  "task": "1-junit4-declarations",
+  "observed_utc": "2026-10-07T18:55:01.093578+00:00",
+  "source_commit": "9ff731ef9c7ee4ab97df0080fe5efff945b8502a",
+  "module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+  "copied_evidence": [
+    {
+      "original_external_file": "new-junit4-code-round1.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-code-round1.log",
+      "bytes": 4231,
+      "sha256": "84186b0dbeb182e7af95489415526c7b4581da5fe850670b226720217d4c7bfe",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-code-round2.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-code-round2.log",
+      "bytes": 2681,
+      "sha256": "1a6495ae2d81c8d5024a082ca9b57b18f7025ce221d1772cde70448415b74cf8",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-code-round3.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-code-round3.log",
+      "bytes": 2255,
+      "sha256": "66c5640df5657075d1e2fad63ed48600744e12d80a26fa9814a8b7dbadd2ab53",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-code-round4.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-code-round4.log",
+      "bytes": 3829,
+      "sha256": "3f3cd5fbb0471fbf12c11ddfa08a194b82966ffdc21ec13cf9677cc0b39db67d",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-code-round5.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-code-round5.log",
+      "bytes": 1532,
+      "sha256": "41e21c01c79af83f2144d70a9757500680d196170bb7b74febe54d65804bfee6",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-performance-design-round1.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-performance-design-round1.log",
+      "bytes": 942,
+      "sha256": "08991c675e97a02a1bb5471bcf2afda6f4d6c48dff4b8fa75a1588e0681f42cf",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-performance-round1.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-performance-round1.log",
+      "bytes": 2357,
+      "sha256": "3ff68063659568c6d4aa9768bd8b2c7149c3b497dfdedde4e0b59203fb50e842",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-performance-round2.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-performance-round2.log",
+      "bytes": 1098,
+      "sha256": "adbec0e96fb434888573bee0bdc1abd78551fe7a3a271e49b04f2a4e9b4da428",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-quality-round1.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-quality-round1.log",
+      "bytes": 5204,
+      "sha256": "be1d5c5a84fd666fed0c27e6d95d8e5476115503bc2cf4ee3974d52086a64336",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-ui-round1.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-ui-round1.log",
+      "bytes": 1836,
+      "sha256": "829d97b21fe1067b429f5246d6ba46e5cd84efc44f07feaeb54293545414c004",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-ui-round2.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-ui-round2.log",
+      "bytes": 5638,
+      "sha256": "a8b714789e0d1ed7334032c502f1ae71bff8bd4fa1ebe8e6cea9123cf282c663",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-ux-round1.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-ux-round1.log",
+      "bytes": 1313,
+      "sha256": "8132ecf5ff8cae7225429c407fc940ba878b07ba1e26f6b4ffa8988b0fe80430",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-ux-round2.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-ux-round2.log",
+      "bytes": 4291,
+      "sha256": "dc9e9cb7b459e8de9b19f251d53a672f430c51ae04f8823e38aeb0af358320a1",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "source-declaration-evidence.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/source-declaration-evidence.json",
+      "bytes": 74671,
+      "sha256": "e0d2e5889cb0edb6274041f6ccc52cff3f288a8d672eb31152245e3893aa17b6",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "brief-input-proof.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/brief-input-proof.json",
+      "bytes": 736,
+      "sha256": "780540dfd6fc58458669c1473799bee5f88f7ccd7048a79c3b0bb0287e8a4ce9",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-task-prevalidation.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/new-task-prevalidation.json",
+      "bytes": 1938,
+      "sha256": "0767b07628c676a8f1d0b6605d39f4cce882d92ea13ecb54e5eac3c71a625d26",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-task-review-history.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/new-task-review-history.json",
+      "bytes": 7152,
+      "sha256": "949c28ba6e89d7aaf1ad4c3ceaa9b7682fa420cd3c8c39f5db401b8613a40927",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "metadata-correction-source-proof-68bfab0.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/metadata-correction-source-proof-68bfab0.json",
+      "bytes": 977,
+      "sha256": "373d85bb1690d235c65aa8d68ac56deb136a6d14497731c8bd7bf927e06a14bc",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "lead-corrections-739d29d.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/lead-corrections-739d29d.json",
+      "bytes": 1554,
+      "sha256": "df20bcd6479ec9c957f4eef919ec34e6d8a08111bdcb259a42754744a525982f",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "runtime-failure-dd66b94.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/runtime-failure-dd66b94.json",
+      "bytes": 1712,
+      "sha256": "b65f2bcd2d1ebd3c24717dc856fb5056711f80304cb5ae77af388b8d33fbd93d",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "clippy-failure-dd66b94.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/clippy-failure-dd66b94.json",
+      "bytes": 1304,
+      "sha256": "d021c5489e7f94ab066af0547455d95eebae87923a066200e6561b93de7f62f7",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "restored-state-proof.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/restored-state-proof.json",
+      "bytes": 5868,
+      "sha256": "856910e920fc3db607134da0828d3e64b87edfa22854af4673b915414aa5eb73",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "current-cargo-source-freshness-proof.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/current-cargo-source-freshness-proof.json",
+      "bytes": 1009,
+      "sha256": "f0c1d90012ab1037186886f9b53844a3eab4fe1482d3ea913bca5640341e912a",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "current-114-test-executable.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/current-114-test-executable.json",
+      "bytes": 656,
+      "sha256": "e7dc34dc733b53158c8f5862119f6ce39f3c558b7cc86d7ccec396bcc10b48bf",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "frozen-current-executables.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/frozen-current-executables.json",
+      "bytes": 1148,
+      "sha256": "d6fcea1f526aae20333a5ffb457705b039c34bf51533c7b58309cc6bea1e59dc",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "source-guard-before-current-validation.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/source-guard-before-current-validation.json",
+      "bytes": 1331628,
+      "sha256": "604a98826096d02aac7f037c065b974ad526a1f27d74d7ef806777e93bebbf88",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "source-guard-after-current-cli.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/source-guard-after-current-cli.json",
+      "bytes": 1331628,
+      "sha256": "2602b705d1fa20cf05db446be462d2b040d2ddc7457a88bd39f9feb0e0d41678",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "source-guard-after-source-commit.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/source-guard-after-source-commit.json",
+      "bytes": 1335382,
+      "sha256": "43bfd1a611da982a9391c763eacb315aed3b150b80280f2a3bcdd9b2a682de73",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-validation-summary.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-validation-summary.json",
+      "bytes": 9549,
+      "sha256": "cba1b02969cf177348b6f8a019d0d68ba2b8a3f61281e2ca6a2de7bb9b569b6e",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "declarations-candidate-68bfab0.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/declarations-candidate-68bfab0.json",
+      "bytes": 301972,
+      "sha256": "81df6c8d6eb0d167d89410f898d7de8d9279ee175fbd637a1ca68bb2dc0ed88f",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-tests-68bfab0.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-tests-68bfab0.log",
+      "bytes": 261665,
+      "sha256": "623318c7508099336ac71dd51a23b1381023efbf8492ac1ad34847ca92c0dae6",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-tests-739d29d.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-tests-739d29d.log",
+      "bytes": 12073,
+      "sha256": "dece6a3f970687e409fe80e2e5d746d881581c9e8d9f31abb37e9c5fb271a206",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-tests-dd66b94-unavailable-time.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-tests-dd66b94-unavailable-time.log",
+      "bytes": 60,
+      "sha256": "6933a7e0df95783acf93ed90af942334f7d1619d9a6a1f897c79ed256537f3c9",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-tests-dd66b94.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-tests-dd66b94.log",
+      "bytes": 18936,
+      "sha256": "839a53b6e0010035223f97c9a56a06f9a289b4a5b55eab5e3b932eb428b4c6aa",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-tests-68bfab0.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-tests-68bfab0.measurement.json",
+      "bytes": 504,
+      "sha256": "fd32e201ccbdc242db0f778332ecc74e5e14a774d37d72098a4da6e0815cc3e9",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-tests-739d29d.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-tests-739d29d.measurement.json",
+      "bytes": 474,
+      "sha256": "b79cd3f8add590d720cebf480296db8c144b72f35a5b9e7a0d9845fd57e02fa7",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-tests-dd66b94.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-tests-dd66b94.measurement.json",
+      "bytes": 476,
+      "sha256": "2683026b5ac120da39b0a4c71f1ca2a431ec095f91a3a8a5bb4389afcd97c8e2",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-clippy-68bfab0.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-clippy-68bfab0.log",
+      "bytes": 656,
+      "sha256": "fde03fba004708f59726683e27bf3262e288850582c990abb8b97e6390a1b4ed",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-clippy-739d29d.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-clippy-739d29d.log",
+      "bytes": 296,
+      "sha256": "b97d58922fa5e608dcf85cd7e3060d602b80e80cb82ea14d59df788b898ccba9",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-clippy-dd66b94.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-clippy-dd66b94.log",
+      "bytes": 1375,
+      "sha256": "861645c44008b4c001f781874ea8129b192c5d5f54123bf90c7f61fd96aef28d",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-clippy-68bfab0.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-clippy-68bfab0.measurement.json",
+      "bytes": 457,
+      "sha256": "7ac73a832632cccdc345e2522f3c5c009da4706314885e463a3c3ebe3c859669",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-clippy-739d29d.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-clippy-739d29d.measurement.json",
+      "bytes": 455,
+      "sha256": "94027d4444f4c9231b6056f16e616cf24e331a6c23daa236f3ddd9e7fc6a7da4",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-clippy-dd66b94.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-clippy-dd66b94.measurement.json",
+      "bytes": 459,
+      "sha256": "d3637d9f87d276a51696e0956fea015c98d4ceafe99e09fb3d5134ddba88b386",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-build-68bfab0.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-build-68bfab0.log",
+      "bytes": 245192,
+      "sha256": "2c2c4950aeb6244438cc6669fea2d7d3bc3bec4c437ba0c8e9c92d6d45afc370",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "xtask-build-68bfab0.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/xtask-build-68bfab0.measurement.json",
+      "bytes": 505,
+      "sha256": "d7d8b9d13a06b929e99d49d6ed4b54a102058aa44d38569b54440e85636171b2",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "workspace-fmt-68bfab0.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/workspace-fmt-68bfab0.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "workspace-fmt-dd66b94.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/workspace-fmt-dd66b94.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "workspace-fmt-68bfab0.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/workspace-fmt-68bfab0.measurement.json",
+      "bytes": 458,
+      "sha256": "25c8dc5b7ab5da15d55f69974435bb1b75638f1fdd28d67bdebb5e805e0e3fb3",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "workspace-fmt-dd66b94.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/workspace-fmt-dd66b94.measurement.json",
+      "bytes": 456,
+      "sha256": "5f25c084b44172c3c33aa59633b9f95b9d48c59841738c0a9d77329cd95d8c07",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-actual-1MiB-package-512-methods.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-actual-1MiB-package-512-methods.log",
+      "bytes": 105,
+      "sha256": "542ef3c318ec1052064c0eb7145e29e4cc5b739c854a3fa4f90389b10662cbee",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-changed-evidence.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-changed-evidence.log",
+      "bytes": 36,
+      "sha256": "755a6f76ee29b3c7218120566d2a33cd7e7f3ff6e0cdfbedecc2f62351024e32",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-changed-provenance.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-changed-provenance.log",
+      "bytes": 146,
+      "sha256": "1cdfde79ff45291aae8d554f1abd80d09a6ce78d4ccf5c59089f995ba36bf753",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-help.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-help.log",
+      "bytes": 834,
+      "sha256": "a666c5d72764fdd521a1c55592f225fc039b4545e87c5abfb8f3ebb1d965d9d1",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-metadata-failure-existing-check.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-metadata-failure-existing-check.log",
+      "bytes": 105,
+      "sha256": "542ef3c318ec1052064c0eb7145e29e4cc5b739c854a3fa4f90389b10662cbee",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-original-check.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-original-check.log",
+      "bytes": 196,
+      "sha256": "4282b6ec05b2b71b07e63aa0e865d44dbeafb20e29e497ef31b8f9870249ec7b",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-original-generation.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-original-generation.log",
+      "bytes": 196,
+      "sha256": "4282b6ec05b2b71b07e63aa0e865d44dbeafb20e29e497ef31b8f9870249ec7b",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-original-refuse-replacement.log",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-original-refuse-replacement.log",
+      "bytes": 70,
+      "sha256": "754cda9c579d54bd6103b84058c53881aabd46b9e9d10ae09f292a9802222c43",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-actual-1MiB-package-512-methods.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-actual-1MiB-package-512-methods.measurement.json",
+      "bytes": 1051,
+      "sha256": "364f0fef5abc349eef457365a984cfefcc858a14361b9c555cfea2d1db58a8ef",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-changed-evidence.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-changed-evidence.measurement.json",
+      "bytes": 1062,
+      "sha256": "afcacd1dc3223530fdd6386083ca32c46e88c730a1f55c795b0d507f2ddbd011",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-changed-provenance.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-changed-provenance.measurement.json",
+      "bytes": 1040,
+      "sha256": "bf8221f67fe19dbdc26cd8944d53345babe9fe8c3f7b8ca3b064db8c1374914e",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-help.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-help.measurement.json",
+      "bytes": 576,
+      "sha256": "803bd944ea2789224c3fb5108aebc0ccd074b95e968cc6f9e4ad523062508c26",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-metadata-failure-existing-check.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-metadata-failure-existing-check.measurement.json",
+      "bytes": 1068,
+      "sha256": "b02b8477aff32fcbe2e9b157a26f40d109fa859307d1bcf602fa25a53ddd0b69",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-original-check.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-original-check.measurement.json",
+      "bytes": 1054,
+      "sha256": "144adc66e3abba4e9a7f6976be2e5862b859d939193c6d7e782c8e75e5b1b3ee",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-original-generation.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-original-generation.measurement.json",
+      "bytes": 1050,
+      "sha256": "edf6951d762748f0a6f59dc60c5add2bb2e0240a31b5e5c0a95c143d9147cf6a",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-original-refuse-replacement.measurement.json",
+      "path": "docs/android-studio/evidence/junit4-declarations/cli-original-refuse-replacement.measurement.json",
+      "bytes": 1066,
+      "sha256": "ec8ede436dd4f8f74336ebfa2cf32e13f69e91980e1fe750802f87ab67e68a24",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "android_junit4_declarations-739d29d.rs",
+      "path": "docs/android-studio/evidence/junit4-declarations/prior-corrected-module-739d29d.log",
+      "bytes": 83048,
+      "sha256": "739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "metadata-budget-design.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/metadata-budget-design.log",
+      "bytes": 10637,
+      "sha256": "5413ca6c1a9eeb0002a43bb00622cb303bb7a3c88170d4e39e13db58dbbe0dd1",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "run_measurement.py",
+      "path": "docs/android-studio/evidence/junit4-declarations/historical-measurement-runner.log",
+      "bytes": 879,
+      "sha256": "3e3e9841b630e42cde19f8574165ba797d0d07d4a4b0d2ea32bd8f18df06ae4b",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "cli-validation.py",
+      "path": "docs/android-studio/evidence/junit4-declarations/actual-cli-validation-script.log",
+      "bytes": 6395,
+      "sha256": "568985c93e7ec0164bdc0e5eafeb078e208a34c5767b28b3f8b5c6ae932befbd",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "task-source-snapshot.py",
+      "path": "docs/android-studio/evidence/junit4-declarations/fixed-source-snapshot-script.log",
+      "bytes": 2356,
+      "sha256": "000a1eb908af5026208339703a1b74b8aae37e212696e94807e90d784fe8db99",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-quality-runtime-addendum.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-quality-runtime-addendum.log",
+      "bytes": 4188,
+      "sha256": "1c937e2572f2597692d28f46dd17e23efba0dd3b800f35c2c4b8049844ff948c",
+      "byte_identical": true
+    },
+    {
+      "original_external_file": "new-junit4-performance-runtime-addendum.md",
+      "path": "docs/android-studio/evidence/junit4-declarations/review-new-junit4-performance-runtime-addendum.log",
+      "bytes": 7010,
+      "sha256": "8856ffbf531e6d1314934c29570ead7aa38674fa10e1a58ce4b7ba399d402d51",
+      "byte_identical": true
+    }
+  ],
+  "only_byte_identical_copy_or_extension_mapping": true,
+  "mapped_extensions": "Historical reports/source/helper scripts retain exact bytes in .log files; original names recorded. JSON/raw logs retain names.",
+  "new_behavioral_parity_credit": 0,
+  "effective_test_census_complete": false
+}

@@ -1,0 +1,91 @@
+# JUnit4 declaration task: code review round 1
+
+Verdict: **FAIL**. This is the new independent JUnit4 declaration task; previous
+reference-census reviews and correction history remain separate.
+
+Reviewed module: tooling/xtask/src/tasks/android_junit4_declarations.rs
+
+Reviewed SHA-256: 9977721ce60cd61ef52c055ac480058c36f321571a3db5eaa3c9f4b9f19f30c6
+
+Review was static and read-only. No Cargo commands, cache changes, repository
+edits, or test execution were performed. Only this requested external report
+was written.
+
+## Blocking findings
+
+1. **P2 — Java text-block escapes can invent confirmed declarations**
+   (lines 528–544). Escapes are handled only for one-character delimiters.
+   Java text blocks also honor escapes. In the following valid source, the two
+   escaped quote sequences cause the current scanner to close and reopen the
+   literal incorrectly. The intervening phantom method then appears as a direct
+   annotated method with balanced braces and a supported JUnit import:
+
+   ~~~java
+   import org.junit.Test;
+   class Suite {
+     String text = """
+       \"""
+       @Test public void phantom() {}
+       \"""
+       """;
+   }
+   ~~~
+
+   Handle Java text-block escapes while preserving Kotlin raw-string semantics.
+   A regression must require no phantom annotation or method declaration.
+
+2. **P2 — Java enum type shadowing is omitted** (lines 954–967).
+   The declaration/shadowing pass recognizes class/interface/object/record,
+   but not Java enum types. For
+   "import org.junit.Test; class Suite { enum Test { Value } @Test public void actual() {} }",
+   the member type named Test is ignored and actual can be marked confirmed.
+   Retain the enum type/shadowing fact and leave the annotation binding
+   unresolved. Include the analogous org type case for qualified spelling.
+
+3. **P2 — Imported aliases and static types do not participate in conflicts**
+   (lines 896–905, 1021–1032, 1123–1135).
+   The explicit Test import calculation excludes aliases and static imports,
+   while qualified confirmation checks only locally declared org/Test shadows.
+   Consequently these known imported-name conflicts can still confirm:
+
+   ~~~kotlin
+   import org.junit.Test
+   import other.Annotation as Test
+   class Suite { @Test fun actual() {} }
+   ~~~
+
+   ~~~kotlin
+   import other.Container as org
+   class Suite { @org.junit.Test fun actual() {} }
+   ~~~
+
+   A conflicting Java single static import of Test is also excluded. Account
+   for effective imported names when deciding unique binding and qualified
+   prefix shadowing. Keep all ambiguous candidates and binding facts unresolved.
+
+4. **P2 — The new mirror line-inequality assertion contradicts its fixtures**
+   (lines 1374–1377). Differing file bytes do not imply differing method lines.
+   Direct inspection shows DefaultVariantsTest.debugPreferred at lines 33/38,
+   but TabbedToolbarTest.tabIsAdded at line 41 in both AOSP and JetBrains files.
+   Use these exact pinned line pairs and retain the distinct hashes, unequal
+   file bytes, method names and declaration-count assertions. The original
+   fixtures must remain unchanged.
+
+## Checks and boundaries
+
+- All 16 selected files match selection hashes and byte counts, totaling
+  100,711 bytes. The selection SHA matches the supplied review snapshot.
+- Frozen discovery module, canonical manifest and ledger remain unchanged.
+  Existing discovery fixtures and assertions were not modified.
+- Publication uses an exclusive staging file and a non-replacing hard link;
+  checkout containment is checked before mutation. Input/source/output budgets
+  and deterministic change detection are present.
+- Runtime cases remain null, applicability unreviewed, completion false and
+  behavioral parity credit zero.
+- The command validates supplied selection assertions against file bytes and
+  pinned manifest identities. It does not independently reread archives to
+  authenticate an arbitrary selection's member provenance. Current originals
+  have separate retained archive-capture proof; reports must preserve this
+  distinction.
+- New tests, required clippy, CLI execution, full workspace and full-app
+  validation remain pending. Static review is not an execution verdict.

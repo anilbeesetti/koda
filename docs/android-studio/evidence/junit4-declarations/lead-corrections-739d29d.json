@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "task": "1-junit4-declarations",
+  "old_module_sha256": "dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed",
+  "new_module_sha256": "739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec",
+  "production_prefix_sha256": "ad2b7a478404a88511b2774b30460af5b1d9e3bc74caa9f7358fbcab610f46f7",
+  "production_prefix_byte_identical": true,
+  "owner_static_fix_rounds": 3,
+  "lead_corrections": 2,
+  "source_diff_only": [
+    "NEW expected superclass literal GradleImportingTestCase->HeavyPlatformTestCase",
+    "NEW serde_json fixture setup selected.clone()->selected"
+  ],
+  "original_fixture_count": 16,
+  "original_fixture_bytes": 100711,
+  "original_fixture_hashes_verified": true,
+  "canonical_ledger_unchanged": true,
+  "new_behavioral_parity_credit": 0,
+  "wrong_new_test_explicitly_flagged": {
+    "original_path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+    "original_sources": [
+      "idea",
+      "jetbrains-android"
+    ],
+    "original_sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+    "original_line": 59,
+    "source_declaration": "public final class GradleModuleImportTest extends HeavyPlatformTestCase {",
+    "wrong_expected_literal": "extends GradleImportingTestCase",
+    "correct_expected_literal": "extends HeavyPlatformTestCase",
+    "assertion_retained": true,
+    "prior_failure_retained": "runtime-failure-dd66b94.json",
+    "canonical_status": "unchanged; no applicability or parity judgment"
+  }
+}

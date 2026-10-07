@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "base_before_production_correction_sha256": "739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec",
+  "new_module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+  "existing34_regression_and_helper_bytes_unchanged": true,
+  "existing_test_region_sha256": "cf2d1d526e84f37be306586d0b0152ce1baf8e65e289f50519e191103b0d1781",
+  "authored_new_tests": 40,
+  "appended_stress_groups": 6,
+  "original_fixture_count": 16,
+  "original_fixture_bytes": 100711,
+  "original_fixture_hashes_verified": true,
+  "selection_sha256": "e87a079f5564a47cb975b5d065ca3a77b5b26eeb949ac249f782ad07371db523",
+  "owner_static_fix_rounds": 3,
+  "lead_test_corrections": 2,
+  "lead_production_correction": 1,
+  "design_sha256": "5413ca6c1a9eeb0002a43bb00622cb303bb7a3c88170d4e39e13db58dbbe0dd1",
+  "Cargo_after_new_correction": "not run; root owns lease",
+  "effective_test_census_complete": false,
+  "new_behavioral_parity_credit": 0
+}

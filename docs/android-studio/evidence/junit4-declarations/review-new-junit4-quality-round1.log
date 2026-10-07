@@ -1,0 +1,30 @@
+# JUnit4 declaration CLI quality review, round 1
+
+**PASS — independent, scoped static code-quality review. No blocking findings.**
+
+Reviewed module: `tooling/xtask/src/tasks/android_junit4_declarations.rs`.
+Exact module SHA-256: `68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f`.
+
+Other reviewed snapshot hashes:
+
+- `tooling/xtask/src/main.rs`: `5e6b1566877f558ef4c02871d3f18cac11a83a3c93d005dc4492ef7e6af5a8e7`.
+- `tooling/xtask/src/tasks.rs`: `d1bcb131e58803dbc25ba8d673e8cc3fa4debe06145a6b79f8c395d142993e35`.
+- `docs/android-studio/junit4-declaration-task.md`: `fd798a9659a42a1f6f7a46f6ab8e51d628a4e2127d230f8159d8bcf38c55d931`.
+- Fixture selection: `e87a079f5564a47cb975b5d065ca3a77b5b26eeb949ac249f782ad07371db523`.
+
+## Scope and findings
+
+Read the repository `.rules`, `docs/.rules`, and `docs/AGENTS.md`, the complete module, CLI wiring, task documentation, fixture notice/selection, retained capture proof/script, and the previous correction/review records. The documentation-automation instructions limit their modification workflow to `docs/src`; this review made no documentation/source change.
+
+No new finding requires escalation or a fix. The following concrete checks support the scoped PASS:
+
+- **Rust conventions and errors:** the new task is a distinct logical module wired through the existing Clap enum and `tasks.rs` convention. Production code propagates fallible scanning, I/O, serialization, budget, and publication operations through `Result`; production has no `unwrap()` or `expect()`. Panic assertions are confined to tests. Borrowed token text and borrowed annotation prefixes avoid needless ownership. Checked access and established token/closing-pair invariants support the remaining indexing.
+- **Publication:** generation completes before staging. Output-parent canonicalization excludes the checkout; source canonicalization confines selected files to the supplied root. A new staging file and hard-link publication preserve the no-replacement contract. `--check` requires a regular existing output and compares bounded deterministic bytes without updating it. Errors remain visible through propagation/context.
+- **Bounded memory design:** one monotonically charged 16 MiB metadata budget is shared through the entire selection and charges owned strings, qualified names, owner copies, annotation copies, and hash strings before allocation. Annotation prefixes borrow facts. The full expanded class header is checked before retained annotation/header/owner copies. `BoundedJsonWriter` checks arithmetic and length before growth, caps requested capacity, propagates allocation errors, and charges the final newline to the same output limit. Source, selection, token, class, annotation, and method limits remain separate bounds. These are bounds on their respective representations, not a claim of a 16 MiB process/RSS ceiling.
+- **Meaningful tests:** the 34 earlier test/helper region is exactly byte-identical (38,189 bytes) to the retained corrected module `739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec`; no prior assertion was deleted or weakened. Six appended stress groups bring the module to 40 authored tests. By inspection they exercise the actual 1 MiB package/512-method amplification, cumulative selection accounting, overflow/rejection accounting, exact and exceeded full-header boundaries, JSON escaping/growth/newline boundaries, and preservation of output/staging behavior on failure. Earlier tests retain original-source counts, names, spans, framework/shadowing negatives, deterministic output, provenance corruption, and safe-publication assertions.
+- **Provenance and documentation:** all 16 complete fixtures match selection SHA-256 and byte counts, total 100,711 bytes, match their retained captured bytes and capture records, and retain distinct AOSP/JetBrains identities. Pinned revisions match the canonical manifest. The Apache notice/license remains present. Archive authentication was not rerun; the command and documentation explicitly disclose that archive membership relies on the retained capture proof (`selected_archive_membership_reverified: false`). Documentation preserves the failure/correction history and the limited declaration scope.
+- **Canonical data:** root and xtask manifests, lockfile, reference manifest, canonical 92-case ledger, parity/census task reports, and frozen discovery module are byte-identical to base `7b2bd3e7ffc07156c7193baf156c5041bef256c1`. The new task keeps runtime counts null, completeness flags false, applicability unreviewed, and new behavioral parity credit zero. `git diff --check` returned success.
+
+## Validation limits
+
+This is a static quality verdict on the exact hashes above. No Cargo, rustc, Clippy, build, unit-test execution, CLI execution, runtime benchmark, full-app validation, cache mutation, source edit, or commit occurred. The prior 108-test pass applies to the retained earlier module; it does not certify this production correction. The expected 114-test xtask suite, strict Clippy, formatting, exact CLI checks, and lead app/workspace validation are separate gates. This PASS establishes neither runtime correctness nor task completion.

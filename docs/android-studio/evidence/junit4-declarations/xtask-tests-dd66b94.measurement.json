@@ -1,0 +1,16 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "xtask",
+    "--release"
+  ],
+  "started_utc": "2026-10-07T16:51:52.260480+00:00",
+  "wall_seconds": 154.7226362729998,
+  "exit_code": 101,
+  "peak_child_rss_kib": 1345136,
+  "measurement": "Linux RUSAGE_CHILDREN maxrss and monotonic wall time; full command including compilation for Cargo invocations",
+  "log": "/workspace/android-studio-artifacts/reference-census-next-task/xtask-tests-dd66b94.log"
+}
