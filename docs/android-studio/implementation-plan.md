@@ -251,8 +251,10 @@ app build, full existing suite, fixture/provenance changes and unchanged `main`.
 Resolve conflicts on the task branch, rebuild and rerun affected checks before
 merge. Fast-forward or non-rewriting merge into `android-studio`; never force
 push either protected branch. Push explicitly to `refs/heads/android-studio`
-only after remote head revalidation. Auth/network/build failures block merge and
-push, not truthfully recording local work.
+only after remote head revalidation. Build or test failures block merges.
+Authentication and network failures block remote verification and publishing;
+they do not prevent local preparation. The current user instruction holds all
+GitHub writes. Any local merge still requires every build, test, and review gate.
 
 Report after each completed phase: merged commits, matrix totals by port and run
 status, failing/blocked/unported tests, five review evidence, actual app checks,
