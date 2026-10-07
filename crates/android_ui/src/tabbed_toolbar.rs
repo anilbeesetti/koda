@@ -3,7 +3,7 @@
 // tests, artwork and license are retained in ../test_data/tabbed_toolbar.
 
 use anyhow::{Context as _, Result};
-use gpui::{AnyView, App, Context, FocusHandle, MouseButton, ScrollHandle, point};
+use gpui::{AnyView, App, Bounds, Context, FocusHandle, MouseButton, ScrollHandle, point};
 use std::{cell::Cell, rc::Rc};
 use ui::{ButtonLike, Tooltip, prelude::*};
 use util::ResultExt as _;
@@ -14,6 +14,8 @@ pub type ToolbarListener = Rc<dyn Fn(&mut Window, &mut App)>;
 enum TabReveal {
     End,
     Selected(usize),
+    FocusedTab(usize),
+    FocusedClose(usize),
 }
 
 struct ToolbarTab {
@@ -24,6 +26,7 @@ struct ToolbarTab {
     closed: Option<ToolbarListener>,
     focus: FocusHandle,
     close_focus: Option<FocusHandle>,
+    close_bounds: Option<Rc<Cell<Option<Bounds<Pixels>>>>>,
 }
 
 struct ToolbarAction {
@@ -84,6 +87,7 @@ impl TabbedToolbar {
             // Element tab_index only configures automatically created handles.
             // Explicit handles must opt into traversal before they are tracked.
             close_focus: closed.as_ref().map(|_| cx.focus_handle().tab_stop(true)),
+            close_bounds: closed.as_ref().map(|_| Rc::new(Cell::new(None))),
             closed,
             focus: cx.focus_handle().tab_stop(true),
         });
@@ -195,7 +199,32 @@ impl TabbedToolbar {
         cx.notify();
     }
 
-    fn reveal_pending_tab(&mut self, measured_visibility: (bool, bool)) -> bool {
+    fn reveal_focused_control(&mut self, window: &Window, cx: &mut Context<Self>) {
+        let request = self.tabs.iter().find_map(|tab| {
+            if tab.focus.is_focused(window) {
+                Some(TabReveal::FocusedTab(tab.id))
+            } else if tab
+                .close_focus
+                .as_ref()
+                .is_some_and(|focus| focus.is_focused(window))
+            {
+                Some(TabReveal::FocusedClose(tab.id))
+            } else {
+                None
+            }
+        });
+        if request.is_some() {
+            self.pending_reveal = request;
+            cx.notify();
+        } else if matches!(
+            self.pending_reveal,
+            Some(TabReveal::FocusedTab(_) | TabReveal::FocusedClose(_))
+        ) {
+            self.pending_reveal = None;
+        }
+    }
+
+    fn reveal_pending_tab(&mut self, measured_visibility: (bool, bool), window: &Window) -> bool {
         let Some(request) = self.pending_reveal else {
             return false;
         };
@@ -219,13 +248,33 @@ impl TabbedToolbar {
                 self.scroll.set_offset(point(-maximum, px(0.)));
                 return true;
             }
-            TabReveal::Selected(id) => id,
+            TabReveal::Selected(id) | TabReveal::FocusedTab(id) | TabReveal::FocusedClose(id) => id,
         };
         let Some(index) = self.tabs.iter().position(|tab| tab.id == id) else {
             self.pending_reveal = None;
             return false;
         };
-        let Some(tab_bounds) = self.scroll.bounds_for_item(index) else {
+        let Some(tab) = self.tabs.get(index) else {
+            self.pending_reveal = None;
+            return false;
+        };
+        let focus_is_current = match request {
+            TabReveal::FocusedTab(_) => tab.focus.is_focused(window),
+            TabReveal::FocusedClose(_) => tab
+                .close_focus
+                .as_ref()
+                .is_some_and(|focus| focus.is_focused(window)),
+            _ => true,
+        };
+        if !focus_is_current {
+            self.pending_reveal = None;
+            return false;
+        }
+        let tab_bounds = match request {
+            TabReveal::FocusedClose(_) => tab.close_bounds.as_ref().and_then(|bounds| bounds.get()),
+            _ => self.scroll.bounds_for_item(index),
+        };
+        let Some(tab_bounds) = tab_bounds else {
             return false;
         };
         let offset = self.scroll.offset().x;
@@ -246,9 +295,23 @@ impl TabbedToolbar {
             }
             return true;
         }
-        // GPUI consumes a reveal before initializing a fresh viewport's geometry.
-        // Keep the stable tab ID until a later layout confirms it is visible.
-        self.scroll.scroll_to_item(index);
+        if matches!(request, TabReveal::FocusedClose(_)) {
+            // Revealing an oversized tab's leading edge leaves its close control
+            // clipped. Use that control's actual layout bounds instead.
+            let offset = if tab_bounds.size.width > viewport.size.width
+                || tab_bounds.left() + offset < viewport.left()
+            {
+                viewport.left() - tab_bounds.left()
+            } else {
+                viewport.right() - tab_bounds.right()
+            };
+            let offset = offset.clamp(-self.scroll.max_offset().x, px(0.));
+            self.scroll.set_offset(point(offset, px(0.)));
+        } else {
+            // GPUI consumes a reveal before initializing a fresh viewport's geometry.
+            // Keep the stable tab ID until a later layout confirms it is visible.
+            self.scroll.scroll_to_item(index);
+        }
         true
     }
 }
@@ -265,24 +328,27 @@ impl Render for TabbedToolbar {
             .h(px(36.))
             .w_full()
             .flex_none()
-            .on_key_down(cx.listener(|_, event: &gpui::KeyDownEvent, window, cx| {
-                let modifiers = event.keystroke.modifiers;
-                if event.keystroke.key == "tab"
-                    && !modifiers.control
-                    && !modifiers.alt
-                    && !modifiers.platform
-                    && !modifiers.function
-                {
-                    // GPUI registers tab stops but does not bind Tab to focus traversal.
-                    // Handle events from focused controls without changing shortcut routing.
-                    cx.stop_propagation();
-                    if modifiers.shift {
-                        window.focus_prev(cx);
-                    } else {
-                        window.focus_next(cx);
+            .on_key_down(
+                cx.listener(|toolbar, event: &gpui::KeyDownEvent, window, cx| {
+                    let modifiers = event.keystroke.modifiers;
+                    if event.keystroke.key == "tab"
+                        && !modifiers.control
+                        && !modifiers.alt
+                        && !modifiers.platform
+                        && !modifiers.function
+                    {
+                        // GPUI registers tab stops but does not bind Tab to focus traversal.
+                        // Handle events from focused controls without changing shortcut routing.
+                        cx.stop_propagation();
+                        if modifiers.shift {
+                            window.focus_prev(cx);
+                        } else {
+                            window.focus_next(cx);
+                        }
+                        toolbar.reveal_focused_control(window, cx);
                     }
-                }
-            }))
+                }),
+            )
             .child(div().flex_none().mr(px(5.)).child(self.title.clone()))
             .child(
                 h_flex()
@@ -344,12 +410,12 @@ impl Render for TabbedToolbar {
                                 // The viewport hook also runs when resize reuses this view.
                                 // Notify after the frame so its invalidation is not consumed
                                 // by the frame that measured the clamped scroll geometry.
-                                window.on_next_frame(move |_, cx| {
+                                window.on_next_frame(move |window, cx| {
                                     if let Some(toolbar) = toolbar.upgrade() {
                                         toolbar.update(cx, |toolbar, cx| {
                                             toolbar.scroll_update_scheduled.set(false);
-                                            let reveal_requested =
-                                                toolbar.reveal_pending_tab(measured_visibility);
+                                            let reveal_requested = toolbar
+                                                .reveal_pending_tab(measured_visibility, window);
                                             let offset = toolbar.scroll.offset().x;
                                             let left = -offset > px(0.01);
                                             let right =
@@ -418,6 +484,25 @@ impl Render for TabbedToolbar {
                                     .when_some(tab.closed.clone(), |this, closed| {
                                         this.child(
                                             div()
+                                                .on_children_prepainted({
+                                                    let close_bounds = tab.close_bounds.clone();
+                                                    let scroll = self.scroll.clone();
+                                                    move |bounds, _, _| {
+                                                        if let Some(close_bounds) = &close_bounds {
+                                                            let bounds = bounds
+                                                                .first()
+                                                                .copied()
+                                                                .map(|mut bounds| {
+                                                                    // Nested children are measured with the viewport's
+                                                                    // scroll applied; retain unscrolled coordinates.
+                                                                    bounds.origin.x -=
+                                                                        scroll.offset().x;
+                                                                    bounds
+                                                                });
+                                                            close_bounds.set(bounds);
+                                                        }
+                                                    }
+                                                })
                                                 .debug_selector(move || {
                                                     format!("tabbed-toolbar-close-{id}")
                                                 })
@@ -1277,5 +1362,232 @@ mod tests {
         assert_eq!(clicked.get(), 1);
         assert_eq!(closed.get(), 1);
         assert_eq!(selected.get(), 1);
+    }
+
+    fn assert_control_visible(selector: &'static str, cx: &mut VisualTestContext) {
+        let control = cx.debug_bounds(selector).expect("Focused control");
+        let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
+        assert!(control.left() >= viewport.left() - px(0.01));
+        assert!(control.right() <= viewport.right() + px(0.01));
+    }
+
+    fn focus_tab(toolbar: &Entity<TabbedToolbar>, index: usize, cx: &mut VisualTestContext) {
+        cx.update(|window, cx| {
+            let focus = toolbar.read(cx).tabs.get(index).expect("Tab").focus.clone();
+            focus.focus(window, cx);
+        });
+    }
+
+    #[gpui::test]
+    fn narrow_tab_traversal_reveals_focus_before_selection(cx: &mut TestAppContext) {
+        let (toolbar, cx) = toolbar(cx);
+        cx.simulate_resize(size(px(230.), px(100.)));
+        let selected = Rc::new(Cell::new(0));
+        toolbar.update(cx, |toolbar, cx| {
+            for (label, value) in [
+                ("A first tab that spans the entire toolbar viewport", 1),
+                ("Second", 2),
+            ] {
+                let selected = selected.clone();
+                toolbar.add_tab(label, cx, move |_, _| selected.set(value), None);
+            }
+            toolbar.set_active_tab(0, cx).expect("First tab");
+        });
+        settle_frames(cx);
+        focus_tab(&toolbar, 0, cx);
+        let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
+        let second = cx.debug_bounds("tabbed-toolbar-tab-1").expect("Second");
+        assert!(second.left() >= viewport.right(), "Second starts offscreen");
+        cx.simulate_keystrokes("tab");
+        settle_frames(cx);
+        cx.update(|window, cx| assert!(toolbar.read(cx).tabs[1].focus.is_focused(window)));
+        assert_control_visible("tabbed-toolbar-tab-1", cx);
+        assert_eq!(selected.get(), 0);
+        assert_eq!(
+            toolbar.read_with(cx, |toolbar, _| toolbar.active_tab),
+            Some(0)
+        );
+        assert_eq!(cx.update(|window, cx| window.simulate_next_frame(cx)), 0);
+        cx.simulate_keystrokes("shift-tab");
+        settle_frames(cx);
+        cx.update(|window, cx| assert!(toolbar.read(cx).tabs[0].focus.is_focused(window)));
+        let first = cx.debug_bounds("tabbed-toolbar-tab-0").expect("First");
+        let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
+        assert!((first.left() - viewport.left()).abs() <= px(0.01));
+        assert_eq!(selected.get(), 0);
+        assert_eq!(
+            toolbar.read_with(cx, |toolbar, _| toolbar.active_tab),
+            Some(0)
+        );
+        cx.simulate_keystrokes("tab");
+        settle_frames(cx);
+        cx.simulate_keystrokes("space");
+        cx.run_until_parked();
+        assert_eq!(selected.get(), 2);
+        assert_eq!(
+            toolbar.read_with(cx, |toolbar, _| toolbar.active_tab),
+            Some(1)
+        );
+    }
+
+    #[gpui::test]
+    fn oversized_tab_close_focus_reveals_the_control_without_callbacks(cx: &mut TestAppContext) {
+        let (toolbar, cx) = toolbar(cx);
+        cx.simulate_scale_factor_change(1.5);
+        cx.simulate_resize(size(px(230.), px(100.)));
+        let selected = Rc::new(Cell::new(0));
+        let closed = Rc::new(Cell::new(0));
+        toolbar.update(cx, |toolbar, cx| {
+            toolbar.add_tab(
+                "An oversized tab whose close control is beyond the viewport",
+                cx,
+                {
+                    let selected = selected.clone();
+                    move |_, _| selected.set(selected.get() + 1)
+                },
+                Some({
+                    let closed = closed.clone();
+                    Rc::new(move |_, _| closed.set(closed.get() + 1))
+                }),
+            );
+            toolbar.set_active_tab(0, cx).expect("First tab");
+        });
+        settle_frames(cx);
+        focus_tab(&toolbar, 0, cx);
+        let close = cx.debug_bounds("tabbed-toolbar-close-0").expect("Close");
+        let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
+        assert!(close.left() >= viewport.right(), "Close starts offscreen");
+        cx.simulate_keystrokes("tab");
+        settle_frames(cx);
+        cx.update(|window, cx| {
+            assert!(
+                toolbar.read(cx).tabs[0]
+                    .close_focus
+                    .as_ref()
+                    .expect("Close")
+                    .is_focused(window)
+            );
+        });
+        assert_control_visible("tabbed-toolbar-close-0", cx);
+        assert_eq!(selected.get(), 0);
+        assert_eq!(closed.get(), 0);
+        assert_eq!(
+            toolbar.read_with(cx, |toolbar, _| toolbar.active_tab),
+            Some(0)
+        );
+        assert_eq!(cx.update(|window, cx| window.simulate_next_frame(cx)), 0);
+        cx.simulate_keystrokes("shift-tab");
+        settle_frames(cx);
+        cx.update(|window, cx| assert!(toolbar.read(cx).tabs[0].focus.is_focused(window)));
+        let tab = cx.debug_bounds("tabbed-toolbar-tab-0").expect("Tab");
+        let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
+        assert!((tab.left() - viewport.left()).abs() <= px(0.01));
+        cx.simulate_keystrokes("tab");
+        settle_frames(cx);
+        assert_control_visible("tabbed-toolbar-close-0", cx);
+        cx.simulate_keystrokes("space");
+        cx.simulate_event(gpui::KeyUpEvent {
+            keystroke: gpui::Keystroke::parse("space").expect("Space key"),
+        });
+        cx.run_until_parked();
+        assert_eq!(closed.get(), 1);
+        assert_eq!(selected.get(), 0);
+    }
+
+    #[gpui::test]
+    fn pending_focus_reveal_ignores_departed_focus_and_rebuilt_tabs(cx: &mut TestAppContext) {
+        let (toolbar, cx) = toolbar(cx);
+        cx.simulate_resize(size(px(230.), px(100.)));
+        let selected = Rc::new(Cell::new(0));
+        toolbar.update(cx, |toolbar, cx| {
+            for label in [
+                "A first tab that spans the entire toolbar viewport",
+                "Second",
+            ] {
+                let selected = selected.clone();
+                toolbar.add_tab(
+                    label,
+                    cx,
+                    move |_, _| selected.set(selected.get() + 1),
+                    None,
+                );
+            }
+            toolbar.add_action(
+                Icon::from_path("icons/android-studio-add.svg"),
+                "Add",
+                cx,
+                |_, _| {},
+            );
+            toolbar.set_active_tab(0, cx).expect("First tab");
+        });
+        settle_frames(cx);
+        focus_tab(&toolbar, 0, cx);
+        let original_offset = toolbar.read_with(cx, |toolbar, _| toolbar.scroll.offset());
+        cx.simulate_keystrokes("tab");
+        cx.update(|window, cx| {
+            let focus = toolbar.read(cx).actions.first().expect("Add").focus.clone();
+            focus.focus(window, cx);
+        });
+        settle_frames(cx);
+        assert_eq!(
+            toolbar.read_with(cx, |toolbar, _| toolbar.scroll.offset()),
+            original_offset
+        );
+        assert_eq!(selected.get(), 0);
+        focus_tab(&toolbar, 0, cx);
+        cx.simulate_keystrokes("tab");
+        toolbar.update(cx, |toolbar, cx| {
+            toolbar.clear_tabs(cx);
+            let selected = selected.clone();
+            toolbar.add_tab("Replacement", cx, move |_, _| selected.set(99), None);
+        });
+        settle_frames(cx);
+        assert!(cx.debug_bounds("tabbed-toolbar-tab-1").is_none());
+        assert_control_visible("tabbed-toolbar-tab-2", cx);
+        assert_eq!(toolbar.read_with(cx, |toolbar, _| toolbar.active_tab), None);
+        assert_eq!(
+            toolbar.read_with(cx, |toolbar, _| toolbar.scroll.offset().x),
+            px(0.)
+        );
+        assert_eq!(selected.get(), 0);
+        assert_eq!(cx.update(|window, cx| window.simulate_next_frame(cx)), 0);
+    }
+
+    #[gpui::test]
+    fn manual_scroll_cancels_a_pending_keyboard_focus_reveal(cx: &mut TestAppContext) {
+        let (toolbar, cx) = toolbar(cx);
+        cx.simulate_resize(size(px(230.), px(100.)));
+        toolbar.update(cx, |toolbar, cx| {
+            for label in [
+                "A first tab that spans the entire toolbar viewport",
+                "Second",
+            ] {
+                toolbar.add_tab(label, cx, |_, _| {}, None);
+            }
+            toolbar.set_active_tab(0, cx).expect("First tab");
+        });
+        settle_frames(cx);
+        focus_tab(&toolbar, 0, cx);
+        cx.simulate_keystrokes("tab");
+        let viewport = cx.debug_bounds("tabbed-toolbar-tabs").expect("Viewport");
+        cx.simulate_event(gpui::ScrollWheelEvent {
+            position: viewport.center(),
+            delta: gpui::ScrollDelta::Pixels(point(px(-20.), px(0.))),
+            ..Default::default()
+        });
+        cx.run_until_parked();
+        let manual_offset = toolbar.read_with(cx, |toolbar, _| toolbar.scroll.offset());
+        assert!(manual_offset.x < px(0.));
+        settle_frames(cx);
+        assert_eq!(
+            toolbar.read_with(cx, |toolbar, _| toolbar.scroll.offset()),
+            manual_offset
+        );
+        cx.update(|window, cx| assert!(toolbar.read(cx).tabs[1].focus.is_focused(window)));
+        assert_eq!(
+            toolbar.read_with(cx, |toolbar, _| toolbar.active_tab),
+            Some(0)
+        );
+        assert_eq!(cx.update(|window, cx| window.simulate_next_frame(cx)), 0);
     }
 }
