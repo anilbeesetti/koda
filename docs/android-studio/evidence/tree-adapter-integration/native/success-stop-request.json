@@ -1,0 +1,7 @@
+{
+  "owned_launcher_pid": 258811,
+  "cwd": "/workspace/android-studio-integration",
+  "command": "bash .agents/skills/koda-app-validation/scripts/run-app.sh --headless /workspace/android-studio-artifacts/tree-native-0e15a3d/generation-project /workspace/android-studio-artifacts/tree-native-0e15a3d/generation-project/app/custom-manifest/AndroidManifest.xml ",
+  "signal": "SIGTERM",
+  "scope": "Verified exact owned official launcher; trap cleans its app and Xvfb children only"
+}

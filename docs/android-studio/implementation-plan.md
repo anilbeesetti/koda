@@ -267,3 +267,7 @@ Report after each completed phase: merged commits, matrix totals by port and run
 status, failing/blocked/unported tests, five review evidence, actual app checks,
 exceptions, deferred work and next dependencies. Never call an unfinished phase
 complete.
+
+## Verified project-tree adapter checkpoint
+
+The pure captured-input adapter passed all owner and lead gates at source `0e15a3d`; see [the lead report](tree-adapter-lead-report.md). Full workspace CI passed 10,450 tests with 23 pre-existing skips. The selected matrix stays 17 ported / 16 adapted / 59 unported; original generated-tree flows and Phase 1 remain incomplete. V2 artifact import and authoritative module presentation continue on isolated task branches.

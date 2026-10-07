@@ -1,0 +1,7 @@
+{
+  "attempted_window_id": 2097155,
+  "actual_discovered_window_id": 2097153,
+  "failure": "BadWindow",
+  "capture": "trusted-window.png is immediate blackframe, receives no flow credit",
+  "correction": "Discover current visible window ID, use windowfocus, repeat Return with fixture-only trust checkbox left unchecked."
+}

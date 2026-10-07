@@ -1,0 +1,27 @@
+{
+  "candidate": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "previous_ELF_retained": "/tmp/android-studio-link-output/koda-junit4-244335",
+  "previous_sha256": "f2f7bfab6bff00a0b0759ede8399e28f1d72a918bae9f0c470b7438e2d1dd0bd",
+  "aliases": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+      "symlink_target": "/tmp/android-studio-link-output/koda-junit4-244335",
+      "resolved": "/tmp/android-studio-link-output/koda-junit4-244335",
+      "action": "unlink generated alias only; previous whole ELF retained"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/koda",
+      "symlink_target": "/tmp/android-studio-link-output/koda-junit4-244335",
+      "resolved": "/tmp/android-studio-link-output/koda-junit4-244335",
+      "action": "unlink generated alias only; previous whole ELF retained"
+    },
+    {
+      "path": "/workspace/android-studio-integration/target/cloud-app/koda",
+      "symlink_target": "/tmp/android-studio-link-output/koda-junit4-244335",
+      "resolved": "/tmp/android-studio-link-output/koda-junit4-244335",
+      "action": "unlink generated alias only; previous whole ELF retained"
+    }
+  ],
+  "source_changes": false,
+  "temporary_restoration_possible_from_recorded_links": true
+}

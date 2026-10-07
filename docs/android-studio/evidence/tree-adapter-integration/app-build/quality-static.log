@@ -1,0 +1,32 @@
+# App-build harness: independent static quality review
+
+**Verdict: PASS for the external harness relocation. No remaining static findings.**
+
+Candidate: `android-studio-task/1-tree-adapter-integration` at `0e15a3d2b6eff51451b5f30d4c62ab0edde608ab`, in `/workspace/android-studio-integration`. Independently checked the expected branch and HEAD and an empty Git status. This review covers only the five prepared external files; it grants no product, runtime, application-build, or full-workspace completion credit.
+
+## Reviewed source identities
+
+| File | Current SHA-256 |
+| --- | --- |
+| `cc.rs` | `7081a4f8bfd70930a9402f4e4749fd4c807f9c9a60d855d14f71d17347124b83` |
+| `retry-app-build.py` | `d417525830ac45a3ebe66bfd41aaa637853260f03a1bbdc1b9d417d13ba86345` |
+| `guarded-app-build.py` | `1c635c66d34adef3d0334018afe160349dbaba7181961dbaf7d9c10bd89b6e59` |
+| `probe.rs` | `e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941` |
+| `preparation-scope.json` | `7beeadabc218c090d30c6dee8c14b672064aca56365f18fd71919443dafc4a1f` |
+
+Independently read the prior files and quality report in `/workspace/android-studio-artifacts/junit4-link`. Every prior and current SHA in `preparation-scope.json` matches the corresponding file. For each of the four executable source files, exact byte comparison succeeds after only substituting the external artifact/probe directory and `koda-junit4` with `koda-tree-adapter`. `probe.rs` remains exactly unchanged. The prior quality report's preserved preparation failure is historical; it has not been removed or converted into this PASS.
+
+## Static findings and checks
+
+- The helper still invokes the exact real compiler driver `/usr/bin/cc`. Redirection requires exactly one separate `-o` argument and an exact match to either `/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935` or the new owned probe output. Other invocations forward their entire `OsString` argument vector unchanged. A selected invocation changes only that output argument; input files and all other flags remain unchanged. The app receipt label and runner glob both use `koda-tree-adapter`.
+- `symlink_metadata` refuses any existing original output, including a dangling symlink, and any existing PID-specific redirected output. Receipts use `create_new`. A failed real link preserves a nonzero status and removes its owned incomplete output; helper I/O or publication failures also return nonzero. Successful linking requires a regular-file target before publishing the original output symlink.
+- The app command remains exactly `cargo build --locked -p zed --bin koda`. The retry runner verifies the supplied lowercase 40-hex commit against HEAD. It hashes all four crate roots, changes only their mtimes, verifies their bytes immediately afterward, and rechecks them after Cargo. A nonzero Cargo result is recorded and propagated before ELF-success assertions.
+- Successful-build assertions still require exactly one final-link receipt, one argv difference immediately after `-o`, a zero real-link status, original and Cargo top-level paths resolving to the redirected executable, and an ELF header. The executable's size and SHA are recorded only after those assertions. These are prepared checks, not evidence that a build has occurred.
+- The whole-source guard keeps the prior HEAD, index, worktree, and untracked-file checks and before/after hashes. Its `PATHS` value was independently parsed and compared exactly with the fixed exclusions: direct `docs/android-studio/*.md`, `reference-manifest.json`, `test-parity.json`, direct `ports/*.json`, and evidence `**/*.log` / `**/*.json`. Source, dependencies, fixtures, Cargo files, assets, PNG/SVG files, and nested port data receive no added exclusion. Both Python files parse successfully without being executed.
+- The outer runner passes through the child build result. Its post-build Git and byte guards run even when the child returns nonzero; a guard failure also exits unsuccessfully. Raw build output and exit records remain separate, and the scripts do not skip tests, change source, weaken compilation flags, or normalize raw logs.
+
+## Pending runtime evidence
+
+The current helper has not been compiled or executed by this reviewer. No probe, Cargo, Gradle, SDK, application, or cache-retirement action was performed. Actual forwarding receipts, standalone probe success, canonical-environment invocation, fresh candidate app build and identity, full-source before/after guards, and application validation remain pending gates for the lead. Earlier JUnit4 runtime receipts validate that earlier candidate only.
+
+The only reviewer write was this external report. No product/test/fixture edit, Git index or branch mutation, commit, cache change, or runtime lease use occurred. The reviewer remains available for an actual-evidence addendum.

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "exit_code": 0,
+  "elapsed_seconds": 28.862374465003086,
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

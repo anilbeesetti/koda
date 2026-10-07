@@ -21,7 +21,7 @@
             "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -38,8 +38,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-DefaultVariantsTest-oneVariant.log",
-              "sha256": "5b8d6314e83aa747400afc7789bdf022be4a8dc00b693807f3576b26142e2528"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-DefaultVariantsTest-oneVariant.log",
+              "sha256": "1f22384b1f7ae73f3640c739626f8950f374d45735c1a2b920ca352ae1e5d7ce"
             }
           }
         }
@@ -66,7 +66,7 @@
             "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -83,8 +83,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-DefaultVariantsTest-debugPreferred.log",
-              "sha256": "e914e90c3ae4c65f1be19e2293b89edf54edf3847aa81e1dabc2c3a99b3ecb86"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-DefaultVariantsTest-debugPreferred.log",
+              "sha256": "fc791df43adfe9734dba30dd5ef1890e51410ec9e02290730ff5fd8d5cda3df8"
             }
           }
         }
@@ -111,7 +111,7 @@
             "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -128,8 +128,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-DefaultVariantsTest-preferredBuildType.log",
-              "sha256": "cdb1f66ed8033c1b4410a4615c5197964c28e7006e903629800536fe64731b49"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-DefaultVariantsTest-preferredBuildType.log",
+              "sha256": "5ddce15e01b02691d068ddee86f3598651c516eecac41b12412437a05cb54032"
             }
           }
         }
@@ -156,7 +156,7 @@
             "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -173,8 +173,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-DefaultVariantsTest-preferredProductFlavorOverDebugBuildType.log",
-              "sha256": "d1e9ae00653463918881104f9b7b2de286d73aca2cbb15d8296207ce66d7354f"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-DefaultVariantsTest-preferredProductFlavorOverDebugBuildType.log",
+              "sha256": "eec53e0d9d5de20e7dc29e687868d938b305cb8623692dffd44c7a62a8629dc4"
             }
           }
         }
@@ -201,7 +201,7 @@
             "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -218,8 +218,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-DefaultVariantsTest-preferredFlavorsInTwoDimensions.log",
-              "sha256": "7348fe944c7492b43eba2a42690ef5b55c6e7d764248c78072b8e740957072ed"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-DefaultVariantsTest-preferredFlavorsInTwoDimensions.log",
+              "sha256": "c1ba7f0181fbf198fd52319290148c979969f93289c16137112d52d61cdbb02b"
             }
           }
         }
@@ -246,7 +246,7 @@
             "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -263,8 +263,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
-              "sha256": "5064d93726f6007b5112586cb86c9cce75acef494fc666378abecb208d533c17"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
+              "sha256": "fa2750e2b524f87a761734842cd68b69afab3b30412c92953ba5947c889d7bd7"
             }
           }
         }
@@ -291,7 +291,7 @@
             "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -308,8 +308,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-DefaultVariantsTest-mismatchedProductFlavourLength.log",
-              "sha256": "22964225e764fdd6dd2b24a44104dd8eafa50aba56babe67b6f9504232ea9c1f"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-DefaultVariantsTest-mismatchedProductFlavourLength.log",
+              "sha256": "7029f9f37ccd6b040e5aa97a7f6e1b7aa6318f281e75a052bdc128eb42f1fd60"
             }
           }
         }
@@ -336,7 +336,7 @@
             "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -353,8 +353,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-DefaultVariantsTest-onEmpty.log",
-              "sha256": "8eb15aa164bbcecd7962e75d069e2ec0a997cf79e58876cef9969f8b568a8d6e"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-DefaultVariantsTest-onEmpty.log",
+              "sha256": "754f5cc6c837e1eaaaa7baa6da1cc5495b66f3c3aa61e6008ddb603629f215fa"
             }
           }
         }
@@ -381,7 +381,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -399,8 +399,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-GradleModuleImportTest-testImportSimpleGradleProject.log",
-              "sha256": "65cf13337d618f2f71dc698099458b209a9f34b70be34d5c234baf5f137ae2e1"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-GradleModuleImportTest-testImportSimpleGradleProject.log",
+              "sha256": "267e68bc443a4ac95fbbf36091fad0e737456b9b61dca3e9bd8fb49c9f939a65"
             }
           }
         }
@@ -427,7 +427,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -445,8 +445,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-GradleModuleImportTest-testImportSubprojects.log",
-              "sha256": "72bcb3a04d33b61180d0bce8a1331089d329b25249d9026749bfc33553d30653"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-GradleModuleImportTest-testImportSubprojects.log",
+              "sha256": "c3fd81b38be5117959506ae7e0bb0a75b6d00026f4b00ab4a0f554749ddb1e46"
             }
           }
         }
@@ -473,7 +473,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -491,8 +491,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-GradleModuleImportTest-testImportSubProjectsWithMissingSubModule.log",
-              "sha256": "259aeed39797bf999d8b27fdd09231042b3906dcde983fe87b48db701dd550b0"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-GradleModuleImportTest-testImportSubProjectsWithMissingSubModule.log",
+              "sha256": "f42979b613370ea3f2591bbad8e039d2c96bd9f0d49e456d86b0a08412367eaf"
             }
           }
         }
@@ -519,7 +519,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -537,8 +537,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-GradleModuleImportTest-testImportSubProjectWithCustomLocation.log",
-              "sha256": "62c99e109dfb691f86453b6b144e9c43ed90b7da047f51f02c8ef0813aa86468"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-GradleModuleImportTest-testImportSubProjectWithCustomLocation.log",
+              "sha256": "5bbdd0ac1977ef06d82e0f98feb0dafa769c680ef31a71f2610e5bd651467db6"
             }
           }
         }
@@ -565,7 +565,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -583,8 +583,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-GradleModuleImportTest-testRequiredProjects.log",
-              "sha256": "ae717fc92550ea5ac71f5241ba97a8c1b038543e260c84965a574ba1a29a1ad9"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-GradleModuleImportTest-testRequiredProjects.log",
+              "sha256": "6bc50952c51853a3b410e6d6517d15e42e879b0023f0575d29e4de29a2140979"
             }
           }
         }
@@ -611,7 +611,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -629,7 +629,7 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-GradleModuleImportTest-testMissingRequiredProjects.log",
+              "path": "docs/android-studio/evidence/tree-adapter-integration-GradleModuleImportTest-testMissingRequiredProjects.log",
               "sha256": "c4e59fbc254f9e91d188a377b796ac2247c06307f0ee60be4c7f54a9a603dc9f"
             }
           }
@@ -657,7 +657,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -675,8 +675,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-GradleModuleImportTest-testMissingEnclosingProject.log",
-              "sha256": "b091608c0d80182deb3a9292411cf606dff9660dab2f911cc6142376765cfaf1"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-GradleModuleImportTest-testMissingEnclosingProject.log",
+              "sha256": "350c3074e94c8877ef7c27c644a0718f722a216450a4aae111614c3065cb86a0"
             }
           }
         }
@@ -703,7 +703,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -721,8 +721,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-GradleModuleImportTest-testTransitiveDependencies.log",
-              "sha256": "52fe29dcb83eae4110302bc124ae7dd841fd2a61d1926b1dff27e132b7c69bea"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-GradleModuleImportTest-testTransitiveDependencies.log",
+              "sha256": "43ac55bfad56b932ea6a6d1a10082c492da40a3831be40b98547f20f5d680ab8"
             }
           }
         }
@@ -749,7 +749,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -767,7 +767,7 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-GradleModuleImportTest-testCircularDependencies.log",
+              "path": "docs/android-studio/evidence/tree-adapter-integration-GradleModuleImportTest-testCircularDependencies.log",
               "sha256": "33e8479486fe0b191e3b7cd82821cd492dafc9fdc56d087608c24266498b4c71"
             }
           }
@@ -822,7 +822,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -840,8 +840,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsSelected.log",
-              "sha256": "1b573b169e3782cc7f52db31fe76e7ea5277ebb35afad32a8d09eceeb4d9e7cb"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsSelected.log",
+              "sha256": "514f437289450307a1ceb669e6365fe946718e5ea4f3f0ad49b589466ba97e69"
             }
           }
         }
@@ -868,7 +868,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -886,8 +886,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
-              "sha256": "88539b9145a8fd9de5be64aa1d27c369f5486f03bdd189db232f7215b59ca4d2"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
+              "sha256": "31447e908965470469aaf9fc70d996de944d1fb8af3b398f47993bc51669d735"
             }
           }
         }
@@ -932,7 +932,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -950,8 +950,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-AndroidProjectViewTest-testAndroidViewIsDefault.log",
-              "sha256": "d3623f7b8882478e1f943d580de767ae017ca8b91ce8eb7516c24122e7b123f9"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-AndroidProjectViewTest-testAndroidViewIsDefault.log",
+              "sha256": "451aca153de8a7afe67c8420b6750f9ef887eba8b50fb6bfd90c7fa84d8704f0"
             }
           }
         }
@@ -978,7 +978,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -996,8 +996,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
-              "sha256": "911cd93b68fe63bf84ed5a28bb9cee26ba2d9c622f28dfbe66e7a2ed1a5ae050"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
+              "sha256": "3abad8d8301c7404effd63d8b65e01ebbafc55893c46494b51569773e540175f"
             }
           }
         }
@@ -1024,7 +1024,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1042,8 +1042,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInNonAndroidProject.log",
-              "sha256": "3b8a7ed456d0877e01a92e34d85e77e899f0970dde747c6af00b0f4beb9352d4"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInNonAndroidProject.log",
+              "sha256": "802cbcf71761be4d4e44b5a4bf84995a0cc3c93db09385451584fdb63243b9e7"
             }
           }
         }
@@ -1070,7 +1070,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1088,7 +1088,7 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
+              "path": "docs/android-studio/evidence/tree-adapter-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
               "sha256": "ed4d484c694f0007337149bd0346ae5d08c3cce706041e055f2172dcba4553cd"
             }
           }
@@ -1116,7 +1116,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1134,8 +1134,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
-              "sha256": "daf1de6e8aa1a6571a3137f8df11fcf68e1c0b678472a1e69a7eae7f3f322e78"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
+              "sha256": "fb5644267e8971b0921674d21da3452e0a4ee2590cbba66bc0b282678baaddbf"
             }
           }
         }
@@ -1162,7 +1162,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1180,8 +1180,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
-              "sha256": "e15b188a968ba4c23dc132105ed574090b18c76a3339d97a745636c8660106e9"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
+              "sha256": "dfda6173f8b868922f70668dcd4e36f7893199d99c72eb0ca9d2fe74a0a117a9"
             }
           }
         }
@@ -1208,7 +1208,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1226,8 +1226,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-AndroidProjectViewTest-testAndroidViewIsDefaultMetrics.log",
-              "sha256": "a58f792e41655318d0d9993bd40965401a8ba6d67c1020729787ef0d23579a6d"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-AndroidProjectViewTest-testAndroidViewIsDefaultMetrics.log",
+              "sha256": "e74e1b10ff86808437440cc242142c346853f9e27b174c8cc3a5615684355bd2"
             }
           }
         }
@@ -1290,7 +1290,7 @@
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1307,8 +1307,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-TabbedToolbarTest-componentIsAddedElement.log",
-              "sha256": "8e13203f951a807c56bb665a162385a0afd503bf3d73dc7dee3952f6f159513f"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-TabbedToolbarTest-componentIsAddedElement.log",
+              "sha256": "d4ed5249578f3df4e2c30f7090fa59cc6d02b73962d3d567bd302f0db7759f4d"
             }
           }
         }
@@ -1335,7 +1335,7 @@
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1352,8 +1352,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-TabbedToolbarTest-tabIsAdded.log",
-              "sha256": "c13cda2938332e70202b12ab6b06128fe0caef7027975ea1999da05569b89713"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-TabbedToolbarTest-tabIsAdded.log",
+              "sha256": "2b16b989e16ed6a4d1678b13210db89b98b12e22a50861448091f2a81df68e70"
             }
           }
         }
@@ -1380,7 +1380,7 @@
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1397,8 +1397,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-TabbedToolbarTest-closedIsCalledWhenClicked.log",
-              "sha256": "eb4e460eafcf2da5f0e9f81e1a9fab8511ecaab9277fcb65fe05cd2527e7ac0c"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-TabbedToolbarTest-closedIsCalledWhenClicked.log",
+              "sha256": "518088e44f8f099d702e112489d111f5bc8e39e6bcfd2850810b101e595f765b"
             }
           }
         }
@@ -1425,7 +1425,7 @@
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1442,8 +1442,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-TabbedToolbarTest-noCloseButtonWhenNoListener.log",
-              "sha256": "081d19639a90beea9d0307af3f2130919f203ed99c50858e04b1004830926620"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-TabbedToolbarTest-noCloseButtonWhenNoListener.log",
+              "sha256": "e2fd8c1566e7a1d9e66ed47e911d9c881230161957fb1907550af3393db2545d"
             }
           }
         }
@@ -1470,7 +1470,7 @@
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1487,8 +1487,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-TabbedToolbarTest-iconButtonsCallbackWhenClicked.log",
-              "sha256": "4af3bf8253ad15cf547349b4f7155fba87a08a1b4b6ee66a750aed0ff96ea87f"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-TabbedToolbarTest-iconButtonsCallbackWhenClicked.log",
+              "sha256": "c1dadadb07d10d40fb0e25412326c505d2ccc29010ceed5a823b2623020ad071"
             }
           }
         }
@@ -1515,7 +1515,7 @@
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1532,8 +1532,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-TabbedToolbarTest-can select tab by index.log",
-              "sha256": "d574b961d75a9ad23544d7da09c64d67ef27e66b202130b7fcde5a1fb0efd1fd"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-TabbedToolbarTest-can select tab by index.log",
+              "sha256": "c9bb5f96a7208d3d27605e0cf52c6d3280ea8ebd7ced37abefbcd95b68e292fa"
             }
           }
         }
@@ -1560,7 +1560,7 @@
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
           "run": {
-            "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+            "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
             "command": [
               "cargo",
               "test",
@@ -1577,8 +1577,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/junit4-integration-TabbedToolbarTest-adding tab should not trigger select listener.log",
-              "sha256": "8478602482456ff89bbcfad107ca1b2c9963a4fa8895968ccfb16f166e6e5447"
+              "path": "docs/android-studio/evidence/tree-adapter-integration-TabbedToolbarTest-adding tab should not trigger select listener.log",
+              "sha256": "321731733c873e364bfc76002f6b28c6e24863eb34ebe1dafbeff686ffd7da8f"
             }
           }
         }

@@ -1,0 +1,11 @@
+{
+  "source": "/tmp/tree-input-adapter-build-output/previous-compose-preview.zip",
+  "retained_file": "/workspace/android-studio-artifacts/tree-adapter-integration/retained-cache/previous-compose-preview.zip",
+  "bytes": 289704452,
+  "sha256": "ac08fa033ccf6c659106355703725cdd8aa4ad69f2bf2059158918e35e9d14a9",
+  "raw_bytes_unchanged": true,
+  "original_path_preserved_as_symlink": true,
+  "generated_owned_cache_only": true,
+  "source_changes": false,
+  "reason": "Capacity for current-source fullapp while preserving previous archive and old currentapp ELF."
+}

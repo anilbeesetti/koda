@@ -1,0 +1,11 @@
+{
+  "actual_probe_compile_exit": 0,
+  "actual_probe_runtime_exit": 0,
+  "new_harness_assertion": "incorrect hardcoded output normal app link probe",
+  "observed_output": "real Rust linker probe passed\n",
+  "correct_unchanged_previous_output": "real Rust linker probe passed\n",
+  "problem": "Lead verification expectation did not match the unchanged source println literal or previous actual runtime proof.",
+  "correction": "Compare the exact retained original output bytes and retain all forwarding/source/assertion checks.",
+  "product_or_probe_source_changed": false,
+  "original_test_assertions_weakened": false
+}

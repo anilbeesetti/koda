@@ -1,0 +1,38 @@
+# App-build harness: runtime-probe evidence addendum
+
+**Verdict: PASS for the actual standalone linker probe. No remaining findings in this scope. The full application build remains pending.**
+
+Candidate remains `0e15a3d2b6eff51451b5f30d4c62ab0edde608ab` on `android-studio-task/1-tree-adapter-integration`; HEAD and empty Git status were independently rechecked. This addendum preserves the earlier static report, SHA-256 `126f0f7e94f7c19ab0e300cc698aa8b40b5143f7b0abb8df9a4589f7e496ec23`.
+
+## Independently verified evidence identities
+
+| Evidence | SHA-256 |
+| --- | --- |
+| `cc.rs` | `7081a4f8bfd70930a9402f4e4749fd4c807f9c9a60d855d14f71d17347124b83` |
+| `bin/cc` (4,708,872-byte ELF) | `7ac75674523cc1e52f422e627776fc61d3e903dacfbb452b30aaa047b522bd8e` |
+| `probe.rs` | `e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941` |
+| `probe-256152.json` | `c74b52309e6cc03e62310c06c9786dbe1e7f987cb650f25ce1c437fc55e9d255` |
+| `probe-validation.json` | `8a5d7d2ad04ba90199a79d3589829e26fb5f0e6eb4636a116605895368ffba16` |
+| `probe-validation-attempt1.json` | `fcade355a322375f9eb4fbc058809b0e9f0ed6f6ba58715145680a49d612d55f` |
+| `helper-build.log` (0 bytes) | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `probe-build.log` (0 bytes) | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| `probe-runtime.log` (30 bytes) | `09397da5e4ca42fcbaf16c84742601a70d34414c8b5322b8cb52bbfd7d1bbc2a` |
+| Actual probe ELF (4,506,752 bytes) | `0d3c3c19167e728efb66d9a495418cf73e2f6ff52d02a758509906dad6cdedd7` |
+
+The source/helper/probe executable hashes independently match `probe-validation.json`. The probe output is a symlink resolving exactly to `/tmp/android-studio-link-output/probe-256152`, a file with the ELF header and the recorded SHA and size. No executable was run by this reviewer.
+
+## Forwarding and runtime result
+
+The actual receipt names `/usr/bin/cc`, records real-link exit status 0, and binds the original output to `/workspace/android-studio-artifacts/tree-adapter-integration/app-build/probe-output`. Both argument arrays contain exactly 47 entries. Comparing every entry independently finds one difference only, at zero-based index 42 immediately after the single `-o`: the original output becomes `/tmp/android-studio-link-output/probe-256152`. All 46 remaining entries, including inputs, libraries, paths, and compiler/linker flags, remain byte-for-byte equal as represented by the receipt. The app-output forwarding path is not inferred from this probe; its actual final-app receipt is still required.
+
+The untouched `probe.rs` is byte-identical to the retained prior JUnit4 source. Its Rust `assert_eq!(19 + 23, 42)` remains intact. The actual raw runtime log is exactly `real Rust linker probe passed` followed by one newline, and is byte-identical to `/workspace/android-studio-artifacts/junit4-link/probe-runtime.log`. The two raw compiler logs are empty; empty logs alone do not establish successful exit status. The preserved first verification record separately states compile exit 0 and runtime exit 0, consistent with the successful receipt, resulting ELF, and actual runtime output.
+
+## Preserved verification failure
+
+`probe-validation-attempt1.json` retains a failed new verification expectation: it expected the unrelated literal `normal app link probe`, while the unchanged source and both prior/current runtime logs say `real Rust linker probe passed`. This was a verification error after successful compilation and execution, not a failing Rust assertion or compiler/runtime result. The corrected record compares the exact retained original bytes and retains the independent source, executable identity, real-CC, and one-output-only checks. The observed logs, receipt, and source were not rewritten to satisfy the mistaken expectation. No new probe run is claimed by this correction, and the historical failure remains explicit.
+
+## Scope limits
+
+The standalone probe validates the selected probe-output forwarding and execution. It does not establish current full-app build, application startup, UI behavior, workspace-test, guard-run, negative-path execution, reference-test, or exhaustive-parity success. Those pending gates remain unchanged.
+
+Only this external report was written. The reviewer performed read-only evidence/hash/argument/source checks and no Cargo, Gradle, Rust compiler, probe or application execution, cache operation, product/test/fixture change, Git mutation, or log normalization. Available for a full-app receipt and source-guard addendum.

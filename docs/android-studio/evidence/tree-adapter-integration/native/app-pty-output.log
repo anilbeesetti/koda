@@ -1,0 +1,3 @@
+Koda QA launcher PID: 258811
+2026-10-07T21:14:55+00:00 [1m[31mERROR[0m [[1mgpui_linux::linux::x11::client[0m] Found no xinput mouse pointers.
+2026-10-07T21:17:28+00:00 [1m[31mERROR[0m [[1mlanguage_core::grammar[0m] missing required capture(s) in Gradle indents TreeSitter query: indent

@@ -1,0 +1,26 @@
+   Compiling icons v0.1.0 (/workspace/android-studio-integration/crates/icons)
+   Compiling android_tools v0.1.0 (/workspace/android-studio-integration/crates/android_tools)
+   Compiling ui v0.1.0 (/workspace/android-studio-integration/crates/ui)
+   Compiling language_model v0.1.0 (/workspace/android-studio-integration/crates/language_model)
+   Compiling edit_prediction_types v0.1.0 (/workspace/android-studio-integration/crates/edit_prediction_types)
+   Compiling markdown v0.1.0 (/workspace/android-studio-integration/crates/markdown)
+   Compiling ui_input v0.1.0 (/workspace/android-studio-integration/crates/ui_input)
+   Compiling project v0.1.0 (/workspace/android-studio-integration/crates/project)
+   Compiling agent_settings v0.1.0 (/workspace/android-studio-integration/crates/agent_settings)
+   Compiling workspace v0.1.0 (/workspace/android-studio-integration/crates/workspace)
+   Compiling breadcrumbs v0.1.0 (/workspace/android-studio-integration/crates/breadcrumbs)
+   Compiling editor v0.1.0 (/workspace/android-studio-integration/crates/editor)
+   Compiling android_ui v0.1.0 (/workspace/android-studio-integration/crates/android_ui)
+    Finished `test` profile [unoptimized] target(s) in 1m 14s
+     Running unittests src/android_ui.rs (/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf)
+
+running 1 test
+test tabbed_toolbar::tests::component_is_added_element ... ok
+
+successes:
+
+successes:
+    tabbed_toolbar::tests::component_is_added_element
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 125 filtered out; finished in 0.06s
+
