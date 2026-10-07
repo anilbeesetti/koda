@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "task": "captured-module-display-policy",
+  "base": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "reference_sources": [
+    {
+      "family": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_path": "project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/GradleModuleSystem.kt",
+      "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/GradleModuleSystem.kt",
+      "sha256": "ebd25bd8d48a828b309615924c4eb315d92a128684bfb29115acaf22d056038c",
+      "bytes": 36961,
+      "path": "crates/android_tools/test_data/module_presentation/reference/idea/project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/GradleModuleSystem.kt"
+    },
+    {
+      "family": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_path": "project-system/src/com/android/tools/idea/projectsystem/AndroidModuleSystem.kt",
+      "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system/src/com/android/tools/idea/projectsystem/AndroidModuleSystem.kt",
+      "sha256": "9d6e88c13ae8cf46cd920c7ef96f773d033a60123e336e2ec28f39c7603ad4d4",
+      "bytes": 21957,
+      "path": "crates/android_tools/test_data/module_presentation/reference/idea/project-system/src/com/android/tools/idea/projectsystem/AndroidModuleSystem.kt"
+    },
+    {
+      "family": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_path": "android-navigator/src/com/android/tools/idea/navigator/nodes/AndroidViewModuleNode.java",
+      "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/android-navigator/src/com/android/tools/idea/navigator/nodes/AndroidViewModuleNode.java",
+      "sha256": "f1b28f0b2fb54b4c419af27521e674210c7a2ab213324f15648de67d9bd7eb99",
+      "bytes": 5797,
+      "path": "crates/android_tools/test_data/module_presentation/reference/idea/android-navigator/src/com/android/tools/idea/navigator/nodes/AndroidViewModuleNode.java"
+    },
+    {
+      "family": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_path": "android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidModuleNode.kt",
+      "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidModuleNode.kt",
+      "sha256": "0df6ce40e8d8a51b84d547cda3a459bb1be47e77fc1653f6c78ae76a7283f2cd",
+      "bytes": 5519,
+      "path": "crates/android_tools/test_data/module_presentation/reference/idea/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidModuleNode.kt"
+    },
+    {
+      "family": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_path": "project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/LinkedAndroidModuleGroupUtils.kt",
+      "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/LinkedAndroidModuleGroupUtils.kt",
+      "sha256": "de6d167144b3aef51b91f0db56f1b5499485168932ce29581a7d6ed62fb445dc",
+      "bytes": 5522,
+      "path": "crates/android_tools/test_data/module_presentation/reference/idea/project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/LinkedAndroidModuleGroupUtils.kt"
+    },
+    {
+      "family": "intellij-core",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "source_path": "plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "url": "https://github.com/JetBrains/intellij-community/blob/b75ab523e6adbe1d26112219729eacbcfd24daa0/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "sha256": "cc99f71aa146656368b5c62fc88746747ae19d3ecd5b87fea63ef17a6214c6eb",
+      "bytes": 61012,
+      "path": "crates/android_tools/test_data/module_presentation/reference/intellij-core/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java"
+    },
+    {
+      "source_path": "platform/util/src/com/intellij/openapi/util/text/StringUtil.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "url": "https://raw.githubusercontent.com/JetBrains/intellij-community/b75ab523e6adbe1d26112219729eacbcfd24daa0/platform/util/src/com/intellij/openapi/util/text/StringUtil.java",
+      "sha256": "d87821f7e79ae9f79daedf36dd22012d1034dc81317bc86ae5680fc6ea67eddf",
+      "bytes": 112743,
+      "family": "intellij-core",
+      "path": "crates/android_tools/test_data/module_presentation/reference/intellij-core/platform/util/src/com/intellij/openapi/util/text/StringUtil.java"
+    },
+    {
+      "source_path": "platform/util-rt/src/com/intellij/openapi/util/text/StringUtilRt.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "url": "https://raw.githubusercontent.com/JetBrains/intellij-community/b75ab523e6adbe1d26112219729eacbcfd24daa0/platform/util-rt/src/com/intellij/openapi/util/text/StringUtilRt.java",
+      "sha256": "31d691e0490b3425778d79812ce2332e23bf32bb94978e89b8f1969e64eeebda",
+      "bytes": 15431,
+      "family": "intellij-core",
+      "path": "crates/android_tools/test_data/module_presentation/reference/intellij-core/platform/util-rt/src/com/intellij/openapi/util/text/StringUtilRt.java"
+    }
+  ],
+  "supplemental_case_names": [
+    "non_gradle_uses_imported_name_and_separate_holder_and_sort_identities",
+    "uncaptured_external_identity_cannot_be_treated_as_non_gradle",
+    "root_project_retains_entire_reported_external_id",
+    "nonroot_project_uses_last_colon_component",
+    "nonroot_id_without_colon_is_already_short",
+    "two_null_reported_paths_compare_equal_like_reference",
+    "one_null_reported_path_does_not_make_a_root",
+    "reported_paths_are_not_filesystem_normalized",
+    "reported_path_comparison_is_case_sensitive",
+    "missing_project_id_uses_internal_name_for_root_and_nonroot",
+    "empty_project_id_remains_empty_for_root_and_nonroot",
+    "source_set_id_uses_final_suffix_even_when_paths_are_equal",
+    "source_set_id_without_colon_uses_imported_name",
+    "missing_source_set_id_uses_imported_name",
+    "source_set_trailing_colon_is_empty_not_fallback",
+    "nonroot_project_trailing_colon_is_empty_not_fallback",
+    "repeated_delimiters_preserve_the_last_component",
+    "reported_unicode_and_whitespace_are_not_reformatted",
+    "holder_lookup_fallback_can_capture_the_module_itself",
+    "long_captured_names_are_borrowed_without_reformatting"
+  ],
+  "canonical_original_test_credit": 0,
+  "original_ports": [],
+  "all_runtime_checks": "pending",
+  "all_five_reviews": "pending",
+  "complete_original_tree_behavior": false,
+  "phase_complete": false,
+  "ide_complete": false
+}
