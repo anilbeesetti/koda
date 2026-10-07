@@ -1,0 +1,23 @@
+{
+  "name": "actual-1MiB-package-512-methods",
+  "command": [
+    "/tmp/android-studio-junit4-declarations/xtask-68bfab0",
+    "android-junit4-declarations",
+    "--repository",
+    "/workspace/android-studio-junit4-declarations",
+    "--source-root",
+    "/workspace/android-studio-artifacts/reference-census-next-task/cli-metadata-stress/sources",
+    "--selection",
+    "/workspace/android-studio-artifacts/reference-census-next-task/cli-metadata-stress/selection.json",
+    "--output",
+    "/workspace/android-studio-artifacts/reference-census-next-task/cli-metadata-stress/rejected.json"
+  ],
+  "started_utc": "2026-10-07T18:42:21.540107+00:00",
+  "wall_seconds": 0.011581162994843908,
+  "exit_code": 1,
+  "peak_rss_kib": 21596,
+  "measurement": "Linux wait4 per-process rusage; executable invocation only, no compilation",
+  "log": "/workspace/android-studio-artifacts/reference-census-next-task/cli-actual-1MiB-package-512-methods.log",
+  "log_sha256": "542ef3c318ec1052064c0eb7145e29e4cc5b739c854a3fa4f90389b10662cbee",
+  "expected_exit": 1
+}

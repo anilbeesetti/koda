@@ -1,0 +1,13 @@
+**PASS — scoped static UX review for the new JUnit4 declaration task.**
+
+Reviewed module SHA-256: `dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed`.
+
+- CLI help and documentation distinguish bounded source declarations from runnable tests and exhaustive discovery.
+- External publication preserves existing output. `--check` compares deterministic bytes without updating evidence.
+- Errors reject changed provenance, unsupported selections and unsafe paths.
+- Output retains unresolved imports, aliases, inheritance, nesting, runners, ignored/abstract declarations and build membership. Runtime counts remain `null`; completeness stays false; canonical parity credit stays zero.
+- Separate AOSP/JetBrains identities, pinned revisions, paths, file hashes and declaration spans support auditability. All 16 fixtures, totaling 100,711 bytes, match selection provenance.
+
+Reporting follow-up: update stale documentation saying tests remain unexecuted. The retained first Cargo run **failed: 107 passed, 1 failed**, with the incorrect new superclass expectation awaiting escalation.
+
+This verdict covers workflow design only. CLI execution, passing runtime checks, remaining reviews and lead validation remain separate gates. No edits, Cargo commands, cache changes or new CLI invocations occurred.

@@ -1,0 +1,25 @@
+# JUnit4 declaration quality review: runtime evidence addendum
+
+**PASS — independent, scoped evidence/documentation sanity check. No blocking findings or new source corrections.**
+
+Exact module SHA-256 remains `68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f`.
+Source commit: `9ff731ef9c7ee4ab97df0080fe5efff945b8502a`.
+
+Reviewed metadata snapshot:
+
+- Task documentation SHA-256: `56abdee9d741b6b76b09ca3286b42506e35294d8d78e154f244a5a17de9d73cc`.
+- Portable report `docs/android-studio/ports/junit4-declarations.json` SHA-256: `5cd492a37da3fecae2481be11f0b71968e73dff700d1e60c4d518185548a2868`.
+- Evidence manifest SHA-256: `4c17e836917de4ad6aac11d0b9a0ed6d61dea3aa913c98167a1cc24fc8045902`.
+
+Concrete checks:
+
+- The retained normal locked release test receipt exits 0, and its raw log reports **114 passed, 0 failed, 0 ignored, 0 measured, 0 filtered**. All 114 individual passing test names are present, including all 108 names from the prior corrected run and 40 current declaration component tests. Required `./script/clippy --locked -p xtask` exits 0; its trace confirms release/all-targets/all-features/deny-warnings. Full workspace `cargo fmt --all -- --check` and the normal locked release CLI build also have exit-0 receipts.
+- The eight actual CLI records match their individual receipts, expected exit codes, and raw log hashes. The frozen CLI independently matches **77,379,264 bytes** and SHA-256 `0f7ced36c8eccbc11b6bc4e64850b87b6d6cac9d3a54ce75e6aac5c4f854232f`. Both frozen executable hashes match the freeze records.
+- The original output independently matches **301,972 bytes**, SHA-256 `81df6c8d6eb0d167d89410f898d7de8d9279ee175fbd637a1ca68bb2dc0ed88f`, **16 selected files, 111 method candidates, and 71 direct source annotation declarations**. All per-method runtime counts are null and applicability is unreviewed; output completeness/archive-reverification flags are false and parity credit is zero.
+- The retained validation script checks changed evidence, provenance refusal, no replacement, output preservation, and no staging residue. Its actual 1 MiB package/512-method input matches the retained synthetic file. The rejection receipt reports **0.011581162994843908 seconds and 21,596 KiB per-process wait4 peak RSS**, including child launch. Rejected outputs and staging files are absent; the original output still has its recorded hash. Documentation correctly limits this measurement to one synthetic failure shape and makes no corpus-wide or process-memory-ceiling claim.
+- All **70 portable history/evidence copies** match both their manifest byte lengths/SHA-256 values and retained external originals exactly, including extension-mapped reports/scripts. The directory contains exactly those copies plus the manifest. Current review hashes and source hashes in the portable report match their retained reports. Previous failures, wrong-test reasons, escalations and earlier review verdicts remain preserved.
+- Independently recomputed the fixed-exclusion source closure: **4,544 files**, digest `b716e9b33b56c6a5a4a210f33448b1811fa7e6790575dfea2f65f37f3c72fefb`. Every current source-file byte hash/length matches the before-validation guard and each corresponding Git blob in the stated source commit. Before/build/CLI source and index guards match; the commit advances HEAD/index while preserving source bytes. Canonical manifest, ledger, parity/census reports, discovery module, workspace/xtask manifests and lockfile remain byte-identical to the base.
+
+The updated documentation and portable report accurately distinguish this validated checkpoint from pending lead combined full-app/full-workspace validation. They do not claim exhaustive discovery, runnable-test counts, behavioral parity, merger, phase completion or IDE completion.
+
+This addendum inspected retained executions and independently checked hashes/bytes; it did **not** rerun Cargo, rustc, Clippy, builds, tests or the CLI. No source/cache mutation or commit occurred. The original static quality report remains unchanged and retains its historical validation limits. This is an evidence sanity PASS, not a combined app/workspace or exhaustive-completion verdict.

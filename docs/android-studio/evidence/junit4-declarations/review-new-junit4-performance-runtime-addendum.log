@@ -1,0 +1,40 @@
+**PASS — scoped review of retained actual CLI performance evidence; no remaining performance finding in this scope.**
+
+This addendum reviews module SHA-256 `68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f` and source commit `9ff731ef9c7ee4ab97df0080fe5efff945b8502a`. The working module, committed module, recorded source guards and CLI summary agree. Review operations only read existing source, binaries and artifacts; no Cargo, rustc, build, executable invocation, benchmark, cache mutation or source edit was performed.
+
+### Executable and source binding
+
+The normal locked release build log records successful compilation of `tooling/xtask/src/main.rs` from this worktree, an optimized non-test xtask artifact, and Cargo `fresh: false` (recompiled, rather than reused). The frozen CLI is `/tmp/android-studio-junit4-declarations/xtask-68bfab0`, 77,379,264 bytes, SHA-256 `0f7ced36c8eccbc11b6bc4e64850b87b6d6cac9d3a54ce75e6aac5c4f854232f`. Its current bytes, summary hash and pre-invocation freeze record match. Its generated and frozen paths still share device/inode. The frozen test executable hash `96a6783ad0b63be984b067b5d309779f12d2dfc6bc0befa8b38ab98a12325a0c` and same-inode binding also verify.
+
+All eight summary command records equal their individual measurement receipts, invoke this frozen CLI, have expected exit codes, and match their retained log hashes. The before-validation, after-build and after-CLI guards have equal source-file and source-index digests. The after-source-commit guard preserves the same 4,544-file source digest `b716e9b33b56c6a5a4a210f33448b1811fa7e6790575dfea2f65f37f3c72fefb`; its HEAD/index transition records the source commit without changing source bytes. Source-root hashes also match the recorded byte-identical freshness preparation.
+
+### Actual measured shape and result
+
+The external synthetic Java file is exactly the source constructed by `cli-validation.py`: a 1,048,576-byte ASCII package identifier, one `Suite` class and 512 distinct `@Test void testN() {}` methods. Total file size is 1,060,803 bytes. Source SHA-256 is `d33351df826fac2cc013579afcb82b280d3fbd4c655637234dcb982751c91cbe`; the one-file synthetic selection binds its byte count, source hash and path. Selection SHA-256 is `c83bfdd9567a1c90239cf4dcbffd87b90078a609a07c059442c673bd32aae255`. The selection explicitly limits itself to synthetic stress validation and carries no upstream-fixture or parity credit.
+
+| Retained CLI flow | Wall time | Peak RSS | Exit |
+| --- | ---: | ---: | ---: |
+| Original 16-file generation | 5.539 ms | 11,520 KiB | 0 |
+| Original byte-identical check | 9.296 ms | 12,672 KiB | 0 |
+| Actual 1 MiB package / 512 methods | 11.581 ms | 21,596 KiB | 1, expected |
+| Same stress shape checking existing evidence | 11.660 ms | 21,596 KiB | 1, expected |
+
+Both stress logs contain `selected declaration metadata budget exhausted; declaration evidence unresolved and not published`. The runner uses monotonic elapsed time around invocation/log handling and `os.wait4(process.pid, 0)` for that child's resource usage, rather than the cumulative `RUSAGE_CHILDREN` maximum used by other receipts. These figures exclude compilation but include launch/fork/exec overhead; they do not isolate scanner CPU time, heap allocations or incremental Rust-only memory. The retained stress observation is below the runner's 128 MiB RSS check.
+
+This is evidence for one retained synthetic input shape through two failure flows. There are no repeated-run distributions, cold-cache controls, corpus-wide RSS measurements or measured pre-correction comparison. The former roughly 513 MiB owner-amplification figure remains a static estimate, not a measured baseline or speedup claim. The 16 MiB aggregate metadata string charge and separate 16 MiB serialized-output limit are logical bounds; neither is a claim that total process RSS stays below 16 MiB. Raw input, token/structure collections, container/allocator overhead and process runtime have separate costs.
+
+### Correction and publication behavior
+
+Inspection confirms that metadata lengths are charged with checked arithmetic before owned copies or qualified-owner construction, and one budget is passed across the whole selection. Each method-owner copy consumes that budget. The expanded class-header span is checked before annotation copies, owner construction and header allocation. The bounded JSON writer rejects an excessive write before requesting capacity or extending the buffer and accounts for the trailing newline. Generation propagates these errors before publication staging.
+
+The rejected synthetic output and invalid-provenance output are absent. No publication staging remains in either output parent. The existing 301,972-byte declaration output still has SHA-256 `81df6c8d6eb0d167d89410f898d7de8d9279ee175fbd637a1ca68bb2dc0ed88f`. The runner asserts byte preservation after normal checking, replacement refusal and stress checking. The retained deliberately changed file is exactly the original bytes plus its known suffix and is rejected by checking. These observations support the bounded failure and preservation behavior for the recorded flows.
+
+### Gate context, history and limits
+
+The retained normal, unfiltered xtask log records **114 passed, zero failed, zero ignored and zero filtered out**, including the appended budget/serialization/publication regression groups. Strict `./script/clippy --locked -p xtask` records release/all-targets/all-features/deny-warnings success. The formatting-check and normal locked release CLI-build receipts have exit zero. These are existing scoped validation results, not tests rerun by this reviewer. The historical `RUSAGE_CHILDREN` maximum in the formatting receipt is **not used as a formatting-memory measurement**, and compilation/formatting receipts supply no CLI RSS estimate.
+
+The history remains **three owner fix rounds, two escalated lead test/helper corrections and one separately approved lead production correction**. The performance round-one FAIL, corrective design, design review and static performance round-two PASS remain intact; this addendum does not reset rounds or overwrite their time-specific statements. No new finding requires another correction or escalation.
+
+Full-app validation, full-workspace test completion, exhaustive declaration/census completion and behavioral parity completion are outside this verdict. The retained output keeps census and declaration coverage false, runtime-case counts null, method applicability unreviewed, archive membership not reverified and new behavioral parity credit zero.
+
+Evidence reviewed: `cli-validation-summary.json`; all eight CLI measurement receipts/logs; `cli-validation.py`; `cli-metadata-stress/selection.json` and its source; `frozen-current-executables.json`; current freshness proof; four source guards; retained normal test/build/Clippy/fmt logs and receipts; current source; correction proof, design and review history. Existing reports were preserved.

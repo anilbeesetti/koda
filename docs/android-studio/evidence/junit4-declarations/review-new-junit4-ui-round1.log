@@ -1,0 +1,12 @@
+**PASS — independent scoped output/UI review.** No blocking findings in module SHA-256 `dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed`.
+
+- CLI help identifies an explicit, bounded source selection. Success output explicitly states that the effective test census remains incomplete.
+- JSON records both completeness flags as `false`, effective runtime counts as `null`, applicability as `unreviewed`, and new behavioral parity credit as `0`. Confirmed declarations are explicitly described as source annotation declarations.
+- Ignored and abstract declarations, custom runners, unsupported bindings, inheritance, parameters, build membership, and declarations outside the selection remain visible as unresolved.
+- AOSP and JetBrains identities remain separate. Original paths, pinned revisions, full-file hashes, byte counts, source spans, lines, annotation facts, and signature hashes provide auditable provenance.
+- `selected_archive_membership_reverified: false` and accompanying explanations clearly distinguish source hash verification from archive capture authentication.
+- Documentation and fixture notices explicitly exclude behavioral parity credit. No product UI code changed.
+
+Independently verified all **16 original fixtures / 100,711 bytes** against selection hashes and lengths. Selection SHA-256: `e87a079f5564a47cb975b5d065ca3a77b5b26eeb949ac249f782ad07371db523`. Existing discovery source, reference manifest, and canonical ledger remain byte-identical to base `7b2bd3e7ffc07156c7193baf156c5041bef256c1`.
+
+This review was read-only. No commands were executed against the new CLI, no Cargo/cache/native work occurred, and no files were edited. Runtime checks, remaining reviews, and lead app/workspace validation are separate gates. Prior SDK review findings and verdict are unrelated to this task.

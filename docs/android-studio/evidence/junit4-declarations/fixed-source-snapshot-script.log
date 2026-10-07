@@ -1,0 +1,33 @@
+import datetime,hashlib,json,os,subprocess,sys
+from pathlib import Path,PurePosixPath
+root=Path("/workspace/android-studio-junit4-declarations")
+
+def digest_bytes(data):return hashlib.sha256(data).hexdigest()
+def permitted_metadata(path):
+    p=PurePosixPath(path)
+    if p.parent==PurePosixPath("docs/android-studio") and (p.suffix==".md" or p.name in ("reference-manifest.json","test-parity.json")):return True
+    if p.parent==PurePosixPath("docs/android-studio/ports") and p.suffix==".json":return True
+    if PurePosixPath("docs/android-studio/evidence") in p.parents and p.suffix in (".json",".log"):return True
+    return False
+paths=set()
+for command in [["git","ls-files","-z"],["git","ls-files","--others","--exclude-standard","-z"]]:
+    paths.update(os.fsdecode(value) for value in subprocess.check_output(command,cwd=root).split(b"\0") if value)
+files=[]
+for name in sorted(paths):
+    if permitted_metadata(name):continue
+    path=root/name
+    if path.is_symlink():data=os.fsencode(os.readlink(path));kind="symlink"
+    else:data=path.read_bytes();kind="file"
+    files.append({"path":name,"kind":kind,"bytes":len(data),"sha256":digest_bytes(data)})
+index=[]
+for record in subprocess.check_output(["git","ls-files","-s","-z"],cwd=root).split(b"\0"):
+    if not record:continue
+    header,name=record.split(b"\t",1)
+    if not permitted_metadata(os.fsdecode(name)):index.append(os.fsdecode(record))
+record={"observed_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),"repository":str(root),"head_commit":subprocess.check_output(["git","rev-parse","HEAD"],cwd=root,text=True).strip(),"fixed_metadata_exclusions":"directdocsmd/referencemanifest/testparity/directportsjson/evidencejsonlogONLY","source_files":files,"source_index":index,"source_files_digest":digest_bytes(json.dumps(files,sort_keys=True,separators=(",",":")).encode()),"source_index_digest":digest_bytes(json.dumps(index,separators=(",",":")).encode())}
+output=Path(sys.argv[1]);output.write_text(json.dumps(record,indent=2)+"\n")
+if len(sys.argv)>2:
+    before=json.loads(Path(sys.argv[2]).read_text())
+    for key in ("head_commit","source_files_digest","source_index_digest"):
+        assert before[key]==record[key],"Source guard changed: "+key
+print(json.dumps({key:value for key,value in record.items() if key not in ("source_files","source_index")},indent=2))

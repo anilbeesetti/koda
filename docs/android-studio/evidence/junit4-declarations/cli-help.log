@@ -1,0 +1,14 @@
+Record bounded, hash-bound source JUnit4 annotation declarations
+
+Usage: xtask-68bfab0 android-junit4-declarations [OPTIONS] --source-root <SOURCE_ROOT> --selection <SELECTION> --output <OUTPUT>
+
+Options:
+      --repository <REPOSITORY>    [default: .]
+      --source-root <SOURCE_ROOT>  Directory containing the selected original sources, with
+                                   source-id/path layout
+      --selection <SELECTION>      Explicit, hash-bound source selection. This is not exhaustive
+                                   reference discovery
+      --output <OUTPUT>            External evidence file to create. Existing output is never
+                                   overwritten
+      --check                      Require byte-identical existing evidence; never update it
+  -h, --help                       Print help

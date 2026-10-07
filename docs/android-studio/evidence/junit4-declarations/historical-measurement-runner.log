@@ -1,0 +1,12 @@
+import datetime,json,resource,subprocess,sys,time
+from pathlib import Path
+log=Path(sys.argv[1]); measurement=Path(sys.argv[2]); command=sys.argv[3:]
+start=datetime.datetime.now(datetime.timezone.utc).isoformat(); before=time.monotonic()
+with log.open('wb') as output:
+ result=subprocess.run(command,stdout=output,stderr=subprocess.STDOUT,check=False)
+usage=resource.getrusage(resource.RUSAGE_CHILDREN)
+record={'command':command,'started_utc':start,'wall_seconds':time.monotonic()-before,'exit_code':result.returncode,'peak_child_rss_kib':usage.ru_maxrss,'measurement':'Linux RUSAGE_CHILDREN maxrss and monotonic wall time; full command including compilation for Cargo invocations','log':str(log)}
+measurement.write_text(json.dumps(record,indent=2)+'\n')
+print(json.dumps(record),flush=True)
+print(log.read_text(errors='replace')[-12000:],flush=True)
+sys.exit(result.returncode)
