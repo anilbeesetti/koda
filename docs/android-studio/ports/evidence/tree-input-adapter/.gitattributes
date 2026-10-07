@@ -1,0 +1,2 @@
+# Preserve byte-exact captured verification output, including trailing blank lines.
+*.log -whitespace

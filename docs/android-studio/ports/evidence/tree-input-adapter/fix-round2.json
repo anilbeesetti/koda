@@ -1,0 +1,8 @@
+{
+  "fix_rounds": 2,
+  "quality_finding": "Unused std::path::Path import in new adapter tests.",
+  "source_change": "Remove only unused import; no production code or assertions changed.",
+  "production_sha256": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+  "test_sha256": "98453f194d39b1d7129f35732c76f0718c5b5f072d5904d6004442b942efd047",
+  "runtime_checks": "not run; Cargo lease pending"
+}

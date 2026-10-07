@@ -1,0 +1,7 @@
+{
+  "heads": "ac58815bb268d338bea40a31fff630734cd719f4 refs/heads/android-studio\n",
+  "owned_untracked": "crates/android_tools/src/project_tree_adapter.rs\ncrates/android_tools/test_data/project_tree_adapter/README.md\ncrates/android_tools/test_data/project_tree_adapter/provenance.json\ncrates/android_tools/test_data/project_tree_adapter/sdk-generation-model.json\ncrates/android_tools/tests/project_tree_adapter.rs\ndocs/android-studio/tree-input-adapter-plan.md\n",
+  "original_guard_count": 97,
+  "runner_sha256": "fd0983bdc2049bd7e5de95109cfacf62baab480f841d0b6882f5b8ff28192529",
+  "build_failure_log_sha256": "69b6266154bb1d75be9f140d6c7b2a93315a66cc946e31b99700cc8fc43c21a7"
+}

@@ -1,0 +1,5 @@
+{
+  "crates/android_tools/src/android_tools.rs": "f4b033f8aa13b8141f706a1f24455c1d5500940ef5e4adffa46edd8baf1f2891",
+  "crates/android_tools/src/project_tree_adapter.rs": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+  "crates/android_tools/tests/project_tree_adapter.rs": "1fa2f0e7eedf5bf6cf2cbdbdcd5a1df8604325956cf6bfce78a9626872f6f69d"
+}

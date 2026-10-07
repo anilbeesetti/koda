@@ -1,0 +1,24 @@
+# Tree input adapter: independent affected UI-contract review, round 2
+
+Verdict: **PASS for the supported pure adapter UI contract**. No outstanding finding in this scope. This does not constitute a native UI pass or feature completion.
+
+Reviewed `/workspace/android-studio-tree-input-adapter` against the retained Apache-attributed AOSP `tools/adt/idea` sources at `a84efec3ba9542d9bfa1255103f0dc94833a3796` (`studio-2026.2.1`). All three files in `review-source-round2.json` and all **97** protected existing inputs in `immutable-inputs-before.json` independently match their SHA-256 hashes. Adapter SHA-256: `d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b`; supplemental test SHA-256: `1fa2f0e7eedf5bf6cf2cbdbdcd5a1df8604325956cf6bfce78a9626872f6f69d`. The round 1 FAIL remains intact at `ui-review-round1.md`, SHA-256 `deab28b27860d60778dfc4146d6e857cbddddc4a4d68752a19790dbb8c74abbd`.
+
+## Round 1 finding resolved
+
+The adapter now preserves Java/Kotlin intersection occurrences as KotlinAndJava during collection (`crates/android_tools/src/project_tree_adapter.rs:248-253`). It applies original built-in exact-root precedence before consulting Kotlin capability or moving surviving common roots to Java (`:309-346`). This matches pinned `AndroidViewNodeDefaultProvider.kt:169-188,198-202`. A Kotlin-only root in one provider therefore defeats a common root in another provider before the Disabled move; an already-shadowed common root also no longer requires an Unknown capability to be guessed. The supplemental regressions at `crates/android_tools/tests/project_tree_adapter.rs:1110-1152` cover both collisions and the Enabled/Disabled/Unknown distinctions. Existing same-provider expectations still require explicit capability for a surviving common root.
+
+Stable sorting at `project_tree_adapter.rs:355-357` restores **final built-in source-group order** after a Disabled common root becomes Java, preserving this producer's root encounters within each group. This is distinct from **source-provider-sorted visible folder order**, which remains pending in the projection and does not receive a pass from that sort.
+
+## Supported presentation and navigation contracts checked
+
+- Supported source labels, order and generated annotations continue to delegate to `SourceGroup` and facts-aware projection (`project_tree.rs:37-68,524-542`). They match pinned manifest-group and source-type labels, including `manifests`, `kotlin+java`, `res`, and ` (generated)`. Unsupported AIDL, RenderScript and JNI-library roots retain their built-in shadow priority without acquiring supported rendered groups (`project_tree_adapter.rs:292-327`; pinned `AndroidSourceType.kt:163-183`).
+- Physical Java filenames remain the fallback when captured bytes are absent, parsing is unsupported, declaration names duplicate or the parsing budget is exhausted. Successful class targets preserve the physical file and verified UTF-8 declaration byte offset (`project_tree_adapter.rs:519-599`; `project_tree.rs:683-738`; supplemental tests `:553-631`). Supplied non-Java bytes and stale Java revisions are rejected rather than used as navigation facts.
+- Resource presentation still uses exact resource-root provider membership, physical filenames and individual physical navigation targets (`project_tree.rs:876-1014`; supplemental tests `:813-887`). Multi-qualified resource groups retain their children; choosing a best qualified resource remains explicitly deferred. Special-file navigation does not fabricate filesystem entry identifiers.
+- Ready module presentation now requires actual Directory evidence. Unknown, Missing and File produce distinct typed unavailable outcomes; external generated descendants cannot establish the module directory (`project_tree_adapter.rs:463-511`; supplemental tests `:1154-1219`). Authoritative module display identity remains required and is not guessed from a basename.
+
+## Scope and checks
+
+This read-only source review ran **no Cargo, tests, compiler, GUI or Git mutation**. Only this external report was written. Independent test execution, formatting, Clippy, full-app checks and lead workspace gates remain the owner's responsibility. No screenshot, icon, resizing, scrolling or focus behavior was exercised.
+
+Provider-sorted visible folders (including the `AndroidSourceTypeNodeTest` contract), generated light-class root filtering, authoritative host presentation/capture, background scan completeness, stale publication and project-panel rendering remain subsequent requirements. ProducerIterator provenance does not assert upstream HashMultimap encounter order. All five original tree methods and ten original assertions remain **unported/not_run**; the 27 supplemental adapter tests grant **zero canonical reference-test parity credit**. The retained round 1 source restoration hashes match their original frozen production/test hashes.

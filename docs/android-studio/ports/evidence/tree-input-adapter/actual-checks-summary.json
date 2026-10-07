@@ -1,0 +1,55 @@
+{
+  "status": "scoped_actual_checks_pass_final_affected_reviews_pending",
+  "guard97_pass": true,
+  "index_unchanged_since_before_checks": true,
+  "head": "ac58815bb268d338bea40a31fff630734cd719f4",
+  "branch": "android-studio-task/1-tree-input-adapter",
+  "source_fix_rounds": 3,
+  "actual_total_tests": 201,
+  "actual_new_tests": 27,
+  "checks": {
+    "all-features-tests-retry2": {
+      "receipt_sha256": "1196ab53ab163f1fcc1456ff150e7ea2a95e11e4aacaaffe232ef4a3ad9efb42",
+      "log_sha256": "2d7354a883b7383d13c02a966b974cc9168f2e8492ed0a319d3570cdd854302b",
+      "wall_seconds": 6.0132512009950005,
+      "passed": true
+    },
+    "strict-clippy": {
+      "receipt_sha256": "30fcff03e550000057cfc6c1e9ecce24ab2e504403d343e2b5cb5d162a58a336",
+      "log_sha256": "87398404a7358c62c0b5eb854f7eded8408e098a056133592de17e60a8b16591",
+      "wall_seconds": 62.95037840199802,
+      "passed": true
+    },
+    "format-check-final": {
+      "receipt_sha256": "e4777785853b19daea6317f9ef73e48dbe4dfc09477a3bae3aa6a5ff2e50998b",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "wall_seconds": 28.446880647999933,
+      "passed": true
+    },
+    "library-build": {
+      "receipt_sha256": "e8d0d29069c1ee838c383cdb970f1278d62de10294834d47a24659d79986857e",
+      "log_sha256": "89cb259e216d17dda7aaafcdf1cd1cba2a051fa14832d746c8bd29d717d66c5f",
+      "wall_seconds": 0.7295535640005255,
+      "passed": true
+    },
+    "stress-20000-per-pid": {
+      "receipt_sha256": "63f5689142ac01442cbb961f82212c1f8c5e26d8218b74ed0829b32e32d01399",
+      "log_sha256": "18cb1a121724f4e10339e7269c7c3d70283de00dea6b7bf14f8cf5fae14fcd75",
+      "wall_seconds": 0.5486718479951378,
+      "passed": true
+    },
+    "stress-java-budget-per-pid": {
+      "receipt_sha256": "d57db9750bad9fa3a74e5216d9bcd48fcd774bc5ca13a906dda144ebfee4e07c",
+      "log_sha256": "2522c0b7661872dc404085ed0c2724cae0fb0f510ad8de19109001552b745539",
+      "wall_seconds": 0.14549388600426028,
+      "passed": true
+    }
+  },
+  "all_nonpassed_attempts_retained": [
+    "all-features-tests.json",
+    "all-features-tests-retry1.json",
+    "time-tool-unavailable.json"
+  ],
+  "root_lead_full_app_workspace_native_ci": "pending_future_combined_branch",
+  "no_reference_credit": true
+}
