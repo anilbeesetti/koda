@@ -1,0 +1,7 @@
+{
+  "checked_at": "2026-10-07T22:12:18.560759+00:00",
+  "owned_check_or_worktree_compiler_processes_observed": [],
+  "measured_child_266605_exited": true,
+  "no_gradle_or_app_launched_by_task": true,
+  "unrelated_processes_untouched": true
+}

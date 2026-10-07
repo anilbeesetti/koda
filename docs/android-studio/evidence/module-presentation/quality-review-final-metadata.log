@@ -1,0 +1,81 @@
+# Independent final metadata and portable-evidence quality audit
+
+Verdict: **PASS for the final task metadata and portable evidence.** No blocking
+findings or misleading completion/scope claims were found. Product source remains
+bound to `5e4b752a057bff25d9e281a43ce4b71a8598406f`; Root's combined full-app/native,
+full-workspace CI, conflict/main verification and protected merge remain pending.
+
+## Independent checks
+
+- Verified **41 unique manifest entries**, totaling **3,599,949 bytes**, plus the
+  manifest itself (42 portable files). Every file's current size and SHA-256
+  matches `manifest.json`. Every entry is byte-identical to its external origin;
+  review Markdown is preserved as prose `.log` without rewriting its bytes.
+- The bundle contains only regular, non-executable JSON/log files: no symlink,
+  PNG, binary or runnable script. Both exact external Python validation recipes
+  are preserved within explicitly labeled audit JSON. Their UTF-8 bytes, sizes
+  and hashes match the external originals, and they are identified as audit
+  metadata rather than product code or checkout executables.
+- Verified all **ten** static/runtime review reports against their five area
+  entries in the scoped port metadata and the manifest. Each retained verdict
+  is scoped PASS, refers to the unchanged production/test hashes, and retains
+  the appropriate historical or pending lead-gate limits. The earlier static
+  runtime-pending statements remain historical evidence, not overwritten claims.
+- The final port metadata agrees with the actual normal component receipts:
+  **221 passed; 0 failed, ignored or filtered; 20 new supplemental cases**,
+  successful normal library build, strict repository Clippy and full Cargo
+  formatting. The fresh own-source CompilerJSON proof and at-run hashes are
+  distinguished from mutable shared-cache identities. No full-app or full-CI
+  result is inferred from those component artifacts.
+- Recomputed Root's **exact seven literal pathspecs** and all **4,717** current
+  product byte bindings. They match the retained successful at-run source map
+  exactly, and no product path has an unstaged diff. The metadata exclusions
+  were not widened. Rechecked all **159** baseline original paths: 158 retain
+  base bytes, with the remaining path containing exactly the additive module
+  export. Existing public DTOs, dependencies, tests, fixtures and canonical
+  manifest/parity matrix remain unchanged.
+- The immutable reference selection JSON is byte-identical to the tested source
+  commit and retains its initial `not_run` inventory status. The final report
+  explicitly directs readers to later actual receipts and port metadata.
+  Original ports/canonical parity credit remain **zero**, all five original
+  generated-tree workflows remain `unported/not_run`, and phase/IDE flags stay
+  false. Empty-label adapter behavior remains an explicitly applicable unported
+  requirement; it is not hidden by a fallback or N/A designation.
+- The final report discloses the **single exact measurement's 19 filters**
+  separately from the normal unfiltered 221-test run. Its 327,680/327,692-byte
+  inputs, 1.817 ms elapsed and 11,008 KiB peak RSS agree with the retained record.
+  The prose correctly limits the result to one test process and makes no
+  allocation-ceiling, adversarial-scan, startup, hardware, large-project or
+  before/after claim.
+- The prior authorized generated-unit-ELF retirement receipt agrees with the
+  retained Root record's source commit, hash and 229-test run total. The two
+  inaccessible system links remain disclosed. The report does not describe
+  deletion of any source, fixture, raw log or frozen executable.
+
+The final report's readiness statement is limited to lead integration. Both the
+report and scoped port metadata keep the required Root full application, native,
+full workspace and protected integration gates open. The task does not claim
+live tree labels, layout/keyboard fidelity, importer/getter transport, Kotlin
+facet import, qualified-name construction or controller publication.
+
+## Audited metadata identities
+
+- Portable manifest SHA-256:
+  `0f63d23a6f65248a34e04722a26dbbd8bc5968cf79533966d85e2f7d4bd2a375`.
+- Final task report SHA-256:
+  `f235c7c291db8bb94a39837b43240333984f2c00ebf5c88473b51784d608ebfd`.
+- Updated task plan SHA-256:
+  `21b4c47c05a8d1db9d2128ef4f7d7776c842d42a7a6b6ab540eefd473d01448b`.
+- Final scoped port metadata SHA-256:
+  `c740996d54653f61d98609b690459bcfdf176768dbaf61ebe8471718684ade1e`.
+- Final source-equivalence receipt SHA-256:
+  `4ed3b5902a80dddd2a1a62ad3b134835be8c934b71aedc6b0fdd71fe707651cb`.
+- Independent verification JSON:
+  `/workspace/android-studio-artifacts/module-presentation-task/quality-review-final-metadata-verification.json`
+  SHA-256 `7cacf703aefc7eb8bfe6eec7ad43e67f74fd3927e51cef4e14172dd7733db1c3`.
+
+This was a read-only metadata/evidence audit using Git/file inspection and JSON/
+hash verification. No Cargo, compiler, runtime, Gradle, app, formatter or cache
+operation was performed, and no product, source, fixture, matrix, Root, main or
+protected-branch file was changed. Only the external reviewer report and its
+verification receipt were written.

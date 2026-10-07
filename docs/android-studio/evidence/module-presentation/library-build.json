@@ -1,0 +1,17 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.67463549200329,
+  "log": "/workspace/android-studio-artifacts/module-presentation-task/library-build.log",
+  "log_sha256": "9ef92fa1048a071372ecd5e783331a115feb28a239d2f8ec04ec1eb8a84c0386",
+  "source_bindings": 4717,
+  "whole_source_git_index_status_unchanged": true
+}

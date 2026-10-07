@@ -1,0 +1,95 @@
+# Performance runtime-evidence addendum
+
+Verdict: **PASS for the bounded policy evidence and its stated performance
+scope**. The prior static PASS remains valid for unchanged production/test
+bytes. No blocking finding was found in the retained component checks or the
+single exact-test measurement. Full-app, native-flow, whole-workspace CI and
+whole-IDE/large-project performance remain pending lead integration.
+
+## Bound source and executable
+
+- Source commit independently checked at current clean worktree HEAD:
+  `5e4b752a057bff25d9e281a43ce4b71a8598406f`.
+- Production SHA-256:
+  `0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c`.
+- Supplemental test SHA-256:
+  `9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924`.
+- All 172 round-1 frozen path hashes independently match again. The two retained
+  runtime whole-source snapshots, index and status compare equal; all 4,717
+  source bindings also match current file contents. Current Git index/status
+  match those receipts. File-content hashing follows the retained runner's
+  symlink-dereferencing semantics.
+- Independently enumerating Root's exact seven Git pathspecs yields the same
+  4,717-path set as the runtime guard. No exclusion was widened.
+- Raw normal Cargo JSON reports a newly compiled (`fresh: false`), all-features
+  policy test artifact from this worktree's exact test path. The retained proof
+  links it to frozen `/tmp/module-presentation-verified-binaries/module-presentation-tests20`.
+- Independently hashed frozen ELF: 1,642,216 bytes, SHA-256
+  `6dcbba6ac91c0318aaa8cc7a459fd599a1d61eacbdd4ba4444b50b133f4726e4`.
+  This is the policy integration-test executable, not the IDE application.
+
+## Actual component gates
+
+Raw-log hashes independently match their retained receipts. The normal locked,
+all-features `android_tools` test run contains seven actual result summaries:
+**221 passed, zero failed, ignored, measured or filtered**. All 20 supplemental
+presentation tests passed in that unfiltered run. Normal all-features library
+build, repository strict `./script/clippy --locked -p android_tools`, and full
+format check each exited zero.
+
+Recorded elapsed times are 39.167 seconds for the complete component test
+command, 0.675 seconds for the subsequent library build, 61.419 seconds for
+strict Clippy, and 28.440 seconds for formatting. These are observations from
+this cached environment, including command overhead and work across the crate;
+they do not isolate this policy's compile cost or establish a before/after
+performance comparison.
+
+## Exact long-metadata observation
+
+The retained `measure-long-name.py` is independently hashed as
+`625ddbf8336332481dd791fe487b12e02c7d99f6b50589bbf1d18580cdf02cfe`.
+It directly spawns the bound frozen ELF with `--exact
+long_captured_names_are_borrowed_without_reformatting --nocapture --test-threads=1`,
+redirects that child's output, and waits for that exact PID using `os.wait4`.
+It checks the executable hash before and after, the child exit code and the
+expected exact-test result. It obtains child resource usage from that `wait4`
+return, rather than aggregate usage accumulated by the Python coordinator.
+The measured PID 266605 is absent from `/proc` at independent review time.
+
+The raw log independently matches SHA-256
+`6d2bceb30d9edfa1840d7a539c5820fe7128c719e952f12581b758f2beb4b769`.
+It reports **one passed, zero failed/ignored, 19 filtered**, which is the
+intentional exact-test measurement; the required preceding normal run had
+zero filters. The unchanged test creates a 327,680-byte imported name and a
+327,692-byte external ID, then checks exact label content and borrowed
+internal/sort/group string pointers. The measurement record reports:
+
+- Wall elapsed time: **0.001816837 seconds** (about **1.817 ms**).
+- Child maximum resident set: **11,008 KiB**.
+- Child user CPU: **0.001182 seconds**; reported system CPU: **0 seconds**.
+
+These quantities cover the entire single test process, including startup,
+fixture allocation, assertions, test harness and output. The reported system
+CPU value is the observed resource-accounting value, not a proof that the
+process performs no system work. A single host-specific sample does not
+establish repeatability, throughput, a regression threshold or hardware
+performance. The final colon is near the external ID's end, so this does not
+stress an adversarial long delimiter-free ID or long equal-path comparison.
+Peak process RSS is not policy allocation count, an allocation ceiling or a
+memory limit. It does not measure full IDE startup or large-project handling.
+The prior O(P + I) time/O(1) auxiliary-space assessment remains a static code
+analysis, not an empirical asymptotic result from this measurement.
+
+## Remaining scope and reviewer actions
+
+Owned-process/lease receipts report completion and release with no task-owned
+Cargo/Gradle/app process left. No Gradle or app was launched by the owner for
+these bounded component gates. Root still owns subsequent full application,
+live/native and CI checks; those cannot be inferred from the component ELF or
+these results. All original generated-tree methods remain unported/not_run and
+this policy grants zero canonical original-test parity credit.
+
+This reviewer inspected and hashed existing evidence only. No new measurement,
+Cargo, Gradle, application, compiler or cache operation was performed. Only
+this external addendum was written; product sources, tests, fixtures, canonical
+matrix and protected branches were not changed.
