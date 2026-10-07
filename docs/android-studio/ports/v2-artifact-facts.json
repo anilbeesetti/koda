@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "task": "1-v2-artifact-facts",
+  "branch": "android-studio-task/1-v2-artifact-facts",
+  "status": "owner_scoped_green_lead_gates_pending",
+  "scope": "Raw independent official V2 artifact transport and two original version ordering methods; no canonical matrix promotion or tree/LSP/IDE completeness",
+  "global_census_complete": false,
+  "canonical_matrix_changed": false,
+  "reference": {
+    "repository": "platform/tools/adt/idea",
+    "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "suite": "com.android.tools.idea.gradle.project.sync.ModelVersionsTest",
+    "license": "Apache-2.0",
+    "files": [
+      {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+        "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+        "retained_path": "crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt"
+      }
+    ]
+  },
+  "proposed_tests": [
+    {
+      "reference_test": "checkModelVersionOrdering",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+      "status": "unported",
+      "execution_status": "lead_exact_capture_pending",
+      "package": "android_tools",
+      "integration_target": "generated_artifacts",
+      "test_name": "check_model_version_ordering",
+      "proposed_status_after_actual_and_lead_gates": "ported",
+      "reason": "Complete original signed values, descriptions, reversed input and ordered full-record assertions retained. Both methods passed in normal unfiltered 202-test owner run; canonical promotion awaits lead exact captures and combined gates.",
+      "owner_execution_status": "passing"
+    },
+    {
+      "reference_test": "checkModelConsumerVersionOrdering",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+      "status": "unported",
+      "execution_status": "lead_exact_capture_pending",
+      "package": "android_tools",
+      "integration_target": "generated_artifacts",
+      "test_name": "check_model_consumer_version_ordering",
+      "proposed_status_after_actual_and_lead_gates": "ported",
+      "reason": "Complete original signed values, descriptions, reversed input and ordered full-record assertions retained. Both methods passed in normal unfiltered 202-test owner run; canonical promotion awaits lead exact captures and combined gates.",
+      "owner_execution_status": "passing"
+    }
+  ],
+  "unported_reference_tests": [
+    "ModelVersionsTest.checkSupportsParallelSync",
+    "five AndroidProjectViewTest generated/resources/direct-file flows"
+  ],
+  "non_rust_exceptions": [
+    {
+      "component": "Existing Gradle/Android SDK JVM tooling-model serialization bridge",
+      "reason": "Official model objects and getters are provided by Gradle/AGP JVM APIs; Rust owns version policy, validation and IDE behavior."
+    }
+  ],
+  "source_commit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "tests": [],
+  "owner_validation": {
+    "normal_cargo_tests": {
+      "passed": 202,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "new_tests": 28,
+      "log": "docs/android-studio/evidence/v2-artifact-facts/cargo-tests.log"
+    },
+    "strict_clippy": "PASS",
+    "workspace_format": "PASS",
+    "normal_library_build": "PASS",
+    "actual_bridge_boundaries": 11,
+    "actual_sdk_modes": 5,
+    "sdk_runtime": "supplementary AGP9.4.0/Gradle9.6.1/JDK21/SDK37, no original generated-tree credit",
+    "lead_full_app_native_full_ci": "pending"
+  },
+  "reviews": {
+    "code": {
+      "verdict": "PASS",
+      "scope": "Current-source owner transport/tests/SDK evidence; lead app/native/full CI/parity pending",
+      "external_report": "/workspace/android-studio-artifacts/v2-artifact-facts/code-review-runtime-addendum.md",
+      "sha256": "79e10cde3b5691fd52ce67af1421d11dea21f645aea4c7cf7e9ab8648e5405dd",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-facts/code-review-runtime-addendum.json"
+    },
+    "ui": {
+      "verdict": "PASS",
+      "scope": "Current-source owner transport/tests/SDK evidence; lead app/native/full CI/parity pending",
+      "external_report": "/workspace/android-studio-artifacts/v2-artifact-facts/ui-review-runtime-addendum.md",
+      "sha256": "3213a299ed84865b2e0576591a79f484c1faa665e9dc0d978ec7fa475dc999ab",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-facts/ui-review-runtime-addendum.json"
+    },
+    "ux": {
+      "verdict": "PASS",
+      "scope": "Current-source owner transport/tests/SDK evidence; lead app/native/full CI/parity pending",
+      "external_report": "/workspace/android-studio-artifacts/v2-artifact-facts/ux-review-runtime-addendum.md",
+      "sha256": "2276f4d31152f2a93badfc9dbfbe3aa14612aff65c7943cda1f6d231b733003f",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-facts/ux-review-runtime-addendum.json"
+    },
+    "performance": {
+      "verdict": "PASS",
+      "scope": "Current-source owner transport/tests/SDK evidence; lead app/native/full CI/parity pending",
+      "external_report": "/workspace/android-studio-artifacts/v2-artifact-facts/performance-review-runtime-addendum.md",
+      "sha256": "1203f55b15e81186f8f20ee4ce66830719655ef709eee01c344d07e831130f01",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-facts/performance-review-runtime-addendum.json"
+    },
+    "quality": {
+      "verdict": "PASS",
+      "scope": "Current-source owner transport/tests/SDK evidence; lead app/native/full CI/parity pending",
+      "external_report": "/workspace/android-studio-artifacts/v2-artifact-facts/quality-review-runtime-addendum.md",
+      "sha256": "2caea1aefa40248b47de618a1d55bab68126ab0eaa8145d95163aeff0c27f254",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-facts/quality-review-runtime-addendum.json"
+    }
+  },
+  "owner_gate": "docs/android-studio/evidence/v2-artifact-facts/owner-gate-final.json",
+  "pending_gates": [
+    "Combined normal application build and native validation",
+    "Full workspace tests/CI",
+    "Matching-source exact two ordering parity captures plus existing captures",
+    "Conflict/main guards, lead review and protected merge"
+  ]
+}

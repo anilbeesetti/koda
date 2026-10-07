@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe",
+    "--bridge-boundaries",
+    "/workspace/android-studio-artifacts/v2-artifact-facts/bridge-boundary-output.json"
+  ],
+  "pid": 254127,
+  "exitCode": 0,
+  "wallSeconds": 0.0017765810043783858,
+  "processPeakRssKiB": 9216,
+  "all11BoundaryCasesAssertedInRust": true
+}

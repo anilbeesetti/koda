@@ -1,0 +1,222 @@
+{
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "originalReceiptsPreserved": true,
+  "exactExecutedRunnerSourceRetained": false,
+  "runnerProvenanceLimitation": "Execution runner was supplied through tool orchestration and was not saved as a standalone source file. This addendum records the measurement method and receipt commands, not a claim that reconstructed runner source was executed.",
+  "noDecoderOnlyMeasurements": true,
+  "noIdeStartupLargeProjectOrHardwareBudgetClaim": true,
+  "cargoAndClippyMemoryScope": "Compiler-inclusive child-process aggregate peaks; not IDE runtime budgets.",
+  "measurements": [
+    {
+      "receipt": "bridge-boundary-run.json",
+      "pid": 254091,
+      "command": [
+        "java",
+        "-cp",
+        "/workspace/android-studio-artifacts/downloads/gradle-9.6.1-bin/gradle-9.6.1/lib/*",
+        "groovy.ui.GroovyMain",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/bridge-boundary-probe.groovy"
+      ],
+      "wallSeconds": 1.6061051699944073,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "bridge-boundary-rust-assertions.json",
+      "pid": 254127,
+      "command": [
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe",
+        "--bridge-boundaries",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/bridge-boundary-output.json"
+      ],
+      "wallSeconds": 0.0017765810043783858,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "source-gradle-result.json",
+      "pid": 254381,
+      "command": [
+        "gradle",
+        "--offline",
+        "--no-daemon",
+        "--max-workers=2",
+        "--console=plain",
+        "-p",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+        "-I",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project-model.gradle",
+        "-I",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-inspection.gradle",
+        "-Dkoda.v2.inspection.output=/workspace/android-studio-artifacts/v2-artifact-facts/source-inspection.json",
+        "-Pandroid.enableBuildConfigAsBytecode=false",
+        "kodaV2ArtifactRuntimeInspection"
+      ],
+      "wallSeconds": 14.75859992900223,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "source-rust-result.json",
+      "pid": 254482,
+      "command": [
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/source-gradle.log",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/source-inspection.json",
+        "source"
+      ],
+      "wallSeconds": 0.005133653998200316,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "bytecode-gradle-result.json",
+      "pid": 254483,
+      "command": [
+        "gradle",
+        "--offline",
+        "--no-daemon",
+        "--max-workers=2",
+        "--console=plain",
+        "-p",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+        "-I",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project-model.gradle",
+        "-I",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-inspection.gradle",
+        "-Dkoda.v2.inspection.output=/workspace/android-studio-artifacts/v2-artifact-facts/bytecode-inspection.json",
+        "-Pandroid.enableBuildConfigAsBytecode=true",
+        "kodaV2ArtifactRuntimeInspection"
+      ],
+      "wallSeconds": 10.578249591002532,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "bytecode-rust-result.json",
+      "pid": 254583,
+      "command": [
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/bytecode-gradle.log",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/bytecode-inspection.json",
+        "bytecode"
+      ],
+      "wallSeconds": 0.005082085997855756,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "custom-gradle-result.json",
+      "pid": 254584,
+      "command": [
+        "gradle",
+        "--offline",
+        "--no-daemon",
+        "--max-workers=2",
+        "--console=plain",
+        "-p",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+        "-I",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project-model.gradle",
+        "-I",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-inspection.gradle",
+        "-Dkoda.v2.inspection.output=/workspace/android-studio-artifacts/v2-artifact-facts/custom-inspection.json",
+        "-Pandroid.enableBuildConfigAsBytecode=true",
+        "kodaV2ArtifactRuntimeInspection"
+      ],
+      "wallSeconds": 11.634996607994253,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "custom-rust-result.json",
+      "pid": 254723,
+      "command": [
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/custom-gradle.log",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/custom-inspection.json",
+        "custom"
+      ],
+      "wallSeconds": 0.005349058999854606,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "disabled-gradle-result.json",
+      "pid": 254724,
+      "command": [
+        "gradle",
+        "--offline",
+        "--no-daemon",
+        "--max-workers=2",
+        "--console=plain",
+        "-p",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+        "-I",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project-model.gradle",
+        "-I",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-inspection.gradle",
+        "-Dkoda.v2.inspection.output=/workspace/android-studio-artifacts/v2-artifact-facts/disabled-inspection.json",
+        "-Pandroid.enableBuildConfigAsBytecode=true",
+        "kodaV2ArtifactRuntimeInspection"
+      ],
+      "wallSeconds": 11.27841972799797,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "disabled-rust-result.json",
+      "pid": 254824,
+      "command": [
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/disabled-gradle.log",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/disabled-inspection.json",
+        "disabled"
+      ],
+      "wallSeconds": 0.005608829997072462,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "disabled-artifact-gradle-result.json",
+      "pid": 254825,
+      "command": [
+        "gradle",
+        "--offline",
+        "--no-daemon",
+        "--max-workers=2",
+        "--console=plain",
+        "-p",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+        "-I",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project-model.gradle",
+        "-I",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-inspection.gradle",
+        "-Dkoda.v2.inspection.output=/workspace/android-studio-artifacts/v2-artifact-facts/disabled-artifact-inspection.json",
+        "-Pandroid.enableBuildConfigAsBytecode=false",
+        "kodaV2ArtifactRuntimeInspection"
+      ],
+      "wallSeconds": 11.065211059998546,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    },
+    {
+      "receipt": "disabled-artifact-rust-result.json",
+      "pid": 254924,
+      "command": [
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/disabled-artifact-gradle.log",
+        "/workspace/android-studio-artifacts/v2-artifact-facts/disabled-artifact-inspection.json",
+        "disabled-artifact"
+      ],
+      "wallSeconds": 0.00799030700000003,
+      "reportedMeasurementMethod": "Python os.posix_spawn followed by os.wait4 for this exact PID; ru_maxrss in KiB on Linux",
+      "measurementScope": "Entire isolated process, including startup/I/O/parsing/assertions/output. Gradle launcher values exclude separate daemon RSS."
+    }
+  ]
+}

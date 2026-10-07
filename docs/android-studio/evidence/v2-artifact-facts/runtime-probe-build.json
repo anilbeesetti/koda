@@ -1,0 +1,33 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe.rs",
+    "-L",
+    "dependency=/workspace/.cache/zed/target/debug/deps",
+    "--extern",
+    "android_tools=/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+    "--extern",
+    "serde_json=/workspace/.cache/zed/target/debug/deps/libserde_json-dad50efee64284ac.rlib",
+    "--extern",
+    "anyhow=/workspace/.cache/zed/target/debug/deps/libanyhow-18b69cad26582a56.rlib",
+    "-o",
+    "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe"
+  ],
+  "exitCode": 0,
+  "wallSeconds": 0.3274495189980371,
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "probeSourceSha256": "5551985487b7e87f31963365ccf203f138de5f7bb4ebb2d5f4ca9d9b9a971dca",
+  "library": {
+    "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+    "sha256": "bf2d8ee866f659ee864387a311a0749c168b3c2e6fb06c06226ca8f0713e00ff",
+    "cargoFresh": false
+  },
+  "sameNormalCargoLibraryArtifact": true,
+  "serdeJsonFingerprintMatchesAndroidToolsDependency": true,
+  "executable": {
+    "path": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe",
+    "sha256": "531cc5f5ee7ca35a304513a9f8ab0b8f7246232e8674a10fa5239f4dfd19702f",
+    "bytes": 9153056
+  }
+}

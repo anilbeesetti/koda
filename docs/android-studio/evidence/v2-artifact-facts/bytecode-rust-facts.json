@@ -1,0 +1,356 @@
+{
+  "supplementaryOnly": true,
+  "originalReferenceRuntimeTestCredit": 0,
+  "root": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+  "modules": [
+    {
+      "module": ":app",
+      "directory": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app",
+      "versions": {
+        "status": "available",
+        "value": {
+          "agp": "9.4.0",
+          "producer": {
+            "major": 23,
+            "minor": 0,
+            "description": "Android Gradle Plugin 9.1"
+          },
+          "minimumConsumer": {
+            "status": "available",
+            "value": {
+              "major": 66,
+              "minor": 1,
+              "description": "Android Studio Iguana"
+            }
+          },
+          "models": [
+            {
+              "name": "basic_android_project",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "android_project",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "android_dsl",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "variant_dependencies",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "native_module",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "model_producer",
+              "version": {
+                "major": 23,
+                "minor": 0,
+                "description": "Android Gradle Plugin 9.1"
+              }
+            },
+            {
+              "name": "minimum_model_consumer",
+              "version": {
+                "major": 66,
+                "minor": 1,
+                "description": "Android Studio Iguana"
+              }
+            }
+          ]
+        }
+      },
+      "buildFolder": {
+        "status": "available",
+        "value": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build"
+      },
+      "variants": {
+        "status": "available",
+        "value": [
+          {
+            "name": "demoDebug",
+            "main": {
+              "status": "available",
+              "value": {
+                "status": "present",
+                "value": {
+                  "kind": "android",
+                  "generatedSourceFolders": {
+                    "status": "available",
+                    "value": [
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/generated/ap_generated_sources/demoDebug/out"
+                    ]
+                  },
+                  "generatedResourceFolders": {
+                    "status": "available",
+                    "value": [
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/outside-build-generated-res/demoDebug"
+                    ]
+                  },
+                  "generatedAssetsFolders": {
+                    "status": "available",
+                    "value": [
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/generated-outside-build/demoDebug"
+                    ]
+                  },
+                  "generatedClassPaths": {
+                    "status": "available",
+                    "value": [
+                      {
+                        "name": "buildConfigGeneratedClasses",
+                        "path": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_build_config_jar/demoDebug/generateDemoDebugBuildConfig/BuildConfig.jar"
+                      }
+                    ]
+                  },
+                  "classesFolders": {
+                    "status": "available",
+                    "value": [
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/javac/demoDebug/compileDemoDebugJavaWithJavac/classes",
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_r_class_jar/demoDebug/generateDemoDebugRFile/R.jar",
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/built_in_kotlinc/demoDebug/compileDemoDebugKotlin/classes",
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_build_config_jar/demoDebug/generateDemoDebugBuildConfig/BuildConfig.jar"
+                    ]
+                  },
+                  "ideSetupTaskNames": {
+                    "status": "available",
+                    "value": [
+                      "generateDemoDebugSources"
+                    ]
+                  },
+                  "sourceGenTaskName": {
+                    "status": "available",
+                    "value": "generateDemoDebugSources"
+                  },
+                  "resGenTaskName": {
+                    "status": "available",
+                    "value": "generateDemoDebugResources"
+                  }
+                }
+              }
+            },
+            "hostTests": {
+              "status": "available",
+              "value": [
+                {
+                  "artifact": "_unit_test_",
+                  "value": {
+                    "status": "present",
+                    "value": {
+                      "kind": "java",
+                      "generatedSourceFolders": {
+                        "status": "available",
+                        "value": [
+                          "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/generated/ap_generated_sources/demoDebugUnitTest/out"
+                        ]
+                      },
+                      "generatedResourceFolders": {
+                        "status": "notApplicable",
+                        "value": "JavaArtifact does not declare generatedResourceFolders"
+                      },
+                      "generatedAssetsFolders": {
+                        "status": "notApplicable",
+                        "value": "JavaArtifact does not declare generatedAssetsFolders"
+                      },
+                      "generatedClassPaths": {
+                        "status": "available",
+                        "value": []
+                      },
+                      "classesFolders": {
+                        "status": "available",
+                        "value": [
+                          "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/javac/demoDebugUnitTest/compileDemoDebugUnitTestJavaWithJavac/classes",
+                          "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/built_in_kotlinc/demoDebugUnitTest/compileDemoDebugUnitTestKotlin/classes",
+                          "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_and_runtime_r_class_jar/demoDebug/processDemoDebugResources/R.jar"
+                        ]
+                      },
+                      "ideSetupTaskNames": {
+                        "status": "available",
+                        "value": [
+                          "createMockableJar"
+                        ]
+                      },
+                      "sourceGenTaskName": {
+                        "status": "notApplicable",
+                        "value": "JavaArtifact does not declare sourceGenTaskName"
+                      },
+                      "resGenTaskName": {
+                        "status": "notApplicable",
+                        "value": "JavaArtifact does not declare resGenTaskName"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "deviceTests": {
+              "status": "available",
+              "value": [
+                {
+                  "artifact": "_android_test_",
+                  "value": {
+                    "status": "present",
+                    "value": {
+                      "kind": "android",
+                      "generatedSourceFolders": {
+                        "status": "available",
+                        "value": [
+                          "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/generated/ap_generated_sources/demoDebugAndroidTest/out"
+                        ]
+                      },
+                      "generatedResourceFolders": {
+                        "status": "available",
+                        "value": []
+                      },
+                      "generatedAssetsFolders": {
+                        "status": "available",
+                        "value": []
+                      },
+                      "generatedClassPaths": {
+                        "status": "available",
+                        "value": [
+                          {
+                            "name": "buildConfigGeneratedClasses",
+                            "path": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_build_config_jar/demoDebugAndroidTest/generateDemoDebugAndroidTestBuildConfig/BuildConfig.jar"
+                          }
+                        ]
+                      },
+                      "classesFolders": {
+                        "status": "available",
+                        "value": [
+                          "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/javac/demoDebugAndroidTest/compileDemoDebugAndroidTestJavaWithJavac/classes",
+                          "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_r_class_jar/demoDebugAndroidTest/generateDemoDebugAndroidTestRFile/R.jar",
+                          "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/built_in_kotlinc/demoDebugAndroidTest/compileDemoDebugAndroidTestKotlin/classes",
+                          "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_build_config_jar/demoDebugAndroidTest/generateDemoDebugAndroidTestBuildConfig/BuildConfig.jar"
+                        ]
+                      },
+                      "ideSetupTaskNames": {
+                        "status": "available",
+                        "value": [
+                          "generateDemoDebugAndroidTestSources"
+                        ]
+                      },
+                      "sourceGenTaskName": {
+                        "status": "available",
+                        "value": "generateDemoDebugAndroidTestSources"
+                      },
+                      "resGenTaskName": {
+                        "status": "available",
+                        "value": "generateDemoDebugAndroidTestResources"
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "fixtures": {
+              "status": "available",
+              "value": {
+                "status": "absent"
+              }
+            }
+          },
+          {
+            "name": "demoRelease",
+            "main": {
+              "status": "available",
+              "value": {
+                "status": "present",
+                "value": {
+                  "kind": "android",
+                  "generatedSourceFolders": {
+                    "status": "available",
+                    "value": [
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/generated/ap_generated_sources/demoRelease/out"
+                    ]
+                  },
+                  "generatedResourceFolders": {
+                    "status": "available",
+                    "value": [
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/outside-build-generated-res/demoRelease"
+                    ]
+                  },
+                  "generatedAssetsFolders": {
+                    "status": "available",
+                    "value": [
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/generated-outside-build/demoRelease"
+                    ]
+                  },
+                  "generatedClassPaths": {
+                    "status": "available",
+                    "value": [
+                      {
+                        "name": "buildConfigGeneratedClasses",
+                        "path": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_build_config_jar/demoRelease/generateDemoReleaseBuildConfig/BuildConfig.jar"
+                      }
+                    ]
+                  },
+                  "classesFolders": {
+                    "status": "available",
+                    "value": [
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/javac/demoRelease/compileDemoReleaseJavaWithJavac/classes",
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_r_class_jar/demoRelease/generateDemoReleaseRFile/R.jar",
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/built_in_kotlinc/demoRelease/compileDemoReleaseKotlin/classes",
+                      "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_build_config_jar/demoRelease/generateDemoReleaseBuildConfig/BuildConfig.jar"
+                    ]
+                  },
+                  "ideSetupTaskNames": {
+                    "status": "available",
+                    "value": [
+                      "generateDemoReleaseSources"
+                    ]
+                  },
+                  "sourceGenTaskName": {
+                    "status": "available",
+                    "value": "generateDemoReleaseSources"
+                  },
+                  "resGenTaskName": {
+                    "status": "available",
+                    "value": "generateDemoReleaseResources"
+                  }
+                }
+              }
+            },
+            "hostTests": {
+              "status": "available",
+              "value": []
+            },
+            "deviceTests": {
+              "status": "available",
+              "value": []
+            },
+            "fixtures": {
+              "status": "available",
+              "value": {
+                "status": "absent"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "revisionBindingVerified": true
+}

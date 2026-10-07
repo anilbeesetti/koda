@@ -1,0 +1,15 @@
+{
+  "kind": "read_only_packaging_summary_lookup_failure",
+  "failed_command": [
+    "git",
+    "rev-parse",
+    "main"
+  ],
+  "exit_code": 128,
+  "reason": "No local main branch exists in this checkout. Metadata writes and validation completed before display lookup failed.",
+  "product_source_changed": false,
+  "main_changed": false,
+  "verified_available_read_only_main_ref": "refs/remotes/origin/main",
+  "main_head": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+  "product_fix_round": false
+}

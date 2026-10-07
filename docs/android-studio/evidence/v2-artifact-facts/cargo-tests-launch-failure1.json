@@ -1,0 +1,8 @@
+{
+  "stage": "execution wrapper before Cargo",
+  "exception": "FileNotFoundError: /usr/bin/time",
+  "cargoStarted": false,
+  "compilerTestsSdkStarted": false,
+  "sourceChanged": false,
+  "remedy": "Use Python resource metrics with the unchanged normal Cargo command"
+}

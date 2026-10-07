@@ -1,0 +1,9 @@
+{
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "productionPath": "/workspace/android-studio-source-providers/crates/android_tools/src/project_model.gradle",
+  "frozenPath": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project-model.gradle",
+  "sha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+  "byteExactCopy": true,
+  "supplementaryOnly": true,
+  "oldSdkPlanningProbesNotCurrentGates": true
+}

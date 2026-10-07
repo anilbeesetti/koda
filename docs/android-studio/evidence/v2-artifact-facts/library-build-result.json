@@ -1,0 +1,16 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--lib",
+    "--message-format=json"
+  ],
+  "exitCode": 0,
+  "wallSeconds": 0.8732120729982853,
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "matchingSourceFreshlyCompiledDuring202TestRun": true
+}

@@ -1,0 +1,17 @@
+{
+  "mode": "disabled",
+  "command": [
+    "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-probe",
+    "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+    "/workspace/android-studio-artifacts/v2-artifact-facts/disabled-gradle.log",
+    "/workspace/android-studio-artifacts/v2-artifact-facts/disabled-inspection.json",
+    "disabled"
+  ],
+  "pid": 254824,
+  "exitCode": 0,
+  "wallSeconds": 0.005608829997072462,
+  "decoderProcessPeakRssKiB": 10496,
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "supplementaryOnly": true,
+  "originalReferenceRuntimeTestCredit": 0
+}
