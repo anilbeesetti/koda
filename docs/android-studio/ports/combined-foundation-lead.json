@@ -12,8 +12,13 @@
   "combined_ci": {
     "head": "cbf8c0ec26057913f62c8dc9f494cf2baf27945d",
     "url": "https://github.com/anilbeesetti/koda/actions/runs/37615677970",
-    "observed_status": "Linux workspace tests running; formatting/scripts and macOS passed",
-    "merge_gate": "Full workspace CI must pass before merging additional code"
+    "observed_status": "All jobs completed successfully: formatting/scripts, Linux full workspace tests and app build, macOS application check",
+    "merge_gate": "Satisfied for reviewed bounded backend/catalog slice; all product UI/remaining phase gates remain required",
+    "workspace_tests_passed": 10247,
+    "pre_existing_ignored": 23,
+    "workspace_compile_and_execution_seconds": 3048.1,
+    "test_execution_seconds": 2192.425,
+    "linux_app_build_seconds": 324.1
   },
   "reference_cases": {
     "catalogued": 92,
@@ -141,6 +146,12 @@
       "path": "/workspace/android-studio-artifacts/completed-root-app-and-release-cleanup.json",
       "bytes": 218886,
       "sha256": "1c2a053c59b43a16af602516f4bd860e3224fc58c7d24c44deec2cc907444d4b"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/combined-backends-full-workspace-ci.log",
+      "bytes": 332352,
+      "sha256": "3f1728c679e6ee13bb5cb46b96f8eb791109d92156e17730aecb10553212b892"
     }
-  ]
+  ],
+  "backend_merge_readiness": "Pass: all five scoped owner reviews, preserved 26 reference ports, focused all-feature tests/clippy, source-identical fullapp build/liveAPIprojectsync/APK smoke and complete workspace CI. Desktop import/settings wiring and full phase1 remain incomplete."
 }

@@ -13,8 +13,8 @@ The staging branch is `android-studio-task/1-integration-check`, worktree
 `f8114bfafa3562760a5e8b98a4b20acf98cce983`. It adds the reviewed Rust module-import
 and project-view-preferences backends and model-sync inventory to the merged
 plan, default-variant port, recovery fix and parity tooling. Later staging
-commits only add catalog, evidence and reports. These additional backends are
-awaiting their complete workspace test gate before a protected-branch merge.
+commits only add catalog, evidence and reports. The complete workspace gate for these additional backends has passed; the
+reviewed bounded backend/catalog slice is ready for its protected-branch merge.
 
 ## Local results
 
@@ -89,9 +89,12 @@ No test was deleted, newly ignored, or weakened.
 
 The next full CI run, [37615677970](https://github.com/anilbeesetti/koda/actions/runs/37615677970),
 tests `cbf8c0ec26057913f62c8dc9f494cf2baf27945d`, which has the same Rust source
-and fixtures as the immutable combined snapshot above. Formatting/scripts and
-the macOS application check passed; Linux workspace tests are still running at
-this checkpoint. The additional backend merge remains gated on that result.
+and fixtures as the immutable combined snapshot above. All jobs passed: formatting/scripts, macOS application check and Linux full
+workspace tests/application build. It ran 10,247 workspace tests, all passing,
+with 23 pre-existing ignored tests. The compile/execution step took 3,048.1
+seconds and the Linux application build took 324.1 seconds. The reviewed bounded
+backend/catalog slice has satisfied its merge gate; product wiring remains
+pending.
 
 The foundation still needs exhaustive census, module-import and preference UI,
 Android tree rendering/navigation and refresh integration, complete model/sync behavior,
