@@ -233,5 +233,15 @@
   "task_complete": false,
   "source_commit": "8322e29b45311fd146a51c7220733507c288920a",
   "validated_source_identity": "Execution occurred on hash-bound uncommitted snapshot before source commit; commit contains the exact validated production bytes. No retroactive tested_commit claim.",
-  "raw_log_whitespace": "Byte-exact Gradle/compiler evidence is retained. It may contain trailing whitespace; source-only diff checks pass without normalizing raw evidence."
+  "raw_log_whitespace": "Byte-exact Gradle/compiler evidence is retained. It may contain trailing whitespace; source-only diff checks pass without normalizing raw evidence.",
+  "combined_lead_validation": {
+    "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+    "component_build_tests_clippy_format": "PASS",
+    "full_workspace_ci": "PASS10383/0fail/23existingignored;fullLinuxapp/macappPASS",
+    "native_full_app": "PASS scoped toolbar/model-sync consumer; GUI tree wiring not claimed",
+    "whole_source_guard": "PASS4606files with unchanged fixed exclusions",
+    "fresh_exact_reference_captures": 33,
+    "combined_report": "docs/android-studio/ports/combined-foundation-371.json",
+    "protected_merge": "pending final source-equivalent metadata commit and branch guard"
+  }
 }

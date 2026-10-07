@@ -1,0 +1,13 @@
+{
+  "source_commit": "f48b72127fac902582e1b7b28499eccc4ebf1841",
+  "files": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "52fa6207155f99d8d91197968af5c97ce8a57f5acc79c270f20a2374dcc32b5e"
+    },
+    {
+      "path": "crates/android_ui/src/android_ui.rs",
+      "sha256": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8"
+    }
+  ]
+}

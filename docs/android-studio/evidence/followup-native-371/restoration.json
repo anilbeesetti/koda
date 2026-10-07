@@ -1,0 +1,13 @@
+{
+  "source_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "old_app_pid": 232854,
+  "old_app_state": "zombie; no active executable",
+  "old_display118": "absent",
+  "new_profile": "qa-restored-success",
+  "interrupted_checks_credited": false,
+  "historical_daemon_pid": 167092,
+  "historical_daemon_owned": false,
+  "restored_capture_script_sha256": "4ac3757a40e6810f0ef604f4a61932d11291cb7457dbfd6d7a8266bdce8b929a",
+  "restored_fixture_shim_sha256": "54a32aa5dc56011ba3e7819687b31587811795058e09d8737b5456d5e1cacba3",
+  "official_wrapper_sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59"
+}

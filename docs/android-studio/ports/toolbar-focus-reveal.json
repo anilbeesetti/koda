@@ -263,5 +263,15 @@
       "path": "docs/android-studio/evidence/toolbar-focus-reveal/full-ui-tests.log",
       "sha256": "554e4b00c391a9dd4c0bd0efc5a1fca18564a3a0160c2ce35fb50f1928701c8e"
     }
-  ]
+  ],
+  "combined_lead_validation": {
+    "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+    "component_build_tests_clippy_format": "PASS",
+    "full_workspace_ci": "PASS10383/0fail/23existingignored;fullLinuxapp/macappPASS",
+    "native_full_app": "PASS scoped toolbar/model-sync consumer; GUI tree wiring not claimed",
+    "whole_source_guard": "PASS4606files with unchanged fixed exclusions",
+    "fresh_exact_reference_captures": 33,
+    "combined_report": "docs/android-studio/ports/combined-foundation-371.json",
+    "protected_merge": "pending final source-equivalent metadata commit and branch guard"
+  }
 }

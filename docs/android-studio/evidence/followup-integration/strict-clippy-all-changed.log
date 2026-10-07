@@ -1,0 +1,304 @@
++ cargo clippy --locked -p android_tools -p android_ui -p icons -p xtask --release --all-targets --all-features -- --deny warnings
+    Checking serde v1.0.229
+   Compiling serde_core v1.0.229
+    Checking erased-serde v0.4.9
+    Checking hashbrown v0.17.1
+    Checking bitflags v2.13.1
+    Checking serde_fmt v1.0.3
+    Checking smallvec v1.16.1
+    Checking value-bag-serde1 v1.12.0
+    Checking indexmap v2.14.0
+    Checking value-bag v1.12.0
+   Compiling serde_json v1.0.151
+    Checking log v0.4.29
+    Checking rustix v1.1.4
+    Checking futures-util v0.3.34
+    Checking icu_normalizer v2.3.0
+    Checking parking_lot_core v0.9.12
+    Checking parking_lot v0.12.5
+    Checking idna_adapter v1.2.1
+    Checking idna v1.1.0
+    Checking futures-executor v0.3.34
+    Checking chrono v0.4.42
+    Checking url v2.5.7
+    Checking futures v0.3.34
+    Checking tracing v0.1.43
+   Compiling globset v0.4.17
+   Compiling gpui_util v0.1.0 (/workspace/android-studio-integration/crates/gpui_util)
+   Compiling rust-embed-utils v8.11.0
+    Checking schemars v1.0.4
+    Checking tempfile v3.27.0
+    Checking polling v3.11.0
+    Checking async-io v2.6.0
+   Compiling rust-embed-impl v8.11.0
+   Compiling collections v0.1.0 (/workspace/android-studio-integration/crates/collections)
+    Checking async-signal v0.2.13
+    Checking async-net v2.0.0
+    Checking async-process v2.5.0 (https://github.com/zed-industries/async-process.git?rev=0b6d6713570af61806e1e5cb40e0f757cb93fd9d#0b6d6713)
+    Checking path v0.1.0 (/workspace/android-studio-integration/crates/path)
+    Checking nix v0.30.1
+    Checking smol v2.0.2
+   Compiling perf v0.1.0 (/workspace/android-studio-integration/tooling/perf)
+    Checking serde_json_lenient v0.2.4
+    Checking rust-embed v8.11.0
+    Checking xattr v1.6.1
+    Checking serde_urlencoded v0.7.1
+   Compiling util_macros v0.1.0 (/workspace/android-studio-integration/crates/util_macros)
+    Checking kurbo v0.13.1
+    Checking uuid v1.18.1
+    Checking gpui_shared_string v0.1.0 (/workspace/android-studio-integration/crates/gpui_shared_string)
+    Checking rayon v1.11.0
+    Checking command-fds v0.3.2
+    Checking async-global-executor v2.4.1
+    Checking util v0.1.0 (/workspace/android-studio-integration/crates/util)
+    Checking tracing-log v0.2.0
+    Checking kv-log-macro v1.0.7
+    Checking async-std v1.13.2
+    Checking svgtypes v0.16.1
+    Checking tracing-subscriber v0.3.22
+    Checking zlog v0.1.0 (/workspace/android-studio-integration/crates/zlog)
+    Checking fontdb v0.23.0
+    Checking async-tar v0.6.1 (https://github.com/zed-industries/async-tar?rev=bd3ad6f89df9a9da7a8535958756d6bf465936a0#bd3ad6f8)
+    Checking rustybuzz v0.20.1
+    Checking simplecss v0.2.2
+    Checking postage v0.5.0
+    Checking ztracing v0.1.0 (/workspace/android-studio-integration/crates/ztracing)
+    Checking sum_tree v0.1.0 (/workspace/android-studio-integration/crates/sum_tree)
+    Checking http_client v0.1.0 (/workspace/android-studio-integration/crates/http_client)
+    Checking exr v1.74.0
+    Checking rusty-fork v0.3.1
+    Checking tiny-skia v0.11.4
+    Checking png v0.18.0
+    Checking usvg v0.46.0
+    Checking proptest v1.10.0 (https://github.com/proptest-rs/proptest?rev=3dca198a8fef1b32e3a66f1e1897c955b4dc5b5b#3dca198a)
+   Compiling gpui v0.2.2 (/workspace/android-studio-integration/crates/gpui)
+    Checking accesskit v0.24.1
+    Checking scheduler v0.1.0 (/workspace/android-studio-integration/crates/scheduler)
+    Checking image v0.25.10
+    Checking futures-concurrency v7.7.1
+    Checking resvg v0.46.0
+    Checking taffy v0.13.0
+   Compiling semver v1.0.28
+    Checking wasmtime-internal-core v48.0.1
+    Checking mio v1.2.0
+    Checking cranelift-bitset v0.135.1
+   Compiling pulley-interpreter v48.0.1
+    Checking cranelift-entity v0.135.1
+    Checking getrandom v0.2.16
+    Checking postcard v1.1.3
+    Checking cranelift-bforest v0.135.1
+    Checking gimli v0.33.0
+    Checking regalloc2 v0.15.2
+   Compiling cranelift-codegen-meta v0.135.1
+   Compiling rustc_version v0.4.1
+    Checking wasmparser v0.254.0
+   Compiling cranelift-codegen v0.135.1
+   Compiling logos-codegen v0.15.1
+    Checking object v0.39.1
+    Checking wasmprinter v0.254.0
+   Compiling aws-lc-rs v1.17.1
+    Checking tokio v1.52.1
+    Checking wasmtime-environ v48.0.1
+    Checking deranged v0.5.4
+   Compiling logos-derive v0.15.1
+    Checking wasmtime-internal-jit-icache-coherence v48.0.1
+    Checking memfd v0.6.5
+   Compiling tree-sitter v0.27.0 (https://github.com/tree-sitter/tree-sitter?rev=43623ec9bf0eaaf7113285c46e8a09018f181b18#43623ec9)
+    Checking time v0.3.47
+    Checking ring v0.17.14
+   Compiling logos v0.15.1
+   Compiling rustls v0.23.40
+   Compiling petgraph v0.8.3
+   Compiling protox-parse v0.9.0
+    Checking rustls-webpki v0.103.13
+    Checking cloud_llm_client v0.1.0 (/workspace/android-studio-integration/crates/cloud_llm_client)
+   Compiling prost-build v0.14.4
+   Compiling protox v0.9.1
+    Checking rand_core v0.6.4
+    Checking ignore v0.4.24
+    Checking paths v0.1.0 (/workspace/android-studio-integration/crates/paths)
+   Compiling proto v0.1.0 (/workspace/android-studio-integration/crates/proto)
+    Checking language_model_core v0.1.0 (/workspace/android-studio-integration/crates/language_model_core)
+    Checking release_channel v0.1.0 (/workspace/android-studio-integration/crates/release_channel)
+    Checking rope v0.1.0 (/workspace/android-studio-integration/crates/rope)
+    Checking net v0.1.0 (/workspace/android-studio-integration/crates/net)
+    Checking clock v0.1.0 (/workspace/android-studio-integration/crates/clock)
+    Checking inotify v0.11.0
+    Checking text v0.1.0 (/workspace/android-studio-integration/crates/text)
+    Checking askpass v0.1.0 (/workspace/android-studio-integration/crates/askpass)
+    Checking tokio-rustls v0.26.4
+    Checking telemetry_events v0.1.0 (/workspace/android-studio-integration/crates/telemetry_events)
+    Checking notify-types v2.1.0 (https://github.com/zed-industries/notify?rev=d842f16b2716bd60f09caf3ae3a894237ab38f54#d842f16b)
+    Checking telemetry v0.1.0 (/workspace/android-studio-integration/crates/telemetry)
+    Checking git v0.1.0 (/workspace/android-studio-integration/crates/git)
+    Checking notify v9.0.0-rc.4 (https://github.com/zed-industries/notify?rev=d842f16b2716bd60f09caf3ae3a894237ab38f54#d842f16b)
+    Checking trash v5.2.5 (https://github.com/zed-industries/trash-rs?rev=41c6c800d884a89351f3b8856d12894cccee261d#41c6c800)
+    Checking signature v2.2.0
+    Checking rand_chacha v0.3.1
+    Checking syntax_theme v0.1.0 (/workspace/android-studio-integration/crates/syntax_theme)
+    Checking serde_spanned v0.6.9
+    Checking toml_datetime v0.6.11
+    Checking toml_edit v0.22.27
+    Checking theme v0.1.0 (/workspace/android-studio-integration/crates/theme)
+    Checking rand v0.8.6
+    Checking toml v0.8.23
+    Checking tungstenite v0.28.0
+    Checking num-bigint-dig v0.8.6
+   Compiling h2 v0.4.19
+    Checking rsa v0.9.10
+    Checking async-tungstenite v0.33.0
+    Checking hyper v1.11.1
+    Checking zed_actions v0.1.0 (/workspace/android-studio-integration/crates/zed_actions)
+    Checking nucleo v0.5.0
+    Checking hyper-util v0.1.17
+    Checking watch v0.1.0 (/workspace/android-studio-integration/crates/watch)
+    Checking fuzzy v0.1.0 (/workspace/android-studio-integration/crates/fuzzy)
+    Checking lsp-types v0.95.1 (https://github.com/zed-industries/lsp-types?rev=f1783e63a7f4eb4397bf51d4148b4895a1f7ab16#f1783e63)
+    Checking async-pipe v0.1.3 (https://github.com/zed-industries/async-pipe-rs?rev=82d00a04211cf4e1236029aa03e6b6ce2a74c553#82d00a04)
+   Compiling language v0.1.0 (/workspace/android-studio-integration/crates/language)
+    Checking fuzzy_nucleo v0.1.0 (/workspace/android-studio-integration/crates/fuzzy_nucleo)
+    Checking tokio-util v0.7.18
+   Compiling hyper-rustls v0.27.9
+   Compiling zed-reqwest v0.12.15-zed (https://github.com/zed-industries/reqwest.git?rev=33bc764aa15ff7b200bf7c93bd96e24878d53e14#33bc764a)
+   Compiling android_tools v0.1.0 (/workspace/android-studio-integration/crates/android_tools)
+    Checking lsp v0.1.0 (/workspace/android-studio-integration/crates/lsp)
+    Checking tiny_http v0.12.0
+    Checking cssparser v0.36.0
+    Checking cranelift-native v0.135.1
+    Checking cranelift-frontend v0.135.1
+    Checking wasmtime-internal-unwinder v48.0.1
+   Compiling htmlize v1.1.0
+    Checking wasmtime-internal-cranelift v48.0.1
+    Checking ciborium v0.2.2
+    Checking rustls-platform-verifier v0.7.0
+    Checking zeta_prompt v0.1.0 (/workspace/android-studio-integration/crates/zeta_prompt)
+    Checking credentials_provider v0.1.0 (/workspace/android-studio-integration/crates/credentials_provider)
+    Checking yawc v0.4.2
+    Checking wasmtime v48.0.1
+    Checking selectors v0.37.0
+    Checking cloud_api_types v0.1.0 (/workspace/android-studio-integration/crates/cloud_api_types)
+    Checking fs v0.1.0 (/workspace/android-studio-integration/crates/fs)
+    Checking task v0.1.0 (/workspace/android-studio-integration/crates/task)
+    Checking rpc v0.1.0 (/workspace/android-studio-integration/crates/rpc)
+    Checking http_client_tls v0.1.0 (/workspace/android-studio-integration/crates/http_client_tls)
+    Checking string_cache v0.9.0
+    Checking gpui_tokio v0.1.0 (/workspace/android-studio-integration/crates/gpui_tokio)
+    Checking cloud_api_client v0.1.0 (/workspace/android-studio-integration/crates/cloud_api_client)
+    Checking granit-parser v1.0.0
+    Checking lol_html v3.0.1
+    Checking json5 v1.3.1
+    Checking web_atoms v0.2.6
+    Checking wasmtime-c-api-impl v48.0.1
+    Checking zed_credentials_provider v0.1.0 (/workspace/android-studio-integration/crates/zed_credentials_provider)
+    Checking proxy_handshake v0.1.0 (/workspace/android-studio-integration/crates/proxy_handshake)
+    Checking icons v0.1.0 (/workspace/android-studio-integration/crates/icons)
+    Checking dugong-graphlib v0.8.0-alpha.5
+    Checking merman-core v0.8.0-alpha.5
+    Checking dugong v0.8.0-alpha.5
+    Checking settings_json v0.1.0 (/workspace/android-studio-integration/crates/settings_json)
+    Checking settings_content v0.1.0 (/workspace/android-studio-integration/crates/settings_content)
+    Checking language_core v0.1.0 (/workspace/android-studio-integration/crates/language_core)
+    Checking grammars v0.1.0 (/workspace/android-studio-integration/crates/grammars)
+    Checking markup5ever v0.39.0
+    Checking icu_collator v2.3.0
+    Checking pulldown-cmark v0.13.4
+    Checking node_runtime v0.1.0 (/workspace/android-studio-integration/crates/node_runtime)
+    Checking roughr-merman v0.12.3
+    Checking manatee v0.8.0-alpha.5
+   Compiling ui v0.1.0 (/workspace/android-studio-integration/crates/ui)
+    Checking component v0.1.0 (/workspace/android-studio-integration/crates/component)
+    Checking menu v0.1.0 (/workspace/android-studio-integration/crates/menu)
+    Checking env_var v0.1.0 (/workspace/android-studio-integration/crates/env_var)
+    Checking dap-types v0.0.1 (https://github.com/zed-industries/dap-types?rev=1b461b310481d01e02b2603c16d7144b926339f8#1b461b31)
+    Checking merman-render v0.8.0-alpha.5
+    Checking vte v0.15.0
+    Checking migrator v0.1.0 (/workspace/android-studio-integration/crates/migrator)
+    Checking settings v0.1.0 (/workspace/android-studio-integration/crates/settings)
+    Checking html5ever v0.39.0
+    Checking feature_flags v0.1.0 (/workspace/android-studio-integration/crates/feature_flags)
+    Checking theme_settings v0.1.0 (/workspace/android-studio-integration/crates/theme_settings)
+    Checking xml5ever v0.39.0
+    Checking rustix-openpty v0.2.0
+   Compiling sqlez v0.1.0 (/workspace/android-studio-integration/crates/sqlez)
+    Checking alacritty_terminal v0.26.1-dev (https://github.com/zed-industries/alacritty?rev=4c129667ce56611becdc82de6e28218c80e2e88f#4c129667)
+    Checking worktree v0.1.0 (/workspace/android-studio-integration/crates/worktree)
+    Checking buffer_diff v0.1.0 (/workspace/android-studio-integration/crates/buffer_diff)
+    Checking markup5ever_rcdom v0.39.0+unofficial
+    Checking oauth_callback_server v0.1.0 (/workspace/android-studio-integration/crates/oauth_callback_server)
+    Checking snippet v0.1.0 (/workspace/android-studio-integration/crates/snippet)
+    Checking spirv v0.4.0+sdk-1.4.341.0
+    Checking client v0.1.0 (/workspace/android-studio-integration/crates/client)
+    Checking naga v29.0.4
+    Checking dap v0.1.0 (/workspace/android-studio-integration/crates/dap)
+    Checking extension v0.1.0 (/workspace/android-studio-integration/crates/extension)
+    Checking snippet_provider v0.1.0 (/workspace/android-studio-integration/crates/snippet_provider)
+    Checking terminal v0.1.0 (/workspace/android-studio-integration/crates/terminal)
+    Checking merman v0.8.0-alpha.5
+   Compiling camino v1.2.6
+    Checking mermaid_render v0.1.0 (/workspace/android-studio-integration/crates/mermaid_render)
+    Checking context_server v0.1.0 (/workspace/android-studio-integration/crates/context_server)
+    Checking markdown v0.1.0 (/workspace/android-studio-integration/crates/markdown)
+    Checking wax v0.7.0
+    Checking prettier v0.1.0 (/workspace/android-studio-integration/crates/prettier)
+   Compiling sqlez_macros v0.1.0 (/workspace/android-studio-integration/crates/sqlez_macros)
+    Checking remote v0.1.0 (/workspace/android-studio-integration/crates/remote)
+    Checking git_hosting_providers v0.1.0 (/workspace/android-studio-integration/crates/git_hosting_providers)
+    Checking zed_env_vars v0.1.0 (/workspace/android-studio-integration/crates/zed_env_vars)
+    Checking wgpu-types v29.0.4
+   Compiling cargo-platform v0.3.2
+    Checking gpu-descriptor-types v0.2.0
+    Checking gpu-allocator v0.28.0
+    Checking gpu-descriptor v0.3.2
+   Compiling cargo_metadata v0.23.1
+    Checking wayland-sys v0.31.11
+    Checking db v0.1.0 (/workspace/android-studio-integration/crates/db)
+    Checking wgpu-naga-bridge v29.0.4
+    Checking language_model v0.1.0 (/workspace/android-studio-integration/crates/language_model)
+    Checking num-bigint v0.4.8
+    Checking wgpu-hal v29.0.4
+   Compiling octocrab v0.49.7
+    Checking session v0.1.0 (/workspace/android-studio-integration/crates/session)
+    Checking ui_input v0.1.0 (/workspace/android-studio-integration/crates/ui_input)
+    Checking simple_asn1 v0.6.3
+    Checking tower v0.5.2
+    Checking jsonwebtoken v10.3.0
+    Checking tower-http v0.6.11
+    Checking hyper-timeout v0.5.2
+    Checking cfg-expr v0.20.9
+    Checking terminal_size v0.4.3
+    Checking serde_yaml v0.9.34+deprecated
+    Checking target-spec v3.7.0
+    Checking clap_builder v4.5.49
+    Checking wgpu-core-deps-windows-linux-android v29.0.4
+    Checking wgpu-core v29.0.4
+    Checking merge v0.1.0
+    Checking ahash v0.8.12
+    Checking language_detection v0.1.0 (/workspace/android-studio-integration/crates/language_detection)
+    Checking harfrust v0.5.0
+    Checking edit_prediction_types v0.1.0 (/workspace/android-studio-integration/crates/edit_prediction_types)
+    Checking multi_buffer v0.1.0 (/workspace/android-studio-integration/crates/multi_buffer)
+    Checking vim_mode_setting v0.1.0 (/workspace/android-studio-integration/crates/vim_mode_setting)
+    Checking file_icons v0.1.0 (/workspace/android-studio-integration/crates/file_icons)
+    Checking assets v0.1.0 (/workspace/android-studio-integration/crates/assets)
+    Checking cargo-platform v0.1.9
+    Checking cosmic-text v0.19.0
+    Checking guppy v0.18.0
+    Checking cargo_metadata v0.19.2
+    Checking gh-workflow v0.8.0 (https://github.com/zed-industries/gh-workflow?rev=37f3c0575d379c218a9c455ee67585184e40d43f#37f3c057)
+    Checking clap v4.5.49
+    Checking wgpu v29.0.4
+    Checking cargo_toml v0.21.0
+    Checking tar v0.4.46
+    Checking gpui_wgpu v0.1.0 (/workspace/android-studio-integration/crates/gpui_wgpu)
+    Checking compliance v0.1.0 (/workspace/android-studio-integration/tooling/compliance)
+    Checking xtask v0.1.0 (/workspace/android-studio-integration/tooling/xtask)
+    Checking project v0.1.0 (/workspace/android-studio-integration/crates/project)
+    Checking agent_settings v0.1.0 (/workspace/android-studio-integration/crates/agent_settings)
+    Checking workspace v0.1.0 (/workspace/android-studio-integration/crates/workspace)
+    Checking breadcrumbs v0.1.0 (/workspace/android-studio-integration/crates/breadcrumbs)
+    Checking editor v0.1.0 (/workspace/android-studio-integration/crates/editor)
+    Checking android_ui v0.1.0 (/workspace/android-studio-integration/crates/android_ui)
+    Finished `release` profile [optimized + debuginfo] target(s) in 2m 30s
++ [[ -z '' ]]
++ which cargo-shear
++ exit 0

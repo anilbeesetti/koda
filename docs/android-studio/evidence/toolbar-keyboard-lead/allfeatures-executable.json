@@ -1,0 +1,8 @@
+{
+  "source_commit": "65055461bb17273fd41e1408cb4ad854280adafd",
+  "scope": "Frozen isolated toolbar follow-up,121passing allfeatureUI tests and1existing opt-in ignored capture. Combined Java/provider/tree dependencies require their own fresh gates.",
+  "bytes": 739939696,
+  "sha256": "3cf23de52189a8967ccdcbc5cc646f723e278ed931fe4b46e0b2b8b77eaf76da",
+  "original": "/workspace/.cache/zed/target/debug/deps/android_ui-09bc6d780809bc79",
+  "frozen": "/tmp/android-studio-frozen-executables/android-ui-650-allfeatures121"
+}

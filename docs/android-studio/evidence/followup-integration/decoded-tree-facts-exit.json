@@ -1,0 +1,10 @@
+{
+  "command": [
+    "/workspace/.cache/zed/target/debug/examples/project_tree_facts_probe",
+    "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project",
+    "/workspace/android-studio-artifacts/followup-integration/gradle-tree-facts.log"
+  ],
+  "exit_code": 0,
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "assertions_passed": true
+}

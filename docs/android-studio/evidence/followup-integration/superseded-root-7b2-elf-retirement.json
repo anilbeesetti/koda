@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "old_path": "/tmp/android-studio-link-output/koda-7b2bd3e7ff-207567",
+  "sha256": "40c6918cb68d873f2025f14cec54e64a79a966ff9fb78771a61823b84ed71ab0",
+  "bytes": 1358448192,
+  "hardlinks_before": 1,
+  "live_process_exe_or_fds_using_old": [],
+  "generated_output_alias_checks": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/koda",
+      "resolved": "/tmp/android-studio-link-output/koda-followup-231332",
+      "points_to_old_inode": false
+    },
+    {
+      "path": "/workspace/android-studio-integration/target/cloud-app/koda",
+      "resolved": "/tmp/android-studio-link-output/koda-followup-231332",
+      "points_to_old_inode": false
+    }
+  ],
+  "new_executable_retained": "/tmp/android-studio-link-output/koda-followup-231332",
+  "reason": "Superseded Root-produced7b2 app; current371 app built and all planned native functional flows pass; older source/logs/screenshots/tests retained. This retires only reproducible generated ELF output.",
+  "source_or_fixture_deleted": false,
+  "retired": true,
+  "old_path_exists_after": false,
+  "new_path_exists_after": true
+}

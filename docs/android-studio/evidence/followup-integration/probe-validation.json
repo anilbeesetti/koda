@@ -1,0 +1,17 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "/workspace/android-studio-artifacts/link-redirect-followup/probe.rs",
+    "-C",
+    "linker=/workspace/android-studio-artifacts/link-redirect-followup/bin/cc",
+    "-o",
+    "/workspace/android-studio-artifacts/link-redirect-followup/probe-output"
+  ],
+  "compiler_exit": 0,
+  "executable_exit": 0,
+  "stdout": "real Rust linker probe passed\n",
+  "helper_sha256": "46e522b3c6fcb1ef974e1fa3d676c333eb34836cfd6e765a30a8bffd90823054",
+  "binary_sha256": "d1a12b3ebc5cc9a66d3fd31bedc4ce7bf35dfc9f09d5b658be19f7dbf1641551",
+  "only_output_argument_changed": true
+}

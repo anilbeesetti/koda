@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "complete": false,
+  "checks": {
+    "android_tools": {
+      "passed": 174,
+      "failed": 0,
+      "ignored": 0
+    },
+    "android_ui": {
+      "passed": 125,
+      "failed": 0,
+      "existing_opt_in_ignored": 1
+    },
+    "icons": {
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    "strict_clippy": "PASS",
+    "workspace_format": "PASS",
+    "actual_full_app_build": "PASS",
+    "selected_reference_captures": 33,
+    "provenance_cli": "PASS",
+    "native_full_app": {
+      "verdict": "PASS scoped to changed toolbar/Build consumer/model sync",
+      "proof": "docs/android-studio/evidence/followup-native-371/runtime-proof.json",
+      "ui_review": "PASS scoped",
+      "ux_review": "PASS scoped",
+      "quiet_idle_samples_one_core_percent": {
+        "wide": 3.2,
+        "initial_narrow": 8.09,
+        "settled_narrow_recheck": 2.2
+      },
+      "hardware_startup_large_project_performance": "not established",
+      "owned_processes_closed": true,
+      "source_guard": "PASS4606 unchanged product/fixture files/index/untracked; same fixed exclusions"
+    },
+    "full_ci": {
+      "schema_version": 1,
+      "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+      "run_id": 37658403968,
+      "url": "https://github.com/anilbeesetti/koda/actions/runs/37658403968",
+      "status": "completed",
+      "conclusion": "success",
+      "tests_run": 10383,
+      "passed": 10383,
+      "failed": 0,
+      "existing_ignored": 23,
+      "full_unfiltered_workspace": true,
+      "full_app_build": "PASS",
+      "raw_log_sha256": "4e3f7d7fc1003ce2750129dc7b10f673dc15b933afb07e06b93062bf0a787283",
+      "summary_lines": [
+        "Linux build and workspace tests\tInstall Linux dependencies\t2026-10-07T17:24:47.1979251Z Finished installing Linux dependencies with script/linux",
+        "Linux build and workspace tests\tBuild test extension\t\ufeff2026-10-07T17:25:15.5219304Z ##[group]Run python3 script/ci-run stage 'Test extension build' -- cargo build --locked --manifest-path extensions/test-extension/Cargo.toml --target wasm32-wasip2 --target-dir extensions/test-extension/target",
+        "Linux build and workspace tests\tBuild test extension\t2026-10-07T17:25:15.5220782Z python3 script/ci-run stage 'Test extension build' -- cargo build --locked --manifest-path extensions/test-extension/Cargo.toml --target wasm32-wasip2 --target-dir extensions/test-extension/target",
+        "Linux build and workspace tests\tBuild test extension\t2026-10-07T17:29:14.7139519Z     Finished `dev` profile [unoptimized] target(s) in 3m 59s",
+        "Linux build and workspace tests\tBuild and run workspace tests\t2026-10-07T17:29:14.9759919Z   cargo nextest run --locked --workspace \"${filter_args[@]}\" --no-fail-fast --no-tests=warn \\",
+        "Linux build and workspace tests\tBuild and run workspace tests\t2026-10-07T17:50:34.7422384Z     Finished `test` profile [unoptimized] target(s) in 21m 12s",
+        "Linux build and workspace tests\tBuild and run workspace tests\t2026-10-07T18:23:29.3945385Z      Summary [1967.027s] 10383 tests run: 10383 passed, 23 skipped",
+        "Linux build and workspace tests\tBuild Zed\t\ufeff2026-10-07T18:23:29.7392666Z ##[group]Run python3 script/ci-run stage 'Linux app build' -- cargo build --locked --keep-going -p zed --bin koda",
+        "Linux build and workspace tests\tBuild Zed\t2026-10-07T18:23:29.7398326Z python3 script/ci-run stage 'Linux app build' -- cargo build --locked --keep-going -p zed --bin koda",
+        "Linux build and workspace tests\tBuild Zed\t2026-10-07T18:33:16.3145263Z     Finished `dev` profile [unoptimized] target(s) in 9m 46s"
+      ]
+    }
+  },
+  "bounded_parity": {
+    "total_identified": 92,
+    "ported_passing": 17,
+    "adapted_passing": 16,
+    "unported": 59,
+    "not_applicable": 0,
+    "failing": 0,
+    "exhaustive_census_complete": false
+  },
+  "evidence": [
+    {
+      "path": "docs/android-studio/evidence/followup-integration/app-build-retry-exit.json",
+      "bytes": 316,
+      "sha256": "31e872442fd23b8d1b28352dfeae7615b226f2009fd56dad79c5e75c6396b5dc"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/app-build-retry.log",
+      "bytes": 17352,
+      "sha256": "b49dc2397bd1a0747c8ecad0c1d2b946c5186df406d86485b13c48117d1105bd"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/build-source-freshness.json",
+      "bytes": 974,
+      "sha256": "75b7c0d83777bad8522ca3e117f8e8cfc1686bf62c786a860cec2fc5933c310f"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/decoded-generation-exit.json",
+      "bytes": 384,
+      "sha256": "647a332aa0b03e90a119bdf3edf93dd735274fed47aaf7e1fc14b9263e094fe8"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/decoded-generation.json",
+      "bytes": 99351,
+      "sha256": "252822f65ebc1e790757463cf65a6bae8cba97a9fea9416f84a081b834a1c659"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/decoded-tree-facts-exit.json",
+      "bytes": 390,
+      "sha256": "61904d68018db092e8972e6bf9a8c8346001e79fd95a45a90cbb9233a75ad1d8"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/decoded-tree-facts.json",
+      "bytes": 457457,
+      "sha256": "eab73f34d720d6524f91e0b09d0504fbf1b13b8002c24985a9048839d72738a5"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/exact-reference-capture.log",
+      "bytes": 2543,
+      "sha256": "ec100c75a7c9d3fd4100112fe73434b1e8b24a4c33d10ca9345e676316a4c228"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/gradle-generation-exit.json",
+      "bytes": 691,
+      "sha256": "882842aa2b26c7c27a564476b36d161109aaf46d46d7cfc934e1d7b022252df0"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/gradle-generation.log",
+      "bytes": 60296,
+      "sha256": "ef384b2aaeedddc0d2a38a4f0e1d3640d408379e64fb32ec1b29b1794f16e6e0"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/gradle-tree-facts-exit.json",
+      "bytes": 667,
+      "sha256": "527f68a5c99b61b4c15062edf1da143833a558e510c390e07dea9d591b383230"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/gradle-tree-facts.log",
+      "bytes": 245987,
+      "sha256": "b9f69a1ada445a16ce42b232301339f60c3637037abc0a047aa26d241de1fbf2"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/helper-change-scope.json",
+      "bytes": 527,
+      "sha256": "49ee0c11f5f505109033648db5a6b222bf13b6704669ddf06ec1fed2c608de7e"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/icons-tools-all-features-exit.json",
+      "bytes": 3223,
+      "sha256": "10dfd8bba2ccbc809233a4f562c9f86c546468a67042708fe686eb1330008ce4"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/icons-tools-all-features.log",
+      "bytes": 169484,
+      "sha256": "896cc84aef4a264b91ca6e0c6940f6ae21f61c4c5cdf1f85d05acca7ddd564e0"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/new-app-executable.json",
+      "bytes": 727,
+      "sha256": "97756fc86d3f0059270f031dbad90cdf7f8c6e57c1ce8e4bba2b41ee852a6cfb"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/parity-validator-371-exit.json",
+      "bytes": 584,
+      "sha256": "58b6d4044f50199a019eff570c48a13a4e39b3250b09ff13b19b1efdc7bd3319"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/parity-validator-371.log",
+      "bytes": 400,
+      "sha256": "6f0807a0eb3a0da24cf43adc48145bf1aa09841c903482446794b530772cbfe6"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/probe-validation.json",
+      "bytes": 618,
+      "sha256": "150a4918c3fd6f7ad3458ad08423f84b7a2a6fef68dab9eebae98c6dca9df2b4"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/strict-clippy-all-changed-exit.json",
+      "bytes": 372,
+      "sha256": "092ab45b251873937b30a8a4b076d9170db5dddd9ecc099aade3586d4d99c533"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/strict-clippy-all-changed.log",
+      "bytes": 16670,
+      "sha256": "b442ef81d7893146fc282a4ba9d9a0c06ceb860e7ad53daabafbfcd24471e8fa"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/ui-all-features-exit.json",
+      "bytes": 711,
+      "sha256": "884859f18f5a727658f38dd3810297fef136321b3c2d7d52737a068bb4d1741a"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/ui-all-features.log",
+      "bytes": 807803,
+      "sha256": "47f8f06bf9dee5d6607ad59692aea29ddb4a5b674af78ae8d7c08e7dfbb3320a"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/whole-product-guard-result.json",
+      "bytes": 220,
+      "sha256": "0d6ac221d14435480870ecfd62e44a075c30c429731dedfc057c8bc48a86f3a9"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/workspace-format-exit.json",
+      "bytes": 289,
+      "sha256": "e174c90ec710a3b68e09fb931e727e13d19cefd7e6161583dfab9a8264f6ade4"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/workspace-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/ci-linux-371-completed.log",
+      "bytes": 734540,
+      "sha256": "4e3f7d7fc1003ce2750129dc7b10f673dc15b933afb07e06b93062bf0a787283"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/ci-371-run.json",
+      "bytes": 6876,
+      "sha256": "253b6914887ff4d031a8fcc1b2c161685551e5dff652a6bb8638cb8e3680ab36"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/ci-371-summary.json",
+      "bytes": 2450,
+      "sha256": "11db2538e387c5e1b8eb7449206e02f9ac7cbe99656d85654825672527dab2a8"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/runtime-proof.json",
+      "bytes": 21009,
+      "sha256": "918456e5641db80c0bd4b634649bee9ba63eecae3b45abc23aa82550e1d8119d"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/guard-final-after-native.json",
+      "bytes": 799,
+      "sha256": "311072f8f12c61d0c7b56f261aae20d40ce928052c19213bcba17b6dd7a2675b"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/native-restored-model-proof.json",
+      "bytes": 4429,
+      "sha256": "4189bf14f1e3bdd201da80775ca516a52d294317e7bd46b07e5c3c507328f6bb"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/native-sync-restored-export-proof.json",
+      "bytes": 463,
+      "sha256": "b62aaac8ae43e7b835d8882d8bd649e291103d3e15efb535d73722060e535773"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/final-closure.json",
+      "bytes": 974,
+      "sha256": "8d896eb635adcfff574d8d6776de33d9179d15519688d0d6b7816d0a47fe78cd"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/idle-restored-wide.json",
+      "bytes": 3471,
+      "sha256": "649e57d69f7363cebf8c98deb7f1390338f53920d480c7db4d0baf4fa53391fd"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/idle-restored-narrow.json",
+      "bytes": 3473,
+      "sha256": "a2d2601facd2ff427b877543b55475296a9ff447da5904edcdc7d80ba894b973"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/idle-restored-narrow-settled-recheck.json",
+      "bytes": 3490,
+      "sha256": "1e579660a942d420614daf9d91c84619d5047c0d223964a5f7f08e5681dcdecf"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/success-closure.json",
+      "bytes": 236,
+      "sha256": "17732f9e3d22a31e2826ea1f1cfa4e60ec73cfab34f0aedca9770c3332809c21"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/restoration.json",
+      "bytes": 626,
+      "sha256": "269b8d8e19cfa7a41c81730b74e32ec854fab65d056b8ccbbfa66cdc4d33e60f"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/fixture-source-proof.json",
+      "bytes": 1923,
+      "sha256": "113e146a9d5a71b10c37cad7fc76dbc230c8cb430c1cdfe547cdc66fbd471418"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/error-fixture-before.json",
+      "bytes": 1618,
+      "sha256": "8a63d3f54232d73d97ce3cbc562dc8915abe6b1510214c943929cd74e1434d80"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/native-sync-restored-stdout.log",
+      "bytes": 197106,
+      "sha256": "bde003c4325f1011cdf30487eaf065d92ae97f2d38c81b795f8208334cec3e73"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-native-371/native-review-text.json",
+      "bytes": 13523,
+      "sha256": "72a218531dc6c08ebe87b2590bef7ec4041687e6e9b63cce8356cb37d2ba243e"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/lead-premerge-371.json",
+      "bytes": 1064,
+      "sha256": "f4e03db502cd7c103d114a1386f0abc53021ea17d1041533c73c80687374ceaa"
+    },
+    {
+      "path": "docs/android-studio/evidence/followup-integration/superseded-root-7b2-elf-retirement.json",
+      "bytes": 1111,
+      "sha256": "95ca441440c8196476ce8bc61311a9e6abc96336b56ded2ad615117da956fbfc"
+    }
+  ],
+  "exceptions": [
+    "Android SDK/Gradle and minimal in-process SDK metadata bridge; IDE/model logic is Rust"
+  ],
+  "prior_failures_retained": true,
+  "source_guard_file_count": 4606,
+  "source_metadata_exclusions_unchanged": true,
+  "status": "Ready for final source-equivalent metadata commit and protected merge; all current component/build/reference/fullCI/native gates pass",
+  "not_complete_reason": "Foundation and IDE remain unfinished; this is a bounded reviewed component slice, and integration merge is pending.",
+  "component_slice_gates_pass": true,
+  "all_five_reviews_for_each_component": "PASS scoped; individual source snapshots and historical failures retained in each task report",
+  "protected_merge_pending": true,
+  "source_review_reports": [
+    "docs/android-studio/ports/toolbar-focus-reveal.json",
+    "docs/android-studio/ports/source-generation-facts.json",
+    "docs/android-studio/ports/project-tree-facts.json",
+    "docs/android-studio/ports/icon-integrity.json",
+    "docs/android-studio/ports/java-class-facts.json",
+    "docs/android-studio/ports/reference-census.json"
+  ]
+}

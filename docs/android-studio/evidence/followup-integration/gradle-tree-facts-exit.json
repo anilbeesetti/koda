@@ -1,0 +1,18 @@
+{
+  "command": [
+    "gradle",
+    "--no-daemon",
+    "--console=plain",
+    "--rerun-tasks",
+    "--init-script",
+    "/workspace/android-studio-integration/crates/android_tools/src/project_model.gradle",
+    ":app:createAssets",
+    "kodaAndroidProjectModel"
+  ],
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "project": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project",
+  "exit_code": 0,
+  "elapsed_seconds": 11.508877937998477,
+  "exporter_sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+  "log_sha256": "b9f69a1ada445a16ce42b232301339f60c3637037abc0a047aa26d241de1fbf2"
+}

@@ -1,0 +1,76 @@
+   Compiling aws-lc-sys v0.42.0
+   Compiling ui v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/ui)
+   Compiling android_tools v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/android_tools)
+   Compiling ui_input v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/ui_input)
+   Compiling aws-lc-rs v1.17.1
+   Compiling rustls v0.23.40
+   Compiling rustls-webpki v0.103.13
+   Compiling tokio-rustls v0.26.4
+   Compiling tungstenite v0.28.0
+   Compiling rustls-platform-verifier v0.7.0
+   Compiling yawc v0.4.2
+   Compiling http_client_tls v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/http_client_tls)
+   Compiling async-tungstenite v0.33.0
+   Compiling rpc v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/rpc)
+   Compiling cloud_api_client v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/cloud_api_client)
+   Compiling language v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/language)
+   Compiling remote v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/remote)
+   Compiling worktree v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/worktree)
+   Compiling buffer_diff v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/buffer_diff)
+   Compiling markdown v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/markdown)
+   Compiling prettier v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/prettier)
+   Compiling multi_buffer v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/multi_buffer)
+   Compiling client v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/client)
+   Compiling language_detection v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/language_detection)
+   Compiling dap v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/dap)
+   Compiling edit_prediction_types v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/edit_prediction_types)
+   Compiling extension v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/extension)
+   Compiling snippet_provider v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/snippet_provider)
+   Compiling project v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/project)
+   Compiling agent_settings v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/agent_settings)
+   Compiling workspace v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/workspace)
+   Compiling breadcrumbs v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/breadcrumbs)
+   Compiling editor v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/editor)
+   Compiling android_ui v0.1.0 (/workspace/android-studio-toolbar-scroll-lead/crates/android_ui)
+    Finished `test` profile [unoptimized] target(s) in 1m 50s
+     Running unittests src/android_ui.rs (/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf)
+
+running 16 tests
+test tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener ... ok
+test tabbed_toolbar::tests::can_select_tab_by_index ... ok
+test tabbed_toolbar::tests::callbacks_can_rebuild_toolbar_after_selection_and_middle_close ... ok
+test tabbed_toolbar::tests::appended_tabs_reveal_the_tail_on_initial_layout_and_after_rebuild ... ok
+test tabbed_toolbar::tests::component_is_added_element ... ok
+test tabbed_toolbar::tests::fractional_scale_reveals_converge_for_tail_and_oversized_selection ... ok
+test tabbed_toolbar::tests::closed_is_called_when_clicked ... ok
+test tabbed_toolbar::tests::icon_buttons_callback_when_clicked ... ok
+test tabbed_toolbar::tests::clearing_before_frame_delivery_does_not_restore_old_scroll_arrows ... ok
+test tabbed_toolbar::tests::no_close_button_when_no_listener ... ok
+test tabbed_toolbar::tests::tab_and_shift_tab_traverse_controls_before_space_selects ... FAILED
+test tabbed_toolbar::tests::pointer_space_middle_close_and_invalid_selection_use_production_callbacks ... ok
+test tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs ... ok
+test tabbed_toolbar::tests::tab_is_added ... ok
+test tabbed_toolbar::tests::title_tabs_and_multiple_actions_retain_reference_geometry ... ok
+test tabbed_toolbar::tests::tab_traversal_reaches_close_and_action_without_selecting_the_tab ... FAILED
+
+failures:
+
+---- tabbed_toolbar::tests::tab_and_shift_tab_traverse_controls_before_space_selects stdout ----
+
+thread 'tabbed_toolbar::tests::tab_and_shift_tab_traverse_controls_before_space_selects' (185177) panicked at crates/android_ui/src/tabbed_toolbar.rs:1159:13:
+assertion failed: toolbar.read(cx).tabs.get(1).expect("Second").focus.is_focused(window)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- tabbed_toolbar::tests::tab_traversal_reaches_close_and_action_without_selecting_the_tab stdout ----
+
+thread 'tabbed_toolbar::tests::tab_traversal_reaches_close_and_action_without_selecting_the_tab' (185179) panicked at crates/android_ui/src/tabbed_toolbar.rs:1249:13:
+assertion failed: close.is_focused(window)
+
+
+failures:
+    tabbed_toolbar::tests::tab_and_shift_tab_traverse_controls_before_space_selects
+    tabbed_toolbar::tests::tab_traversal_reaches_close_and_action_without_selecting_the_tab
+
+test result: FAILED. 14 passed; 2 failed; 0 ignored; 0 measured; 106 filtered out; finished in 0.22s
+
+error: test failed, to rerun pass `-p android_ui --lib`

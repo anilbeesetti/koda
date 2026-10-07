@@ -1,0 +1,21 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "exit_code": 0,
+  "elapsed_seconds": 215.45362006700088,
+  "log_sha256": "b49dc2397bd1a0747c8ecad0c1d2b946c5186df406d86485b13c48117d1105bd",
+  "executable": "/tmp/android-studio-link-output/koda-followup-231332",
+  "executable_sha256": "e5bec9ab384701f21e8af5a9e6a353e24ff1e7c31f677794c878bc7b8aa65521",
+  "executable_bytes": 1359369480,
+  "cargo_published_executable": "/workspace/.cache/zed/target/debug/koda",
+  "original_linker_output": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+  "only_final_output_argument_changed": true
+}

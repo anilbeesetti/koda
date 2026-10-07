@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "run_id": 37658403968,
+  "url": "https://github.com/anilbeesetti/koda/actions/runs/37658403968",
+  "status": "completed",
+  "conclusion": "success",
+  "tests_run": 10383,
+  "passed": 10383,
+  "failed": 0,
+  "existing_ignored": 23,
+  "full_unfiltered_workspace": true,
+  "full_app_build": "PASS",
+  "raw_log_sha256": "4e3f7d7fc1003ce2750129dc7b10f673dc15b933afb07e06b93062bf0a787283",
+  "summary_lines": [
+    "Linux build and workspace tests\tInstall Linux dependencies\t2026-10-07T17:24:47.1979251Z Finished installing Linux dependencies with script/linux",
+    "Linux build and workspace tests\tBuild test extension\t\ufeff2026-10-07T17:25:15.5219304Z ##[group]Run python3 script/ci-run stage 'Test extension build' -- cargo build --locked --manifest-path extensions/test-extension/Cargo.toml --target wasm32-wasip2 --target-dir extensions/test-extension/target",
+    "Linux build and workspace tests\tBuild test extension\t2026-10-07T17:25:15.5220782Z python3 script/ci-run stage 'Test extension build' -- cargo build --locked --manifest-path extensions/test-extension/Cargo.toml --target wasm32-wasip2 --target-dir extensions/test-extension/target",
+    "Linux build and workspace tests\tBuild test extension\t2026-10-07T17:29:14.7139519Z     Finished `dev` profile [unoptimized] target(s) in 3m 59s",
+    "Linux build and workspace tests\tBuild and run workspace tests\t2026-10-07T17:29:14.9759919Z   cargo nextest run --locked --workspace \"${filter_args[@]}\" --no-fail-fast --no-tests=warn \\",
+    "Linux build and workspace tests\tBuild and run workspace tests\t2026-10-07T17:50:34.7422384Z     Finished `test` profile [unoptimized] target(s) in 21m 12s",
+    "Linux build and workspace tests\tBuild and run workspace tests\t2026-10-07T18:23:29.3945385Z      Summary [1967.027s] 10383 tests run: 10383 passed, 23 skipped",
+    "Linux build and workspace tests\tBuild Zed\t\ufeff2026-10-07T18:23:29.7392666Z ##[group]Run python3 script/ci-run stage 'Linux app build' -- cargo build --locked --keep-going -p zed --bin koda",
+    "Linux build and workspace tests\tBuild Zed\t2026-10-07T18:23:29.7398326Z python3 script/ci-run stage 'Linux app build' -- cargo build --locked --keep-going -p zed --bin koda",
+    "Linux build and workspace tests\tBuild Zed\t2026-10-07T18:33:16.3145263Z     Finished `dev` profile [unoptimized] target(s) in 9m 46s"
+  ]
+}

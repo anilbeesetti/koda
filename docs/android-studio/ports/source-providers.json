@@ -3,7 +3,7 @@
   "task": "1-source-providers",
   "branch": "android-studio-task/1-source-providers",
   "base_commit": "6ac8e50dce8893e30c4cc544e0f4c165759751b2",
-  "status": "validated_model_live_sync_pending_combined_build_confirmation",
+  "status": "validated_model_live_sync_and_combined_build_pending_final_workspace_gate",
   "scope": "Add evaluated Android DSL provider names/configured directory facts and component asset roots to the existing Gradle project model; no tree policy, UI, active-provider selection or canonical parity changes.",
   "new_reference_test_credit": 0,
   "global_census_complete": false,
@@ -47,66 +47,42 @@
     "findings": [
       {
         "path": "project-system/src/com/android/tools/idea/projectsystem/IdeaSourceProvider.kt",
-        "lines": [
-          21,
-          109
-        ],
+        "lines": [21, 109],
         "fact": "Configured URLs include missing roots, unlike existing virtual-file collections; named provider identity and overlay order are explicit separate facts."
       },
       {
         "path": "project-system/src/com/android/tools/idea/projectsystem/SourceProviders.kt",
-        "lines": [
-          429,
-          477
-        ],
+        "lines": [429, 477],
         "fact": "getForFile preserves multiple containing/contained candidates; findSourceRoot checks exact manifests/parent directories and existing VFS ancestry. The Rust configured-candidate API intentionally does not claim these active/VFS semantics."
       },
       {
         "path": "project-system/src/com/android/tools/idea/projectsystem/SourceProviders.kt",
-        "lines": [
-          495,
-          510
-        ],
+        "lines": [495, 510],
         "fact": "First source-root lookup spans Java, Kotlin, res, aidl, renderscript, assets and jniLibs, so provider identity cannot be guessed from only one root category."
       },
       {
         "path": "project-system-gradle/src/com/android/tools/idea/gradle/project/model/AndroidModelSourceProviderUtils.kt",
-        "lines": [
-          100,
-          135
-        ],
+        "lines": [100, 135],
         "fact": "Current and all-provider lists differ; current overlay order is main, flavors, multi-flavor, build type and variant, with a noted flavor-order issue. Gradle source-set container iteration is not this order."
       },
       {
         "path": "android-navigator/src/com/android/tools/idea/navigator/AndroidViewNodes.java",
-        "lines": [
-          47,
-          61
-        ],
+        "lines": [47, 61],
         "fact": "Tree lookup combines current main, host tests, device tests, test suites and test fixtures. The additive catalog does not establish those active scopes."
       },
       {
         "path": "android-navigator/src/org/jetbrains/android/facet/AndroidSourceType.kt",
-        "lines": [
-          93,
-          101
-        ],
+        "lines": [93, 101],
         "fact": "Configured assets and generated assets form distinct source groups."
       },
       {
         "path": "android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidSourceTypeNode.kt",
-        "lines": [
-          86,
-          96
-        ],
+        "lines": [86, 96],
         "fact": "Provider annotations depend on first actual source-root match across active providers, not root basenames."
       },
       {
         "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
-        "lines": [
-          186,
-          243
-        ],
+        "lines": [186, 243],
         "fact": "Original generated-assets test checks evaluated model generated folders, writes/refreshes a nested asset, and asserts its exact tree path. The smoke only exercises evaluated export/producer facts, so this original method stays unported."
       }
     ],
@@ -310,8 +286,29 @@
       "confirmation": "Cargo exited101 while linking cli/zed: ld terminated with signal7 Bus error; overlay had858MiB free. No OOM event or source change recorded. Failing log retained; lead is recovering generated-output capacity before retry.",
       "binary_sha256": "0272419ff550c566c1a5d536215a3fd5857b2068074f47c1c9e18615ef8a5dd8",
       "binary_size": 1358127824,
-      "final_gate": "pending_lead_combined_source_build",
-      "confirmation_plan": "Lead will build the combined implementation after generated-output recovery and current Cargo lease completion. The combined project_model.rs/.gradle hashes must match the frozen task F7/F0 hashes; no redundant old-checkout build is planned. Until that actual command passes this task does not claim the final app build gate."
+      "final_gate": "passing_lead_combined_source_build",
+      "confirmation_plan": "Completed by the lead on byte-identical provider source. Earlier wrapper/link failures above remain retained; final combined workspace and lead merge checks are pending.",
+      "combined_confirmation": {
+        "tested_commit": "a7ef0b6be4c2fccaf4d9120672115f6310c7c379",
+        "command": ["cargo", "build", "--locked", "-p", "zed", "--bin", "koda"],
+        "exit_code": 0,
+        "duration": "3m10s",
+        "source_binding": [
+          {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "f7a3fd3161b25c0ddaecce76f58da7a7dbd57451614f5723dc00184e09bf8ef6",
+            "byte_identical_to": "cdb7b90490a9e54466eac93a3b1d7f9279164001"
+          },
+          {
+            "path": "crates/android_tools/src/project_model.gradle",
+            "sha256": "f0fdac17431fed5367249f567895b73d521bf1164fea85a08c3a84d327d54107",
+            "byte_identical_to": "cdb7b90490a9e54466eac93a3b1d7f9279164001"
+          }
+        ],
+        "binary_sha256": "523c1bdf1005a0ef802ddcb0b830fe729fb18680211379192464f129215b5096",
+        "binary_size": 1358436976,
+        "evidence": "docs/android-studio/evidence/next-foundation/provider-build-confirmation.json"
+      }
     },
     "live_app_model_sync": {
       "command": "KODA_ENVIRONMENT_ROOT=/workspace/android-studio-artifacts/source-providers-smoke/app-runtime KODA_REPOSITORY=/workspace/android-studio-source-providers KODA_QA_DIRECTORY=/workspace/android-studio-artifacts/source-providers-smoke/app-qa KODA_TEST_DISPLAY=:118 bash .agents/skills/koda-app-validation/scripts/run-app.sh --headless /workspace/android-studio-artifacts/source-providers-smoke/project /workspace/android-studio-artifacts/source-providers-smoke/project/app/custom-manifest/AndroidManifest.xml",
@@ -322,20 +319,15 @@
         ":app:kodaAndroidModuleModel",
         ":kodaAndroidProjectModel"
       ],
-      "up_to_date_tasks": [
-        ":app:createAssets"
-      ],
+      "up_to_date_tasks": [":app:createAssets"],
       "provider_count": 20,
       "configured_root_records": 182,
       "provider_order": "gradleSourceSetIteration",
       "component_asset_records": 18,
       "generated_asset_records": 2,
-      "shared_configured_asset_providers": [
-        "debug",
-        "main"
-      ],
+      "shared_configured_asset_providers": ["debug", "main"],
       "model_equality": "Actual copied app JSON is semantically identical to the frozen genuine Gradle smoke model, including provider catalog and component source arrays.",
-      "console_reconstruction": "Existing AndroidBuildPanel MAX_LINE_BYTES=16*1024 splits the JSON into displayed lines8–10. app-sync-model.json rejoins exactly those three lines and removes the KODA_ANDROID_PROJECT_MODEL= prefix; no field or value changed. Raw copied console is retained.",
+      "console_reconstruction": "Existing AndroidBuildPanel MAX_LINE_BYTES=16*1024 splits the JSON into displayed lines8\u201310. app-sync-model.json rejoins exactly those three lines and removes the KODA_ANDROID_PROJECT_MODEL= prefix; no field or value changed. Raw copied console is retained.",
       "scope": "Proves real app model sync and the actual evaluated facts; configured candidates do not establish active Studio provider winners, tree annotations, overlay ordering or original integration-test parity.",
       "shutdown": "TERM sent only to owned launcher166928; its EXIT trap stopped app166952 and Xvfb166942; session exited143 and all three PIDs were absent afterward.",
       "incidental_diagnostics": "Xvfb reported no xinput mouse pointers; native Save dialog reported missing ZBus service and the app's fallback save flow retained the console successfully. The current shared project_model_probe executable was stale (SHA6e77e8efc9891b9689a0d3ac16685e359e462488334300d7903541b931312ddf) and rejected Assets; that attempted decode is uncredited. The separate recorded cdb Rust smoke decoder evidence remains unchanged.",

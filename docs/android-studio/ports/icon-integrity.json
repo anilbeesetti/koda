@@ -56,5 +56,15 @@
   "evidence_manifest": {
     "path": "docs/android-studio/evidence/icon-integrity/manifest.json",
     "sha256": "4981e7b0fda3cf041b358d2f62d229a82e69475007e3a38e62e0a56c82365aa0"
+  },
+  "combined_lead_validation": {
+    "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+    "component_build_tests_clippy_format": "PASS",
+    "full_workspace_ci": "PASS10383/0fail/23existingignored;fullLinuxapp/macappPASS",
+    "native_full_app": "PASS scoped toolbar/model-sync consumer; GUI tree wiring not claimed",
+    "whole_source_guard": "PASS4606files with unchanged fixed exclusions",
+    "fresh_exact_reference_captures": 33,
+    "combined_report": "docs/android-studio/ports/combined-foundation-371.json",
+    "protected_merge": "pending final source-equivalent metadata commit and branch guard"
   }
 }

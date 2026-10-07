@@ -1,0 +1,25 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_ui",
+    "--all-features",
+    "--lib",
+    "--message-format=json"
+  ],
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "exit_code": 0,
+  "elapsed_seconds": 116.88399884200044,
+  "source_root_sha256": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8",
+  "log_sha256": "47f8f06bf9dee5d6607ad59692aea29ddb4a5b674af78ae8d7c08e7dfbb3320a",
+  "artifacts": [
+    {
+      "target": "android_ui",
+      "path": "/workspace/.cache/zed/target/debug/deps/android_ui-09bc6d780809bc79",
+      "bytes": 741639088,
+      "sha256": "eb5965f9ad837d35373953a677524917593f780ebda40500e1d9f06581d48c53"
+    }
+  ]
+}

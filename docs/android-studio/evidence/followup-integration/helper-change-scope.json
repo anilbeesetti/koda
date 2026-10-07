@@ -1,0 +1,6 @@
+{
+  "prior_helper_sha256": "bb0e1fd09f11ef9975ba8a30ec4d0d0a67c96bce1da800d76e44f8757a59e599",
+  "new_helper_sha256": "46e522b3c6fcb1ef974e1fa3d676c333eb34836cfd6e765a30a8bffd90823054",
+  "change": "Only owned probe/receipt path and generated output label changed. Actual linker command arguments/output redirection/refusal and success checks unchanged. Runner requires final40hex commit fromenvironment and includes icon root inmtimebyteproof.",
+  "runtime_gate": "pending independentreview+standaloneprobe+realCargo build"
+}

@@ -1,0 +1,108 @@
+{
+  "source_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "captured_native_model_records": 3,
+  "raw_stdout_sha256": "bde003c4325f1011cdf30487eaf065d92ae97f2d38c81b795f8208334cec3e73",
+  "bridge": {
+    "command_arguments": [
+      "--init-script",
+      "/tmp/koda-android-model-BSqPr6/export.gradle",
+      "kodaAndroidProjectModel",
+      "--no-configuration-cache",
+      "--console=plain"
+    ],
+    "init_path": "/tmp/koda-android-model-BSqPr6/export.gradle",
+    "sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+    "expected_source_bridge_sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+    "matches_source": true
+  },
+  "native_parser_UI_result": "Sync successful;2 build variants discovered; :app demoDebug selected",
+  "summary": [
+    {
+      "variant": "demoDebug",
+      "variant_only_java_kotlin_resources_assets_generated": false,
+      "assets": [
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/generated-outside-build/demoDebug",
+          "kind": "assets",
+          "generated": true
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/src/demoDebug/assets",
+          "kind": "assets",
+          "generated": false
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/late-static-assets",
+          "kind": "assets",
+          "generated": false
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/build/late-static-assets",
+          "kind": "assets",
+          "generated": false
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/unrelated-assets",
+          "kind": "assets",
+          "generated": false
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/unrelated-assets/nested",
+          "kind": "assets",
+          "generated": false
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/flavor-assets",
+          "kind": "assets",
+          "generated": false
+        }
+      ],
+      "inactive_component_roots_present": false
+    },
+    {
+      "variant": "demoRelease",
+      "variant_only_java_kotlin_resources_assets_generated": false,
+      "assets": [
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/generated-outside-build/demoRelease",
+          "kind": "assets",
+          "generated": true
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/src/demoRelease/assets",
+          "kind": "assets",
+          "generated": false
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/late-static-assets",
+          "kind": "assets",
+          "generated": false
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/build/late-static-assets",
+          "kind": "assets",
+          "generated": false
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/src/release/assets",
+          "kind": "assets",
+          "generated": false
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/flavor-assets",
+          "kind": "assets",
+          "generated": false
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/unrelated-assets",
+          "kind": "assets",
+          "generated": false
+        }
+      ],
+      "inactive_component_roots_present": false
+    }
+  ],
+  "limits": "Runtime-produced model flags and successful native parsing, not GPUI project-tree grouping or screenshot parity. AGP 9.4/Gradle 9.6.1/JDK 21/SDK 37 are supplemental; no canonical reference credit.",
+  "all_three_native_sync_variant_static_flags_verified": true,
+  "all_three_native_sync_generation_and_inactive_flags_verified": true
+}

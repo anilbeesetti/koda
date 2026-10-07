@@ -18,10 +18,10 @@
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -38,8 +38,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-oneVariant.log",
-              "sha256": "76946d793e66d3675dfbff5b71a8c86675c9de983e7537554deb5ff838829870"
+              "path": "docs/android-studio/evidence/next-DefaultVariantsTest-oneVariant.log",
+              "sha256": "655755f7b4ad8260c38ee53a57afb67fde9d2db85f221e6b1b7c9473c6ce7073"
             }
           }
         }
@@ -63,10 +63,10 @@
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -83,8 +83,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-debugPreferred.log",
-              "sha256": "bfa17355eb521f53cb8546f9b2e61da9275e0e81a9d2fb4e48d6b347d189a721"
+              "path": "docs/android-studio/evidence/next-DefaultVariantsTest-debugPreferred.log",
+              "sha256": "c9b74db13e1fe6935b419c463d204ba714379d5c6e56fb21292d5d3f162bc80c"
             }
           }
         }
@@ -108,10 +108,10 @@
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -128,8 +128,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-preferredBuildType.log",
-              "sha256": "4d785afd9ec8dd6dd237fb227a29046a12019b60633a06550c16d70042acf081"
+              "path": "docs/android-studio/evidence/next-DefaultVariantsTest-preferredBuildType.log",
+              "sha256": "4ad913a5a2bde03cf0e4b07a82364c3a5b7f8af80551ebef15c1e0d631fb3cfa"
             }
           }
         }
@@ -153,10 +153,10 @@
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -173,8 +173,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-preferredProductFlavorOverDebugBuildType.log",
-              "sha256": "d81245f56fdd7f2fe55b8f8bce19e44c7d84637ec0230879b0bd189343652647"
+              "path": "docs/android-studio/evidence/next-DefaultVariantsTest-preferredProductFlavorOverDebugBuildType.log",
+              "sha256": "73a901337b4b34d43c58b4956d5c27f44a33a76797f5e08d7181fe938de23587"
             }
           }
         }
@@ -198,10 +198,10 @@
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -218,8 +218,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-preferredFlavorsInTwoDimensions.log",
-              "sha256": "ef041732a894e6fd3f108f5f4eb1b0341d0b30ec525c14404b82ae76f9853c11"
+              "path": "docs/android-studio/evidence/next-DefaultVariantsTest-preferredFlavorsInTwoDimensions.log",
+              "sha256": "5f60fc5c230591ff7b386758f68e45aaa2d9410dddca09e46ac3392b257a7013"
             }
           }
         }
@@ -243,10 +243,10 @@
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -263,8 +263,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
-              "sha256": "2514da40991d7a5b19925e2b01e9f17eb5f016c983d540fc8fd6957bace6742c"
+              "path": "docs/android-studio/evidence/next-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
+              "sha256": "8467a8cd4faaf6496d1359b49740c3d46b31d02579fb6b9b6c608f1ae20cc4b5"
             }
           }
         }
@@ -288,10 +288,10 @@
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -308,8 +308,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-mismatchedProductFlavourLength.log",
-              "sha256": "23726a858b422e31c1ad5eabf061e13a57d8ef512590210ee70d13b2da7a8626"
+              "path": "docs/android-studio/evidence/next-DefaultVariantsTest-mismatchedProductFlavourLength.log",
+              "sha256": "a5d875f08233ca8722f1c26316e7fb16f4d489358107378f0358e325b28195cc"
             }
           }
         }
@@ -333,10 +333,10 @@
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -353,8 +353,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-onEmpty.log",
-              "sha256": "b4e6fd1981f06e114353e63c1796302b0ef1ecaba139316b0c49873d5e1f034f"
+              "path": "docs/android-studio/evidence/next-DefaultVariantsTest-onEmpty.log",
+              "sha256": "c401f66f054c36c0c24ea178fac67a50e74141fe8c4c064bae8e6432fc154456"
             }
           }
         }
@@ -381,7 +381,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -399,8 +399,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testImportSimpleGradleProject.log",
-              "sha256": "83d22697cadad1039b10dc120e37d3a54a9c0dd59e4c995db1a0c67409470810"
+              "path": "docs/android-studio/evidence/next-GradleModuleImportTest-testImportSimpleGradleProject.log",
+              "sha256": "ce43c3c6073fcbc0d89e40ce21ab51561f02839c3f5c4cfa2d6408bceea16bf5"
             }
           }
         }
@@ -427,7 +427,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -445,8 +445,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testImportSubprojects.log",
-              "sha256": "a7ce5af86489ea737523daeb51ed1898ac91a4b7f6e77b72b4ef6269c74bb24b"
+              "path": "docs/android-studio/evidence/next-GradleModuleImportTest-testImportSubprojects.log",
+              "sha256": "c160ff441e7e32c13d25169eda5e02d498288d0ee55c7596095cfc60e12fbbc6"
             }
           }
         }
@@ -473,7 +473,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -491,8 +491,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testImportSubProjectsWithMissingSubModule.log",
-              "sha256": "82df368f4577e8461b0108e0da8622de0038a6e0b11a4a517b9802c602a89bb7"
+              "path": "docs/android-studio/evidence/next-GradleModuleImportTest-testImportSubProjectsWithMissingSubModule.log",
+              "sha256": "9886821316be36310bebbc9c09f07d632313a4c2c48ec249254e0e27636edfe8"
             }
           }
         }
@@ -519,7 +519,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -537,8 +537,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testImportSubProjectWithCustomLocation.log",
-              "sha256": "7548c901abc45cd4645941c6c634e5225e3d9f5b5e3e7f6c7b4ebe37154cdaf6"
+              "path": "docs/android-studio/evidence/next-GradleModuleImportTest-testImportSubProjectWithCustomLocation.log",
+              "sha256": "986fc249e883a5f984026dc15627e5fe9598deee8948abb21d3cd1e751fb4b6c"
             }
           }
         }
@@ -565,7 +565,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -583,8 +583,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testRequiredProjects.log",
-              "sha256": "68bde1e095daafded31b93937b029026312ea6b8099bd5c32ea7087259e5dbcb"
+              "path": "docs/android-studio/evidence/next-GradleModuleImportTest-testRequiredProjects.log",
+              "sha256": "598f868c30ae06dba294ab84d65716dfc269a8f5b6723b7f374f1a3c41d982e6"
             }
           }
         }
@@ -611,7 +611,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -629,8 +629,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testMissingRequiredProjects.log",
-              "sha256": "dd6ce7f870762127b3bbc0b42df664190109943bbecb8a8eaf83c4f0522e83c6"
+              "path": "docs/android-studio/evidence/next-GradleModuleImportTest-testMissingRequiredProjects.log",
+              "sha256": "34740ce00898b64c97ae6900fd4c9e47a8591f0a557223bd7aebf396d207e744"
             }
           }
         }
@@ -657,7 +657,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -675,8 +675,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testMissingEnclosingProject.log",
-              "sha256": "5db51c2773f43d33f8127d914661fc7e18ca57c298eb6563c191a7a002c711ff"
+              "path": "docs/android-studio/evidence/next-GradleModuleImportTest-testMissingEnclosingProject.log",
+              "sha256": "da156b8e8f64ef1c3037c28ef955c606c3ade219b4c13e17d161312fbba36978"
             }
           }
         }
@@ -703,7 +703,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -721,8 +721,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testTransitiveDependencies.log",
-              "sha256": "dcdae0f147f7a8b7b47e4056f3bb1aaabedf2a74361bd55d02ca5e483d305ffe"
+              "path": "docs/android-studio/evidence/next-GradleModuleImportTest-testTransitiveDependencies.log",
+              "sha256": "2ef683ee5f6d729ceca6f67b1f707110fbaf4861c25a782854498974e47bd29d"
             }
           }
         }
@@ -749,7 +749,7 @@
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -767,8 +767,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testCircularDependencies.log",
-              "sha256": "a62b3863f6c3ff55fb8dcc6d304050c776434f56c8b7cd7da7f97e4a3e7c9a76"
+              "path": "docs/android-studio/evidence/next-GradleModuleImportTest-testCircularDependencies.log",
+              "sha256": "cc6637e5b49526e7bae468f7300a77939f73dce5dfaaa03db9c5cde792c8fd09"
             }
           }
         }
@@ -822,7 +822,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -840,8 +840,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsSelected.log",
-              "sha256": "8d7d24717452a00c000b2f68a510e894c0e6a94bfcd2e4f8c53b595818863225"
+              "path": "docs/android-studio/evidence/next-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsSelected.log",
+              "sha256": "63acd658d1e6849d7d5a4eff73ac2d9d7736b1a6156d9670bd95191b17d01174"
             }
           }
         }
@@ -868,7 +868,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -886,8 +886,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
-              "sha256": "aa1cc4fb8e0c21f94ce6acfd15a3258d1eee12e7d24610a97bcc93b2e8bcac01"
+              "path": "docs/android-studio/evidence/next-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
+              "sha256": "8adf894c0f5ccb23af4772b79a7073f8efd0a36d931640218ef909dc5a5f596d"
             }
           }
         }
@@ -932,7 +932,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -950,8 +950,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewIsDefault.log",
-              "sha256": "66cdb01292f6b86ff159547ce2ee388b6fd37d468b165240cbb0a3f07f34c1ea"
+              "path": "docs/android-studio/evidence/next-AndroidProjectViewTest-testAndroidViewIsDefault.log",
+              "sha256": "0124c401132e4b5c8b74c181d3be0b5d9e074149441399f77e6258ccac4656ce"
             }
           }
         }
@@ -978,7 +978,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -996,7 +996,7 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
+              "path": "docs/android-studio/evidence/next-AndroidProjectViewTest-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
               "sha256": "b825c98c0a8fab4893da7c40fe51a7958fe797b3f86c57baccfcdc1ec6bb98bc"
             }
           }
@@ -1024,7 +1024,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -1042,8 +1042,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewNotVisibleInNonAndroidProject.log",
-              "sha256": "e38a28b981881f7d98f70251b9e3c429b79b01b2667ce2c5ffc0d72d9ae3d235"
+              "path": "docs/android-studio/evidence/next-AndroidProjectViewTest-testAndroidViewNotVisibleInNonAndroidProject.log",
+              "sha256": "e9e74b9f6148ce52a8cfad5d020ad514e3fc2d242767e567922783b3d4686503"
             }
           }
         }
@@ -1070,7 +1070,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -1088,8 +1088,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
-              "sha256": "ed4d484c694f0007337149bd0346ae5d08c3cce706041e055f2172dcba4553cd"
+              "path": "docs/android-studio/evidence/next-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
+              "sha256": "b062943cee035c50cd1b4f0095a48ca133b7e392c2aa89c2ddbe3c6de23410da"
             }
           }
         }
@@ -1116,7 +1116,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -1134,8 +1134,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
-              "sha256": "abecc0c702d4fb3a09b9e627cac5b093f37942041557c07880f9ad9a09f60b11"
+              "path": "docs/android-studio/evidence/next-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
+              "sha256": "b37b1ecb336305039b58696d75cc0c58206d97574b48b4e766d961085d49c6d7"
             }
           }
         }
@@ -1162,7 +1162,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -1180,8 +1180,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
-              "sha256": "7e1ff5d9928abc494585a4cfeb01c4501f8b6b323ab9115fa359a1f9cc17e840"
+              "path": "docs/android-studio/evidence/next-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
+              "sha256": "bf7a54594cefed2728533ce9f5513700e5dca8c942cc32f1f0440deae7db555a"
             }
           }
         }
@@ -1208,7 +1208,7 @@
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
           "run": {
-            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
             "command": [
               "cargo",
               "test",
@@ -1226,8 +1226,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewIsDefaultMetrics.log",
-              "sha256": "7c7409b161cd6b9fc35047f7b0d741f218e7cde4061092e53e7666ba2e56b72d"
+              "path": "docs/android-studio/evidence/next-AndroidProjectViewTest-testAndroidViewIsDefaultMetrics.log",
+              "sha256": "4fb120a349176940990173702f39f763e684547209a24f7ae70e81147fe7b51c"
             }
           }
         }
@@ -1272,65 +1272,317 @@
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::component_is_added_element",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::component_is_added_element",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/next-TabbedToolbarTest-componentIsAddedElement.log",
+              "sha256": "6b552742bb13b88ba09ece8430c07d0c54b13a50799fe9c35b7332989a2a3c98"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::tab_is_added",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::tab_is_added",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/next-TabbedToolbarTest-tabIsAdded.log",
+              "sha256": "6ba5ff0c9ca16d7976b1c3073dec0517f0ac099c83b560bc7c0d10e3d1489219"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::closed_is_called_when_clicked",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/next-TabbedToolbarTest-closedIsCalledWhenClicked.log",
+              "sha256": "518088e44f8f099d702e112489d111f5bc8e39e6bcfd2850810b101e595f765b"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::no_close_button_when_no_listener",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/next-TabbedToolbarTest-noCloseButtonWhenNoListener.log",
+              "sha256": "becbd2fe7e86772e94e71575891f0c7faa40662be611a4db6714cf1d32278b89"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/next-TabbedToolbarTest-iconButtonsCallbackWhenClicked.log",
+              "sha256": "d9f1241b5a7ade767ba385d87b7f8c53427d95b23cbb1567aea81cd85f4457ba"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::can_select_tab_by_index",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::can_select_tab_by_index",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/next-TabbedToolbarTest-can select tab by index.log",
+              "sha256": "d43df0b25c09b6882039b15307d81720580dfb02c4d99387698fe75804f0f772"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/next-TabbedToolbarTest-adding tab should not trigger select listener.log",
+              "sha256": "b94391af3bcc8e766b0fe76f27f6c746a553515965d6a75e7d3adf83b79539f2"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {

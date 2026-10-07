@@ -1,0 +1,136 @@
+
+running 14 tests
+test tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 47px, y: 0px }, size: Size { 1863px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 47px, y: 0px }, size: Size { 1863px × 36px } } children=1 pending=true
+ok
+test tabbed_toolbar::tests::appended_tabs_reveal_the_tail_on_initial_layout_and_after_rebuild ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 268px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=7 pending=true
+CALL offset=Point { x: 0px, y: 0px } max=Point { x: 268px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=7 pending=true
+CALL offset=Point { x: -268px, y: 0px } max=Point { x: 268px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=7 pending=true
+CALL offset=Point { x: -268px, y: 0px } max=Point { x: 268px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=7 pending=false
+OBS offset=-268px max=Point { x: 285px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 184px × 36px } } children=7 pending=false
+CALL offset=Point { x: -268px, y: 0px } max=Point { x: 285px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 184px × 36px } } children=7 pending=false
+OBS offset=-268px max=Point { x: 302px, y: 0px } flags=(true, true) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 167px × 36px } } children=7 pending=false
+
+thread 'tabbed_toolbar::tests::appended_tabs_reveal_the_tail_on_initial_layout_and_after_rebuild' (157628) panicked at crates/android_ui/src/tabbed_toolbar.rs:1027:13:
+Last tab's trailing edge
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test tabbed_toolbar::tests::callbacks_can_rebuild_toolbar_after_selection_and_middle_close ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+ok
+test tabbed_toolbar::tests::can_select_tab_by_index ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 47px, y: 0px }, size: Size { 1863px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 47px, y: 0px }, size: Size { 1863px × 36px } } children=3 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 47px, y: 0px }, size: Size { 1863px × 36px } } children=3 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 47px, y: 0px }, size: Size { 1863px × 36px } } children=2 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 47px, y: 0px }, size: Size { 1863px × 36px } } children=2 pending=true
+ok
+test tabbed_toolbar::tests::clearing_before_frame_delivery_does_not_restore_old_scroll_arrows ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 268px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=7 pending=true
+CALL offset=Point { x: 0px, y: 0px } max=Point { x: 268px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=7 pending=true
+CALL offset=Point { x: -268px, y: 0px } max=Point { x: 268px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=7 pending=true
+CALL offset=Point { x: -268px, y: 0px } max=Point { x: 268px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=7 pending=false
+OBS offset=-268px max=Point { x: 285px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 184px × 36px } } children=7 pending=false
+CALL offset=Point { x: -268px, y: 0px } max=Point { x: 285px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 184px × 36px } } children=7 pending=false
+OBS offset=-268px max=Point { x: 302px, y: 0px } flags=(true, true) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 167px × 36px } } children=7 pending=false
+OBS offset=0px max=Point { x: 285px, y: 0px } flags=(false, true) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 184px × 36px } } children=7 pending=false
+OBS offset=-60px max=Point { x: 285px, y: 0px } flags=(false, true) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 184px × 36px } } children=7 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=0 pending=false
+CALL offset=Point { x: 0px, y: 0px } max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=0 pending=false
+CALL offset=Point { x: 0px, y: 0px } max=Point { x: 0px, y: 0px } flags=(false, true) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 201px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, true) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 184px × 36px } } children=0 pending=false
+
+thread 'tabbed_toolbar::tests::clearing_before_frame_delivery_does_not_restore_old_scroll_arrows' (157631) panicked at crates/android_ui/src/tabbed_toolbar.rs:1058:9:
+assertion failed: cx.debug_bounds("tabbed-toolbar-scroll-right").is_none()
+FAILED
+test tabbed_toolbar::tests::closed_is_called_when_clicked ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+ok
+test tabbed_toolbar::tests::component_is_added_element ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+ok
+test tabbed_toolbar::tests::fractional_scale_reveals_converge_for_tail_and_oversized_selection ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 38.666668px, y: 0px }, size: Size { 1872px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 38.666668px, y: 0px }, size: Size { 202px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 268px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 38.666668px, y: 0px }, size: Size { 202px × 36px } } children=7 pending=true
+CALL offset=Point { x: 0px, y: 0px } max=Point { x: 268px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 38.666668px, y: 0px }, size: Size { 202px × 36px } } children=7 pending=true
+CALL offset=Point { x: -268px, y: 0px } max=Point { x: 268px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 38.666668px, y: 0px }, size: Size { 202px × 36px } } children=7 pending=true
+CALL offset=Point { x: -268px, y: 0px } max=Point { x: 268px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 38.666668px, y: 0px }, size: Size { 202px × 36px } } children=7 pending=false
+CALL offset=Point { x: -268px, y: 0px } max=Point { x: 268px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 38.666668px, y: 0px }, size: Size { 202px × 36px } } children=7 pending=false
+OBS offset=-268px max=Point { x: 285.33px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 184.66667px × 36px } } children=7 pending=false
+CALL offset=Point { x: -268px, y: 0px } max=Point { x: 285.33px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 184.66667px × 36px } } children=7 pending=false
+OBS offset=-268px max=Point { x: 302.67px, y: 0px } flags=(true, true) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 167.33333px × 36px } } children=7 pending=false
+
+thread 'tabbed_toolbar::tests::fractional_scale_reveals_converge_for_tail_and_oversized_selection' (157634) panicked at crates/android_ui/src/tabbed_toolbar.rs:1078:9:
+assertion failed: last.right() <= viewport.right() + px(0.01)
+FAILED
+test tabbed_toolbar::tests::icon_buttons_callback_when_clicked ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1847px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1847px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1847px × 36px } } children=0 pending=false
+ok
+test tabbed_toolbar::tests::no_close_button_when_no_listener ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+ok
+test tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1847px × 36px } } children=7 pending=true
+OBS offset=0px max=Point { x: 292px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 177px × 36px } } children=7 pending=true
+CALL offset=Point { x: 0px, y: 0px } max=Point { x: 292px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 177px × 36px } } children=7 pending=true
+CALL offset=Point { x: -292px, y: 0px } max=Point { x: 292px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 177px × 36px } } children=7 pending=true
+CALL offset=Point { x: -292px, y: 0px } max=Point { x: 292px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 177px × 36px } } children=7 pending=false
+OBS offset=-292px max=Point { x: 309px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 160px × 36px } } children=7 pending=false
+CALL offset=Point { x: -292px, y: 0px } max=Point { x: 309px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 160px × 36px } } children=7 pending=false
+OBS offset=-292px max=Point { x: 326px, y: 0px } flags=(true, true) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 143px × 36px } } children=7 pending=false
+OBS offset=0px max=Point { x: 309px, y: 0px } flags=(false, true) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 160px × 36px } } children=7 pending=false
+OBS offset=0px max=Point { x: 309px, y: 0px } flags=(false, true) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 160px × 36px } } children=7 pending=false
+OBS offset=-30px max=Point { x: 326px, y: 0px } flags=(true, true) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 143px × 36px } } children=7 pending=false
+OBS offset=-30px max=Point { x: 326px, y: 0px } flags=(true, true) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 143px × 36px } } children=7 pending=false
+OBS offset=0px max=Point { x: 309px, y: 0px } flags=(false, true) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 160px × 36px } } children=7 pending=false
+OBS offset=-60px max=Point { x: 309px, y: 0px } flags=(false, true) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 160px × 36px } } children=7 pending=false
+CALL offset=Point { x: -60px, y: 0px } max=Point { x: 309px, y: 0px } flags=(false, true) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 160px × 36px } } children=7 pending=false
+OBS offset=-60px max=Point { x: 326px, y: 0px } flags=(true, true) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 143px × 36px } } children=7 pending=false
+OBS offset=-309px max=Point { x: 309px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 160px × 36px } } children=7 pending=false
+OBS offset=-0px max=Point { x: 0px, y: 0px } flags=(true, false) bounds=Bounds { origin: Point { x: 56px, y: 0px }, size: Size { 910px × 36px } } children=7 pending=false
+
+thread 'tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs' (157637) panicked at crates/android_ui/src/tabbed_toolbar.rs:992:9:
+Left arrow after resize; state (Point { x: -0px, y: 0px }, Point { x: 0px, y: 0px }, true, false)
+FAILED
+test tabbed_toolbar::tests::pointer_space_middle_close_and_invalid_selection_use_production_callbacks ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+ok
+test tabbed_toolbar::tests::tab_is_added ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=1 pending=true
+ok
+test tabbed_toolbar::tests::title_tabs_and_multiple_actions_retain_reference_geometry ... OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1871px × 36px } } children=0 pending=false
+OBS offset=0px max=Point { x: 0px, y: 0px } flags=(false, false) bounds=Bounds { origin: Point { x: 39px, y: 0px }, size: Size { 1818px × 36px } } children=1 pending=true
+ok
+
+failures:
+
+failures:
+    tabbed_toolbar::tests::appended_tabs_reveal_the_tail_on_initial_layout_and_after_rebuild
+    tabbed_toolbar::tests::clearing_before_frame_delivery_does_not_restore_old_scroll_arrows
+    tabbed_toolbar::tests::fractional_scale_reveals_converge_for_tail_and_oversized_selection
+    tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs
+
+test result: FAILED. 10 passed; 4 failed; 0 ignored; 0 measured; 106 filtered out; finished in 0.68s
+

@@ -1,0 +1,15 @@
+{
+  "tested_commit": "a7ef0b6be4c2fccaf4d9120672115f6310c7c379",
+  "provider_source": "cdb7b90490a9e54466eac93a3b1d7f9279164001",
+  "files": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "3384502fe3b1222533eaf71d7bf101dfb04fe58c2b5cace6e5f4a4a2b0afdd7f"
+    },
+    {
+      "path": "crates/android_ui/src/android_ui.rs",
+      "sha256": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8"
+    }
+  ],
+  "freshness": "Touch crate roots only; verify bytes unchanged before/after to invalidate cross-worktree relative Cargo fingerprints."
+}

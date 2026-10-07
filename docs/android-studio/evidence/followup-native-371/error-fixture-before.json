@@ -1,0 +1,22 @@
+{
+  "source": "/workspace/android-studio-artifacts/next-foundation-native/error-project",
+  "new_external_fixture": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/restored-error-project",
+  "excludes": [
+    "generated .gradle/.kotlin/.koda/.zed/build directories"
+  ],
+  "files": {
+    "app/build.gradle": "25f01c0db7bee9a4a8b7034430ba852e1a0665d10f37c7d8f15b439e08aeccc5",
+    "app/custom-manifest/AndroidManifest.xml": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e",
+    "app/flavor-assets/demo.txt": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd",
+    "app/main/resources/resources.properties": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c",
+    "app/provider-res/layout/sample.xml": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208",
+    "app/unrelated-assets/sample.txt": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950",
+    "build.gradle": "ec58ac8235b73f65d5e74f21d225068f50b92fcbdf29522ad30b2e34e7268060",
+    "gradle/wrapper/gradle-wrapper.jar": "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7",
+    "gradle/wrapper/gradle-wrapper.properties": "89f62533208a72b7a8cc2892b6b3540c445fa6175508297d932dae57d653591a",
+    "gradle.properties": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2",
+    "gradlew": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+    "local.properties": "00c76c7994130b465695145ca6d2e144002d7b1afb594b3d2f715c7643eb87da",
+    "settings.gradle": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c"
+  }
+}
