@@ -148,6 +148,112 @@ gradle.projectsEvaluated {
             [name: sourceSet.name, roots: roots]
         }]
     }
+    def evaluatedProviders = { project, variants ->
+        def capability = 'agpV2BasicAndroidProject'
+        if (multiplatformPaths.contains(project.path)) {
+            return [status: 'unavailable', value: [capability: capability,
+                detail: 'KMP active-provider containers have not been proved against the pinned Studio adapter']]
+        }
+        try {
+            def required = { object, name ->
+                if (object == null || !object.hasProperty(name)) {
+                    throw new UnsupportedOperationException('Missing tooling-model property ' + name)
+                }
+                object."$name"
+            }
+            def registry = project.services.get(org.gradle.tooling.provider.model.ToolingModelBuilderRegistry)
+            def query = { modelName -> registry.getBuilder(modelName).buildAll(modelName, project) }
+            def versions = query('com.android.builder.model.v2.models.Versions')
+            def producer = required(versions, 'versions')['model_producer']
+            if (producer == null) throw new UnsupportedOperationException('Missing model_producer version')
+            def basic = query('com.android.builder.model.v2.models.BasicAndroidProject')
+            def provider = { source ->
+                if (source == null) return null
+                def roots = []
+                // This is findSourceRoot's category order; JVM resources/custom
+                // roots do not participate in the pinned lookup.
+                ['javaDirectories': 'java', 'kotlinDirectories': 'kotlin',
+                 'resDirectories': 'resources', 'aidlDirectories': 'aidl',
+                 'renderscriptDirectories': 'renderscript', 'assetsDirectories': 'assets',
+                 'jniLibsDirectories': 'jniLibs'].each { property, kind ->
+                    def directories = required(source, property)
+                    if (directories != null) directories.each { directory ->
+                        roots.add([path: directory.canonicalPath, kind: kind])
+                    }
+                }
+                def manifest = required(source, 'manifestFile')
+                if (manifest != null) roots.add([path: manifest.canonicalPath, kind: 'manifest'])
+                [name: required(source, 'name'), roots: roots]
+            }
+            def container = { sourceSet ->
+                if (sourceSet == null) return null
+                [main: provider(required(sourceSet, 'sourceProvider')),
+                 hostTests: required(sourceSet, 'hostTestSourceProviders').collect { artifact, source ->
+                     [artifact: artifact, provider: provider(source)]
+                 },
+                 deviceTests: required(sourceSet, 'deviceTestSourceProviders').collect { artifact, source ->
+                     [artifact: artifact, provider: provider(source)]
+                 },
+                 fixtures: provider(required(sourceSet, 'testFixturesSourceProvider'))]
+            }
+            def artifact = { source ->
+                if (source == null) return null
+                [multiFlavor: provider(required(source, 'multiFlavorSourceProvider')),
+                 variant: provider(required(source, 'variantSourceProvider'))]
+            }
+            def dimensions = { sourceSets -> sourceSets.collect { sourceSet ->
+                def value = container(sourceSet)
+                // ModelCacheV2Impl joins each actual DSL dimension to this
+                // typed container's sourceProvider.name, never a directory.
+                [name: value.main?.name, container: value]
+            } }
+            def suites = optional(basic, 'testSuites')
+            def nativeMembership = null
+            try {
+                nativeMembership = variants.collectMany { variant ->
+                    def components = [variant, optional(variant, 'unitTest'),
+                        optional(variant, 'androidTest'), optional(variant, 'testFixtures')]
+                    components.addAll((optional(variant, 'hostTests') ?: [:]).values())
+                    components.addAll((optional(variant, 'deviceTests') ?: [:]).values())
+                    components.findAll { it != null }.unique { it.name }.collect { component ->
+                        def sourceNames = optional(component.sources, 'sourceProviderNames')
+                        [variant: variant.name, component: component.name,
+                         artifact: required(required(component, 'componentType'), 'artifactName'),
+                         order: 'agpSourceProviderNames', providers: sourceNames == null ? null : sourceNames.collect { it }]
+                    }
+                }
+            } catch (Exception unavailableNativeMembership) {
+                // Native capability is separate from the complete basic model.
+                nativeMembership = null
+            }
+            [status: 'available', value: [version: 1, agpVersion: required(versions, 'agp'),
+             modelProducer: [major: required(producer, 'major'), minor: required(producer, 'minor')],
+             defaultSourceSet: container(required(basic, 'mainSourceSet')),
+             buildTypes: dimensions(required(basic, 'buildTypeSourceSets')),
+             productFlavors: dimensions(required(basic, 'productFlavorSourceSets')),
+             variants: required(basic, 'variants').collect { variant ->
+                 [name: required(variant, 'name'), buildType: required(variant, 'buildType'),
+                  productFlavors: required(variant, 'productFlavors').collect { it },
+                  main: artifact(required(variant, 'mainArtifact')),
+                  hostTests: required(variant, 'hostTestArtifacts').collect { name, value ->
+                      [artifact: name, sources: artifact(value)]
+                  },
+                  deviceTests: required(variant, 'deviceTestArtifacts').collect { name, value ->
+                      [artifact: name, sources: artifact(value)]
+                  },
+                  fixtures: artifact(required(variant, 'testFixturesArtifact')),
+                  testSuites: optional(variant, 'testSuiteArtifacts')?.keySet()?.collect { it }]
+             },
+             // Basic suite kinds need additional version-sensitive conversion.
+             // Retain each actual suite identity, with unavailable provider facts.
+             testSuites: suites == null ? null : suites.collect { suite ->
+                 [name: required(suite, 'name'), providers: null]
+             }, nativeMembership: nativeMembership]]
+        } catch (Exception failure) {
+            [status: 'unavailable', value: [capability: capability,
+                detail: failure.class.name + ': ' + (failure.message ?: 'Tooling model capture failed')]]
+        }
+    }
     def defaultVariantSelection = { project, variants ->
         def multiplatform = multiplatformPaths.contains(project.path)
         def android = multiplatform ? null : project.extensions.getByName('android')
@@ -189,7 +295,7 @@ gradle.projectsEvaluated {
                     provider.roots.findAll { it.kind == 'assets' }*.path
                 } as Set
                 models[path] = [path: path, directory: project.projectDir.canonicalPath, namespace: multiplatformPaths.contains(path) ? variants.first().namespace.get() : project.extensions.getByName('android').namespace,
-                 kind: androidKinds[path], sourceProviders: catalog, defaultVariantSelection: defaultVariantSelection(project, variants), variants: variants.collect { variant ->
+                 kind: androidKinds[path], sourceProviders: catalog, evaluatedProviders: evaluatedProviders(project, variants), defaultVariantSelection: defaultVariantSelection(project, variants), variants: variants.collect { variant ->
                     def components = [[component: variant, scope: 'main']]
                     def add = { component, scope -> if (component != null && !components.any { it.component.name == component.name }) components.add([component: component, scope: scope]) }
                     add(optional(variant, 'unitTest'), 'unitTest')
@@ -249,6 +355,12 @@ gradle.projectsEvaluated {
             def diagnostics = modules.any { it.kind == 'application' } ? [] : ['No runnable application module was found. Library-only builds are catalogued, but selecting an application target is currently required for language setup, build/run/debug, and previews.']
             def unknownProviders = modules.findAll { it.kind != 'jvm' && it.sourceProviders == null }*.path
             if (!unknownProviders.isEmpty()) diagnostics.add('Source-provider names are unavailable for ' + unknownProviders.join(', ') + '; Android tree annotations cannot be determined.')
+            modules.findAll { it.evaluatedProviders?.status == 'unavailable' }.each { module ->
+                diagnostics.add('Evaluated active providers are unavailable for ' + module.path + ': ' + module.evaluatedProviders.value.detail)
+            }
+            modules.findAll { it.evaluatedProviders?.status == 'available' && it.evaluatedProviders.value.nativeMembership == null }.each { module ->
+                diagnostics.add('Native provider membership is unavailable for ' + module.path + '; Studio ordering remains a separate captured capability.')
+            }
             println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics]))
         }
     }
