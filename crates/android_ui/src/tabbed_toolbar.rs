@@ -62,8 +62,8 @@ impl TabbedToolbar {
             scroll_update_scheduled: Cell::new(false),
             scroll_left_visible: false,
             scroll_right_visible: false,
-            scroll_left_focus: cx.focus_handle(),
-            scroll_right_focus: cx.focus_handle(),
+            scroll_left_focus: cx.focus_handle().tab_stop(true),
+            scroll_right_focus: cx.focus_handle().tab_stop(true),
         }
     }
 
@@ -81,9 +81,11 @@ impl TabbedToolbar {
             label: label.into(),
             icon: None,
             selected: Rc::new(selected),
-            close_focus: closed.as_ref().map(|_| cx.focus_handle()),
+            // Element tab_index only configures automatically created handles.
+            // Explicit handles must opt into traversal before they are tracked.
+            close_focus: closed.as_ref().map(|_| cx.focus_handle().tab_stop(true)),
             closed,
-            focus: cx.focus_handle(),
+            focus: cx.focus_handle().tab_stop(true),
         });
         self.pending_reveal = Some(TabReveal::End);
         cx.notify();
@@ -100,7 +102,7 @@ impl TabbedToolbar {
             icon,
             label: label.into(),
             clicked: Rc::new(clicked),
-            focus: cx.focus_handle(),
+            focus: cx.focus_handle().tab_stop(true),
         });
         cx.notify();
     }
