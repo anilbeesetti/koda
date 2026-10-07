@@ -833,5 +833,11 @@
     "source_commit": "0f28d7c178abc738bd94b7f88e28a8e11637bf62",
     "note": "Tests ran on the reviewed uncommitted snapshot at base959992d; source commit contains exactly those bytes. No claim that Cargo was invoked with this commit as HEAD. Lead immutable/combined recapture pending."
   },
-  "evidence_manifest": "docs/android-studio/ports/evidence/project-tree-facts/manifest.json"
+  "evidence_manifest": "docs/android-studio/ports/evidence/project-tree-facts/manifest.json",
+  "evidence_whitespace_exception": {
+    "scope": "docs/android-studio/ports/evidence/project-tree-facts/*.log only, via local .gitattributes",
+    "reason": "Exact captured Gradle stdout has trailing spaces on daemon-stop lines. Logs remain byte-identical and hash-bound; source/report checks remain normal.",
+    "initial_check": "Reported trailing spaces after initial docs staging; preserved without normalization",
+    "source_reference_eof_exception": "Original attributed sources/fixtures retain intentional EOF blank lines; source review uses core.whitespace=-blank-at-eof for retained data only."
+  }
 }
