@@ -72,7 +72,213 @@
       "run_blocker": null,
       "rust_targets": [],
       "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedSourceFiles_lightClasses",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedResources",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedAssets",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testResourcesPropertiesInAndroidView",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGoogleServicesJsonInAndroidView",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
     }
   ]
 }
-

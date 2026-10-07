@@ -947,10 +947,10 @@ mod tests {
     fn seed() -> Result<(Manifest, Ledger)> {
         Ok((
             serde_json::from_str(include_str!(
-                "../../../../docs/android-studio/reference-manifest.json"
+                "../../test_data/android_parity/reference-manifest.json"
             ))?,
             serde_json::from_str(include_str!(
-                "../../../../docs/android-studio/test-parity.json"
+                "../../test_data/android_parity/test-parity.json"
             ))?,
         ))
     }
@@ -1694,7 +1694,7 @@ mod tests {
             .is_err()
         );
         let mut value = serde_json::to_value(serde_json::from_str::<serde_json::Value>(
-            include_str!("../../../../docs/android-studio/test-parity.json"),
+            include_str!("../../test_data/android_parity/test-parity.json"),
         )?)?;
         value["silently_ignored_override"] = true.into();
         ensure!(serde_json::from_value::<Ledger>(value).is_err());

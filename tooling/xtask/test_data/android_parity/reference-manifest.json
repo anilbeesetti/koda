@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "baseline": "Android Studio Rabbit1 stable, studio-2026.2.1; matching IntelliJ build family 262.9437.185. Source repositories are independently pinned, and mirror coverage remains unverified.",
+  "census_complete": false,
+  "sources": [
+    {
+      "id": "idea",
+      "repository": "https://android.googlesource.com/platform/tools/adt/idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "tag": null,
+      "license": "Apache-2.0",
+      "archive": {
+        "path": "idea.tar.gz",
+        "sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84"
+      },
+      "coverage": "canonical",
+      "coverage_reason": "Pinned canonical AOSP archive retained externally; only eight manually inspected reference methods are cataloged.",
+      "coverage_evidence": null,
+      "census_complete": false,
+      "census_evidence": null
+    },
+    {
+      "id": "base",
+      "repository": "https://android.googlesource.com/platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "tag": null,
+      "license": "Apache-2.0",
+      "archive": {
+        "path": "base.tar.gz",
+        "sha256": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4"
+      },
+      "coverage": "canonical",
+      "coverage_reason": "Pinned canonical AOSP archive retained externally; no per-method test inventory has been reviewed yet.",
+      "coverage_evidence": null,
+      "census_complete": false,
+      "census_evidence": null
+    },
+    {
+      "id": "jetbrains-android",
+      "repository": "https://github.com/JetBrains/android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "tag": "idea/262.9437.185",
+      "license": "Apache-2.0",
+      "archive": {
+        "path": "jetbrains-android.tar.gz",
+        "sha256": "d7bb6a155c077166a6aed54ddaaa7d1629cbee8c200ceced0bddc0bcedfd92e2"
+      },
+      "coverage": "unverified_mirror",
+      "coverage_reason": "The GitHub mirror discloses files omitted due to size limits. Coverage against canonical git.jetbrains.org/idea/android.git is UNVERIFIED.",
+      "coverage_evidence": null,
+      "census_complete": false,
+      "census_evidence": null
+    }
+  ],
+  "tests": [
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "oneVariant",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 26,
+      "declaration": "fun oneVariant() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "debugPreferred",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 33,
+      "declaration": "fun debugPreferred() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "preferredBuildType",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 40,
+      "declaration": "fun preferredBuildType() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "preferredProductFlavorOverDebugBuildType",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 47,
+      "declaration": "fun preferredProductFlavorOverDebugBuildType() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "preferredFlavorsInTwoDimensions",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 54,
+      "declaration": "fun preferredFlavorsInTwoDimensions() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "preferredFlavorInSecondDimensionOnly",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 71,
+      "declaration": "fun preferredFlavorInSecondDimensionOnly() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "mismatchedProductFlavourLength",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 88,
+      "declaration": "fun mismatchedProductFlavourLength() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "onEmpty",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 96,
+      "declaration": "fun onEmpty() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    }
+  ]
+}

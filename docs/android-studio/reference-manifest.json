@@ -14,7 +14,7 @@
         "sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84"
       },
       "coverage": "canonical",
-      "coverage_reason": "Pinned canonical AOSP archive retained externally; only eight manually inspected reference methods are cataloged.",
+      "coverage_reason": "Pinned canonical AOSP archive retained externally; 31 declared methods in three inspected suites are cataloged. Baseline-wide suite discovery and runner expansion coverage remain incomplete.",
       "coverage_evidence": null,
       "census_complete": false,
       "census_evidence": null
@@ -180,6 +180,899 @@
       "copyright": "Copyright (C) 2022 The Android Open Source Project",
       "fixtures": [],
       "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testImportSimpleGradleProject",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 163,
+      "declaration": "public void testImportSimpleGradleProject() throws Exception {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testImportSubprojects",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 172,
+      "declaration": "public void testImportSubprojects() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testImportSubProjectsWithMissingSubModule",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 196,
+      "declaration": "public void testImportSubProjectsWithMissingSubModule() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testImportSubProjectWithCustomLocation",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 214,
+      "declaration": "public void testImportSubProjectWithCustomLocation() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testRequiredProjects",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 238,
+      "declaration": "public void testRequiredProjects() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testMissingRequiredProjects",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 252,
+      "declaration": "public void testMissingRequiredProjects() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testMissingEnclosingProject",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 265,
+      "declaration": "public void testMissingEnclosingProject() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testTransitiveDependencies",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 277,
+      "declaration": "public void testTransitiveDependencies() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testCircularDependencies",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 293,
+      "declaration": "public void testCircularDependencies() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedSourceFiles_lightClasses",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedSourceFiles_lightClasses",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 103,
+      "declaration": "public void testGeneratedSourceFiles_lightClasses() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/simpleApplication/.gitignore",
+          "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/build.gradle",
+          "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+          "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/build.gradle",
+          "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/gradle.properties",
+          "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedResources",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedResources",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 128,
+      "declaration": "public void testGeneratedResources() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/simpleApplication/.gitignore",
+          "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/build.gradle",
+          "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+          "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/build.gradle",
+          "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/gradle.properties",
+          "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedAssets",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedAssets",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 186,
+      "declaration": "public void testGeneratedAssets() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/simpleApplication/.gitignore",
+          "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/build.gradle",
+          "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+          "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/build.gradle",
+          "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/gradle.properties",
+          "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testShowVisibilityIconsWhenOptionIsSelected",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 243,
+      "declaration": "public void testShowVisibilityIconsWhenOptionIsSelected() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test sets the project visibility-icons preference to true and inspects a generated tree structure; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testShowVisibilityIconsWhenOptionIsUnselected",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 253,
+      "declaration": "public void testShowVisibilityIconsWhenOptionIsUnselected() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test sets the project visibility-icons preference to false and inspects a generated tree structure; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testResourcesPropertiesInAndroidView",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testResourcesPropertiesInAndroidView",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 263,
+      "declaration": "public void testResourcesPropertiesInAndroidView() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/simpleApplication/.gitignore",
+          "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/build.gradle",
+          "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+          "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/build.gradle",
+          "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/gradle.properties",
+          "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGoogleServicesJsonInAndroidView",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGoogleServicesJsonInAndroidView",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 277,
+      "declaration": "public void testGoogleServicesJsonInAndroidView() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/simpleApplication/.gitignore",
+          "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/build.gradle",
+          "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+          "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/build.gradle",
+          "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/gradle.properties",
+          "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefault",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 291,
+      "declaration": "public void testAndroidViewIsDefault() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test supplies mocked IDE/project capabilities, inline Studio flags and system-property overrides; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 360,
+      "declaration": "public void testAndroidViewNotVisibleInUnsupportedProjectSystem() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test supplies mocked project-system support and Android-project capabilities; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewNotVisibleInNonAndroidProject",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 382,
+      "declaration": "public void testAndroidViewNotVisibleInNonAndroidProject() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test supplies mocked project-system support and a non-Android project capability; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultCustomPropertyHandling",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 404,
+      "declaration": "public void testAndroidViewIsDefaultCustomPropertyHandling() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test supplies inline system-property overrides and a mocked notification sink to verify one-time migration; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 445,
+      "declaration": "public void testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test writes studio.projectview=true into a temporary idea.properties file from an inline string and mocks its options directory; it loads no external static fixture file."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 491,
+      "declaration": "public void testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test writes -Dstudio.projectview=true into a temporary studio64.vmoptions file from an inline string and supplies jb.vmOptionsFile; it loads no external static fixture file."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultMetrics",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 533,
+      "declaration": "public void testAndroidViewIsDefaultMetrics() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test uses mocked IDE/project capabilities, inline preference changes and a local virtual-time usage-event sink; it loads no external static project fixture."
     }
   ]
 }

@@ -1,9 +1,19 @@
 # Android reference-test ledger
 
-`cargo xtask android-parity` validates the checked-in catalog and prints an honest
-progress summary. This initial slice contains the eight manually inspected methods
-in AOSP `DefaultVariantsTest`, all unported and not run. It is not a test census,
-and archive file totals must never be presented as reference-test totals.
+`cargo xtask android-parity` validates the [current catalog](reference-manifest.json)
+and [current ledger](test-parity.json) and prints a progress summary. Consult the
+ledger or command for current port and execution statuses; they change as task
+evidence is integrated. The first standalone snapshot at `529a1d9453` contained
+eight inspected `DefaultVariantsTest` methods, all `unported/not_run`. That
+historical seed is preserved separately for validator regression tests. Archive
+file totals must never be presented as reference-test totals.
+
+The inspected foundation slice now catalogs eight `DefaultVariantsTest` methods,
+nine `GradleModuleImportTest` methods and fourteen `AndroidProjectViewTest`
+methods. These 31 declared methods are a partial inventory; the exhaustive
+baseline total remains unknown. The 23 newly cataloged import/project-view methods
+remain `unported/not_run`. Model-sync methods remain outside this partial catalog
+until their runner expansions are verified. No N/A classifications were added.
 
 Run from the checkout root:
 
@@ -20,6 +30,24 @@ provenance; `jetbrains-android-provenance.json` records the mirror omission
 warning. The checked-in manifest pins the hashes independently. No downloaded
 archive belongs in the product repository. External byte verification is optional
 for progress reports and required for the completion gate.
+
+`samples/foundation-source-provenance.json` records the inspected import and
+project-view declarations, source hashes, superclass/runner limits and immediate
+fixtures. Five project-view methods load the complete preserved 26-file
+`SIMPLE_APPLICATION` tree; each catalogs all those files and hashes. Their
+generated-source/resource/asset and special-file mutations remain inline in the
+unchanged suite. The other methods use inline Gradle templates, mocks, generated
+temporary property files or local event sinks, explained per method. The original
+sample uses AGP 1.5.0 and test-harness substitutions; a future executable port must
+record any AGP/repository/SDK adaptations. Files without individual license headers
+remain identified in the external provenance record for redistribution review.
+
+The Rust validator's 21 regression tests read immutable metadata fixtures in
+`tooling/xtask/test_data/android_parity/`, copied byte-for-byte from the original
+`529a1d9453` eight-row snapshot. This keeps their inputs and assertions stable as
+the production ledger grows and gains run evidence. The production catalog is
+checked separately by the command against the pinned archives and source/fixture
+bytes; freezing unit-test inputs does not claim current-catalog or census coverage.
 
 The canonical release manifest is
 [studio-2026.2.1](https://android.googlesource.com/platform/manifest/+/refs/tags/studio-2026.2.1/default.xml).
