@@ -3,7 +3,7 @@
   "task": "1-source-providers",
   "branch": "android-studio-task/1-source-providers",
   "base_commit": "6ac8e50dce8893e30c4cc544e0f4c165759751b2",
-  "status": "implementation_in_progress",
+  "status": "validated_model_pending_full_app_gates",
   "scope": "Add evaluated Android DSL provider names/configured directory facts and component asset roots to the existing Gradle project model; no tree policy, UI, active-provider selection or canonical parity changes.",
   "new_reference_test_credit": 0,
   "global_census_complete": false,
@@ -34,7 +34,8 @@
       "The catalog includes configured inactive providers and does not establish the selected variant's Studio provider order/scope. A tree adapter must preserve unknown/ambiguous identities rather than choosing the first catalog item.",
       "Shader, ML model, baseline profile, keep rule, arbitrary custom and JVM-resource categories are not covered by this bounded root-kind enum.",
       "Generated directory contents, VFS refresh/existence, colocation of generated and configured roots, and exact Studio generated-source model identity are not established merely by this raw model.",
-      "Existing Java/Kotlin/resource generatedness export behavior is unchanged by this assets-only correction."
+      "Existing Java/Kotlin/resource generatedness export behavior is unchanged by this assets-only correction.",
+      "Provider winners may change inside overlapping roots because Studio searches per directory/file. A future tree adapter needs per-entry active-scope/ordered lookup facts, not one provider annotation for an entire physical root."
     ]
   },
   "reference": {
@@ -282,18 +283,36 @@
     "rust_decode_command": "cargo run --locked -p android_tools --example project_model_probe -- /workspace/android-studio-artifacts/source-providers-smoke/project /workspace/android-studio-artifacts/source-providers-smoke/gradle-model-final.log --model-only"
   },
   "validation": {
-    "rust_tests": "not_run_pending_exclusive_Cargo_lease",
-    "rust_live_model_decode": "not_run_pending_exclusive_Cargo_lease",
-    "clippy": "not_run_pending_exclusive_Cargo_lease",
-    "full_app_build": "not_run_pending_exclusive_Cargo_lease",
-    "live_app_model_sync": "not_run_pending_exclusive_Cargo_lease",
+    "rust_tests": {
+      "command": "cargo test --locked -p android_tools --lib",
+      "status": "passing",
+      "passed": 50,
+      "failed": 0,
+      "ignored": 0,
+      "filtered_out": 0
+    },
+    "rust_live_model_decode": {
+      "status": "passing",
+      "command": "cargo run --locked -p android_tools --example project_model_probe -- /workspace/android-studio-artifacts/source-providers-smoke/project /workspace/android-studio-artifacts/source-providers-smoke/gradle-model-final.log --model-only",
+      "decoded_provider_count": 20,
+      "configured_root_records": 182,
+      "raw_provider_and_component_arrays_preserved": true,
+      "artifact": "docs/android-studio/evidence/source-providers/rust-decoded-model.json"
+    },
+    "clippy": {
+      "command": "./script/clippy --locked -p android_tools",
+      "status": "passing",
+      "includes": "release all-targets all-features with deny warnings"
+    },
+    "full_app_build": "pending_lead_capacity_and_exclusive_Cargo_lease",
+    "live_app_model_sync": "pending_matching_full_app_build",
     "formatting": "standalone rustfmt and git diff --check passing",
     "review_verdicts": {
-      "code": "PASS previous static snapshot; assets caching fix requires affected rereview",
-      "ui": "not_run",
-      "ux": "not_run",
-      "performance": "PASS round1 static scaling fix; no measured startup or large-project benchmark",
-      "quality": "PASS previous static snapshot; assets caching fix requires affected rereview"
+      "code": "PASS affected static correctness rereview after caching fix",
+      "quality": "PASS final narrow lint rereview, no assertions changed",
+      "performance": "PASS once-per-module caching fix, no measured startup or large-project benchmark",
+      "ui": "PASS UI/data contract scope; no widget/layout or visual parity claim",
+      "ux": "PASS bounded raw model/workflow contract; live app sync remains separate gate"
     },
     "canonical_ledger": "unchanged; synthetic regression models and the current-version smoke do not port original reference tests",
     "frozen_parity_fixture_sha256": {
@@ -306,7 +325,36 @@
       "project_model::tests::rejects_invalid_provider_names_duplicates_and_escaping_roots"
     ],
     "protected_origin_main": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
-    "ledger_and_frozen_tooling_diff": "git diff --exit-code against base6ac: no changes to canonical manifest/ledger, parity validator or immutable test fixtures"
+    "ledger_and_frozen_tooling_diff": "git diff --exit-code against base6ac: no changes to canonical manifest/ledger, parity validator or immutable test fixtures",
+    "rust_all_features_tests": {
+      "command": "cargo test --locked -p android_tools --all-features",
+      "status": "passing",
+      "library_passed": 55,
+      "gradle_import_integration_passed": 20,
+      "project_view_preferences_integration_passed": 19,
+      "total_passed": 94,
+      "failed": 0,
+      "ignored": 0,
+      "filtered_out": 0
+    },
+    "fix_rounds": [
+      {
+        "round": 1,
+        "finding": "Repeated DSL asset-root canonicalization for each variant/test component; README incorrectly implied Rust decode evidence already existed.",
+        "fix": "Reuse one evaluated module catalog/asset-root set and clarify already captured versus pending evidence.",
+        "affected_reviews": "code/quality/performance PASS",
+        "tests_weakened": false
+      },
+      {
+        "round": 2,
+        "finding": "Clippy redundant clone in the new regression helper.",
+        "fix": "Move the final-use PathBuf, preserving every assertion.",
+        "affected_reviews": "quality PASS; other scopes unaffected",
+        "failing_evidence": "docs/android-studio/evidence/source-providers/clippy-round1-failing.log",
+        "tests_weakened": false
+      }
+    ],
+    "release_capacity": "Canonical Cargo target/release path symlinks to /tmp/koda-android-studio-release-cache (separate 8.8 GiB tmpfs) only after verifying target/release absent; generated outputs remain disposable, source/evidence stay workspace."
   },
   "non_rust_exceptions": [
     {
@@ -320,6 +368,53 @@
     {
       "component": "Android SDK platform/build-tools",
       "reason": "Official Android compile target and build-tool metadata used by AGP; no practical equivalent Rust Android platform distribution exists."
+    }
+  ],
+  "tested_source_commit": "cdb7b90490a9e54466eac93a3b1d7f9279164001",
+  "tested_source_hashes": {
+    "crates/android_tools/src/project_model.rs": "f7a3fd3161b25c0ddaecce76f58da7a7dbd57451614f5723dc00184e09bf8ef6",
+    "crates/android_tools/src/project_model.gradle": "f0fdac17431fed5367249f567895b73d521bf1164fea85a08c3a84d327d54107"
+  },
+  "retained_evidence": [
+    {
+      "path": "docs/android-studio/evidence/source-providers/all-feature-tests.log",
+      "sha256": "9ad0a2065034e31ef6caa0e7b48a097078f0c9ae3ec39f99e3751775780ae6f6"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-providers/clippy-round1-failing.log",
+      "sha256": "d9064da3e8fbabc1aa1295b8992a4af0459f203a7aba9441da28334ed8d263d1"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-providers/clippy.log",
+      "sha256": "0470863680664de71d6f58f415a8769915aea9bb924d6b1e3ca0a2f15139fce0"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-providers/default-lib-tests.log",
+      "sha256": "743438622ca8d25c61d575f97f3dd64b7a1b6c83a472344a6de8de5eea39c16d"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-providers/gradle-model.json",
+      "sha256": "8b373d6ec948e3b14bb533aecc4718d1421452f1c9b6e44cf9bbb77c9a265348"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-providers/gradle-model.log",
+      "sha256": "f1d99bbf22eddfc13fec10881f8be77dc1e6a95df9d87c6a79aa47a346be5db4"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-providers/release-capacity.log",
+      "sha256": "c2f289e7b669eddc5bdbb6f8a22d618508928bce88a07ea1ed33be489e54dad3"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-providers/rust-decoded-model.json",
+      "sha256": "b87652489728e0c8f0577b62a7f8b1f6c0494741f80a3afb21cb2a8666b300c0"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-providers/rust-model-comparison.json",
+      "sha256": "b815c68d3e73e53126b92cf78d957ef98d01ca298575e2a49a67e0a50a9c04e4"
+    },
+    {
+      "path": "docs/android-studio/evidence/source-providers/rust-probe.log",
+      "sha256": "4a9899f1e749ba7d80dff2eda30109628b3dfeb7b269bd5055e3e0e7c589d86b"
     }
   ]
 }
