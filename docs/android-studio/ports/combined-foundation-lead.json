@@ -1,0 +1,146 @@
+{
+  "schema_version": 1,
+  "scope": "Lead verification of combined foundation backend slice; phase1 and completeIDE remain unfinished",
+  "tested_source_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+  "merged_first_slice": {
+    "commit": "d2046e36b9448c69d8fe1b6f35efa87fb8714f78",
+    "tree_identical_to": "5577738e0cca988b7d61925f203d03c0b3e48fbf",
+    "ci": "https://github.com/anilbeesetti/koda/actions/runs/37609909130",
+    "workspace_tests_passed": 10206,
+    "pre_existing_ignored": 23
+  },
+  "combined_ci": {
+    "head": "cbf8c0ec26057913f62c8dc9f494cf2baf27945d",
+    "url": "https://github.com/anilbeesetti/koda/actions/runs/37615677970",
+    "observed_status": "Linux workspace tests running; formatting/scripts and macOS passed",
+    "merge_gate": "Full workspace CI must pass before merging additional code"
+  },
+  "reference_cases": {
+    "catalogued": 92,
+    "ported_passing": 17,
+    "adapted_passing": 9,
+    "unported_not_run": 66,
+    "not_applicable": 0,
+    "exhaustive_census": "incomplete; total unknown"
+  },
+  "checks": [
+    {
+      "command": "cargo test --locked -p android_tools -p android_ui -p xtask --all-features",
+      "results": {
+        "android_tools_unit": 52,
+        "gradle_import_integration": 20,
+        "project_view_preferences_integration": 19,
+        "android_ui": 105,
+        "xtask": 41,
+        "pre_existing_ignored_native_capture": 1
+      },
+      "outcome": "pass"
+    },
+    {
+      "command": "./script/clippy --locked -p android_tools -p android_ui -p xtask",
+      "mode": "repository release all-targets/all-features warnings denied",
+      "outcome": "pass"
+    },
+    {
+      "command": "cargo build --locked -p zed --bin koda",
+      "outcome": "pass",
+      "elapsed_seconds": 152
+    },
+    {
+      "command": "Previously compiled all-feature Android UI executable: android_preview::tests::capture_compose_preview_surface --ignored --exact --show-output",
+      "outcome": "pass;1executed,0ignored",
+      "boundary": "Native GPUI opt-in capture only, not official rendering-runtime/full-app preview parity"
+    }
+  ],
+  "live_checks": {
+    "rust_api_probe": "External module import/discovery, byte preservation at import, preferences save/load and durable legacy migration passed",
+    "full_app": "Opened actual API-imported project and completed Gradle sync;2application build variants; successful sync inspected in retained screenshot; launcher/app/Xvfb terminated and verified",
+    "apk": "Supplementary synthetic project assembleDebug passed;874020bytes;application and imported-library classes present",
+    "apk_sha256": "3c289375ebeddf789b870816041ed63229847e14a33f8fad45b91bf2dbcbd483",
+    "versions": {
+      "gradle": "9.6.1",
+      "agp": "9.4.0",
+      "jdk": "21.0.12.1",
+      "sdk_platform": "37.0",
+      "build_tools": "37.0.0"
+    },
+    "device_execution": "not_run;no emulator/ADBtarget or /dev/kvm",
+    "performance": "No hardware startup/memory benchmark claimed",
+    "pending_product_work": [
+      "Import wizard and durable settings UI wiring",
+      "Real evaluated source-provider metadata and tree UI refresh/navigation",
+      "Pinned original Gradle integration fixtures/model-sync test behavior",
+      "Complete Android Studio window/workflow parity"
+    ]
+  },
+  "retained_attempts": {
+    "initial_local_workspace_build": "Disk capacity failure before tests; later full GitHub workspace run passed",
+    "combined_all_features_initial_attempt": "Interrupted before tests due disk capacity; unchanged command rerun passed",
+    "native_capture_initial_cargo_attempt": "Interrupted unnecessary feature rebuild before test; existing compiled executable then passed exact native capture",
+    "apk_initial_attempts": "JRE lacked javac, Gradle expected absent build-tools/platform local registration; official JDK and exact official SDK registration fixed environment; logs retained",
+    "file_navigation_attempt": "Second standalone CLI app had software GPU option missing and was terminated; not a passed keyboard/navigation result"
+  },
+  "source_and_test_integrity": "No source fixture/test assertions deleted, skipped, newly ignored or weakened. Only generated Cargo output/completed ELF hardlinks and verified duplicate JDK download cleaned with retained manifests; SDK payload/test source preserved",
+  "evidence": [
+    {
+      "path": "/workspace/android-studio-artifacts/combined-backends-all-features-tests.log",
+      "bytes": 21825,
+      "sha256": "21c565d0a5fdb38461f99ed74c26046a9a501a05e592050fd017e87d01292bd4"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/combined-backends-clippy.log",
+      "bytes": 16636,
+      "sha256": "965b4d66ea7add01ead1034b0bc78ec9ce98588515d0e43ac75b45aea68622dd"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/combined-backends-app-build.log",
+      "bytes": 8274,
+      "sha256": "263831ce4ce0b1b4be1f2b9493b6d75e3fa3aa48bb8a0ba0a67bf7c4e5d2b11d"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/combined-backends-native-surfaces-executable.log",
+      "bytes": 266,
+      "sha256": "0d3e442d0dc2b1df38daa8d50197f5f74c7a1614fe7a6098b90f33cd92070c5e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/combined-backends-live/probe.log",
+      "bytes": 307,
+      "sha256": "1b89dd49b98cb54f35094798794fb3139985d3bd9327e64b695dc461779dc5c9"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/combined-backends-live/sync-settled.png",
+      "bytes": 133271,
+      "sha256": "9c19f8eba8ec2da6be3d9da0734440dd23b8817192d28ca6cde20a0a39b47df2"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/combined-backends-live/imported-library-resized.png",
+      "bytes": 110957,
+      "sha256": "6c064fa88c7d6f125f47624041d2b4bc53457f52e31eef6cb8c8be693e71625d"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/combined-backends-live/assemble-debug-registered-sdk.log",
+      "bytes": 4428,
+      "sha256": "347fbc7c38e5d5d3e417d5129d5e2347824358a2709a23c629bfd13ed4b7cb5f"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/combined-backends-live/apk-verification.json",
+      "bytes": 531,
+      "sha256": "e60010c6bd8fb9c84310cc04b4d527a4815088452ab05bb0d8b9629e398c3aa9"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sdk-platform-local-registration.json",
+      "bytes": 776,
+      "sha256": "b5ed48336e4bee4e03b928c62b1676b38a3b02f5e8814a8aaf3cdfd5d11830c2"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/jdk21-provenance.json",
+      "bytes": 469,
+      "sha256": "7beedfb58b9bb66355915b5e197b2bc8287f36c5f0328f292b74df8d7d54e046"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/completed-root-app-and-release-cleanup.json",
+      "bytes": 218886,
+      "sha256": "1c2a053c59b43a16af602516f4bd860e3224fc58c7d24c44deec2cc907444d4b"
+    }
+  ]
+}
