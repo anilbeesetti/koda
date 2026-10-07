@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized] target(s) in 0.65s
+     Running tests/project_tree_component.rs (/workspace/.cache/zed/target/debug/deps/project_tree_component-4535bf65bc6c83de)
+
+running 1 test
+test component_properties_use_first_physical_main_root_without_fallback ... ok
+
+successes:
+
+successes:
+    component_properties_use_first_physical_main_root_without_fallback
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
+

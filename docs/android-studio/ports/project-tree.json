@@ -1,0 +1,603 @@
+{
+  "schema_version": 1,
+  "task": "Foundation Android logical project tree projection component",
+  "branch": "android-studio-task/1-project-tree",
+  "base_commit": "f8114bfafa",
+  "scope": "Backend-only immutable Rust projection. No upstream tree parity credit and no product Android-view fidelity claim.",
+  "status": "Backend component reviewed and immutably verified. Five scoped reviewers PASS after two fix rounds; lead app/full-workspace integration gates and product tree wiring pending.",
+  "reference": {
+    "repository": "https://android.googlesource.com/platform/tools/adt/idea",
+    "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "release": "studio-2026.2.1",
+    "suite": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+    "suite_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+    "provenance": "crates/android_tools/test_data/project_tree/provenance.json",
+    "original_fixture_files": 26,
+    "original_source_files": 21,
+    "preservation": "Original files and source notices copied byte-for-byte. Intentional sample failingTest and raw AGP configuration preserved.",
+    "suite_class": "com.android.tools.idea.navigator.AndroidProjectViewTest"
+  },
+  "upstream_rows": [
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedSourceFiles_lightClasses",
+      "status": "unported",
+      "reason": "Real pinned-fixture Gradle import, BuildConfig generated source model export, exact original source bytes, file refresh, class facts and integrated tree.",
+      "original_assertions": [
+        {
+          "assertion": "assertThat(androidModel).isNotNull();",
+          "status": "unported",
+          "rust_target": null
+        },
+        {
+          "assertion": "assertThat(generatedFolders).isNotEmpty();",
+          "status": "unported",
+          "rust_target": null
+        },
+        {
+          "assertion": "assertThat(buildConfigFolder).isNotNull();",
+          "status": "unported",
+          "rust_target": null
+        },
+        {
+          "assertion": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"java (generated)\", \"application\", \"BuildConfig\"));",
+          "status": "unported",
+          "rust_target": null
+        }
+      ],
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedSourceFiles_lightClasses",
+      "source_file": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "declaration_line": 103,
+      "run_status": "not_run",
+      "assertion_count": 4
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedResources",
+      "status": "unported",
+      "reason": "Original GenerateRes Gradle registration, real model generated-resource folder discovery, exact newline-prefixed file bytes, file refresh and integrated tree.",
+      "original_assertions": [
+        {
+          "assertion": "assertThat(generatedResourcesFolder).named(\"my_generated_resources folder\").isNotNull();",
+          "status": "unported",
+          "rust_target": null
+        },
+        {
+          "assertion": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"res (generated)\", \"raw\", \"sample_raw_resource\"));",
+          "status": "unported",
+          "rust_target": null
+        }
+      ],
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedResources",
+      "source_file": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "declaration_line": 128,
+      "run_status": "not_run",
+      "assertion_count": 2
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedAssets",
+      "status": "unported",
+      "reason": "Asset source kind and Gradle bridge export, original AssetGenerator registration, real model root discovery, exact newline-prefixed file bytes, file refresh and integrated tree.",
+      "original_assertions": [
+        {
+          "assertion": "assertThat(generatedAssetsFolder).named(\"createAssets folder\").isNotNull();",
+          "status": "unported",
+          "rust_target": null
+        },
+        {
+          "assertion": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"assets (generated)\", \"raw\", \"createAssets\"));",
+          "status": "unported",
+          "rust_target": null
+        }
+      ],
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedAssets",
+      "source_file": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "declaration_line": 186,
+      "run_status": "not_run",
+      "assertion_count": 2
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testResourcesPropertiesInAndroidView",
+      "status": "unported",
+      "reason": "Real fixture import, actual provider metadata, exact empty file, file refresh and integrated tree.",
+      "original_assertions": [
+        {
+          "assertion": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"res\", \"resources.properties (main)\"));",
+          "status": "unported",
+          "rust_target": null
+        }
+      ],
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testResourcesPropertiesInAndroidView",
+      "source_file": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "declaration_line": 263,
+      "run_status": "not_run",
+      "assertion_count": 1
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGoogleServicesJsonInAndroidView",
+      "status": "unported",
+      "reason": "Real fixture import, exact empty direct-module file, file refresh and integrated tree.",
+      "original_assertions": [
+        {
+          "assertion": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"google-services.json\"));",
+          "status": "unported",
+          "rust_target": null
+        }
+      ],
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGoogleServicesJsonInAndroidView",
+      "source_file": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "declaration_line": 277,
+      "run_status": "not_run",
+      "assertion_count": 1
+    }
+  ],
+  "supplemental_tests": {
+    "package": "android_tools",
+    "integration_target": "project_tree_component",
+    "methods": [
+      "component_fixture_package_manifest_and_class_navigation",
+      "component_fixture_resource_variants_preserve_every_file_target",
+      "component_generated_groups_keep_explicit_facts_and_literal_assets",
+      "component_properties_main_annotation_is_separate_from_visual_text",
+      "component_properties_use_first_physical_main_root_without_fallback",
+      "component_properties_do_not_infer_physical_main_from_provider_name",
+      "component_google_services_requires_a_direct_module_file",
+      "component_input_reordering_preserves_snapshot_and_stable_keys",
+      "component_overlapping_roots_have_distinct_occurrence_keys",
+      "component_identical_roots_follow_builtin_type_priority",
+      "component_empty_and_missing_roots_are_distinct",
+      "component_empty_resource_types_survive_and_unknown_folders_are_excluded",
+      "component_missing_class_metadata_keeps_filename_and_given_offsets",
+      "component_disabling_package_compaction_and_asset_hierarchy",
+      "component_obsolete_file_facts_and_unknown_provider_are_rejected",
+      "component_conflicting_file_provider_and_module_facts_are_rejected",
+      "component_file_ancestor_contradictions_are_rejected",
+      "component_invalid_source_kind_and_unsafe_paths_are_rejected",
+      "component_deep_hierarchy_builds_and_drops_without_recursive_nodes",
+      "component_large_flat_project_preserves_targets_with_unique_keys",
+      "component_original_sample_intentional_failure_is_preserved"
+    ],
+    "interpretation": "Typed projection facts replace platform services only for component verification; they do not replace any original Gradle-backed assertions or receive adapted parity status.",
+    "result": "PASS:21 manifest-bound exact supplemental captures at frozen source commit,0 failed/ignored. These are component tests and grant no reference-test parity credit."
+  },
+  "contracts": {
+    "source_facts": "Current-variant roots, provider identity and Java class presentation facts must be supplied by an authoritative producer. Unattributed means known absence; Unknown aborts projection. This component annotates a whole root with one provider; faithful overlapping-root behavior still needs per-entry ordered provider facts or equivalent pure lookup.",
+    "file_facts": "Immutable absolute physical-file/directory inventory bound to a model revision. Conflicting facts abort; nonexistent roots are omitted. No per-render disk I/O.",
+    "identities": "Module/source group keys and physical occurrence keys with source-root identity; merged resource variants retain unique physical-path keys. Arena IDs are snapshot-local.",
+    "presentation": "Rendered labels and gray annotations are separate from reference toTestString labels. Main annotations are omitted visually and retained in source/manifest reference labels.",
+    "navigation": "Leaf targets preserve physical paths and supplied class offsets. Resource group best-target selection is unavailable until qualifier semantics exist.",
+    "determinism": "Ordered indexes and UTF-16 presentation sorting; resource qualifier order and platform PSI presentation are not claimed equivalent. Root ties use physical-path order, not upstream Set insertion order; a later authoritative root-order adapter is required for exact ties."
+  },
+  "remaining_product_wiring": [
+    "Integrate evaluated assets/source-provider catalog after lead validation; configured source-set iteration includes inactive providers and cannot establish Android Studio active overlay order.",
+    "Extend typed projection inputs with authoritative per-directory/file provider selection and explicit source-root encounter order; do not treat constant root annotations or physical-path tie ordering as complete reference behavior.",
+    "Adapt the current variant model and physical file snapshot on a background executor; bind revisions and reject stale results before publication; preserve the last successful tree after sync failure.",
+    "Install the GPUI Android/filesystem selector and virtual-row rendering, icons, expansion/selection persistence, keyboard shortcuts, physical entry mapping and file/class navigation.",
+    "Integrate durable view settings, local notifications, file refresh and generated-root updates; persist migrated preferences before cleanup and publish after durability.",
+    "Port all five complete original cases using real Gradle import and every original assertion, then add applicable UI/live evidence.",
+    "Implement resource FolderConfiguration comparison and best qualified resource navigation; define PSI-equivalent multi-class presentation when Rust language metadata is available.",
+    "Add remaining AndroidSourceType groups, build-script/dependency nodes and non-Android/included-build module behavior; this component only exposes the documented source-group subset."
+  ],
+  "validation": {
+    "focused_tests": {
+      "status": "PASS",
+      "command": "cargo test --locked -p android_tools --lib --test project_tree_component",
+      "unit_passed": 47,
+      "component_passed": 20,
+      "failed": 0,
+      "ignored": 0,
+      "log": "/workspace/android-studio-artifacts/project-tree/initial-focused-tests.log",
+      "source_commit": "uncommitted initial candidate; immutable capture pending"
+    },
+    "android_tools_all_features": {
+      "status": "PASS",
+      "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features"
+      ],
+      "unit_passed": 52,
+      "importer_integration_passed": 20,
+      "policy_integration_passed": 19,
+      "component_passed": 21,
+      "total_passed": 112,
+      "failed": 0,
+      "ignored": 0,
+      "log": {
+        "path": "docs/android-studio/evidence/project-tree-immutable-all-features-tests-rerun.log",
+        "sha256": "443d9601e34a0b38a31494bdc78d3c8417303089dd3e76d9e914d9dc55dd7548"
+      }
+    },
+    "format": {
+      "status": "PASS",
+      "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "log": {
+        "path": "docs/android-studio/evidence/project-tree-immutable-format.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "clippy": {
+      "status": "PASS",
+      "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools"
+      ],
+      "log": {
+        "path": "docs/android-studio/evidence/project-tree-immutable-clippy.log",
+        "sha256": "25821ba96d6835a623964d471089e4b936041cced3ce04ffb4ae54016455f6b3"
+      },
+      "profile": "release/all-targets/all-features/deny warnings"
+    },
+    "original_hashes": {
+      "status": "PASS",
+      "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+      "fixtures": 26,
+      "sources": 21,
+      "report": {
+        "path": "docs/android-studio/evidence/project-tree-original-preservation.json",
+        "sha256": "edd4dd32a4c4597de928a78a9ef8b9f2e1c5e386ec9921adcaa7b6b10a42a7de"
+      },
+      "preservation": "Every original byte count/SHA256 matches committed provenance; sample failingTest and original blank EOF retained unchanged."
+    },
+    "full_app_build": "pending lead gate",
+    "live_app": "pending lead gate; no visible tree wiring exists in this component",
+    "full_workspace_suite": "pending lead gate",
+    "reviewed_component_candidate": {
+      "status": "PASS",
+      "command": "cargo test --locked -p android_tools --all-features --test project_tree_component",
+      "passed": 21,
+      "failed": 0,
+      "ignored": 0,
+      "log": "/workspace/android-studio-artifacts/project-tree/round2-component-tests.log",
+      "interpretation": "Reviewed candidate bytes match source commit; capture was before source freeze, so it is not recorded as immutable tested_commit evidence."
+    },
+    "diff_check": {
+      "owned_files": "PASS strict for owned Rust/task source; original fixture/source bytes excluded from formatting mutations.",
+      "complete_source": "Default check reports one unchanged original blank EOF at simpleApplication/app/src/main/res/layout/absolute.xml:63; core.whitespace=-blank-at-eof check PASS",
+      "preservation": "Original bytes remain unchanged; no formatting patch applied to the reference fixture.",
+      "immutable_evidence": "Raw Cargo stdout/stderr retained byte-for-byte, including trailing blank lines. Full staged documentation/evidence check PASS with core.whitespace=-blank-at-eof; no source whitespace rule relaxed."
+    },
+    "windows": "Static valid-producer path finding fixed; no Windows build/test runtime was available or executed.",
+    "immutable_evidence": {
+      "path": "docs/android-studio/evidence/project-tree-validation.json",
+      "sha256": "339af459c5037dde5dd6d2b9c282c5a9e3020e0362b7a98c4544a73afa16a338"
+    },
+    "immutable_source_snapshot": {
+      "path": "docs/android-studio/evidence/project-tree-crate-source-snapshot.json",
+      "sha256": "e147538a249dcb2cbcb9fd6cfabb0b6e48acb13641277101e0f405a0edc3e6d3"
+    },
+    "immutable_component_captures": {
+      "targets": {
+        "path": "docs/android-studio/evidence/project-tree-component-targets.json",
+        "sha256": "d6cb1dc53d46f6a0fd15707444ac9a789dd009efb28bde4019c7714e0f71583c"
+      },
+      "passed_exact_captures": 21,
+      "reference_parity_credit": false
+    },
+    "shared_target_initial_failure": {
+      "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features"
+      ],
+      "exit_code": 101,
+      "log": {
+        "path": "docs/android-studio/evidence/project-tree-immutable-all-features-tests.log",
+        "sha256": "89a92031305eceeaacc875b9b308e3919c21ba5ac80549182f741a3b22faf70d"
+      },
+      "log_sha256": "89a92031305eceeaacc875b9b308e3919c21ba5ac80549182f741a3b22faf70d",
+      "summaries": [],
+      "status": "FAIL",
+      "reason": "Shared-target relative dep-info reused a newer library from another worktree that lacked project_tree. Source bytes were correct; refreshing this task crate-root mtime forced recompilation. The failed attempt is retained."
+    },
+    "shared_target_freshness_recovery": "Root source mtime refreshed, byte hash unchanged, to invalidate shared relative dep-info from another worktree; successful rerun and clippy recovery records retained. No cache cleanup.",
+    "canonical_ledger": "Not recaptured by this owner; lead must validate canonical ports on the final combined source. Five original tree rows remain unported/not_run."
+  },
+  "reviews": [
+    {
+      "area": "code",
+      "round": 1,
+      "verdict": "FAIL",
+      "findings": "A File fact with descendant files/directories could project an impossible tree. Fixed with cached complete-index ancestor validation and both descendant kinds covered.",
+      "reviewer": "/root/project_view_policy/code_review",
+      "scope": "Component only; reviewer ran no Cargo/app builds or mutations."
+    },
+    {
+      "area": "code",
+      "round": 2,
+      "verdict": "PASS",
+      "findings": "Ancestor, module-kind, provider-conflict and lexical path validation now consistent; no remaining scoped correctness finding.",
+      "reviewer": "/root/project_view_policy/code_review",
+      "scope": "Component only; reviewer ran no Cargo/app builds or mutations."
+    },
+    {
+      "area": "ui",
+      "round": 1,
+      "verdict": "PASS",
+      "findings": "Backend display labels/annotations, reference labels, generated groups, package compaction, literal assets and resource variants match the documented source contracts; no visible UI completion claimed.",
+      "reviewer": "/root/project_view_policy/ui_review",
+      "scope": "Component only; reviewer ran no Cargo/app builds or mutations."
+    },
+    {
+      "area": "ux",
+      "round": 1,
+      "verdict": "PASS",
+      "findings": "Explicit metadata, stable node keys, physical/class targets and stale/error handling are suitable for a later background adapter; selectors, keyboard workflows and file opening remain pending.",
+      "reviewer": "/root/project_view_policy/ux_review",
+      "scope": "Component only; reviewer ran no Cargo/app builds or mutations."
+    },
+    {
+      "area": "performance",
+      "round": 1,
+      "verdict": "PASS",
+      "findings": "Ordered indexes/prefix ranges, ancestor caching and flat iterative arena avoid unrelated scans/recursive stack growth; stress durations are functional evidence, not product benchmarks.",
+      "reviewer": "/root/project_view_policy/performance_review",
+      "scope": "Component only; reviewer ran no Cargo/app builds or mutations."
+    },
+    {
+      "area": "performance",
+      "round": 2,
+      "verdict": "PASS",
+      "findings": "Normalization adds linear component passes and a temporary PathBuf per path, released immediately; no disk I/O or project-wide rescan.",
+      "reviewer": "/root/project_view_policy/performance_review",
+      "scope": "Component only; reviewer ran no Cargo/app builds or mutations."
+    },
+    {
+      "area": "quality",
+      "round": 1,
+      "verdict": "FAIL",
+      "findings": "Strict native path comparison rejected slash-separated valid Windows test-producer paths. Fixed with platform_path/canonical_file for valid facts and raw_file for malformed regressions.",
+      "reviewer": "/root/project_view_policy/quality_review",
+      "scope": "Component only; reviewer ran no Cargo/app builds or mutations."
+    },
+    {
+      "area": "quality",
+      "round": 2,
+      "verdict": "PASS",
+      "findings": "Platform producer fix retains rejection assertions; original 47 files byte-identical, coverage/attribution/scoped status accurate; no remaining owned-source finding.",
+      "reviewer": "/root/project_view_policy/quality_review",
+      "scope": "Component only; reviewer ran no Cargo/app builds or mutations."
+    }
+  ],
+  "source_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+  "final_review_verdicts": {
+    "code": "PASS",
+    "ui": "PASS",
+    "ux": "PASS",
+    "performance": "PASS",
+    "quality": "PASS"
+  },
+  "fix_rounds": 2,
+  "source_bindings": [
+    {
+      "path": "Cargo.lock",
+      "sha256": "8b8fa07d44a4151a5c75935510eb686728e79f10bb3a6f375efdeaa8837a9c88"
+    },
+    {
+      "path": "crates/android_tools/Cargo.toml",
+      "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+    },
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "3384502fe3b1222533eaf71d7bf101dfb04fe58c2b5cace6e5f4a4a2b0afdd7f"
+    },
+    {
+      "path": "crates/android_tools/src/project_tree.rs",
+      "sha256": "43450176a548408ac9abd1894305cc927c1fb07ded090e18a6a442968d69222e"
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_component.rs",
+      "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22"
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/provenance.json",
+      "sha256": "e9fed4664d0fefe0e3ffdba16b1f0fd86bbb2e9d7d98458380b636b9aff637b8"
+    }
+  ],
+  "fixture_mappings": [
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/.gitignore",
+      "upstream_sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/.gitignore",
+      "local_sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/.gitignore",
+      "upstream_sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/.gitignore",
+      "local_sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/build.gradle",
+      "upstream_sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/build.gradle",
+      "local_sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+      "upstream_sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/proguard-rules.pro",
+      "local_sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+      "upstream_sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+      "local_sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+      "upstream_sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/AndroidManifest.xml",
+      "local_sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+      "upstream_sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+      "local_sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+      "upstream_sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+      "local_sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+      "upstream_sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/layout/absolute.xml",
+      "local_sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+      "upstream_sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/layout/activity_my.xml",
+      "local_sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+      "upstream_sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/layout/frames.xml",
+      "local_sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+      "upstream_sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/menu/my.xml",
+      "local_sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+      "upstream_sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values/dimens.xml",
+      "local_sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+      "upstream_sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values/strings.xml",
+      "local_sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+      "upstream_sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values/styles.xml",
+      "local_sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+      "upstream_sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-en/strings.xml",
+      "local_sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+      "upstream_sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+      "local_sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+      "upstream_sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-ta/strings.xml",
+      "local_sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+      "upstream_sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-v19/styles.xml",
+      "local_sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+      "upstream_sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-v20/styles.xml",
+      "local_sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+      "upstream_sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+      "local_sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+      "upstream_sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+      "local_sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+      "upstream_sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+      "local_sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/build.gradle",
+      "upstream_sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/build.gradle",
+      "local_sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/gradle.properties",
+      "upstream_sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/gradle.properties",
+      "local_sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    },
+    {
+      "upstream_path": "android/testData/projects/simpleApplication/settings.gradle",
+      "upstream_sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f",
+      "local_path": "crates/android_tools/test_data/project_tree/simpleApplication/settings.gradle",
+      "local_sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f",
+      "status": "reused unchanged; component input only, no original-case parity credit"
+    }
+  ],
+  "dependent_plan": "docs/android-studio/project-tree-ui-plan.md"
+}
