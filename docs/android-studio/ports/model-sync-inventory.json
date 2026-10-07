@@ -1,0 +1,980 @@
+{
+  "schema_version": 1,
+  "task": "1-model-sync-inventory",
+  "branch": "android-studio-task/1-model-sync-inventory",
+  "base_commit": "5577738e0cca988b7d61925f203d03c0b3e48fbf",
+  "scope": "Source-defined leaf cases in three selected suites, including separately categorized resource conversion. Metadata only; no Rust implementation or validator fixture changes.",
+  "status": "source_inventory_verified_for_lead_review",
+  "global_census_complete": false,
+  "mirror_omissions_resolved": false,
+  "counts": {
+    "selected_declared_methods": 4,
+    "source_defined_leaf_cases": 4,
+    "runtime_executed_cases": null,
+    "new_ported_tests": 0,
+    "new_applicable_unported_rows": 4,
+    "fixture_references_added": 158,
+    "fixture_files_redistributed_in_repository": 0
+  },
+  "runner_resolution": {
+    "status": "resolved_for_named_normal_build_targets_from_source",
+    "normal_execution_assumptions": [
+      "Selected pinned Bazel target definitions, ordinary JUnit4 dispatch, no user-supplied agp.version/gradle.version/test_filter/ignored.tests.only overrides.",
+      "JUnit4.13.2 comes from the pinned idea library metadata. Its source jar is retained externally with a SHA-256; it is supplementary runner evidence, not a new Android reference baseline.",
+      "Compiled jar membership, actual JVM descriptions, shard assignment and reference test execution were not run or claimed. Retry/repeat infrastructure is not counted as a distinct input case."
+    ],
+    "inheritance": [
+      "AllVariantsSyncWithGradleSyncExecutorTest implements SnapshotComparisonTest; the fully inspected interface has no Test-annotated methods. No test superclass, RunWith, Parameters, factory or dynamic-case declaration exists in this selected class.",
+      "GradleSyncSpecialCasesIntegrationTest has no test superclass or custom runner; it declares one Test method and project/Expect rules.",
+      "GradleAndroidModelTest explicitly uses RunWith(JUnit4), has no test superclass/rules and declares one inline resource-conversion method.",
+      "TestGroup considers public inherited methods; JUnit TestClass scans the concrete class and superclasses. Here all three Kotlin classes have Object as their superclass, so no inherited leaf test is omitted. Kotlin interface/default-argument accessors are not Test-annotated methods."
+    ],
+    "rule_and_helper_dispatch": "AndroidProjectRule returns/delegates one wrapped statement, NamedExternalResource evaluates it once, TestName/TestWatcher and Truth Expect evaluate once, and prepared-project/fixture helpers invoke the callback once. RunsInEdt changes dispatch context, not invocation count.",
+    "environment_selection": "For the three sync leaf cases in the normal integration target, prepareTestProject selects AGP_CURRENT=AGP_LATEST once. ModelVersion defaults V2. Default AGP/Gradle/Kotlin/JDK versions are resolved by the harness; they are not enumerated into parameter instances. Separate generated targets were inspected independently before this conclusion.",
+    "snapshot_selection": "Phased/baseline suffixes select a comparison file for the same assertion. The pinned selected snapshot directory contains only three baseline files and no phased variants; selected methods use allVariantSyncWithV2.txt and allVariantWithBuildSrc.txt. The duplicate-snapshot assertion remains part of each method's future port requirements.",
+    "excluded_snapshot": {
+      "path": "android/testData/snapshots/IdeModels_AllVariantsSync/allVariantSyncWithV1.txt",
+      "sha256": "150729acc6904c869cf8f610a2a6fbe4746e48f6ac5d840e12951ef6e17397a7",
+      "reason": "Retained externally. No testAllVariantSyncWithV1 declaration exists in the full selected suite; a stale V1/V2 class comment and this file do not create a test case. No N/A classification or deletion was performed."
+    }
+  },
+  "target_inventory": [
+    {
+      "target": "//tools/adt/idea/android/gradle.project.sync:intellij.android.core.gradle.project.sync_tests",
+      "leaf_classes": [
+        "com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest",
+        "com.android.tools.idea.gradle.project.sync.GradleSyncSpecialCasesIntegrationTest"
+      ],
+      "suite": "com.android.tools.idea.IdeaTestSuite",
+      "source_leaf_invocations": 3,
+      "shards": 4,
+      "version_inputs": "Normal target defines no AGP/Gradle version properties or split configurations. Four shards distribute methods; they do not define four AGP inputs. The full module BUILD defines no generated old-AGP targets.",
+      "status": "source_resolved_not_executed"
+    },
+    {
+      "target": "//tools/adt/idea/project-system-gradle:intellij.android.projectSystem.gradle.tests_tests__other",
+      "leaf_classes": [
+        "com.android.tools.idea.gradle.project.model.GradleAndroidModelTest"
+      ],
+      "suite": "com.android.tools.idea.projectsystem.GradleProjectSystemTestSuite",
+      "source_leaf_invocations": 1,
+      "version_inputs": "The class matches none of the explicitly named split filters in the complete BUILD. The other split excludes those filters, enables indexing, and supplies jbr-next. This method does not run Gradle or read version/configuration inputs; its conversion helper uses only class field values.",
+      "status": "source_resolved_not_executed"
+    },
+    {
+      "target": "//tools/adt/idea/project-system-gradle:intellij.android.projectSystem.gradle.tests_tests__all",
+      "leaf_classes": [
+        "com.android.tools.idea.gradle.project.model.GradleAndroidModelTest"
+      ],
+      "manual": true,
+      "version_inputs": "Explicit manual local-development alias generated by _gen_split_tests. Indexing defaults differ from other, but the selected pure conversion method has identical literal inputs and no indexing/AGP/Gradle interaction. It is recorded as a target alias for the same input case, not silently discarded or counted as a parameter instance.",
+      "status": "source_resolved_not_executed"
+    },
+    {
+      "target": "//tools/adt/idea/project-system-gradle:GradleSyncWithOldAgpIntegrationTest_gradle_7.5_agp_7.4.1",
+      "suite": "com.android.tools.idea.projectsystem.GradleProjectSystemOldAgpTestSuite",
+      "version_inputs": {
+        "gradle.version": "7.5",
+        "agp.version": "7.4.1",
+        "ignore_other_tests": true
+      },
+      "selected_leaf_invocations": 0,
+      "reason": "The full generated target definition and OldAgpFilter were inspected. GradleAndroidModelTest has no OldAgpTest annotation, so ignore_other_tests=true excludes it. The three selected integration methods belong to a different module jar. Old-AGP inputs were not collapsed to AGP_CURRENT.",
+      "status": "selected_classes_source_excluded"
+    }
+  ],
+  "uncredited_suite_infrastructure": [
+    {
+      "suite": "com.android.tools.tests.LastInIdeaTestSuite",
+      "method": "checkForLeaks",
+      "source_path": "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+      "declaration_line": 30,
+      "execution_condition": "Suite finalizer executes once per successful JarTestSuiteRunner target; its method assumes idea.leak.check.enabled=true. It is not inherited by a selected leaf class or invoked once per selected method.",
+      "status": "identified_outside_selected_leaf_class_scope_uncredited",
+      "reason": "Retained and cited for the later global suite/infrastructure census. This bounded inventory makes no inapplicability classification or claim to cover all tests in the containing module targets.",
+      "source_sha256": "67b883002362195992b7111d0e8d88cda30ccfeeae355a2ada761bb83f95c274"
+    }
+  ],
+  "fixture_preservation": {
+    "projects": [
+      {
+        "directory": "android/testData/projects/psdSample/Groovy",
+        "original_files": 67
+      },
+      {
+        "directory": "android/testData/projects/appWithBuildSrc",
+        "original_files": 33
+      },
+      {
+        "directory": "android/testData/projects/projectWithAppandLib",
+        "original_files": 56
+      }
+    ],
+    "selected_snapshots": [
+      "android/testData/snapshots/IdeModels_AllVariantsSync/allVariantSyncWithV2.txt",
+      "android/testData/snapshots/IdeModels_AllVariantsSync/allVariantWithBuildSrc.txt"
+    ],
+    "preservation": "Full selected directories and suites were extracted unchanged from the pinned full idea archive. Every file hash was checked against existing per-file fixture provenance; original notices and binary fixture bytes remain external. Canonical rows record all immediate fixture paths/hashes.",
+    "harness_adaptations_required_for_future_ports": [
+      "Preserve original fixture bytes, then reproduce or explain original harness patches: AGP/Kotlin/tooling versions, local repositories, SDK/build-tools/compileSdk/targetSdk, Gradle wrapper creation and configured JDK.",
+      "TemplateBasedTestProject migrates manifest package attributes to namespaces for applicable AGP versions; original helper setup and library targetSdk compatibility patches must be respected.",
+      "Generated-manifest test moves lib/src/main/AndroidManifest.xml into lib/build/generated/manifests/AndroidManifest.xml and appends sourceSets.main.manifest.srcFile before project import/sync. Both virtual-file presence and project Android association must be ported.",
+      "All-variant tests require normal-sync count1, non-null fetched all-variant model, count12 or2, full Android/dependency snapshot equality and duplicate-snapshot validation. Checking counts alone is insufficient."
+    ],
+    "licensing": "AOSP source carries Apache2.0 notices retained in external originals. Immediate fixture files without individual notices remain identified by model-sync-fixture-provenance.json; redistribution audit remains required before copying fixtures into product/test source. JUnit runner sources are EPL1.0; Truth sources are Apache2.0. No third-party runner source was adapted into Rust."
+  },
+  "remaining_limits": [
+    "No generated compiled test jars, IntelliJ/JBR/Android SDK/offline Maven runtime or Bazel descriptions were built/executed here. Source-defined leaf cases and dispatch conditions are resolved for the named targets; actual executed cases are not credited.",
+    "Exact AGP dev version, default Gradle/Kotlin/JDK artifacts and project dump rendering depend on the pinned build and prebuilts. A future Rust port must bind and document that executable environment; using arbitrary newer versions cannot earn parity credit.",
+    "Other model-sync classes, old-AGP suites, suite finalizers, global inherited/generated cases, platform/configuration variants and target discovery remain outside this bounded task. Census flags remain false and mirror omissions remain unverified.",
+    "Pure metadata/catalog changes do not implement sync, project import, generated manifest handling or resource conversion in the IDE. All four new rows remain unported/not_run."
+  ],
+  "checks": [
+    {
+      "name": "canonical ledger and external reference bytes",
+      "command": [
+        "/workspace/.cache/zed/target/debug/xtask",
+        "android-parity",
+        "--repository",
+        "/workspace/android-studio-model-sync-inventory",
+        "--reference-root",
+        "/workspace/android-studio-references"
+      ],
+      "status": "passing",
+      "actual_exit_code": 0,
+      "archive_hashes_verified": 3,
+      "reference_citations_verified": 35,
+      "fixture_references_verified": 288,
+      "new_fixture_references": 158,
+      "summary": {
+        "census": "PARTIAL",
+        "ported": 8,
+        "unported": 27,
+        "passing": 8,
+        "not_run": 27,
+        "mirror": "UNVERIFIED"
+      },
+      "log": {
+        "path": "/workspace/android-studio-artifacts/model-sync-inventory/parity-cli.log",
+        "sha256": "6dd1c906a5d41360cfadda616546192fe9ba437b36bf5c35acd4710360920400"
+      },
+      "note": "Existing eight historical exact Rust-run records validated; this command did not rerun them or execute the four new reference cases."
+    },
+    {
+      "name": "strict completion rejection",
+      "command": [
+        "/workspace/.cache/zed/target/debug/xtask",
+        "android-parity",
+        "--repository",
+        "/workspace/android-studio-model-sync-inventory",
+        "--reference-root",
+        "/workspace/android-studio-references",
+        "--complete"
+      ],
+      "status": "expected_rejection",
+      "actual_exit_code": 1,
+      "reason": "completion blocked: reference test census is incomplete",
+      "log": {
+        "path": "/workspace/android-studio-artifacts/model-sync-inventory/parity-completion-gate.log",
+        "sha256": "252c95d2e8a170437f0ae76fe6901d07337aadc4b9345a378285e0d1c8e32ecd"
+      }
+    },
+    {
+      "name": "preservation and metadata integrity",
+      "status": "passing",
+      "note": "git diff --check; first31production catalog rows and ledger entries unchanged against base5577738; frozen validator fixtures cmp-identical; all158new fixture hashes match original provenance. No product Rust changes."
+    }
+  ],
+  "reviewers": [
+    {
+      "area": "code",
+      "agent": "/root/parity_ledger/code_review",
+      "verdict": "pass",
+      "scope": "Read-only source/provenance, target/runner dispatch, canonical mapping and preservation; finalizer citation correction and precise helper/count evidence rechecked."
+    },
+    {
+      "area": "ui",
+      "agent": "/root/parity_ledger/ui_review",
+      "verdict": "pass",
+      "scope": "Static developer-visible presentation only; no app visual-fidelity or screenshot claim."
+    },
+    {
+      "area": "ux",
+      "agent": "/root/parity_ledger/ux_review",
+      "verdict": "pass",
+      "scope": "Static developer-workflow/evidence clarity only; no Android app behavior or reference execution claim."
+    },
+    {
+      "area": "performance",
+      "agent": "/root/parity_ledger/performance_review",
+      "verdict": "pass",
+      "scope": "Static metadata/streaming validation only; no benchmarks or app-performance claim."
+    },
+    {
+      "area": "quality",
+      "agent": "/root/parity_ledger/quality_review",
+      "verdict": "pass",
+      "scope": "Read-only documentation/provenance/fixture completeness/unchanged regression inputs; no Cargo or app UI checks."
+    }
+  ],
+  "runner_evidence": [
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android/gradle.project.sync/BUILD",
+      "sha256": "6e075ebb6dafd7e6d49e6e5812aad948b316aa0bee0394be1ec5616f7289dd33",
+      "local_path": "/workspace/android-studio-references/samples/idea/android/gradle.project.sync/BUILD",
+      "lines": {
+        "start": 1,
+        "end": 59
+      },
+      "finding": "Normal module target supplies IdeaTestSuite, JUnit4 and integration test data; four shards partition the target, with no split targets or old-AGP generation declared."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "project-system-gradle/BUILD",
+      "sha256": "81cd166e97015b76a90f6f2e3d0a0ff9ace45d5c24b9993896a505da01931aa7",
+      "local_path": "/workspace/android-studio-references/samples/idea/project-system-gradle/BUILD",
+      "lines": {
+        "start": 143,
+        "end": 782
+      },
+      "finding": "Normal project-system targets are split: GradleAndroidModelTest matches no explicit filter and runs in the other catch-all split; a manual __all target repeats that same input scenario on request. A separate old-AGP7.4 target has ignore_other_tests=true and excludes this unannotated class."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android/testSrc/com/android/tools/idea/IdeaTestSuite.java",
+      "sha256": "b34ad421fbf5a8e7e0b139c08c074d1090567ae3de14d365e69049a4e3c32e99",
+      "local_path": "/workspace/android-studio-references/samples/idea/android/testSrc/com/android/tools/idea/IdeaTestSuite.java",
+      "lines": {
+        "start": 24,
+        "end": 54
+      },
+      "finding": "Integration module suite uses JarTestSuiteRunner and inherits initialization/finalizer metadata from IdeaTestSuiteBase."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleProjectSystemTestSuite.java",
+      "sha256": "3a9ee0ae60d0bae68fa3fd9005d248f9e2181d120e533f0867657b82c0427c2b",
+      "local_path": "/workspace/android-studio-references/samples/idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleProjectSystemTestSuite.java",
+      "lines": {
+        "start": 27,
+        "end": 40
+      },
+      "finding": "Normal project-system suite uses JarTestSuiteRunner and excludes only the two suite classes, not GradleAndroidModelTest."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+      "sha256": "26cd53f9592d29bc21f531c7e22c142e29922b412a31bd3937a71d720b0614c4",
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+      "lines": {
+        "start": 40,
+        "end": 58
+      },
+      "finding": "Suite-level Gradle cleanup and LastInIdeaTestSuite finalizer are separate infrastructure, not inherited methods on the selected test classes."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+      "sha256": "da503cfd8096ae4be970e29f5a96d882bbc6eeb31f0c1ec8a47bed9a7d2abc3a",
+      "local_path": "/workspace/android-studio-references/samples/base/testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+      "lines": {
+        "start": 68,
+        "end": 161
+      },
+      "finding": "Scans selected module jar, delegates class runner construction, applies filters and separately executes the suite finalizer after success; does not expand selected methods into version cases."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+      "local_path": "/workspace/android-studio-references/samples/base/testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "lines": {
+        "start": 113,
+        "end": 127
+      },
+      "finding": "Jar scanning loads candidate classes; method inheritance is considered in JUnit4 discovery, not source filenames."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+      "local_path": "/workspace/android-studio-references/samples/base/testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "lines": {
+        "start": 222,
+        "end": 229
+      },
+      "finding": "JUnit4 eligibility checks RunWith or public Test-annotated methods; all three selected classes qualify."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/DelegatingRunnerBuilder.java",
+      "sha256": "b5b0f2c7f33fcf61e109dc3fb4972f7f3356cd9800c08c42c21a9a905bcc8ce7",
+      "local_path": "/workspace/android-studio-references/samples/base/testutils/src/main/java/com/android/testutils/DelegatingRunnerBuilder.java",
+      "lines": {
+        "start": 27,
+        "end": 38
+      },
+      "finding": "Ordinary execution delegates to the default JUnit builder; ignored.tests.only would instead select ignored tests and is outside the normal target configuration."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "bazel/bazel.bzl",
+      "sha256": "f2d3850c522a794e8ced96915624a7fb0b7fde3c12e862e9e53a067e1279553b",
+      "local_path": "/workspace/android-studio-references/samples/base/bazel/bazel.bzl",
+      "lines": {
+        "start": 633,
+        "end": 657
+      },
+      "finding": "iml_module passes test jar suffix and configured suite to generated test target."
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "bazel/bazel.bzl",
+      "sha256": "f2d3850c522a794e8ced96915624a7fb0b7fde3c12e862e9e53a067e1279553b",
+      "local_path": "/workspace/android-studio-references/samples/base/bazel/bazel.bzl",
+      "lines": {
+        "start": 915,
+        "end": 977
+      },
+      "finding": "Without split_test_targets, generation creates one coverage_java_test with the configured shard count; sharding is distribution rather than a parameter list."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AndroidProjectRule.kt",
+      "sha256": "8a96f150915065657219e242e1e3205de6c03244148dd1da94e7b2585612c7c7",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidProjectRule.kt",
+      "lines": {
+        "start": 252,
+        "end": 286
+      },
+      "finding": "Integration rule forwards RunsInEdt to only the open-project callback; it returns base unchanged and supplies no method repetition."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AndroidProjectRule.kt",
+      "sha256": "8a96f150915065657219e242e1e3205de6c03244148dd1da94e7b2585612c7c7",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidProjectRule.kt",
+      "lines": {
+        "start": 398,
+        "end": 431
+      },
+      "finding": "Fixture/environment RuleChain delegates one wrapped statement."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AndroidProjectRule.kt",
+      "sha256": "8a96f150915065657219e242e1e3205de6c03244148dd1da94e7b2585612c7c7",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidProjectRule.kt",
+      "lines": {
+        "start": 433,
+        "end": 480
+      },
+      "finding": "Environment initialization prepares phased sync and cleanup around each method, not a flag matrix."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/NamedExternalResource.kt",
+      "sha256": "2bb0b966a413a36b53d8aeee2c51f90d6cede3f1270a7f0157f3dee1d402237b",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/NamedExternalResource.kt",
+      "lines": {
+        "start": 28,
+        "end": 55
+      },
+      "finding": "Rule evaluates the base statement once and aggregates cleanup failures without retries."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/SnapshotComparisonTestUtils.kt",
+      "sha256": "9663669d800dd6374fd0a4c10d461d7adcf7fa3162a107967ec8699938194b13",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/SnapshotComparisonTestUtils.kt",
+      "lines": {
+        "start": 39,
+        "end": 78
+      },
+      "finding": "SnapshotComparisonTest is an interface with no Test methods; phased/baseline suffixes are file-selection candidates, not JUnit instances."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/SnapshotComparisonTestUtils.kt",
+      "sha256": "9663669d800dd6374fd0a4c10d461d7adcf7fa3162a107967ec8699938194b13",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/SnapshotComparisonTestUtils.kt",
+      "lines": {
+        "start": 117,
+        "end": 162
+      },
+      "finding": "Full snapshot assertion also checks duplicate snapshots; these assertions belong to the same selected method."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/SnapshotComparisonTestUtils.kt",
+      "sha256": "9663669d800dd6374fd0a4c10d461d7adcf7fa3162a107967ec8699938194b13",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/SnapshotComparisonTestUtils.kt",
+      "lines": {
+        "start": 215,
+        "end": 240
+      },
+      "finding": "Snapshot lookup chooses the first existing suffix candidate; both selected snapshot files use baseline fallback because no phased files exist in this directory."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/gradle/project/sync/snapshots/TestProjectDefinition.kt",
+      "sha256": "f0a8ec642d71ab0dc5c59956d69aa90e78d2ca32e96fda19347114734fc024a2",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/gradle/project/sync/snapshots/TestProjectDefinition.kt",
+      "lines": {
+        "start": 58,
+        "end": 68
+      },
+      "finding": "Preparation selects one AgpVersionSoftwareEnvironmentDescriptor by default; no list expansion occurs here."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/gradle/project/sync/snapshots/AndroidCoreTestProject.kt",
+      "sha256": "9422124efbfd8ee3da272af235579d1e1525a3842a482cb9410bff9265e08cde",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/gradle/project/sync/snapshots/AndroidCoreTestProject.kt",
+      "lines": {
+        "start": 34,
+        "end": 59
+      },
+      "finding": "APP_WITH_BUILDSRC inherits default setup, no custom patch or variant-switch invocation."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/gradle/project/sync/snapshots/AndroidCoreTestProject.kt",
+      "sha256": "9422124efbfd8ee3da272af235579d1e1525a3842a482cb9410bff9265e08cde",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/gradle/project/sync/snapshots/AndroidCoreTestProject.kt",
+      "lines": {
+        "start": 110,
+        "end": 115
+      },
+      "finding": "PROJECT_WITH_APPAND_LIB and PSD_SAMPLE_GROOVY inherit default setup and have no additional repos or per-project case generation."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/gradle/project/sync/snapshots/TemplateBasedTestProject.kt",
+      "sha256": "22af7a347ae1df3709840b45f5ff8a1b9be137c5cbc36868d481b3243dee3895",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/gradle/project/sync/snapshots/TemplateBasedTestProject.kt",
+      "lines": {
+        "start": 133,
+        "end": 225
+      },
+      "finding": "Preparation resolves one environment, mutates a copied fixture, and open runs one callback; optional variant-switch defaults null for selected projects."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AgpIntegrationTests.kt",
+      "sha256": "20a0edaa7876d8d0398794fb56c72052aa2a8eba842e28d77576bdd36973d889",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/AgpIntegrationTests.kt",
+      "lines": {
+        "start": 174,
+        "end": 187
+      },
+      "finding": "With no agp.version or gradle.version properties, selected is AGP_CURRENT=AGP_LATEST, not all enum entries."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AgpVersionSoftwareEnvironment.kt",
+      "sha256": "2d5c34a4b2d5a913a6f2a4bcbe8bcf5b7aa866927f05b6508dd9cbc276e18fe8",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/AgpVersionSoftwareEnvironment.kt",
+      "lines": {
+        "start": 142,
+        "end": 167
+      },
+      "finding": "Default versions resolve from BuildEnvironment, Gradle constant, configured JDK and Kotlin test constant; exact generated build artifacts are not supplied by this source-only inventory."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/ProjectBoundJavaCodeInsightFixture.kt",
+      "sha256": "785c6c7ac0e3ada2fec571227f1580c1f09de9700f30c9124b4189185af1f596",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/ProjectBoundJavaCodeInsightFixture.kt",
+      "lines": {
+        "start": 33,
+        "end": 101
+      },
+      "finding": "Provides one fixture context and invokes testBody once."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/ExceptionUtil.kt",
+      "sha256": "b44c1fac013b2eda8dc76ffa60acef50c9a499e201f7419954418b94b3450220",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/ExceptionUtil.kt",
+      "lines": {
+        "start": 36,
+        "end": 61
+      },
+      "finding": "Exception aggregation and usingIdeaTestFixture call their bodies once, then tear down, without generated invocations."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTestUtils.kt",
+      "sha256": "35dfe03ce1ffafa7e94750580fcfdaf95f41debdb31cd682eb88721571095ff4",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTestUtils.kt",
+      "lines": {
+        "start": 2329,
+        "end": 2338
+      },
+      "finding": "IntegrationTestEnvironment contributes no inherited test methods and defaults to non-EDT callback."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTestUtils.kt",
+      "sha256": "35dfe03ce1ffafa7e94750580fcfdaf95f41debdb31cd682eb88721571095ff4",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTestUtils.kt",
+      "lines": {
+        "start": 2373,
+        "end": 2398
+      },
+      "finding": "Selected fixture preparation delegates version/repository/wrapper substitution on a copied source tree."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTestUtils.kt",
+      "sha256": "35dfe03ce1ffafa7e94750580fcfdaf95f41debdb31cd682eb88721571095ff4",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTestUtils.kt",
+      "lines": {
+        "start": 2436,
+        "end": 2621
+      },
+      "finding": "Project import/startup/sync verification dispatches the action once, choosing EDT only when requested, then closes/disposes."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTests.java",
+      "sha256": "6f1a9666f8617b042ec873590571dc63fe8123d63017533ca5e4ac60ee648374",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTests.java",
+      "lines": {
+        "start": 247,
+        "end": 366
+      },
+      "finding": "Tooling patch replaces AGP/Kotlin/SDK/repository values and creates wrappers; fixture source bytes must remain preserved before adaptation."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTests.java",
+      "sha256": "6f1a9666f8617b042ec873590571dc63fe8123d63017533ca5e4ac60ee648374",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTests.java",
+      "lines": {
+        "start": 848,
+        "end": 856
+      },
+      "finding": "Default prepared-project patch invokes tooling substitutions once."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android-test-framework/testSrc/com/android/testutils/junit4/OldAgpFilter.java",
+      "sha256": "c7898ca8bdc82b22e1bd377f90fa079175cc3b3f45dff1cca14286632c5e7f30",
+      "local_path": "/workspace/android-studio-references/samples/idea/android-test-framework/testSrc/com/android/testutils/junit4/OldAgpFilter.java",
+      "lines": {
+        "start": 55,
+        "end": 104
+      },
+      "finding": "Unannotated selected classes are excluded by OldAgpSuite when ignore_other_tests=true; no selected method has OldAgpTest."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-testutils/old-agp-test.bzl",
+      "sha256": "85e637e904c394b2d4bf3d660d15701a0cab70ab7b44976ce4c80fe22ef679a6",
+      "local_path": "/workspace/android-studio-references/samples/idea/adt-testutils/old-agp-test.bzl",
+      "lines": {
+        "start": 29,
+        "end": 39
+      },
+      "finding": "Old-AGP targets set version properties and ignore_other_tests; these are separate targets and do not affect the normal module target."
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": ".idea/libraries/junit4.xml",
+      "sha256": "92b9cdcfd1301c969eb9e9541fd9496b2d1a8d452e16cefeb446c85f99c52dae",
+      "local_path": "/workspace/android-studio-references/samples/idea/.idea/libraries/junit4.xml",
+      "lines": {
+        "start": 1,
+        "end": 12
+      },
+      "finding": "Pinned idea metadata references JUnit4.13.2 binary and source artifact."
+    }
+  ],
+  "selected_cases": [
+    {
+      "suite": "com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest",
+      "method": "testAllVariantSyncWithV2",
+      "category": "model-sync-all-variants",
+      "source": {
+        "source_path": "android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt",
+        "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt",
+        "bytes": 5307,
+        "sha256": "3fa6a06ddd7adfef30297ec96697374a287d778c89767c85a97627e791792847",
+        "preservation": "Unchanged original bytes",
+        "license": "Apache-2.0; original file copyright/license headers retained"
+      },
+      "declaration_sha256": "d83c8c19f79f64805d61afe51fa124bfe1f2b1747b273f60d7701dcd40a80754",
+      "signature_sha256": "7ec743ad068870ebbcc56194d0c5e0898530b809c9dcd51259b420cf82b0c5b2",
+      "body_sha256": "8312e99c83128af800ff4237f56afc9958a0a15242de2b722a2255dbf2a74029",
+      "hash_boundary": "From fun keyword through closing brace; exact UTF-8 bytes; annotations and preceding indentation excluded",
+      "lines": {
+        "start": 62,
+        "end": 66
+      },
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Normal sync exposes one variant",
+        "fetchGradleModels all-variants result is non-null",
+        "All-variants result variant count equals 12 or 2 for corresponding test",
+        "Complete dumped Android model/dependency representation matches expected snapshot"
+      ],
+      "fixture": "android/testData/projects/psdSample/Groovy",
+      "expected_initial_variant_count": 1,
+      "expected_all_variant_count": 12
+    },
+    {
+      "suite": "com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest",
+      "method": "testAllVariantWithBuildSrc",
+      "category": "model-sync-all-variants",
+      "source": {
+        "source_path": "android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt",
+        "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt",
+        "bytes": 5307,
+        "sha256": "3fa6a06ddd7adfef30297ec96697374a287d778c89767c85a97627e791792847",
+        "preservation": "Unchanged original bytes",
+        "license": "Apache-2.0; original file copyright/license headers retained"
+      },
+      "declaration_sha256": "6fc05f29a1c393b28f2cc941063111dd526767a80706b256b88125812a0dd290",
+      "signature_sha256": "a25eec856b11c04dfff4818c54f30ac41f4f761ab746cd831e04b5e61112558d",
+      "body_sha256": "55009fb5932d95094719068466d5c5ef190d11abdcfbccccce10e65a8c4d007a",
+      "hash_boundary": "From fun keyword through closing brace; exact UTF-8 bytes; annotations and preceding indentation excluded",
+      "lines": {
+        "start": 69,
+        "end": 73
+      },
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Normal sync exposes one variant",
+        "fetchGradleModels all-variants result is non-null",
+        "All-variants result variant count equals 12 or 2 for corresponding test",
+        "Complete dumped Android model/dependency representation matches expected snapshot"
+      ],
+      "fixture": "android/testData/projects/appWithBuildSrc",
+      "expected_initial_variant_count": 1,
+      "expected_all_variant_count": 2
+    },
+    {
+      "suite": "com.android.tools.idea.gradle.project.sync.GradleSyncSpecialCasesIntegrationTest",
+      "method": "manifest in build folder",
+      "category": "model-sync-generated-manifest",
+      "source": {
+        "source_path": "android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/GradleSyncSpecialCasesIntegrationTest.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/GradleSyncSpecialCasesIntegrationTest.kt",
+        "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/GradleSyncSpecialCasesIntegrationTest.kt",
+        "bytes": 2448,
+        "sha256": "de9a8a062f8b7385820a0cb320e09af8cbf386b7b650e8ce6e87991e96a415a5",
+        "preservation": "Unchanged original bytes",
+        "license": "Apache-2.0; original file copyright/license headers retained"
+      },
+      "declaration_sha256": "21fc85108f0fde73d1ae7de00e2cad86b6f819a1e6fd9e3ac193f9d4fedf6c6f",
+      "signature_sha256": "38ebe2a7a25c9e87735231b34add1726e065a14499de52e406d3361b9c16f2e3",
+      "body_sha256": "cf2a315d878798bf0e74be94e9d0dd41fe8814827b2e444e80fb3b53c5190362",
+      "hash_boundary": "From fun keyword through closing brace; exact UTF-8 bytes; annotations and preceding indentation excluded",
+      "lines": {
+        "start": 37,
+        "end": 56
+      },
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Manifest virtual file exists after project sync",
+        "Manifest associates with Android module/facet after sync"
+      ],
+      "fixture": "android/testData/projects/projectWithAppandLib",
+      "expected_initial_variant_count": null,
+      "expected_all_variant_count": null
+    },
+    {
+      "suite": "com.android.tools.idea.gradle.project.model.GradleAndroidModelTest",
+      "method": "testClassFieldsToDynamicResourceValues",
+      "category": "resource-model-conversion-only",
+      "source": {
+        "source_path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/project/model/GradleAndroidModelTest.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/project-system-gradle/testSrc/com/android/tools/idea/gradle/project/model/GradleAndroidModelTest.kt",
+        "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/testSrc/com/android/tools/idea/gradle/project/model/GradleAndroidModelTest.kt",
+        "bytes": 1601,
+        "sha256": "2b66675c00896110d7be3db4d779fb7639e1e7cfc257fac01d19e0158598940a",
+        "preservation": "Unchanged original bytes",
+        "license": "Apache-2.0; original file copyright/license headers retained"
+      },
+      "declaration_sha256": "1ccd39e85107b41205ac9c0512a657baac1b50eeef30061d9bd6149e4e4a91e7",
+      "signature_sha256": "08cfef0f1f936c32bd10d5f77b40f809a33509f25fa9465d8bac566814e98c2e",
+      "body_sha256": "a05e09d8f3efe4580ae01ee8760824a7d09a01b9889ecaaabd8e42dc5ac2cff9",
+      "hash_boundary": "From fun keyword through closing brace; exact UTF-8 bytes; annotations and preceding indentation excluded",
+      "lines": {
+        "start": 30,
+        "end": 42
+      },
+      "source_defined_leaf_invocations": 1,
+      "runtime_status": "not_run",
+      "parameterized_or_dynamic": false,
+      "required_assertions": [
+        "Map STRING foo=baz and INTEGER foo2=123 class fields to the matching DynamicResourceValue map; this test does not execute model sync."
+      ],
+      "fixture": null,
+      "expected_initial_variant_count": null,
+      "expected_all_variant_count": null
+    }
+  ],
+  "reference_case_ids": [
+    "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt#com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest.testAllVariantSyncWithV2",
+    "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt#com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest.testAllVariantWithBuildSrc",
+    "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/GradleSyncSpecialCasesIntegrationTest.kt#com.android.tools.idea.gradle.project.sync.GradleSyncSpecialCasesIntegrationTest.manifest in build folder",
+    "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/project/model/GradleAndroidModelTest.kt#com.android.tools.idea.gradle.project.model.GradleAndroidModelTest.testClassFieldsToDynamicResourceValues"
+  ],
+  "source_provenance": {
+    "path": "/workspace/android-studio-references/samples/model-sync-source-provenance.json",
+    "sha256": "76e510f0f328727c7e67bb0c48cf51263f5c4b4c3363e3bbbbcc12ad94295f10"
+  },
+  "fixture_provenance": {
+    "path": "/workspace/android-studio-references/samples/model-sync-fixture-provenance.json",
+    "sha256": "20cf1b07f4eb30a8cd2b23a41ef641328a066ba2e9dd062c8b449a0984679a84"
+  },
+  "fixture_archives": [
+    {
+      "archive_url": "https://android.googlesource.com/platform/tools/adt/idea/+archive/a84efec3ba9542d9bfa1255103f0dc94833a3796/android/testData/projects/appWithBuildSrc.tar.gz",
+      "sha256": "f0ad54e7aa7b979db09512db91924450619116d60316e96a088b631a071112b4",
+      "bytes": 7381,
+      "directory": "android/testData/projects/appWithBuildSrc",
+      "files": 33
+    },
+    {
+      "archive_url": "https://android.googlesource.com/platform/tools/adt/idea/+archive/a84efec3ba9542d9bfa1255103f0dc94833a3796/android/testData/projects/projectWithAppandLib.tar.gz",
+      "sha256": "356a9d6821d831acfb2818a998f57f6420b287e1be30be2ab75f6e5c1337b72c",
+      "bytes": 126122,
+      "directory": "android/testData/projects/projectWithAppandLib",
+      "files": 56
+    },
+    {
+      "archive_url": "https://android.googlesource.com/platform/tools/adt/idea/+archive/a84efec3ba9542d9bfa1255103f0dc94833a3796/android/testData/projects/psdSample/Groovy.tar.gz",
+      "sha256": "af63581bb77b06c2e638d1967787504361b3711779fe65d466725e1ebd259c0d",
+      "bytes": 128947,
+      "directory": "android/testData/projects/psdSample/Groovy",
+      "files": 67
+    },
+    {
+      "archive_url": "https://android.googlesource.com/platform/tools/adt/idea/+archive/a84efec3ba9542d9bfa1255103f0dc94833a3796/android/testData/snapshots/IdeModels_AllVariantsSync.tar.gz",
+      "sha256": "49f2fc2a6930f8e9aef9a7017d35d60697c6625b14a76c8eab0bc7552b586f3d",
+      "bytes": 63972,
+      "directory": "android/testData/snapshots/IdeModels_AllVariantsSync",
+      "files": 3
+    }
+  ],
+  "additional_source_artifacts": [
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+      "sha256": "67b883002362195992b7111d0e8d88cda30ccfeeae355a2ada761bb83f95c274"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "project-system-gradle/src/com/android/tools/idea/gradle/project/model/GradleAndroidModel.kt",
+      "sha256": "57d3f5fdf508453beb95780289ab84d2c01a1411205e79f970bf608ab735a698"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": ".idea/libraries/truth.xml",
+      "sha256": "05b1c2cf6a3449258dfae69273cf50d82474db5d43a3464fd62315a3ecca1ad9"
+    }
+  ],
+  "supplementary_runner_sources": {
+    "junit4": {
+      "version": "4.13.2",
+      "artifact_url": "https://repo.maven.apache.org/maven2/junit/junit/4.13.2/junit-4.13.2-sources.jar",
+      "sha256": "34181df6482d40ea4c046b063cb53c7ffae94bdf1b1d62695bdf3adf9dea7e3a",
+      "license": "EPL-1.0",
+      "files": [
+        {
+          "path": "org/junit/internal/builders/AllDefaultPossibilitiesBuilder.java",
+          "sha256": "c2e5a35ff12f34162b5248c09e48330291bba6f31fcc0c0ffdc5cb42898f1193"
+        },
+        {
+          "path": "org/junit/internal/builders/JUnit4Builder.java",
+          "sha256": "aab4c9a420dc515ca4d7f5d80760262ae66143cf38c225f35606ef9297b6cc40"
+        },
+        {
+          "path": "org/junit/runners/JUnit4.java",
+          "sha256": "8aa2d062383f2a4a8faf25ea71b89ac8d0ea401c8853508d2140b169e5a64f79"
+        },
+        {
+          "path": "org/junit/runners/BlockJUnit4ClassRunner.java",
+          "sha256": "218ac2f796567bcc7fb53a133e8fb675e037cbbc534900c0541a91c8c077ad12"
+        },
+        {
+          "path": "org/junit/runners/model/TestClass.java",
+          "sha256": "48bce8f1ff282dce30cd654b4de17fc8f223ef4b726d20bd71224b588e22ec2c"
+        },
+        {
+          "path": "org/junit/internal/runners/statements/InvokeMethod.java",
+          "sha256": "dbfd34c3cd7496d039e69dc674c2b6bbf24f27c6b3304789e61c7c5266a514b2"
+        },
+        {
+          "path": "org/junit/rules/TestName.java",
+          "sha256": "77be0643695e4a96ae467f57d9af385811088c661e0f909be130e10fb5310284"
+        },
+        {
+          "path": "org/junit/rules/TestWatcher.java",
+          "sha256": "9ae87e79b86803c8a449d8f6e090849ca2f30a2040239f1b963945a150a8a255"
+        },
+        {
+          "path": "org/junit/rules/RunRules.java",
+          "sha256": "3221e7bd7b56084878a912e0f1335b713356270927cc76fb754a3d10d3ee09b8"
+        }
+      ],
+      "findings": [
+        {
+          "path": "org/junit/internal/builders/AllDefaultPossibilitiesBuilder.java",
+          "lines": {
+            "start": 27,
+            "end": 42
+          },
+          "finding": "Normal builder selects annotated runner, suite method or JUnit3 where applicable, otherwise JUnit4."
+        },
+        {
+          "path": "org/junit/runners/BlockJUnit4ClassRunner.java",
+          "lines": {
+            "start": 130,
+            "end": 144
+          },
+          "finding": "Test-annotated methods are child cases."
+        },
+        {
+          "path": "org/junit/runners/model/TestClass.java",
+          "lines": {
+            "start": 63,
+            "end": 72
+          },
+          "finding": "Annotation discovery scans class and superclass methods, not generated parameter rows."
+        },
+        {
+          "path": "org/junit/internal/runners/statements/InvokeMethod.java",
+          "lines": {
+            "start": 16,
+            "end": 19
+          },
+          "finding": "One leaf method invocation."
+        },
+        {
+          "path": "org/junit/rules/TestWatcher.java",
+          "lines": {
+            "start": 52,
+            "end": 78
+          },
+          "finding": "TestName rule inherits one wrapped base evaluation."
+        }
+      ]
+    },
+    "truth": {
+      "version": "0.42",
+      "artifact_url": "https://repo.maven.apache.org/maven2/com/google/truth/truth/0.42/truth-0.42-sources.jar",
+      "sha256": "8cd0b42e58406ad1a4554235035d4d98f1897d182a1e4d064d6a3dab047f55f9",
+      "license": "Apache-2.0",
+      "file": {
+        "path": "com/google/common/truth/Expect.java",
+        "sha256": "9d2a99847d1d061788662606df6182de7897da81afc061ea7de1801c9f0061bb"
+      },
+      "lines": {
+        "start": 244,
+        "end": 268
+      },
+      "finding": "Expect rule evaluates base once, aggregates failures and does not add invocations."
+    }
+  },
+  "shared_all_variants_helper": {
+    "test_method": "runSvsAndAvsSyncAndVerifyFetchedVariants",
+    "start_line": 75,
+    "end_line": 110,
+    "start_byte": 3643,
+    "end_byte_exclusive": 5304,
+    "declaration_sha256": "3489dc2c1e72d963775bdab00a02972cb8b295fa75002709d4d943f6000945a8",
+    "signature_sha256": "b1112d526bcf1317c3a99e39a6902e73c5689b1a0bc4042f5377bef3dafa1869",
+    "body_sha256": "e2674ba4ba572980dc6eddf72ef0ad227a170366af768ac8f3c9faf1c31200ef",
+    "hash_boundary": "From fun keyword through closing brace; exact UTF-8 bytes; annotations and preceding indentation excluded",
+    "test_entry": false,
+    "snapshot_directory": "android/testData/snapshots/IdeModels_AllVariantsSync",
+    "required_assertions": [
+      "Normal sync exposes one variant",
+      "fetchGradleModels all-variants result is non-null",
+      "All-variants result variant count equals 12 or 2 for corresponding test",
+      "Complete dumped Android model/dependency representation matches expected snapshot"
+    ],
+    "framework_dependencies": [
+      "SnapshotComparisonTest",
+      "IntegrationTestEnvironmentRule",
+      "prepareTestProject",
+      "ProjectDumper",
+      "GradleSyncExecutor"
+    ],
+    "dependency_status": "Exact test/helper code and immediate fixture/snapshot sources retained; full harness version/parameter/runtime discovery remains pending."
+  },
+  "date": "2026-10-07",
+  "validator": {
+    "source": {
+      "path": "tooling/xtask/src/tasks/android_parity.rs",
+      "sha256": "7f2a3b263bc57ed7dd0635756425e643477e56c79d7d6909f5382bb47df779f7"
+    },
+    "binary": {
+      "path": "/workspace/.cache/zed/target/debug/xtask",
+      "sha256": "24279a94c8adbd6a710780c0ada7a69ca01209571e038a935ec2fe0e15ffce42"
+    },
+    "source_changed": false,
+    "cargo_compilation_for_this_task": false,
+    "frozen_fixtures": [
+      {
+        "path": "tooling/xtask/test_data/android_parity/reference-manifest.json",
+        "sha256": "89c88ae7300f928fe78c2d754a815e8e8d9e4e5d50dbf7913315f47e15b50139"
+      },
+      {
+        "path": "tooling/xtask/test_data/android_parity/test-parity.json",
+        "sha256": "25f483cd6b65bebf23d13bd327c394a3c3e353a53d61a9e827860b7abc76092b"
+      }
+    ]
+  }
+}
