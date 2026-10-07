@@ -55,7 +55,10 @@ is also retained. This metadata name is not a filesystem path. Only the exact
 `52 comment=<pinned revision>\n` payload is supported; semantic overrides such as
 `path`, `linkpath` or `size`, other keys, malformed records and other metadata
 names fail before publication. Regular entries receive no metadata exception,
-and duplicate normalized member names remain rejected.
+and duplicate normalized filesystem names remain rejected. Metadata names have
+their own duplicate guard, so a valid anchored regular file whose relative name
+is `pax_global_header` remains distinct from that metadata record. Duplicate global
+metadata headers are still rejected.
 
 The scanner preserves JUnit3 test-prefixed declarations, suite factories, Kotlin
 backtick names, declared nested classes and annotations. It retains abstract
