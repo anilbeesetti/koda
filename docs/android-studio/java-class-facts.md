@@ -16,6 +16,12 @@ or publishing a navigation target. An unavailable result keeps the file
 presentation available without inventing a class name or providing parity
 credit.
 
+Invalid unsaved buffers can contain duplicate top-level names. These are two
+actual declarations, which this producer preserves without semantic checking.
+The existing tree rejects duplicate class names, so the future adapter must
+detect this case and retain ordinary file presentation for that entry before
+publishing a snapshot. It must not merge declarations or invent another name.
+
 Comments, escaped character/string literals, text blocks, annotations, generic
 headers and nested scopes are handled by a streaming lexer. Unicode contents in
 comments and literals preserve byte offsets. Every backslash followed by `u` is
@@ -61,3 +67,14 @@ The task touches `android_tools/src/java_class_facts.rs`, one module export, its
 attributed fixture/provenance, and this task report. It depends on the reviewed
 project-tree component's unchanged `JavaClassFact` interface. The active
 source/provider producer and background/UI adapter are separate dependent tasks.
+
+Final component source `b0f340dc4e` has five scoped reviewer PASS verdicts after
+two fix rounds. Its 29 focused regressions and all 144 affected all-feature
+tests pass with no ignored or failing cases. Repository Clippy passes with
+warnings denied, and workspace formatting passes. Frozen executable tests cover
+the 8 MiB source limit and 10,000 declarations; recorded timing and peak RSS
+include test-process setup and fixture construction. Source-bound command logs,
+initial findings, and retained failure evidence are recorded in
+`ports/java-class-facts.json` and `evidence/java-class-facts/`. Full-app and full
+workspace integration remain lead gates, and all five original tree cases
+remain unported.

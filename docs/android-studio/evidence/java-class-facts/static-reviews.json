@@ -1,0 +1,68 @@
+{
+  "source_commit": "8f2c43c83c803cbb6ef826fb1cf844125612a10b",
+  "branch": "android-studio-task/1-java-class-facts",
+  "fix_rounds": 1,
+  "runtime_status": "pending_root_cargo_lease",
+  "canonical_parity_credit": 0,
+  "original_tree_cases": "unported/not_run",
+  "expected_focused_tests": 29,
+  "files": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "294945f7bff20d2fd60eec3e181cf8d409fb0510cb4877065d398aba4a4284e8",
+      "bytes": 33145
+    },
+    {
+      "path": "crates/android_tools/src/java_class_facts.rs",
+      "sha256": "35499e67402ea64c2eacd92d8b942bdc1938c75495536a1849e5d7c85fff1e4d",
+      "bytes": 48240
+    },
+    {
+      "path": "crates/android_tools/test_data/java_class_facts/BuildConfig.java",
+      "sha256": "425c4701302c5615019f86b12663a241a40e63d129b0f653cb4bdf52bce7e3e2",
+      "bytes": 58
+    },
+    {
+      "path": "crates/android_tools/test_data/java_class_facts/provenance.json",
+      "sha256": "12172ccb3deee3d040e94f0af26dfe7fc72a7bf81b93182e2041804212ea4c4f",
+      "bytes": 764
+    }
+  ],
+  "reviews": [
+    {
+      "area": "code",
+      "agent": "/root/java_class_facts/code_review",
+      "verdict": "PASS",
+      "initial_verdict": "FAIL",
+      "findings_fixed": [
+        "Accept valid primitive-array generic reference types including annotations/multiple dimensions.",
+        "Share the delimiter depth budget between generic headers and nested annotations/array dimensions."
+      ],
+      "runtime_scope": "Static review only; tests/build pending."
+    },
+    {
+      "area": "ui",
+      "agent": "/root/java_class_facts/ui_review",
+      "verdict": "PASS",
+      "scope": "Actual names and navigation offsets supplied to existing class-fact contract; no live/visual fidelity claim."
+    },
+    {
+      "area": "ux",
+      "agent": "/root/java_class_facts/ux_review",
+      "verdict": "PASS",
+      "scope": "Static declaration/fallback/revision-binding contract; no live workflow claim."
+    },
+    {
+      "area": "performance",
+      "agent": "/root/java_class_facts/performance_review",
+      "verdict": "PASS",
+      "scope": "Static linear traversal/bounded memory/termination; timing/RSS and product scheduling pending."
+    },
+    {
+      "area": "quality",
+      "agent": "/root/java_class_facts/quality_review",
+      "verdict": "PASS",
+      "scope": "Static Rust/error/docs/fixtures/tests review; actual tests/repository Clippy and lead app/full-workspace gates pending."
+    }
+  ]
+}
