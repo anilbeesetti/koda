@@ -71,13 +71,13 @@ gradle.projectsEvaluated {
             [kind: 'external', coordinate: id.displayName]
         }.findAll { it != null }.unique()
     }
-    def sources = { project, component ->
+    def sources = { project, component, declaredAssetPaths ->
         def result = []
         def kotlin = project.extensions.findByName('kotlin')
         def compilation = multiplatformPaths.contains(project.path) ?
             kotlin.targets.getByName('android').compilations.find { it.defaultSourceSet.name == component.name } :
             optional(optional(kotlin, 'target'), 'compilations')?.findByName(component.name)
-        ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources'].each { property, kind ->
+        ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources', 'assets': 'assets'].each { property, kind ->
             def source = optional(component.sources, property)
             def provider = optional(source, 'all')
             def staticProvider = optional(source, 'static')
@@ -92,7 +92,7 @@ gradle.projectsEvaluated {
                 }
             }
             def legacy = project.extensions.getByName('androidComponents').pluginVersion.major < 9
-            if (legacy && staticProvider != null && !multiplatformPaths.contains(project.path)) {
+            if (legacy && staticProvider != null && !multiplatformPaths.contains(project.path) && property != 'assets') {
                 // Older AGP omits variant-only static roots and includes res-value producers.
                 staticPaths = staticPaths.findAll { !new File(it).toPath().startsWith(buildPath) } as Set
                 project.extensions.getByName('android').sourceSets.each { sourceSet ->
@@ -100,9 +100,16 @@ gradle.projectsEvaluated {
                     if (conventional != null) staticPaths.addAll(conventional.srcDirs.collect { it.canonicalPath })
                 }
             }
+            def declaredAssets = property == 'assets' && declaredAssetPaths != null
+            if (declaredAssets) {
+                // AGP 9 also omits variant-only assets from `static`. Evaluated DSL
+                // directories remain configured roots, including missing/custom ones.
+                staticPaths = staticPaths ?: [] as Set
+                staticPaths.addAll(declaredAssetPaths)
+            }
             if (provider != null) provider.get().flatten().each { directory ->
                 def file = directory.asFile.canonicalFile
-                def generated = staticProvider != null ? !staticPaths.contains(file.path) : file.toPath().startsWith(buildPath)
+                def generated = staticProvider != null || declaredAssets ? !staticPaths.contains(file.path) : file.toPath().startsWith(buildPath)
                 result.add([path: file.path, kind: kind, generated: generated])
             }
         }
@@ -119,6 +126,27 @@ gradle.projectsEvaluated {
             result.add([path: file.path, kind: 'manifest', generated: file.toPath().startsWith(project.layout.buildDirectory.get().asFile.canonicalFile.toPath())])
         }
         result.unique()
+    }
+    def sourceProviders = { project ->
+        // These are evaluated DSL declarations, not Studio's active-provider overlay order.
+        // KMP source sets use a different model; missing declarations stay explicitly unknown.
+        if (multiplatformPaths.contains(project.path)) return null
+        def android = project.extensions.findByName('android')
+        def sourceSets = optional(android, 'sourceSets')
+        if (sourceSets == null) return null
+        [order: 'gradleSourceSetIteration', providers: sourceSets.collect { sourceSet ->
+            def roots = []
+            ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources', 'aidl': 'aidl',
+             'renderscript': 'renderscript', 'assets': 'assets', 'jniLibs': 'jniLibs'].each { property, kind ->
+                def directories = optional(sourceSet, property)
+                if (directories != null) directories.srcDirs.each { directory ->
+                    roots.add([path: directory.canonicalPath, kind: kind])
+                }
+            }
+            def manifest = optional(sourceSet, 'manifest')
+            if (manifest != null) roots.add([path: manifest.srcFile.canonicalPath, kind: 'manifest'])
+            [name: sourceSet.name, roots: roots]
+        }]
     }
     def defaultVariantSelection = { project, variants ->
         def multiplatform = multiplatformPaths.contains(project.path)
@@ -148,15 +176,20 @@ gradle.projectsEvaluated {
                 components.addAll((optional(variant, 'hostTests') ?: [:]).values())
                 components.addAll((optional(variant, 'deviceTests') ?: [:]).values())
                 components.findAll { it != null }.unique { it.name }.each { component ->
-                    ['java', 'kotlin', 'res', 'manifests'].each { kind ->
+                    ['java', 'kotlin', 'res', 'assets', 'manifests'].each { kind ->
                         def provider = optional(optional(component.sources, kind), 'all')
                         if (provider != null) inputs.files(provider)
                     }
                 }
             }
             doLast {
+                def catalog = sourceProviders(project)
+                // Canonicalize configured paths once per module, not per variant/test component.
+                def declaredAssetPaths = catalog == null ? null : catalog.providers.collectMany { provider ->
+                    provider.roots.findAll { it.kind == 'assets' }*.path
+                } as Set
                 models[path] = [path: path, directory: project.projectDir.canonicalPath, namespace: multiplatformPaths.contains(path) ? variants.first().namespace.get() : project.extensions.getByName('android').namespace,
-                 kind: androidKinds[path], defaultVariantSelection: defaultVariantSelection(project, variants), variants: variants.collect { variant ->
+                 kind: androidKinds[path], sourceProviders: catalog, defaultVariantSelection: defaultVariantSelection(project, variants), variants: variants.collect { variant ->
                     def components = [[component: variant, scope: 'main']]
                     def add = { component, scope -> if (component != null && !components.any { it.component.name == component.name }) components.add([component: component, scope: scope]) }
                     add(optional(variant, 'unitTest'), 'unitTest')
@@ -181,7 +214,7 @@ gradle.projectsEvaluated {
                                 graph.add([kind: 'project', module: feature, variant: candidates.first().name])
                             }
                         }
-                        [name: entry.component.name, namespace: optional(entry.component, 'namespace')?.get(), scope: entry.scope, sources: sources(project, entry.component), dependencies: graph.unique()]
+                        [name: entry.component.name, namespace: optional(entry.component, 'namespace')?.get(), scope: entry.scope, sources: sources(project, entry.component, declaredAssetPaths), dependencies: graph.unique()]
                     }]
                  }]
             }
@@ -214,6 +247,8 @@ gradle.projectsEvaluated {
             def modules = models.entrySet().sort { it.key }.collect { it.value }
             if (modules.size() != collectors.size()) throw new GradleException('Android module collection did not finish; sync again')
             def diagnostics = modules.any { it.kind == 'application' } ? [] : ['No runnable application module was found. Library-only builds are catalogued, but selecting an application target is currently required for language setup, build/run/debug, and previews.']
+            def unknownProviders = modules.findAll { it.kind != 'jvm' && it.sourceProviders == null }*.path
+            if (!unknownProviders.isEmpty()) diagnostics.add('Source-provider names are unavailable for ' + unknownProviders.join(', ') + '; Android tree annotations cannot be determined.')
             println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics]))
         }
     }
