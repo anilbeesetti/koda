@@ -1,0 +1,35 @@
+{
+  "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+  "fixtures": [
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "bytes": 4201,
+      "local_path": "tooling/xtask/test_data/reference_census/idea/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "license": "Apache-2.0",
+      "adaptation": "none; original bytes retained"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+      "bytes": 16649,
+      "local_path": "tooling/xtask/test_data/reference_census/idea/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "license": "Apache-2.0",
+      "adaptation": "none; original bytes retained"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15",
+      "bytes": 4006,
+      "local_path": "tooling/xtask/test_data/reference_census/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "license": "Apache-2.0",
+      "adaptation": "none; original bytes retained"
+    }
+  ]
+}
