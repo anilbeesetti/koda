@@ -1,0 +1,34 @@
+{
+  "source": "Existing previously reviewed actual normal-app/probe harness",
+  "candidate": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "prepared_files": [
+    {
+      "path": "cc.rs",
+      "prior_sha256": "886ce500d20e9e7d0a4845a791aa7fd295b59c7e34e807dd4c535a98fcedfbd0",
+      "current_sha256": "7081a4f8bfd70930a9402f4e4749fd4c807f9c9a60d855d14f71d17347124b83",
+      "only_change": "External proof/output paths and koda-tree-adapter output label; logic identical."
+    },
+    {
+      "path": "retry-app-build.py",
+      "prior_sha256": "0fe2a8afecc802457fd0bd927019ae4ba70620a827c2d65ff71c1deaf262a9e4",
+      "current_sha256": "d417525830ac45a3ebe66bfd41aaa637853260f03a1bbdc1b9d417d13ba86345",
+      "only_change": "External proof/output paths and koda-tree-adapter output label; logic identical."
+    },
+    {
+      "path": "guarded-app-build.py",
+      "prior_sha256": "80bc859d4b6eb596ef70b12645bdb8dd2b7787f89e691fea48724cba3e039b85",
+      "current_sha256": "1c635c66d34adef3d0334018afe160349dbaba7181961dbaf7d9c10bd89b6e59",
+      "only_change": "External proof/output paths and koda-tree-adapter output label; logic identical."
+    },
+    {
+      "path": "probe.rs",
+      "prior_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+      "current_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+      "only_change": "External proof/output paths and koda-tree-adapter output label; logic identical."
+    }
+  ],
+  "product_source_modified": false,
+  "executed": false,
+  "build_helper_probe_pending": true,
+  "Cargo_lease": "V2 owns; prepare/read-only review only"
+}

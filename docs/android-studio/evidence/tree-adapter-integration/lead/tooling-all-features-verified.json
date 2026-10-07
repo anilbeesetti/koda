@@ -1,0 +1,77 @@
+{
+  "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "passed": 201,
+  "failed": 0,
+  "ignored": 0,
+  "filtered": 0,
+  "groups": [
+    [
+      "85",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "20",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "27",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "21",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "29",
+      "0",
+      "0",
+      "0"
+    ],
+    [
+      "19",
+      "0",
+      "0",
+      "0"
+    ]
+  ],
+  "normal_Cargo_artifacts": [
+    {
+      "target": "android_tools",
+      "source": "/workspace/android-studio-integration/crates/android_tools/src/android_tools.rs",
+      "fresh": true,
+      "executable": null,
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rmeta"
+      ]
+    },
+    {
+      "target": "project_tree_adapter",
+      "source": "/workspace/android-studio-integration/crates/android_tools/tests/project_tree_adapter.rs",
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_adapter-1a256a69c3619b4e",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/project_tree_adapter-1a256a69c3619b4e"
+      ]
+    },
+    {
+      "target": "android_tools",
+      "source": "/workspace/android-studio-integration/crates/android_tools/src/android_tools.rs",
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2"
+      ]
+    }
+  ],
+  "first_compilation_ENOSPC_retained": true,
+  "all_source_hashes": 4704
+}

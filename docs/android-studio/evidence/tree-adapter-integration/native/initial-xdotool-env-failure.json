@@ -1,0 +1,6 @@
+{
+  "command": "DISPLAY=:119 /workspace/cloud-environment/native/usr/bin/xdotool search --onlyvisible --class koda|Zed",
+  "exit_code": 127,
+  "error": "libxdo.so.3 not found because shell did not activate canonical native library environment",
+  "correction": "Activate /workspace/cloud-environment/env.sh and preserved runtime environment for UI shell only. No source or launcher changes."
+}

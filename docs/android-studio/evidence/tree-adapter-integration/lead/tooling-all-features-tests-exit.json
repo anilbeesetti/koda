@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--message-format=json"
+  ],
+  "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "exit_code": 101,
+  "elapsed_seconds": 6.463073412996891,
+  "log_sha256": "d9d6836ebc0d84560f52f458dfe353f911c0ad5514efe9661f4bb98451ebf6c6"
+}

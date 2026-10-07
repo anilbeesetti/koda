@@ -4,7 +4,7 @@
   "branch": "android-studio-task/1-tree-input-adapter",
   "base_commit": "ac58815bb268d338bea40a31fff630734cd719f4",
   "source_commit": "c5d6eff7b32a86cd37614bf744b0ed94089b4d25",
-  "status": "owner_checks_and_five_reviews_pass_lead_gates_pending",
+  "status": "owner_and_lead_gates_pass_protected_merge_pending",
   "scope": "Pure immutable per-module captured-input adapter for evaluated provider/root facts and actual Java bytes. No scanner, publisher, selector or project-panel integration.",
   "new_reference_test_credit": 0,
   "global_census_complete": false,
@@ -443,5 +443,26 @@
     "protected_branch_merge_push": "lead owned; not done by task owner"
   },
   "new_non_rust_product_components": [],
-  "evidence": "docs/android-studio/ports/evidence/tree-input-adapter/artifact-catalog.json"
+  "evidence": "docs/android-studio/ports/evidence/tree-input-adapter/artifact-catalog.json",
+  "lead_combined_validation": {
+    "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+    "report": "docs/android-studio/tree-adapter-lead-report.md",
+    "evidence": "docs/android-studio/evidence/tree-adapter-integration/lead-validation-final.json",
+    "all_five_owner_reviews": "pass",
+    "normal_app_build": "pass",
+    "native_full_app": "pass",
+    "normal_tooling_allfeatures_passed": 201,
+    "normal_default_UI_passed": 125,
+    "pre_existing_UI_ignored": 1,
+    "strict_repository_clippy": "pass",
+    "workspace_format": "pass",
+    "full_workspace_CI_passed": 10450,
+    "full_workspace_CI_pre_existing_skipped": 23,
+    "all_CI_jobs": "success",
+    "exact_reference_recaptures_passed": 33,
+    "new_reference_credit": 0,
+    "source_file_binding_count": 4704,
+    "original_five_tree_flows": "unported",
+    "phase_complete": false
+  }
 }

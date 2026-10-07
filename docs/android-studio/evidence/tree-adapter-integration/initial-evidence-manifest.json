@@ -1,0 +1,348 @@
+{
+  "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "all_raw_bytes_retained": true,
+  "images_and_source_helpers_external": true,
+  "full_CI_pending": true,
+  "files": [
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/alias-preparation.json",
+      "bytes": 1267,
+      "sha256": "ea127a5db2861a510f7b44fc3a748bbf14ba6d943d087905f5d40fe2b2b26210"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/app-build-retry-exit.json",
+      "bytes": 316,
+      "sha256": "93f59ab87742b8f7543f0c29ba0db4357d43b0bfedd623eaf9d821106f4692d3"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/app-build-retry.log",
+      "bytes": 9511,
+      "sha256": "322a9ddd5d27ee77b3f7af8aea3df4867f47935f8f1b3ea70b4ddfccb47eab91"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/build-runner.log",
+      "bytes": 731,
+      "sha256": "aad89dca2d1127b9289feaa764ea6462fac49c09ec55b03ed1deed7d28ca0be6"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/build-source-freshness.json",
+      "bytes": 974,
+      "sha256": "c956d88183169a6c393619ca2344deb84da890a844ca0d038057b3ce8e53ca60"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/helper-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/koda-tree-adapter-258543.json",
+      "bytes": 182475,
+      "sha256": "a62e2b2a63a67ee11e8236726edcdbcc77bbfb8b983269a089de54e612a26d51"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/new-app-executable.json",
+      "bytes": 731,
+      "sha256": "aad89dca2d1127b9289feaa764ea6462fac49c09ec55b03ed1deed7d28ca0be6"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/preparation-scope.json",
+      "bytes": 1637,
+      "sha256": "7beeadabc218c090d30c6dee8c14b672064aca56365f18fd71919443dafc4a1f"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/probe-256152.json",
+      "bytes": 7957,
+      "sha256": "c74b52309e6cc03e62310c06c9786dbe1e7f987cb650f25ce1c437fc55e9d255"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/probe-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/probe-runtime.log",
+      "bytes": 30,
+      "sha256": "09397da5e4ca42fcbaf16c84742601a70d34414c8b5322b8cb52bbfd7d1bbc2a"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/probe-validation-attempt1.json",
+      "bytes": 620,
+      "sha256": "fcade355a322375f9eb4fbc058809b0e9f0ed6f6ba58715145680a49d612d55f"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/probe-validation.json",
+      "bytes": 789,
+      "sha256": "8a5d7d2ad04ba90199a79d3589829e26fb5f0e6eb4636a116605895368ffba16"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/quality-app-build.log",
+      "bytes": 6732,
+      "sha256": "d4ab2ef6966e506da3ce90e1b8ca71da8cd274e54c5fd8a29a00855e531bc0a4"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/quality-runtime-probe.log",
+      "bytes": 4554,
+      "sha256": "debc2e9a82e3fec369cf5c3417912e0d52b1bf895660397c59d1d1712267d869"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/quality-static.log",
+      "bytes": 4833,
+      "sha256": "126f0f7e94f7c19ab0e300cc698aa8b40b5143f7b0abb8df9a4589f7e496ec23"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/whole-product-guard-result.json",
+      "bytes": 220,
+      "sha256": "17de8918403fb32cef3f1dd2384f5971f9b31f006db3ff3c604d65af31791002"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/app-build/whole-product-source-snapshot.json",
+      "bytes": 727492,
+      "sha256": "d92580b5c8a200e2c5968635b6d9daccd186351b09760447d67c9367e63ad0eb"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/cherry-evidence.log",
+      "bytes": 7650,
+      "sha256": "cbd45f506df4b9b6c301dfe8562021440dc1177803268a6cb67fde1d5c737cbf"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/cherry-source.log",
+      "bytes": 657,
+      "sha256": "9cf73620f1468806c544ce6d7ceb285b5235e82abdeac4ab599160a3c0fc6602"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/exact-reference-capture.log",
+      "bytes": 2543,
+      "sha256": "73bd00a274b3f970d8771b417f125c13a1cd9cc92845e07bee0d7795ef62e996"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/incomplete-unit-object-retirement.json",
+      "bytes": 609,
+      "sha256": "f7aea75da6e497b9f196e5321b386b0f0591364622010031b04449797def98e6"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/lead-validation-inprogress.json",
+      "bytes": 1920,
+      "sha256": "9d2426e7ddad6fb99c9b74f9c3c6db82930342f61a6e6c0466a475ac9dd0ce34"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/owned-cache-capacity-preflight.json",
+      "bytes": 717,
+      "sha256": "7b30aaa86212fb079556505b7fd400118095eae9532e68bcaac95596ea7b61a8"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/parity-validator-exit.json",
+      "bytes": 435,
+      "sha256": "fc9d2e06442267411f908df1fe611146340836e29c732a5e7a84a74fce6ae89e"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/parity-validator.log",
+      "bytes": 400,
+      "sha256": "6f0807a0eb3a0da24cf43adc48145bf1aa09841c903482446794b530772cbfe6"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/pre-runtime-source-snapshot.json",
+      "bytes": 727739,
+      "sha256": "cfef694a693d8f1fe1fbe2e6e7099ae0e1e904c6ab138adfc031c7693124b447"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/previous-archive-byte-exact-relocation.json",
+      "bytes": 564,
+      "sha256": "15c8c25743c93646ddc45c9ce91718850b2288f4763d87b0b62ac6a66a1cbf8f"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/previous-merged-junit4-app-ELF-retirement.json",
+      "bytes": 3817,
+      "sha256": "52c29494908f4cd4418d40d66d5a8a6077c8ac32c3ff3371fce783efb30a4eaa"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/strict-clippy.log",
+      "bytes": 311,
+      "sha256": "cd578d4edfb09745f57552d9ba8fa5efe1175673a14c143438fa25539c1eb4e2"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/superseded-caches-recovery.json",
+      "bytes": 8955,
+      "sha256": "13cfbf95405e4bef5cea56a3dddf86136750a550b96b9bb0939a941701cad346"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/superseded-v2-unit85-elf-retirement.json",
+      "bytes": 3873,
+      "sha256": "63f3cc45be114a8b45be096033e0eafe55f2c0c1c8c8662837ae248fb937cb8a"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/tooling-all-features-tests-exit.json",
+      "bytes": 352,
+      "sha256": "a12a962804674e21a896a22306b31ad8cc4ff016eeb50c68784aae9be796ef62"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/tooling-all-features-tests-retry1-exit.json",
+      "bytes": 452,
+      "sha256": "f85a0a324b7244813d0ff307fa39dcd699f3c1f69c60d9b27c25f4c41b215b8e"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/tooling-all-features-tests-retry1.log",
+      "bytes": 169261,
+      "sha256": "56086828148c23bff1b40aa24c4ae21f6bbc60640b5515948ce6e4b8a9c6d444"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/tooling-all-features-tests.log",
+      "bytes": 154380,
+      "sha256": "d9d6836ebc0d84560f52f458dfe353f911c0ad5514efe9661f4bb98451ebf6c6"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/tooling-all-features-verified.json",
+      "bytes": 1772,
+      "sha256": "4154ac4bc88bec72f75ab734778e76de42ef03f6d369493b6a1f52c88ed195e3"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/tooling-source-freshness.json",
+      "bytes": 436,
+      "sha256": "516576dbbba8548c30324c3de5754522a7565afac9bdcae718a72ec8e7509242"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/ui-full-default-suite-exit.json",
+      "bytes": 430,
+      "sha256": "90bc3b486ceaaec945b8bb48116aba8c888df477d78249be32b448b4d301b1cc"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/ui-full-default-suite.log",
+      "bytes": 11772,
+      "sha256": "171870ae75fdec9bf946daf3112d80e69affdcfaec4054db490af4b49c59aeb2"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/unit85-retirement-attempt1.json",
+      "bytes": 328,
+      "sha256": "ce184129456f9465f15bec10e9b0cbabeb1e16fb763218cf44eb0dc2623e5f47"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/workspace-format-exit.json",
+      "bytes": 290,
+      "sha256": "2af4aecbd3aa3807af8632a4d7c4583fde6b2c604310a5d7da2b07dd10bf1fbd"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/lead/workspace-format.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/app-pty-output.log",
+      "bytes": 299,
+      "sha256": "246eb3e9952b2d79dee392168e222b3f63744177790e8f195abbe20c02b57124"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/artifact-manifest.json",
+      "bytes": 10150,
+      "sha256": "2665004190db83e9fdf138345052d0927f1dd636d1830ad42c7a2521d0220fb7"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/diagnostic-provenance.json",
+      "bytes": 924,
+      "sha256": "fbf13bcb91d24bbdd605eac22f2909006a80450e4b2b90408e8f56f5ff4f0d52"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/final-closure.json",
+      "bytes": 564,
+      "sha256": "29a15859527cf8bd90fa35aef75b9ba642e7fa209f3f56802201f1f2642feca6"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/guard-after-controls.json",
+      "bytes": 799,
+      "sha256": "332c7b42b5ed143458f3cb145979fcb7ba2696ecbf4626993fd40d463153a470"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/guard-before-launch.json",
+      "bytes": 798,
+      "sha256": "f7c85952129403c496749ae4ba021efb1c699c6bffae7a9391428263f225d4d5"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/guard-final-after-native.json",
+      "bytes": 803,
+      "sha256": "63c0cfefb702e5b9a1c8233ca0ebc2020865a6ecbac4cf20e15a540c2e5d6ec5"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/idle-settled-toolbar-focus.json",
+      "bytes": 3420,
+      "sha256": "e53e1139ff623c8762e90fa4318630a64a3b68a49e79561d9e3234674b02b8eb"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/idle-settled-wide.json",
+      "bytes": 3413,
+      "sha256": "b91d3045e93ea05d217935a48ae0b814839d5933f6ee15c126bb65651c7d84d6"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/initial-focus-identifier-failure.json",
+      "bytes": 324,
+      "sha256": "56ce099d2ba6ca19e44d4696f4eca0dbad23beae89470c6d84d607c8e9378787"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/initial-xdotool-env-failure.json",
+      "bytes": 394,
+      "sha256": "5933c9a2d5aaade40c32a7db8b26091ffe7a63ecc88cd80a7be8cccd335c664c"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/loading-capture-timing.json",
+      "bytes": 171,
+      "sha256": "0da7c0599522dff1ce074016e42d253f9404f93a9bf1ff3044d2ddd6f4755855"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/native-model-first.json",
+      "bytes": 102792,
+      "sha256": "a3d16a6bfa83292f939eabb9340cea6f8fcb82d9d9eee39e8254ff959350c2d0"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/native-model-proof-initial.json",
+      "bytes": 1553,
+      "sha256": "12407aebc94d9a955d2ce4b1ae698a598a39eacc10c81511eea98f8195ac550f"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/native-model-proof.json",
+      "bytes": 1863,
+      "sha256": "9b665ba6e92ba2c2c11436134a1f633502146e3371fb7bfcd32c0f94e147e748"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/native-sync-export-proof.json",
+      "bytes": 463,
+      "sha256": "1f39201a5fe0733a75eb25686f60171713faef719e91e180273edd47ba7799db"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/native-sync-stdout.log",
+      "bytes": 125404,
+      "sha256": "f4e0d4313886b5ea60830e1630a75dcb6e0c2202960426373dd1ac037a8a6961"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/preparation-proof.json",
+      "bytes": 3714,
+      "sha256": "e35badc84e29d88ef248ed00409c658021e0132cc1ae4c7c3d8fc666df550779"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/process-before-stop.json",
+      "bytes": 675,
+      "sha256": "c0afe39000a94243a52409636656da13b86e961ffea2e45f8307732d363e2123"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/process-initial.json",
+      "bytes": 671,
+      "sha256": "457cf473e2387c27b265c39170ff2ac66a072813a2cc1f8a752f6626d0857104"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/review-report-text.log",
+      "bytes": 3200,
+      "sha256": "bb04062cb6b2317d6c5e6ce3540e3f6ca2eef4718b2db02ee461774ac4731280"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/review-report.log",
+      "bytes": 3200,
+      "sha256": "bb04062cb6b2317d6c5e6ce3540e3f6ca2eef4718b2db02ee461774ac4731280"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/runtime-proof.json",
+      "bytes": 15470,
+      "sha256": "a0bd9dc23f67f0c1658309637758468ec242e34e6790b80c495b3d7a41fef52d"
+    },
+    {
+      "path": "docs/android-studio/evidence/tree-adapter-integration/native/success-stop-request.json",
+      "bytes": 482,
+      "sha256": "d7dc09d706c00a841f0695cfb24e8d3d38f116d91449c5cad035209eb589fe3d"
+    }
+  ]
+}

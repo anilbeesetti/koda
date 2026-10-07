@@ -1,0 +1,54 @@
+# App-build harness: independent full-app build evidence addendum
+
+**Verdict: PASS for the normal current-candidate app build, linker forwarding, executable identity, and whole-source guard evidence. No remaining findings in this scope. Native application validation and the full workspace/CI gates are separate.**
+
+Candidate: `android-studio-task/1-tree-adapter-integration` at `0e15a3d2b6eff51451b5f30d4c62ab0edde608ab`, Git tree `ea0dd3b90fe66c30e6c7debd336cc708a4bbf0ec`, in `/workspace/android-studio-integration`. HEAD, tree, and an empty Git status were independently rechecked. Both preceding independent reviews remain unchanged.
+
+## Bound evidence identities
+
+| Evidence | SHA-256 |
+| --- | --- |
+| `new-app-executable.json` | `aad89dca2d1127b9289feaa764ea6462fac49c09ec55b03ed1deed7d28ca0be6` |
+| `app-build-retry-exit.json` | `93f59ab87742b8f7543f0c29ba0db4357d43b0bfedd623eaf9d821106f4692d3` |
+| `whole-product-guard-result.json` | `17de8918403fb32cef3f1dd2384f5971f9b31f006db3ff3c604d65af31791002` |
+| `whole-product-source-snapshot.json` | `d92580b5c8a200e2c5968635b6d9daccd186351b09760447d67c9367e63ad0eb` |
+| `build-source-freshness.json` | `c956d88183169a6c393619ca2344deb84da890a844ca0d038057b3ce8e53ca60` |
+| `koda-tree-adapter-258543.json` | `a62e2b2a63a67ee11e8236726edcdbcc77bbfb8b983269a089de54e612a26d51` |
+| `app-build-retry.log` | `322a9ddd5d27ee77b3f7af8aea3df4867f47935f8f1b3ea70b4ddfccb47eab91` |
+| `quality-static.md` | `126f0f7e94f7c19ab0e300cc698aa8b40b5143f7b0abb8df9a4589f7e496ec23` |
+| `quality-runtime-probe.md` | `debc2e9a82e3fec369cf5c3417912e0d52b1bf895660397c59d1d1712267d869` |
+| `probe-validation-attempt1.json` | `fcade355a322375f9eb4fbc058809b0e9f0ed6f6ba58715145680a49d612d55f` |
+
+Current helper source remains `7081a4f8bfd70930a9402f4e4749fd4c807f9c9a60d855d14f71d17347124b83`. All four prepared helper/runner/probe source files still match the exact hashes reviewed in the static report and recorded in `preparation-scope.json`.
+
+## Actual normal build and current compiler paths
+
+The exit record and executable record agree on exactly `cargo build --locked -p zed --bin koda`, exit 0, elapsed 150.27082520299882 seconds, and the exact raw build-log SHA above. The raw 9,511-byte log contains 101 compilation lines; every line identifies a crate in `/workspace/android-studio-integration/crates/`. Fresh compilation of `icons`, `android_tools`, `android_ui`, and `zed` is explicit. The log ends with `Finished dev profile [unoptimized] target(s) in 2m 30s`. There are no added Cargo target/feature/test-bypass flags in the recorded command.
+
+The unchanged retry runner records the canonical environment path `/workspace/cloud-environment/env.sh`, binds its requested commit to HEAD, touches only the four crate-root mtimes, and checks their original bytes before and after Cargo. The freshness receipt binds those four hashes to this candidate; all four were independently recomputed and matched. The whole-source snapshot and final guard record bind this exact commit/tree and 4,704 tracked source/dependency/fixture/asset files. The runner preserves failures and verifies success before publishing executable proof; the raw log was not normalized.
+
+## Actual final-app forwarding
+
+`koda-tree-adapter-258543.json` records `/usr/bin/cc`, real-link status 0, original output `/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935`, and redirected output `/tmp/android-studio-link-output/koda-tree-adapter-258543`.
+
+Independently compared all 1,206 entries in both argument vectors. Exactly one changes, at zero-based index 1,199 immediately after the sole `-o`: the final output path. All 1,205 remaining entries, including object/library inputs and every represented compiler/linker flag, are unchanged. The independently verified earlier probe remains supporting evidence for the same current helper; the full-app receipt itself now establishes the final-app forwarding path.
+
+## Independently verified executable and guards
+
+The actual new ELF is `/tmp/android-studio-link-output/koda-tree-adapter-258543`, size **1,359,383,016 bytes**, SHA-256 **`f5e4ae6dd711fe4b8e0001a3f4923bbe697b5b855ebd081e6631f528ea7354d4`**. Its ELF header, size, and complete SHA were independently read and checked. Device, inode, size, and modification time remained stable across hashing (device 33, inode 82655). All three published aliases independently resolve to this exact file:
+
+- `/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935`
+- `/workspace/.cache/zed/target/debug/koda`
+- `/workspace/android-studio-integration/target/cloud-app/koda`
+
+The fixed guard exclusions are unchanged from the reviewed original: direct Android Studio Markdown and the two named manifests, direct port JSON, and evidence JSON/log only. Independently re-applied HEAD/index/worktree/untracked guards, verified the exact ordered set of 4,704 snapshot paths with no duplicate entries, and recomputed every snapshot file's SHA against its current byte content. All 4,704 match. Cargo files, source, fixtures, images, and nonexcluded metadata remain in the guard. The build's final guard record reports successful before/after guards with child exit 0 and the same count; the independent current-byte checks agree with it.
+
+The brief bulk source/ELF hash pass took 1.56 seconds. The native-validation agent confirmed that no idle performance sample had started and held measurement until this pass was complete; completion was communicated before its measurements resumed.
+
+## Preserved failure and remaining limits
+
+The prior new-verifier error expecting `normal app link probe` remains in `probe-validation-attempt1.json` with the exact SHA above. Its successful compile/runtime exits and actual `real Rust linker probe passed` output were preserved. The corrected independent probe review compared untouched source, exact original runtime bytes, real-CC forwarding, and executable identity; neither this app build nor this addendum erases or reclassifies the historical verification failure as an initial PASS.
+
+This verdict establishes the actual normal app build and its source/executable binding. It does not claim native UI/SDK workflow completion, full workspace or CI success, Android Studio reference-driver equivalence, exhaustive parity, startup/large-project performance, or a completed IDE. Native UI/SDK validation is proceeding separately under the native agent's runtime lease.
+
+Only this external report was written by this reviewer. All checks were read-only hash/stat/source/receipt/Git inspections. No Cargo, Gradle, Rust compiler, probe or application execution, cache retirement, product/test/fixture write, branch/index mutation, raw-log rewrite, or runtime lease use occurred.
