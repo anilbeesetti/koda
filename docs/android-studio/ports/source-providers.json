@@ -1,0 +1,325 @@
+{
+  "schema_version": 1,
+  "task": "1-source-providers",
+  "branch": "android-studio-task/1-source-providers",
+  "base_commit": "6ac8e50dce8893e30c4cc544e0f4c165759751b2",
+  "status": "implementation_in_progress",
+  "scope": "Add evaluated Android DSL provider names/configured directory facts and component asset roots to the existing Gradle project model; no tree policy, UI, active-provider selection or canonical parity changes.",
+  "new_reference_test_credit": 0,
+  "global_census_complete": false,
+  "mirror_omissions_resolved": false,
+  "model_contract": {
+    "version": 1,
+    "legacy_decoding": "sourceProviders is an optional additive module property. Missing/null remains unknown; known empty is distinct. Existing module/default-variant/component/dependency decoding and assertions are preserved.",
+    "order": "gradleSourceSetIteration: encounter order of the evaluated Gradle Android source-set container; not textual declaration order or Studio active-provider/overlay order.",
+    "names": "Exact evaluated Android DSL sourceSet.name values, never inferred from a directory basename, component name or build variant.",
+    "root_kinds": [
+      "java",
+      "kotlin",
+      "resources",
+      "aidl",
+      "renderscript",
+      "assets",
+      "jniLibs",
+      "manifest"
+    ],
+    "resources": "Android res directories; JVM resources and other source categories are outside this bounded catalog.",
+    "root_paths": "Canonical Gradle file paths; Rust validates absolute project containment, lexical parent traversal and nearest-existing-ancestor symlink escape. Configured missing paths remain present.",
+    "candidate_query": "All configured containing provider candidates in reported order, one occurrence per provider, retaining shared/nested/mixed-kind ambiguity. Manifest matches only its exact configured file or exact parent directory. This is not a VFS existence query, first overlay winner, active provider filter or full getForFile ancestor-folder semantics.",
+    "asset_roots": "Evaluated component assets.all roots; generatedness uses assets.static plus exact evaluated DSL asset directories. AGP 9.4 static omits variant-specific configured paths, so the DSL union retains those as configured even when missing. No basename or build-folder classification for supported ordinary Android assets.",
+    "producer_execution": "Collector source inputs retain Gradle provider producer dependencies. The smoke explicitly requests createAssets and uses rerun-tasks. No APK assembly or unrelated task is requested.",
+    "unsupported": [
+      "KMP source-provider catalogs remain unknown with an export diagnostic; the Android DSL catalog is not used to invent KGP source-set identities.",
+      "JVM modules have no Android provider catalog.",
+      "The catalog includes configured inactive providers and does not establish the selected variant's Studio provider order/scope. A tree adapter must preserve unknown/ambiguous identities rather than choosing the first catalog item.",
+      "Shader, ML model, baseline profile, keep rule, arbitrary custom and JVM-resource categories are not covered by this bounded root-kind enum.",
+      "Generated directory contents, VFS refresh/existence, colocation of generated and configured roots, and exact Studio generated-source model identity are not established merely by this raw model.",
+      "Existing Java/Kotlin/resource generatedness export behavior is unchanged by this assets-only correction."
+    ]
+  },
+  "reference": {
+    "repository": "platform/tools/adt/idea",
+    "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "archive": "/workspace/android-studio-references/idea.tar.gz",
+    "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+    "license": "Apache-2.0; original notices retained unchanged in externally preserved sources. The smoke AssetGenerator registration adapts the 2019 AOSP test pattern and retains attribution plus LICENSE-APACHE.",
+    "findings": [
+      {
+        "path": "project-system/src/com/android/tools/idea/projectsystem/IdeaSourceProvider.kt",
+        "lines": [
+          21,
+          109
+        ],
+        "fact": "Configured URLs include missing roots, unlike existing virtual-file collections; named provider identity and overlay order are explicit separate facts."
+      },
+      {
+        "path": "project-system/src/com/android/tools/idea/projectsystem/SourceProviders.kt",
+        "lines": [
+          429,
+          477
+        ],
+        "fact": "getForFile preserves multiple containing/contained candidates; findSourceRoot checks exact manifests/parent directories and existing VFS ancestry. The Rust configured-candidate API intentionally does not claim these active/VFS semantics."
+      },
+      {
+        "path": "project-system/src/com/android/tools/idea/projectsystem/SourceProviders.kt",
+        "lines": [
+          495,
+          510
+        ],
+        "fact": "First source-root lookup spans Java, Kotlin, res, aidl, renderscript, assets and jniLibs, so provider identity cannot be guessed from only one root category."
+      },
+      {
+        "path": "project-system-gradle/src/com/android/tools/idea/gradle/project/model/AndroidModelSourceProviderUtils.kt",
+        "lines": [
+          100,
+          135
+        ],
+        "fact": "Current and all-provider lists differ; current overlay order is main, flavors, multi-flavor, build type and variant, with a noted flavor-order issue. Gradle source-set container iteration is not this order."
+      },
+      {
+        "path": "android-navigator/src/com/android/tools/idea/navigator/AndroidViewNodes.java",
+        "lines": [
+          47,
+          61
+        ],
+        "fact": "Tree lookup combines current main, host tests, device tests, test suites and test fixtures. The additive catalog does not establish those active scopes."
+      },
+      {
+        "path": "android-navigator/src/org/jetbrains/android/facet/AndroidSourceType.kt",
+        "lines": [
+          93,
+          101
+        ],
+        "fact": "Configured assets and generated assets form distinct source groups."
+      },
+      {
+        "path": "android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidSourceTypeNode.kt",
+        "lines": [
+          86,
+          96
+        ],
+        "fact": "Provider annotations depend on first actual source-root match across active providers, not root basenames."
+      },
+      {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "lines": [
+          186,
+          243
+        ],
+        "fact": "Original generated-assets test checks evaluated model generated folders, writes/refreshes a nested asset, and asserts its exact tree path. The smoke only exercises evaluated export/producer facts, so this original method stays unported."
+      }
+    ],
+    "artifacts": [
+      {
+        "source": "idea",
+        "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+        "path": "project-system/src/com/android/tools/idea/projectsystem/IdeaSourceProvider.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/project-system/src/com/android/tools/idea/projectsystem/IdeaSourceProvider.kt",
+        "sha256": "b22840e8f769afaebd07d4b84090fbb1cf79f83b5cbfb6d7b372d880705b83aa",
+        "bytes": 4062,
+        "preservation": "Original Apache 2.0 notices and bytes retained unchanged in pinned archive and external extract."
+      },
+      {
+        "source": "idea",
+        "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+        "path": "project-system/src/com/android/tools/idea/projectsystem/SourceProviders.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/project-system/src/com/android/tools/idea/projectsystem/SourceProviders.kt",
+        "sha256": "3908e5e66c6726d83cb269f2252af15637593a0c9e7b32e4c4e900bcf9710b58",
+        "bytes": 23540,
+        "preservation": "Original Apache 2.0 notices and bytes retained unchanged in pinned archive and external extract."
+      },
+      {
+        "source": "idea",
+        "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+        "path": "project-system/src/com/android/tools/idea/projectsystem/SourceProvidersImpl.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/project-system/src/com/android/tools/idea/projectsystem/SourceProvidersImpl.kt",
+        "sha256": "0966960f70568f1c65a80d7473795a42a05d196ee26a4c73058795f32181e9b7",
+        "bytes": 2917,
+        "preservation": "Original Apache 2.0 notices and bytes retained unchanged in pinned archive and external extract."
+      },
+      {
+        "source": "idea",
+        "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+        "path": "project-system-gradle/src/com/android/tools/idea/gradle/project/model/AndroidModelSourceProviderUtils.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/project-system-gradle/src/com/android/tools/idea/gradle/project/model/AndroidModelSourceProviderUtils.kt",
+        "sha256": "4605166cb811b7d7afc3241641e28b324b936146995a85348838c449ba1f63ca",
+        "bytes": 10514,
+        "preservation": "Original Apache 2.0 notices and bytes retained unchanged in pinned archive and external extract."
+      },
+      {
+        "source": "idea",
+        "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+        "path": "project-system-gradle-models/src/com/android/tools/idea/gradle/model/IdeSourceProvider.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/project-system-gradle-models/src/com/android/tools/idea/gradle/model/IdeSourceProvider.kt",
+        "sha256": "c4cd52be2fdeae7410dd9fc014a219d952726e0d679570f9a555276db12cdfa4",
+        "bytes": 9618,
+        "preservation": "Original Apache 2.0 notices and bytes retained unchanged in pinned archive and external extract."
+      },
+      {
+        "source": "idea",
+        "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+        "path": "android-navigator/src/org/jetbrains/android/facet/AndroidSourceType.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/android-navigator/src/org/jetbrains/android/facet/AndroidSourceType.kt",
+        "sha256": "2fa40619a269c1de937853a18c54b91dcfe087b77d274b0739fb826933ca3425",
+        "bytes": 7854,
+        "preservation": "Original Apache 2.0 notices and bytes retained unchanged in pinned archive and external extract."
+      },
+      {
+        "source": "idea",
+        "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+        "path": "android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidSourceTypeNode.kt",
+        "local_path": "/workspace/android-studio-references/samples/idea/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidSourceTypeNode.kt",
+        "sha256": "3a8496f744bdc6d7355919c3de83f7a25dbcdfd78c3f554c0bf0ba456c1d0f11",
+        "bytes": 5966,
+        "preservation": "Original Apache 2.0 notices and bytes retained unchanged in pinned archive and external extract."
+      },
+      {
+        "source": "idea",
+        "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+        "path": "android-navigator/src/com/android/tools/idea/navigator/AndroidViewNodes.java",
+        "local_path": "/workspace/android-studio-references/samples/idea/android-navigator/src/com/android/tools/idea/navigator/AndroidViewNodes.java",
+        "sha256": "bb4a8691a165359c5f1b46f33a94475404f5a4e5a8cc57557171512509a4e621",
+        "bytes": 2934,
+        "preservation": "Original Apache 2.0 notices and bytes retained unchanged in pinned archive and external extract."
+      },
+      {
+        "source": "idea",
+        "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "local_path": "/workspace/android-studio-references/samples/idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+        "bytes": 34018,
+        "preservation": "Original Apache 2.0 notices and bytes retained unchanged in pinned archive and external extract."
+      }
+    ],
+    "archive_extract_comparison": "Nine selected original sources re-extracted directly from pinned idea archive, cmp identical to preserved samples; notices retained."
+  },
+  "smoke": {
+    "fixture": "crates/android_tools/test_data/source_providers/gradle-smoke",
+    "project": "/workspace/android-studio-artifacts/source-providers-smoke/project",
+    "gradle": "9.6.1",
+    "agp": "9.4.0",
+    "jdk": "21.0.12.1+1",
+    "sdk_platform": "37",
+    "build_tools": "37.0.0",
+    "baseline_adaptation": "Current local smoke versions, not the pinned Android Studio original integration harness, fixture, runner or full assertions; no reference parity credit.",
+    "command": "./gradlew --no-daemon --console=plain --rerun-tasks --init-script /workspace/android-studio-artifacts/source-providers-smoke/export.gradle :app:createAssets kodaAndroidProjectModel",
+    "frozen_export_sha256": "f0fdac17431fed5367249f567895b73d521bf1164fea85a08c3a84d327d54107",
+    "frozen_inputs": "/workspace/android-studio-artifacts/source-providers-smoke/frozen-input-sha256.txt",
+    "frozen_inputs_after_run": "sha256sum -c: all seven recorded input files unchanged",
+    "execution_status": "passing",
+    "executed_tasks": [
+      ":app:createAssets",
+      ":app:kodaAndroidModuleModel",
+      ":kodaAndroidProjectModel"
+    ],
+    "exit_code": 0,
+    "observations": [
+      "debug and main are exact reported provider names sharing unrelated-assets; debug also reports unrelated-assets/nested. No arbitrary identity is chosen.",
+      "main has custom-manifest/AndroidManifest.xml plus provider-res and main/resources; directory basenames are independent of provider identity.",
+      "Configured missing demoDebug/demoRelease assets directories remain in their respective component models with generated=false.",
+      "The actual createAssets task writes build/generated/assets/createAssets/raw/createAssets; the evaluated component root is generated=true.",
+      "Each provider/root encounter order is retained verbatim; no Studio active-provider or tree assertion is claimed."
+    ],
+    "fixture_files": [
+      {
+        "path": "crates/android_tools/test_data/source_providers/LICENSE-APACHE",
+        "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a"
+      },
+      {
+        "path": "crates/android_tools/test_data/source_providers/README.md",
+        "sha256": "96a67d849d5b64c2fe9fea45d4e6a543e65497d771af244926059ea8d7b0a33e"
+      },
+      {
+        "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/build.gradle",
+        "sha256": "25f01c0db7bee9a4a8b7034430ba852e1a0665d10f37c7d8f15b439e08aeccc5"
+      },
+      {
+        "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/custom-manifest/AndroidManifest.xml",
+        "sha256": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e"
+      },
+      {
+        "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/flavor-assets/demo.txt",
+        "sha256": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd"
+      },
+      {
+        "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/main/resources/resources.properties",
+        "sha256": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c"
+      },
+      {
+        "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/provider-res/layout/sample.xml",
+        "sha256": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208"
+      },
+      {
+        "path": "crates/android_tools/test_data/source_providers/gradle-smoke/app/unrelated-assets/sample.txt",
+        "sha256": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950"
+      },
+      {
+        "path": "crates/android_tools/test_data/source_providers/gradle-smoke/build.gradle",
+        "sha256": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2"
+      },
+      {
+        "path": "crates/android_tools/test_data/source_providers/gradle-smoke/gradle.properties",
+        "sha256": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2"
+      },
+      {
+        "path": "crates/android_tools/test_data/source_providers/gradle-smoke/settings.gradle",
+        "sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c"
+      }
+    ],
+    "raw_model": {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/model-final.json",
+      "sha256": "8b373d6ec948e3b14bb533aecc4718d1421452f1c9b6e44cf9bbb77c9a265348"
+    },
+    "gradle_log": {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/gradle-model-final.log",
+      "sha256": "f1d99bbf22eddfc13fec10881f8be77dc1e6a95df9d87c6a79aa47a346be5db4"
+    },
+    "generated_file": {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/build/generated/assets/createAssets/raw/createAssets",
+      "sha256": "27de70dad89c7bf864f74cc91c6f94273b3d718e3451097382995b2049ab1e9a"
+    },
+    "rust_decode_command": "cargo run --locked -p android_tools --example project_model_probe -- /workspace/android-studio-artifacts/source-providers-smoke/project /workspace/android-studio-artifacts/source-providers-smoke/gradle-model-final.log --model-only"
+  },
+  "validation": {
+    "rust_tests": "not_run_pending_exclusive_Cargo_lease",
+    "rust_live_model_decode": "not_run_pending_exclusive_Cargo_lease",
+    "clippy": "not_run_pending_exclusive_Cargo_lease",
+    "full_app_build": "not_run_pending_exclusive_Cargo_lease",
+    "live_app_model_sync": "not_run_pending_exclusive_Cargo_lease",
+    "formatting": "standalone rustfmt and git diff --check passing",
+    "review_verdicts": {
+      "code": "PASS previous static snapshot; assets caching fix requires affected rereview",
+      "ui": "not_run",
+      "ux": "not_run",
+      "performance": "PASS round1 static scaling fix; no measured startup or large-project benchmark",
+      "quality": "PASS previous static snapshot; assets caching fix requires affected rereview"
+    },
+    "canonical_ledger": "unchanged; synthetic regression models and the current-version smoke do not port original reference tests",
+    "frozen_parity_fixture_sha256": {
+      "reference-manifest.json": "89c88ae7300f928fe78c2d754a815e8e8d9e4e5d50dbf7913315f47e15b50139",
+      "test-parity.json": "25f483cd6b65bebf23d13bd327c394a3c3e353a53d61a9e827860b7abc76092b"
+    },
+    "regression_tests": [
+      "project_model::tests::legacy_provider_metadata_stays_unknown_and_assets_retain_missing_roots",
+      "project_model::tests::provider_candidates_preserve_names_order_and_shared_nested_ambiguity",
+      "project_model::tests::rejects_invalid_provider_names_duplicates_and_escaping_roots"
+    ],
+    "protected_origin_main": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+    "ledger_and_frozen_tooling_diff": "git diff --exit-code against base6ac: no changes to canonical manifest/ledger, parity validator or immutable test fixtures"
+  },
+  "non_rust_exceptions": [
+    {
+      "component": "Gradle and Android Gradle Plugin runtime",
+      "reason": "Official Gradle evaluation owns dynamic Android DSL/provider/task facts; replacing its execution with a Rust parser would not faithfully evaluate arbitrary Gradle builds. The existing minimal Groovy init script exports evaluated facts; validation, provider-candidate logic, selection and IDE code remain Rust."
+    },
+    {
+      "component": "JDK 21",
+      "reason": "Runs the official Gradle/AGP JVM runtime for the evaluated model smoke."
+    },
+    {
+      "component": "Android SDK platform/build-tools",
+      "reason": "Official Android compile target and build-tool metadata used by AGP; no practical equivalent Rust Android platform distribution exists."
+    }
+  ]
+}

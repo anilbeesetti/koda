@@ -58,6 +58,50 @@ pub enum SourceKind {
     Kotlin,
     Resources,
     Manifest,
+    Assets,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SourceProviderOrder {
+    /// The evaluated Gradle source-set container's iteration order, which can
+    /// differ from both textual declarations and Studio's active overlay order.
+    GradleSourceSetIteration,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SourceProviderRootKind {
+    Java,
+    Kotlin,
+    /// Android `res` directories, rather than JVM classpath resources.
+    Resources,
+    Aidl,
+    Renderscript,
+    Assets,
+    JniLibs,
+    Manifest,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SourceProviderRoot {
+    pub path: PathBuf,
+    pub kind: SourceProviderRootKind,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SourceProvider {
+    pub name: String,
+    pub roots: Vec<SourceProviderRoot>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SourceProviderCatalog {
+    pub order: SourceProviderOrder,
+    pub providers: Vec<SourceProvider>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -103,7 +147,34 @@ pub struct Module {
     pub kind: ModuleKind,
     #[serde(default)]
     pub default_variant: Option<String>,
+    /// Evaluated Android DSL facts. Missing legacy or unsupported metadata stays unknown.
+    #[serde(default)]
+    pub source_providers: Option<SourceProviderCatalog>,
     pub variants: Vec<Variant>,
+}
+
+impl Module {
+    /// Configured provider candidates in their reported order, without choosing an
+    /// overlay winner. A source-set-iteration catalog does not establish Android
+    /// Studio's active-provider order, membership, or existing virtual-file roots.
+    pub fn source_provider_candidates(&self, path: &Path) -> Option<Vec<&SourceProvider>> {
+        Some(
+            self.source_providers
+                .as_ref()?
+                .providers
+                .iter()
+                .filter(|provider| {
+                    provider.roots.iter().any(|root| {
+                        if root.kind == SourceProviderRootKind::Manifest {
+                            path == root.path || root.path.parent() == Some(path)
+                        } else {
+                            path.starts_with(&root.path)
+                        }
+                    })
+                })
+                .collect(),
+        )
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -132,6 +203,8 @@ struct ExportedModule {
     kind: ModuleKind,
     #[serde(default)]
     default_variant: Option<String>,
+    #[serde(default)]
+    source_providers: Option<SourceProviderCatalog>,
     variants: Vec<Variant>,
     #[serde(default)]
     default_variant_selection: Option<DefaultVariantSelection>,
@@ -220,6 +293,7 @@ impl ExportedModule {
             namespace: self.namespace,
             kind: self.kind,
             default_variant: self.default_variant,
+            source_providers: self.source_providers,
             variants: self.variants,
         };
         if let Some(selection) = self.default_variant_selection {
@@ -544,6 +618,21 @@ pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
             "Invalid or duplicate Android module {}",
             module.path
         );
+        if let Some(catalog) = &module.source_providers {
+            let mut providers = BTreeSet::new();
+            for provider in &catalog.providers {
+                ensure!(
+                    !provider.name.trim().is_empty()
+                        && !provider.name.chars().any(char::is_control)
+                        && providers.insert(&provider.name),
+                    "Invalid or duplicate source provider in Android module {}",
+                    module.path
+                );
+                for source in &provider.roots {
+                    validate_project_path(&source.path, &root)?;
+                }
+            }
+        }
         ensure!(
             module.directory.is_absolute() && module.directory.canonicalize()?.starts_with(&root),
             "Module {} is outside the selected build; included builds and external project directories are unsupported",
@@ -1004,6 +1093,7 @@ mod tests {
             namespace: Some(format!("dev.{name}")),
             kind,
             default_variant: None,
+            source_providers: None,
             variants,
         };
         Ok(ProjectModel {
@@ -1035,6 +1125,214 @@ mod tests {
             "Gradle noise\n{OUTPUT}{}\nBUILD SUCCESSFUL",
             serde_json::to_string(model)?
         ))
+    }
+
+    #[test]
+    fn legacy_provider_metadata_stays_unknown_and_assets_retain_missing_roots() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().canonicalize()?;
+        let mut model = fixture(&root)?;
+        let generated_assets = root.join("app/build/generated/assets/createAssets");
+        model.modules[0].variants[0].components[0]
+            .sources
+            .push(SourceRoot {
+                path: generated_assets.clone(),
+                kind: SourceKind::Assets,
+                generated: true,
+            });
+        let mut legacy = serde_json::to_value(&model)?;
+        for module in legacy["modules"].as_array_mut().context("Module array")? {
+            let removed = module
+                .as_object_mut()
+                .context("Module object")?
+                .remove("sourceProviders");
+            assert!(removed.is_some());
+        }
+        let parsed = parse_model(&format!("{OUTPUT}{legacy}"), &root)?;
+        let application = parsed.modules.first().context("Application module")?;
+        assert!(application.source_providers.is_none());
+        assert!(
+            application
+                .source_provider_candidates(&root.join("app/src/main/res/resources.properties"))
+                .is_none()
+        );
+        assert!(!generated_assets.exists());
+        assert!(
+            application.variants[0].components[0]
+                .sources
+                .iter()
+                .any(|source| source.kind == SourceKind::Assets
+                    && source.generated
+                    && source.path == generated_assets)
+        );
+        model.modules[0].source_providers = Some(SourceProviderCatalog {
+            order: SourceProviderOrder::GradleSourceSetIteration,
+            providers: Vec::new(),
+        });
+        let parsed = parse_model(&output(&model)?, &root)?;
+        assert_eq!(
+            parsed.modules[0]
+                .source_provider_candidates(&generated_assets)
+                .context("Known configured catalog")?
+                .len(),
+            0
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn provider_candidates_preserve_names_order_and_shared_nested_ambiguity() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().canonicalize()?;
+        let mut model = fixture(&root)?;
+        let shared = root.join("app/unrelated-location");
+        let nested = shared.join("nested");
+        let manifest = root.join("app/custom-manifest/manifest.xml");
+        model.modules[0].source_providers = Some(SourceProviderCatalog {
+            order: SourceProviderOrder::GradleSourceSetIteration,
+            providers: vec![
+                SourceProvider {
+                    name: "release".into(),
+                    roots: vec![SourceProviderRoot {
+                        path: shared.clone(),
+                        kind: SourceProviderRootKind::Resources,
+                    }],
+                },
+                SourceProvider {
+                    name: "main".into(),
+                    roots: vec![
+                        SourceProviderRoot {
+                            path: nested.clone(),
+                            kind: SourceProviderRootKind::Assets,
+                        },
+                        SourceProviderRoot {
+                            path: shared.clone(),
+                            kind: SourceProviderRootKind::Java,
+                        },
+                        SourceProviderRoot {
+                            path: shared.clone(),
+                            kind: SourceProviderRootKind::Kotlin,
+                        },
+                        SourceProviderRoot {
+                            path: manifest.clone(),
+                            kind: SourceProviderRootKind::Manifest,
+                        },
+                    ],
+                },
+            ],
+        });
+        let parsed = parse_model(&output(&model)?, &root)?;
+        let application = parsed.modules.first().context("Application module")?;
+        let catalog = application
+            .source_providers
+            .as_ref()
+            .context("Provider catalog")?;
+        assert_eq!(
+            catalog,
+            model.modules[0]
+                .source_providers
+                .as_ref()
+                .context("Input catalog")?
+        );
+        let candidates = application
+            .source_provider_candidates(&nested.join("resources.properties"))
+            .context("Known catalog")?;
+        assert_eq!(
+            candidates
+                .iter()
+                .map(|provider| provider.name.as_str())
+                .collect::<Vec<_>>(),
+            ["release", "main"]
+        );
+        for path in [
+            manifest.as_path(),
+            manifest.parent().context("Manifest parent")?,
+        ] {
+            assert_eq!(
+                application
+                    .source_provider_candidates(path)
+                    .context("Known catalog")?
+                    .iter()
+                    .map(|provider| provider.name.as_str())
+                    .collect::<Vec<_>>(),
+                ["main"]
+            );
+        }
+        assert!(
+            application
+                .source_provider_candidates(&manifest.join("child"))
+                .context("Known catalog")?
+                .is_empty()
+        );
+        assert!(
+            application
+                .source_provider_candidates(&root.join("app/src/main/res"))
+                .context("Known catalog")?
+                .is_empty()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_invalid_provider_names_duplicates_and_escaping_roots() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().canonicalize()?;
+        let mut model = fixture(&root)?;
+        let provider = SourceProvider {
+            name: "main".into(),
+            roots: vec![SourceProviderRoot {
+                path: root.join("app/custom-assets"),
+                kind: SourceProviderRootKind::Assets,
+            }],
+        };
+        model.modules[0].source_providers = Some(SourceProviderCatalog {
+            order: SourceProviderOrder::GradleSourceSetIteration,
+            providers: vec![provider.clone(), provider.clone()],
+        });
+        assert!(parse_model(&output(&model)?, &root).is_err());
+        for name in ["", " ", "main\nother"] {
+            model.modules[0].source_providers = Some(SourceProviderCatalog {
+                order: SourceProviderOrder::GradleSourceSetIteration,
+                providers: vec![SourceProvider {
+                    name: name.into(),
+                    ..provider.clone()
+                }],
+            });
+            assert!(parse_model(&output(&model)?, &root).is_err());
+        }
+        for path in [
+            PathBuf::from("relative/assets"),
+            root.join("app/../../outside-assets"),
+        ] {
+            model.modules[0].source_providers = Some(SourceProviderCatalog {
+                order: SourceProviderOrder::GradleSourceSetIteration,
+                providers: vec![SourceProvider {
+                    roots: vec![SourceProviderRoot {
+                        path,
+                        kind: SourceProviderRootKind::Assets,
+                    }],
+                    ..provider.clone()
+                }],
+            });
+            assert!(parse_model(&output(&model)?, &root).is_err());
+        }
+        #[cfg(unix)]
+        {
+            let outside = tempfile::tempdir()?;
+            std::os::unix::fs::symlink(outside.path(), root.join("app/escaped"))?;
+            model.modules[0].source_providers = Some(SourceProviderCatalog {
+                order: SourceProviderOrder::GradleSourceSetIteration,
+                providers: vec![SourceProvider {
+                    roots: vec![SourceProviderRoot {
+                        path: root.join("app/escaped/missing/assets"),
+                        kind: SourceProviderRootKind::Assets,
+                    }],
+                    ..provider
+                }],
+            });
+            assert!(parse_model(&output(&model)?, &root).is_err());
+        }
+        Ok(())
     }
 
     #[test]
