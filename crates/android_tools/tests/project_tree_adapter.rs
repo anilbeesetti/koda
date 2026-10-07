@@ -1,0 +1,1237 @@
+/*
+ * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+//! Supplemental captured-input tests; no original Gradle/GPUI parity credit.
+
+use android_tools::{
+    java_class_facts::{JavaFactsErrorKind, MAX_JAVA_FACT_BYTES},
+    project_model::{
+        ArtifactSourceProvider, Component, EvaluatedProviderMetadata, Module, ModuleKind,
+        ProviderArtifact, ProviderContainer, ProviderDimension, ProviderMetadataUnavailable,
+        ProviderModelVersion, ProviderToolingModel, ProviderVariant, SourceKind, SourceProvider,
+        SourceProviderRoot, SourceProviderRootKind, SourceRoot, SourceScope, Variant,
+    },
+    project_tree::{NodeKey, SourceGroup},
+    project_tree_adapter::{
+        AdapterUnavailableReason, CaptureBinding, CapturedEntry, CapturedEntryKind,
+        CapturedJavaSource, CapturedModuleFiles, CapturedModulePresentation,
+        JavaFileDiagnosticKind, KotlinCapability, MAX_PARSED_JAVA_BYTES, ModuleRootPlan,
+        UnsupportedRootKind, adapt_captured_module, prepare_module_roots,
+    },
+    project_tree_facts::{FactsUnavailableReason, RootPresence},
+};
+use anyhow::{Context as _, Result};
+use std::{path::PathBuf, sync::Arc};
+
+fn root() -> PathBuf {
+    std::env::temp_dir()
+        .join("koda-tree-adapter-inputs")
+        .components()
+        .collect()
+}
+
+fn path(relative: &str) -> PathBuf {
+    root().join(relative).components().collect()
+}
+
+fn provider(name: &str, roots: &[(&str, SourceProviderRootKind)]) -> SourceProvider {
+    SourceProvider {
+        name: name.into(),
+        roots: roots
+            .iter()
+            .map(|(relative, kind)| SourceProviderRoot {
+                path: path(relative),
+                kind: *kind,
+            })
+            .collect(),
+    }
+}
+
+fn container(main: Option<SourceProvider>) -> ProviderContainer {
+    ProviderContainer {
+        main,
+        host_tests: Vec::new(),
+        device_tests: Vec::new(),
+        fixtures: None,
+    }
+}
+
+fn fixture(roots: &[(&str, SourceProviderRootKind)]) -> Module {
+    Module {
+        path: ":app".into(),
+        directory: root(),
+        namespace: Some("example".into()),
+        kind: ModuleKind::Application,
+        default_variant: Some("debug".into()),
+        source_providers: None,
+        variants: vec![Variant {
+            name: "debug".into(),
+            output_listing: None,
+            components: vec![Component {
+                name: "debug".into(),
+                namespace: Some("example".into()),
+                scope: SourceScope::Main,
+                sources: Vec::new(),
+                dependencies: Vec::new(),
+            }],
+        }],
+        evaluated_providers: Some(EvaluatedProviderMetadata::Available(ProviderToolingModel {
+            version: 1,
+            agp_version: "9.4.0".into(),
+            model_producer: ProviderModelVersion {
+                major: 22,
+                minor: 0,
+            },
+            default_source_set: Some(container(Some(provider("main", roots)))),
+            build_types: vec![ProviderDimension {
+                name: Some("debug".into()),
+                container: container(Some(provider("debug", &[]))),
+            }],
+            product_flavors: Vec::new(),
+            variants: vec![ProviderVariant {
+                name: "debug".into(),
+                build_type: Some("debug".into()),
+                product_flavors: Vec::new(),
+                main: ProviderArtifact {
+                    multi_flavor: None,
+                    variant: None,
+                },
+                host_tests: Vec::new(),
+                device_tests: Vec::new(),
+                fixtures: None,
+                test_suites: Some(Vec::new()),
+            }],
+            test_suites: Some(Vec::new()),
+            native_membership: None,
+        })),
+    }
+}
+
+fn metadata(module: &mut Module) -> &mut ProviderToolingModel {
+    match module
+        .evaluated_providers
+        .as_mut()
+        .expect("Fixture metadata")
+    {
+        EvaluatedProviderMetadata::Available(metadata) => metadata,
+        _ => panic!("Fixture metadata unavailable"),
+    }
+}
+
+fn presentation(kotlin: KotlinCapability) -> CapturedModulePresentation {
+    CapturedModulePresentation {
+        display_name: Some("app".into()),
+        kotlin,
+        compact_packages: true,
+    }
+}
+
+fn plan(module: &Module) -> Result<ModuleRootPlan> {
+    Ok(prepare_module_roots(
+        module,
+        "debug",
+        7,
+        Some(&presentation(KotlinCapability::Enabled)),
+    )?)
+}
+
+fn directory(relative: &str) -> CapturedEntry {
+    CapturedEntry {
+        path: path(relative),
+        kind: CapturedEntryKind::Directory,
+    }
+}
+
+fn raw(relative: &str) -> CapturedEntry {
+    CapturedEntry {
+        path: path(relative),
+        kind: CapturedEntryKind::File { java_source: None },
+    }
+}
+
+fn java(relative: &str, bytes: &[u8]) -> CapturedEntry {
+    CapturedEntry {
+        path: path(relative),
+        kind: CapturedEntryKind::File {
+            java_source: Some(CapturedJavaSource {
+                file_revision: 11,
+                bytes: Arc::from(bytes),
+            }),
+        },
+    }
+}
+
+/// These synthetic fixtures explicitly define a finite known physical world;
+/// this is not a product scanner or an inference of absence from real snapshots.
+fn capture(plan: &ModuleRootPlan, entries: Vec<CapturedEntry>) -> CapturedModuleFiles {
+    let presence = plan
+        .required_presence_paths()
+        .into_iter()
+        .map(|candidate| {
+            let state = if let Some(entry) = entries.iter().find(|entry| entry.path == candidate) {
+                match entry.kind {
+                    CapturedEntryKind::Directory => RootPresence::Directory,
+                    CapturedEntryKind::File { .. } => RootPresence::File,
+                }
+            } else if entries
+                .iter()
+                .any(|entry| entry.path.starts_with(&candidate))
+            {
+                RootPresence::Directory
+            } else {
+                RootPresence::Missing
+            };
+            (candidate, state)
+        })
+        .collect();
+    CapturedModuleFiles {
+        binding: CaptureBinding {
+            module: plan.binding().module.clone(),
+            variant: plan.binding().variant.clone(),
+            model_revision: plan.binding().model_revision,
+            file_revision: 11,
+        },
+        entries,
+        presence,
+    }
+}
+
+fn groups(plan: &ModuleRootPlan) -> Vec<(SourceGroup, PathBuf)> {
+    plan.source_roots()
+        .iter()
+        .map(|root| (root.group, root.path.clone()))
+        .collect()
+}
+
+#[test]
+fn per_provider_intersections_respect_explicit_kotlin_capability() -> Result<()> {
+    use SourceProviderRootKind::{Java, Kotlin};
+    let module = fixture(&[
+        ("java", Java),
+        ("shared", Java),
+        ("shared", Kotlin),
+        ("kotlin", Kotlin),
+    ]);
+    let enabled = plan(&module)?;
+    assert_eq!(
+        groups(&enabled),
+        vec![
+            (SourceGroup::Java, path("java")),
+            (SourceGroup::Kotlin, path("kotlin")),
+            (SourceGroup::KotlinAndJava, path("shared"))
+        ]
+    );
+    let disabled = prepare_module_roots(
+        &module,
+        "debug",
+        7,
+        Some(&presentation(KotlinCapability::Disabled)),
+    )?;
+    assert_eq!(
+        groups(&disabled),
+        vec![
+            (SourceGroup::Java, path("java")),
+            (SourceGroup::Java, path("shared")),
+            (SourceGroup::Kotlin, path("kotlin"))
+        ]
+    );
+    let unknown = prepare_module_roots(
+        &module,
+        "debug",
+        7,
+        Some(&presentation(KotlinCapability::Unknown)),
+    )
+    .expect_err("No Kotlin guess");
+    assert_eq!(
+        unknown.reason,
+        AdapterUnavailableReason::MissingKotlinCapability
+    );
+    assert_eq!(unknown.path, Some(path("shared")));
+    Ok(())
+}
+
+#[test]
+fn missing_presentation_never_uses_directory_or_module_basename() -> Result<()> {
+    let module = fixture(&[]);
+    for value in [
+        None,
+        Some(CapturedModulePresentation {
+            display_name: None,
+            ..presentation(KotlinCapability::Unknown)
+        }),
+        Some(CapturedModulePresentation {
+            display_name: Some(String::new()),
+            ..presentation(KotlinCapability::Unknown)
+        }),
+    ] {
+        assert_eq!(
+            prepare_module_roots(&module, "debug", 7, value.as_ref())
+                .expect_err("Missing identity")
+                .reason,
+            AdapterUnavailableReason::MissingPresentation
+        );
+    }
+    let mut module = module;
+    module.path = ":nested:app".into();
+    let metadata = plan(&module)?;
+    assert_eq!(metadata.binding().module, ":nested:app");
+    let result = adapt_captured_module(&metadata, &capture(&metadata, vec![directory("")]))?;
+    assert_eq!(
+        result.tree.nodes().next().context("Module node")?.label,
+        "app"
+    );
+    Ok(())
+}
+
+#[test]
+fn missing_provider_metadata_and_variants_remain_typed() -> Result<()> {
+    let mut module = fixture(&[]);
+    module.evaluated_providers = None;
+    assert_eq!(
+        plan(&module)
+            .expect_err("Missing metadata")
+            .downcast_ref::<android_tools::project_tree_adapter::AdapterUnavailable>()
+            .context("Typed error")?
+            .reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::MissingMetadata)
+    );
+    module.evaluated_providers = Some(EvaluatedProviderMetadata::Unavailable(
+        ProviderMetadataUnavailable {
+            capability: "toolingModel".into(),
+            detail: "not exported".into(),
+        },
+    ));
+    assert_eq!(
+        prepare_module_roots(
+            &module,
+            "debug",
+            7,
+            Some(&presentation(KotlinCapability::Enabled))
+        )
+        .expect_err("Unavailable metadata")
+        .reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::Capability)
+    );
+    module = fixture(&[]);
+    assert_eq!(
+        prepare_module_roots(
+            &module,
+            "release",
+            7,
+            Some(&presentation(KotlinCapability::Enabled))
+        )
+        .expect_err("No guessed variant")
+        .reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::MissingVariant)
+    );
+    module.kind = ModuleKind::Jvm;
+    assert_eq!(
+        prepare_module_roots(
+            &module,
+            "debug",
+            7,
+            Some(&presentation(KotlinCapability::Enabled))
+        )
+        .expect_err("JVM is separate")
+        .reason,
+        AdapterUnavailableReason::UnsupportedModule
+    );
+    Ok(())
+}
+
+#[test]
+fn static_under_build_and_generated_outside_build_keep_model_flags() -> Result<()> {
+    let mut module = fixture(&[
+        ("build/static-assets", SourceProviderRootKind::Assets),
+        ("outside-static", SourceProviderRootKind::Assets),
+    ]);
+    module.variants[0].components[0].sources = vec![
+        SourceRoot {
+            path: path("build/static-assets"),
+            kind: SourceKind::Assets,
+            generated: false,
+        },
+        SourceRoot {
+            path: path("outside-generated"),
+            kind: SourceKind::Assets,
+            generated: true,
+        },
+        SourceRoot {
+            path: path("outside-java"),
+            kind: SourceKind::Java,
+            generated: true,
+        },
+        SourceRoot {
+            path: path("outside-kotlin"),
+            kind: SourceKind::Kotlin,
+            generated: true,
+        },
+        SourceRoot {
+            path: path("outside-res"),
+            kind: SourceKind::Resources,
+            generated: true,
+        },
+    ];
+    let result = plan(&module)?;
+    assert_eq!(
+        groups(&result),
+        vec![
+            (SourceGroup::GeneratedJava, path("outside-java")),
+            (SourceGroup::GeneratedJava, path("outside-kotlin")),
+            (SourceGroup::Assets, path("build/static-assets")),
+            (SourceGroup::Assets, path("outside-static")),
+            (SourceGroup::GeneratedAssets, path("outside-generated")),
+            (SourceGroup::GeneratedResources, path("outside-res")),
+        ]
+    );
+    Ok(())
+}
+
+#[test]
+fn generated_and_static_exact_root_duplicates_follow_builtin_priority() -> Result<()> {
+    let mut module = fixture(&[
+        ("shared", SourceProviderRootKind::Java),
+        ("shared", SourceProviderRootKind::Assets),
+    ]);
+    module.variants[0].components[0].sources.push(SourceRoot {
+        path: path("shared"),
+        kind: SourceKind::Java,
+        generated: true,
+    });
+    assert_eq!(
+        groups(&plan(&module)?),
+        vec![(SourceGroup::Java, path("shared"))]
+    );
+    Ok(())
+}
+
+#[test]
+fn unsupported_roots_remain_explicit_and_keep_builtin_shadow_priority() -> Result<()> {
+    use SourceProviderRootKind::{Aidl, Assets, Java, JniLibs, Renderscript, Resources};
+    let mut module = fixture(&[
+        ("earlier-aidl", Aidl),
+        ("earlier-aidl", Assets),
+        ("earlier-jni", JniLibs),
+        ("earlier-jni", Resources),
+        ("java-wins", Java),
+        ("java-wins", Aidl),
+        ("script", Renderscript),
+    ]);
+    module.variants[0].components[0].sources.push(SourceRoot {
+        path: path("generated-manifest"),
+        kind: SourceKind::Manifest,
+        generated: true,
+    });
+    let result = plan(&module)?;
+    assert_eq!(
+        groups(&result),
+        vec![(SourceGroup::Java, path("java-wins"))]
+    );
+    assert_eq!(result.unsupported_roots().len(), 5);
+    assert!(
+        result
+            .unsupported_roots()
+            .iter()
+            .any(|root| root.kind == UnsupportedRootKind::GeneratedManifest)
+    );
+    assert!(
+        result
+            .required_presence_paths()
+            .contains(&path("generated-manifest"))
+    );
+    let tree = adapt_captured_module(&result, &capture(&result, vec![directory("java-wins")]))?;
+    assert_eq!(tree.unsupported_roots, result.unsupported_roots());
+    Ok(())
+}
+
+#[test]
+fn retained_host_roots_survive_absent_selected_artifact_without_device_or_fixture_guesses()
+-> Result<()> {
+    use SourceProviderRootKind::Java;
+    let mut module = fixture(&[("main", Java)]);
+    let source_set = metadata(&mut module)
+        .default_source_set
+        .as_mut()
+        .context("Default")?;
+    source_set.host_tests.push(ArtifactSourceProvider {
+        artifact: "_unit_test_".into(),
+        provider: provider("test", &[("host", Java)]),
+    });
+    source_set.device_tests.push(ArtifactSourceProvider {
+        artifact: "_android_test_".into(),
+        provider: provider("androidTest", &[("device", Java)]),
+    });
+    source_set.fixtures = Some(provider("testFixtures", &[("fixtures", Java)]));
+    assert_eq!(
+        groups(&plan(&module)?),
+        vec![
+            (SourceGroup::Java, path("main")),
+            (SourceGroup::Java, path("host"))
+        ]
+    );
+    assert!(
+        module.variants[0]
+            .components
+            .iter()
+            .all(|component| component.scope == SourceScope::Main)
+    );
+    // The pinned converter classifies fixture artifacts by this name prefix.
+    // An invalid producer name must remain rejected even for an inactive role.
+    metadata(&mut module)
+        .default_source_set
+        .as_mut()
+        .context("Default")?
+        .fixtures
+        .as_mut()
+        .context("Fixtures")?
+        .name = "fixtures".into();
+    assert_eq!(
+        prepare_module_roots(
+            &module,
+            "debug",
+            7,
+            Some(&presentation(KotlinCapability::Enabled)),
+        )
+        .expect_err("Invalid fixture provider name")
+        .reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::UnsupportedShape)
+    );
+    Ok(())
+}
+
+#[test]
+fn root_encounters_preserve_producer_order_and_nested_occurrences() -> Result<()> {
+    let mut module = fixture(&[
+        ("assets/z", SourceProviderRootKind::Assets),
+        ("assets", SourceProviderRootKind::Assets),
+    ]);
+    let first = plan(&module)?;
+    assert_eq!(
+        groups(&first),
+        vec![
+            (SourceGroup::Assets, path("assets/z")),
+            (SourceGroup::Assets, path("assets"))
+        ]
+    );
+    metadata(&mut module)
+        .default_source_set
+        .as_mut()
+        .context("Default")?
+        .main
+        .as_mut()
+        .context("Main")?
+        .roots
+        .reverse();
+    assert_eq!(
+        groups(&plan(&module)?),
+        vec![
+            (SourceGroup::Assets, path("assets")),
+            (SourceGroup::Assets, path("assets/z"))
+        ]
+    );
+    let cap = capture(
+        &first,
+        vec![
+            directory("assets"),
+            directory("assets/z"),
+            raw("assets/z/sample.txt"),
+        ],
+    );
+    let result = adapt_captured_module(&first, &cap)?;
+    assert_eq!(
+        result
+            .tree
+            .nodes()
+            .filter(|node| node
+                .navigation
+                .as_ref()
+                .is_some_and(|target| target.path == path("assets/z/sample.txt")))
+            .count(),
+        2
+    );
+    Ok(())
+}
+
+#[test]
+fn original_java_bytes_produce_actual_class_name_and_utf8_byte_target() -> Result<()> {
+    let module = fixture(&[("src", SourceProviderRootKind::Java)]);
+    let plan = plan(&module)?;
+    let original = include_bytes!("../test_data/java_class_facts/BuildConfig.java");
+    let source = b"// \xe2\x98\x83\npackage example; class Actual {}";
+    let result = adapt_captured_module(
+        &plan,
+        &capture(
+            &plan,
+            vec![
+                directory("src"),
+                java("src/com/application/BuildConfig.java", original),
+                java("src/Misleading.java", source),
+            ],
+        ),
+    )?;
+    let node = result
+        .tree
+        .nodes()
+        .find(|node| node.label == "Actual")
+        .context("Parsed class")?;
+    let target = node.navigation.as_ref().context("Target")?;
+    assert_eq!(target.path, path("src/Misleading.java"));
+    assert_eq!(
+        target.byte_offset,
+        Some(
+            source
+                .windows(6)
+                .position(|window| window == b"Actual")
+                .context("Name")?
+        )
+    );
+    assert!(result.tree.nodes().any(|node| node.label == "BuildConfig"));
+    assert!(result.java_diagnostics.is_empty());
+    Ok(())
+}
+
+#[test]
+fn duplicate_unsupported_and_missing_java_facts_keep_ordinary_files_and_other_classes() -> Result<()>
+{
+    let plan = plan(&fixture(&[("src", SourceProviderRootKind::Java)]))?;
+    let result = adapt_captured_module(
+        &plan,
+        &capture(
+            &plan,
+            vec![
+                directory("src"),
+                java("src/Multiple.java", b"class First {} interface Second {}"),
+                java("src/Duplicate.java", b"class Repeated {} class Repeated {}"),
+                java("src/Escape.java", b"// \\u0041\nclass Escaped {}"),
+                raw("src/Missing.java"),
+                raw("src/Actual.kt"),
+            ],
+        ),
+    )?;
+    for filename in ["Duplicate.java", "Escape.java", "Missing.java", "Actual.kt"] {
+        assert!(result.tree.nodes().any(|node| node.label == filename));
+    }
+    for name in ["First", "Second"] {
+        assert!(result.tree.nodes().any(|node| node.label == name));
+    }
+    assert!(!result.tree.nodes().any(|node| node.label == "Repeated"));
+    assert_eq!(result.java_diagnostics.len(), 3);
+    assert!(
+        result
+            .java_diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.kind == JavaFileDiagnosticKind::DuplicateDeclarations)
+    );
+    assert!(
+        result
+            .java_diagnostics
+            .iter()
+            .any(|diagnostic| diagnostic.kind == JavaFileDiagnosticKind::MissingBytes)
+    );
+    assert!(result.java_diagnostics.iter().any(|diagnostic| matches!(diagnostic.kind,
+        JavaFileDiagnosticKind::Parser(failure) if failure.kind == JavaFactsErrorKind::UnicodeEscape)));
+    Ok(())
+}
+
+#[test]
+fn model_variant_module_and_java_revision_mismatches_reject_capture() -> Result<()> {
+    let plan = plan(&fixture(&[("src", SourceProviderRootKind::Java)]))?;
+    let cap = capture(
+        &plan,
+        vec![
+            directory("src"),
+            java("src/Actual.java", b"class Actual {}"),
+        ],
+    );
+    let mut stale = cap.clone();
+    stale.binding.model_revision += 1;
+    assert_eq!(
+        adapt_captured_module(&plan, &stale)
+            .expect_err("Old model")
+            .reason,
+        AdapterUnavailableReason::StaleCapture
+    );
+    stale = cap.clone();
+    stale.binding.variant = "release".into();
+    assert_eq!(
+        adapt_captured_module(&plan, &stale)
+            .expect_err("Old variant")
+            .reason,
+        AdapterUnavailableReason::StaleCapture
+    );
+    stale = cap.clone();
+    stale.binding.module = ":other".into();
+    assert_eq!(
+        adapt_captured_module(&plan, &stale)
+            .expect_err("Other module")
+            .reason,
+        AdapterUnavailableReason::StaleCapture
+    );
+    stale = cap;
+    stale.binding.file_revision += 1;
+    let failure = adapt_captured_module(&plan, &stale).expect_err("Old source bytes");
+    assert_eq!(failure.reason, AdapterUnavailableReason::StaleCapture);
+    assert_eq!(failure.path, Some(path("src/Actual.java")));
+    Ok(())
+}
+
+#[test]
+fn absent_inventory_without_presence_is_unknown_not_missing() -> Result<()> {
+    let plan = plan(&fixture(&[("assets", SourceProviderRootKind::Assets)]))?;
+    let mut cap = capture(&plan, vec![directory("")]);
+    cap.presence
+        .retain(|(candidate, _)| candidate != &path("assets"));
+    let failure = adapt_captured_module(&plan, &cap).expect_err("No scan proof");
+    assert_eq!(
+        failure.reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::UnknownPresence)
+    );
+    assert_eq!(failure.path, Some(path("assets")));
+    cap.presence.push((path("assets"), RootPresence::Missing));
+    assert!(
+        !adapt_captured_module(&plan, &cap)?
+            .tree
+            .nodes()
+            .any(|node| node.label == "assets")
+    );
+    Ok(())
+}
+
+#[test]
+fn observed_child_proves_root_directory_and_contradictory_absence_is_rejected() -> Result<()> {
+    let plan = plan(&fixture(&[("assets", SourceProviderRootKind::Assets)]))?;
+    let mut cap = capture(&plan, vec![raw("assets/child.txt")]);
+    cap.presence
+        .retain(|(candidate, _)| candidate != &path("assets"));
+    assert!(
+        adapt_captured_module(&plan, &cap)?
+            .tree
+            .nodes()
+            .any(|node| node.label == "child.txt")
+    );
+    cap.presence.push((path("assets"), RootPresence::Missing));
+    assert_eq!(
+        adapt_captured_module(&plan, &cap)
+            .expect_err("Contradiction")
+            .reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::Malformed)
+    );
+    Ok(())
+}
+
+#[test]
+fn malformed_paths_duplicate_inventory_and_non_java_bytes_are_rejected() -> Result<()> {
+    let plan = plan(&fixture(&[("src", SourceProviderRootKind::Java)]))?;
+    let mut cap = capture(
+        &plan,
+        vec![directory("src"), raw("src/file.txt"), raw("src/file.txt")],
+    );
+    assert_eq!(
+        adapt_captured_module(&plan, &cap)
+            .expect_err("Duplicate path")
+            .reason,
+        AdapterUnavailableReason::MalformedCapture
+    );
+    cap = capture(&plan, vec![java("src/Actual.kt", b"class Actual {}")]);
+    assert_eq!(
+        adapt_captured_module(&plan, &cap)
+            .expect_err("Kotlin is not Java")
+            .reason,
+        AdapterUnavailableReason::MalformedCapture
+    );
+    cap.entries[0].path = PathBuf::from("relative/Actual.java");
+    assert_eq!(
+        adapt_captured_module(&plan, &cap)
+            .expect_err("Relative path")
+            .reason,
+        AdapterUnavailableReason::MalformedCapture
+    );
+    let mut module = fixture(&[]);
+    module.variants[0].components[0].sources.push(SourceRoot {
+        path: PathBuf::from("relative/generated"),
+        kind: SourceKind::Assets,
+        generated: true,
+    });
+    assert_eq!(
+        prepare_module_roots(
+            &module,
+            "debug",
+            7,
+            Some(&presentation(KotlinCapability::Enabled))
+        )
+        .expect_err("Malformed source root")
+        .reason,
+        AdapterUnavailableReason::MalformedCapture
+    );
+    Ok(())
+}
+
+#[test]
+fn nested_provider_winners_change_per_entry_after_adaptation() -> Result<()> {
+    let mut module = fixture(&[("assets/nested", SourceProviderRootKind::Assets)]);
+    metadata(&mut module).build_types[0].container.main = Some(provider(
+        "debug",
+        &[("assets", SourceProviderRootKind::Assets)],
+    ));
+    let plan = plan(&module)?;
+    let result = adapt_captured_module(
+        &plan,
+        &capture(
+            &plan,
+            vec![
+                directory("assets"),
+                directory("assets/nested"),
+                raw("assets/outside.txt"),
+                raw("assets/nested/inside.txt"),
+            ],
+        ),
+    )?;
+    assert!(
+        result
+            .tree
+            .nodes()
+            .filter(|node| node
+                .navigation
+                .as_ref()
+                .is_some_and(|target| target.path == path("assets/outside.txt")))
+            .all(|node| node.reference_label.contains("debug"))
+    );
+    assert!(
+        result
+            .tree
+            .nodes()
+            .filter(|node| node
+                .navigation
+                .as_ref()
+                .is_some_and(|target| target.path == path("assets/nested/inside.txt")))
+            .all(|node| !node.reference_label.contains("debug"))
+    );
+    assert!(result.tree.nodes().any(|node| node.label == "outside.txt"));
+    assert!(result.tree.nodes().any(|node| node.label == "inside.txt"));
+    Ok(())
+}
+
+#[test]
+fn resource_annotations_use_exact_root_membership_not_generic_ancestry() -> Result<()> {
+    let mut module = fixture(&[("broad", SourceProviderRootKind::Java)]);
+    metadata(&mut module).build_types[0].container.main = Some(provider(
+        "debug",
+        &[("broad/res", SourceProviderRootKind::Resources)],
+    ));
+    let plan = plan(&module)?;
+    let result = adapt_captured_module(
+        &plan,
+        &capture(
+            &plan,
+            vec![
+                directory("broad"),
+                directory("broad/res"),
+                directory("broad/res/layout"),
+                raw("broad/res/layout/sample.xml"),
+            ],
+        ),
+    )?;
+    assert!(result.tree.nodes().any(|node| {
+        matches!(
+            node.key,
+            NodeKey::File {
+                group: Some(SourceGroup::Resources),
+                ..
+            }
+        ) && node.reference_label.contains("debug")
+            && node
+                .navigation
+                .as_ref()
+                .is_some_and(|target| target.path == path("broad/res/layout/sample.xml"))
+    }));
+    Ok(())
+}
+
+#[test]
+fn special_files_keep_exact_paths_without_fabricated_filesystem_ids() -> Result<()> {
+    let plan = plan(&fixture(&[(
+        "src/main/res",
+        SourceProviderRootKind::Resources,
+    )]))?;
+    let result = adapt_captured_module(
+        &plan,
+        &capture(
+            &plan,
+            vec![
+                directory("src/main/res"),
+                raw("src/main/res/resources.properties"),
+                raw("google-services.json"),
+                raw("nested/google-services.json"),
+            ],
+        ),
+    )?;
+    let properties = result
+        .tree
+        .nodes()
+        .find(|node| node.label == "resources.properties")
+        .context("Properties")?;
+    assert_eq!(properties.reference_label, "resources.properties (main)");
+    assert_eq!(
+        properties.navigation.as_ref().context("Path")?.path,
+        path("src/main/res/resources.properties")
+    );
+    let json = result
+        .tree
+        .nodes()
+        .filter(|node| node.label == "google-services.json")
+        .collect::<Vec<_>>();
+    assert_eq!(json.len(), 1);
+    assert_eq!(
+        json[0].navigation.as_ref().context("JSON path")?.path,
+        path("google-services.json")
+    );
+    Ok(())
+}
+
+#[test]
+fn relevant_unknown_provider_root_cannot_become_unattributed_or_later_winner() -> Result<()> {
+    let mut module = fixture(&[("assets/missing", SourceProviderRootKind::Assets)]);
+    metadata(&mut module).build_types[0].container.main = Some(provider(
+        "debug",
+        &[("assets", SourceProviderRootKind::Assets)],
+    ));
+    let plan = plan(&module)?;
+    let mut cap = capture(&plan, vec![directory("assets"), raw("assets/outside.txt")]);
+    cap.presence
+        .retain(|(candidate, _)| candidate != &path("assets/missing"));
+    assert_eq!(
+        adapt_captured_module(&plan, &cap)
+            .expect_err("Unknown root")
+            .reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::UnknownPresence)
+    );
+    Ok(())
+}
+
+#[test]
+fn generated_filename_does_not_invent_build_config_or_original_parity() -> Result<()> {
+    let mut module = fixture(&[]);
+    module.variants[0].components[0].sources.push(SourceRoot {
+        path: path("generated"),
+        kind: SourceKind::Java,
+        generated: true,
+    });
+    let plan = plan(&module)?;
+    let result = adapt_captured_module(
+        &plan,
+        &capture(
+            &plan,
+            vec![
+                directory("generated"),
+                java("generated/BuildConfig.java", b"class ActualGenerated {}"),
+            ],
+        ),
+    )?;
+    assert!(
+        result
+            .tree
+            .nodes()
+            .any(|node| node.label == "ActualGenerated")
+    );
+    assert!(!result.tree.nodes().any(|node| node.label == "BuildConfig"));
+    assert!(
+        result
+            .tree
+            .nodes()
+            .any(|node| node.reference_label == "java (generated)")
+    );
+    Ok(())
+}
+
+#[test]
+fn individual_java_size_failure_preserves_file_and_remaining_valid_declarations() -> Result<()> {
+    let plan = plan(&fixture(&[("src", SourceProviderRootKind::Java)]))?;
+    let excessive = vec![b'x'; MAX_JAVA_FACT_BYTES + 1];
+    let result = adapt_captured_module(
+        &plan,
+        &capture(
+            &plan,
+            vec![
+                directory("src"),
+                java("src/Large.java", &excessive),
+                java("src/Valid.java", b"class Valid {}"),
+            ],
+        ),
+    )?;
+    assert!(result.tree.nodes().any(|node| node.label == "Large.java"));
+    assert!(result.tree.nodes().any(|node| node.label == "Valid"));
+    assert!(
+        matches!(result.java_diagnostics[0].kind, JavaFileDiagnosticKind::Parser(failure)
+        if failure.kind == JavaFactsErrorKind::InputTooLarge)
+    );
+    Ok(())
+}
+
+#[test]
+fn aggregate_java_work_budget_falls_back_without_discarding_other_entries() -> Result<()> {
+    let plan = plan(&fixture(&[("src", SourceProviderRootKind::Java)]))?;
+    let mut bytes = Vec::from(b"/*".as_slice());
+    bytes.resize(MAX_JAVA_FACT_BYTES - b"*/ class Actual {}".len(), b' ');
+    bytes.extend_from_slice(b"*/ class Actual {}");
+    let bytes: Arc<[u8]> = bytes.into();
+    let budget_files = MAX_PARSED_JAVA_BYTES / MAX_JAVA_FACT_BYTES;
+    let mut entries = vec![directory("src")];
+    for index in 0..=budget_files {
+        entries.push(CapturedEntry {
+            path: path(&format!("src/File{index}.java")),
+            kind: CapturedEntryKind::File {
+                java_source: Some(CapturedJavaSource {
+                    file_revision: 11,
+                    bytes: bytes.clone(),
+                }),
+            },
+        });
+    }
+    let result = adapt_captured_module(&plan, &capture(&plan, entries))?;
+    assert_eq!(result.java_diagnostics.len(), 1);
+    assert_eq!(
+        result.java_diagnostics[0].kind,
+        JavaFileDiagnosticKind::AggregateBudgetExceeded
+    );
+    assert_eq!(
+        result.java_diagnostics[0].path,
+        path(&format!("src/File{budget_files}.java"))
+    );
+    assert_eq!(
+        result
+            .tree
+            .nodes()
+            .filter(|node| node.label == "Actual")
+            .count(),
+        budget_files
+    );
+    assert!(
+        result
+            .tree
+            .nodes()
+            .any(|node| node.label == format!("File{budget_files}.java"))
+    );
+    Ok(())
+}
+
+#[test]
+fn large_flat_capture_preserves_every_real_target_and_stable_node_key() -> Result<()> {
+    let plan = plan(&fixture(&[("assets", SourceProviderRootKind::Assets)]))?;
+    let mut entries = vec![directory("assets")];
+    entries.extend((0..20_000).map(|index| raw(&format!("assets/file{index:05}.txt"))));
+    let result = adapt_captured_module(&plan, &capture(&plan, entries))?;
+    let files = result
+        .tree
+        .nodes()
+        .filter(|node| node.navigation.is_some())
+        .collect::<Vec<_>>();
+    assert_eq!(files.len(), 20_000);
+    assert_eq!(
+        files
+            .iter()
+            .map(|node| &node.key)
+            .collect::<std::collections::BTreeSet<_>>()
+            .len(),
+        20_000
+    );
+    assert!(files.iter().any(|node| {
+        node.navigation
+            .as_ref()
+            .is_some_and(|target| target.path == path("assets/file19999.txt"))
+    }));
+    Ok(())
+}
+
+#[test]
+fn captured_sdk_generation_flags_survive_with_explicit_synthetic_language_capability() -> Result<()>
+{
+    let mut record: serde_json::Value = serde_json::from_str(include_str!(
+        "../test_data/project_tree_adapter/sdk-generation-model.json"
+    ))?;
+    fn restore_paths(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::String(text) => {
+                if let Some(relative) = text.strip_prefix("${project_root}") {
+                    *text = root()
+                        .join(relative.trim_start_matches('/'))
+                        .components()
+                        .collect::<PathBuf>()
+                        .to_string_lossy()
+                        .into_owned();
+                }
+            }
+            serde_json::Value::Array(values) => values.iter_mut().for_each(restore_paths),
+            serde_json::Value::Object(values) => values.values_mut().for_each(restore_paths),
+            _ => {}
+        }
+    }
+    restore_paths(&mut record);
+    let module: Module = serde_json::from_value(record["modules"][0].clone())?;
+    let prepared = prepare_module_roots(
+        &module,
+        "demoDebug",
+        7,
+        Some(&presentation(KotlinCapability::Enabled)),
+    )?;
+    for relative in [
+        "app/build/late-static-assets",
+        "app/late-static-assets",
+        "app/src/demoDebug/assets",
+    ] {
+        assert!(groups(&prepared).contains(&(SourceGroup::Assets, path(relative))));
+    }
+    assert!(groups(&prepared).contains(&(
+        SourceGroup::GeneratedAssets,
+        path("app/generated-outside-build/demoDebug")
+    )));
+    assert!(
+        !groups(&prepared)
+            .iter()
+            .any(|(_, candidate)| candidate == &path("app/inactive-assets"))
+    );
+    assert!(
+        !prepared
+            .source_roots()
+            .iter()
+            .any(|root| root.group == SourceGroup::GeneratedJava)
+    );
+    let unknown = prepare_module_roots(
+        &module,
+        "demoDebug",
+        7,
+        Some(&presentation(KotlinCapability::Unknown)),
+    )
+    .expect_err("SDK capture does not supply a Kotlin capability");
+    assert_eq!(
+        unknown.reason,
+        AdapterUnavailableReason::MissingKotlinCapability
+    );
+    Ok(())
+}
+
+#[test]
+fn cross_provider_kotlin_only_roots_win_before_disabled_common_move() -> Result<()> {
+    let mut module = fixture(&[("shared", SourceProviderRootKind::Kotlin)]);
+    metadata(&mut module).build_types[0].container.main = Some(provider(
+        "debug",
+        &[
+            ("shared", SourceProviderRootKind::Java),
+            ("shared", SourceProviderRootKind::Kotlin),
+        ],
+    ));
+    for capability in [
+        KotlinCapability::Enabled,
+        KotlinCapability::Disabled,
+        KotlinCapability::Unknown,
+    ] {
+        let prepared = prepare_module_roots(&module, "debug", 7, Some(&presentation(capability)))?;
+        assert_eq!(
+            groups(&prepared),
+            vec![(SourceGroup::Kotlin, path("shared"))]
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn shadowed_shared_roots_need_no_kotlin_capability_when_java_already_wins() -> Result<()> {
+    let mut module = fixture(&[("shared", SourceProviderRootKind::Java)]);
+    metadata(&mut module).build_types[0].container.main = Some(provider(
+        "debug",
+        &[
+            ("shared", SourceProviderRootKind::Java),
+            ("shared", SourceProviderRootKind::Kotlin),
+        ],
+    ));
+    let prepared = prepare_module_roots(
+        &module,
+        "debug",
+        7,
+        Some(&presentation(KotlinCapability::Unknown)),
+    )?;
+    assert_eq!(groups(&prepared), vec![(SourceGroup::Java, path("shared"))]);
+    Ok(())
+}
+
+#[test]
+fn module_directory_missing_unknown_and_file_are_distinct_from_known_empty_module() -> Result<()> {
+    let prepared = plan(&fixture(&[]))?;
+    for (presence, expected) in [
+        (
+            RootPresence::Unknown,
+            FactsUnavailableReason::UnknownPresence,
+        ),
+        (RootPresence::Missing, FactsUnavailableReason::MissingEntry),
+        (RootPresence::File, FactsUnavailableReason::Malformed),
+    ] {
+        let mut cap = capture(&prepared, vec![]);
+        cap.presence = vec![(root(), presence)];
+        let failure = adapt_captured_module(&prepared, &cap).expect_err("No real module directory");
+        assert_eq!(failure.reason, AdapterUnavailableReason::Provider(expected));
+        assert_eq!(failure.path, Some(root()));
+    }
+    let mut cap = capture(&prepared, vec![]);
+    cap.presence = vec![(root(), RootPresence::Directory)];
+    let ready = adapt_captured_module(&prepared, &cap)?;
+    assert_eq!(ready.tree.nodes().count(), 1);
+    assert_eq!(
+        ready.tree.nodes().next().context("Empty module")?.label,
+        "app"
+    );
+    Ok(())
+}
+
+#[test]
+fn external_generated_children_cannot_prove_a_missing_module_directory() -> Result<()> {
+    let mut module = fixture(&[]);
+    let external = root()
+        .parent()
+        .context("Parent")?
+        .join("external-generated")
+        .components()
+        .collect::<PathBuf>();
+    module.variants[0].components[0].sources.push(SourceRoot {
+        path: external.clone(),
+        kind: SourceKind::Assets,
+        generated: true,
+    });
+    let prepared = plan(&module)?;
+    let mut cap = capture(
+        &prepared,
+        vec![CapturedEntry {
+            path: external.join("child.txt"),
+            kind: CapturedEntryKind::File { java_source: None },
+        }],
+    );
+    cap.presence.retain(|(candidate, _)| candidate != &root());
+    assert_eq!(
+        adapt_captured_module(&prepared, &cap)
+            .expect_err("External child is not module proof")
+            .reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::UnknownPresence)
+    );
+    cap.presence.push((root(), RootPresence::Directory));
+    assert!(
+        adapt_captured_module(&prepared, &cap)?
+            .tree
+            .nodes()
+            .any(|node| node.label == "child.txt")
+    );
+    Ok(())
+}
