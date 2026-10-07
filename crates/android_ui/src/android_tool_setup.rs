@@ -1123,9 +1123,6 @@ impl SetupWizard {
                     .size(LabelSize::Small)
                     .color(Color::Muted),
             )
-            .child(
-                Self::text(provision::platform_label()).text_color(cx.theme().colors().text_muted),
-            )
             .into_any_element()
     }
 
