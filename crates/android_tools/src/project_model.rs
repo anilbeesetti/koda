@@ -1210,7 +1210,7 @@ mod tests {
                             kind: SourceProviderRootKind::Java,
                         },
                         SourceProviderRoot {
-                            path: shared.clone(),
+                            path: shared,
                             kind: SourceProviderRootKind::Kotlin,
                         },
                         SourceProviderRoot {
