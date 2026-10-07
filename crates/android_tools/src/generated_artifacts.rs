@@ -204,21 +204,26 @@ fn parse_agp(version: &str) -> FactsResult<((u32, u32, u32), (u8, u32))> {
     if parts.next().is_some() {
         return Err(malformed());
     }
-    let numbers = numeric
-        .split('.')
-        .map(|value| {
-            if value.is_empty() || !value.bytes().all(|byte| byte.is_ascii_digit()) {
-                return Err(malformed());
-            }
-            value.parse::<u32>().map_err(|_| malformed())
-        })
-        .collect::<FactsResult<Vec<_>>>()?;
-    let [major, minor, micro] = numbers.as_slice() else {
-        return Err(malformed());
+    let mut numbers = numeric.split('.');
+    let mut number = || {
+        let value = numbers.next().ok_or_else(malformed)?;
+        if value.is_empty()
+            || (value.len() > 1 && value.starts_with('0'))
+            || !value.bytes().all(|byte| byte.is_ascii_digit())
+        {
+            return Err(malformed());
+        }
+        value.parse::<i32>().map_err(|_| malformed())
     };
+    let major = number()?;
+    let minor = number()?;
+    let micro = number()?;
+    if numbers.next().is_some() {
+        return Err(malformed());
+    }
     let preview = match qualifier {
-        None => (4, 0),
-        Some("dev") => (0, 0),
+        None => (5, 0),
+        Some("dev") => (4, 0),
         Some(value) => {
             let (rank, suffix) = if let Some(value) = value.strip_prefix("alpha") {
                 (1, value)
@@ -232,13 +237,22 @@ fn parse_agp(version: &str) -> FactsResult<((u32, u32, u32), (u8, u32))> {
                     format!("Unproved AGP version qualifier in {version:?}"),
                 ));
             };
-            if suffix.is_empty() || !suffix.bytes().all(|byte| byte.is_ascii_digit()) {
+            // Pinned AgpVersion preserves the historical 3.1.0 beta numbering.
+            let two_digit = major > 3
+                || (major == 3 && minor > 1)
+                || (major == 3 && minor == 1 && micro == 0 && rank != 2);
+            if suffix.is_empty()
+                || suffix.len() > 2
+                || !suffix.bytes().all(|byte| byte.is_ascii_digit())
+                || (two_digit && suffix.len() != 2)
+                || (!two_digit && suffix.starts_with('0'))
+            {
                 return Err(malformed());
             }
             (rank, suffix.parse().map_err(|_| malformed())?)
         }
     };
-    Ok(((*major, *minor, *micro), preview))
+    Ok(((major as u32, minor as u32, micro as u32), preview))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
