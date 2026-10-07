@@ -197,3 +197,29 @@ This checkpoint is ready for the lead's combined validation. The task is not
 merged and does not yet have a combined full-app build/full-workspace pass on
 its new source. It grants zero behavioral parity credit, leaves completeness
 false and runtime counts null, and does not complete a phase or the IDE.
+
+
+## Lead combined validation on 93155342
+
+The combined candidate retains all owner source bytes and passes the complete
+114-test xtask suite, strict repository Clippy, workspace formatting, a normal
+full application build, a normal CLI build, and eight actual CLI flows. All 33
+previously ported/adapted reference cases were recaptured against this commit
+with the unchanged whole-product exclusions and all 4626 source/fixture hashes.
+The completion gate still rejects the incomplete reference census.
+
+The rebuilt full app opened the private Android fixture, completed official SDK
+sync with two variants, and passed editor/tab/focus/Hide-restore checks. Native
+screenshots stay external; byte-exact JSON and logs are retained under
+`evidence/junit4-integration`. Installed Java 6.8.27 reports an existing Gradle
+indent query diagnostic; Rust language support and indentation fidelity remain
+required in the editing phase.
+
+PR #59 full CI passed: 10423 workspace tests passed, zero failed, and 23
+pre-existing tests remain skipped. The 40 new cases introduce no skips.
+Linux and macOS application builds and formatting/scripts all pass. CI checked
+the same complete Git tree as tested source 93155342. The lead verified every
+source and fixture hash, prior parity log and protected/main reference again.
+This scoped checkpoint is ready for authorized integration; the merge receipt
+is a subsequent event. No behavioral parity credit was added by this tooling
+checkpoint, and the phase and IDE remain incomplete.

@@ -1,0 +1,24 @@
+[android-studio-task/1-junit4-integration 09daa7b785] Add bounded JUnit4 source declaration evidence
+ Date: Wed Oct 7 18:44:20 2026 +0000
+ 23 files changed, 5928 insertions(+)
+ create mode 100644 docs/android-studio/junit4-declaration-task.md
+ create mode 100644 tooling/xtask/src/tasks/android_junit4_declarations.rs
+ create mode 100644 tooling/xtask/test_data/reference_declarations/LICENSE-APACHE-2.0.txt
+ create mode 100644 tooling/xtask/test_data/reference_declarations/NOTICE.md
+ create mode 100644 tooling/xtask/test_data/reference_declarations/selection.json
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/base/apkparser/analyzer/src/test/java/com/android/tools/apk/analyzer/PathUtilsTest.java
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/base/build-system/aaptcompiler/src/test/java/com/android/aaptcompiler/FloatParsingTest.kt
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/base/build-system/gradle-api/src/main/java/com/android/build/api/instrumentation/AsmClassVisitorFactory.kt
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/base/build-system/gradle-core/src/test/java/com/android/build/api/artifact/impl/AbstractMultipleArtifactTest.kt
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/visualtests/VisualTest.java
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/idea/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/jetbrains-android/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java
+ create mode 100644 tooling/xtask/test_data/reference_declarations/sources/jetbrains-android/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt

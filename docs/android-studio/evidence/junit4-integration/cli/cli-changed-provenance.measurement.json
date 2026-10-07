@@ -1,0 +1,23 @@
+{
+  "name": "changed-provenance",
+  "command": [
+    "/tmp/android-studio-junit4-integration/xtask",
+    "android-junit4-declarations",
+    "--repository",
+    "/workspace/android-studio-integration",
+    "--source-root",
+    "/workspace/android-studio-integration/tooling/xtask/test_data/reference_declarations/sources",
+    "--selection",
+    "/workspace/android-studio-artifacts/junit4-integration/cli/selection-deliberately-invalid-hash.json",
+    "--output",
+    "/workspace/android-studio-artifacts/junit4-integration/cli/rejected-invalid-provenance.json"
+  ],
+  "started_utc": "2026-10-07T19:39:35.943569+00:00",
+  "wall_seconds": 0.0014365949973580427,
+  "exit_code": 1,
+  "peak_rss_kib": 12928,
+  "measurement": "Linux wait4 per-process rusage; executable invocation only, no compilation",
+  "log": "/workspace/android-studio-artifacts/junit4-integration/cli/cli-changed-provenance.log",
+  "log_sha256": "1cdfde79ff45291aae8d554f1abd80d09a6ce78d4ccf5c59089f995ba36bf753",
+  "expected_exit": 1
+}

@@ -1,0 +1,10 @@
+{
+  "capture_script": "/workspace/android-studio-artifacts/capture-junit4-integration.py",
+  "capture_script_sha256": "bfd40e0bb13d5f73ee954a0c76c297482b962713f8e217b1d3fa587896a57a58",
+  "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "existing_applicable_cases": 33,
+  "new_parity_credit": 0,
+  "same_fixed_guard_exclusions": true,
+  "old_raw_evidence_preserved": true,
+  "planned_normal_commands": true
+}

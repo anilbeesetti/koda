@@ -1,0 +1,15 @@
+{
+  "retained_previous_executable": "/tmp/android-studio-link-output/koda-followup-231332",
+  "retained_sha256": "e5bec9ab384701f21e8af5a9e6a353e24ff1e7c31f677794c878bc7b8aa65521",
+  "removed_generated_symlinks": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+      "target": "/tmp/android-studio-link-output/koda-followup-231332"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/koda",
+      "target": "/tmp/android-studio-link-output/koda-followup-231332"
+    }
+  ],
+  "source_fixtures_and_evidence_untouched": true
+}

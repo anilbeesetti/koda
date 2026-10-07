@@ -1,0 +1,81 @@
+{
+  "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "executables": [
+    {
+      "label": "xtask",
+      "normal_cargo_artifact": {
+        "reason": "compiler-artifact",
+        "package_id": "path+file:///workspace/android-studio-integration/tooling/xtask#0.1.0",
+        "manifest_path": "/workspace/android-studio-integration/tooling/xtask/Cargo.toml",
+        "target": {
+          "kind": [
+            "bin"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "xtask",
+          "src_path": "/workspace/android-studio-integration/tooling/xtask/src/main.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 1,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": false
+        },
+        "features": [],
+        "filenames": [
+          "/workspace/.cache/zed/target/release/xtask"
+        ],
+        "executable": "/workspace/.cache/zed/target/release/xtask",
+        "fresh": false
+      },
+      "frozen_path": "/tmp/android-studio-junit4-integration/xtask",
+      "sha256": "f86f1846b0553a703dd5a381173dafb500db36b3654e8e0b61841c05299695af",
+      "bytes": 77379416
+    },
+    {
+      "label": "xtask-tests114",
+      "normal_cargo_artifact": {
+        "reason": "compiler-artifact",
+        "package_id": "path+file:///workspace/android-studio-integration/tooling/xtask#0.1.0",
+        "manifest_path": "/workspace/android-studio-integration/tooling/xtask/Cargo.toml",
+        "target": {
+          "kind": [
+            "bin"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "xtask",
+          "src_path": "/workspace/android-studio-integration/tooling/xtask/src/main.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 1,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        },
+        "features": [],
+        "filenames": [
+          "/workspace/.cache/zed/target/release/deps/xtask-ab9e3b7b145fa54b"
+        ],
+        "executable": "/workspace/.cache/zed/target/release/deps/xtask-ab9e3b7b145fa54b",
+        "fresh": false
+      },
+      "frozen_path": "/tmp/android-studio-junit4-integration/xtask-tests114",
+      "sha256": "fa2437c3242643acfc412e841136eca0eea44080669311c0546315d288174e72",
+      "bytes": 34985920
+    }
+  ]
+}

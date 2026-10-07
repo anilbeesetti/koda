@@ -1,0 +1,29 @@
+{
+  "result": "failed",
+  "reason": "Investigating actual native model mismatch to fixture; no parity or native model equivalence credited",
+  "differences": [
+    [
+      "/modules/0",
+      "keys",
+      [
+        "path",
+        "directory",
+        "namespace",
+        "kind",
+        "sourceProviders",
+        "evaluatedProviders",
+        "defaultVariantSelection",
+        "variants"
+      ],
+      [
+        "path",
+        "directory",
+        "namespace",
+        "kind",
+        "sourceProviders",
+        "defaultVariantSelection",
+        "variants"
+      ]
+    ]
+  ]
+}

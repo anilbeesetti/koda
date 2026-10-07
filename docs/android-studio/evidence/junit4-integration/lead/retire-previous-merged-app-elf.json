@@ -1,0 +1,25 @@
+{
+  "retired_generated_previous_app_executable": "/tmp/android-studio-link-output/koda-followup-231332",
+  "previous_bytes": 1359369480,
+  "previous_sha256": "e5bec9ab384701f21e8af5a9e6a353e24ff1e7c31f677794c878bc7b8aa65521",
+  "previous_links": 1,
+  "accessible_active_exe_or_fd_matches": [],
+  "unreadable_active_system_processes": [
+    {
+      "pid": "198",
+      "state": "State:\tS (sleeping)"
+    },
+    {
+      "pid": "249",
+      "state": "State:\tS (sleeping)"
+    }
+  ],
+  "skipped_zombies": 212,
+  "current_executable": "/tmp/android-studio-link-output/koda-junit4-244335",
+  "current_sha256": "f2f7bfab6bff00a0b0759ede8399e28f1d72a918bae9f0c470b7438e2d1dd0bd",
+  "known_Cargo_and_launcher_aliases_resolve_to_current": true,
+  "current_normal_build_and_actual_android_sync_passed": true,
+  "root_inspected_actual_success_screenshot": true,
+  "historical_source_fixtures_logs_receipts_and_screenshots_preserved": true,
+  "scope": "Only the owned generated superseded ELF was retired; current native review continues."
+}

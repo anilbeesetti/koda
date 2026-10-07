@@ -1,0 +1,12 @@
+{
+  "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "command": [
+    "./script/clippy",
+    "--locked",
+    "-p",
+    "xtask"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 4.932172448003257,
+  "log_sha256": "795aa4c6fea82fc58285307ec5ac7db90c256f59fefb19ce84ed949bdd2e73ef"
+}

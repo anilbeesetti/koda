@@ -1,0 +1,24 @@
+{
+  "name": "original-check",
+  "command": [
+    "/tmp/android-studio-junit4-integration/xtask",
+    "android-junit4-declarations",
+    "--repository",
+    "/workspace/android-studio-integration",
+    "--source-root",
+    "/workspace/android-studio-integration/tooling/xtask/test_data/reference_declarations/sources",
+    "--selection",
+    "/workspace/android-studio-integration/tooling/xtask/test_data/reference_declarations/selection.json",
+    "--output",
+    "/workspace/android-studio-artifacts/junit4-integration/cli/declarations-candidate-9315534.json",
+    "--check"
+  ],
+  "started_utc": "2026-10-07T19:39:35.932366+00:00",
+  "wall_seconds": 0.0043831460061483085,
+  "exit_code": 0,
+  "peak_rss_kib": 12672,
+  "measurement": "Linux wait4 per-process rusage; executable invocation only, no compilation",
+  "log": "/workspace/android-studio-artifacts/junit4-integration/cli/cli-original-check.log",
+  "log_sha256": "b97fe7646b98a336af5b4f2e0c4e0d653a1d54b4984e417c718ce937686a241e",
+  "expected_exit": 0
+}

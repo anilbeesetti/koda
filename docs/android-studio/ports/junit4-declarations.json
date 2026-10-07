@@ -143,5 +143,34 @@
       "sha256": "8856ffbf531e6d1314934c29570ead7aa38674fa10e1a58ce4b7ba399d402d51",
       "no_new_commands_executed": true
     }
+  },
+  "lead_combined_validation": {
+    "verdict": "PASS",
+    "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+    "combined_branch": "android-studio-task/1-junit4-integration",
+    "source_and_fixture_files": 4626,
+    "all_xtask_tests": {
+      "passed": 114,
+      "failed": 0,
+      "ignored": 0
+    },
+    "actual_CLI_flows": 8,
+    "full_workspace_tests": {
+      "passed": 10423,
+      "failed": 0,
+      "pre_existing_skipped": 23,
+      "new_skips": 0
+    },
+    "strict_clippy": "PASS",
+    "format": "PASS",
+    "normal_full_app_build": "PASS",
+    "native_regression": "PASS scoped current rebuilt full application",
+    "parity_recaptured": 33,
+    "new_behavioral_parity_credit": 0,
+    "full_CI_run": 37675257011,
+    "report": "docs/android-studio/evidence/junit4-integration/lead/lead-validation-final.json",
+    "integration_at_generation": "Ready; protected merge not yet performed.",
+    "phase_complete": false,
+    "IDE_complete": false
   }
 }

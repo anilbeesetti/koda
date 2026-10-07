@@ -1,0 +1,15 @@
+{
+  "tested_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "xtask",
+    "--release",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 50.942976512000314,
+  "log_sha256": "5d7572a0e1f2ca1c623754151fda72316f35b4c01c270892faaab3389d251fa5"
+}

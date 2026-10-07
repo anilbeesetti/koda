@@ -1,0 +1,9 @@
+{
+  "stage": "success",
+  "pid": 245615,
+  "executable": "/tmp/android-studio-link-output/koda-junit4-244335",
+  "sha256": "f2f7bfab6bff00a0b0759ede8399e28f1d72a918bae9f0c470b7438e2d1dd0bd",
+  "cwd": "/workspace/android-studio-integration",
+  "source_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "command": "/workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/junit4-native-9315534/qa-success/user-data /workspace/android-studio-artifacts/junit4-native-9315534/generation-project /workspace/android-studio-artifacts/junit4-native-9315534/generation-project/app/custom-manifest/AndroidManifest.xml "
+}

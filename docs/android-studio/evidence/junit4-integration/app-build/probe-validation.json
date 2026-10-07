@@ -1,0 +1,30 @@
+{
+  "status": "PASS",
+  "commands": [
+    [
+      "rustc",
+      "--edition=2024",
+      "/workspace/android-studio-artifacts/junit4-link/cc.rs",
+      "-o",
+      "/workspace/android-studio-artifacts/junit4-link/bin/cc"
+    ],
+    [
+      "rustc",
+      "--edition=2024",
+      "/workspace/android-studio-artifacts/junit4-link/probe.rs",
+      "-C",
+      "linker=/workspace/android-studio-artifacts/junit4-link/bin/cc",
+      "-o",
+      "/workspace/android-studio-artifacts/junit4-link/probe-output"
+    ]
+  ],
+  "source_hashes": {
+    "cc.rs": "886ce500d20e9e7d0a4845a791aa7fd295b59c7e34e807dd4c535a98fcedfbd0",
+    "probe.rs": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941"
+  },
+  "only_output_argument_changed": true,
+  "runtime_exit_code": 0,
+  "stdout": "real Rust linker probe passed\n",
+  "executable_sha256": "ba8690338dede1831c62a2aa93f385d97c769e7dbf39b9d4a0ba76c25cc4a5ff",
+  "receipt": "/workspace/android-studio-artifacts/junit4-link/probe-242092.json"
+}

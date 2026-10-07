@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-10-07T20:35:34.623496+00:00",
+  "run_id": 37675257011,
+  "head_sha": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "pull_request": 59,
+  "url": "https://github.com/anilbeesetti/koda/actions/runs/37675257011",
+  "verdict": "PASS",
+  "all_three_jobs": [
+    {
+      "id": 112976983211,
+      "name": "Formatting and scripts",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 112977568336,
+      "name": "Linux build and workspace tests",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 112977568449,
+      "name": "macOS application check",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "workspace_tests": {
+    "coverage": "full",
+    "passed": 10423,
+    "failed": 0,
+    "pre_existing_skipped": 23,
+    "new_ignored_tests": 0,
+    "execution_seconds": 1550.35,
+    "raw_nextest_summary": [
+      "1550.350",
+      "10423",
+      "10423",
+      "23"
+    ]
+  },
+  "Linux_application_build": "PASS",
+  "macOS_application_build": "PASS",
+  "checkout_merge_commit": "d891daa45eefa8796af71bae25436174a2a401f7",
+  "checkout_tree": "5368d74db627da9e33d44b7c8f79f1035407e2fc",
+  "checkout_tree_equal_tested_head": true,
+  "linux_log": {
+    "path": "docs/android-studio/evidence/junit4-integration/ci/linux-workspace.log",
+    "bytes": 431262,
+    "sha256": "d82d569ce8943347ab94d948c6b234230a1b0977695c31edc814a21d6bd9a8c6",
+    "transport": "Connected GitHub integration decoded full log text, unchanged UTF-8/BOM/newlines; shell signed-URL fetch was rejected."
+  },
+  "pre_merge_refs": {
+    "refs/heads/android-studio": "ac58815bb268d338bea40a31fff630734cd719f4",
+    "refs/heads/main": "30fca99a7a015168dfe4f394f576fbe2955fb4ea"
+  },
+  "phase_complete": false,
+  "IDE_complete": false
+}

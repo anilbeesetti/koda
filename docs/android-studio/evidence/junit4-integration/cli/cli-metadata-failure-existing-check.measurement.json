@@ -1,0 +1,24 @@
+{
+  "name": "metadata-failure-existing-check",
+  "command": [
+    "/tmp/android-studio-junit4-integration/xtask",
+    "android-junit4-declarations",
+    "--repository",
+    "/workspace/android-studio-integration",
+    "--source-root",
+    "/workspace/android-studio-artifacts/junit4-integration/cli/cli-metadata-stress/sources",
+    "--selection",
+    "/workspace/android-studio-artifacts/junit4-integration/cli/cli-metadata-stress/selection.json",
+    "--output",
+    "/workspace/android-studio-artifacts/junit4-integration/cli/declarations-candidate-9315534.json",
+    "--check"
+  ],
+  "started_utc": "2026-10-07T19:39:35.959385+00:00",
+  "wall_seconds": 0.009546528002829291,
+  "exit_code": 1,
+  "peak_rss_kib": 21468,
+  "measurement": "Linux wait4 per-process rusage; executable invocation only, no compilation",
+  "log": "/workspace/android-studio-artifacts/junit4-integration/cli/cli-metadata-failure-existing-check.log",
+  "log_sha256": "542ef3c318ec1052064c0eb7145e29e4cc5b739c854a3fa4f90389b10662cbee",
+  "expected_exit": 1
+}

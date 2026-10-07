@@ -1,0 +1,8 @@
+{
+  "old_helper_sha256": "98c172297eb9ff17f125da8b53ed2b34de634b4e3fbadb0ee362066bb5335ed2",
+  "finding": "Hyphen-suffixed replacement missed helper base label, producing wrong receipt names for runner.",
+  "correction": "Replace base ownedlabel consistently; all old preparation bytes retained underpre-label-correction.",
+  "compiler_probe_or_Cargo_ran_before_correction": false,
+  "fix_rounds": 1,
+  "new_helper_sha256": "886ce500d20e9e7d0a4845a791aa7fd295b59c7e34e807dd4c535a98fcedfbd0"
+}
