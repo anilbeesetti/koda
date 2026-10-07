@@ -1,0 +1,175 @@
+{
+  "source_commit": "0f28d7c178abc738bd94b7f88e28a8e11637bf62",
+  "executed_snapshot": "review-source-lead-correction6.json",
+  "artifact_count": 27,
+  "artifacts": [
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/review-source-lead-correction2.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction2.json",
+      "sha256": "98f5b3b37583f0b2ef04a28948734713858802be1399f1478c39682f36b6616e",
+      "bytes": 1246
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/review-source-lead-correction3.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction3.json",
+      "sha256": "195b8d3296cec63abf98100afae037c9407f6dc11996d2a09a69dacbd63063f2",
+      "bytes": 1253
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/review-source-lead-correction4.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction4.json",
+      "sha256": "9179d21490cfe40268e8318e4fc96954a2a15f76e03359cee8dfb369f0866075",
+      "bytes": 1247
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/review-source-lead-correction5.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction5.json",
+      "sha256": "b669c0cbec0535a0be1aaacc8c3e6d2383206e1bb763eac6640d8bdc5ecdf9d8",
+      "bytes": 1476
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/review-source-lead-correction6.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+      "sha256": "07044bdc0fb7aef0a317ab2c9eb392adcd2df4eaeb3b08a6029d69f1821e5ec2",
+      "bytes": 1477
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/crate-root-freshness-initial.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/crate-root-freshness-initial.json",
+      "sha256": "e412b4784090e5d26f469b401a4d0e8dca4671ec6c788bc62f18a1c43289c01d",
+      "bytes": 607
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/crate-root-freshness-correction3.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/crate-root-freshness-correction3.json",
+      "sha256": "3aadef0f16101a2b3758be4824225a64b785403b467e8585ea75ff714d103b18",
+      "bytes": 474
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/crate-root-freshness-correction4.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/crate-root-freshness-correction4.json",
+      "sha256": "0fb8549107362c220a286c7ae5e5f242d3d8ba3285186806660ecd5afbf1a390",
+      "bytes": 474
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/original-preservation-lead-correction2.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/original-preservation-lead-correction2.json",
+      "sha256": "7fe5c6e0d120818dc0892c14adb09cdb251187c14090be1c2f76e2db3b5b9798",
+      "bytes": 13000
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/runtime-evidence-correction6.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/runtime-evidence-correction6.json",
+      "sha256": "a73cae39600f1fda191d3e753618dccd787c37472068b362e4471c02b3aa3697",
+      "bytes": 5357
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/static-assets-classification-conflict.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/static-assets-classification-conflict.json",
+      "sha256": "1591af7fa4c33697aaa01a9b564cb59792606fdc0fcbfb1638d0eb53667fdae1",
+      "bytes": 2957
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/tests-focused-default.log",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/tests-focused-default.log",
+      "sha256": "09b58f5a8faae25ecd832e06dfdff28065f2c84c76d4dcfff91dc6d1f64a69d5",
+      "bytes": 839
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/tests-focused-default-correction3.log",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/tests-focused-default-correction3.log",
+      "sha256": "c965ef5b6582d3d05ce3cea631bfc22fdf13d410c10590725c6db489d17e914b",
+      "bytes": 2793
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/tests-all-features-correction6.log",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+      "sha256": "67f6bf990ad393d1522136eda73a5c9b822937b92f8e4454dcddfdd281f65ccc",
+      "bytes": 12565
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/clippy-correction3.log",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/clippy-correction3.log",
+      "sha256": "ea92141de246e22fcb6ea3c1ce55dffc19564862395f568d5fefbfdd3e11cafd",
+      "bytes": 991
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/clippy-correction6.log",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/clippy-correction6.log",
+      "sha256": "d25f58ba35a43405194f0561c8c1b1a51822e304d183a3d008291083f300a801",
+      "bytes": 318
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/fmt-correction6.log",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/fmt-correction6.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/smoke-runtime-correction2/inputs.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/inputs.json",
+      "sha256": "3dfe3c3ade5621d59779a49dd9450799f295b2bf3b7884989fc914170e2432f5",
+      "bytes": 3764
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/smoke-runtime-correction2/inputs-correction5.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/inputs-correction5.json",
+      "sha256": "9e2319ccf68f5a051a07d253635aee9f24a074a8c4d7d15bb38f4ad7c56ea97d",
+      "bytes": 3795
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/smoke-runtime-correction2/gradle-capture-initial.log",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/gradle-capture-initial.log",
+      "sha256": "05259cb2d6ee8d5778895272ba723d08590d9287d7c9e1861e848dbaaaff23e5",
+      "bytes": 1519
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/smoke-runtime-correction2/gradle-capture-correction5.log",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/gradle-capture-correction5.log",
+      "sha256": "ed046cfb2c1b40997e3d74ea2c94eada8d30647dea9d35a63f731c74adab5948",
+      "bytes": 245919
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/smoke-runtime-correction2/probe-incorrect-presence-correction5.log",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/probe-incorrect-presence-correction5.log",
+      "sha256": "42781893d9d5c00f16047c186e8d62d914402f587f1d486ea719c9d6603e5c45",
+      "bytes": 524
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/smoke-runtime-correction2/probe-correction6.log",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/probe-correction6.log",
+      "sha256": "94fdc44f9cb5ece36bf95f4e44e8847ad8d5002a04f723704e89ac336cfbbce2",
+      "bytes": 447
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/smoke-runtime-correction2/model-raw-correction5.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/model-raw-correction5.json",
+      "sha256": "35833ae90abbf8f86af047c37954b125de0257f3af7a206f20309246eaf4df8c",
+      "bytes": 394523
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/smoke-runtime-correction2/rust-decoded-correction6.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/rust-decoded-correction6.json",
+      "sha256": "1e1f6f82a7bea1008f8e19faf6655992fdf2ae3304c6155927ed81142526c7cc",
+      "bytes": 457389
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/smoke-runtime-correction2/summary-correction6.json",
+      "source_path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/summary-correction6.json",
+      "sha256": "d63db65b785422f7cd4c5799507ce177817014bf92786fcb03f599c13c3a76a2",
+      "bytes": 1678
+    },
+    {
+      "path": "docs/android-studio/ports/evidence/project-tree-facts/reviews.json",
+      "sha256": "2bbced1fa26214c60c8e12ae9209491e5453f59df8a71442f7e1bba1be9d8a83",
+      "bytes": 1611
+    }
+  ],
+  "upstream_credit": 0,
+  "lead_gates": [
+    "source-commit/combined exact recapture if required",
+    "full app build/live",
+    "full workspace/combinedCI",
+    "product adapter/navigation/refresh/grouping"
+  ]
+}

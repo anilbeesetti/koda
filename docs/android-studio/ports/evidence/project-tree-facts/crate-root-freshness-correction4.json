@@ -1,0 +1,8 @@
+{
+  "path": "/workspace/android-studio-project-tree-facts/crates/android_tools/src/android_tools.rs",
+  "before_sha256": "65db8615c48993adf5c3c76a1030dd936b8a6a032825eb7e3023c4e4f0c68c98",
+  "after_sha256": "65db8615c48993adf5c3c76a1030dd936b8a6a032825eb7e3023c4e4f0c68c98",
+  "before_mtime_ns": 1791387274194467001,
+  "after_mtime_ns": 1791387541752976032,
+  "source_manifest": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction4.json"
+}

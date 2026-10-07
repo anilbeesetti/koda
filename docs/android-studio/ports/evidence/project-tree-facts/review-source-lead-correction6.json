@@ -1,0 +1,38 @@
+{
+  "base_commit": "959992d03c4cfc928aaad01fda6f83cfc3e34994",
+  "stage": "lead_correction_6_flagged_wrong_supplemental_expectation",
+  "files": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "65db8615c48993adf5c3c76a1030dd936b8a6a032825eb7e3023c4e4f0c68c98"
+    },
+    {
+      "path": "crates/android_tools/src/project_model.rs",
+      "sha256": "e0185c189f05528b2807e9a7cecd250a91fc710af6f756c8cc2e2ba3d2aa54b2"
+    },
+    {
+      "path": "crates/android_tools/src/project_model.gradle",
+      "sha256": "5b8539668f08ee16ba8b1b63ef24d9ec795b4e42b939d8e436cd68a3cf0bf358"
+    },
+    {
+      "path": "crates/android_tools/src/project_tree.rs",
+      "sha256": "6ab35de418bd8d8f1951815b6774339462d2fec4f33bd2e3480c6f81e202b7eb"
+    },
+    {
+      "path": "crates/android_tools/src/project_tree_facts.rs",
+      "sha256": "145233d0b061ba3ed47d013ada827219f49ad3a7cf217f01bdaaf7ba9e16ecd8"
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_facts.rs",
+      "sha256": "7d032f41e790d19a7a3f2f7cb38ea91cf19181c3427c4531f3126d6a2b6542fc"
+    },
+    {
+      "path": "crates/android_tools/examples/project_tree_facts_probe.rs",
+      "sha256": "21a4e239c1606f152572f8e3a61d5493f50a40abf80cdac9bcc2f0f6626fa2ce"
+    }
+  ],
+  "supplemental_fixture": {
+    "path": "crates/android_tools/test_data/project_tree_facts/gradle-smoke/app/build.gradle",
+    "sha256": "bac117bc75c50fdd1866f6800d2606678670e56b25483be29075349ac8067ef4"
+  }
+}
