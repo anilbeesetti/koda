@@ -1,0 +1,34 @@
+{
+  "base_commit": "959992d03c4cfc928aaad01fda6f83cfc3e34994",
+  "stage": "lead_correction_2_formatted_source",
+  "files": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "65db8615c48993adf5c3c76a1030dd936b8a6a032825eb7e3023c4e4f0c68c98"
+    },
+    {
+      "path": "crates/android_tools/src/project_model.rs",
+      "sha256": "e0185c189f05528b2807e9a7cecd250a91fc710af6f756c8cc2e2ba3d2aa54b2"
+    },
+    {
+      "path": "crates/android_tools/src/project_model.gradle",
+      "sha256": "5b8539668f08ee16ba8b1b63ef24d9ec795b4e42b939d8e436cd68a3cf0bf358"
+    },
+    {
+      "path": "crates/android_tools/src/project_tree.rs",
+      "sha256": "67ea29ffabab53f5b813ba04bad6665f2ca490add1c3c5c2ca1b1330cafd0e5c"
+    },
+    {
+      "path": "crates/android_tools/src/project_tree_facts.rs",
+      "sha256": "145233d0b061ba3ed47d013ada827219f49ad3a7cf217f01bdaaf7ba9e16ecd8"
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_facts.rs",
+      "sha256": "98e10eb27a9801408290e83f35d7f3370775e0291815eec3ff4c59a50ff4d948"
+    },
+    {
+      "path": "crates/android_tools/examples/project_tree_facts_probe.rs",
+      "sha256": "21db25288ead739b19a84b5866be04c2848a9235e84175e00097c2ad5df04a3f"
+    }
+  ]
+}

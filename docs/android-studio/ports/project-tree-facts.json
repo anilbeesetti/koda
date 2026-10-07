@@ -1,0 +1,837 @@
+{
+  "schema_version": 1,
+  "task": "1-project-tree-facts",
+  "branch": "android-studio-task/1-project-tree-facts",
+  "base_commit": "959992d03c4cfc928aaad01fda6f83cfc3e34994",
+  "source_commit": "0f28d7c178abc738bd94b7f88e28a8e11637bf62",
+  "status": "owner_checks_and_five_reviews_pass_lead_gates_pending",
+  "scope": "Optional evaluated AGP V2 provider inputs; Rust active-provider order and per-entry/exact-resource lookup; additive immutable projection. No GPUI/product adapter or original integration parity credit.",
+  "new_reference_test_credit": 0,
+  "global_census_complete": false,
+  "reference": {
+    "idea_revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "base_revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+    "provenance": "crates/android_tools/test_data/project_tree_facts/provenance.json",
+    "retained_source_files": 17,
+    "original_tree_preservation": "Original 26 fixtures, 21 source files and original 21-component-test assertions unchanged."
+  },
+  "upstream_rows": [
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedSourceFiles_lightClasses",
+      "status": "unported",
+      "reason": "Real pinned-fixture Gradle import, BuildConfig generated source model export, exact original source bytes, file refresh, class facts and integrated tree.",
+      "original_assertions": [
+        {
+          "assertion": "assertThat(androidModel).isNotNull();",
+          "status": "unported",
+          "rust_target": null
+        },
+        {
+          "assertion": "assertThat(generatedFolders).isNotEmpty();",
+          "status": "unported",
+          "rust_target": null
+        },
+        {
+          "assertion": "assertThat(buildConfigFolder).isNotNull();",
+          "status": "unported",
+          "rust_target": null
+        },
+        {
+          "assertion": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"java (generated)\", \"application\", \"BuildConfig\"));",
+          "status": "unported",
+          "rust_target": null
+        }
+      ],
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedSourceFiles_lightClasses",
+      "source_file": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "declaration_line": 103,
+      "run_status": "not_run",
+      "assertion_count": 4
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedResources",
+      "status": "unported",
+      "reason": "Original GenerateRes Gradle registration, real model generated-resource folder discovery, exact newline-prefixed file bytes, file refresh and integrated tree.",
+      "original_assertions": [
+        {
+          "assertion": "assertThat(generatedResourcesFolder).named(\"my_generated_resources folder\").isNotNull();",
+          "status": "unported",
+          "rust_target": null
+        },
+        {
+          "assertion": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"res (generated)\", \"raw\", \"sample_raw_resource\"));",
+          "status": "unported",
+          "rust_target": null
+        }
+      ],
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedResources",
+      "source_file": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "declaration_line": 128,
+      "run_status": "not_run",
+      "assertion_count": 2
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedAssets",
+      "status": "unported",
+      "reason": "Asset source kind and Gradle bridge export, original AssetGenerator registration, real model root discovery, exact newline-prefixed file bytes, file refresh and integrated tree.",
+      "original_assertions": [
+        {
+          "assertion": "assertThat(generatedAssetsFolder).named(\"createAssets folder\").isNotNull();",
+          "status": "unported",
+          "rust_target": null
+        },
+        {
+          "assertion": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"assets (generated)\", \"raw\", \"createAssets\"));",
+          "status": "unported",
+          "rust_target": null
+        }
+      ],
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedAssets",
+      "source_file": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "declaration_line": 186,
+      "run_status": "not_run",
+      "assertion_count": 2
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testResourcesPropertiesInAndroidView",
+      "status": "unported",
+      "reason": "Real fixture import, actual provider metadata, exact empty file, file refresh and integrated tree.",
+      "original_assertions": [
+        {
+          "assertion": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"res\", \"resources.properties (main)\"));",
+          "status": "unported",
+          "rust_target": null
+        }
+      ],
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testResourcesPropertiesInAndroidView",
+      "source_file": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "declaration_line": 263,
+      "run_status": "not_run",
+      "assertion_count": 1
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGoogleServicesJsonInAndroidView",
+      "status": "unported",
+      "reason": "Real fixture import, exact empty direct-module file, file refresh and integrated tree.",
+      "original_assertions": [
+        {
+          "assertion": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"google-services.json\"));",
+          "status": "unported",
+          "rust_target": null
+        }
+      ],
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGoogleServicesJsonInAndroidView",
+      "source_file": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "declaration_line": 277,
+      "run_status": "not_run",
+      "assertion_count": 1
+    }
+  ],
+  "contracts": [
+    "Raw DSL iteration includes inactive providers and stays distinct from evaluated active metadata.",
+    "Versioned BasicAndroidProject containers/artifacts and Versions.model_producer captured in Gradle under owner locks; logic remains Rust.",
+    "Studio current main order preserves forward flavor TODO; native AGP sourceProviderNames order remains a separate optional capability.",
+    "All-variant unit/screenshot containers may remain with absent selected artifacts; selected device/fixture membership is guarded.",
+    "Generic lookup retains ordered active candidates and chooses first, never deepest/last or a directory-derived name.",
+    "Resource file lookup is exact resDirectories membership; resources.properties uses generic ancestry.",
+    "Unknown/capability/malformed/missing/stale states remain explicit; initial and post-inventory presence hierarchies are validated.",
+    "Root iteration provenance is producerIterator; it does not prove AndroidSourceType grouping/generated-root Studio ordering."
+  ],
+  "known_unavailable": [
+    "Legacy module or KMP evaluated metadata absent/unproved.",
+    "Required V2 tooling-model getters/registry/version capability unavailable.",
+    "Model producer versions before11 require unimplemented pinned legacy asset filtering.",
+    "Nonempty test suites with unconverted providers; missing membership on model producers16+.",
+    "Explicit artifact map key disagrees with pinned converter classification.",
+    "Unknown filesystem/root encounter facts, stale revisions or present root absent from inventory."
+  ],
+  "non_rust_exception": {
+    "component": "Existing Gradle/AGP JVM runtime bridge",
+    "reason": "Official evaluated tooling models are JVM objects created by the Gradle build; Rust cannot inspect those objects without this host bridge. No new non-Rust language service or IDE logic is introduced."
+  },
+  "supplemental_tests": [
+    {
+      "test": "studio_forward_flavors_and_native_reverse_flavors_remain_distinct",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "studio_forward_flavors_and_native_reverse_flavors_remain_distinct"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "all_variant_host_containers_survive_absent_selected_artifacts_but_device_and_fixture_do_not",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "all_variant_host_containers_survive_absent_selected_artifacts_but_device_and_fixture_do_not"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "main_host_device_suite_fixture_encounters_match_reference_concatenation",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "main_host_device_suite_fixture_encounters_match_reference_concatenation"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "first_active_provider_wins_over_deeper_root_and_later_native_precedence",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "first_active_provider_wins_over_deeper_root_and_later_native_precedence"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "provider_winner_changes_per_entry_within_one_projected_root",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "provider_winner_changes_per_entry_within_one_projected_root"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "shared_roots_retain_all_candidates_and_ignore_inactive_dsl_catalog",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "shared_roots_retain_all_candidates_and_ignore_inactive_dsl_catalog"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "existing_manifest_parent_matches_even_when_the_manifest_is_missing",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "existing_manifest_parent_matches_even_when_the_manifest_is_missing"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "manifest_exact_file_matches_and_other_files_are_unattributed",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "manifest_exact_file_matches_and_other_files_are_unattributed"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "unknown_relevant_root_never_becomes_unattributed_or_a_later_winner",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "unknown_relevant_root_never_becomes_unattributed_or_a_later_winner"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "known_absent_or_noncontaining_roots_do_not_match",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "known_absent_or_noncontaining_roots_do_not_match"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "reference_category_order_precedes_raw_root_order_inside_a_provider",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "reference_category_order_precedes_raw_root_order_inside_a_provider"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "stale_presence_missing_entries_and_conflicting_presence_are_explicit",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "stale_presence_missing_entries_and_conflicting_presence_are_explicit"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "unavailable_legacy_kmp_and_capability_metadata_never_fall_back_to_dsl",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "unavailable_legacy_kmp_and_capability_metadata_never_fall_back_to_dsl"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "unsupported_model_version_and_artifact_converter_disagreement_are_explicit",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "unsupported_model_version_and_artifact_converter_disagreement_are_explicit"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "nonempty_unconverted_suites_and_unknown_membership_remain_unavailable",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "nonempty_unconverted_suites_and_unknown_membership_remain_unavailable"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "malformed_dimensions_variants_and_provider_paths_are_rejected",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "malformed_dimensions_variants_and_provider_paths_are_rejected"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "optional_evaluated_metadata_round_trips_without_erasing_unknown_capabilities",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "optional_evaluated_metadata_round_trips_without_erasing_unknown_capabilities"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "explicit_resource_root_encounter_preserves_first_main_without_fallback",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "explicit_resource_root_encounter_preserves_first_main_without_fallback"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "projection_rejects_unknown_incomplete_or_stale_root_encounters",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "projection_rejects_unknown_incomplete_or_stale_root_encounters"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "twenty_thousand_evaluated_entries_resolve_without_foreground_or_disk_work",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "twenty_thousand_evaluated_entries_resolve_without_foreground_or_disk_work"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "presence_rejects_present_descendants_below_missing_or_file_ancestors",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "presence_rejects_present_descendants_below_missing_or_file_ancestors"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "projection_distinguishes_unknown_missing_and_uninventoried_present_roots",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "projection_distinguishes_unknown_missing_and_uninventoried_present_roots"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "observed_file_cannot_refine_unknown_parent_above_known_present_descendants",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "observed_file_cannot_refine_unknown_parent_above_known_present_descendants"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "exact_resource_provider_is_not_stolen_by_earlier_java_assets_or_resource_ancestors",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "exact_resource_provider_is_not_stolen_by_earlier_java_assets_or_resource_ancestors"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "exact_resource_lookup_keeps_unknown_missing_file_and_stale_presence_distinct",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "exact_resource_lookup_keeps_unknown_missing_file_and_stale_presence_distinct"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "successful_earlier_rule_ignores_later_unknown_but_earlier_unknown_blocks_match",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "successful_earlier_rule_ignores_later_unknown_but_earlier_unknown_blocks_match"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "thousands_of_disjoint_roots_keep_overlap_category_and_duplicate_provider_order",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "thousands_of_disjoint_roots_keep_overlap_category_and_duplicate_provider_order"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "deep_shared_ancestors_keep_all_sibling_navigation_and_annotations",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "deep_shared_ancestors_keep_all_sibling_navigation_and_annotations"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    },
+    {
+      "test": "thousands_of_root_encounters_preserve_first_main_and_builtin_group_priority",
+      "source": "crates/android_tools/tests/project_tree_facts.rs",
+      "target": {
+        "package": "android_tools",
+        "test_binary": "project_tree_facts",
+        "rust_test_name": "thousands_of_root_encounters_preserve_first_main_and_builtin_group_priority"
+      },
+      "parity": "supplemental_only",
+      "run_status": "pass",
+      "evidence": {
+        "source_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+        "full_unfiltered_run": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+        "immutable_commit_capture": "pending_if_required_by_lead"
+      }
+    }
+  ],
+  "smoke": {
+    "fixture": "crates/android_tools/test_data/project_tree_facts/gradle-smoke",
+    "probe": "crates/android_tools/examples/project_tree_facts_probe.rs",
+    "status": "pass_actual_gradle_and_rust_probe",
+    "adaptation": "Public AGP 9.4/prepared Gradle 9.6.1/SDK 37/build tools 37/JDK 21 is separate from the pinned original Gradle test runner/toolchain; zero upstream parity credit.",
+    "actual_agp_version": "9.4.0",
+    "actual_model_producer": {
+      "major": 23,
+      "minor": 0
+    },
+    "variant_count": 8,
+    "gradle_command": [
+      "./gradlew",
+      "--no-daemon",
+      "--console=plain",
+      "--rerun-tasks",
+      "--init-script",
+      "export.gradle",
+      ":app:createAssets",
+      "kodaAndroidProjectModel"
+    ],
+    "gradle_log": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/gradle-capture-correction5.log",
+    "rust_command": [
+      "cargo",
+      "run",
+      "--locked",
+      "-p",
+      "android_tools",
+      "--example",
+      "project_tree_facts_probe",
+      "--",
+      "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project",
+      "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/gradle-capture-correction5.log"
+    ],
+    "rust_log": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/probe-correction6.log",
+    "decoded_model": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/rust-decoded-correction6.json",
+    "decoded_sha256": "1e1f6f82a7bea1008f8e19faf6655992fdf2ae3304c6155927ed81142526c7cc",
+    "runtime_wrapper_scope": "Only available Linux gradlew/JAR/properties reused; absent optional Windows gradlew.bat recorded, no original fixture deleted."
+  },
+  "review_history": {
+    "owner_fix_rounds": 3,
+    "escalation": "UI exact-resource annotation finding after three owner CODE fix rounds; lead reported escalation and directed a bounded correction. History is not reset.",
+    "lead_correction_rounds": 6,
+    "current_source_manifest": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+    "reviewers": {
+      "code": "pass_source_review_lead_correction6",
+      "ui": "pass_backend_contract_review_lead_correction6",
+      "ux": "pass_backend_contract_review_lead_correction6",
+      "performance": "pass_backend_scaling_review_lead_correction6",
+      "quality": "pass_source_runtime_quality_review_lead_correction6"
+    },
+    "second_escalation": "Lead authorized bounded immutable lookup/ancestor/encounter indexing correction after performance failure; design review occurs before source edits.",
+    "correction2_design_verdict": "performance_pass_before_source_edits; runtime validation pending",
+    "remaining_review_scope": "All five reviewers passed frozen correction6 backend/source scope. Full app/live/workspace/combined CI and product performance/fidelity remain lead gates.",
+    "third_escalation": "Initial actual focused build E0621: private entry_provider module lifetime was omitted. Lead acknowledged/reported the escalation and authorized only explicit module lifetime correction, original assertions/fixtures unchanged.",
+    "fourth_escalation": "Required repository Clippy flagged a redundant clone in the new deep-ancestor test. Lead authorized moving the otherwise unused root; all assertion and input values unchanged. Failure log retained.",
+    "fifth_escalation": "AGP9.4 rejected an unsupported standalone orphan source set in the supplemental smoke. Lead authorized a real orphan flavor with all variants disabled; existing inactive assertion/assets retained and probe strengthened to require authoritative Basic/DSL presence plus evaluated variant absence. Initial Gradle failure retained.",
+    "sixth_escalation": "CODE and actual model rejected newly introduced supplemental Basic-presence expectation. Lead authorized source-backed Basic/variant absence while retaining original inactive-provider assertion, DSL identity/assets and all original tests.",
+    "verdicts_file": "docs/android-studio/ports/evidence/project-tree-facts/reviews.json"
+  },
+  "validation": {
+    "focused_default_target": {
+      "source_stage": "lead_correction3",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--test",
+        "project_tree_facts"
+      ],
+      "passed": 29,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "log": "/workspace/android-studio-artifacts/project-tree-facts/tests-focused-default-correction3.log"
+    },
+    "all_feature_crate": {
+      "source_stage": "lead_correction6",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features"
+      ],
+      "counts": {
+        "lib": 55,
+        "gradle_import_reference": 20,
+        "project_tree_component": 21,
+        "project_tree_facts": 29,
+        "project_view_preferences_reference": 19
+      },
+      "passed": 144,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "log": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log"
+    },
+    "repository_clippy": {
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools"
+      ],
+      "effective_flags": "--release --all-targets --all-features -- --deny warnings",
+      "status": "pass",
+      "log": "/workspace/android-studio-artifacts/project-tree-facts/clippy-correction6.log"
+    },
+    "workspace_format": {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "status": "pass",
+      "log": "/workspace/android-studio-artifacts/project-tree-facts/fmt-correction6.log"
+    },
+    "gradle_capture": "pass_actual_public_toolchain",
+    "rust_probe": "pass_actual_model_all_assertions",
+    "source_and_executable_binding": "/workspace/android-studio-artifacts/project-tree-facts/runtime-evidence-correction6.json",
+    "capture_git_state": "Reviewed uncommitted snapshot with seven exact source hashes and fixture hash; no retroactive tested_commit claim",
+    "named_immutable_commit_captures": "not_run_after_source_commit; shared lease released for lead build",
+    "full_app_live": "lead_merge_gate_pending",
+    "full_workspace": "lead_merge_gate_pending",
+    "shared_build_lease": "released; no Cargo/Gradle until new grant",
+    "retained_failures": {
+      "initial_compile": "/workspace/android-studio-artifacts/project-tree-facts/tests-focused-default.log",
+      "initial_clippy": "/workspace/android-studio-artifacts/project-tree-facts/clippy-correction3.log",
+      "initial_supplemental_gradle": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/gradle-capture-initial.log",
+      "wrong_new_supplemental_expectation": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/probe-incorrect-presence-correction5.log"
+    }
+  },
+  "remaining_product_wiring": [
+    "Complete version-sensitive suite/legacy adapters before claiming unavailable shapes supported.",
+    "Capture actual AndroidSourceType static/generated root group and encounter facts; producer order alone is not equivalent.",
+    "Integrate independently reviewed real Java class producer and bind source/content revisions.",
+    "Complete exact pinned fixture/toolchain preparation and every original generated model/file/class assertion.",
+    "Async VFS/file scanner publication, GPUI Android selector/rendering, navigation, refresh and durable settings.",
+    "For malformed/unsupported Java source or duplicate top-level declaration names, later adapter must retain ordinary file presentation for the entry; never invent/merge classes or abort the entire snapshot.",
+    "Reconcile existing Component.sources generatedness with authoritative V2 static provider roots: addStaticSourceDirectory late-static-assets currently exported generated=true. See explicit actual-model conflict evidence; no static/generated UI grouping claim."
+  ],
+  "scaling_contract": {
+    "provider_index": "Immutable once-built path/exact-manifest/exact-resource index retains provider/category/root ranks; queries visit candidate ancestor/exact keys and matching rules only.",
+    "annotation_paths": "Ancestor coverage cached separately for each source-root boundary.",
+    "root_encounters": "Typed group/path map preserves first duplicate and stable built-in group priority.",
+    "regressions": "2,048 disjoint lookup roots; duplicate exact-resource providers; 4,096 files under 96 shared levels; 2,048 explicit root encounters; earlier-success/later-unknown short circuit."
+  },
+  "expectation_corrections": [
+    {
+      "scope": "Supplemental runtime probe only; no canonical test reclassification or parity credit",
+      "old_expectation": "Fully disabled orphan flavor remains in BasicAndroidProject.productFlavorSourceSets",
+      "old_status": "wrong_expectation; actually_failed; never marked passing",
+      "old_source_manifest": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction5.json",
+      "failure_log": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/probe-incorrect-presence-correction5.log",
+      "failure_sha256": "42781893d9d5c00f16047c186e8d62d914402f587f1d486ea719c9d6603e5c45",
+      "reference_revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "reference_evidence": [
+        {
+          "path": "build-system/gradle-core/src/main/java/com/android/build/gradle/internal/ide/v2/ModelBuilder.kt",
+          "lines": [
+            299,
+            313,
+            351,
+            356
+          ],
+          "sha256": "128bf77cd981464a9698bbda450dccaf1458fa154f4f7a215aafed488dd9eff4",
+          "reason": "DimensionInformation derives only created-variant dimensions; Basic source-set catalog filters by this set."
+        },
+        {
+          "path": "build-system/gradle-core/src/main/java/com/android/build/gradle/internal/VariantManager.kt",
+          "lines": [
+            317,
+            320
+          ],
+          "sha256": "02e6a88797eba1e077749044ea068ad9864bff33dc0fc5fa03dcc4442b85e8c0",
+          "reason": "beforeVariants(enable=false) returns no created variant."
+        }
+      ],
+      "actual_model_evidence": {
+        "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/model-raw-correction5.json",
+        "sha256": "35833ae90abbf8f86af047c37954b125de0257f3af7a206f20309246eaf4df8c",
+        "basic_flavors": [
+          "red",
+          "blue",
+          "wide",
+          "narrow"
+        ],
+        "dsl_orphan_present": true,
+        "orphan_evaluated_variants": 0
+      },
+      "corrected_expectation": "Fully disabled orphan remains in evaluated DSL with original assets; it is independently absent from Basic flavor containers and evaluated variants, and remains absent from selected active providers."
+    }
+  ],
+  "integration_prerequisites": [
+    {
+      "kind": "existing_static_asset_generatedness_conflict",
+      "status": "unresolved_separate_source_model_task",
+      "evidence": "/workspace/android-studio-artifacts/project-tree-facts/static-assets-classification-conflict.json",
+      "new_reference_credit": 0
+    }
+  ],
+  "source_commit_binding": {
+    "status": "pass_byte_identity_after_commit",
+    "executed_snapshot": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+    "source_commit": "0f28d7c178abc738bd94b7f88e28a8e11637bf62",
+    "note": "Tests ran on the reviewed uncommitted snapshot at base959992d; source commit contains exactly those bytes. No claim that Cargo was invoked with this commit as HEAD. Lead immutable/combined recapture pending."
+  },
+  "evidence_manifest": "docs/android-studio/ports/evidence/project-tree-facts/manifest.json"
+}
