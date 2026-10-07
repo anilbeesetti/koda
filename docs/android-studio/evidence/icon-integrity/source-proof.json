@@ -1,0 +1,14 @@
+{
+  "base_commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+  "tests_sha256": "f98eb81260493b21c9a1e49f27c1eebeca6cbc288d6f39797718759942683564",
+  "source_sha256": "66b3c2f12b829ccd7e623c5bcc6f0f7d8bedead06514d5a27f266af828391640",
+  "assets": {
+    "assets/icons/android-studio-add.svg": "90ea35fe93f58db441ccf12778af7b56f91897b3d44651b3801ec530a9dd9ba8",
+    "assets/icons/android-studio-close.svg": "b720c5641b67d33efb0ef3feb5c11a7c49f9d89d26909776ae99a28358c6194a"
+  },
+  "source_sha256_after": "f312b115ffb6bc0c7f7cef8c6fdf44681a88edb3b5a0acc7d58426829e81911d",
+  "test_assertions_unchanged": true,
+  "asset_bytes_unchanged": true,
+  "literal_toolbar_paths_unchanged": true,
+  "new_reference_test_credit": 0
+}

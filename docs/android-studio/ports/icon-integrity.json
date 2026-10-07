@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "task": "1-icon-integrity",
+  "branch": "android-studio-task/1-icon-integrity",
+  "source_commit": "af387f61600975d4ac4df1e2541ecb59f26af470",
+  "base_commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+  "problem": "The imported Android Studio add/close SVG stems have no corresponding IconName variants, so the unchanged Zed test_no_dangling_icons fails with VariantNotFound.",
+  "change": "Register AndroidStudioAdd and AndroidStudioClose with explicit Strum serializations matching the existing hyphenated filenames. Preserve SVG bytes, toolbar paths, tests and attribution.",
+  "files_changed": [
+    "crates/icons/src/icons.rs"
+  ],
+  "new_reference_test_credit": 0,
+  "canonical_parity_matrix_changed": false,
+  "non_rust_exceptions_added": [],
+  "existing_tests": [
+    "icons::tests::test_all_icons_exist",
+    "icons::tests::test_no_dangling_icons"
+  ],
+  "tests_changed": false,
+  "asset_bytes_changed": false,
+  "all_icons_preview": "The existing developer component preview enumerates IconName variants and gains the two registered entries. No toolbar paths, renderer or handlers change.",
+  "task_complete": false,
+  "source_review_verdicts": {
+    "code": "PASS",
+    "ui": "PASS",
+    "ux": "PASS",
+    "performance": "PASS",
+    "quality": "PASS"
+  },
+  "source_review_scope": "Independent source reviews only; these do not establish actual Rust test, Clippy, app or runtime results.",
+  "validation": {
+    "changed_file_rustfmt": "PASS",
+    "current_icon_tests": "PENDING_ROOT_COMBINED_CHECK",
+    "strict_repository_clippy": "PENDING_ROOT_COMBINED_CHECK",
+    "workspace_fmt": "PENDING_ROOT_COMBINED_CHECK",
+    "full_app_build": "PENDING_ROOT_COMBINED_CHECK",
+    "live_app": "PENDING_ROOT_COMBINED_CHECK",
+    "full_workspace_tests": "PENDING_ROOT_COMBINED_CI"
+  },
+  "prior_ci_failure": {
+    "run_id": 37643890651,
+    "commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+    "passed": 10348,
+    "failed": 1,
+    "existing_ignored": 23,
+    "failed_test": "icons::tests::test_no_dangling_icons",
+    "error": "VariantNotFound",
+    "url": "https://github.com/anilbeesetti/koda/actions/runs/37643890651"
+  },
+  "evidence_directory": "docs/android-studio/evidence/icon-integrity",
+  "protected_integration_observed": "c19021e1827e347b54b597b53f6f27ea61bce0d0",
+  "read_only_main_worktree_observed": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+  "push_performed_by_task": false,
+  "fix_review_rounds": 0,
+  "all_five_source_reviews_pass": true,
+  "evidence_manifest": {
+    "path": "docs/android-studio/evidence/icon-integrity/manifest.json",
+    "sha256": "4981e7b0fda3cf041b358d2f62d229a82e69475007e3a38e62e0a56c82365aa0"
+  }
+}

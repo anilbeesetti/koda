@@ -1,0 +1,7 @@
+{
+  "command": "rustfmt --check --edition 2024 crates/icons/src/icons.rs",
+  "exit_code": 0,
+  "source_commit": "af387f61600975d4ac4df1e2541ecb59f26af470",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "scope": "changed source file only; workspace fmt deferred to root"
+}
