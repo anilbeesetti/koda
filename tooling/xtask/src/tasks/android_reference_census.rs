@@ -312,16 +312,41 @@ fn discover_archive(reference_root: &Path, output: &Path, source: Source) -> Res
     for entry in archive.entries()? {
         let mut entry = entry?;
         let archive_path = std::str::from_utf8(&entry.path_bytes())?.to_owned();
+        let global_metadata = entry.header().entry_type().is_pax_global_extensions();
+        let kind = if global_metadata {
+            "global_pax_metadata"
+        } else {
+            member_kind(entry.header().entry_type())
+        };
+        let pinned_comment = global_metadata.then(|| format!("52 comment={}\n", source.revision));
         let prefix =
             (source.id == "jetbrains-android").then(|| format!("android-{}/", source.revision));
-        let relative = match &prefix {
-            Some(prefix) => archive_path
-                .strip_prefix(prefix)
-                .context("mirror archive member lacks pinned root prefix")?,
-            None => &archive_path,
+        let path = if global_metadata {
+            ensure!(
+                archive_path == "pax_global_header",
+                "unsupported global PAX header name"
+            );
+            ensure!(
+                pinned_comment
+                    .as_ref()
+                    .is_some_and(|comment| entry.size() == comment.len() as u64),
+                "unsupported global PAX payload; only the exact pinned Git comment is supported"
+            );
+            archive_path.clone()
+        } else {
+            let relative = match &prefix {
+                Some(prefix)
+                    if kind == "directory" && archive_path == prefix.trim_end_matches('/') =>
+                {
+                    ""
+                }
+                Some(prefix) => archive_path
+                    .strip_prefix(prefix)
+                    .context("mirror archive member lacks pinned root prefix")?,
+                None => &archive_path,
+            };
+            safe_path(relative, kind == "directory")?
         };
-        let kind = member_kind(entry.header().entry_type());
-        let path = safe_path(relative, kind == "directory")?;
         ensure!(
             paths.insert(path.clone()),
             "duplicate normalized archive path: {path}"
@@ -334,7 +359,7 @@ fn discover_archive(reference_root: &Path, output: &Path, source: Source) -> Res
         let mut content = Vec::new();
         let mut hasher = Sha256::new();
         let mut buffer = [0_u8; 64 * 1024];
-        let mut retain = candidate_kind.is_some() && bytes <= MAX_SOURCE_BYTES;
+        let mut retain = global_metadata || candidate_kind.is_some() && bytes <= MAX_SOURCE_BYTES;
         let mut bytes_read = 0_u64;
         loop {
             let count = entry.read(&mut buffer)?;
@@ -359,6 +384,12 @@ fn discover_archive(reference_root: &Path, output: &Path, source: Source) -> Res
             bytes_read == bytes,
             "archive member length mismatch: {path}"
         );
+        if let Some(comment) = pinned_comment {
+            ensure!(
+                content == comment.as_bytes(),
+                "unsupported global PAX payload; only the exact pinned Git comment is supported"
+            );
+        }
         let hash = format!("{:x}", hasher.finalize());
         let link_target = entry
             .link_name()?
@@ -377,9 +408,12 @@ fn discover_archive(reference_root: &Path, output: &Path, source: Source) -> Res
                 bytes,
                 sha256: hash.clone(),
                 link_target,
-                discovery_classification: candidate_kind
-                    .unwrap_or("unclassified_payload")
-                    .to_owned(),
+                discovery_classification: if global_metadata {
+                    "archive_metadata"
+                } else {
+                    candidate_kind.unwrap_or("unclassified_payload")
+                }
+                .to_owned(),
             },
         )?;
         *member_kinds.entry(kind.to_owned()).or_default() += 1;
@@ -1863,6 +1897,317 @@ abstract class Outer : InheritedSuite() {
                 sha256: hash_file(&path)?,
             },
         })
+    }
+
+    fn mirror_fixture_archive(
+        root: &Path,
+        entries: &[(&str, tar::EntryType, &[u8])],
+    ) -> Result<Source> {
+        let mut builder = tar::Builder::new(Vec::new());
+        for (path, kind, bytes) in entries {
+            let mut header = tar::Header::new_gnu();
+            header.set_entry_type(*kind);
+            header.set_size(bytes.len() as u64);
+            header.set_mode(0o644);
+            // Preserve the supplied spelling, including deliberately invalid test paths.
+            ensure!(path.len() <= 100, "bounded mirror fixture name");
+            header.as_mut_bytes()[..path.len()].copy_from_slice(path.as_bytes());
+            header.set_cksum();
+            builder.append(&header, *bytes)?;
+        }
+        let mut source = write_archive(root, &builder.into_inner()?)?;
+        source.id = "jetbrains-android".to_owned();
+        source.revision = "132bc7c3cf52598117590637d00e81b929444bde".to_owned();
+        source.coverage = "unverified_mirror".to_owned();
+        Ok(source)
+    }
+
+    #[test]
+    fn pinned_mirror_root_directory_and_jvm_child_are_retained() -> Result<()> {
+        let root = "android-132bc7c3cf52598117590637d00e81b929444bde";
+        for root_path in [root.to_owned(), format!("{root}/")] {
+            let directory = tempfile::tempdir()?;
+            let output = tempfile::tempdir()?;
+            let child = format!("{root}/tests/RootTest.kt");
+            let content = b"class RootTest { fun testChild() {} }";
+            let source = mirror_fixture_archive(
+                directory.path(),
+                &[
+                    (&root_path, tar::EntryType::Directory, b""),
+                    (&child, tar::EntryType::Regular, content),
+                ],
+            )?;
+            let summary = discover_archive(directory.path(), output.path(), source)?;
+            assert_eq!(summary.physical_member_types.values().sum::<usize>(), 2);
+            assert_eq!(summary.member_kinds["directory"], 1);
+            assert_eq!(summary.member_kinds["file"], 1);
+            assert_eq!(summary.candidate_kinds["jvm_source"], 1);
+            assert_eq!(summary.method_candidates, 1);
+            let members =
+                fs::read_to_string(output.path().join("jetbrains-android-members.jsonl"))?
+                    .lines()
+                    .map(serde_json::from_str::<Value>)
+                    .collect::<std::result::Result<Vec<_>, _>>()?;
+            assert_eq!(members.len(), 2);
+            assert_eq!(members[0]["path"], "");
+            assert_eq!(members[0]["kind"], "directory");
+            assert_eq!(members[0]["archive_path"], root_path);
+            assert_eq!(members[1]["path"], "tests/RootTest.kt");
+            assert_eq!(members[1]["archive_path"], child);
+            assert_eq!(
+                members[1]["sha256"],
+                format!("{:x}", Sha256::digest(content))
+            );
+            let physical = fs::read_to_string(
+                output
+                    .path()
+                    .join("jetbrains-android-physical-members.jsonl"),
+            )?
+            .lines()
+            .map(serde_json::from_str::<Value>)
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+            assert_eq!(physical.len(), 2);
+            assert_eq!(physical[0]["type_byte"], b'5');
+            assert_eq!(
+                physical[0]["raw_path_bytes"],
+                serde_json::to_value(root_path.as_bytes())?
+            );
+            assert_eq!(physical[1]["type_byte"], b'0');
+            assert_eq!(
+                physical[1]["payload_sha256"],
+                format!("{:x}", Sha256::digest(content))
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn mirror_prefix_regular_roots_and_duplicate_root_boundaries_are_rejected() -> Result<()> {
+        let root = "android-132bc7c3cf52598117590637d00e81b929444bde";
+        for (path, kind) in [
+            (
+                "android-wrong-revision".to_owned(),
+                tar::EntryType::Directory,
+            ),
+            (
+                format!("{root}-lookalike/tests/Test.kt"),
+                tar::EntryType::Regular,
+            ),
+            (root.to_owned(), tar::EntryType::Regular),
+            (format!("{root}/"), tar::EntryType::Regular),
+            (format!("{root}/../outside.kt"), tar::EntryType::Regular),
+            (
+                format!("{root}//empty-component.kt"),
+                tar::EntryType::Regular,
+            ),
+        ] {
+            let directory = tempfile::tempdir()?;
+            let output = tempfile::tempdir()?;
+            let source = mirror_fixture_archive(directory.path(), &[(&path, kind, b"")])?;
+            assert!(
+                discover_archive(directory.path(), output.path(), source).is_err(),
+                "{path}"
+            );
+        }
+        let directory = tempfile::tempdir()?;
+        let output = tempfile::tempdir()?;
+        let slash_root = format!("{root}/");
+        let source = mirror_fixture_archive(
+            directory.path(),
+            &[
+                (root, tar::EntryType::Directory, b""),
+                (&slash_root, tar::EntryType::Directory, b""),
+            ],
+        )?;
+        let error = discover_archive(directory.path(), output.path(), source)
+            .err()
+            .context("duplicate normalized mirror roots must be rejected")?;
+        assert!(
+            error
+                .to_string()
+                .contains("duplicate normalized archive path")
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn actual_pinned_global_metadata_root_and_jvm_child_are_retained() -> Result<()> {
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("test_data/reference_census/jetbrains-android");
+        let provenance: Value =
+            serde_json::from_reader(File::open(fixture.join("provenance.json"))?)?;
+        let prefix = fs::read(fixture.join("archive-prefix.tar"))?;
+        assert_eq!(prefix.len(), 1536);
+        assert_eq!(provenance["bytes"], 1536);
+        assert_eq!(
+            format!("{:x}", Sha256::digest(&prefix)),
+            "cd3d6c0175e3992cc0cda497fc3c531a4b81173e7af5aeb7a82555d1f050f311"
+        );
+        assert_eq!(
+            provenance["sha256"],
+            format!("{:x}", Sha256::digest(&prefix))
+        );
+        let comment = b"52 comment=132bc7c3cf52598117590637d00e81b929444bde\n";
+        assert_eq!(&prefix[512..564], comment);
+        assert_eq!(prefix[156], b'g');
+        assert_eq!(prefix[1024 + 156], b'5');
+        let directory = tempfile::tempdir()?;
+        let output = tempfile::tempdir()?;
+        let child = "android-132bc7c3cf52598117590637d00e81b929444bde/tests/GitTest.kt";
+        let content = b"class GitTest { fun testPinnedArchive() {} }";
+        let mut tar = prefix;
+        tar.extend_from_slice(&archive_bytes(&[(child, content)])?);
+        let mut source = write_archive(directory.path(), &tar)?;
+        source.id = "jetbrains-android".to_owned();
+        source.revision = "132bc7c3cf52598117590637d00e81b929444bde".to_owned();
+        source.coverage = "unverified_mirror".to_owned();
+        let summary = discover_archive(directory.path(), output.path(), source)?;
+        assert_eq!(summary.physical_member_types.values().sum::<usize>(), 3);
+        assert_eq!(summary.member_kinds["global_pax_metadata"], 1);
+        assert_eq!(summary.member_kinds["directory"], 1);
+        assert_eq!(summary.member_kinds["file"], 1);
+        assert_eq!(summary.candidate_kinds["jvm_source"], 1);
+        assert_eq!(summary.method_candidates, 1);
+        let members = fs::read_to_string(output.path().join("jetbrains-android-members.jsonl"))?
+            .lines()
+            .map(serde_json::from_str::<Value>)
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        assert_eq!(members.len(), 3);
+        assert_eq!(members[0]["path"], "pax_global_header");
+        assert_eq!(members[0]["archive_path"], "pax_global_header");
+        assert_eq!(members[0]["kind"], "global_pax_metadata");
+        assert_eq!(members[0]["discovery_classification"], "archive_metadata");
+        assert_eq!(members[0]["bytes"], 52);
+        assert_eq!(
+            members[0]["sha256"],
+            format!("{:x}", Sha256::digest(comment))
+        );
+        assert_eq!(members[1]["path"], "");
+        assert_eq!(members[1]["kind"], "directory");
+        assert_eq!(
+            members[1]["archive_path"],
+            "android-132bc7c3cf52598117590637d00e81b929444bde/"
+        );
+        assert_eq!(members[2]["path"], "tests/GitTest.kt");
+        assert_eq!(members[2]["archive_path"], child);
+        let physical = fs::read_to_string(
+            output
+                .path()
+                .join("jetbrains-android-physical-members.jsonl"),
+        )?
+        .lines()
+        .map(serde_json::from_str::<Value>)
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+        assert_eq!(physical.len(), 3);
+        assert_eq!(physical[0]["type_byte"], b'g');
+        assert_eq!(
+            physical[0]["header_sha256"],
+            "e7ff54ee799caf447a96992e78032e874a1b76a3f3af5436dfcfcd1b8ebb80ae"
+        );
+        assert_eq!(
+            physical[0]["payload_sha256"],
+            format!("{:x}", Sha256::digest(comment))
+        );
+        assert_eq!(
+            physical[1]["header_sha256"],
+            "3b15fcd3eeefff60e039e35a6e7c89e4a1993a7b828ff5dab0a08e28eb3c2eff"
+        );
+        assert_eq!(physical[2]["type_byte"], b'0');
+        assert_eq!(
+            physical[2]["payload_sha256"],
+            format!("{:x}", Sha256::digest(content))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn unsupported_global_pax_semantics_fail_before_publication() -> Result<()> {
+        let comment = b"52 comment=132bc7c3cf52598117590637d00e81b929444bde\n";
+        let mut cases = vec![
+            ("pax_global_header", b"13 path=evil\n".to_vec()),
+            ("pax_global_header", b"17 linkpath=evil\n".to_vec()),
+            ("pax_global_header", b"12 size=999\n".to_vec()),
+            ("pax_global_header", b"13 mtime=0.0\n".to_vec()),
+            ("pax_global_header", b"15 unknown=foo\n".to_vec()),
+            ("pax_global_header", b"malformed".to_vec()),
+            ("wrong_global_header", comment.to_vec()),
+        ];
+        cases.push((
+            "pax_global_header",
+            format!("52 comment={}\n", "0".repeat(40)).into_bytes(),
+        ));
+        for (name, payload) in cases {
+            let directory = tempfile::tempdir()?;
+            let repository = directory.path().join("repository");
+            let references = directory.path().join("references");
+            fs::create_dir_all(repository.join("docs/android-studio"))?;
+            fs::create_dir(&references)?;
+            let source = mirror_fixture_archive(
+                &references,
+                &[(name, tar::EntryType::XGlobalHeader, &payload)],
+            )?;
+            let manifest = json!({
+                "schema_version": 1,
+                "baseline": "bounded global PAX rejection fixture; no parity credit",
+                "sources": [{
+                    "id": source.id,
+                    "revision": source.revision,
+                    "repository": source.repository,
+                    "coverage": source.coverage,
+                    "archive": source.archive
+                }]
+            });
+            fs::write(
+                repository.join("docs/android-studio/reference-manifest.json"),
+                serde_json::to_vec(&manifest)?,
+            )?;
+            let output = directory.path().join("census");
+            let error = run(AndroidReferenceCensusArgs {
+                repository,
+                reference_root: references,
+                output: output.clone(),
+                check: false,
+            })
+            .err()
+            .context("unsupported global PAX metadata must fail")?;
+            assert!(format!("{error:#}").contains("unsupported global PAX"));
+            assert!(!output.exists());
+            assert!(!fs::read_dir(directory.path())?.any(|entry| {
+                entry.is_ok_and(|entry| {
+                    entry
+                        .file_name()
+                        .to_string_lossy()
+                        .starts_with(".census-staging-")
+                })
+            }));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn global_metadata_does_not_relax_regular_path_or_duplicate_guards() -> Result<()> {
+        let comment = b"52 comment=132bc7c3cf52598117590637d00e81b929444bde\n";
+        for entries in [
+            vec![("pax_global_header", tar::EntryType::Regular, &comment[..])],
+            vec![
+                (
+                    "pax_global_header",
+                    tar::EntryType::XGlobalHeader,
+                    &comment[..],
+                ),
+                (
+                    "pax_global_header",
+                    tar::EntryType::XGlobalHeader,
+                    &comment[..],
+                ),
+            ],
+        ] {
+            let directory = tempfile::tempdir()?;
+            let output = tempfile::tempdir()?;
+            let source = mirror_fixture_archive(directory.path(), &entries)?;
+            assert!(discover_archive(directory.path(), output.path(), source).is_err());
+        }
+        Ok(())
     }
 
     #[test]

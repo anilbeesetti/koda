@@ -42,6 +42,21 @@ These counts describe source discovery. They are never test-case or port counts.
 Both archive traversals independently verify the exact compressed stream consumed
 against the pinned hash and size before publication.
 
+The mirror's exact pinned root directory is retained with an empty logical
+`path`; its original `archive_path` and physical header remain recorded. This
+empty root applies only to a directory, whether its wrapper name has a trailing
+slash. Regular files cannot have an empty logical path, and every mirror child
+still requires the exact pinned wrapper prefix and normal safe-path validation.
+
+The verified Git archive's global PAX record is retained as logical kind
+`global_pax_metadata`, classified `archive_metadata`, with its original metadata
+name `pax_global_header` and payload hash. Its physical header/payload provenance
+is also retained. This metadata name is not a filesystem path. Only the exact
+`52 comment=<pinned revision>\n` payload is supported; semantic overrides such as
+`path`, `linkpath` or `size`, other keys, malformed records and other metadata
+names fail before publication. Regular entries receive no metadata exception,
+and duplicate normalized member names remain rejected.
+
 The scanner preserves JUnit3 test-prefixed declarations, suite factories, Kotlin
 backtick names, declared nested classes and annotations. It retains abstract
 classes and inheritance text, but does not resolve their effective runner suites.
