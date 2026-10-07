@@ -10,10 +10,14 @@ file totals must never be presented as reference-test totals.
 
 The inspected foundation slice now catalogs eight `DefaultVariantsTest` methods,
 nine `GradleModuleImportTest` methods and fourteen `AndroidProjectViewTest`
-methods. These 31 declared methods are a partial inventory; the exhaustive
-baseline total remains unknown. The 23 newly cataloged import/project-view methods
-remain `unported/not_run`. Model-sync methods remain outside this partial catalog
-until their runner expansions are verified. No N/A classifications were added.
+methods, plus three selected model-sync methods and one separate resource-conversion
+method. These 35 source-defined method cases are a partial inventory; the
+exhaustive baseline total remains unknown. The 27 import/project-view/model-sync
+and resource-conversion rows remain `unported/not_run`. The bounded
+[model-sync inventory](ports/model-sync-inventory.json) records normal and generated
+target membership, runner inheritance, fixture hashes and runtime verification
+limits. The suite leak finalizer is identified separately and remains uncredited
+outside the selected leaf-class scope. No N/A classifications were added.
 
 Run from the checkout root:
 

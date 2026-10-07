@@ -567,6 +567,42 @@
       "run_blocker": null,
       "rust_targets": [],
       "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt#com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest.testAllVariantSyncWithV2",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded JUnit4 method case has not been implemented or exercised as a Rust test. Bounded runner, target and original fixture evidence are recorded in ports/model-sync-inventory.json; metadata does not establish IDE behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt#com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest.testAllVariantWithBuildSrc",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded JUnit4 method case has not been implemented or exercised as a Rust test. Bounded runner, target and original fixture evidence are recorded in ports/model-sync-inventory.json; metadata does not establish IDE behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/GradleSyncSpecialCasesIntegrationTest.kt#com.android.tools.idea.gradle.project.sync.GradleSyncSpecialCasesIntegrationTest.manifest in build folder",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded JUnit4 method case has not been implemented or exercised as a Rust test. Bounded runner, target and original fixture evidence are recorded in ports/model-sync-inventory.json; metadata does not establish IDE behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/project/model/GradleAndroidModelTest.kt#com.android.tools.idea.gradle.project.model.GradleAndroidModelTest.testClassFieldsToDynamicResourceValues",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded JUnit4 method case has not been implemented or exercised as a Rust test. Bounded runner, target and original fixture evidence are recorded in ports/model-sync-inventory.json; metadata does not establish IDE behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
     }
   ]
 }
