@@ -58,7 +58,7 @@ case "$kotlin_backend" in
     *) echo "Unknown Kotlin backend: $kotlin_backend; only official is supported." >&2; exit 2 ;;
 esac
 export ANDROID_IDE_KOTLIN_BACKEND="$kotlin_backend"
-kotlin_official_server="$repository/target/android-ide/dependencies/kotlin-lsp-263.4702.0+android-7/kotlin-server-263.4702.0/bin/intellij-server"
+kotlin_official_server="$repository/target/android-ide/dependencies/kotlin-lsp-263.4702.0+android-8/kotlin-server-263.4702.0/bin/intellij-server"
 if [[ -z ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} && -x "$kotlin_official_server" ]]; then
     export ANDROID_IDE_OFFICIAL_KOTLIN_SERVER="$kotlin_official_server"
 fi

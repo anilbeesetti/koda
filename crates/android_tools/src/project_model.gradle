@@ -71,19 +71,32 @@ gradle.projectsEvaluated {
             [kind: 'external', coordinate: id.displayName]
         }.findAll { it != null }.unique()
     }
+    def androidKotlinCompilation = { project, component ->
+        def kotlin = project.extensions.findByName('kotlin')
+        if (multiplatformPaths.contains(project.path)) {
+            return kotlin.targets.getByName('android').compilations.find { it.defaultSourceSet.name == component.name }
+        }
+        if (!project.plugins.hasPlugin('org.jetbrains.kotlin.multiplatform')) {
+            return optional(optional(kotlin, 'target'), 'compilations')?.findByName(component.name)
+        }
+        // Legacy KMP has multiple targets; the selected Android compilation owns its common roots.
+        def candidates = kotlin.targets.findAll { it.platformType.toString() == 'androidJvm' }.collectMany { target ->
+            target.compilations.findAll { it.name == component.name }
+        }
+        if (candidates.size() > 1) throw new GradleException('Cannot map Android Kotlin component ' + project.path + ':' + component.name + ' to one compilation')
+        // Java-only test fixtures have no KGP compilation and retain their AGP source providers.
+        candidates ? candidates.first() : null
+    }
     def sources = { project, component ->
         def result = []
-        def kotlin = project.extensions.findByName('kotlin')
-        def compilation = multiplatformPaths.contains(project.path) ?
-            kotlin.targets.getByName('android').compilations.find { it.defaultSourceSet.name == component.name } :
-            optional(optional(kotlin, 'target'), 'compilations')?.findByName(component.name)
+        def compilation = androidKotlinCompilation(project, component)
         ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources'].each { property, kind ->
             def source = optional(component.sources, property)
             def provider = optional(source, 'all')
             def staticProvider = optional(source, 'static')
             def staticPaths = staticProvider?.get()?.flatten()?.collect { it.asFile.canonicalPath } as Set
             def buildPath = project.layout.buildDirectory.get().asFile.canonicalFile.toPath()
-            if (multiplatformPaths.contains(project.path) && staticProvider != null && property in ['java', 'kotlin']) {
+            if (multiplatformPaths.contains(project.path) && compilation != null && staticProvider != null && property in ['java', 'kotlin']) {
                 // AGP's KMP adapter exposes KGP roots in `all`, but omits them from `static`.
                 compilation.allKotlinSourceSets.each { sourceSet ->
                     staticPaths.addAll(sourceSet.kotlin.srcDirs.collect { directory ->
@@ -161,6 +174,13 @@ gradle.projectsEvaluated {
                 components.addAll((optional(variant, 'hostTests') ?: [:]).values())
                 components.addAll((optional(variant, 'deviceTests') ?: [:]).values())
                 components.findAll { it != null }.unique { it.name }.each { component ->
+                    if (project.plugins.hasPlugin('org.jetbrains.kotlin.multiplatform')) {
+                        // AGP providers omit common-only source sets and their generator dependencies.
+                        def compilation = androidKotlinCompilation(project, component)
+                        if (compilation != null) compilation.allKotlinSourceSets.each { sourceSet ->
+                            inputs.files(sourceSet.kotlin)
+                        }
+                    }
                     ['java', 'kotlin', 'res', 'manifests'].each { kind ->
                         def provider = optional(optional(component.sources, kind), 'all')
                         if (provider != null) inputs.files(provider)

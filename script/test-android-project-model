@@ -281,28 +281,146 @@ kotlin { androidLibrary { namespace = 'dev.koda.util'; compileSdk = 35; minSdk =
     print(f"Passed AGP {agp}: KMP app dependencies, transitive Android libraries, common/intermediate/platform sources, generated roots, host/device scopes, Kotlin-only and Java-enabled projections, failure/recovery", flush=True)
 
 
+def check_legacy_multiplatform(root, agp, sdk, gradle, probe, compile_sdk=35, build_tools=None):
+    root = root / "legacy-multiplatform"
+    write(root, "settings.gradle", """pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+rootProject.name = 'koda-legacy-multiplatform-probe'; include ':app', ':shared'
+""")
+    write(root, "build.gradle", f"""plugins {{
+ id 'com.android.application' version '{agp}' apply false
+ id 'com.android.library' version '{agp}' apply false
+ id 'org.jetbrains.kotlin.android' version '2.2.10' apply false
+ id 'org.jetbrains.kotlin.multiplatform' version '2.2.10' apply false
+}}
+""")
+    write(root, "local.properties", f"sdk.dir={Path(sdk).resolve()}\n")
+    write(root, "gradle.properties", "android.builder.sdkDownload=false\norg.gradle.java.installations.auto-download=false\norg.gradle.workers.max=2\n")
+    tools = f"; buildToolsVersion '{build_tools}'" if build_tools else ""
+    write(root, "app/build.gradle", f"""plugins {{ id 'com.android.application'; id 'org.jetbrains.kotlin.android' }}
+android {{ namespace 'dev.koda.app'; compileSdk {compile_sdk}{tools}; defaultConfig {{ applicationId 'dev.koda.app'; minSdk 24 }} }}
+dependencies {{ implementation project(':shared') }}
+""")
+    write(root, "shared/build.gradle", f"""plugins {{ id 'com.android.library'; id 'org.jetbrains.kotlin.multiplatform' }}
+android {{ namespace 'dev.koda.shared'; compileSdk {compile_sdk}{tools}; defaultConfig {{ minSdk 24 }}; testFixtures {{ enable true }} }}
+kotlin {{
+ androidTarget(); jvm()
+ sourceSets {{
+  sharedMain {{ dependsOn commonMain }}
+  androidMain {{ dependsOn sharedMain }}
+ }}
+}}
+abstract class GenerateKotlin extends DefaultTask {{
+ @OutputDirectory abstract DirectoryProperty getOutputDirectory()
+ @TaskAction void generate() {{
+  def source = outputDirectory.file('Generated.kt').get().asFile
+  source.parentFile.mkdirs(); source.text = 'package dev.koda.shared; class Generated'
+ }}
+}}
+abstract class GenerateCommonKotlin extends DefaultTask {{
+ @OutputDirectory abstract DirectoryProperty getOutputDirectory()
+ @TaskAction void generate() {{
+  def source = outputDirectory.file('GeneratedCommon.kt').get().asFile
+  source.parentFile.mkdirs(); source.text = 'package dev.koda.shared; class GeneratedCommon'
+ }}
+}}
+def commonGenerator = tasks.register('generateCommonKotlin', GenerateCommonKotlin) {{ outputDirectory.set(layout.buildDirectory.dir('generated/common')) }}
+kotlin.sourceSets.commonMain.kotlin.srcDir(commonGenerator.flatMap {{ it.outputDirectory }})
+androidComponents.onVariants(androidComponents.selector().all()) {{ variant ->
+ def generator = tasks.register('generate' + variant.name.capitalize() + 'Kotlin', GenerateKotlin) {{ outputDirectory.set(layout.projectDirectory.dir('generated/' + variant.name)) }}
+ variant.sources.kotlin.addGeneratedSourceDirectory(generator) {{ it.outputDirectory }}
+}}
+""")
+    for module in ("app", "shared"):
+        write(root, f"{module}/src/main/AndroidManifest.xml", '<manifest xmlns:android="http://schemas.android.com/apk/res/android"/>')
+    write(root, "app/src/main/kotlin/UseShared.kt", "package dev.koda.app\nval shared = dev.koda.shared.CommonMain()\n")
+    write(root, "shared/src/testFixtures/java/dev/koda/shared/FixtureHelper.java", "package dev.koda.shared; public class FixtureHelper {}\n")
+    directories = ["commonMain", "sharedMain", "androidMain", "androidDebug", "androidRelease", "commonTest", "androidUnitTest", "androidInstrumentedTest", "jvmMain", "jvmTest"]
+    for directory in directories:
+        write(root, f"shared/src/{directory}/kotlin/{directory}.kt", f"package dev.koda.shared\nclass {directory[0].upper() + directory[1:]}\n")
+    log = root / "model.log"
+    with log.open("w") as output:
+        result = subprocess.run([gradle, "--console=plain", "--no-configuration-cache", "--parallel", "--max-workers=2", "--init-script", str(REPOSITORY / "crates/android_tools/src/project_model.gradle"), "kodaAndroidProjectModel"], cwd=root, stdout=output, stderr=subprocess.STDOUT, timeout=240)
+    if result.returncode:
+        raise RuntimeError(log.read_text())
+    model = model_from_log(log)
+    assert {module["path"] for module in model["modules"]} == {":app", ":shared"}, model
+    shared = next(module for module in model["modules"] if module["path"] == ":shared")
+    assert shared["kind"] == "library" and {variant["name"] for variant in shared["variants"]} == {"debug", "release"}, shared
+    assert "without an exclusive lock" not in log.read_text()
+    assert not any(line.startswith("> Task ") and ("compile" in line.split()[2].lower()) for line in log.read_text().splitlines()), log.read_text()
+    assert "> Task :shared:generateCommonKotlin" in log.read_text(), log.read_text()
+    common_generated = root / "shared/build/generated/common"
+    assert (common_generated / "GeneratedCommon.kt").is_file()
+    for selected in ("debug", "release"):
+        variant = next(variant for variant in shared["variants"] if variant["name"] == selected)
+        components = {component["scope"]: component for component in variant["components"]}
+        assert {"main", "unitTest", "testFixtures"} <= set(components), components
+        for scope, expected in [("main", {"commonMain", "sharedMain", "androidMain", "android" + selected.capitalize()}), ("unitTest", {"commonTest", "androidUnitTest"})]:
+            roots = components[scope]["sources"]
+            for directory in expected:
+                matches = [source for source in roots if Path(source["path"]) == root / f"shared/src/{directory}/kotlin"]
+                assert matches and all(not source["generated"] for source in matches), (scope, directory, roots)
+        main_roots = components["main"]["sources"]
+        assert not any("commonTest" in source["path"] or "androidUnitTest" in source["path"] for source in main_roots), main_roots
+        generated = root / "shared/build/generated/kotlin" / ("generate" + selected.capitalize() + "Kotlin")
+        assert any(source["generated"] and Path(source["path"]) == generated for source in main_roots), main_roots
+        assert (generated / "Generated.kt").is_file()
+        assert any(source["generated"] and Path(source["path"]) == common_generated for source in main_roots), main_roots
+        fixture_roots = components["testFixtures"]["sources"]
+        assert any(source["kind"] == "java" and Path(source["path"]) == root / "shared/src/testFixtures/java" for source in fixture_roots), fixture_roots
+        assert not any(Path(source["path"]) == common_generated or any(directory in Path(source["path"]).parts for directory in ("commonMain", "sharedMain", "androidMain", "jvmMain", "commonTest", "jvmTest")) for source in fixture_roots), fixture_roots
+        graph = json.loads(subprocess.check_output([probe, root, log, ":app", selected]))
+        assert graph["variants"] == {":app": selected, ":shared": selected}, graph
+        projection = json.loads(Path(graph["javaSelection"]).read_text())
+        for module in projection:
+            assert module["variant"] == selected, module
+            for component in module["components"]:
+                for source in component["sources"]:
+                    parts = Path(source["path"]).relative_to(root).parts
+                    assert "jvmMain" not in parts and "jvmTest" not in parts, source
+                    assert "android" + ("Release" if selected == "debug" else "Debug") not in parts, source
+        write(root, f"selected-{selected}.json", json.dumps(projection, indent=2) + "\n")
+    print(f"Passed AGP {agp}: legacy Android/KMP debug/release selection, common/intermediate/platform roots, common unit-test sources, Java-only test fixtures, common-only and AGP generated producers and JVM exclusion; no project source compilation", flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gradle", required=True)
     parser.add_argument("--sdk", required=True)
-    parser.add_argument("--agp", choices=["8.9.1", "9.4.0"], required=True)
+    parser.add_argument("--agp", choices=["8.9.1", "8.10.1", "9.4.0"], required=True)
     parser.add_argument("--keep", type=Path, help="Use this directory and retain output for inspection")
     parser.add_argument("--defaults-only", action="store_true", help="Run only default-variant exporter checks")
     parser.add_argument("--multiplatform-only", action="store_true", help="Run only Android multiplatform model/Java/Eclipse checks (AGP 9)")
+    parser.add_argument("--legacy-multiplatform-only", action="store_true", help="Run only Android library plus Kotlin multiplatform exporter/selection checks (AGP 8), without compiling project sources")
+    parser.add_argument("--compile-sdk", type=int, default=35, help="Compile SDK for the legacy multiplatform fixture (default 35)")
+    parser.add_argument("--build-tools", help="Explicit SDK build-tools version for the legacy multiplatform fixture")
     args = parser.parse_args()
+    if sum((args.defaults_only, args.multiplatform_only, args.legacy_multiplatform_only)) > 1:
+        parser.error("Choose only one fixture-only mode")
     if args.multiplatform_only and args.agp.startswith("8."):
         parser.error("The multiplatform fixture requires AGP 9")
+    if args.legacy_multiplatform_only and not args.agp.startswith("8."):
+        parser.error("The legacy multiplatform fixture requires AGP 8")
+    if args.compile_sdk <= 0 or (args.build_tools and (len(args.build_tools.split('.')) != 3 or not all(part.isdigit() for part in args.build_tools.split('.')))):
+        parser.error("Use a positive compile SDK and a numeric build-tools version such as 37.0.0")
+    if not args.legacy_multiplatform_only and (args.compile_sdk != 35 or args.build_tools):
+        parser.error("--compile-sdk and --build-tools apply only to --legacy-multiplatform-only")
     temporary = tempfile.TemporaryDirectory(prefix="koda-model-") if args.keep is None else None
     root = (args.keep or Path(temporary.name)).resolve()
     root.mkdir(parents=True, exist_ok=True)
     if args.defaults_only:
         check_default_variants(root, args.agp, args.sdk, args.gradle)
         return
-    fixture(root, args.agp)
-    write(root, "local.properties", f"sdk.dir={Path(args.sdk).resolve()}\n")
+    if not args.legacy_multiplatform_only:
+        fixture(root, args.agp)
+        write(root, "local.properties", f"sdk.dir={Path(args.sdk).resolve()}\n")
     subprocess.run(["cargo", "build", "--locked", "-p", "android_tools", "--example", "project_model_probe"], cwd=REPOSITORY, check=True)
     metadata = json.loads(subprocess.check_output(["cargo", "metadata", "--no-deps", "--format-version", "1"], cwd=REPOSITORY))
     probe = Path(metadata["target_directory"]) / "debug/examples/project_model_probe"
+    if args.legacy_multiplatform_only:
+        check_legacy_multiplatform(root, args.agp, args.sdk, args.gradle, probe, args.compile_sdk, args.build_tools)
+        return
     if args.multiplatform_only:
         check_multiplatform(root, args.agp, args.sdk, args.gradle, probe)
         return

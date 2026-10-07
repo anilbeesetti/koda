@@ -19,7 +19,7 @@ import time
 REPOSITORY = Path(__file__).resolve().parent.parent
 DEPENDENCIES = Path(os.environ.get("KODA_TOOL_DEPENDENCIES", REPOSITORY / "target/android-ide/dependencies"))
 OFFICIAL_VERSION = "263.4702.0"
-OFFICIAL_REVISION = OFFICIAL_VERSION + "+android-7"
+OFFICIAL_REVISION = OFFICIAL_VERSION + "+android-8"
 OFFICIAL_SHA256 = "95da3fc6d3b9092c7616345044a05edb85e5408dc648d081e4e433595c892bec"
 OFFICIAL_ARCHIVE = f"kotlin-server-{OFFICIAL_VERSION}-aarch64.sit"
 OFFICIAL_URL = f"https://download.jetbrains.com/language-server/kotlin-server/{OFFICIAL_VERSION}/{OFFICIAL_ARCHIVE}"

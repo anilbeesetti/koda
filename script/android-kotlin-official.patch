@@ -823,7 +823,7 @@
                  listOfNotNull(mainComponent.name.takeIf { it != name }),
          /* hasUnresolvedDependencies = */false,
          /* javaSettings = */ javaSettings,
-@@ -105,3 +114,64 @@
+@@ -105,3 +114,66 @@
      val instance = reflected.instance as? Task ?: return null
      return KotlinMetadataModelBuilder.readCompilerSettings(instance)
 -}
@@ -887,6 +887,8 @@
 +        it.reflected.call("getCompilations")?.unwrapAs<Iterable<*>>()?.filterNotNull()
 +            ?: throw GradleException("Cannot read Android Kotlin compilations in $path; sync Koda again")
 +    }.map { KotlinCompilationReflection(this, it.reflected) }
-+    return compilations.singleOrNull { it.androidSourceSetName() == component }
-+        ?: throw GradleException("Cannot uniquely map Android Kotlin component $component in $path; sync Koda again")
++    val matches = compilations.filter { it.androidSourceSetName() == component }
++    if (matches.size > 1) throw GradleException("Cannot uniquely map Android Kotlin component $component in $path; sync Koda again")
++    // A Java-only Android test-fixtures component has no Kotlin compilation.
++    return matches.singleOrNull()
 +}

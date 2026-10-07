@@ -17,7 +17,7 @@ Report issues to: [https://github.com/zed-extensions/kotlin/issues](https://gith
 [Kotlin LSP](https://github.com/kotlin/kotlin-lsp) is the official language server for Kotlin, built by JetBrains.
 
 On Apple Silicon macOS, Koda selects its pinned Kotlin server with Android patches
-(`263.4702.0+android-7`) instead of the extension's server download. If the managed
+(`263.4702.0+android-8`) instead of the extension's server download. If the managed
 runtime is missing or needs repair, open {#action android::Setup}, choose
 **Customize**, expand **Advanced tools**, and choose Kotlin **Install / repair**.
 The installer currently requires Python 3.12+ and Apple's Command Line Tools.
@@ -30,11 +30,13 @@ previews use the Java 21 selected in setup. Server caches are isolated by Koda
 profile and project.
 
 The patched Android importer includes the Android target of Kotlin Multiplatform
-modules, including `com.android.kotlin.multiplatform.library`. It imports the
-selected Android compilation and its common sources; this does not add IDE
-support for the project's other targets. After upgrading from an older patched
-runtime, use Kotlin **Install / repair** in **Advanced tools**, sync the project,
-and restart its language server.
+modules using `com.android.kotlin.multiplatform.library` or `com.android.library`
+with `androidTarget()`. It imports the selected Android compilation and its
+common sources; this does not add IDE support for the project's other targets.
+Common and Android `expect`/`actual` declarations can still produce overload
+ambiguity diagnostics. After upgrading from an older patched runtime, use Kotlin
+**Install / repair** in **Advanced tools**, sync the project, and restart its
+language server.
 
 On other platforms, the Kotlin extension still downloads and updates its default
 server. Koda's patched runtime installer currently supports Apple Silicon macOS
