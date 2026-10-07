@@ -2011,7 +2011,7 @@ abstract class Outer : InheritedSuite() {
     fn physical_extension_headers_and_resolved_names_are_both_retained() -> Result<()> {
         let directory = tempfile::tempdir()?;
         let output = tempfile::tempdir()?;
-        let long_path = format!("tests/{}/LongTest.kt", "nested/".repeat(30));
+        let long_path = format!("tests/{}LongTest.kt", "nested/".repeat(30));
         let source = fixture_archive(
             directory.path(),
             &[(long_path.as_str(), b"class LongTest { fun testLong() {} }")],
