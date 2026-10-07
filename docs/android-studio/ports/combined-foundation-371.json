@@ -318,6 +318,11 @@
     "docs/android-studio/ports/project-tree-facts.json",
     "docs/android-studio/ports/icon-integrity.json",
     "docs/android-studio/ports/java-class-facts.json",
-    "docs/android-studio/ports/reference-census.json"
-  ]
+    "docs/android-studio/ports/reference-census-task-report.json"
+  ],
+  "metadata_correction": {
+    "problem": "Final review list used nonexistent reference-census.json instead of reference-census-task-report.json",
+    "scope": "One report link only; product/tests/fixtures unchanged",
+    "validation": "Final JSON/report/source guard rerun before push; first failed check retained"
+  }
 }
