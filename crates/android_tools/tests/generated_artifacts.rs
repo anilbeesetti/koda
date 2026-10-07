@@ -145,7 +145,7 @@ fn classpaths_use_model_or_exact_legacy_agp_boundary() -> Result<()> {
         (8, 8, "8.2.0-beta01", true),
         (8, 8, "8.2.0-rc01", true),
         (8, 8, "8.2.0", true),
-        (8, 8, "8.2.0-dev", false),
+        (8, 8, "8.2.0-dev", true),
         (8, 9, "1.0.0", true),
         (9, 0, "1.0.0", true),
         (i32::MIN, i32::MIN, "8.2.0-alpha07", true),
@@ -156,6 +156,77 @@ fn classpaths_use_model_or_exact_legacy_agp_boundary() -> Result<()> {
             versions(major, minor, agp).supports(GeneratedArtifactFeature::ClassPaths)?,
             supported,
             "producer {major}.{minor}, AGP {agp}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn classpath_dev_versions_follow_pinned_preview_ordering() -> Result<()> {
+    for (agp, supported) in [
+        ("8.1.0-dev", false),
+        ("8.2.0-alpha06", false),
+        ("8.2.0-alpha07", true),
+        ("8.2.0-beta01", true),
+        ("8.2.0-rc01", true),
+        ("8.2.0-dev", true),
+        ("8.2.0", true),
+    ] {
+        assert_eq!(
+            versions(i32::MIN, i32::MIN, agp).supports(GeneratedArtifactFeature::ClassPaths)?,
+            supported,
+            "AGP {agp}"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn agp_versions_preserve_pinned_numeric_limits_and_historical_preview_padding() -> Result<()> {
+    for agp in [
+        "0.0.0",
+        "2147483647.2147483647.2147483647",
+        "3.0.0-alpha1",
+        "3.0.0-beta12",
+        "3.0.0-rc1",
+        "3.1.0-alpha01",
+        "3.1.0-beta1",
+        "3.1.0-rc01",
+        "3.1.1-alpha1",
+        "3.2.0-beta01",
+        "8.2.0-alpha07",
+        "8.2.0-beta00",
+        "8.2.0-dev",
+        "8.2.0",
+    ] {
+        assert!(
+            versions(23, 0, agp).supports(GeneratedArtifactFeature::ClassPaths)?,
+            "Valid pinned AGP spelling {agp}"
+        );
+    }
+    for agp in [
+        "08.2.0",
+        "8.02.0",
+        "8.2.00",
+        "2147483648.0.0",
+        "8.2147483648.0",
+        "8.2.2147483648",
+        "8.2.0-alpha7",
+        "8.2.0-alpha0007",
+        "8.2.0-alpha100",
+        "3.0.0-alpha01",
+        "3.0.0-alpha0",
+        "3.1.0-beta01",
+        "3.1.0-alpha1",
+        "3.1.1-alpha01",
+    ] {
+        assert_eq!(
+            versions(23, 0, agp)
+                .supports(GeneratedArtifactFeature::ClassPaths)
+                .unwrap_err()
+                .reason,
+            FactsUnavailableReason::Malformed,
+            "Invalid pinned AGP spelling {agp}"
         );
     }
     Ok(())
