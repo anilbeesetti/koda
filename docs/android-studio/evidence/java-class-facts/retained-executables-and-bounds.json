@@ -1,0 +1,89 @@
+{
+  "source_commit": "b0f340dc4e00268705eac00521e26c21b23d7ebd",
+  "executable_case_count": 29,
+  "executables": [
+    {
+      "target": "android_tools",
+      "cargo_executable": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "retained_executable": "/workspace/android-studio-java-class-facts/target/cloud-tests/java-class-facts/android_tools",
+      "bytes": 302694528,
+      "sha256": "376deb6b71d012926b49fa7789b2ec81603d50026bab884ab4bab297523a1da3",
+      "inode": 1074001
+    },
+    {
+      "target": "project_view_preferences_reference",
+      "cargo_executable": "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394",
+      "retained_executable": "/workspace/android-studio-java-class-facts/target/cloud-tests/java-class-facts/project_view_preferences_reference",
+      "bytes": 2562600,
+      "sha256": "9bac80ac1d55516fa5d211c861b370a96636c46bea949198a939528638f084cc",
+      "inode": 1074513
+    },
+    {
+      "target": "project_tree_component",
+      "cargo_executable": "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950",
+      "retained_executable": "/workspace/android-studio-java-class-facts/target/cloud-tests/java-class-facts/project_tree_component",
+      "bytes": 3854816,
+      "sha256": "5dc993f09903637b229fd6246f93321d6f02aa4252c9b9e6c65a32dd89353411",
+      "inode": 1073704
+    },
+    {
+      "target": "gradle_import_reference",
+      "cargo_executable": "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5",
+      "retained_executable": "/workspace/android-studio-java-class-facts/target/cloud-tests/java-class-facts/gradle_import_reference",
+      "bytes": 2937296,
+      "sha256": "11981ae04091128cf74aadbf5a8145c94b0f8c51557efe59eda35b1fcd731aa2",
+      "inode": 1073672
+    }
+  ],
+  "bounded_input_test_runs": [
+    {
+      "command": [
+        "/workspace/android-studio-java-class-facts/target/cloud-tests/java-class-facts/android_tools",
+        "--exact",
+        "java_class_facts::tests::source_size_limit_is_checked_before_utf8_or_tokenization",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.128575,
+      "user_cpu_seconds": 0.122041,
+      "system_cpu_seconds": 0.003978,
+      "max_rss_kib": 13272,
+      "major_page_faults": 0,
+      "minor_page_faults": 2480,
+      "label": "bounded-source"
+    },
+    {
+      "command": [
+        "/workspace/android-studio-java-class-facts/target/cloud-tests/java-class-facts/android_tools",
+        "--exact",
+        "java_class_facts::tests::large_multiple_declaration_inputs_keep_the_last_actual_navigation_target",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.022091,
+      "user_cpu_seconds": 0.015125,
+      "system_cpu_seconds": 0.0034579999999999997,
+      "max_rss_kib": 9216,
+      "major_page_faults": 0,
+      "minor_page_faults": 689,
+      "label": "many-declarations"
+    }
+  ],
+  "measurement_tool": "Python resource.getrusage(RUSAGE_CHILDREN), fresh wrapper process per Rust test child; Linux ru_maxrss is KiB",
+  "initial_measurement_attempt": {
+    "command": [
+      "/usr/bin/time",
+      "-v",
+      "/workspace/android-studio-java-class-facts/target/cloud-tests/java-class-facts/android_tools",
+      "--exact",
+      "java_class_facts::tests::source_size_limit_is_checked_before_utf8_or_tokenization",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "status": "not_run",
+    "reason": "/usr/bin/time is not installed; failure occurred before any test launch; replaced with per-child Python resource statistics"
+  },
+  "scope": "Actual parser API regressions under frozen b0f340 source test executable. Timings/RSS include Rust test-process setup and fixture construction in a shared cloud environment; no isolated parser throughput, app startup, UI responsiveness or hardware performance claim."
+}
