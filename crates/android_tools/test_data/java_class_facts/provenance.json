@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "reference_repository": "https://android.googlesource.com/platform/tools/adt/idea",
+  "reference_revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+  "suite": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+  "method": "testGeneratedSourceFiles_lightClasses",
+  "suite_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+  "fixture": "BuildConfig.java",
+  "fixture_sha256": "425c4701302c5615019f86b12663a241a40e63d129b0f653cb4bdf52bce7e3e2",
+  "fixture_bytes": 58,
+  "preservation": "Exact inline Java source, no added newline. The full Gradle/model/refresh/UI case remains unported.",
+  "license": "Apache-2.0",
+  "license_file": "../project_tree/LICENSE-APACHE"
+}

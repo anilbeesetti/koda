@@ -1,4 +1,5 @@
 pub mod gradle_import;
+pub mod java_class_facts;
 pub mod logcat;
 pub mod preview;
 pub mod project_model;

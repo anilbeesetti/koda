@@ -1,0 +1,1 @@
+package com.application; public final class BuildConfig {}
