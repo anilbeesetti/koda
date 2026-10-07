@@ -2,6 +2,7 @@ pub mod gradle_import;
 pub mod logcat;
 pub mod preview;
 pub mod project_model;
+pub mod project_tree;
 pub mod project_view_preferences;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
