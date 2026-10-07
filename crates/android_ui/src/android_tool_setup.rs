@@ -892,7 +892,7 @@ impl SetupWizard {
                             .child(v_flex().flex_1().min_w_0().gap_1().child(Label::new("Android SDK")).child(Label::new(format!("Platform {} · Build and device tools", self.api_level)).size(LabelSize::Small).color(Color::Muted)))
                             .child(Label::new(if sdk_bytes > 0 { format_bytes(sdk_bytes) } else { "Installed".into() }).color(if sdk_bytes > 0 { Color::Muted } else { Color::Success }))))
                         .child(ui::Divider::horizontal())
-                        .child(Label::new(if plan.download_bytes > 0 { format!("Download size: {}", format_bytes(plan.download_bytes)) } else { "No downloads needed".into() }).color(Color::Muted)))
+                        .child(Label::new(if plan.download_bytes > 0 { format!("Java / SDK download size: {}", format_bytes(plan.download_bytes)) } else { "No Java / SDK downloads needed".into() }).color(Color::Muted)))
                     .child(h_flex().items_start().child(div().debug_selector(|| "android-setup-summary-details-control".into()).child(self.focus_row("reveal-android-setup-download-details", setup_button("android-setup-download-details", if self.show_details { "Hide details" } else { "Details" }, cx).disabled(disabled).tab_index(0isize)
                         .end_icon(Icon::new(if self.show_details { IconName::ChevronUp } else { IconName::ChevronDown }).size(IconSize::Small))
                         .on_click(cx.listener(|wizard, _, _, cx| { wizard.show_details = !wizard.show_details; cx.notify(); })), cx))))
