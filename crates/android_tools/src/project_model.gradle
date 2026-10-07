@@ -279,6 +279,82 @@ gradle.projectsEvaluated {
                 detail: failure.class.name + ': ' + (failure.message ?: 'Tooling model capture failed')]]
         }
     }
+    def generatedArtifacts = { project ->
+        def required = { object, name ->
+            if (object == null || !object.hasProperty(name)) {
+                throw new UnsupportedOperationException('Missing tooling-model property ' + name)
+            }
+            object."$name"
+        }
+        def captured = { capability, action ->
+            try {
+                [status: 'available', value: action()]
+            } catch (Exception failure) {
+                [status: 'unavailable', value: [capability: capability,
+                    detail: failure.class.name + ': ' + (failure.message ?: 'Tooling-model getter failed')]]
+            }
+        }
+        def query = { name ->
+            def registry = project.services.get(org.gradle.tooling.provider.model.ToolingModelBuilderRegistry)
+            registry.getBuilder(name).buildAll(name, project)
+        }
+        def version = { value ->
+            [major: required(value, 'major'), minor: required(value, 'minor'),
+             description: required(value, 'humanReadable')]
+        }
+        def versions = captured('com.android.builder.model.v2.models.Versions') {
+            def model = query('com.android.builder.model.v2.models.Versions')
+            def values = required(model, 'versions')
+            if (!(values instanceof Map)) throw new UnsupportedOperationException('Versions map is null or has an unsupported type')
+            [agp: required(model, 'agp'), producer: version(values['model_producer']),
+             minimumConsumer: captured('Versions.minimum_model_consumer') { version(values['minimum_model_consumer']) },
+             models: values.collect { name, value -> [name: name, version: version(value)] }]
+        }
+        def collection = { value ->
+            if (!(value instanceof Collection)) throw new UnsupportedOperationException('Tooling-model collection is null or has an unsupported type')
+            value
+        }
+        def entries = { value ->
+            if (!(value instanceof Map)) throw new UnsupportedOperationException('Tooling-model map is null or has an unsupported type')
+            value
+        }
+        def paths = { files -> collection(files).collect { file -> file.canonicalPath } }
+        def artifact = { value, kind ->
+            if (value == null) return [status: 'absent']
+            def field = { name, transform -> captured('AndroidProject.' + name) { transform(required(value, name)) } }
+            def androidField = { name, transform -> kind == 'android' ? field(name, transform) :
+                [status: 'notApplicable', value: 'JavaArtifact does not declare ' + name] }
+            [status: 'present', value: [kind: kind,
+             generatedSourceFolders: field('generatedSourceFolders', paths),
+             generatedResourceFolders: androidField('generatedResourceFolders', paths),
+             generatedAssetsFolders: androidField('generatedAssetsFolders', paths),
+             generatedClassPaths: field('generatedClassPaths', { values -> entries(values).collect { name, file ->
+                 [name: name, path: file.canonicalPath]
+             } }),
+             classesFolders: field('classesFolders', paths),
+             ideSetupTaskNames: field('ideSetupTaskNames', { values -> collection(values).collect { it } }),
+             sourceGenTaskName: androidField('sourceGenTaskName', { it }),
+             resGenTaskName: androidField('resGenTaskName', { it })]]
+        }
+        [module: project.path, directory: project.projectDir.canonicalPath, versions: versions,
+         buildFolder: captured('BasicAndroidProject.buildFolder') {
+             required(query('com.android.builder.model.v2.models.BasicAndroidProject'), 'buildFolder').canonicalPath
+         },
+         variants: captured('com.android.builder.model.v2.models.AndroidProject.variants') {
+             def model = query('com.android.builder.model.v2.models.AndroidProject')
+             collection(required(model, 'variants')).collect { value ->
+                 [name: required(value, 'name'),
+                  main: captured('Variant.mainArtifact') { artifact(required(value, 'mainArtifact'), 'android') },
+                  hostTests: captured('Variant.hostTestArtifacts') { entries(required(value, 'hostTestArtifacts')).collect { name, entry ->
+                      [artifact: name, value: artifact(entry, 'java')]
+                  } },
+                  deviceTests: captured('Variant.deviceTestArtifacts') { entries(required(value, 'deviceTestArtifacts')).collect { name, entry ->
+                      [artifact: name, value: artifact(entry, 'android')]
+                  } },
+                  fixtures: captured('Variant.testFixturesArtifact') { artifact(required(value, 'testFixturesArtifact'), 'android') }]
+             }
+         }]
+    }
     def defaultVariantSelection = { project, variants ->
         def multiplatform = multiplatformPaths.contains(project.path)
         def android = multiplatform ? null : project.extensions.getByName('android')
@@ -296,6 +372,7 @@ gradle.projectsEvaluated {
     }
     // Under parallel execution Gradle holds the task owner's project lock only.
     // Collect each module there, then aggregate plain data without resolving foreign configurations.
+    def artifactModels = new java.util.concurrent.ConcurrentHashMap()
     def models = new java.util.concurrent.ConcurrentHashMap()
     def collectors = []
     androidVariants.each { path, variants ->
@@ -314,6 +391,7 @@ gradle.projectsEvaluated {
                 }
             }
             doLast {
+                artifactModels[path] = generatedArtifacts(project)
                 def catalog = sourceProviders(project)
                 // Canonicalize configured paths once per module, not per variant/test component.
                 def declaredAssetPaths = catalog == null ? null : catalog.providers.collectMany { provider ->
@@ -386,7 +464,8 @@ gradle.projectsEvaluated {
             modules.findAll { it.evaluatedProviders?.status == 'available' && it.evaluatedProviders.value.nativeMembership == null }.each { module ->
                 diagnostics.add('Native provider membership is unavailable for ' + module.path + '; Studio ordering remains a separate captured capability.')
             }
-            println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics]))
+            println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics,
+                generatedArtifacts: [schema: 1, root: root.projectDir.canonicalPath, modules: modules.findAll { it.kind != 'jvm' }.collect { artifactModels[it.path] }]]))
         }
     }
 }
