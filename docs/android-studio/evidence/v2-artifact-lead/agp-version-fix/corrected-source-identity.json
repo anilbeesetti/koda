@@ -1,0 +1,25 @@
+{
+  "tested_source_pending": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "fix_round": 3,
+  "scope": "Pinned AGP decoder ordering/parser correction; all prior tests preserved except explicitly documented wrong supplemental DEV expectation corrected to true, with two additional tests.",
+  "source_bindings": [
+    {
+      "path": "crates/android_tools/src/generated_artifacts.rs",
+      "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52"
+    },
+    {
+      "path": "crates/android_tools/tests/generated_artifacts.rs",
+      "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
+    },
+    {
+      "path": "crates/android_tools/test_data/generated_artifacts/AgpVersion.kt",
+      "sha256": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb"
+    },
+    {
+      "path": "crates/android_tools/test_data/generated_artifacts/AGP-VERSION-NOTICE.md",
+      "sha256": "8433d749e6d56e4e16df936c1086210342deb077eac7d0c5fce83b698933d794"
+    }
+  ],
+  "new_supplemental_count": 2,
+  "prior_229_actual_runs_preserved_but_not_current_source_credit": true
+}

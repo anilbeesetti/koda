@@ -1,0 +1,7 @@
+{
+  "prior_runner_sha256": "f473ee7d4ecdd3ed98502989adbf46236b0ca52dbb46e530655ca092eea351fb",
+  "current_runner_sha256": "925c32e39c8faa936293ddbb35c010f53eb8462882a2b256d076477f0185d080",
+  "only_output_artifact_directory_changed": true,
+  "no_code_flags_assertions_or_expected_test_count_changed": true,
+  "first_failed_attempt_retained": true
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "tested_source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "exact_source_scope": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "files_verified": 4712,
+  "all_source_index_worktree_untracked_hash_guards": "PASS",
+  "independently_reviewed_payload_files": 107,
+  "independently_reviewed_manifest_sha256": "95201d0f9ee0e796c6ff82d5fe35716ebbeeb2447adbd990b3534bb2fbe7024f",
+  "additional_root_metadata": [
+    "preserved_reviewed_manifest",
+    "independent_quality_reports",
+    "this_source_equivalence_receipt"
+  ],
+  "main_commit": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+  "main_worktree": "clean unchanged",
+  "protected_premerge": "ed7040f650a01d31eb32eac68a623ce45b7a77e8",
+  "CI_source_and_synthetic_tree_equal": true,
+  "no_product_test_or_fixture_change": true,
+  "ordinary_commit_push_merge_pending": true
+}
