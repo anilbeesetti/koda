@@ -1,0 +1,925 @@
+{
+  "schema_version": 1,
+  "task": "1-project-view-policy",
+  "branch": "android-studio-task/1-project-view-policy",
+  "completion_status": "blocked",
+  "scope": "Backend-only Android view availability/default/visibility preferences, persistence, legacy migration and local change events; no Android logical tree or GPUI controls installed.",
+  "adaptations": [
+    "IntelliJ project/IDE services and Studio flag overrides are explicit Rust inputs.",
+    "JVM System properties and options-directory lookup are supplied launcher-resolved configuration; clearing updates that configuration object.",
+    "Application settings XML becomes a narrow standalone JSON preference backend with fallible load/save; the product adapter must persist state before reporting migration durable.",
+    "Notification balloons and UsageTracker/protobuf events become typed return values for local caller delivery; no network messages or telemetry.",
+    "Legacy Java properties migration retains unrelated configuration bytes/comments/line endings and removes all equivalent escaped/continued property entries. This strengthens preservation over Properties.store without changing any original assertion.",
+    "VM-options comparison remains case-sensitive true with last value winning, and all matching custom options are removed. The Rust backend reports removal only when a custom entry was actually removed."
+  ],
+  "remaining_product_wiring": [
+    "project_panel Android/filesystem view selector and explicit backend capability input, after Android logical tree exists",
+    "Existing settings service adapter: persist the true filesystem-view preference before legacy cleanup; provide retry/recovery or rollback when persistence fails",
+    "Run filesystem reads/atomic writes on the background executor; marshal typed results to the foreground without blocking GPUI",
+    "Publish local change events and GPUI information notifications only after preference durability; clear the shared launcher-resolved legacy configuration once",
+    "Node visibility icon rendering using the backend preference"
+  ],
+  "reference_sources": [
+    {
+      "path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewTest.java",
+      "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "source_path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "preservation": "Unchanged original bytes, including copyright/license header"
+    },
+    {
+      "path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewPane.java",
+      "sha256": "b48e40148e50ef8181985b042fea4a443c02e6435fe8ad469a9d2faa149c899b",
+      "source_path": "android-navigator/src/com/android/tools/idea/navigator/AndroidProjectViewPane.java",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/android-navigator/src/com/android/tools/idea/navigator/AndroidProjectViewPane.java",
+      "preservation": "Unchanged original bytes, including copyright/license header"
+    },
+    {
+      "path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewSettings.kt",
+      "sha256": "da5c27a8dbd12cf1aac96b310bad4c2ab17cba62c807e5ae0a7412ac98553051",
+      "source_path": "project-system-gradle/src/com/android/tools/idea/gradle/projectView/AndroidProjectViewSettings.kt",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/src/com/android/tools/idea/gradle/projectView/AndroidProjectViewSettings.kt",
+      "preservation": "Unchanged original bytes, including copyright/license header"
+    },
+    {
+      "path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewSettingsImpl.kt",
+      "sha256": "365f0ab95b5e34c4f778778deddc6b33c84f932154e76472f123fdb9f6ec2013",
+      "source_path": "project-system-gradle/src/com/android/tools/idea/gradle/projectView/AndroidProjectViewSettingsImpl.kt",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/src/com/android/tools/idea/gradle/projectView/AndroidProjectViewSettingsImpl.kt",
+      "preservation": "Unchanged original bytes, including copyright/license header"
+    },
+    {
+      "path": "crates/android_tools/test_data/project_view_preferences/VMOptions.java",
+      "sha256": "1912cf74d84f9c841de5b0eff2930445dcbeeb561685b568a96591e79d8fd487",
+      "source_path": "platform/platform-impl/src/com/intellij/diagnostic/VMOptions.java",
+      "source_commit": "1141b43139d42a022d3b9f6d15e9d0b445bd302f",
+      "source_url": "https://android.googlesource.com/platform/tools/idea/+/1141b43139d42a022d3b9f6d15e9d0b445bd302f/platform/platform-impl/src/com/intellij/diagnostic/VMOptions.java",
+      "preservation": "Unchanged original bytes, including copyright/license header"
+    }
+  ],
+  "tests": [
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+      "reference_test": "testShowVisibilityIconsWhenOptionIsSelected",
+      "status": "adapted",
+      "execution_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_show_visibility_icons_when_option_is_selected",
+      "assertions": [
+        {
+          "reference_line": 249,
+          "reference_statement": "assertThat(((ProjectViewSettings)structure).isShowVisibilityIcons()).isTrue();",
+          "rust_line": 55,
+          "rust_assertion_start": "assert!(preferences.show_visibility_icons());"
+        }
+      ],
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_show_visibility_icons_when_option_is_selected",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_show_visibility_icons_when_option_is_selected",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/project-view-policy-testShowVisibilityIconsWhenOptionIsSelected.log",
+              "sha256": "1246dde3ec289f339e269f089c28e3881e76f44a9e8c4622893bb446a55a3184"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+      "reference_test": "testShowVisibilityIconsWhenOptionIsUnselected",
+      "status": "adapted",
+      "execution_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_show_visibility_icons_when_option_is_unselected",
+      "assertions": [
+        {
+          "reference_line": 259,
+          "reference_statement": "assertThat(((ProjectViewSettings)structure).isShowVisibilityIcons()).isFalse();",
+          "rust_line": 62,
+          "rust_assertion_start": "assert!(!preferences.show_visibility_icons());"
+        }
+      ],
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_show_visibility_icons_when_option_is_unselected",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_show_visibility_icons_when_option_is_unselected",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/project-view-policy-testShowVisibilityIconsWhenOptionIsUnselected.log",
+              "sha256": "0ad1c2851bdd33aacea42fe066212765dac4000f49df17212d3e310026869ffc"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+      "reference_test": "testAndroidViewIsDefault",
+      "status": "adapted",
+      "execution_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default",
+      "assertions": [
+        {
+          "reference_line": 305,
+          "reference_statement": "assertThat(myPane.isInitiallyVisible()).isTrue();",
+          "rust_line": 70,
+          "rust_assertion_start": "assert!(ANDROID.is_android_view_visible());"
+        },
+        {
+          "reference_line": 308,
+          "reference_statement": "assertThat(settings.isDefaultToProjectViewVisible()).isFalse();",
+          "rust_line": 71,
+          "rust_assertion_start": "assert!(!ProjectViewPreferences::is_default_to_project_view_visible("
+        },
+        {
+          "reference_line": 311,
+          "reference_statement": "assertThat(settings.isDefaultToProjectViewVisible()).isTrue();",
+          "rust_line": 74,
+          "rust_assertion_start": "assert!(ProjectViewPreferences::is_default_to_project_view_visible("
+        },
+        {
+          "reference_line": 314,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault\").isFalse();",
+          "rust_line": 77,
+          "rust_assertion_start": "assert!(!default_pane(&mut preferences, IdeIdentity::Other, &mut legacy).is_default);"
+        },
+        {
+          "reference_line": 318,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isTrue();",
+          "rust_line": 78,
+          "rust_assertion_start": "assert!(default_pane(&mut preferences, IdeIdentity::AndroidStudio, &mut legacy).is_default);"
+        },
+        {
+          "reference_line": 322,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(GameTools)\").isTrue();",
+          "rust_line": 79,
+          "rust_assertion_start": "assert!(default_pane(&mut preferences, IdeIdentity::GameTools, &mut legacy).is_default);"
+        },
+        {
+          "reference_line": 326,
+          "reference_statement": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();",
+          "rust_line": 82,
+          "rust_assertion_start": "assert!(ProjectViewPreferences::is_default_to_project_view_enabled("
+        },
+        {
+          "reference_line": 329,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(property)\").isFalse();",
+          "rust_line": 85,
+          "rust_assertion_start": "assert!(!default_pane(&mut preferences, IdeIdentity::Other, &mut legacy).is_default);"
+        },
+        {
+          "reference_line": 333,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio, property)\").isFalse();",
+          "rust_line": 86,
+          "rust_assertion_start": "assert!(!default_pane(&mut preferences, IdeIdentity::AndroidStudio, &mut legacy).is_default);"
+        },
+        {
+          "reference_line": 337,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(GameTools, property)\").isFalse();",
+          "rust_line": 87,
+          "rust_assertion_start": "assert!(!default_pane(&mut preferences, IdeIdentity::GameTools, &mut legacy).is_default);"
+        },
+        {
+          "reference_line": 341,
+          "reference_statement": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();",
+          "rust_line": 91,
+          "rust_assertion_start": "assert!(ProjectViewPreferences::is_default_to_project_view_enabled("
+        },
+        {
+          "reference_line": 344,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(settings)\").isFalse();",
+          "rust_line": 94,
+          "rust_assertion_start": "assert!(!default_pane(&mut preferences, IdeIdentity::Other, &mut legacy).is_default);"
+        },
+        {
+          "reference_line": 348,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio, settings)\").isFalse();",
+          "rust_line": 95,
+          "rust_assertion_start": "assert!(!default_pane(&mut preferences, IdeIdentity::AndroidStudio, &mut legacy).is_default);"
+        },
+        {
+          "reference_line": 352,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(GameTools, settings)\").isFalse();",
+          "rust_line": 96,
+          "rust_assertion_start": "assert!(!default_pane(&mut preferences, IdeIdentity::GameTools, &mut legacy).is_default);"
+        }
+      ],
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/project-view-policy-testAndroidViewIsDefault.log",
+              "sha256": "076211868f7f96d5bc41e95a4d00b3844466f0c7d82bdd49d347f8a5d2fbcebd"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "reference_test": "testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "status": "adapted",
+      "execution_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_not_visible_in_unsupported_project_system",
+      "assertions": [
+        {
+          "reference_line": 374,
+          "reference_statement": "assertThat(myPane.isInitiallyVisible()).isFalse();",
+          "rust_line": 107,
+          "rust_assertion_start": "assert!(!capabilities.is_android_view_visible());"
+        },
+        {
+          "reference_line": 375,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault\").isFalse();",
+          "rust_line": 108,
+          "rust_assertion_start": "assert!("
+        }
+      ],
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_not_visible_in_unsupported_project_system",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_not_visible_in_unsupported_project_system",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/project-view-policy-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
+              "sha256": "b76b60749d55177cfab6427a8894436503a0819b7fc791928d825c0f3bf106f7"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+      "reference_test": "testAndroidViewNotVisibleInNonAndroidProject",
+      "status": "adapted",
+      "execution_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_not_visible_in_non_android_project",
+      "assertions": [
+        {
+          "reference_line": 396,
+          "reference_statement": "assertThat(myPane.isInitiallyVisible()).isFalse();",
+          "rust_line": 123,
+          "rust_assertion_start": "assert!(!capabilities.is_android_view_visible());"
+        },
+        {
+          "reference_line": 397,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault\").isFalse();",
+          "rust_line": 124,
+          "rust_assertion_start": "assert!("
+        }
+      ],
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_not_visible_in_non_android_project",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_not_visible_in_non_android_project",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/project-view-policy-testAndroidViewNotVisibleInNonAndroidProject.log",
+              "sha256": "e9e74b9f6148ce52a8cfad5d020ad514e3fc2d242767e567922783b3d4686503"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+      "reference_test": "testAndroidViewIsDefaultCustomPropertyHandling",
+      "status": "adapted",
+      "execution_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_custom_property_handling",
+      "assertions": [
+        {
+          "reference_line": 427,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();",
+          "rust_line": 139,
+          "rust_assertion_start": "assert!(!first.is_default);"
+        },
+        {
+          "reference_line": 428,
+          "reference_statement": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();",
+          "rust_line": 140,
+          "rust_assertion_start": "assert!(ProjectViewPreferences::is_default_to_project_view_enabled("
+        },
+        {
+          "reference_line": 429,
+          "reference_statement": "assertThat(settings.isProjectViewDefault()).isTrue();",
+          "rust_line": 143,
+          "rust_assertion_start": "assert!(preferences.is_project_view_default(true, &legacy));"
+        },
+        {
+          "reference_line": 430,
+          "reference_statement": "assertThat(java.lang.Boolean.getBoolean(PROJECT_VIEW_DEFAULT_KEY)).isFalse();",
+          "rust_line": 144,
+          "rust_assertion_start": "assert!(!legacy.is_project_view_property_true());"
+        },
+        {
+          "reference_line": 434,
+          "reference_statement": "verify(myMockNotification, times(1)).showBalloon(\"Default Project View Setting Updated\",\n                                                       \"'Set Project view as the default' advanced\" +\n                                                       \" setting was enabled due to the custom property `studio.projectview=true`. We recommend removing this property and using\" +\n                                                       \" 'Advanced Settings -> Project View -> Set Project view as the default` to configure the default project view.\",\n                                                       NotificationType.INFORMATION);",
+          "rust_line": 151,
+          "rust_assertion_start": "assert_eq!("
+        }
+      ],
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_custom_property_handling",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_custom_property_handling",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/project-view-policy-testAndroidViewIsDefaultCustomPropertyHandling.log",
+              "sha256": "39520b7a04fa4d74f00dc6fdca8f5fb7bc52d987912803ef1bab9f7c272658f3"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "reference_test": "testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "status": "adapted",
+      "execution_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+      "assertions": [
+        {
+          "reference_line": 476,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();",
+          "rust_line": 172,
+          "rust_assertion_start": "assert!(!decision.is_default);"
+        },
+        {
+          "reference_line": 477,
+          "reference_statement": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();",
+          "rust_line": 173,
+          "rust_assertion_start": "assert!(ProjectViewPreferences::is_default_to_project_view_enabled("
+        },
+        {
+          "reference_line": 478,
+          "reference_statement": "assertThat(settings.isProjectViewDefault()).isTrue();",
+          "rust_line": 176,
+          "rust_assertion_start": "assert!(preferences.is_project_view_default(true, &legacy));"
+        },
+        {
+          "reference_line": 479,
+          "reference_statement": "assertThat(java.lang.Boolean.getBoolean(PROJECT_VIEW_DEFAULT_KEY)).isFalse();",
+          "rust_line": 177,
+          "rust_assertion_start": "assert!(!legacy.is_project_view_property_true());"
+        },
+        {
+          "reference_line": 480,
+          "reference_statement": "verify(myMockNotification).showBalloon(\"Default Project View Setting Updated\", \"'Set Project view as the default' advanced\" +\n                                                                                     \" setting was enabled due to the custom property `studio.projectview=true`. This property has been removed from \" +\n                                                                                     ideaFile.getPath(), NotificationType.INFORMATION);",
+          "rust_line": 178,
+          "rust_assertion_start": "assert_eq!("
+        },
+        {
+          "reference_line": 483,
+          "reference_statement": "assertThat(java.nio.file.Files.readString(ideaFile.toPath())).doesNotContain(PROJECT_VIEW_DEFAULT_KEY + \"=true\");",
+          "rust_line": 185,
+          "rust_assertion_start": "assert!(!fs::read_to_string(&path)?.contains(&format!(\"{PROJECT_VIEW_DEFAULT_KEY}=true\")));"
+        }
+      ],
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/project-view-policy-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
+              "sha256": "fb5644267e8971b0921674d21da3452e0a4ee2590cbba66bc0b282678baaddbf"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "reference_test": "testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "status": "adapted",
+      "execution_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+      "assertions": [
+        {
+          "reference_line": 518,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();",
+          "rust_line": 202,
+          "rust_assertion_start": "assert!(!decision.is_default);"
+        },
+        {
+          "reference_line": 519,
+          "reference_statement": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();",
+          "rust_line": 203,
+          "rust_assertion_start": "assert!(ProjectViewPreferences::is_default_to_project_view_enabled("
+        },
+        {
+          "reference_line": 520,
+          "reference_statement": "assertThat(settings.isProjectViewDefault()).isTrue();",
+          "rust_line": 206,
+          "rust_assertion_start": "assert!(preferences.is_project_view_default(true, &legacy));"
+        },
+        {
+          "reference_line": 521,
+          "reference_statement": "assertThat(java.lang.Boolean.getBoolean(PROJECT_VIEW_DEFAULT_KEY)).isFalse();",
+          "rust_line": 207,
+          "rust_assertion_start": "assert!(!legacy.is_project_view_property_true());"
+        },
+        {
+          "reference_line": 522,
+          "reference_statement": "verify(myMockNotification).showBalloon(\"Default Project View Setting Updated\", \"'Set Project view as the default' advanced\" +\n                                                                                     \" setting was enabled due to the custom property `studio.projectview=true`. This property has been removed from custom VM options.\",\n                                             NotificationType.INFORMATION);",
+          "rust_line": 208,
+          "rust_assertion_start": "assert_eq!("
+        },
+        {
+          "reference_line": 525,
+          "reference_statement": "assertThat(java.nio.file.Files.readString(vmPropertiesFile.toPath())).doesNotContain(PROJECT_VIEW_DEFAULT_KEY + \"=true\");",
+          "rust_line": 214,
+          "rust_assertion_start": "assert!(!fs::read_to_string(&path)?.contains(&format!(\"{PROJECT_VIEW_DEFAULT_KEY}=true\")));"
+        }
+      ],
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/project-view-policy-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
+              "sha256": "ab7699d3c2fcc26de85cd66ad3ccc11a9759ba333d2cd8dbf723aa881260f803"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+      "reference_test": "testAndroidViewIsDefaultMetrics",
+      "status": "adapted",
+      "execution_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_metrics",
+      "assertions": [
+        {
+          "reference_line": 555,
+          "reference_statement": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();",
+          "rust_line": 228,
+          "rust_assertion_start": "assert!(ProjectViewPreferences::is_default_to_project_view_enabled("
+        },
+        {
+          "reference_line": 558,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isTrue();",
+          "rust_line": 231,
+          "rust_assertion_start": "assert!(default_pane(&mut preferences, IdeIdentity::AndroidStudio, &mut legacy).is_default);"
+        },
+        {
+          "reference_line": 561,
+          "reference_statement": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();",
+          "rust_line": 234,
+          "rust_assertion_start": "assert!(ProjectViewPreferences::is_default_to_project_view_enabled("
+        },
+        {
+          "reference_line": 564,
+          "reference_statement": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();",
+          "rust_line": 237,
+          "rust_assertion_start": "assert!(!default_pane(&mut preferences, IdeIdentity::AndroidStudio, &mut legacy).is_default);"
+        },
+        {
+          "reference_line": 573,
+          "reference_statement": "assertThat(statsEvents.size()).isEqualTo(2);",
+          "rust_line": 239,
+          "rust_assertion_start": "assert_eq!(events.len(), 2);"
+        },
+        {
+          "reference_line": 576,
+          "reference_statement": "assertThat(disableDefaultProjectViewEvent.getKind()).isEqualTo(AndroidStudioEvent.EventKind.PROJECT_VIEW_DEFAULT_VIEW_EVENT);",
+          "rust_line": 240,
+          "rust_assertion_start": "assert!(matches!("
+        },
+        {
+          "reference_line": 577,
+          "reference_statement": "assertThat(disableDefaultProjectViewEvent.getProjectViewDefaultViewEvent().getDefaultView()).isEqualTo(\n        ProjectViewDefaultViewEvent.DefaultView.ANDROID_VIEW);",
+          "rust_line": 244,
+          "rust_assertion_start": "assert_eq!("
+        },
+        {
+          "reference_line": 581,
+          "reference_statement": "assertThat(enableDefaultProjectViewEvent.getKind()).isEqualTo(AndroidStudioEvent.EventKind.PROJECT_VIEW_DEFAULT_VIEW_EVENT);",
+          "rust_line": 248,
+          "rust_assertion_start": "assert!(matches!("
+        },
+        {
+          "reference_line": 582,
+          "reference_statement": "assertThat(enableDefaultProjectViewEvent.getProjectViewDefaultViewEvent().getDefaultView()).isEqualTo(\n        ProjectViewDefaultViewEvent.DefaultView.PROJECT_VIEW);",
+          "rust_line": 252,
+          "rust_assertion_start": "assert_eq!("
+        }
+      ],
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_metrics",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_metrics",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/project-view-policy-testAndroidViewIsDefaultMetrics.log",
+              "sha256": "a5d7511197ac37df561b488293599aab51f4f3e2351c58117246a75f5cceb63e"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "unported_tree_tests": [
+    "testGeneratedSourceFiles_lightClasses",
+    "testGeneratedResources",
+    "testGeneratedAssets",
+    "testResourcesPropertiesInAndroidView",
+    "testGoogleServicesJsonInAndroidView"
+  ],
+  "validation": {
+    "all_features_tests": {
+      "status": "passing",
+      "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features"
+      ],
+      "exit_code": 0,
+      "log": "/workspace/android-studio-artifacts/project-view-policy/android-tools-final-all-features-tests.log",
+      "sha256": "d2aa1071f075bb2b6586a7d2db0a186baa60a0dcdfa0a73f9a72feae8db67741",
+      "source_module_sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+      "rust_reference_tests_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+      "results": {
+        "unit_passed": 50,
+        "integration_passed": 19,
+        "reference_methods": 9,
+        "original_assertions": 46,
+        "supplementary_integration_cases": 10,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "clippy": {
+      "status": "passing",
+      "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+      "command": ["./script/clippy", "--locked", "-p", "android_tools"],
+      "exit_code": 0,
+      "log": "/workspace/android-studio-artifacts/project-view-policy/clippy-immutable-source.log",
+      "sha256": "e745a2419c4d2fad00d695d3c80ae78d1f035b0d4b46b711d1ec3198816a4694",
+      "source_module_sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+      "rust_reference_tests_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+    },
+    "app_build_live": {
+      "status": "pending",
+      "reason": "Lead coordinates the full app/build/live smoke after integration under the shared Cargo lease and filesystem capacity limit. No task-owner app/live claim."
+    },
+    "full_workspace": {
+      "status": "pending",
+      "reason": "Hard lead merge gate on final integrated source; scoped unit/integration tests do not waive it."
+    },
+    "source_freeze": {
+      "status": "passing",
+      "commit": "77522a862e0448af951e42bd228f5c12598b7898",
+      "note": "All five scoped reviewers passed before source freeze; report/evidence will follow as metadata only."
+    },
+    "exact_reference_captures": {
+      "status": "passing",
+      "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+      "reference_methods": 9,
+      "source_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+      "module_sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+      "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+      "note": "Each manifest-bound command executes exactly one named Rust integration test with zero ignored and unchanged immutable source."
+    },
+    "formatting": {
+      "status": "passing",
+      "tested_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+      "command": ["cargo", "fmt", "--all", "--", "--check"],
+      "exit_code": 0,
+      "log": "/workspace/android-studio-artifacts/project-view-policy/fmt-immutable-source.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_module_sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+      "rust_reference_tests_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+    }
+  },
+  "reviews": {
+    "code": {
+      "verdict": "pass",
+      "agent": "/root/project_view_policy/code_review",
+      "fix_rounds": 1,
+      "finding": "Failed platform VM-options reads blocked a valid custom migration and warning used the wrong path.",
+      "fix": "Continue past per-file read failures, collect actual-path warnings, and retain the regression unreadable_platform_options_do_not_block_custom_options_migration.",
+      "scope": "Backend correctness and original assertion/source parity; no product UI claim.",
+      "final_source_confirmation": "pass: per-physical-line continuation parity/EOF/empty-line behavior reviewed after round2"
+    },
+    "ui": {
+      "verdict": "pass",
+      "agent": "/root/project_view_policy/ui_review",
+      "fix_rounds": 0,
+      "finding": null,
+      "scope": "UI-facing visibility/default/notification contracts and honest documentation of pending controls/rendering."
+    },
+    "ux": {
+      "verdict": "pass",
+      "agent": "/root/project_view_policy/ux_review",
+      "fix_rounds": 0,
+      "finding": null,
+      "scope": "Availability/identity/flags, migration once, exact notices, configuration preservation, ordered/idempotent events and persistence contract.",
+      "final_source_confirmation": "pass: migration spans and unrelated-byte retention reviewed after round2"
+    },
+    "performance": {
+      "verdict": "pass",
+      "agent": "/root/project_view_policy/performance_review",
+      "fix_rounds": 1,
+      "finding": "Counting trailing backslashes in the accumulated logical property entry caused quadratic work across a long series of continued lines.",
+      "fix": "Determine continuation from each physical line once, retaining the long_continued_property_migrates_without_changing_other_entries regression with10,000 continuation lines.",
+      "scope": "Static linear-time/linear-memory configuration parsing and constant-time hot-path review; no measured app startup/memory/rendering claim."
+    },
+    "quality": {
+      "verdict": "pass",
+      "agent": "/root/project_view_policy/quality_review",
+      "fix_rounds": 0,
+      "finding": null,
+      "scope": "Idiomatic Rust/error handling, original46/assertion mapping, source licensing/hash preservation, meaningful tests and formatting; no Cargo executed by reviewer.",
+      "source_confirmation": "pass on final19-test source; immutable tests/clippy subsequently passed"
+    }
+  },
+  "license": {
+    "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "source_url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+    "original_notices_retained": true
+  },
+  "fix_rounds": 2,
+  "source_commit": "77522a862e0448af951e42bd228f5c12598b7898",
+  "completion_blockers": [
+    "Lead combined full-app build/live smoke and full-workspace validation are hard merge gates; no task-owner app/live or full-suite pass is claimed."
+  ],
+  "durability_boundary": "The backend has fallible load/save and an in-memory migration decision, but no installed settings service. is_default_android_pane performs reference-compatible cleanup synchronously. Product wiring must persist before invoking cleanup, schedule file work off the UI thread, and publish after durability; this task does not claim that adapter exists.",
+  "scope_verification_status": "passing",
+  "no_canonical_ledger_claim": "Canonical reference-manifest.json and test-parity.json were not edited or CLI-validated on this task source. Lead must recapture old and new targets on final integrated source before claiming canonical passing status."
+}
