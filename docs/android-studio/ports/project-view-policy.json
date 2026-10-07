@@ -864,6 +864,20 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "source_module_sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
       "rust_reference_tests_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+    },
+    "diff_whitespace": {
+      "status": "passing_for_source_and_metadata",
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "5577738e0c",
+        "HEAD",
+        "--",
+        ".",
+        ":(exclude)docs/android-studio/evidence/*.log"
+      ],
+      "raw_evidence_note": "Unmodified captured Cargo stdout logs end with a terminal blank line. Broad default git diff --check flags blank-at-EOF in those nine logs. Captured bytes and SHA256 evidence remain intact. All other whitespace checks pass with git -c core.whitespace=-blank-at-eof diff --check 5577738e0c HEAD."
     }
   },
   "reviews": {
