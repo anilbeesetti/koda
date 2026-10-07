@@ -4,6 +4,7 @@ mod android_logcat;
 mod android_logcat_panel;
 mod android_preview;
 mod android_status;
+pub mod tabbed_toolbar;
 
 use android_build::{BuildEvent, BuildStatus, BuildTab, ProcessOutput};
 pub use android_build::{BuildPanel, ToggleBuild};
