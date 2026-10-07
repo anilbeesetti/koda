@@ -104,6 +104,114 @@ pub struct SourceProviderCatalog {
     pub providers: Vec<SourceProvider>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(tag = "status", content = "value", rename_all = "camelCase")]
+pub enum EvaluatedProviderMetadata {
+    Available(ProviderToolingModel),
+    Unavailable(ProviderMetadataUnavailable),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub struct ProviderMetadataUnavailable {
+    pub capability: String,
+    pub detail: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderToolingModel {
+    pub version: u32,
+    pub agp_version: String,
+    pub model_producer: ProviderModelVersion,
+    pub default_source_set: Option<ProviderContainer>,
+    pub build_types: Vec<ProviderDimension>,
+    pub product_flavors: Vec<ProviderDimension>,
+    pub variants: Vec<ProviderVariant>,
+    /// None means the tooling model did not expose suite definitions.
+    pub test_suites: Option<Vec<ProviderSuiteDefinition>>,
+    pub native_membership: Option<Vec<NativeProviderMembership>>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub struct ProviderModelVersion {
+    pub major: u32,
+    pub minor: u32,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderContainer {
+    pub main: Option<SourceProvider>,
+    pub host_tests: Vec<ArtifactSourceProvider>,
+    pub device_tests: Vec<ArtifactSourceProvider>,
+    pub fixtures: Option<SourceProvider>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub struct ArtifactSourceProvider {
+    pub artifact: String,
+    pub provider: SourceProvider,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub struct ProviderDimension {
+    /// Identity from the explicitly typed model container, never a directory name.
+    pub name: Option<String>,
+    pub container: ProviderContainer,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderArtifact {
+    pub multi_flavor: Option<SourceProvider>,
+    pub variant: Option<SourceProvider>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub struct NamedProviderArtifact {
+    pub artifact: String,
+    pub sources: ProviderArtifact,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProviderVariant {
+    pub name: String,
+    pub build_type: Option<String>,
+    pub product_flavors: Vec<String>,
+    pub main: ProviderArtifact,
+    pub host_tests: Vec<NamedProviderArtifact>,
+    pub device_tests: Vec<NamedProviderArtifact>,
+    pub fixtures: Option<ProviderArtifact>,
+    pub test_suites: Option<Vec<String>>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+pub struct ProviderSuiteDefinition {
+    pub name: String,
+    /// A known suite with an unsupported source model remains explicit.
+    pub providers: Option<Vec<SourceProvider>>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NativeProviderMembership {
+    pub variant: String,
+    pub component: String,
+    pub artifact: String,
+    pub order: NativeProviderOrder,
+    /// This is AGP's increasing-precedence order, which reverses flavors.
+    /// Missing capability stays unknown, rather than becoming an empty list.
+    pub providers: Option<Vec<String>>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum NativeProviderOrder {
+    /// The native SourcesImpl getter, not Studio's provider collector.
+    AgpSourceProviderNames,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SourceRoot {
@@ -150,6 +258,8 @@ pub struct Module {
     /// Evaluated Android DSL facts. Missing legacy or unsupported metadata stays unknown.
     #[serde(default)]
     pub source_providers: Option<SourceProviderCatalog>,
+    #[serde(default)]
+    pub evaluated_providers: Option<EvaluatedProviderMetadata>,
     pub variants: Vec<Variant>,
 }
 
@@ -205,6 +315,8 @@ struct ExportedModule {
     default_variant: Option<String>,
     #[serde(default)]
     source_providers: Option<SourceProviderCatalog>,
+    #[serde(default)]
+    evaluated_providers: Option<EvaluatedProviderMetadata>,
     variants: Vec<Variant>,
     #[serde(default)]
     default_variant_selection: Option<DefaultVariantSelection>,
@@ -294,6 +406,7 @@ impl ExportedModule {
             kind: self.kind,
             default_variant: self.default_variant,
             source_providers: self.source_providers,
+            evaluated_providers: self.evaluated_providers,
             variants: self.variants,
         };
         if let Some(selection) = self.default_variant_selection {
@@ -1094,6 +1207,7 @@ mod tests {
             kind,
             default_variant: None,
             source_providers: None,
+            evaluated_providers: None,
             variants,
         };
         Ok(ProjectModel {

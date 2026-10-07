@@ -24,6 +24,9 @@
 //! or install GPUI controls. Producers must supply actual model/provider/class
 //! facts and reject obsolete results before publishing a snapshot.
 
+use crate::project_tree_facts::{
+    RootEncounterProvenance, RootOccurrence, RootPresence, TreeProjectionFacts,
+};
 use anyhow::{Context as _, Result, bail, ensure};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -232,6 +235,24 @@ impl TreeSnapshot {
 }
 
 pub fn project_tree(model: &TreeModel, files: &TreeFiles) -> Result<TreeSnapshot> {
+    project_tree_internal(model, files, None)
+}
+
+/// Preserves explicitly captured root encounters and resolves annotations for
+/// each entry. This installs no model-to-group adapter or GPUI workflow.
+pub fn project_tree_with_facts(
+    model: &TreeModel,
+    files: &TreeFiles,
+    facts: &TreeProjectionFacts,
+) -> Result<TreeSnapshot> {
+    project_tree_internal(model, files, Some(facts))
+}
+
+fn project_tree_internal(
+    model: &TreeModel,
+    files: &TreeFiles,
+    facts: Option<&TreeProjectionFacts>,
+) -> Result<TreeSnapshot> {
     ensure!(
         model.revision == files.model_revision,
         "File facts belong to an obsolete Android model"
@@ -263,6 +284,143 @@ pub fn project_tree(model: &TreeModel, files: &TreeFiles) -> Result<TreeSnapshot
             checked_directories.insert(ancestor.to_owned());
         }
     }
+    let mut provider_names = BTreeMap::new();
+    let mut resource_provider_names = BTreeMap::new();
+    let mut root_encounters = BTreeMap::new();
+    if let Some(facts) = facts {
+        ensure!(
+            facts.presence.model_revision == model.revision
+                && facts.presence.file_revision == files.revision,
+            "Provider presence belongs to obsolete model or file facts"
+        );
+        let mut presence = facts.presence.clone();
+        for entry in entries.values() {
+            presence.add_entry(
+                &entry.path,
+                match entry.kind {
+                    FileKind::Directory => RootPresence::Directory,
+                    FileKind::File { .. } => RootPresence::File,
+                },
+            )?;
+            // A real observed child also proves its ancestor directories exist.
+            for ancestor in entry.path.ancestors().skip(1) {
+                if presence.get(ancestor) == RootPresence::Directory {
+                    break;
+                }
+                presence.add_entry(ancestor, RootPresence::Directory)?;
+            }
+        }
+        presence.validate()?;
+        for module_facts in &facts.modules {
+            let binding = module_facts.providers.binding();
+            let encounters = &module_facts.roots;
+            ensure!(
+                binding.model_revision == model.revision
+                    && encounters.model_revision == model.revision,
+                "Provider/root encounters belong to an obsolete model"
+            );
+            ensure!(
+                binding.module == encounters.module,
+                "Provider and root modules disagree"
+            );
+            ensure!(
+                binding.variant == encounters.variant,
+                "Provider and root variants disagree"
+            );
+            ensure!(
+                encounters.provenance == RootEncounterProvenance::ProducerIterator,
+                "Source-root encounter order is unavailable"
+            );
+            let module = model
+                .modules
+                .iter()
+                .find(|module| module.id == binding.module)
+                .context("Provider module is absent from the tree model")?;
+            for root in &module.source_roots {
+                match presence.get(&root.path) {
+                    RootPresence::Unknown => {
+                        return Err(crate::project_tree_facts::unknown_presence(&root.path).into());
+                    }
+                    RootPresence::Missing => {}
+                    RootPresence::Directory | RootPresence::File => {
+                        ensure!(
+                            entries.contains_key(&root.path),
+                            "A present source root is absent from the file inventory: {}",
+                            root.path.display()
+                        );
+                    }
+                }
+                if matches!(
+                    root.group,
+                    SourceGroup::Resources | SourceGroup::GeneratedResources
+                ) && presence.get(&root.path) != RootPresence::Missing
+                {
+                    let resolution = module_facts
+                        .providers
+                        .resolve_resource_root(&root.path, &presence)?;
+                    resource_provider_names.insert(
+                        (module.id.as_str(), root.path.clone()),
+                        resolution.winner().map(|candidate| candidate.name.clone()),
+                    );
+                }
+            }
+            ensure!(
+                root_encounters
+                    .insert(module.id.as_str(), &encounters.roots)
+                    .is_none(),
+                "Duplicate provider projection module"
+            );
+            let mut expected = module
+                .source_roots
+                .iter()
+                .map(|root| RootOccurrence {
+                    group: root.group,
+                    path: root.path.clone(),
+                })
+                .collect::<Vec<_>>();
+            let mut actual = encounters.roots.clone();
+            expected.sort();
+            actual.sort();
+            ensure!(
+                expected == actual,
+                "Source-root encounters do not cover the evaluated roots"
+            );
+            let mut annotated_paths = BTreeSet::new();
+            for root in &module.source_roots {
+                let mut completed_ancestors = BTreeSet::new();
+                for (path, _) in entries
+                    .range(root.path.clone()..)
+                    .take_while(|(path, _)| path.starts_with(&root.path))
+                {
+                    annotated_paths.insert(path.clone());
+                    for ancestor in path
+                        .ancestors()
+                        .skip(1)
+                        .take_while(|ancestor| ancestor.starts_with(&root.path))
+                    {
+                        if completed_ancestors.contains(ancestor) {
+                            break;
+                        }
+                        annotated_paths.insert(ancestor.into());
+                        completed_ancestors.insert(ancestor.to_owned());
+                    }
+                }
+            }
+            for path in annotated_paths {
+                let resolution = module_facts.providers.resolve(&path, &presence)?;
+                provider_names.insert(
+                    (module.id.as_str(), path),
+                    resolution.winner().map(|candidate| candidate.name.clone()),
+                );
+            }
+        }
+        ensure!(
+            root_encounters.len() == model.modules.len(),
+            "A tree module has no evaluated provider facts"
+        );
+    }
+    let provider_names = facts.map(|_| &provider_names);
+    let resource_provider_names = facts.map(|_| &resource_provider_names);
     let mut modules = model.modules.iter().collect::<Vec<_>>();
     modules.sort_by(|left, right| left.id.encode_utf16().cmp(right.id.encode_utf16()));
     let mut module_ids = BTreeSet::new();
@@ -304,26 +462,49 @@ pub fn project_tree(model: &TreeModel, files: &TreeFiles) -> Result<TreeSnapshot
             },
         );
         let mut roots = module.source_roots.iter().collect::<Vec<_>>();
-        roots.sort_by(|left, right| {
-            left.group
-                .cmp(&right.group)
-                .then_with(|| {
-                    provider_sort_key(&left.provider)
-                        .encode_utf16()
-                        .cmp(provider_sort_key(&right.provider).encode_utf16())
-                })
-                .then_with(|| left.path.cmp(&right.path))
-        });
+        if let Some(encounters) = root_encounters.get(module.id.as_str()) {
+            let mut by_occurrence = BTreeMap::new();
+            for root in &roots {
+                by_occurrence
+                    .entry(RootOccurrence {
+                        group: root.group,
+                        path: root.path.clone(),
+                    })
+                    .or_insert(*root);
+            }
+            let mut ordered = Vec::new();
+            for occurrence in *encounters {
+                let root = by_occurrence
+                    .get(occurrence)
+                    .context("Source-root encounter is absent from evaluated roots")?;
+                ordered.push(*root);
+            }
+            roots = ordered;
+            roots.sort_by_key(|root| root.group);
+        } else {
+            roots.sort_by(|left, right| {
+                left.group
+                    .cmp(&right.group)
+                    .then_with(|| {
+                        provider_sort_key(&left.provider)
+                            .encode_utf16()
+                            .cmp(provider_sort_key(&right.provider).encode_utf16())
+                    })
+                    .then_with(|| left.path.cmp(&right.path))
+            });
+        }
         let mut root_paths: BTreeMap<&Path, &TreeSourceRoot> = BTreeMap::new();
         let mut grouped = BTreeMap::<SourceGroup, Vec<&TreeSourceRoot>>::new();
         for root in roots {
             validate_path(&root.path)?;
-            root.provider
-                .name()
-                .with_context(|| format!("Source root {}", root.path.display()))?;
+            if provider_names.is_none() {
+                root.provider
+                    .name()
+                    .with_context(|| format!("Source root {}", root.path.display()))?;
+            }
             if let Some(previous) = root_paths.get(root.path.as_path()) {
                 ensure!(
-                    previous.provider == root.provider,
+                    provider_names.is_some() || previous.provider == root.provider,
                     "Conflicting source providers for {}",
                     root.path.display()
                 );
@@ -361,19 +542,41 @@ pub fn project_tree(model: &TreeModel, files: &TreeFiles) -> Result<TreeSnapshot
                 },
             );
             match group {
-                SourceGroup::Resources | SourceGroup::GeneratedResources => {
-                    resource_nodes(&mut tree, group_node, module, group, &roots, &entries)?
-                }
+                SourceGroup::Resources | SourceGroup::GeneratedResources => resource_nodes(
+                    &mut tree,
+                    group_node,
+                    module,
+                    group,
+                    &roots,
+                    &entries,
+                    provider_names,
+                    resource_provider_names,
+                )?,
                 SourceGroup::Manifests => {
                     for root in roots {
                         if let Some(entry) = entries.get(&root.path) {
-                            file_nodes(&mut tree, group_node, module, root, entry, false)?;
+                            file_nodes(
+                                &mut tree,
+                                group_node,
+                                module,
+                                root,
+                                entry,
+                                false,
+                                provider_names,
+                            )?;
                         }
                     }
                 }
                 _ => {
                     for root in roots {
-                        directory_nodes(&mut tree, group_node, module, root, &entries)?;
+                        directory_nodes(
+                            &mut tree,
+                            group_node,
+                            module,
+                            root,
+                            &entries,
+                            provider_names,
+                        )?;
                     }
                 }
             }
@@ -446,6 +649,23 @@ fn annotated(name: &str, provider: Option<&str>, include_main: bool) -> String {
     }
 }
 
+type EntryProviders<'a> = BTreeMap<(&'a str, PathBuf), Option<String>>;
+
+fn entry_provider<'a>(
+    root: &'a TreeSourceRoot,
+    module: &'a TreeModule,
+    path: &Path,
+    names: Option<&'a EntryProviders<'_>>,
+) -> Result<Option<&'a str>> {
+    match names {
+        Some(names) => names
+            .get(&(module.id.as_str(), path.into()))
+            .map(|provider| provider.as_deref())
+            .context("Entry provider fact is unavailable"),
+        None => root.provider.name(),
+    }
+}
+
 fn file_nodes(
     tree: &mut TreeSnapshot,
     parent: NodeId,
@@ -453,9 +673,10 @@ fn file_nodes(
     root: &TreeSourceRoot,
     entry: &FileFact,
     classes: bool,
+    provider_names: Option<&EntryProviders<'_>>,
 ) -> Result<()> {
     let group = root.group;
-    let provider = root.provider.name()?;
+    let provider = entry_provider(root, module, &entry.path, provider_names)?;
     let FileKind::File { java_classes } = &entry.kind else {
         return Ok(());
     };
@@ -533,6 +754,7 @@ fn directory_nodes(
     module: &TreeModule,
     root: &TreeSourceRoot,
     entries: &BTreeMap<PathBuf, &FileFact>,
+    provider_names: Option<&EntryProviders<'_>>,
 ) -> Result<()> {
     let mut directories = BTreeMap::<PathBuf, DirectoryContents<'_>>::new();
     directories.insert(root.path.clone(), DirectoryContents::default());
@@ -609,7 +831,7 @@ fn directory_nodes(
             } else {
                 "/"
             });
-        let provider = root.provider.name()?;
+        let provider = entry_provider(root, module, path, provider_names)?;
         let id = tree.add(
             Some(parent),
             TreeNode {
@@ -640,6 +862,7 @@ fn directory_nodes(
                     root,
                     entry,
                     root.group.is_package_group(),
+                    provider_names,
                 )?;
             }
         }
@@ -657,6 +880,8 @@ fn resource_nodes(
     group: SourceGroup,
     roots: &[&TreeSourceRoot],
     entries: &BTreeMap<PathBuf, &FileFact>,
+    provider_names: Option<&EntryProviders<'_>>,
+    resource_provider_names: Option<&EntryProviders<'_>>,
 ) -> Result<()> {
     let mut resources = ResourceGroups::new();
     for root in roots {
@@ -691,7 +916,13 @@ fn resource_nodes(
                 .or_default()
                 .entry(stem.into())
                 .or_default()
-                .insert(path.clone(), (root.provider.name()?, qualifier.into()));
+                .insert(
+                    path.clone(),
+                    (
+                        entry_provider(root, module, &root.path, resource_provider_names)?,
+                        qualifier.into(),
+                    ),
+                );
         }
     }
     for (folder_type, names) in resources {
@@ -779,7 +1010,7 @@ fn resource_nodes(
     }) {
         let properties = root.path.join("resources.properties");
         if let Some(entry) = entries.get(&properties) {
-            file_nodes(tree, parent, module, root, entry, false)?;
+            file_nodes(tree, parent, module, root, entry, false, provider_names)?;
         }
     }
     Ok(())
