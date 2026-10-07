@@ -1,0 +1,816 @@
+{
+  "schema_version": 1,
+  "task": "1-gradle-import",
+  "scope": "Bounded Rust pre-sync discovery/copy/registration backend; not Gradle model sync or a finished desktop module-import workflow.",
+  "reference": {
+    "repository": "platform/tools/adt/idea",
+    "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+    "license": "Apache-2.0",
+    "copyright": "Copyright (C) 2014 The Android Open Source Project",
+    "files": [
+      {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "retained_path": "crates/android_tools/test_data/gradle_import/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      {
+        "path": "project-system-gradle/src/com/android/tools/idea/gradle/project/GradleModuleImporter.java",
+        "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/src/com/android/tools/idea/gradle/project/GradleModuleImporter.java",
+        "retained_path": "crates/android_tools/test_data/gradle_import/GradleModuleImporter.java",
+        "sha256": "c43eea268ff7b08d2f24887a26ab5fb9f1130b34252d2c58128c8332a4156f10"
+      },
+      {
+        "path": "project-system-gradle/src/com/android/tools/idea/gradle/project/GradleProjectDependencyParser.java",
+        "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/src/com/android/tools/idea/gradle/project/GradleProjectDependencyParser.java",
+        "retained_path": "crates/android_tools/test_data/gradle_import/GradleProjectDependencyParser.java",
+        "sha256": "74bb668b43f9079e5da97e623c26810c20a93d02b05e3970f2557eace070b617"
+      },
+      {
+        "path": "project-system-gradle/src/com/android/tools/idea/gradle/project/GradleSiblingLookup.java",
+        "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/src/com/android/tools/idea/gradle/project/GradleSiblingLookup.java",
+        "retained_path": "crates/android_tools/test_data/gradle_import/GradleSiblingLookup.java",
+        "sha256": "2d58da04c171343dc4780967cb40ffcf623a9762f9f0f178f876fde4aa754509"
+      }
+    ],
+    "fixture": {
+      "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+      "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+      "adaptation": "433 exact UTF-8 bytes extracted from BUILD_GRADLE_TEMPLATE by decoding and concatenating its Java string literals. Rust helper preserves tabbed project dependency statements, blank lines, %s substitution, Gradle names and settings generator trailing newlines."
+    }
+  },
+  "implementation": "crates/android_tools/src/gradle_import.rs",
+  "accepted_dsl": {
+    "settings": [
+      "Literal Groovy/Kotlin include statements (optional parentheses and Kotlin trailing comma)",
+      "Literal project(name).projectDir = new File(path), File(path), or file(path)",
+      "Literal rootProject.name assignment"
+    ],
+    "build": [
+      "Literal apply plugin: string / apply(plugin = string)",
+      "Top-level dependencies with literal external artifact or literal project reference, including path: / path = arguments",
+      "plugins, android, and repositories blocks retained as opaque non-dependency configuration; nested dependency declarations and nonliteral apply are rejected"
+    ],
+    "unsupported_policy": "All other top-level build/settings statements, dynamic/conditional/receiver dependencies, applied scripts, interpolated strings, unrecognized literals and incomplete token structures return an error before staging copies. This reads declarations, not Gradle runtime/plugin-generated dependencies; evaluated support is a later adapter."
+  },
+  "behavior_adaptations": [
+    "Rust filesystem paths and explicit Result values replace IntelliJ VirtualFile, DSL services and write actions while retaining every applicable upstream assertion.",
+    "The backend returns registration results; desktop wizard/action and successful-sync scheduling remain lead-owned product wiring.",
+    "Existing unrelated destination directories/logical registrations are rejected rather than destructively replaced. Symlink/special-file entries within external copies and custom paths containing controls are rejected before publication. Supplied root paths are canonicalized. Callers serialize target edits and perform work on a background executor."
+  ],
+  "final_source_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+  "source_snapshot_files": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "cdf3dd0d2d2210406efc8b5ba242d059b09e47e092394680d86c4b9a3a0bfcaa"
+    },
+    {
+      "path": "crates/android_tools/src/gradle_import.rs",
+      "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a"
+    },
+    {
+      "path": "crates/android_tools/tests/gradle_import_reference.rs",
+      "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+    }
+  ],
+  "preserved_reference_assertions": "Every assertion in the nine original method bodies and assertModuleImported/assertNoFilesAdded/assertModuleInSettingsFile/assertModuleRequiredButNotFound helpers is represented. Source-byte equality and no-mutation assertions add coverage; no original assertion deleted, skipped or weakened.",
+  "tests": [
+    {
+      "reference_test": "testImportSimpleGradleProject",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "import_simple_gradle_project",
+      "reason": "Import/register the module, keep exactly build.gradle in its source directory, and preserve source bytes.",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_simple_gradle_project",
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_simple_gradle_project",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_simple_gradle_project",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/gradle-import-testImportSimpleGradleProject.log",
+              "sha256": "799d88e52678eaaf6243ce07948a6c70cc0dc6f79aa50106502ea2c45f3f3ffa"
+            }
+          }
+        }
+      ],
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_simple_gradle_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/gradle-import-testImportSimpleGradleProject.log",
+        "sha256": "799d88e52678eaaf6243ce07948a6c70cc0dc6f79aa50106502ea2c45f3f3ffa",
+        "source_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "testImportSubprojects",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "import_subprojects",
+      "reason": "Discover exactly three nested/root subprojects at expected locations; import/register each, preserve every source child/path/byte assertion.",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subprojects",
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_subprojects",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_subprojects",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/gradle-import-testImportSubprojects.log",
+              "sha256": "70358f681a56cb472bbc04d8f36d599e99a4775cf891123a6f4cc1f2a0ef3a75"
+            }
+          }
+        }
+      ],
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subprojects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/gradle-import-testImportSubprojects.log",
+        "sha256": "70358f681a56cb472bbc04d8f36d599e99a4775cf891123a6f4cc1f2a0ef3a75",
+        "source_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "testImportSubProjectsWithMissingSubModule",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "import_subprojects_with_missing_submodule",
+      "reason": "Discover two names, retain the unresolved second name with no location, and reject import without changing target/settings/source bytes.",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subprojects_with_missing_submodule",
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_subprojects_with_missing_submodule",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_subprojects_with_missing_submodule",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/gradle-import-testImportSubProjectsWithMissingSubModule.log",
+              "sha256": "82a306f2311044f2822e2ea133b8b05c5540da514f581adae709e608f09e861d"
+            }
+          }
+        }
+      ],
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subprojects_with_missing_submodule",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/gradle-import-testImportSubProjectsWithMissingSubModule.log",
+        "sha256": "82a306f2311044f2822e2ea133b8b05c5540da514f581adae709e608f09e861d",
+        "source_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "testImportSubProjectWithCustomLocation",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "import_subproject_with_custom_location",
+      "reason": "Discover the exact named custom location, import/register it, retain every original source child/path assertion.",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subproject_with_custom_location",
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_subproject_with_custom_location",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_subproject_with_custom_location",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/gradle-import-testImportSubProjectWithCustomLocation.log",
+              "sha256": "a01db3cae45d732df67e3f272519e26b4c2d4a8503465d34ff150a594805e8ee"
+            }
+          }
+        }
+      ],
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subproject_with_custom_location",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/gradle-import-testImportSubProjectWithCustomLocation.log",
+        "sha256": "a01db3cae45d732df67e3f272519e26b4c2d4a8503465d34ff150a594805e8ee",
+        "source_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "testRequiredProjects",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "required_projects",
+      "reason": "Discover both primary and required project at their exact paths.",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "required_projects",
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "required_projects",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "required_projects",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/gradle-import-testRequiredProjects.log",
+              "sha256": "759b1fbf829b75f5c755798d9a8923f1665ea25282b1d7caee3acef5630400b4"
+            }
+          }
+        }
+      ],
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "required_projects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/gradle-import-testRequiredProjects.log",
+        "sha256": "759b1fbf829b75f5c755798d9a8923f1665ea25282b1d7caee3acef5630400b4",
+        "source_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "testMissingRequiredProjects",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "missing_required_projects",
+      "reason": "Retain missing required module by name with no location alongside the primary source.",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "missing_required_projects",
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "missing_required_projects",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "missing_required_projects",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/gradle-import-testMissingRequiredProjects.log",
+              "sha256": "842b1c5d47e947569135ac251ab69a86517432e343ecb341153abac322593a5e"
+            }
+          }
+        }
+      ],
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "missing_required_projects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/gradle-import-testMissingRequiredProjects.log",
+        "sha256": "842b1c5d47e947569135ac251ab69a86517432e343ecb341153abac322593a5e",
+        "source_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "testMissingEnclosingProject",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "missing_enclosing_project",
+      "reason": "Without enclosing settings, retain the unresolved dependency plus the primary source.",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "missing_enclosing_project",
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "missing_enclosing_project",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "missing_enclosing_project",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/gradle-import-testMissingEnclosingProject.log",
+              "sha256": "98f1ed872d32769dbfc7f0eaf5cc5ff7aab00873df0dcee11d17756723971dbe"
+            }
+          }
+        }
+      ],
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "missing_enclosing_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/gradle-import-testMissingEnclosingProject.log",
+        "sha256": "98f1ed872d32769dbfc7f0eaf5cc5ff7aab00873df0dcee11d17756723971dbe",
+        "source_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "testTransitiveDependencies",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "transitive_dependencies",
+      "reason": "Discover exactly three projects and every exact expected location through transitive dependencies.",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "transitive_dependencies",
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "transitive_dependencies",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "transitive_dependencies",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/gradle-import-testTransitiveDependencies.log",
+              "sha256": "43ac55bfad56b932ea6a6d1a10082c492da40a3831be40b98547f20f5d680ab8"
+            }
+          }
+        }
+      ],
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "transitive_dependencies",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/gradle-import-testTransitiveDependencies.log",
+        "sha256": "43ac55bfad56b932ea6a6d1a10082c492da40a3831be40b98547f20f5d680ab8",
+        "source_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "testCircularDependencies",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "circular_dependencies",
+      "reason": "Terminate circular dependency traversal and discover exactly three projects at every expected location.",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "circular_dependencies",
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "circular_dependencies",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "circular_dependencies",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/gradle-import-testCircularDependencies.log",
+              "sha256": "f543624577fe55c87b7fb0dcbabbbec40b65127a6767a5adf0452cac834e02dc"
+            }
+          }
+        }
+      ],
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "circular_dependencies",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/gradle-import-testCircularDependencies.log",
+        "sha256": "f543624577fe55c87b7fb0dcbabbbec40b65127a6767a5adf0452cac834e02dc",
+        "source_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    }
+  ],
+  "validation": {
+    "all_features_tests": {
+      "status": "passing",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features"
+      ],
+      "unit_passed": 52,
+      "integration_passed": 20,
+      "ported_cases_passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "artifact": "/workspace/android-studio-artifacts/gradle-import/android-tools-tests.log",
+      "sha256": "5be0a966cfda31c05ca3b74dd88f67ab5c0f2ae3b3a20eb9a91125b5adbc6905",
+      "source_snapshot_note": "Executed on the exact source tree subsequently committed as final_source_commit; immutable per-method Cargo captures follow separately."
+    },
+    "clippy": {
+      "status": "passing",
+      "command": ["./script/clippy", "--locked", "-p", "android_tools"],
+      "artifact": "/workspace/android-studio-artifacts/gradle-import/clippy.log",
+      "sha256": "dc8e04a464d548cb850154612ae8bfd269f21498c3dc54c7be346fd4576beec2"
+    },
+    "format": {
+      "status": "passing",
+      "commands": ["cargo fmt --all -- --check", "git diff --check"],
+      "artifact": "/workspace/android-studio-artifacts/gradle-import/format.log"
+    },
+    "full_app_build": {
+      "status": "pending",
+      "reason": "Lead coordinates full-app build after review due shared 32GB overlay capacity."
+    },
+    "live_app": {
+      "status": "pending",
+      "scope": "Backend is not connected to an import UI; opening resulting module files in the full app checks integration only, not wizard fidelity."
+    },
+    "full_suite": {
+      "status": "blocked",
+      "reason": "Final task source has not passed the required full workspace suite; lead owns combined CI execution."
+    },
+    "reviews": {
+      "code": {
+        "verdict": "pass",
+        "fix_rounds": 3,
+        "scope": "Static correctness/reference/failure-path review; all specific findings resolved."
+      },
+      "ui": {
+        "verdict": "pass",
+        "scope": "Static backend contract/claims review only; no desktop import action/visual fidelity claim."
+      },
+      "ux": {
+        "verdict": "pass",
+        "scope": "Static reference-flow/error/source-registration review only; desktop selection/error/shortcut/sync UX remains unwired."
+      },
+      "performance": {
+        "verdict": "pass",
+        "scope": "Static backend-only graph/parser/copy/publication review; no startup/memory/large-project/hardware benchmark claimed.",
+        "future_product_requirements": [
+          "Measure overlap validation on large plans (current copies-times-modules check).",
+          "Account for whole-script token memory and staging all source contents, including outputs.",
+          "Provide cancellable/progress-aware desktop imports; dropping a task does not stop synchronous filesystem copying."
+        ]
+      },
+      "quality": {
+        "verdict": "pass",
+        "scope": "Static source/provenance/assertion review and supplied test/Clippy logs inspected. Four Java originals independently byte-compared with pinned archive; exact template and all nine methods/helpers preserved."
+      }
+    },
+    "exact_reference_captures": {
+      "status": "passing",
+      "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0,
+      "source_and_manifest_guards": "SHA-256 before and after every invocation; HEAD unchanged.",
+      "mapping_artifact": "docs/android-studio/evidence/gradle-import-canonical-targets.json"
+    }
+  },
+  "completion_status": "blocked",
+  "completion_reason": "Scoped implementation, nine reference ports, focused all-features tests, Clippy, formatting and all five reviewers pass. Full app/final full-workspace gates and desktop product wiring remain pending; lead captures combined evidence before any protected merge.",
+  "remaining_product_work": [
+    "Desktop module-import chooser, missing-module/error presentation and project refresh/sync scheduling.",
+    "Evaluated Gradle discovery/settings editing for unsupported programs; this backend is only the documented literal declaration subset.",
+    "Cancellation/progress contract and measured large-project behavior in the eventual desktop flow."
+  ]
+}
