@@ -8,19 +8,28 @@ eight inspected `DefaultVariantsTest` methods, all `unported/not_run`. That
 historical seed is preserved separately for validator regression tests. Archive
 file totals must never be presented as reference-test totals.
 
-The inspected foundation slice now catalogs eight `DefaultVariantsTest` methods,
-nine `GradleModuleImportTest` methods and fourteen `AndroidProjectViewTest`
-methods, plus three selected model-sync methods and one separate resource-conversion
-method. These 35 source-defined method cases are a partial inventory; the
-exhaustive baseline total remains unknown. Fresh combined-source captures credit nine import methods as `ported/passing`
-and nine project-view policy methods as `adapted/passing`. Together with the eight
-default-variant cases, 26 named reference ports pass. Five logical-tree methods
-and four model-sync/resource-conversion methods remain `unported/not_run`. These
-backend ports do not complete desktop import or Android tree workflows. The bounded
-[model-sync inventory](ports/model-sync-inventory.json) records normal and generated
-target membership, runner inheritance, fixture hashes and runtime verification
-limits. The suite leak finalizer is identified separately and remains uncredited
-outside the selected leaf-class scope. No N/A classifications were added.
+The inspected foundation slice catalogs eight `DefaultVariantsTest` methods,
+nine `GradleModuleImportTest` methods, fourteen `AndroidProjectViewTest`
+methods, three selected model-sync methods, one separate resource-conversion
+method, seven `TabbedToolbarTest` methods and fifty `AttachedToolWindowTest`
+methods. These 92 source-defined cases are a partial inventory; the exhaustive
+baseline total remains unknown. All 57 new toolbar/workbench rows remain
+`unported/not_run`. The bounded [window inventory](ports/window-inventory.json)
+records exact declarations, assertions, helper-fixture hashes, actual Java
+production sources and ordinary JUnit4 dispatch. These are embedded designer
+workbench controls; this inventory does not establish main-window or editor-tab
+fidelity. The [model-sync inventory](ports/model-sync-inventory.json) records
+normal/generated target membership, runner inheritance and original fixture
+hashes. Suite leak finalizers and neighboring suites remain separately identified
+and uncredited outside these selected leaf-class scopes. No N/A classifications
+were added. Consult the current ledger for integrated execution evidence.
+
+Fresh combined-source captures credit nine import methods as `ported/passing`
+and nine project-view policy methods as `adapted/passing`. Together with the
+eight default-variant cases, 26 named reference ports pass. Five logical-tree
+methods and four model-sync/resource-conversion methods remain `unported/not_run`,
+alongside the 57 new window cases. These backend ports do not complete desktop
+import or Android tree workflows.
 
 Run from the checkout root:
 

@@ -1269,6 +1269,519 @@
       "run_blocker": null,
       "rust_targets": [],
       "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefault",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToolOrder",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testContext",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testContentContext",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefaultPropertyValues",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testFloatingAndDetachedIgnoredWhenFlagIsOff",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testGettersAndSetters",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefinitionContext",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSetPropertyAndUpdateWillNotifyModelAndChangeContent",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testMinimizeDefaultSetInConstructor",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testMinimizeAutoHideIsNotGlobal",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAutoClose",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testRestore",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testRestoreDefaultLayout",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testStoreAndRestoreDefaultLayout",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDraggedEvent",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDropEvent",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testButtonClickTogglesMinimizedState",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAddedGearActionFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftTopFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftBottomFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightTopFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightBottomFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectSwapFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleDockModeFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleFloatingModeFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleAttachedModeFromButtonRightClick",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testHideFromButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAdditionalActionFromButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftTopFromGearButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftBottomFromGearButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightTopFromGearButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightBottomFromGearButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftFromGearButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightFromGearButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectSwapFromGearButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleDockModeFromGearButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleFloatingModeFromGearButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSearchButtonInHeader",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSearchTextChangesAreSentToContent",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAcceptedSearchesAreStoredInHistory",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testStartSearching",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testStopSearching",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testEscapeClosesSearchFieldIfTextIsEmpty",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testContentIsDisposed",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefaultValueDoesNotOverrideActualValue",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testCommandFStartsFiltering",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testActionsEnabledAtStartup",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "This source-grounded ordinary JUnit4 method has no Rust port or run evidence. Bounded window/workbench runner, helper-fixture and production-source requirements are recorded in ports/window-inventory.json; metadata does not establish IDE or UI behavior.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
     }
   ]
 }
