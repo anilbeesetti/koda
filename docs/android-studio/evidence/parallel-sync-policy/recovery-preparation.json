@@ -1,0 +1,41 @@
+{
+  "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+  "worktree": "/workspace/android-studio-parallel-sync-policy",
+  "whole_source_bindings": 4717,
+  "immutable_originals": 148,
+  "prior_five_static_reviews": {
+    "code": {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-policy/code-review-round1.md",
+      "sha256": "c87e35b9adfbed915da7f53dbe9508ef22047664f45cade8ebf57da9c94f0252",
+      "verdict": "PASS",
+      "scope": "static only; normal execution and lead gates pending"
+    },
+    "ui": {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-policy/ui-review-round1.md",
+      "sha256": "26964876cfb394efe8c4ce963a6158bd4deebd450da04d8f91bd14f62e64ab1a",
+      "verdict": "PASS",
+      "scope": "static only; normal execution and lead gates pending"
+    },
+    "ux": {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-policy/ux-review-round1.md",
+      "sha256": "5501a829184656a755d644b1546babae4a6f901967754f0718015b566bfc0bb9",
+      "verdict": "PASS",
+      "scope": "static only; normal execution and lead gates pending"
+    },
+    "performance": {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-policy/performance-review-round1.md",
+      "sha256": "71795b1c303b10a11325ef9e122b731776e7f0ce202823844a3c354fbf95590b",
+      "verdict": "PASS",
+      "scope": "static only; normal execution and lead gates pending"
+    },
+    "quality": {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-policy/quality-review-round1.md",
+      "sha256": "d707659b72b6902c52014def7df9f4149468243a8ff6204c8e01ab37aa9e072e",
+      "verdict": "PASS",
+      "scope": "static only; normal execution and lead gates pending"
+    }
+  },
+  "source_and_git_clean": true,
+  "tests_executed_by_recovery": false,
+  "cargo_gradle_native_lease": "not granted; preparation only"
+}

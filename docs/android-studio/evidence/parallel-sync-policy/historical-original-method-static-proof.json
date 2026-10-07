@@ -1,0 +1,91 @@
+{
+  "kind": "static_complete_original_method_mapping",
+  "reference_file": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt",
+  "reference_sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+  "reference_method": "checkSupportsParallelSync",
+  "original_assertions": [
+    [
+      "DoesNotSupport",
+      "7.2.0-rc01"
+    ],
+    [
+      "Supports",
+      "7.2.0"
+    ],
+    [
+      "Supports",
+      "7.2.1"
+    ],
+    [
+      "Supports",
+      "7.2.2"
+    ],
+    [
+      "DoesNotSupport",
+      "7.3.0-alpha01"
+    ],
+    [
+      "DoesNotSupport",
+      "7.3.0-alpha02"
+    ],
+    [
+      "DoesNotSupport",
+      "7.3.0-alpha03"
+    ],
+    [
+      "Supports",
+      "7.3.0-alpha04"
+    ],
+    [
+      "Supports",
+      "7.3.0"
+    ]
+  ],
+  "ported_assertions": [
+    [
+      "does_not_support",
+      "7.2.0-rc01"
+    ],
+    [
+      "supports",
+      "7.2.0"
+    ],
+    [
+      "supports",
+      "7.2.1"
+    ],
+    [
+      "supports",
+      "7.2.2"
+    ],
+    [
+      "does_not_support",
+      "7.3.0-alpha01"
+    ],
+    [
+      "does_not_support",
+      "7.3.0-alpha02"
+    ],
+    [
+      "does_not_support",
+      "7.3.0-alpha03"
+    ],
+    [
+      "supports",
+      "7.3.0-alpha04"
+    ],
+    [
+      "supports",
+      "7.3.0"
+    ]
+  ],
+  "same_order_values_booleans": true,
+  "original_model_major_minor": "Int.MIN_VALUE -> i32::MIN",
+  "original_model_description": "empty String -> Some(empty String), preserved",
+  "original_minimum_consumer": "null -> unavailable/unused captured field, not consulted by feature policy",
+  "assertion_named_message": "AGP {agp} supports parallel sync, both positive and negative",
+  "rust_test": "check_supports_parallel_sync",
+  "tests_executed": false,
+  "all146_originals_unchanged": true,
+  "source_snapshot_unchanged": true
+}

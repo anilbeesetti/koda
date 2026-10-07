@@ -1,0 +1,18 @@
+{
+  "command": [
+    "node",
+    "/workspace/android-studio-artifacts/tree-native-0e15a3d/qa-success/user-data/prettier/node_modules/prettier/bin/prettier.cjs",
+    "--config",
+    "docs/.prettierrc",
+    "--check",
+    "docs/android-studio/parallel-sync-policy-task-report.md"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.13276991399470717,
+  "log": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/task-report-prettier-check.log",
+  "log_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+  "document_before_sha256": "5867109083e17c2b0e8e405edf3ae00ed32535e675282577d4348d9f7430d4ec",
+  "document_after_sha256": "5867109083e17c2b0e8e405edf3ae00ed32535e675282577d4348d9f7430d4ec",
+  "doc_unchanged": true,
+  "scope": "Changed top-level owner task report only; docs/src unchanged; no broader documentation formatting result claimed."
+}
