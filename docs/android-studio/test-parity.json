@@ -21,7 +21,7 @@
             "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
           },
           "run": {
-            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
             "command": [
               "cargo",
               "test",
@@ -38,8 +38,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-default-variants-oneVariant.log",
-              "sha256": "ce790634ce30e90cf871eac13e4454e9f42fa59bb20e70a9914438bb1efda4a5"
+              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-oneVariant.log",
+              "sha256": "76946d793e66d3675dfbff5b71a8c86675c9de983e7537554deb5ff838829870"
             }
           }
         }
@@ -66,7 +66,7 @@
             "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
           },
           "run": {
-            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
             "command": [
               "cargo",
               "test",
@@ -83,8 +83,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-default-variants-debugPreferred.log",
-              "sha256": "01f23e28421df077bad505f11d98e8aee48c51c0234eba2f6d7221fc0e92655a"
+              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-debugPreferred.log",
+              "sha256": "bfa17355eb521f53cb8546f9b2e61da9275e0e81a9d2fb4e48d6b347d189a721"
             }
           }
         }
@@ -111,7 +111,7 @@
             "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
           },
           "run": {
-            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
             "command": [
               "cargo",
               "test",
@@ -128,8 +128,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-default-variants-preferredBuildType.log",
-              "sha256": "c013a0d6582f918080e373f7b851259b91c5d1ec37515f64bf410bf51c4e6bef"
+              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-preferredBuildType.log",
+              "sha256": "4d785afd9ec8dd6dd237fb227a29046a12019b60633a06550c16d70042acf081"
             }
           }
         }
@@ -156,7 +156,7 @@
             "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
           },
           "run": {
-            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
             "command": [
               "cargo",
               "test",
@@ -173,8 +173,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-default-variants-preferredProductFlavorOverDebugBuildType.log",
-              "sha256": "2ce02140a95b45d1ad35dc30a53301d816b551c20128a74cadd09ab86a0883a3"
+              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-preferredProductFlavorOverDebugBuildType.log",
+              "sha256": "d81245f56fdd7f2fe55b8f8bce19e44c7d84637ec0230879b0bd189343652647"
             }
           }
         }
@@ -201,7 +201,7 @@
             "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
           },
           "run": {
-            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
             "command": [
               "cargo",
               "test",
@@ -218,8 +218,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-default-variants-preferredFlavorsInTwoDimensions.log",
-              "sha256": "99764b81dd3b87e85309e388c5ff10b1fd714856c50086012db23a235990dac2"
+              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-preferredFlavorsInTwoDimensions.log",
+              "sha256": "ef041732a894e6fd3f108f5f4eb1b0341d0b30ec525c14404b82ae76f9853c11"
             }
           }
         }
@@ -246,7 +246,7 @@
             "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
           },
           "run": {
-            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
             "command": [
               "cargo",
               "test",
@@ -263,8 +263,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-default-variants-preferredFlavorInSecondDimensionOnly.log",
-              "sha256": "26a7ef7f54b5944ed94a587ec733b85e9bda57aeb3c3f8ccf343aab71c440eaa"
+              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
+              "sha256": "2514da40991d7a5b19925e2b01e9f17eb5f016c983d540fc8fd6957bace6742c"
             }
           }
         }
@@ -291,7 +291,7 @@
             "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
           },
           "run": {
-            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
             "command": [
               "cargo",
               "test",
@@ -308,8 +308,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-default-variants-mismatchedProductFlavourLength.log",
-              "sha256": "75401fbeee3198cc87789b62a6757a0901a36c07198c55124a498101d74c78ff"
+              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-mismatchedProductFlavourLength.log",
+              "sha256": "23726a858b422e31c1ad5eabf061e13a57d8ef512590210ee70d13b2da7a8626"
             }
           }
         }
@@ -336,7 +336,7 @@
             "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
           },
           "run": {
-            "tested_commit": "e77d75de8502597457692f0b8c7c0ebbfe4e98d6",
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
             "command": [
               "cargo",
               "test",
@@ -353,8 +353,8 @@
             ],
             "exit_code": 0,
             "log": {
-              "path": "docs/android-studio/evidence/combined-default-variants-onEmpty.log",
-              "sha256": "70ffddc2ffd1b87ac6fc3b4754cef9459edb61b506a8476370ab1f80ac1743a2"
+              "path": "docs/android-studio/evidence/combined-DefaultVariantsTest-onEmpty.log",
+              "sha256": "b4e6fd1981f06e114353e63c1796302b0ef1ecaba139316b0c49873d5e1f034f"
             }
           }
         }
@@ -363,83 +363,416 @@
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_simple_gradle_project",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_simple_gradle_project",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testImportSimpleGradleProject.log",
+              "sha256": "83d22697cadad1039b10dc120e37d3a54a9c0dd59e4c995db1a0c67409470810"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_subprojects",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_subprojects",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testImportSubprojects.log",
+              "sha256": "a7ce5af86489ea737523daeb51ed1898ac91a4b7f6e77b72b4ef6269c74bb24b"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_subprojects_with_missing_submodule",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_subprojects_with_missing_submodule",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testImportSubProjectsWithMissingSubModule.log",
+              "sha256": "82df368f4577e8461b0108e0da8622de0038a6e0b11a4a517b9802c602a89bb7"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_subproject_with_custom_location",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_subproject_with_custom_location",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testImportSubProjectWithCustomLocation.log",
+              "sha256": "7548c901abc45cd4645941c6c634e5225e3d9f5b5e3e7f6c7b4ebe37154cdaf6"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "required_projects",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "required_projects",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testRequiredProjects.log",
+              "sha256": "68bde1e095daafded31b93937b029026312ea6b8099bd5c32ea7087259e5dbcb"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "missing_required_projects",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "missing_required_projects",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testMissingRequiredProjects.log",
+              "sha256": "dd6ce7f870762127b3bbc0b42df664190109943bbecb8a8eaf83c4f0522e83c6"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "missing_enclosing_project",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "missing_enclosing_project",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testMissingEnclosingProject.log",
+              "sha256": "5db51c2773f43d33f8127d914661fc7e18ca57c298eb6563c191a7a002c711ff"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "transitive_dependencies",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "transitive_dependencies",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testTransitiveDependencies.log",
+              "sha256": "dcdae0f147f7a8b7b47e4056f3bb1aaabedf2a74361bd55d02ca5e483d305ffe"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "circular_dependencies",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "circular_dependencies",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-GradleModuleImportTest-testCircularDependencies.log",
+              "sha256": "a62b3863f6c3ff55fb8dcc6d304050c776434f56c8b7cd7da7f97e4a3e7c9a76"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
@@ -471,20 +804,94 @@
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_show_visibility_icons_when_option_is_selected",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_show_visibility_icons_when_option_is_selected",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsSelected.log",
+              "sha256": "8d7d24717452a00c000b2f68a510e894c0e6a94bfcd2e4f8c53b595818863225"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_show_visibility_icons_when_option_is_unselected",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_show_visibility_icons_when_option_is_unselected",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
+              "sha256": "aa1cc4fb8e0c21f94ce6acfd15a3258d1eee12e7d24610a97bcc93b2e8bcac01"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
@@ -507,65 +914,324 @@
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewIsDefault.log",
+              "sha256": "66cdb01292f6b86ff159547ce2ee388b6fd37d468b165240cbb0a3f07f34c1ea"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_not_visible_in_unsupported_project_system",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_not_visible_in_unsupported_project_system",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
+              "sha256": "b825c98c0a8fab4893da7c40fe51a7958fe797b3f86c57baccfcdc1ec6bb98bc"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_not_visible_in_non_android_project",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_not_visible_in_non_android_project",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewNotVisibleInNonAndroidProject.log",
+              "sha256": "e38a28b981881f7d98f70251b9e3c429b79b01b2667ce2c5ffc0d72d9ae3d235"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_custom_property_handling",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_custom_property_handling",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
+              "sha256": "ed4d484c694f0007337149bd0346ae5d08c3cce706041e055f2172dcba4553cd"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
+              "sha256": "abecc0c702d4fb3a09b9e627cac5b093f37942041557c07880f9ad9a09f60b11"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
+              "sha256": "7e1ff5d9928abc494585a4cfeb01c4501f8b6b323ab9115fa359a1f9cc17e840"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
-      "port_status": "unported",
-      "run_status": "not_run",
-      "reason": "The inspected upstream behavior has not yet been ported or exercised as a Rust test. Original source and fixture provenance are retained for the future port.",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
       "run_blocker": null,
-      "rust_targets": [],
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_metrics",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "f8114bfafa3562760a5e8b98a4b20acf98cce983",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_metrics",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/combined-AndroidProjectViewTest-testAndroidViewIsDefaultMetrics.log",
+              "sha256": "7c7409b161cd6b9fc35047f7b0d741f218e7cde4061092e53e7666ba2e56b72d"
+            }
+          }
+        }
+      ],
       "fixtures": []
     },
     {
