@@ -1,0 +1,9 @@
+{
+  "productionBridge": "/workspace/android-studio-source-providers/crates/android_tools/src/project_model.gradle",
+  "productionBridgeSha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+  "copiedHelperRanges": 4,
+  "helperBytesSha256": "2dce2d3ba503ad57b757e0b1effe5ac554a28f52dcf3b6d985f248680b1c3920",
+  "probeSha256": "627cf336027bda26af42f1c67026021e84f8c9acae96e59d4416cacf730710e8",
+  "testAssertionsLanguage": "Rust driver, not Groovy",
+  "executed": false
+}

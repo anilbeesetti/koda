@@ -1,0 +1,49 @@
+{
+    "supplementaryOnly": true,
+    "originalReferenceRuntimeTestCredit": 0,
+    "variants": [
+        {
+            "name": "demoDebug",
+            "type": {
+                "status": "available",
+                "value": "JAVA_SOURCE"
+            }
+        },
+        {
+            "name": "demoRelease",
+            "type": {
+                "status": "available",
+                "value": "JAVA_SOURCE"
+            }
+        }
+    ],
+    "buildConfigTasks": [
+        {
+            "path": ":app:generateDemoDebugAndroidTestBuildConfig",
+            "sourceOutput": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/generated/source/buildConfig/androidTest/demo/debug",
+            "bytecodeOutput": null,
+            "namespace": "dev.koda.sourceproviders.test",
+            "customFields": [
+                "FACT_STRING"
+            ]
+        },
+        {
+            "path": ":app:generateDemoDebugBuildConfig",
+            "sourceOutput": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/generated/source/buildConfig/demo/debug",
+            "bytecodeOutput": null,
+            "namespace": "dev.koda.sourceproviders",
+            "customFields": [
+                "FACT_STRING"
+            ]
+        },
+        {
+            "path": ":app:generateDemoReleaseBuildConfig",
+            "sourceOutput": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/generated/source/buildConfig/demo/release",
+            "bytecodeOutput": null,
+            "namespace": "dev.koda.sourceproviders",
+            "customFields": [
+                "FACT_STRING"
+            ]
+        }
+    ]
+}

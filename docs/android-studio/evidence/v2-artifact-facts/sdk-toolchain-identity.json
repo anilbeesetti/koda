@@ -1,0 +1,57 @@
+{
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "checkedUtc": "2026-10-07T21:00:47.574931+00:00",
+  "officialSdkVersions": {
+    "AGP": "9.4.0",
+    "producer": "23.0",
+    "minimumConsumer": "66.1",
+    "Gradle": "9.6.1",
+    "JDK": "21.0.12.1+1",
+    "AndroidPlatform": "37",
+    "buildTools": "37.0.0"
+  },
+  "supplementaryOnly": true,
+  "pinnedStudioRuntimeEquivalent": false,
+  "files": {
+    "/workspace/android-studio-artifacts/gradle-home/caches/modules-2/files-2.1/com.android.tools.build/gradle-api/9.4.0/4b8d719df49cceafe003db8277780acfab8b0d0d/gradle-api-9.4.0.jar": {
+      "sha256": "7ab18c3e9f88d3936b714e8e210296ed1c45889a697945f19d91f22af6e1f4a4",
+      "bytes": 419087
+    },
+    "/workspace/android-studio-artifacts/gradle-home/caches/modules-2/files-2.1/com.android.tools.build/builder-model/9.4.0/2edee2cd225a6dc43276d3328a3ffac827694a9f/builder-model-9.4.0.jar": {
+      "sha256": "9ec37d9d6188c84af3b4a78134b5a42e7c9aee1cde0169d13e155e1d6ee81542",
+      "bytes": 143245
+    },
+    "/workspace/android-studio-artifacts/gradle-home/caches/modules-2/files-2.1/com.android.tools.build/gradle/9.4.0/4bf388abd58d7a14e9571c2524b3c5c54083a5c7/gradle-9.4.0.jar": {
+      "sha256": "606a2136d291e69ba18c9b21672ff62de0af65c1eb3a9f69c0e7da6a490348ca",
+      "bytes": 12137130
+    },
+    "/workspace/android-studio-artifacts/jdk21/jdk-21.0.12.1+1/release": {
+      "sha256": "ebbd70bf00bab6d39addf51969c5ff244030b86b29de400b9fb10612ebd3ceec",
+      "bytes": 1628
+    },
+    "/workspace/android-studio-artifacts/jdk21/jdk-21.0.12.1+1/bin/java": {
+      "sha256": "2a207f5e7d075afa01d97f8048389a64432a44c4a5af0f5e77d6e286ec5f401d",
+      "bytes": 12328
+    },
+    "/workspace/android-studio-artifacts/gradle-home/wrapper/dists/gradle-9.6.1-bin/4ticwg1pgcbps2hj28r8so764/gradle-9.6.1/lib/gradle-launcher-9.6.1.jar": {
+      "sha256": "d20e0cee243419ef001d2c3646acfc603447d2ce585b03f204afaa6caa898acd",
+      "bytes": 317566
+    },
+    "/workspace/android-studio-artifacts/sdk/platforms/android-37.0/package.xml": {
+      "sha256": "517d41dbd85875b3596ccb308a0fa8b78609e029babaddbec8c592f28f5e50aa",
+      "bytes": 17783
+    },
+    "/workspace/android-studio-artifacts/sdk/platforms/android-37.0/source.properties": {
+      "sha256": "fa89029fc0cee414cb5e44a37cd3033771217eeecb5086577bb6d9b1b03b5b5f",
+      "bytes": 343
+    },
+    "/workspace/android-studio-artifacts/sdk/build-tools/37.0.0/package.xml": {
+      "sha256": "16f8768a5bb8bd55e1873403caca97f48a1660a44832102755dee90a349578fb",
+      "bytes": 1641
+    },
+    "/workspace/android-studio-artifacts/sdk/build-tools/37.0.0/source.properties": {
+      "sha256": "fbd87c8567afbc6dc78e140097fcde234f4a61fa7065e85081d43e442ccd3d24",
+      "bytes": 38
+    }
+  }
+}

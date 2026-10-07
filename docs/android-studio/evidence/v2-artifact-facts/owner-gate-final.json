@@ -1,0 +1,96 @@
+{
+  "task": "1-v2-artifact-facts",
+  "branch": "android-studio-task/1-v2-artifact-facts",
+  "source_commit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "base_commit": "ac58815bb268d338bea40a31fff630734cd719f4",
+  "status": "owner_scoped_green_lead_gates_pending",
+  "source_hashes": {
+    "crates/android_tools/src/generated_artifacts.rs": "5264e4c00d8958a4aaee250c7d924ae89e4665f778b893156442f6af3ed52be0",
+    "crates/android_tools/src/project_model.gradle": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+    "crates/android_tools/src/android_tools.rs": "8ee120d91a3dc26ebe235e14bce66074f3b1504901e43915729a43d353e7f2df",
+    "crates/android_tools/tests/generated_artifacts.rs": "9900069b1a993875795c4be1feadf5f4a8da2a5750f486beb4596ae6b45efbf1",
+    "crates/android_tools/test_data/generated_artifacts/BasicModules.kt": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed",
+    "crates/android_tools/test_data/generated_artifacts/LICENSE-APACHE": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+    "crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+    "crates/android_tools/test_data/generated_artifacts/NOTICE": "bfee2f15cfeccecbf0ea05f503b6138398459e43dc59fb1da59c5944ae146111"
+  },
+  "whole_source_guard_files": 4612,
+  "whole_source_guard_passed": true,
+  "immutable_originals": 184,
+  "immutable_original_guard_passed": true,
+  "reviews": {
+    "code": {
+      "verdict": "PASS",
+      "scope": "Current-source owner transport/tests/SDK evidence; lead app/native/full CI/parity pending",
+      "external_report": "/workspace/android-studio-artifacts/v2-artifact-facts/code-review-runtime-addendum.md",
+      "sha256": "79e10cde3b5691fd52ce67af1421d11dea21f645aea4c7cf7e9ab8648e5405dd",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-facts/code-review-runtime-addendum.json"
+    },
+    "ui": {
+      "verdict": "PASS",
+      "scope": "Current-source owner transport/tests/SDK evidence; lead app/native/full CI/parity pending",
+      "external_report": "/workspace/android-studio-artifacts/v2-artifact-facts/ui-review-runtime-addendum.md",
+      "sha256": "3213a299ed84865b2e0576591a79f484c1faa665e9dc0d978ec7fa475dc999ab",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-facts/ui-review-runtime-addendum.json"
+    },
+    "ux": {
+      "verdict": "PASS",
+      "scope": "Current-source owner transport/tests/SDK evidence; lead app/native/full CI/parity pending",
+      "external_report": "/workspace/android-studio-artifacts/v2-artifact-facts/ux-review-runtime-addendum.md",
+      "sha256": "2276f4d31152f2a93badfc9dbfbe3aa14612aff65c7943cda1f6d231b733003f",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-facts/ux-review-runtime-addendum.json"
+    },
+    "performance": {
+      "verdict": "PASS",
+      "scope": "Current-source owner transport/tests/SDK evidence; lead app/native/full CI/parity pending",
+      "external_report": "/workspace/android-studio-artifacts/v2-artifact-facts/performance-review-runtime-addendum.md",
+      "sha256": "1203f55b15e81186f8f20ee4ce66830719655ef709eee01c344d07e831130f01",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-facts/performance-review-runtime-addendum.json"
+    },
+    "quality": {
+      "verdict": "PASS",
+      "scope": "Current-source owner transport/tests/SDK evidence; lead app/native/full CI/parity pending",
+      "external_report": "/workspace/android-studio-artifacts/v2-artifact-facts/quality-review-runtime-addendum.md",
+      "sha256": "2caea1aefa40248b47de618a1d55bab68126ab0eaa8145d95163aeff0c27f254",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-facts/quality-review-runtime-addendum.json"
+    }
+  },
+  "validation": {
+    "tests_passed": 202,
+    "tests_failed": 0,
+    "tests_ignored": 0,
+    "tests_filtered": 0,
+    "new_tests_passed": 28,
+    "complete_original_ordering_methods_passed": 2,
+    "strict_clippy": "PASS",
+    "workspace_format": "PASS",
+    "normal_library_build": "PASS",
+    "current_extracted_getter_boundary_cases_passed": 11,
+    "actual_sdk_modes_passed": 5,
+    "sdk_runtime": "Supplementary AGP9.4.0/Gradle9.6.1/JDK21/SDK37; zero original generated-project-view runtime credit",
+    "cleanup": "PASS: five owned SDK daemons absent; unowned processes left untouched"
+  },
+  "fix_rounds": {
+    "production_fixes": 2,
+    "third_round_additive_test_only": true,
+    "all_previous_assertions_preserved": true,
+    "earlier_failed_and_static_only_records_preserved": true,
+    "environment_wrapper_failure_not_product_test_failure": true
+  },
+  "shared_runtime_lease": "released_to_root",
+  "canonical_matrix_changed": false,
+  "canonical_new_port_credit": 0,
+  "pending_lead_gates": [
+    "Combined normal application build and native validation",
+    "Full workspace tests/CI",
+    "Matching-source exact two ordering parity captures plus existing captures",
+    "Conflict/main guards, lead review and protected merge"
+  ],
+  "limitations": [
+    "Exact runner source not retained; reported timing/RSS covers entire isolated validation process",
+    "Disabled-artifact mode confirms already-empty release maps, not before/after removal",
+    "No Studio generated-root filtering/light-class/Kotlin-facet/tree/controller/LSP implementation",
+    "Remaining ModelVersions test and all five original generated-project-view flows unported",
+    "No exhaustive test-suite/runtime census or phase/IDE completion claim"
+  ]
+}

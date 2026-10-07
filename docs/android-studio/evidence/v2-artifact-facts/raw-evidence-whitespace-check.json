@@ -1,0 +1,94 @@
+{
+  "kind": "raw_evidence_whitespace_check",
+  "first_command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check"
+  ],
+  "first_exit_code": 2,
+  "diagnostics": "docs/android-studio/evidence/v2-artifact-facts/bytecode-gradle.log:3: trailing whitespace.\n+Daemon will be stopped at the end of the build \ndocs/android-studio/evidence/v2-artifact-facts/bytecode-inspection.json:27: trailing whitespace.\n+                \ndocs/android-studio/evidence/v2-artifact-facts/bytecode-inspection.json:36: trailing whitespace.\n+                \ndocs/android-studio/evidence/v2-artifact-facts/bytecode-inspection.json:45: trailing whitespace.\n+                \ndocs/android-studio/evidence/v2-artifact-facts/cargo-tests.log:444: new blank line at EOF.\ndocs/android-studio/evidence/v2-artifact-facts/custom-gradle.log:3: trailing whitespace.\n+Daemon will be stopped at the end of the build \ndocs/android-studio/evidence/v2-artifact-facts/disabled-artifact-gradle.log:3: trailing whitespace.\n+Daemon will be stopped at the end of the build \ndocs/android-studio/evidence/v2-artifact-facts/disabled-artifact-inspection.json:27: trailing whitespace.\n+                \ndocs/android-studio/evidence/v2-artifact-facts/disabled-artifact-inspection.json:36: trailing whitespace.\n+                \ndocs/android-studio/evidence/v2-artifact-facts/disabled-artifact-inspection.json:45: trailing whitespace.\n+                \ndocs/android-studio/evidence/v2-artifact-facts/disabled-gradle.log:3: trailing whitespace.\n+Daemon will be stopped at the end of the build \ndocs/android-studio/evidence/v2-artifact-facts/disabled-inspection.json:21: trailing whitespace.\n+        \ndocs/android-studio/evidence/v2-artifact-facts/source-gradle.log:3: trailing whitespace.\n+Daemon will be stopped at the end of the build \ndocs/android-studio/evidence/v2-artifact-facts/source-inspection.json:27: trailing whitespace.\n+                \ndocs/android-studio/evidence/v2-artifact-facts/source-inspection.json:36: trailing whitespace.\n+                \ndocs/android-studio/evidence/v2-artifact-facts/source-inspection.json:45: trailing whitespace.\n+                \n",
+  "raw_evidence_files": [
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bytecode-gradle.log",
+      "external_source": "/workspace/android-studio-artifacts/v2-artifact-facts/bytecode-gradle.log",
+      "sha256": "a6ddf67c8148efa724958ac62e6ebb5396fcb627ab8e832402de8919626147d1",
+      "raw_bytes_preserved": true
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bytecode-inspection.json",
+      "external_source": "/workspace/android-studio-artifacts/v2-artifact-facts/bytecode-inspection.json",
+      "sha256": "24e07fa16b6f02fb309e31e6ca8bc6163d747d1a05eecef2e891e9c4e540d6f5",
+      "raw_bytes_preserved": true
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/cargo-tests.log",
+      "external_source": "/workspace/android-studio-artifacts/v2-artifact-facts/cargo-tests.log",
+      "sha256": "ef59bd2249cadff4ab556d6bf23044398bdd21f2ab14df9fcc9e4e8b87cc20bb",
+      "raw_bytes_preserved": true
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/custom-gradle.log",
+      "external_source": "/workspace/android-studio-artifacts/v2-artifact-facts/custom-gradle.log",
+      "sha256": "b7035ab7ed15959ae5ddc32663578e6484b0aec5edeb6ab05c583c418c741f97",
+      "raw_bytes_preserved": true
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-artifact-gradle.log",
+      "external_source": "/workspace/android-studio-artifacts/v2-artifact-facts/disabled-artifact-gradle.log",
+      "sha256": "e6edaaa11e178de8c5dea1fd633e84c8a4086b37ddd060e08153f3e0d55b0e9b",
+      "raw_bytes_preserved": true
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-artifact-inspection.json",
+      "external_source": "/workspace/android-studio-artifacts/v2-artifact-facts/disabled-artifact-inspection.json",
+      "sha256": "0911395ce56e02acbf37dc35491e5d64271f47f0c05a6ac0eee9f33bab4a8b88",
+      "raw_bytes_preserved": true
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-gradle.log",
+      "external_source": "/workspace/android-studio-artifacts/v2-artifact-facts/disabled-gradle.log",
+      "sha256": "e1d505bd17a31f6badb39be3fb31353e085e9644209c813a5f1e88b7e1d6597c",
+      "raw_bytes_preserved": true
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-inspection.json",
+      "external_source": "/workspace/android-studio-artifacts/v2-artifact-facts/disabled-inspection.json",
+      "sha256": "ac6af4a79171008b41a55e6fed75680fbff805ebd09843f6ea45ca729b8c7166",
+      "raw_bytes_preserved": true
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/source-gradle.log",
+      "external_source": "/workspace/android-studio-artifacts/v2-artifact-facts/source-gradle.log",
+      "sha256": "b24233d0cf47c1d7ed7ab179ffbdd3476520c5d13d5687c5f3621d3c505b1f3a",
+      "raw_bytes_preserved": true
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/source-inspection.json",
+      "external_source": "/workspace/android-studio-artifacts/v2-artifact-facts/source-inspection.json",
+      "sha256": "0911395ce56e02acbf37dc35491e5d64271f47f0c05a6ac0eee9f33bab4a8b88",
+      "raw_bytes_preserved": true
+    }
+  ],
+  "decision": "Preserve original executed output bytes; no source/test/assertion/receipt normalization. Check all other staged paths.",
+  "scoped_command": [
+    "git",
+    "diff",
+    "--cached",
+    "--check",
+    "--",
+    ".",
+    ":(exclude)docs/android-studio/evidence/v2-artifact-facts/bytecode-gradle.log",
+    ":(exclude)docs/android-studio/evidence/v2-artifact-facts/bytecode-inspection.json",
+    ":(exclude)docs/android-studio/evidence/v2-artifact-facts/cargo-tests.log",
+    ":(exclude)docs/android-studio/evidence/v2-artifact-facts/custom-gradle.log",
+    ":(exclude)docs/android-studio/evidence/v2-artifact-facts/disabled-artifact-gradle.log",
+    ":(exclude)docs/android-studio/evidence/v2-artifact-facts/disabled-artifact-inspection.json",
+    ":(exclude)docs/android-studio/evidence/v2-artifact-facts/disabled-gradle.log",
+    ":(exclude)docs/android-studio/evidence/v2-artifact-facts/disabled-inspection.json",
+    ":(exclude)docs/android-studio/evidence/v2-artifact-facts/source-gradle.log",
+    ":(exclude)docs/android-studio/evidence/v2-artifact-facts/source-inspection.json"
+  ],
+  "scoped_exit_code": 0,
+  "product_fix_round": false
+}
