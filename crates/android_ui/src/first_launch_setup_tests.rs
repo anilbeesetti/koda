@@ -95,6 +95,41 @@ fn persisted_state(cx: &TestAppContext) -> Option<String> {
     })
 }
 
+#[gpui::test]
+async fn startup_kotlin_outcomes_preserve_existing_operation_errors(cx: &mut TestAppContext) {
+    let _state = initialize(true, cx);
+    cx.update(|cx| startup_kotlin::set_state_for_test(startup_kotlin::State::Checking, cx));
+    let project = empty_project(cx).await;
+    let window = add_workspace(&project, false, cx);
+    cx.run_until_parked();
+    window
+        .update(cx, |workspace, _, cx| {
+            let panel = controller(workspace, cx).expect("Android controller");
+            panel.update(cx, |panel, _| {
+                panel.error = Some("Existing build failure".into());
+                panel.status = "Build failed".into();
+            });
+        })
+        .expect("Open window");
+    for outcome in [
+        startup_kotlin::State::Ready,
+        startup_kotlin::State::Failed("Kotlin setup failed: Python is missing".into()),
+    ] {
+        cx.update(|cx| startup_kotlin::set_state_for_test(outcome, cx));
+        cx.run_until_parked();
+        window
+            .update(cx, |workspace, _, cx| {
+                let panel = controller(workspace, cx).expect("Android controller");
+                assert_eq!(
+                    panel.read(cx).error.as_deref(),
+                    Some("Existing build failure")
+                );
+                assert_eq!(panel.read(cx).status.as_ref(), "Build failed");
+            })
+            .expect("Open window");
+    }
+}
+
 struct BlockingModal(FocusHandle);
 
 impl Focusable for BlockingModal {

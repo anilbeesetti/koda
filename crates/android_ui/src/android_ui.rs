@@ -7,6 +7,7 @@ mod android_status;
 mod android_tool_setup;
 #[cfg(test)]
 mod first_launch_setup_tests;
+mod startup_kotlin;
 
 use android_build::{BuildEvent, BuildStatus, BuildTab, ProcessOutput};
 pub use android_build::{BuildPanel, ToggleBuild};
@@ -207,6 +208,22 @@ impl Global for FirstLaunchSetup {}
 pub fn enable_first_launch_setup(cx: &mut App) {
     observe_automatic_setup_windows(cx);
     cx.global_mut::<FirstLaunchSetup>().enabled = true;
+    startup_kotlin::initialize(cx);
+}
+
+fn first_launch_setup_resolved_for_kotlin(cx: &App) -> bool {
+    cx.try_global::<FirstLaunchSetup>()
+        .is_none_or(|setup| !setup.enabled || setup.resolved)
+        && cx
+            .try_global::<AndroidControllers>()
+            .is_none_or(|controllers| {
+                controllers.0.values().all(|controller| {
+                    controller.upgrade().is_none_or(|controller| {
+                        let panel = controller.read(cx);
+                        !panel.tool_setup.choosing && panel.tool_setup.operation.is_none()
+                    })
+                })
+            })
 }
 
 fn observe_automatic_setup_windows(cx: &mut App) {
@@ -224,6 +241,7 @@ fn observe_automatic_setup_windows(cx: &mut App) {
             setup.workspace = None;
             setup.window = None;
         }
+        cx.defer(startup_kotlin::resume);
     })
     .detach();
 }
@@ -251,6 +269,7 @@ fn record_first_launch_setup(state: &'static str, cx: &mut App) {
     db::write_and_log(cx, move || async move {
         database.write_kvp(key, state.to_owned()).await
     });
+    startup_kotlin::resume(cx);
 }
 
 fn finish_first_launch_setup(cx: &mut App) {
@@ -598,6 +617,59 @@ impl AndroidPanel {
         cx: &mut Context<Self>,
     ) {
         observe_automatic_setup_windows(cx);
+        if cx.has_global::<startup_kotlin::StartupKotlin>() {
+            let mut previous_state = startup_kotlin::state(cx).cloned();
+            self._startup_subscriptions.push(
+                cx.observe_global_in::<startup_kotlin::StartupKotlin>(
+                    window,
+                    move |panel, window, cx| {
+                        let state = startup_kotlin::state(cx).cloned();
+                        if previous_state == state {
+                            return;
+                        }
+                        previous_state = state.clone();
+                        match state {
+                            Some(startup_kotlin::State::Ready) => {
+                                panel.auto_sync_root = None;
+                                panel.refresh_tool_setup(cx);
+                                panel.refresh_devices(cx);
+                                panel.recover_kotlin_buffers(cx);
+                                panel.auto_sync_project(window, cx);
+                            }
+                            Some(startup_kotlin::State::Failed(error)) => {
+                                let message = error
+                                    .lines()
+                                    .next()
+                                    .unwrap_or("Kotlin setup failed")
+                                    .to_owned();
+                                let workspace = panel.workspace.clone();
+                                window.defer(cx, move |_, cx| {
+                                    workspace
+                                        .update(cx, |workspace, cx| {
+                                            workspace.show_toast(
+                                                Toast::new(
+                                                    NotificationId::unique::<
+                                                        startup_kotlin::StartupKotlin,
+                                                    >(
+                                                    ),
+                                                    message,
+                                                )
+                                                .on_click("Android Setup", |window, cx| {
+                                                    window.dispatch_action(Setup.boxed_clone(), cx)
+                                                }),
+                                                cx,
+                                            );
+                                        })
+                                        .log_err();
+                                });
+                            }
+                            _ => {}
+                        }
+                        cx.notify();
+                    },
+                ),
+            );
+        }
         self._startup_subscriptions.push(cx.observe_in(
             modal_layer,
             window,
@@ -661,6 +733,7 @@ impl AndroidPanel {
                         .is_some()
                     {
                         cx.global_mut::<FirstLaunchSetup>().resolved = true;
+                        startup_kotlin::resume(cx);
                         return;
                     }
                     let setup = cx.global_mut::<FirstLaunchSetup>();
@@ -860,6 +933,18 @@ impl AndroidPanel {
         if active != tab {
             return;
         }
+        if self.tool_setup.operation.is_some() {
+            if let Some(cancel) = self.command_cancel.take()
+                && cancel.send(()).is_err()
+            {
+                log::debug!("Managed tool command already finished before cancellation");
+            }
+            // Keep the profile gate until the installer has stopped its children
+            // and released the shared lock, then resume the startup installation.
+            self.status = "Cancelling managed tool setup…".into();
+            cx.notify();
+            return;
+        }
         self.active_build_session = None;
         self.pending_gradle_operation = None;
         self.active_operation_id = None;
@@ -900,6 +985,9 @@ impl AndroidPanel {
         if self.active_build_session.is_some() && self.trusted_root(cx).is_err() {
             self.cancel_build(BuildTab::Output, cx);
             self.cancel_build(BuildTab::Sync, cx);
+            if self.tool_setup.operation.is_some() {
+                return;
+            }
         }
         if !self.startup_settings_ready {
             return;
@@ -1091,6 +1179,7 @@ impl AndroidPanel {
     }
 
     pub(crate) fn bootstrap_completed(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
+        cx.defer(startup_kotlin::resume);
         self.auto_sync_root = None;
         self.error = None;
         self.refresh_tool_setup(cx);
@@ -2331,6 +2420,16 @@ impl AndroidPanel {
     }
 
     fn should_configure_official_kotlin(&self, cx: &App) -> bool {
+        if matches!(
+            startup_kotlin::state(cx),
+            Some(
+                startup_kotlin::State::Checking
+                    | startup_kotlin::State::Installing(_)
+                    | startup_kotlin::State::WaitingForSetup
+            )
+        ) {
+            return false;
+        }
         self.official_kotlin_state(cx).is_some()
             || (project::lsp_store::managed_kotlin_runtime_enabled(cx)
                 && self.default_official_kotlin_eligible(cx))
@@ -6215,7 +6314,9 @@ fi
     }
 
     #[gpui::test]
-    async fn managed_tool_setup_cancel_and_root_removal_clear_busy_state(cx: &mut TestAppContext) {
+    async fn managed_tool_setup_cancel_and_root_removal_keep_ownership_until_cleanup(
+        cx: &mut TestAppContext,
+    ) {
         let _app_state = cx.update(AppState::test);
         let filesystem = FakeFs::new(cx.executor());
         filesystem
@@ -6239,6 +6340,8 @@ fi
                     PathBuf::from("/android")
                 });
                 panel.running = true;
+                let (cancel, cancelled) = oneshot::channel();
+                panel.command_cancel = Some(cancel);
                 panel.tool_setup.operation =
                     Some(cx.spawn(async |_, _| futures::future::pending().await));
                 if closed {
@@ -6246,10 +6349,14 @@ fi
                 } else {
                     panel.cancel_build(BuildTab::Output, cx);
                 }
-                assert!(!panel.running);
-                assert!(panel.active_build_session.is_none());
-                assert!(panel.tool_setup.operation.is_none());
+                assert!(panel.running);
+                assert!(panel.active_build_session.is_some());
+                assert!(panel.tool_setup.operation.is_some());
                 assert!(panel.command_cancel.is_none());
+                assert_eq!(cancelled.now_or_never(), Some(Ok(())));
+                panel.tool_setup.operation = None;
+                panel.active_build_session = None;
+                panel.running = false;
             });
         }
     }

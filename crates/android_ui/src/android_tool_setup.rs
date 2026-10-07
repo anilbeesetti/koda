@@ -128,13 +128,24 @@ struct SetupWizard {
     close_requested: bool,
     error: Option<String>,
     show_details: bool,
+    show_kotlin_details: bool,
     _panel_subscription: Subscription,
+    _kotlin_subscription: Option<Subscription>,
 }
 
 impl SetupWizard {
     fn new(panel: Entity<AndroidPanel>, window: &mut Window, cx: &mut Context<Self>) -> Self {
+        let offline =
+            super::startup_kotlin::offline(cx).unwrap_or(panel.read(cx).tool_setup.offline);
+        panel.update(cx, |panel, _| panel.tool_setup.offline = offline);
         let mut wizard = Self {
             _panel_subscription: cx.observe(&panel, |_, _, cx| cx.notify()),
+            _kotlin_subscription: cx
+                .has_global::<super::startup_kotlin::StartupKotlin>()
+                .then(|| {
+                    cx.observe_global::<super::startup_kotlin::StartupKotlin>(|_, cx| cx.notify())
+                }),
+            offline,
             panel,
             focus_handle: cx.focus_handle(),
             content_focus: cx.focus_handle().tab_index(0).tab_stop(true),
@@ -148,7 +159,6 @@ impl SetupWizard {
             focus_reveals: Default::default(),
             license_scroll: ScrollHandle::new(),
             show_settings: false,
-            offline: false,
             install_sdk: true,
             reuse_jdk: true,
             reuse_sdk: true,
@@ -169,6 +179,7 @@ impl SetupWizard {
             close_requested: false,
             error: None,
             show_details: false,
+            show_kotlin_details: false,
         };
         wizard.detect(window, cx);
         wizard
@@ -253,6 +264,14 @@ impl SetupWizard {
         if self.busy || self.choosing {
             return false;
         }
+        if matches!(
+            super::startup_kotlin::state(cx),
+            Some(super::startup_kotlin::State::Installing(_))
+        ) {
+            self.error = Some("Kotlin language support is being installed. Wait for it to finish or cancel its download before changing Java or the Android SDK.".into());
+            cx.notify();
+            return false;
+        }
         self.rendered_error = None;
         let cancel = Arc::new(AtomicBool::new(false));
         let acquired = self.panel.update(cx, |panel, cx| {
@@ -301,6 +320,7 @@ impl SetupWizard {
                 cx.notify();
             }
         });
+        cx.defer(super::startup_kotlin::resume);
     }
 
     fn prepare_plan(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -1110,9 +1130,14 @@ impl SetupWizard {
                 "android-setup-offline",
                 self.offline,
                 "Use cached downloads only (offline)".into(),
-                disabled,
+                disabled || super::startup_kotlin::busy(cx),
                 |wizard, selected, cx| {
                     wizard.offline = selected;
+                    wizard.panel.update(cx, |panel, cx| {
+                        panel.tool_setup.offline = selected;
+                        cx.notify();
+                    });
+                    super::startup_kotlin::set_offline(selected, cx);
                     wizard.invalidate_plan();
                     cx.notify();
                 },
@@ -1259,6 +1284,133 @@ impl SetupWizard {
             })
             .child(Self::text("Preview uses the selected Java 21. Run needs an authorized device; Debug also needs the debugger runtime. Kotlin server and debugger provisioning supports Apple Silicon macOS."))
             .child(self.advanced(cx)))
+            .into_any_element()
+    }
+
+    fn kotlin_setup(&self, cx: &mut Context<Self>) -> AnyElement {
+        use super::startup_kotlin::{self, State};
+        let Some(state) = startup_kotlin::state(cx).cloned() else {
+            return div().into_any_element();
+        };
+        let message = match &state {
+            State::Checking => "Checking installation…",
+            State::WaitingForSetup | State::WaitingForJava(_) => {
+                "Installs automatically after Java setup"
+            }
+            State::Installing(message) if message.starts_with("Cancelling") => "Cancelling…",
+            State::Installing(_) => "Installing…",
+            State::Ready => "Installed",
+            State::Failed(_) => "Installation needs attention",
+            State::Cancelled => "Download cancelled",
+        };
+        v_flex()
+            .id("android-setup-kotlin-runtime")
+            .role(gpui::Role::Status)
+            .aria_label(format!("Kotlin language support: {message}"))
+            .gap_2()
+            .child(
+                h_flex()
+                    .gap_3()
+                    .justify_between()
+                    .flex_wrap()
+                    .child(
+                        v_flex()
+                            .gap_1()
+                            .child(Label::new("Kotlin language support"))
+                            .child(Label::new(message).size(LabelSize::Small).color(
+                                if matches!(state, State::Ready) {
+                                    Color::Success
+                                } else {
+                                    Color::Muted
+                                },
+                            )),
+                    )
+                    .when(startup_kotlin::busy(cx), |element| {
+                        element.child(
+                            self.focus_row(
+                                "cancel-startup-kotlin",
+                                setup_button("cancel-startup-kotlin", "Cancel", cx)
+                                    .tab_index(0isize)
+                                    .on_click(
+                                        cx.listener(|_, _, _, cx| startup_kotlin::cancel(cx)),
+                                    ),
+                                cx,
+                            )
+                            .debug_selector(|| "android-kotlin-cancel-control".into()),
+                        )
+                    })
+                    .when(
+                        matches!(
+                            state,
+                            State::Failed(_)
+                                | State::Cancelled
+                                | State::WaitingForJava(_)
+                                | State::WaitingForSetup
+                        ),
+                        |element| {
+                            element.child(
+                                self.focus_row(
+                                    "retry-startup-kotlin",
+                                    setup_button("retry-startup-kotlin", "Retry", cx)
+                                        .disabled(self.busy || self.choosing)
+                                        .tab_index(0isize)
+                                        .on_click(cx.listener(|wizard, _, _, cx| {
+                                            startup_kotlin::retry(
+                                                startup_kotlin::offline(cx)
+                                                    .unwrap_or(wizard.offline),
+                                                cx,
+                                            )
+                                        })),
+                                    cx,
+                                ),
+                            )
+                        },
+                    ),
+            )
+            .when_some(
+                match state {
+                    State::Failed(error) | State::WaitingForJava(error) => Some(error),
+                    _ => None,
+                },
+                |element, error| {
+                    element
+                        .child(
+                            Self::text(
+                                error
+                                    .lines()
+                                    .next()
+                                    .unwrap_or("Kotlin setup failed")
+                                    .to_owned(),
+                            )
+                            .text_color(cx.theme().status().error),
+                        )
+                        .child(
+                            self.focus_row(
+                                "startup-kotlin-details",
+                                setup_button(
+                                    "startup-kotlin-details",
+                                    if self.show_kotlin_details {
+                                        "Hide details"
+                                    } else {
+                                        "Details"
+                                    },
+                                    cx,
+                                )
+                                .tab_index(0isize)
+                                .on_click(cx.listener(
+                                    |wizard, _, _, cx| {
+                                        wizard.show_kotlin_details = !wizard.show_kotlin_details;
+                                        cx.notify();
+                                    },
+                                )),
+                                cx,
+                            ),
+                        )
+                        .when(self.show_kotlin_details, |element| {
+                            element.child(Self::text(error))
+                        })
+                },
+            )
             .into_any_element()
     }
 
@@ -1410,7 +1562,8 @@ impl Render for SetupWizard {
                     .child(Self::text(error).text_color(cx.theme().status().error))
                     .child(Self::text("Your previous selection is preserved. Resolve the error, then retry."))
                     .when(self.step == SetupStep::Review, |element| element.child(div().debug_selector(|| "android-setup-retry-control".into()).child(self.focus_row("reveal-android-setup-retry-detection", setup_button("android-setup-retry-detection", "Retry detection", cx).disabled(busy).tab_index(0isize).on_click(cx.listener(|wizard, _, window, cx| wizard.detect(window, cx))), cx))))))
-                .child(content))
+                .child(content)
+                .child(self.kotlin_setup(cx)))
                 .custom_scrollbars(ui::Scrollbars::always_visible(ui::ScrollAxes::Vertical).tracked_scroll_handle(&self.content_scroll).tracked_entity(cx.entity_id()), window, cx))
             .child(h_flex().debug_selector(|| "android-setup-footer".into()).flex_shrink_0().p_4().when(compact_height, |element| element.p_2()).gap_2().flex_wrap().justify_between().border_t_1().border_color(cx.theme().colors().border)
                 .child(div().debug_selector(|| "android-setup-cancel-control".into()).child(setup_button("android-setup-cancel", if self.close_requested && finishing { "Finishing…" } else if self.close_requested { "Cancelling…" } else if finishing { "Close when finished" } else if busy { "Cancel setup" } else { "Not now" }, cx)
@@ -1478,6 +1631,103 @@ mod tests {
             .0;
         let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
         (state, workspace, panel)
+    }
+
+    #[gpui::test]
+    async fn kotlin_diagnostics_expand_independently_and_preserve_offline_choice(
+        cx: &mut TestAppContext,
+    ) {
+        use super::super::startup_kotlin::{self, State};
+        let (_state, _workspace, panel) = fixture(cx).await;
+        cx.update(|cx| {
+            startup_kotlin::set_state_for_test(
+                State::Failed("Install Python 3.12 or newer\nInstaller details".into()),
+                cx,
+            );
+            startup_kotlin::set_offline(true, cx);
+        });
+        let (wizard, cx) =
+            cx.add_window_view(|window, cx| SetupWizard::new(panel.clone(), window, cx));
+        cx.run_until_parked();
+        wizard.update_in(cx, |wizard, window, cx| {
+            assert!(wizard.offline && panel.read(cx).tool_setup.offline);
+            assert!(!wizard.show_details && !wizard.show_kotlin_details);
+            wizard.focus_handle.focus(window, cx);
+        });
+        for _ in 0..32 {
+            press_key(cx, "tab");
+            if wizard.update_in(cx, |wizard, window, cx| {
+                wizard
+                    .focus_reveals
+                    .borrow()
+                    .get("startup-kotlin-details")
+                    .expect("Kotlin details control")
+                    .focus
+                    .contains_focused(window, cx)
+            }) {
+                break;
+            }
+        }
+        press_key(cx, "enter");
+        cx.run_until_parked();
+        wizard.read_with(cx, |wizard, _| {
+            assert!(wizard.show_kotlin_details);
+            assert!(
+                !wizard.show_details,
+                "Kotlin diagnostics must not expose Java/SDK details"
+            );
+        });
+    }
+
+    #[gpui::test]
+    async fn kotlin_cancellation_remains_available_on_the_license_page(cx: &mut TestAppContext) {
+        use super::super::startup_kotlin::{self, State};
+        let (_state, _workspace, panel) = fixture(cx).await;
+        let (wizard, cx) = cx.add_window_view(|window, cx| SetupWizard::new(panel, window, cx));
+        cx.run_until_parked();
+        wizard.update(cx, |wizard, cx| {
+            wizard.step = SetupStep::Licenses;
+            wizard.plan = Some(plan(vec![license("android-sdk-license")]));
+            startup_kotlin::set_state_for_test(State::Installing("Downloading…".into()), cx);
+            cx.notify();
+        });
+        cx.run_until_parked();
+        cx.simulate_resize(gpui::size(px(360.), px(600.)));
+        wizard.update_in(cx, |wizard, window, cx| {
+            wizard.focus_handle.focus(window, cx)
+        });
+        for _ in 0..64 {
+            press_key(cx, "tab");
+            if wizard.update_in(cx, |wizard, window, cx| {
+                wizard
+                    .focus_reveals
+                    .borrow()
+                    .get("cancel-startup-kotlin")
+                    .expect("Kotlin cancel control")
+                    .focus
+                    .contains_focused(window, cx)
+            }) {
+                break;
+            }
+        }
+        let cancel_bounds = cx
+            .debug_bounds("android-kotlin-cancel-control")
+            .expect("Visible cancel control");
+        let viewport = wizard.read_with(cx, |wizard, _| wizard.content_scroll.bounds());
+        assert!(
+            cancel_bounds.top() >= viewport.top() && cancel_bounds.bottom() <= viewport.bottom()
+        );
+        press_key(cx, "enter");
+        wizard.read_with(cx, |wizard, _| {
+            assert!(
+                wizard
+                    .focus_reveals
+                    .borrow()
+                    .contains_key("cancel-startup-kotlin")
+            );
+            assert!(!wizard.licenses_accepted());
+        });
+        cx.read(|cx| assert!(matches!(startup_kotlin::state(cx), Some(State::Installing(message)) if message.starts_with("Cancelling"))));
     }
 
     fn plan(licenses: Vec<provision::License>) -> provision::SetupPlan {
@@ -2501,6 +2751,7 @@ impl AndroidPanel {
                     }
                     panel.refresh_tool_setup(cx);
                     panel.refresh_devices(cx);
+                    cx.defer(super::startup_kotlin::resume);
                 })
                 .log_err();
         })
@@ -2518,6 +2769,7 @@ impl AndroidPanel {
             || self.syncing
             || self.tool_setup.choosing
             || self.tool_setup.operation.is_some()
+            || super::startup_kotlin::busy(cx)
         {
             return;
         }
@@ -2536,7 +2788,7 @@ impl AndroidPanel {
             );
             return;
         }
-        let offline = self.tool_setup.offline;
+        let offline = super::startup_kotlin::offline(cx).unwrap_or(self.tool_setup.offline);
         self.root = Some(root.clone());
         self.last_build_operation = None;
         self.tool_setup.last_operation = Some((tool, operation));
@@ -2568,6 +2820,7 @@ impl AndroidPanel {
                 panel.command_cancel = None;
                 panel.running = false;
                 panel.tool_setup.operation = None;
+                cx.defer(super::startup_kotlin::resume);
                 let succeeded = matches!(&result, Ok(ProcessOutput::Success(_)));
                 let (status, message) = match result {
                     Ok(ProcessOutput::Success(_)) => (BuildStatus::Succeeded, "Managed tool ready. Configure Kotlin or retry Run / Debug.".to_owned()),
@@ -2592,7 +2845,10 @@ impl AndroidPanel {
     }
 
     fn render_tool_setup(&self, wizard: &SetupWizard, cx: &mut Context<Self>) -> impl IntoElement {
-        let busy = self.running || self.syncing || self.tool_setup.choosing;
+        let busy = self.running
+            || self.syncing
+            || self.tool_setup.choosing
+            || super::startup_kotlin::busy(cx);
         let details = v_flex().gap_2()
             .child(Label::new("Advanced Kotlin and debugger tools: Apple Silicon macOS. Preview uses the configured Java 21 runtime.").size(LabelSize::Small))
             .child(Label::new("These advanced installers require Python 3.12+ and Apple's Command Line Tools. Java and Android SDK setup uses Koda's native installer.").size(LabelSize::Small).color(Color::Muted))
@@ -2605,7 +2861,7 @@ impl AndroidPanel {
             .child(h_flex().gap_1().flex_wrap()
                 .child(wizard.focus_row("advanced-check-tool-setup", setup_button("check-tool-setup", "Detect dependencies", cx).tab_index(0isize).on_click(cx.listener(|panel, _, _, cx| panel.refresh_tool_setup(cx))), cx))
                 .child(wizard.focus_row("advanced-tool-storage", setup_button("tool-storage", "Reveal managed storage", cx).tab_index(0isize).on_click(|_, _, cx| cx.reveal_path(&managed::root())), cx))
-                .child(wizard.focus_row("advanced-offline-tools", setup_button("offline-tools", if self.tool_setup.offline { "Offline: on" } else { "Offline: off" }, cx).tab_index(0isize).disabled(busy).on_click(cx.listener(|panel, _, _, cx| { panel.tool_setup.offline = !panel.tool_setup.offline; cx.notify(); })), cx)))
+                )
             .children(Tool::ALL.into_iter().map(|tool| {
                 v_flex().gap_1().child(Label::new(tool.label())).child(wizard.focus_row(tool.name(), h_flex().gap_1().flex_wrap().children([
                     ("install", "Install / repair"), ("validate", "Validate"), ("rollback", "Roll back"),

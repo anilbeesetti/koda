@@ -718,7 +718,12 @@ pub fn prepare(tool: Tool, operation: &str, offline: bool) -> Result<Prepared> {
     if offline {
         arguments.push("--offline".into());
     }
-    let mut environment = command_environment()?;
+    // Kotlin's patch compiler needs Java, but does not use the Android SDK.
+    // A removed SDK must not prevent repairing language support at startup.
+    let mut environment = match tool {
+        Tool::Kotlin => BTreeMap::new(),
+        Tool::Debugger => command_environment()?,
+    };
     if operation == "install" {
         let jdk = super::kotlin::java_home()?;
         executable(&jdk.join("bin/javac"))?;
