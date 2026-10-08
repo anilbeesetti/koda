@@ -1,0 +1,20 @@
+{
+  "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+  "stage": "all-features-tests",
+  "lease_granted": "Root-local-lease-after-parallel-owner-release-2308UTC",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 12.50052537600277,
+  "log": "/workspace/android-studio-artifacts/module-presentation-integration/runtime/all-features-tests.log",
+  "log_sha256": "6a7e171fcb9bb2bc4e3d0493d872918b03fcd5e29d01d304e76c60e55159a40a",
+  "whole_source_bindings": 4725,
+  "source_index_status_unchanged": true
+}

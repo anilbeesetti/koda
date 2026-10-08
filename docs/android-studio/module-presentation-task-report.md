@@ -1,64 +1,104 @@
-# Captured module display policy: verified component
+# Captured module display policy: verified integration
 
-Source commit `5e4b752a057bff25d9e281a43ce4b71a8598406f` adds a pure Rust display policy and
-20 supplemental source-derived tests. It preserves imported internal, holder,
-display and sort identities, Gradle awareness, raw path equality, null-only
-fallback, source-set precedence and empty suffixes. Eight pinned originals
-retain their exact bytes and Apache 2.0 attribution. No dependency, new non-Rust
-runtime, getter producer, public-model field or adapter change is added.
+The Rust policy preserves captured imported, internal, holder, display and sort
+identities when deriving Android module labels. Root projects retain their
+reported external IDs; nonroot projects use the final component; source-set
+suffixes take precedence. Null-only fallback, raw path equality, empty suffixes,
+Unicode and borrowed names follow the retained reference behavior. Twenty
+supplemental tests cover these rules. Eight pinned source files retain their
+exact bytes and Apache 2.0 attribution.
 
-All five independent reviewers passed both static and source-bound runtime
-review. There were no blocking findings and no product fix rounds.
+Combined source `905012f11885a86c9e8e18710ead07897d941d40` passes the scoped owner
+reviews and the lead implementation/runtime gates. All five owner reviewers
+passed static and source-bound runtime review. Their original reports and
+receipts remain unchanged in [owner evidence](evidence/module-presentation/).
+The previous component report is retained byte-exact in
+[historical report](evidence/module-presentation-lead/history/owner-task-report.json).
+There were no policy source fixes or weakened tests. Protected merge remains
+pending Root's normal PR61 dependency merge and final metadata, conflict and
+`main` checks.
 
-| Actual bounded check | Result |
-| --- | --- |
-| Normal locked `android_tools` tests, all features | 221 passed, 0 failed/ignored/filtered; 20 new supplemental cases |
-| Normal locked all-features library build | Passed |
-| Repository `./script/clippy --locked -p android_tools` | Passed; release, all targets/features, warnings denied |
-| `cargo fmt --all -- --check` | Passed |
-| Current-worktree compiler proof | Seven fresh test artifacts with exact source paths and at-run hashes |
-| Root's exact seven source-guard patterns | All 4,717 source bindings and Git index/status unchanged during execution; nested port evidence visible |
-| Original-source preservation | 159 tracked baseline paths preserved except one additive module export |
-| Process cleanup | Task checks and exact measurement child exited; no Gradle/app launched; lease released |
+| Lead check on combined source              | Actual result                                                                                       |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| Locked `android_tools` tests, all features | 251 passed; zero failed, ignored or filtered; includes all 20 new supplemental cases                |
+| Default `android_ui` library suite         | 125 passed; zero failed or filtered; one pre-existing ignored native capture retained               |
+| Exact existing reference captures          | 35 actual passing captures bound to this source                                                     |
+| Frozen Rust parity validator               | Passed: 95 selected, 19 ported, 16 adapted, 60 unported; 35 passing, zero failing                   |
+| Normal all-features library build          | Passed                                                                                              |
+| Repository strict Clippy                   | Passed; release, all targets and features, warnings denied                                          |
+| Full workspace Rust formatting             | Passed                                                                                              |
+| Normal full Koda app build                 | Passed in 205.18 seconds; actual executable hash and whole-source binding retained                  |
+| Full workspace CI                          | 10,500 passed, zero failed, 23 existing skips retained; execution 1,099.69 seconds                  |
+| CI formatting/Linux/macOS jobs             | All three succeeded; synthetic merge tree exactly equals the tested source tree                     |
+| Native SDK and model regression            | Two syncs succeeded; both complete exports passed the current Rust decoder and model comparisons    |
+| Native keyboard and editor regression      | 51 paired recorded commands exited zero; 17 full-app captures inspected                             |
+| Source and cleanup guards                  | All 4,725 source bindings and 12 original/private fixture files unchanged; owned app/display closed |
 
-The new frozen policy-test ELF is 1,642,216 bytes with SHA-256
-`6dcbba6ac91c0318aaa8cc7a459fd599a1d61eacbdd4ba4444b50b133f4726e4`. Its current exact identity is recorded in
-`evidence/module-presentation/frozen-policy-executable.json`. Other shared-target
-artifact hashes are historical identities observed at execution time; they
-must not be assumed current after later tasks rebuild the shared cache.
+[CI run 37696260846](https://github.com/anilbeesetti/koda/actions/runs/37696260846)
+uses synthetic merge `6ce178a20c755cdce04774bc56281c8bf647c7c2`, whose tree
+`ca7e3a82b6dcd83c756a40e6e74c57dcf9cdb796` exactly equals combined source.
+The retained raw Linux job log has 423,527 bytes and SHA-256
+`c024922293e081b70fc05fc69dcfee16313c667ed53f310657451dd76f0a3a83`.
+The earlier CI summary's pending local-gate field remains historical; the
+[final lead summary](evidence/module-presentation-lead/final-lead-summary.json)
+adds the completed native and parity gates without rewriting that receipt.
 
-One exact existing long-name test exercised a 327,680-byte imported name and a
-327,692-byte external ID. Its actual child process measured 1.817 ms elapsed and
-11,008 KiB peak RSS through `posix_spawn`/`wait4`, including process startup,
-allocation, assertions and output. That intentional exact-test measurement has
-one passing case and 19 filtered cases; the normal 221-test run has zero filtered
-cases. This is borrowing coverage and a bounded test-process measurement, not
-an adversarial delimiter scan, allocation count, memory ceiling, app startup,
-hardware, large-project or before/after performance result. Exact external
-validation runner source text and hashes are retained as audit metadata.
+The normal full-app ELF is 1,359,451,424 bytes with SHA-256
+`9c018912f5622c4b991276a311a1f86bd3544de612537904d299cdc7f0b40891`.
+The linker helper changes only the final output path, preserving all 1,205 other
+arguments. Its independent static, probe and actual-app reviews are retained as
+reversible JSON wrappers. This is actual app compilation and native execution;
+it does not measure startup or hardware graphics performance.
 
-Raw logs and all ten independent review reports are retained byte-exact in
-`evidence/module-presentation`; `manifest.json` binds portable paths and hashes.
-The explicitly authorized superseded generated unit-ELF retirement is recorded
-with its prior Root 229-test compiler identity, hash/size/nlink and observed
-process/FD checks. Two inaccessible system executable links are listed rather
-than treated as inspected. No source, fixture, raw log or frozen binary was
-retired. The previous execution receipts are not rewritten.
+The fresh native profile trusts only the private fixture and uses the unchanged
+official wrapper with explicit JDK 21, AGP 9.4.0, Gradle 9.6.1 and SDK 37. This
+is supplementary runtime evidence, not the pinned original reference driver.
+Recorded keyboard checks cover wide and narrow forward Tab/Space, reverse
+Shift+Tab/Space, Hide by Return, sidebar restore, explicit resync and Gradle/XML
+tabs. The second sync's screenshot shows loading; the first attempted loading
+capture still shows the trust prompt and receives no loading credit. No current
+SDK error was induced or credited. The 230-pixel stress width clips unrelated
+content and provides only toolbar-overflow evidence.
 
-The immutable `test_data/module_presentation/selection.json` records the initial
-source inventory before execution. Actual later execution status is in this
-report, the scoped port metadata and source-bound raw receipts. Original test
-ports and new canonical parity credit remain **zero**; the global matrix is
-unchanged. All five original generated-tree methods remain unported/not_run.
+Both complete current models, including generated-artifact facts, equal the two
+retained prior V2 models after replacing only each known private-root prefix in
+JSON strings. Seven older complete legacy projections match every other field,
+nested value and list order. Full raw exports remain intact. The current Rust
+decoder validates schema, root, module/variant identity, consumer/version gates,
+revision binding and generated assets/classpaths, then reproduces every sidecar
+module value and list order. The native
+[report](evidence/module-presentation-lead/native/review-report.md.json) and
+[model proof](evidence/module-presentation-lead/native/native-model-proof.json)
+retain exact commands, raw hashes and these comparison limits.
 
-Authoritative import/getter transport, qualified/internal-name construction,
-source-set/group publication, Kotlin facet/capability import and live tree UI
-remain separate tasks. Empty-label policy is implemented here; the current
-adapter's rejection remains specifically applicable unported behavior requiring
-an intentional adapter extension and edge tests. There is no silent fallback or
-N/A classification for it.
+No original module-name or generated-tree test becomes ported here. The retained
+[bounded preflight inventory](evidence/module-presentation-lead/preflight/bounded-test-inventory.json)
+contains 53 inspected method declarations: nine existing adapted declarations
+and 44 unported declarations. Its 22 source-provider definitions remain
+unported. Runtime parameter and runner expansion are incomplete, so these
+bounded source counts do not establish an executed runtime-case census. The
+[original preflight report](evidence/module-presentation-lead/preflight/preflight-report.md.json)
+retains the exact source inventory and planning limits. These counts are
+separate from the canonical matrix of 95 identified tests and 35 passing ports.
+The 20 policy assertions add supplemental source-derived coverage and zero
+original-test credit. All five original generated-tree flows and their ten
+assertions remain unported. The global census and mirror coverage remain
+incomplete.
 
-Root still owns combined full-app build, native regression, full-workspace CI,
-conflict/main verification and protected merge. This bounded component result
-is ready for lead integration; it does not establish full task integration,
-Android tree UI, phase or IDE completion.
+Authoritative getter transport, internal/qualified-name construction and
+collisions, holder resolution, Kotlin facet/capability import, revision-bound
+publication, the adapter's empty-label extension and logical Project UI remain
+separate tasks. The visible tree remains physical, the Sync console still shows
+raw model JSON, and the known Gradle indent-query diagnostic remains an editing
+issue. Language servers are disabled for native isolation; no Rust language-server
+credit is implied. No CPU, allocation count, app startup, large-project or
+hardware GPU performance claim is added. No new non-Rust runtime exception is
+introduced by this Rust policy.
+
+[Portable lead evidence](evidence/module-presentation-lead/manifest.json) retains
+byte-exact logs, current source snapshots, build/test/CI/native receipts and
+reversible original review text. Earlier component reports, failures and artifact
+retirement receipts are preserved. Metadata packaging keeps the exact seven
+source exclusions, including all nested port evidence in the source guard.
+This scoped integration is ready for Root's final metadata review and protected
+merge; Phase 1 and the complete IDE remain unfinished.

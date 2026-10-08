@@ -1,0 +1,17 @@
+{
+  "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+  "stage": "strict-clippy",
+  "lease_granted": "Root-local-lease-after-parallel-owner-release-2308UTC",
+  "command": [
+    "./script/clippy",
+    "--locked",
+    "-p",
+    "android_tools"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 4.782004210006562,
+  "log": "/workspace/android-studio-artifacts/module-presentation-integration/runtime/strict-clippy.log",
+  "log_sha256": "3524f740ae360e165301ac8988094057bae54a7b7b8578ac81676c2249326ade",
+  "whole_source_bindings": 4725,
+  "source_index_status_unchanged": true
+}

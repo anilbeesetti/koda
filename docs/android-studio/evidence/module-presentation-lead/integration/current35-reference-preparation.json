@@ -1,0 +1,13 @@
+{
+  "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+  "scope": "Only excluded canonical manifest/ledger metadata copied from verified9b95row inventory; ordinary current905recaptures must replace all35olderSource runs before validator credit. No production/test/source file changed.",
+  "original_metadata_sha256": {
+    "reference-manifest.json": "e23b942ee6e3e39ac869de13ad762ce4f8cb75eb6233695e90036d8b3f3dc1c2",
+    "test-parity.json": "96a84124391978ff96192552d891f848a3375981d8cb04fdeef4d841974fc736"
+  },
+  "selected_reference_tests": 95,
+  "to_recapture": 35,
+  "helper_sha256": "a2af786ecfd458301e64ff01dd72d43fdfed59cafe51e098724d083f1d7cae1b",
+  "fixed_seven_source_exclusions_unchanged": true,
+  "global_census_complete": false
+}

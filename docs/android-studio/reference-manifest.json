@@ -14,7 +14,7 @@
         "sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84"
       },
       "coverage": "canonical",
-      "coverage_reason": "92 declared method cases in eight bounded inspected suites, including 57 toolbar/attached-workbench cases. Bounded runner/target/helper-fixture evidence is recorded in ports/model-sync-inventory.json and ports/window-inventory.json. Global suite discovery, runtime descriptions, SDK dependency equivalence and other runner expansions remain incomplete.",
+      "coverage_reason": "95 declared method cases in nine bounded inspected suites, including all three original ModelVersionsTest methods and 57 toolbar/attached-workbench cases. Bounded runner/target/helper-fixture evidence is recorded in ports/model-sync-inventory.json and ports/window-inventory.json. Global suite discovery, runtime descriptions, SDK dependency equivalence and other runner expansions remain incomplete.",
       "coverage_evidence": null,
       "census_complete": false,
       "census_evidence": null
@@ -2684,6 +2684,54 @@
       "copyright": "Copyright (C) 2016 The Android Open Source Project",
       "fixtures": [],
       "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.ModelVersionsTest",
+      "method": "checkModelConsumerVersionOrdering",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+        "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef"
+      },
+      "line": 25,
+      "declaration": "fun checkModelConsumerVersionOrdering() {",
+      "copyright": "Copyright (C) 2024 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original ordinary JUnit4 method constructs model versions and AGP versions in memory; its complete pinned source is retained unchanged under generated_artifacts/ModelVersionsTest.kt."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.ModelVersionsTest",
+      "method": "checkModelVersionOrdering",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+        "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef"
+      },
+      "line": 43,
+      "declaration": "fun checkModelVersionOrdering() {",
+      "copyright": "Copyright (C) 2024 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original ordinary JUnit4 method constructs model versions and AGP versions in memory; its complete pinned source is retained unchanged under generated_artifacts/ModelVersionsTest.kt."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.ModelVersionsTest",
+      "method": "checkSupportsParallelSync",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+        "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef"
+      },
+      "line": 61,
+      "declaration": "fun checkSupportsParallelSync() {",
+      "copyright": "Copyright (C) 2024 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original ordinary JUnit4 method constructs model versions and AGP versions in memory; its complete pinned source is retained unchanged under generated_artifacts/ModelVersionsTest.kt."
     }
   ]
 }

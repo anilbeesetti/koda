@@ -1,0 +1,10 @@
+{
+  "pid": 294564,
+  "window_id": 2097153,
+  "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+  "executable": "/tmp/android-studio-link-output/koda-module-presentation-290003",
+  "executable_sha256": "9c018912f5622c4b991276a311a1f86bd3544de612537904d299cdc7f0b40891",
+  "command": "/workspace/android-studio-module-presentation/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/module-presentation-native-905012f/qa/user-data /workspace/android-studio-artifacts/module-presentation-native-905012f/generation-project /workspace/android-studio-artifacts/module-presentation-native-905012f/generation-project/app/custom-manifest/AndroidManifest.xml ",
+  "utc": "2026-10-07T23:32:01.347497+00:00",
+  "monotonic": 52561.417142434
+}

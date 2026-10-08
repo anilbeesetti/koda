@@ -1,0 +1,50 @@
+{
+  "touched_markdown_commands": [
+    [
+      "npx",
+      "--offline",
+      "prettier",
+      "--write",
+      "docs/android-studio/module-presentation-task-report.md"
+    ],
+    [
+      "npx",
+      "--offline",
+      "prettier",
+      "--check",
+      "docs/android-studio/module-presentation-task-report.md"
+    ]
+  ],
+  "touched_markdown_exit_codes": [
+    0,
+    0
+  ],
+  "touched_markdown_result": "PASS",
+  "read_only_broad_docs_check": {
+    "command": [
+      "npx",
+      "--offline",
+      "prettier",
+      "--check",
+      "src/"
+    ],
+    "cwd": "docs",
+    "exit_code": 1,
+    "result": "two pre-existing baseline formatting failures, no touched document failure",
+    "raw_log_sha256": "3ea8a8074a56c36a937e2f7a63dba659009ce5ec2df032ea77ee8a89576303e1",
+    "files": [
+      {
+        "path": "docs/src/installation.md",
+        "sha256": "1a4dcd9e8a3bd235d601d33da2d0a925b2f033164b8a59c4b354d3358571d565",
+        "unchanged_from_read_only_main_and_tested_source": true
+      },
+      {
+        "path": "docs/src/languages/csharp.md",
+        "sha256": "9a0f09eb0ea40809ea8f70a622efef5713d94c3dc7cb4d0e0f7cb473aeb7823b",
+        "unchanged_from_read_only_main_and_tested_source": true
+      }
+    ]
+  },
+  "baseline_source_files_not_formatted": "Root explicitly permits only excluded task metadata; baseline docs remain exact tested-source/main bytes, preserving source gates",
+  "version": "3.9.9"
+}

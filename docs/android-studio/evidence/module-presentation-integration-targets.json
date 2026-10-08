@@ -1,0 +1,1422 @@
+[
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_one_variant",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_one_variant",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-DefaultVariantsTest-oneVariant.log",
+          "sha256": "b04ba7a05a2713d5167dc416f07a6367670d99a6a99ea07e3e4740add07aba40"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_debug_preferred",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_debug_preferred",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-DefaultVariantsTest-debugPreferred.log",
+          "sha256": "c058a517c684d384639d3ebd5b962b75f3dc1ffbc269ed6f30a7619ec69a76d2"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_build_type",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_build_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-DefaultVariantsTest-preferredBuildType.log",
+          "sha256": "52876b3799d2091ad4d79bb3130510e443dda1024b98ad1ab7fdf170275ed1e6"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-DefaultVariantsTest-preferredProductFlavorOverDebugBuildType.log",
+          "sha256": "9a09b3b57424925ed651c285a91cfbb39818e81e04be46bda25beee9254ba51b"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-DefaultVariantsTest-preferredFlavorsInTwoDimensions.log",
+          "sha256": "c1ba7f0181fbf198fd52319290148c979969f93289c16137112d52d61cdbb02b"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
+          "sha256": "442ce440f46dd8bcc0ef3dcadf803138be660d0b97f50a0c0d141f24c20a46a5"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_mismatched_product_flavour_length",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-DefaultVariantsTest-mismatchedProductFlavourLength.log",
+          "sha256": "9298b5f68580af360b9e656b070a9fd564fca091eda3ff4449f9b75e6e2a166a"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_on_empty",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_on_empty",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-DefaultVariantsTest-onEmpty.log",
+          "sha256": "8eb15aa164bbcecd7962e75d069e2ec0a997cf79e58876cef9969f8b568a8d6e"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_simple_gradle_project",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_simple_gradle_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-GradleModuleImportTest-testImportSimpleGradleProject.log",
+          "sha256": "787e5241b7338e44dc351e2c863d1261443e889b9bc0399ef86f475c3c360e41"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subprojects",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subprojects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-GradleModuleImportTest-testImportSubprojects.log",
+          "sha256": "c31c23a5c704fb8742e720e4aca3bab331595564bc59c1ed1854e70c0ead91e0"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subprojects_with_missing_submodule",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subprojects_with_missing_submodule",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-GradleModuleImportTest-testImportSubProjectsWithMissingSubModule.log",
+          "sha256": "80bbf33332f68cf90c97a772d77ff26a43369f45949e4664089e8c12365714fd"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subproject_with_custom_location",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subproject_with_custom_location",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-GradleModuleImportTest-testImportSubProjectWithCustomLocation.log",
+          "sha256": "e1444ab2a9b00a4901c1c5453daa32bc2469095717940783d447bb6a0b7f9b6f"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "required_projects",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "required_projects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-GradleModuleImportTest-testRequiredProjects.log",
+          "sha256": "8ba220c5c4ec57e6b40a61fccb583ec2117b137a735d9c0dcb703cc9f24dc8d2"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "missing_required_projects",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "missing_required_projects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-GradleModuleImportTest-testMissingRequiredProjects.log",
+          "sha256": "34740ce00898b64c97ae6900fd4c9e47a8591f0a557223bd7aebf396d207e744"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "missing_enclosing_project",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "missing_enclosing_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-GradleModuleImportTest-testMissingEnclosingProject.log",
+          "sha256": "1ab8c5aa0011d74017f4fc91fad4912ab55bcb8230ddb20166e945d1750664d6"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "transitive_dependencies",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "transitive_dependencies",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-GradleModuleImportTest-testTransitiveDependencies.log",
+          "sha256": "bbd7c482ae7089f44845dd4fb4826c85080d8b07cd35ec912f7fa298dc6f1d6b"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "circular_dependencies",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "circular_dependencies",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-GradleModuleImportTest-testCircularDependencies.log",
+          "sha256": "bd54564fc1464a078cf1ea3299d98ecb6aa91bd957733f1a2ce6f34f36aa1f63"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+    "port_status": "adapted",
+    "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+    "target": {
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_show_visibility_icons_when_option_is_selected",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+        "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_show_visibility_icons_when_option_is_selected",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsSelected.log",
+          "sha256": "826e2d8a2a51e4f0906ad80baa27f1f6078ef62922a4b047722ffe1a0d8b219a"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+    "port_status": "adapted",
+    "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+    "target": {
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_show_visibility_icons_when_option_is_unselected",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+        "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_show_visibility_icons_when_option_is_unselected",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
+          "sha256": "0ad1c2851bdd33aacea42fe066212765dac4000f49df17212d3e310026869ffc"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+    "port_status": "adapted",
+    "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+    "target": {
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+        "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-AndroidProjectViewTest-testAndroidViewIsDefault.log",
+          "sha256": "66cdb01292f6b86ff159547ce2ee388b6fd37d468b165240cbb0a3f07f34c1ea"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+    "port_status": "adapted",
+    "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+    "target": {
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_not_visible_in_unsupported_project_system",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+        "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_not_visible_in_unsupported_project_system",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
+          "sha256": "b76b60749d55177cfab6427a8894436503a0819b7fc791928d825c0f3bf106f7"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+    "port_status": "adapted",
+    "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+    "target": {
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_not_visible_in_non_android_project",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+        "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_not_visible_in_non_android_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInNonAndroidProject.log",
+          "sha256": "fbd81e88789ee5c0e356b9de8187f7a7fa0a62b8f96c52c313457b157a0b7369"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+    "port_status": "adapted",
+    "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+    "target": {
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_custom_property_handling",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+        "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_custom_property_handling",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
+          "sha256": "ed4d484c694f0007337149bd0346ae5d08c3cce706041e055f2172dcba4553cd"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+    "port_status": "adapted",
+    "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+    "target": {
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+        "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
+          "sha256": "3ed01dbb602f02e9b09d10fcc366897a7a711b27f667683b8e3cd3a2d3b5ff6f"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+    "port_status": "adapted",
+    "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+    "target": {
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+        "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
+          "sha256": "981c31e208d2fbc6ddb3f9438d49026aebbdc1c068516b9625d2fe34a9f6b1d3"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+    "port_status": "adapted",
+    "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+    "target": {
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_metrics",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+        "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_metrics",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-AndroidProjectViewTest-testAndroidViewIsDefaultMetrics.log",
+          "sha256": "b11d35ecd4debe25f219bd29b6886bd83cac7387a6d945644f3996b68293394a"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::component_is_added_element",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::component_is_added_element",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-TabbedToolbarTest-componentIsAddedElement.log",
+          "sha256": "87c239bd986d78ba6acaecd05a687a2536c4fb58a8cb325a62993da42836e9e2"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::tab_is_added",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::tab_is_added",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-TabbedToolbarTest-tabIsAdded.log",
+          "sha256": "cbd4d1d1df14e32cc123d7cb0ad9ccd94e62c55b81d0ab38ada5adf2a66dcd98"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::closed_is_called_when_clicked",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-TabbedToolbarTest-closedIsCalledWhenClicked.log",
+          "sha256": "be2e56bbff9ae3ed2b37fff9cb2d8ad36b0eeec8d7a0079170c7e15ca81ea028"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::no_close_button_when_no_listener",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-TabbedToolbarTest-noCloseButtonWhenNoListener.log",
+          "sha256": "fe980569e2648fb9d104f3877e26d12f8bebf9f84927acd4f851f2f5702607c6"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-TabbedToolbarTest-iconButtonsCallbackWhenClicked.log",
+          "sha256": "83a37850f0d983519f553466813b5dc81b984411ab11305c21bb1ed0760a6768"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::can_select_tab_by_index",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::can_select_tab_by_index",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-TabbedToolbarTest-can select tab by index.log",
+          "sha256": "40c974d6e44464b1ba17e1e25a342b7d25b524c36db39eb6a0e6dd8e7e9d5311"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-TabbedToolbarTest-adding tab should not trigger select listener.log",
+          "sha256": "c77f49bfc4882294fbf9d9fcd9d02dc83307d9ab718c7fc4925f6c2dd97a3aa6"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "generated_artifacts",
+      "test_name": "check_model_consumer_version_ordering",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/generated_artifacts.rs",
+        "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "generated_artifacts",
+          "check_model_consumer_version_ordering",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-ModelVersionsTest-checkModelConsumerVersionOrdering.log",
+          "sha256": "068c5683add8ae4a76216d2a9f3f14f20a2ce4c322f0f4d6eaaaae044390f88c"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+    "port_status": "ported",
+    "reason": null,
+    "target": {
+      "package": "android_tools",
+      "integration_target": "generated_artifacts",
+      "test_name": "check_model_version_ordering",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/generated_artifacts.rs",
+        "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
+      },
+      "run": {
+        "tested_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "generated_artifacts",
+          "check_model_version_ordering",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/module-presentation-integration-ModelVersionsTest-checkModelVersionOrdering.log",
+          "sha256": "6eaad07117bf1dbff19b748f009faaacf716495a8b883c4426655e55000d3079"
+        }
+      }
+    }
+  }
+]

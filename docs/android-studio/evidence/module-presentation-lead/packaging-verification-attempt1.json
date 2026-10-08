@@ -1,0 +1,7 @@
+{
+  "attempt": "First read-only packaging verification",
+  "failure": "TypeError: unsupported operand type(s) for +: PosixPath and str",
+  "location": "Constructing UI/validator receipt filename after prior source/owner/reversible-wrapper/parity/fixture/log checks passed",
+  "source_or_test_change": false,
+  "recovery": "Parenthesized filename construction; unchanged normal evidence and all checks revalidated"
+}

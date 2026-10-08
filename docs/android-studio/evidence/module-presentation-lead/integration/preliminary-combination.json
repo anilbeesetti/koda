@@ -1,0 +1,14 @@
+{
+  "source_head": "905012f11885a86c9e8e18710ead07897d941d40",
+  "base_corrected_V2_source": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "source_owner_commit": "5e4b752a057bff25d9e281a43ce4b71a8598406f",
+  "owner_metadata_commit": "f51538cd4021432a52e31913ac2e12d9860f86d7",
+  "P1_payload_byte_identical": true,
+  "V2_and_module_presentation_exports_both_preserved": true,
+  "no_conflicts": true,
+  "owner_221tests_and_five_reviews": "pass, owner scope only",
+  "combined_251tests_fullapp_native_CI": "pending",
+  "protected_merge_order": "PR61 must pass and merge first, then normally merge final metadata into this task branch",
+  "main_unchanged": true,
+  "global_parity_credit": 0
+}
