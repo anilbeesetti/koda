@@ -50,7 +50,9 @@ use client::{
     proto::{self, ErrorCode, PanelId, PeerId},
 };
 use collections::{HashMap, HashSet, TypeIdHashMap, hash_map};
-use dock::{Dock, DockPosition, PanelButtons, PanelHandle, RESIZE_HANDLE_SIZE};
+use dock::{
+    Dock, DockPosition, PanelButtons, PanelHandle, RESIZE_HANDLE_SIZE, TOOL_WINDOW_RAIL_WIDTH,
+};
 use fs::Fs;
 use futures::{
     Future, FutureExt, StreamExt,
@@ -10138,7 +10140,7 @@ impl Render for Workspace {
                                     .child(
                                         v_flex()
                                             .id("left-tool-window-rail")
-                                            .w(px(40.))
+                                            .w(TOOL_WINDOW_RAIL_WIDTH)
                                             .h_full()
                                             .flex_none()
                                             .py_2()
@@ -10153,7 +10155,7 @@ impl Render for Workspace {
                                     .child(
                                         v_flex()
                                             .id("right-tool-window-rail")
-                                            .w(px(40.))
+                                            .w(TOOL_WINDOW_RAIL_WIDTH)
                                             .h_full()
                                             .flex_none()
                                             .py_2()
@@ -14727,6 +14729,309 @@ mod tests {
             assert_eq!(*top.flexes.lock(), vec![1.0; top.members.len()]);
             assert_eq!(*nested.flexes.lock(), vec![1.0; nested.members.len()]);
         });
+    }
+
+    #[gpui::test]
+    async fn test_tool_window_rail_reference_geometry(cx: &mut TestAppContext) {
+        init_test(cx);
+        for position in [
+            DockPosition::Left,
+            DockPosition::Right,
+            DockPosition::Bottom,
+        ] {
+            let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
+            let (workspace, cx) =
+                cx.add_window_view(|window, cx| Workspace::test_new(project, window, cx));
+            workspace.update_in(cx, |workspace, window, cx| {
+                let first = cx.new(|cx| RailTestPanel::<0>::new(position, cx));
+                let second = cx.new(|cx| RailTestPanel::<1>::new(position, cx));
+                workspace.add_panel(first, window, cx);
+                workspace.add_panel(second, window, cx);
+            });
+            cx.run_until_parked();
+            assert_rail_geometry(cx);
+            cx.simulate_resize(gpui::size(px(360.), px(720.)));
+            assert_rail_geometry(cx);
+            cx.simulate_scale_factor_change(2.);
+            assert_rail_geometry(cx);
+        }
+    }
+
+    fn assert_rail_geometry(cx: &mut VisualTestContext) {
+        let first = cx
+            .debug_bounds("tool-window-slot-RailFirst")
+            .expect("first rail button");
+        let second = cx
+            .debug_bounds("tool-window-slot-RailSecond")
+            .expect("second rail button");
+        let surface = cx
+            .debug_bounds("tool-window-surface-RailFirst")
+            .expect("state surface");
+        let icon = cx.debug_bounds("tool-window-icon-RailFirst").expect("icon");
+        assert_eq!(first.size, gpui::size(px(40.), px(40.)));
+        assert_eq!(second.size, first.size);
+        assert_eq!(second.origin.x, first.origin.x);
+        assert_eq!(second.origin.y, first.bottom());
+        assert_eq!(surface.size, gpui::size(px(30.), px(30.)));
+        assert_eq!(surface.origin, first.origin + gpui::point(px(5.), px(5.)));
+        assert_eq!(icon.size, gpui::size(px(20.), px(20.)));
+        assert_eq!(icon.origin, first.origin + gpui::point(px(10.), px(10.)));
+    }
+
+    #[gpui::test]
+    async fn test_tool_window_rail_full_slot_activates_and_hides_panel(cx: &mut TestAppContext) {
+        init_test(cx);
+        for position in [
+            DockPosition::Left,
+            DockPosition::Right,
+            DockPosition::Bottom,
+        ] {
+            let fs = FakeFs::new(cx.executor());
+            fs.insert_tree(
+                path!("/rail-project"),
+                json!({ "settings.gradle": "rootProject.name = 'rail-fixture'\n" }),
+            )
+            .await;
+            let project = Project::test(fs, [path!("/rail-project").as_ref()], cx).await;
+            project.read_with(cx, |project, cx| {
+                assert!(
+                    project.visible_worktrees(cx).next().is_some(),
+                    "rail fixture must have a visible project worktree"
+                );
+            });
+            let (multi_workspace, cx) =
+                cx.add_window_view(|window, cx| MultiWorkspace::test_new(project, window, cx));
+            let workspace = multi_workspace.read_with(cx, |mw, _| mw.workspace().clone());
+            let rail_button_focus_handles = Rc::new(RefCell::new(Vec::<FocusHandle>::new()));
+            // This fixture has one rail button. Observe its actual keyed state,
+            // retaining both selected-state identities if either is reused.
+            let _observe_rail_button_focus_handles = cx.update({
+                let rail_button_focus_handles = rail_button_focus_handles.clone();
+                move |window, cx| {
+                    let test_window = window.window_handle();
+                    cx.observe_new(move |handles: &mut (FocusHandle, FocusHandle), window, _| {
+                        if window.is_some_and(|window| window.window_handle() == test_window) {
+                            rail_button_focus_handles
+                                .borrow_mut()
+                                .push(handles.0.clone());
+                        }
+                    })
+                }
+            });
+            let panel = workspace.update_in(cx, |workspace, window, cx| {
+                let panel = cx.new(|cx| RailTestPanel::<0>::new(position, cx));
+                workspace.add_panel(panel.clone(), window, cx);
+                for dock_position in [
+                    DockPosition::Left,
+                    DockPosition::Right,
+                    DockPosition::Bottom,
+                ] {
+                    assert_eq!(
+                        workspace
+                            .dock_at_position(dock_position)
+                            .read(cx)
+                            .panels_len(),
+                        usize::from(dock_position == position),
+                        "{position:?} fixture must contain exactly its single rail panel"
+                    );
+                }
+                workspace.register_action::<ToggleFirstRailPanel>(|workspace, _, window, cx| {
+                    workspace.toggle_panel_focus::<RailTestPanel<0>>(window, cx);
+                });
+                panel
+            });
+            cx.run_until_parked();
+            let bounds = cx
+                .debug_bounds("tool-window-slot-RailFirst")
+                .expect("rail button");
+            let center = bounds.center();
+            cx.simulate_mouse_down(center, gpui::MouseButton::Left, gpui::Modifiers::none());
+            let surface = cx
+                .debug_bounds("tool-window-surface-RailFirst")
+                .expect("state surface");
+            workspace.update_in(cx, |workspace, window, cx| {
+                let pressed_color = cx.theme().colors().ghost_element_active;
+                assert!(window.painted_quads().iter().any(|quad| {
+                    quad.bounds == surface.scale(window.scale_factor())
+                        && quad.background == pressed_color.into()
+                        && quad.bounds.intersect(&quad.content_mask.bounds) == quad.bounds
+                }));
+                assert!(!workspace.dock_at_position(position).read(cx).is_open());
+                assert!(
+                    workspace
+                        .active_pane()
+                        .focus_handle(cx)
+                        .contains_focused(window, cx)
+                );
+            });
+            let outside = bounds.origin + gpui::point(px(80.), px(80.));
+            cx.simulate_mouse_move(
+                outside,
+                Some(gpui::MouseButton::Left),
+                gpui::Modifiers::none(),
+            );
+            cx.simulate_mouse_up(outside, gpui::MouseButton::Left, gpui::Modifiers::none());
+            workspace.update_in(cx, |workspace, window, cx| {
+                assert!(!workspace.dock_at_position(position).read(cx).is_open());
+                assert!(
+                    workspace
+                        .active_pane()
+                        .focus_handle(cx)
+                        .contains_focused(window, cx)
+                );
+            });
+            for offset in [gpui::point(px(1.), px(1.)), gpui::point(px(39.), px(39.))] {
+                let bounds = cx
+                    .debug_bounds("tool-window-slot-RailFirst")
+                    .expect("rail button");
+                cx.simulate_click(bounds.origin + offset, gpui::Modifiers::none());
+                workspace.update_in(cx, |workspace, window, cx| {
+                    assert!(
+                        workspace.dock_at_position(position).read(cx).is_open(),
+                        "{position:?} rail click at offset {offset:?} must open dock"
+                    );
+                    assert!(
+                        panel.focus_handle(cx).is_focused(window),
+                        "{position:?} rail click at offset {offset:?} must focus panel"
+                    );
+                });
+                cx.simulate_click(bounds.origin + offset, gpui::Modifiers::none());
+                workspace.update_in(cx, |workspace, window, cx| {
+                    assert!(
+                        !workspace.dock_at_position(position).read(cx).is_open(),
+                        "{position:?} rail click at offset {offset:?} must hide dock"
+                    );
+                    assert!(
+                        workspace
+                            .active_pane()
+                            .focus_handle(cx)
+                            .contains_focused(window, cx)
+                    );
+                });
+            }
+            for key in ["space", "enter"] {
+                workspace.update_in(cx, |workspace, window, cx| {
+                    assert!(
+                        workspace.active_pane().focus_handle(cx).is_focused(window),
+                        "{position:?} navigation before {key} must start at the center pane"
+                    );
+                    // Left and bottom buttons precede the pane in the render
+                    // order; right buttons follow it. The status-bar tab group
+                    // comes later, so a single global next is not always a rail.
+                    match position {
+                        DockPosition::Left | DockPosition::Bottom => window.focus_prev(cx),
+                        DockPosition::Right => window.focus_next(cx),
+                    }
+                });
+                cx.run_until_parked();
+                workspace.update_in(cx, |_, window, cx| {
+                    let rail_button_focus_handles = rail_button_focus_handles.borrow();
+                    assert!(
+                        rail_button_focus_handles
+                            .iter()
+                            .any(|handle| handle.is_focused(window)),
+                        "{position:?} focus before {key}: expected an observed rail {rail_button_focus_handles:?}, actual {:?}",
+                        window.focused(cx)
+                    );
+                });
+                cx.simulate_keystrokes(key);
+                cx.simulate_event(gpui::KeyUpEvent {
+                    keystroke: gpui::Keystroke::parse(key).expect("activation key"),
+                });
+                workspace.update_in(cx, |workspace, window, cx| {
+                    assert!(
+                        workspace.dock_at_position(position).read(cx).is_open(),
+                        "{position:?} rail activation with {key} must open dock"
+                    );
+                    assert!(
+                        panel.focus_handle(cx).is_focused(window),
+                        "{position:?} rail activation with {key} must focus panel"
+                    );
+                    workspace.toggle_dock(position, window, cx);
+                });
+                cx.run_until_parked();
+            }
+        }
+    }
+
+    gpui::actions!(
+        window_rail_test,
+        [ToggleFirstRailPanel, ToggleSecondRailPanel]
+    );
+
+    struct RailTestPanel<const INDEX: usize> {
+        position: DockPosition,
+        focus_handle: FocusHandle,
+    }
+
+    impl<const INDEX: usize> RailTestPanel<INDEX> {
+        fn new(position: DockPosition, cx: &mut App) -> Self {
+            Self {
+                position,
+                focus_handle: cx.focus_handle(),
+            }
+        }
+    }
+
+    impl<const INDEX: usize> EventEmitter<PanelEvent> for RailTestPanel<INDEX> {}
+
+    impl<const INDEX: usize> Focusable for RailTestPanel<INDEX> {
+        fn focus_handle(&self, _cx: &App) -> FocusHandle {
+            self.focus_handle.clone()
+        }
+    }
+
+    impl<const INDEX: usize> Render for RailTestPanel<INDEX> {
+        fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            div().track_focus(&self.focus_handle(cx))
+        }
+    }
+
+    impl<const INDEX: usize> dock::Panel for RailTestPanel<INDEX> {
+        fn persistent_name() -> &'static str {
+            if INDEX == 0 {
+                "RailFirst"
+            } else {
+                "RailSecond"
+            }
+        }
+        fn panel_key() -> &'static str {
+            Self::persistent_name()
+        }
+        fn position(&self, _window: &Window, _cx: &App) -> DockPosition {
+            self.position
+        }
+        fn position_is_valid(&self, _position: DockPosition) -> bool {
+            true
+        }
+        fn set_position(
+            &mut self,
+            position: DockPosition,
+            _window: &mut Window,
+            cx: &mut Context<Self>,
+        ) {
+            self.position = position;
+            cx.update_global::<SettingsStore, _>(|_, _| {});
+        }
+        fn default_size(&self, _window: &Window, _cx: &App) -> Pixels {
+            px(200.)
+        }
+        fn icon(&self, _window: &Window, _cx: &App) -> Option<IconName> {
+            Some(IconName::Check)
+        }
+        fn icon_tooltip(&self, _window: &Window, _cx: &App) -> Option<&'static str> {
+            Some(Self::persistent_name())
+        }
+        fn toggle_action(&self) -> Box<dyn Action> {
+            if INDEX == 0 {
+                ToggleFirstRailPanel.boxed_clone()
+            } else {
+                ToggleSecondRailPanel.boxed_clone()
+            }
+        }
+        fn activation_priority(&self) -> u32 {
+            INDEX as u32
+        }
     }
 
     #[gpui::test]

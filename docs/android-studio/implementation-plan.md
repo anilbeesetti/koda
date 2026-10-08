@@ -9,6 +9,14 @@ implementation is approved for merge by this planning document alone.
 
 - Repository: `anilbeesetti/koda`.
 - Integration branch: `android-studio`. Preserve `main` and its history.
+- Preserve general-purpose Zed/Koda extension functionality, including Python,
+  HTML and other languages. This is a hybrid general-purpose IDE.
+- Keep the existing top project/workspace/branch switcher. Android Studio
+  fidelity must preserve these explicitly required Koda features.
+- Show Android-specific UI, actions and workflows only when the active project
+  qualifies as Android, Kotlin Multiplatform, Compose Multiplatform or another
+  supported Android-capable context. A dedicated Foundation project-kind/context
+  gating task remains planned; this metadata adds no product gating behavior.
 - Initial snapshot: `30fca99a7a015168dfe4f394f576fbe2955fb4ea`, the observed
   `main` head at planning time. Revalidate the remote before pushing.
 - Task branches: `android-studio-task/<phase>-<task>`. Git cannot store both
@@ -16,6 +24,11 @@ implementation is approved for merge by this planning document alone.
 - Reference: stable Android Studio Rabbit 1, tag `studio-2026.2.1`.
 - Official JVM layout and Compose rendering/compiler runtimes are allowed
   exceptions. Language servers and IDE logic must be Rust.
+- Retain inherited C++ WebRTC for collaboration calls and screen sharing,
+  unchanged, by the user's explicit instruction: "don't touch it keep c++ webrtc".
+  Its stable existing media implementation remains in use; a Rust replacement is
+  outside the authorized scope. This preference does not approve other native
+  dependencies.
 - NDK/C++, device-specific designers, hosted Google integrations, and IntelliJ
   Marketplace compatibility are deferred. Their applicable tests stay unported;
   deferral is never a reason to mark a test not applicable.
@@ -92,6 +105,7 @@ Gradle's job because scripts execute arbitrary JVM code.
 | Android emulator and system images            | Android OS/device emulation has no practical equivalent Rust implementation                                          | Rust AVD model, management and launch                                                                          |
 | layoutlib and Compose compiler/render runtime | Faithful Android/Compose rendering depends on platform/JVM execution; explicitly approved                            | Rust editor/UI/cache/process control, isolated render bridge                                                   |
 | Device-side profiling and inspection agents   | Platform hooks and JVMTI/runtime access must execute inside Android's supported runtime                              | Rust capture control, transport, parsing and presentation; each bundled agent needs a license/provenance entry |
+| Inherited C++ WebRTC                          | Explicit user preference to retain the stable existing calls/screen-sharing implementation; Rust replacement is outside authorized scope | Preserve existing media implementation and required FFI/runtime support unchanged; other native dependencies still require individual review |
 | Host OS APIs and graphics drivers             | Native windows, input, accessibility and graphics depend on operating-system/driver interfaces                       | GPUI/Rust bindings; retain required system ABI dependencies                                                    |
 
 Existing Kotlin language servers, JDT-style Java servers, JVM debug adapters,
@@ -169,6 +183,18 @@ and full suite pass, live app behavior is exercised where affected, and all five
 reviewers pass. A task blocked by discovery or environment is not complete.
 
 ### Foundation
+
+The bounded [tool-window rail geometry slice](tool-window-rails.md) has current
+build, full-suite, native and five-reviewer evidence. It aligns icon/state
+surfaces and full-slot input targets in existing panels; the complete window
+shell redesign and visible Android project-tree adapter integration remain
+planned. Its two GPUI supplements earn zero original-reference test credit.
+Final metadata-head CI and lead merge approval remain required.
+
+The next dedicated project-kind/context gating task must preserve ordinary
+extension workflows and the existing top switcher while making Android-specific
+controls follow the qualifying active project. Generic rail geometry may apply
+to all projects; the rail task does not implement or claim that context gate.
 
 | Task                  | Files or crates                                                                                              | Dependencies                                              | Acceptance                                                                                                                                                            | Reference tests to port                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
