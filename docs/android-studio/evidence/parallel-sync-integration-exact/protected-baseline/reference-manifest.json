@@ -1,0 +1,2737 @@
+{
+  "schema_version": 1,
+  "baseline": "Android Studio Rabbit1 stable, studio-2026.2.1; matching IntelliJ build family 262.9437.185. Source repositories are independently pinned, and mirror coverage remains unverified.",
+  "census_complete": false,
+  "sources": [
+    {
+      "id": "idea",
+      "repository": "https://android.googlesource.com/platform/tools/adt/idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "tag": null,
+      "license": "Apache-2.0",
+      "archive": {
+        "path": "idea.tar.gz",
+        "sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84"
+      },
+      "coverage": "canonical",
+      "coverage_reason": "95 declared method cases in nine bounded inspected suites, including all three original ModelVersionsTest methods and 57 toolbar/attached-workbench cases. Bounded runner/target/helper-fixture evidence is recorded in ports/model-sync-inventory.json and ports/window-inventory.json. Global suite discovery, runtime descriptions, SDK dependency equivalence and other runner expansions remain incomplete.",
+      "coverage_evidence": null,
+      "census_complete": false,
+      "census_evidence": null
+    },
+    {
+      "id": "base",
+      "repository": "https://android.googlesource.com/platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "tag": null,
+      "license": "Apache-2.0",
+      "archive": {
+        "path": "base.tar.gz",
+        "sha256": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4"
+      },
+      "coverage": "canonical",
+      "coverage_reason": "Pinned canonical AOSP archive retained externally; no per-method test inventory has been reviewed yet.",
+      "coverage_evidence": null,
+      "census_complete": false,
+      "census_evidence": null
+    },
+    {
+      "id": "jetbrains-android",
+      "repository": "https://github.com/JetBrains/android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "tag": "idea/262.9437.185",
+      "license": "Apache-2.0",
+      "archive": {
+        "path": "jetbrains-android.tar.gz",
+        "sha256": "d7bb6a155c077166a6aed54ddaaa7d1629cbee8c200ceced0bddc0bcedfd92e2"
+      },
+      "coverage": "unverified_mirror",
+      "coverage_reason": "The GitHub mirror discloses files omitted due to size limits. Coverage against canonical git.jetbrains.org/idea/android.git is UNVERIFIED.",
+      "coverage_evidence": null,
+      "census_complete": false,
+      "census_evidence": null
+    }
+  ],
+  "tests": [
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "oneVariant",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 26,
+      "declaration": "fun oneVariant() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "debugPreferred",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 33,
+      "declaration": "fun debugPreferred() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "preferredBuildType",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 40,
+      "declaration": "fun preferredBuildType() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "preferredProductFlavorOverDebugBuildType",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 47,
+      "declaration": "fun preferredProductFlavorOverDebugBuildType() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "preferredFlavorsInTwoDimensions",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 54,
+      "declaration": "fun preferredFlavorsInTwoDimensions() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "preferredFlavorInSecondDimensionOnly",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 71,
+      "declaration": "fun preferredFlavorInSecondDimensionOnly() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "mismatchedProductFlavourLength",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 88,
+      "declaration": "fun mismatchedProductFlavourLength() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+      "method": "onEmpty",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+      },
+      "line": 96,
+      "declaration": "fun onEmpty() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The upstream test constructs variant values in memory and uses no external fixture files."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testImportSimpleGradleProject",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 163,
+      "declaration": "public void testImportSimpleGradleProject() throws Exception {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testImportSubprojects",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 172,
+      "declaration": "public void testImportSubprojects() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testImportSubProjectsWithMissingSubModule",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 196,
+      "declaration": "public void testImportSubProjectsWithMissingSubModule() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testImportSubProjectWithCustomLocation",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 214,
+      "declaration": "public void testImportSubProjectWithCustomLocation() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testRequiredProjects",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 238,
+      "declaration": "public void testRequiredProjects() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testMissingRequiredProjects",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 252,
+      "declaration": "public void testMissingRequiredProjects() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testMissingEnclosingProject",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 265,
+      "declaration": "public void testMissingEnclosingProject() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testTransitiveDependencies",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 277,
+      "declaration": "public void testTransitiveDependencies() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.GradleModuleImportTest",
+      "method": "testCircularDependencies",
+      "case": null,
+      "file": {
+        "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+        "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+      },
+      "line": 293,
+      "declaration": "public void testCircularDependencies() throws IOException {",
+      "copyright": "Copyright (C) 2014 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "BUILD_GRADLE_TEMPLATE and per-test helpers generate temporary build.gradle and settings.gradle files; the unchanged suite preserves their inline inputs. No external static fixture files are loaded."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedSourceFiles_lightClasses",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedSourceFiles_lightClasses",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 103,
+      "declaration": "public void testGeneratedSourceFiles_lightClasses() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/simpleApplication/.gitignore",
+          "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/build.gradle",
+          "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+          "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/build.gradle",
+          "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/gradle.properties",
+          "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedResources",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedResources",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 128,
+      "declaration": "public void testGeneratedResources() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/simpleApplication/.gitignore",
+          "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/build.gradle",
+          "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+          "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/build.gradle",
+          "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/gradle.properties",
+          "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedAssets",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedAssets",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 186,
+      "declaration": "public void testGeneratedAssets() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/simpleApplication/.gitignore",
+          "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/build.gradle",
+          "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+          "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/build.gradle",
+          "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/gradle.properties",
+          "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testShowVisibilityIconsWhenOptionIsSelected",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 243,
+      "declaration": "public void testShowVisibilityIconsWhenOptionIsSelected() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test sets the project visibility-icons preference to true and inspects a generated tree structure; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testShowVisibilityIconsWhenOptionIsUnselected",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 253,
+      "declaration": "public void testShowVisibilityIconsWhenOptionIsUnselected() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test sets the project visibility-icons preference to false and inspects a generated tree structure; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testResourcesPropertiesInAndroidView",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testResourcesPropertiesInAndroidView",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 263,
+      "declaration": "public void testResourcesPropertiesInAndroidView() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/simpleApplication/.gitignore",
+          "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/build.gradle",
+          "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+          "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/build.gradle",
+          "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/gradle.properties",
+          "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGoogleServicesJsonInAndroidView",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGoogleServicesJsonInAndroidView",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 277,
+      "declaration": "public void testGoogleServicesJsonInAndroidView() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/simpleApplication/.gitignore",
+          "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/build.gradle",
+          "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/AndroidManifest.xml",
+          "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/build.gradle",
+          "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/gradle.properties",
+          "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553"
+        },
+        {
+          "path": "android/testData/projects/simpleApplication/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefault",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 291,
+      "declaration": "public void testAndroidViewIsDefault() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test supplies mocked IDE/project capabilities, inline Studio flags and system-property overrides; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 360,
+      "declaration": "public void testAndroidViewNotVisibleInUnsupportedProjectSystem() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test supplies mocked project-system support and Android-project capabilities; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewNotVisibleInNonAndroidProject",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 382,
+      "declaration": "public void testAndroidViewNotVisibleInNonAndroidProject() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test supplies mocked project-system support and a non-Android project capability; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultCustomPropertyHandling",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 404,
+      "declaration": "public void testAndroidViewIsDefaultCustomPropertyHandling() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test supplies inline system-property overrides and a mocked notification sink to verify one-time migration; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 445,
+      "declaration": "public void testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test writes studio.projectview=true into a temporary idea.properties file from an inline string and mocks its options directory; it loads no external static fixture file."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 491,
+      "declaration": "public void testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test writes -Dstudio.projectview=true into a temporary studio64.vmoptions file from an inline string and supplies jb.vmOptionsFile; it loads no external static fixture file."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+      "source": "idea",
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultMetrics",
+      "case": null,
+      "file": {
+        "path": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+        "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+      },
+      "line": 533,
+      "declaration": "public void testAndroidViewIsDefaultMetrics() throws Exception {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The test uses mocked IDE/project capabilities, inline preference changes and a local virtual-time usage-event sink; it loads no external static project fixture."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt#com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest.testAllVariantSyncWithV2",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest",
+      "method": "testAllVariantSyncWithV2",
+      "case": null,
+      "file": {
+        "path": "android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt",
+        "sha256": "3fa6a06ddd7adfef30297ec96697374a287d778c89767c85a97627e791792847"
+      },
+      "line": 62,
+      "declaration": "fun testAllVariantSyncWithV2() {",
+      "copyright": "Copyright (C) 2018 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/build.gradle",
+          "sha256": "2b41148ef58d5fe5879d5b3240193f4626dc151258a32fecc7b01f83e9f2c843"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/debug.keystore",
+          "sha256": "7f9cd88065f58fef9faa2908b889a2fe7178cad4b536049e0a4c008a5ebdbc12"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/other.pro",
+          "sha256": "49782a12cdc13ca4fb223cd349fff3adeb3f68a923d8bc648238444885fa9815"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/proguard-rules.txt",
+          "sha256": "49782a12cdc13ca4fb223cd349fff3adeb3f68a923d8bc648238444885fa9815"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/AndroidManifest.xml",
+          "sha256": "1dc4922f212e4d2406213fa9ba8e762aca939593da3ddec36df6b6c81fd1b84a"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/java/com/example/projectwithappandlib/app/MainActivity.java",
+          "sha256": "9e481acb9db7bd7755ba8a281b2d5fd1810480955329a427b1716fb70b381726"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/java/com/example/projectwithappandlib/app/NavigationDrawerFragment.java",
+          "sha256": "4b310d7070ac07261e61965db7ee971289df82b2784253c770c6a7ba35136e90"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/java/com/example/projectwithappandlib/app/dummy.kt",
+          "sha256": "23202aadd5e7453965de6667b6a812e77b02ff662a435cb65dbfd36033c7e412"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-hdpi/drawer_shadow.9.png",
+          "sha256": "31ae15ee424e681f2f0ea9265a98720abe4360b14502860cb69e8021f787cf88"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-hdpi/ic_drawer.png",
+          "sha256": "37bd5ff628cfedb80902d38efba415b712667724e8b3ef6439a28abfc2fc4c2f"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-hdpi/ic_launcher.png",
+          "sha256": "28c89918a8d235fcadf2e83bb14a6d9da9eab9e665857ad43b9f00e038f1f615"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-mdpi/drawer_shadow.9.png",
+          "sha256": "9ac4bcba0a28369903d4e1e606f1d17aba67005bc6767afa0520bdffd1d44990"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-mdpi/ic_drawer.png",
+          "sha256": "bcd1095daa48ca75b833838f70a3d6a9acd9dadd077f94ef58e818bfdb282dd9"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-mdpi/ic_launcher.png",
+          "sha256": "eb2a39a5c0c475a793e8814faaaf6afa92d303ec9f1fd65696be43eafbb3260d"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-xhdpi/drawer_shadow.9.png",
+          "sha256": "132388a302deeddaa96f4a30d463b8dc062b744111f9be2656fb91415d5a1b41"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-xhdpi/ic_drawer.png",
+          "sha256": "d20a030d762acc27cd9a84090a61248795e870e91958fdc1318e970a25c80e4f"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-xhdpi/ic_launcher.png",
+          "sha256": "d9c73c0298e96e08af5c28896b8482503fce0bb9bc29696cadcbdc6e98218041"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-xxhdpi/drawer_shadow.9.png",
+          "sha256": "ca98af6622ea2c14884035a4fb578f69b8fb8826428780855bb2e9091aff3e77"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-xxhdpi/ic_drawer.png",
+          "sha256": "a5d91b9acc8ba27309c335eff9a79f51e9f8a23b0946441b6af80215a6a93db8"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/drawable-xxhdpi/ic_launcher.png",
+          "sha256": "c1898bf316b705f59c07ca5eb157114694db4055cb22fc2a4545b67bb7352cfd"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/layout/activity_main.xml",
+          "sha256": "f30c6843337025936728bf806a08f995481e09ceefab8ef27444fdc1cdcd19bc"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/layout/fragment_main.xml",
+          "sha256": "cca4b90562f4a1333a9fdb47256a2ee737393417e14377aef9953bf8e2c89d53"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/layout/fragment_navigation_drawer.xml",
+          "sha256": "2fc29e0d07c6c37a5f00b391ef996d486822b9331080c6e4ede456d37be8576c"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/menu/global.xml",
+          "sha256": "4ec2e1288d8c35eeaa5c1436cbc747893386680e2e3bf108f66a07295aec1f48"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/menu/main.xml",
+          "sha256": "9a3b4fe23ab5f4ae6b4374a15d4cd787384bac7c908b56074f5c561911b491ed"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/values/dimens.xml",
+          "sha256": "1423732008fa797ee415af774dfe510ca34717d1984319c6e70f6e384276c649"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/values/refs.xml",
+          "sha256": "43421b3a82f579bc08180fd797d9a3a14d674be836bec63ffa721cae702d0219"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/values/strings.xml",
+          "sha256": "6a9ee1bc35c831b9d61e2c7c43dcc17365e7c032f1dd1286942338b3088c77dc"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/main/res/values/styles.xml",
+          "sha256": "eae69a0ed17e0831fe3fe5fb4e7d4646fcb4145c3fef7aa37a848d08fb2c2a13"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/paid/AndroidManifest.xml",
+          "sha256": "457b1a86e7e5b084a1b5bf41e07e21a99e212d4483cd6efd9f241181117fa0c7"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/paid/java/com/example/projectwithappandlib/app/paid/BlankFragment.java",
+          "sha256": "7247ba401641064c30ef990ad168eff367a986314c30e7fdb28e2b358c5a190a"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/paid/res/values/dimens.xml",
+          "sha256": "1423732008fa797ee415af774dfe510ca34717d1984319c6e70f6e384276c649"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/paid/res/values/strings.xml",
+          "sha256": "6a9ee1bc35c831b9d61e2c7c43dcc17365e7c032f1dd1286942338b3088c77dc"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/app/src/paid/res/values/styles.xml",
+          "sha256": "2d7fed025e207bd89701b97ce7f67f58e8e3044c1a1bf69ed6e34ce58f26f7b0"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/build.gradle",
+          "sha256": "e58ce7e15ba0e063c7a898cd46ddcef1bde337d16240d2981460da28713d704e"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/dyn_feature/build.gradle",
+          "sha256": "2875ae683edc967e542442c3c10c34d8917ca4527357806b6f7f55b136cb7db0"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/dyn_feature/src/main/AndroidManifest.xml",
+          "sha256": "6d08b1ffcfb9766c8fcb2237be6bade875c4d572ba5e8afc0e99796fadc52b97"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/gradle.properties",
+          "sha256": "2d4ad9d18b9c4085f347f8e484b7778b8f3caa6ca8ec76c6ed87d01884d208a6"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/jav/build.gradle",
+          "sha256": "bffeb957a9f9ae5c6c96dd932f40d433d07210aec3d354ec2309aa6d2cdf276f"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/build.gradle",
+          "sha256": "081e9009c588dfcb9df3a08fe34858937ca8f55b281049ac5a00c2920737f980"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/other.pro",
+          "sha256": "49782a12cdc13ca4fb223cd349fff3adeb3f68a923d8bc648238444885fa9815"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/proguard-rules.txt",
+          "sha256": "49782a12cdc13ca4fb223cd349fff3adeb3f68a923d8bc648238444885fa9815"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/AndroidManifest.xml",
+          "sha256": "bf1a8bbf03dda770867c278c676b98d0c418b3ece83f921b527dcf112326eec4"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/java/com/example/projectwithappandlib/lib/LoginActivity.java",
+          "sha256": "6afd226de5a342022809a9f15370e413a96912b30c4d033614f39fd083440b2f"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/java/com/example/projectwithappandlib/lib/PlusBaseActivity.java",
+          "sha256": "5c02abed84ba21982c880f0981402a53c6d0d839014bb56829f935d2aede596c"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/res/drawable-hdpi/ic_launcher.png",
+          "sha256": "28c89918a8d235fcadf2e83bb14a6d9da9eab9e665857ad43b9f00e038f1f615"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/res/drawable-mdpi/ic_launcher.png",
+          "sha256": "eb2a39a5c0c475a793e8814faaaf6afa92d303ec9f1fd65696be43eafbb3260d"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/res/drawable-xhdpi/ic_launcher.png",
+          "sha256": "d9c73c0298e96e08af5c28896b8482503fce0bb9bc29696cadcbdc6e98218041"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/res/drawable-xxhdpi/ic_launcher.png",
+          "sha256": "c1898bf316b705f59c07ca5eb157114694db4055cb22fc2a4545b67bb7352cfd"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/res/layout/activity_login.xml",
+          "sha256": "2bbd28f27c23d2ddbe3393deb72cfec780cd540b36fc7ae8638bec5892d8e67e"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/res/values/strings.xml",
+          "sha256": "b115dff0f8cd2525c1b16426de22a50131b611b660bec0b215636fe45a369daa"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/lib/src/main/res/values/strings_activity_login.xml",
+          "sha256": "fb72eb153f80055ae2bb14c6da405adeef0aa5e921fed3c914e33dbb23f9c792"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/nested1/build.gradle",
+          "sha256": "780efa226544d32152cdf69ec73e5b983fa8c9635e53243cf68edc4f0cb06402"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/nested1/deep/build.gradle",
+          "sha256": "789ad06dd401339f7487e65a6a3f37f9e1fb6e6fa0baba6aa5088d4725556a90"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/nested1/deep/src/main/AndroidManifest.xml",
+          "sha256": "2aab7305fcbd54b4cbc911c66ca0cf4b4af7899cdb44c35b68848f3d65fd5b88"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/nested1/src/main/AndroidManifest.xml",
+          "sha256": "d6bca60bec0b150c7a164f39566a442d5daae7d2e898c9e5cae34c5b5b40384c"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/nested2/build.gradle",
+          "sha256": "ddc5eab71cc9bda0aa9885fc85937e77727dd1fba74ed4b5bc714aba2061c8ed"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/nested2/deep/build.gradle",
+          "sha256": "780efa226544d32152cdf69ec73e5b983fa8c9635e53243cf68edc4f0cb06402"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/nested2/deep/src/main/AndroidManifest.xml",
+          "sha256": "e5de4cf086754af45bf92d3739a24523928d36723033626d350117a7c72790fe"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/nested2/src/main/AndroidManifest.xml",
+          "sha256": "3f8c803848265692057df390a5cb726d8015939f6fc25cb6de41d293bdd47754"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/nested2/trans/deep2/build.gradle",
+          "sha256": "3fc5de14e96c0e026685a4a0d23cd5d26ae8407293bbcac62e2ef99bc0d96c99"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/nested2/trans/deep2/src/main/AndroidManifest.xml",
+          "sha256": "9001540ed564e9289e7db93e7f0379d3d6673e3d3c537bd56107626ec7d2427f"
+        },
+        {
+          "path": "android/testData/projects/psdSample/Groovy/settings.gradle",
+          "sha256": "95fc90608d9066b5847e9d87dc5aee0a1aabfb6ac665958c88abe1bde3ff67e8"
+        },
+        {
+          "path": "android/testData/snapshots/IdeModels_AllVariantsSync/allVariantSyncWithV2.txt",
+          "sha256": "cc653afead09aac856da901171f95ed123a9a7a31ed5a0ec18a2bd8faa85a8c5"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt#com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest.testAllVariantWithBuildSrc",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.AllVariantsSyncWithGradleSyncExecutorTest",
+      "method": "testAllVariantWithBuildSrc",
+      "case": null,
+      "file": {
+        "path": "android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/AllVariantsSyncWithGradleSyncExecutorTest.kt",
+        "sha256": "3fa6a06ddd7adfef30297ec96697374a287d778c89767c85a97627e791792847"
+      },
+      "line": 69,
+      "declaration": "fun testAllVariantWithBuildSrc() {",
+      "copyright": "Copyright (C) 2018 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/appWithBuildSrc/.gitignore",
+          "sha256": "e8296e33c8f94da9dd9830a84eb3256a26c3579b6314baf2224545265780c5c7"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/build.gradle",
+          "sha256": "a1d96a2a494d78d168387e0b7e24cf32d23987170abe4e6452bba55332a1bbab"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/proguard-rules.pro",
+          "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+          "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/AndroidManifest.xml",
+          "sha256": "a70390e58d582d3b0e4089cf61d35cf2cd04e917b62744ea4e7032ae36aa884c"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/java/google/simpleapplication/MyActivity.java",
+          "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/drawable/ic_launcher.xml",
+          "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/layout/absolute.xml",
+          "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/layout/activity_my.xml",
+          "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/layout/frames.xml",
+          "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/menu/my.xml",
+          "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/values-en-rGB/strings.xml",
+          "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/values-en/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/values-ta/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/values-v19/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/values-v20/styles.xml",
+          "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/values-zh-rCN/strings.xml",
+          "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/values/strings.xml",
+          "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/main/res/values/styles.xml",
+          "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/app/src/test/java/google/simpleapplication/UnitTest.java",
+          "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/build.gradle",
+          "sha256": "4b093a51b85bb95a441da6c8537940ec9cee7bf1a99bdfc7bddb8b01c127150e"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/buildSrc/build.gradle",
+          "sha256": "834d91decc993d6bfac4979e2d7f59fe0e697c455a34cb5d677659315635baec"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/buildSrc/lib1/build.gradle",
+          "sha256": "aae2c61cb68e84c8297595d5337d30e300e7c75930a816920272886bd71df3b8"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/buildSrc/lib1/src/main/java/org/example/buildsrc/lib1/Lib1Class.java",
+          "sha256": "72c07d74345835d5dfe2a6ac5e352182f36745a18d9ecd56745d3e3d612035a1"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/buildSrc/lib2/build.gradle",
+          "sha256": "52fb486b7a631275865f71216ba78a78e946fd421feac45dc44453f2765bd0d5"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/buildSrc/lib2/src/main/java/org/example/buildsrc/lib2/Lib2Class.java",
+          "sha256": "a0cc09f3ac60978a0e165edc28fb0b0c9e891122442ed6107f5fba9944eec06d"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/buildSrc/settings.gradle",
+          "sha256": "1dddbe5312b50fe20420c8a2037fdc2fedcc02271c4a2f0d2d69f8ec49dc8cd9"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/buildSrc/src/main/java/org/example/buildsrc/BuildScriptClass.java",
+          "sha256": "925fec068eda25819af8f31339aea1d9ad7a75feed13da745d9474e56c8b51b8"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/gradle.properties",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "path": "android/testData/projects/appWithBuildSrc/settings.gradle",
+          "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f"
+        },
+        {
+          "path": "android/testData/snapshots/IdeModels_AllVariantsSync/allVariantWithBuildSrc.txt",
+          "sha256": "df9aa31ded537c51c8f938ff573b3990762a477eb1cea83b444992cddb1d15e6"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/GradleSyncSpecialCasesIntegrationTest.kt#com.android.tools.idea.gradle.project.sync.GradleSyncSpecialCasesIntegrationTest.manifest in build folder",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.GradleSyncSpecialCasesIntegrationTest",
+      "method": "manifest in build folder",
+      "case": null,
+      "file": {
+        "path": "android/gradle.project.sync/testSrc/com/android/tools/idea/gradle/project/sync/GradleSyncSpecialCasesIntegrationTest.kt",
+        "sha256": "de9a8a062f8b7385820a0cb320e09af8cbf386b7b650e8ce6e87991e96a415a5"
+      },
+      "line": 37,
+      "declaration": "fun `manifest in build folder`() {",
+      "copyright": "Copyright (C) 2020 The Android Open Source Project",
+      "fixtures": [
+        {
+          "path": "android/testData/projects/projectWithAppandLib/.gitignore",
+          "sha256": "3f5f08da58c42cfe00ed43392b186057dca05033bbc99c7a8a0770b2f8ce48c4"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/build.gradle",
+          "sha256": "264c149a10b6c9632a632718572ac3fb5c04abaad862f3dee9fdf91ca6c14ef2"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/proguard-rules.txt",
+          "sha256": "49782a12cdc13ca4fb223cd349fff3adeb3f68a923d8bc648238444885fa9815"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/androidTest/java/com/example/projectwithappandlib/app/ExampleApplicationTest.java",
+          "sha256": "6a55a92c89413eb00d89442b898d00bd390c37440bcf6ea08691f95b90e8a7a9"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/AndroidManifest.xml",
+          "sha256": "1dc4922f212e4d2406213fa9ba8e762aca939593da3ddec36df6b6c81fd1b84a"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/java/com/example/projectwithappandlib/app/MainActivity.java",
+          "sha256": "9e481acb9db7bd7755ba8a281b2d5fd1810480955329a427b1716fb70b381726"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/java/com/example/projectwithappandlib/app/NavigationDrawerFragment.java",
+          "sha256": "4b310d7070ac07261e61965db7ee971289df82b2784253c770c6a7ba35136e90"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/java/com/example/projectwithappandlib/app/dummy.kt",
+          "sha256": "23202aadd5e7453965de6667b6a812e77b02ff662a435cb65dbfd36033c7e412"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-hdpi/drawer_shadow.9.png",
+          "sha256": "31ae15ee424e681f2f0ea9265a98720abe4360b14502860cb69e8021f787cf88"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-hdpi/ic_drawer.png",
+          "sha256": "37bd5ff628cfedb80902d38efba415b712667724e8b3ef6439a28abfc2fc4c2f"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-hdpi/ic_launcher.png",
+          "sha256": "28c89918a8d235fcadf2e83bb14a6d9da9eab9e665857ad43b9f00e038f1f615"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-mdpi/drawer_shadow.9.png",
+          "sha256": "9ac4bcba0a28369903d4e1e606f1d17aba67005bc6767afa0520bdffd1d44990"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-mdpi/ic_drawer.png",
+          "sha256": "bcd1095daa48ca75b833838f70a3d6a9acd9dadd077f94ef58e818bfdb282dd9"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-mdpi/ic_launcher.png",
+          "sha256": "eb2a39a5c0c475a793e8814faaaf6afa92d303ec9f1fd65696be43eafbb3260d"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-xhdpi/drawer_shadow.9.png",
+          "sha256": "132388a302deeddaa96f4a30d463b8dc062b744111f9be2656fb91415d5a1b41"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-xhdpi/ic_drawer.png",
+          "sha256": "d20a030d762acc27cd9a84090a61248795e870e91958fdc1318e970a25c80e4f"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-xhdpi/ic_launcher.png",
+          "sha256": "d9c73c0298e96e08af5c28896b8482503fce0bb9bc29696cadcbdc6e98218041"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-xxhdpi/drawer_shadow.9.png",
+          "sha256": "ca98af6622ea2c14884035a4fb578f69b8fb8826428780855bb2e9091aff3e77"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-xxhdpi/ic_drawer.png",
+          "sha256": "a5d91b9acc8ba27309c335eff9a79f51e9f8a23b0946441b6af80215a6a93db8"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/drawable-xxhdpi/ic_launcher.png",
+          "sha256": "c1898bf316b705f59c07ca5eb157114694db4055cb22fc2a4545b67bb7352cfd"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/layout/activity_main.xml",
+          "sha256": "f30c6843337025936728bf806a08f995481e09ceefab8ef27444fdc1cdcd19bc"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/layout/fragment_main.xml",
+          "sha256": "cca4b90562f4a1333a9fdb47256a2ee737393417e14377aef9953bf8e2c89d53"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/layout/fragment_navigation_drawer.xml",
+          "sha256": "2fc29e0d07c6c37a5f00b391ef996d486822b9331080c6e4ede456d37be8576c"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/menu/global.xml",
+          "sha256": "4ec2e1288d8c35eeaa5c1436cbc747893386680e2e3bf108f66a07295aec1f48"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/menu/main.xml",
+          "sha256": "9a3b4fe23ab5f4ae6b4374a15d4cd787384bac7c908b56074f5c561911b491ed"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/navigation/nav_graph.xml",
+          "sha256": "94338e2ab6c86d0861df9c0412856fd49d92d5560dbb98ae5555f8e67fc70da1"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/values-w820dp/dimens.xml",
+          "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/values/dimens.xml",
+          "sha256": "1423732008fa797ee415af774dfe510ca34717d1984319c6e70f6e384276c649"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/values/refs.xml",
+          "sha256": "43421b3a82f579bc08180fd797d9a3a14d674be836bec63ffa721cae702d0219"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/values/strings.xml",
+          "sha256": "6a9ee1bc35c831b9d61e2c7c43dcc17365e7c032f1dd1286942338b3088c77dc"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/main/res/values/styles.xml",
+          "sha256": "eae69a0ed17e0831fe3fe5fb4e7d4646fcb4145c3fef7aa37a848d08fb2c2a13"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/paid/AndroidManifest.xml",
+          "sha256": "457b1a86e7e5b084a1b5bf41e07e21a99e212d4483cd6efd9f241181117fa0c7"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/paid/java/com/example/projectwithappandlib/app/paid/BlankFragment.java",
+          "sha256": "7247ba401641064c30ef990ad168eff367a986314c30e7fdb28e2b358c5a190a"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/paid/res/values/dimens.xml",
+          "sha256": "1423732008fa797ee415af774dfe510ca34717d1984319c6e70f6e384276c649"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/paid/res/values/strings.xml",
+          "sha256": "6a9ee1bc35c831b9d61e2c7c43dcc17365e7c032f1dd1286942338b3088c77dc"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/paid/res/values/styles.xml",
+          "sha256": "2d7fed025e207bd89701b97ce7f67f58e8e3044c1a1bf69ed6e34ce58f26f7b0"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/app/src/test/java/com/example/projectwithappandlib/app/MainActivityTest.java",
+          "sha256": "b2d358539375c9d26de2391cc1f166d490d24ff65751df9d993fa06c41fee940"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/build.gradle",
+          "sha256": "65d5a737288898ce25c14555d104ad95e0cd9deb99fa09293e7380813cc820df"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/gradle.properties",
+          "sha256": "f5ae73d5c6ee31f98ab7248123cf04a4cdeb0add755025fa367ce9d98003fed3"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/.gitignore",
+          "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/build.gradle",
+          "sha256": "8c4ef6802ea3b64534b98af48ae52932129d421c36828cc4d349c84356601237"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/proguard-rules.txt",
+          "sha256": "49782a12cdc13ca4fb223cd349fff3adeb3f68a923d8bc648238444885fa9815"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/androidTest/java/com/example/projectwithappandlib/lib/ExampleApplicationTest.java",
+          "sha256": "a095a7da8f375cda7b7561f15f59edbe3316eb084fbd49967bd6541aef44b783"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/AndroidManifest.xml",
+          "sha256": "bf1a8bbf03dda770867c278c676b98d0c418b3ece83f921b527dcf112326eec4"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/java/com/example/projectwithappandlib/lib/LoginActivity.java",
+          "sha256": "6afd226de5a342022809a9f15370e413a96912b30c4d033614f39fd083440b2f"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/java/com/example/projectwithappandlib/lib/PlusBaseActivity.java",
+          "sha256": "5c02abed84ba21982c880f0981402a53c6d0d839014bb56829f935d2aede596c"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/res/drawable-hdpi/ic_launcher.png",
+          "sha256": "28c89918a8d235fcadf2e83bb14a6d9da9eab9e665857ad43b9f00e038f1f615"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/res/drawable-mdpi/ic_launcher.png",
+          "sha256": "eb2a39a5c0c475a793e8814faaaf6afa92d303ec9f1fd65696be43eafbb3260d"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/res/drawable-xhdpi/ic_launcher.png",
+          "sha256": "d9c73c0298e96e08af5c28896b8482503fce0bb9bc29696cadcbdc6e98218041"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/res/drawable-xxhdpi/ic_launcher.png",
+          "sha256": "c1898bf316b705f59c07ca5eb157114694db4055cb22fc2a4545b67bb7352cfd"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/res/layout/activity_login.xml",
+          "sha256": "2bbd28f27c23d2ddbe3393deb72cfec780cd540b36fc7ae8638bec5892d8e67e"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/res/values/dimens.xml",
+          "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/res/values/strings.xml",
+          "sha256": "b115dff0f8cd2525c1b16426de22a50131b611b660bec0b215636fe45a369daa"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/lib/src/main/res/values/strings_activity_login.xml",
+          "sha256": "fb72eb153f80055ae2bb14c6da405adeef0aa5e921fed3c914e33dbb23f9c792"
+        },
+        {
+          "path": "android/testData/projects/projectWithAppandLib/settings.gradle",
+          "sha256": "c7613d1ef6a3ae3b0a4fbed656abd0198cedf607cefc80925bdec5c4088fb6ed"
+        }
+      ],
+      "fixture_reason": null
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/project/model/GradleAndroidModelTest.kt#com.android.tools.idea.gradle.project.model.GradleAndroidModelTest.testClassFieldsToDynamicResourceValues",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.model.GradleAndroidModelTest",
+      "method": "testClassFieldsToDynamicResourceValues",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/project/model/GradleAndroidModelTest.kt",
+        "sha256": "2b66675c00896110d7be3db4d779fb7639e1e7cfc257fac01d19e0158598940a"
+      },
+      "line": 30,
+      "declaration": "fun testClassFieldsToDynamicResourceValues() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The JUnit4 method constructs two IdeClassFieldImpl inputs and the expected DynamicResourceValue map inline. It has no external fixture, project rule, Gradle execution or snapshot dependency."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "componentIsAddedElement",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+        "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b"
+      },
+      "line": 33,
+      "declaration": "fun componentIsAddedElement() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method constructs JLabel/TabbedToolbar and callbacks inline. TreeWalker/CommonButton and icon classes are source/library dependencies, not loaded test-data or snapshot fixtures."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "tabIsAdded",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+        "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b"
+      },
+      "line": 41,
+      "declaration": "fun tabIsAdded() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method constructs JLabel/TabbedToolbar and callbacks inline. TreeWalker/CommonButton and icon classes are source/library dependencies, not loaded test-data or snapshot fixtures."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "closedIsCalledWhenClicked",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+        "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b"
+      },
+      "line": 52,
+      "declaration": "fun closedIsCalledWhenClicked() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method constructs JLabel/TabbedToolbar and callbacks inline. TreeWalker/CommonButton and icon classes are source/library dependencies, not loaded test-data or snapshot fixtures."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "noCloseButtonWhenNoListener",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+        "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b"
+      },
+      "line": 67,
+      "declaration": "fun noCloseButtonWhenNoListener() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method constructs JLabel/TabbedToolbar and callbacks inline. TreeWalker/CommonButton and icon classes are source/library dependencies, not loaded test-data or snapshot fixtures."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "iconButtonsCallbackWhenClicked",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+        "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b"
+      },
+      "line": 80,
+      "declaration": "fun iconButtonsCallbackWhenClicked() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method constructs JLabel/TabbedToolbar and callbacks inline. TreeWalker/CommonButton and icon classes are source/library dependencies, not loaded test-data or snapshot fixtures."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "can select tab by index",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+        "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b"
+      },
+      "line": 95,
+      "declaration": "fun `can select tab by index`() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method constructs JLabel/TabbedToolbar and callbacks inline. TreeWalker/CommonButton and icon classes are source/library dependencies, not loaded test-data or snapshot fixtures."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.TabbedToolbarTest",
+      "method": "adding tab should not trigger select listener",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+        "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b"
+      },
+      "line": 115,
+      "declaration": "fun `adding tab should not trigger select listener`() {",
+      "copyright": "Copyright (C) 2019 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method constructs JLabel/TabbedToolbar and callbacks inline. TreeWalker/CommonButton and icon classes are source/library dependencies, not loaded test-data or snapshot fixtures."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefault",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDefault",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 104,
+      "declaration": "fun testDefault() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToolOrder",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToolOrder",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 110,
+      "declaration": "fun testToolOrder() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testContext",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testContext",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 118,
+      "declaration": "fun testContext() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testContentContext",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testContentContext",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 124,
+      "declaration": "fun testContentContext() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefaultPropertyValues",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDefaultPropertyValues",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 134,
+      "declaration": "fun testDefaultPropertyValues() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testFloatingAndDetachedIgnoredWhenFlagIsOff",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testFloatingAndDetachedIgnoredWhenFlagIsOff",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 149,
+      "declaration": "fun testFloatingAndDetachedIgnoredWhenFlagIsOff() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testGettersAndSetters",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testGettersAndSetters",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 160,
+      "declaration": "fun testGettersAndSetters() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefinitionContext",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDefinitionContext",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 183,
+      "declaration": "fun testDefinitionContext() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSetPropertyAndUpdateWillNotifyModelAndChangeContent",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSetPropertyAndUpdateWillNotifyModelAndChangeContent",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 204,
+      "declaration": "fun testSetPropertyAndUpdateWillNotifyModelAndChangeContent() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testMinimizeDefaultSetInConstructor",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testMinimizeDefaultSetInConstructor",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 237,
+      "declaration": "fun testMinimizeDefaultSetInConstructor() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testMinimizeAutoHideIsNotGlobal",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testMinimizeAutoHideIsNotGlobal",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 248,
+      "declaration": "fun testMinimizeAutoHideIsNotGlobal() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAutoClose",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testAutoClose",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 259,
+      "declaration": "fun testAutoClose() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testRestore",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testRestore",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 269,
+      "declaration": "fun testRestore() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testRestoreDefaultLayout",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testRestoreDefaultLayout",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 278,
+      "declaration": "fun testRestoreDefaultLayout() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testStoreAndRestoreDefaultLayout",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testStoreAndRestoreDefaultLayout",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 293,
+      "declaration": "fun testStoreAndRestoreDefaultLayout() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDraggedEvent",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDraggedEvent",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 315,
+      "declaration": "fun testDraggedEvent() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDropEvent",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDropEvent",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 332,
+      "declaration": "fun testDropEvent() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testButtonClickTogglesMinimizedState",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testButtonClickTogglesMinimizedState",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 351,
+      "declaration": "fun testButtonClickTogglesMinimizedState() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAddedGearActionFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testAddedGearActionFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 367,
+      "declaration": "fun testAddedGearActionFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftTopFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftTopFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 377,
+      "declaration": "fun testSelectLeftTopFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftBottomFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftBottomFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 382,
+      "declaration": "fun testSelectLeftBottomFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightTopFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightTopFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 387,
+      "declaration": "fun testSelectRightTopFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightBottomFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightBottomFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 392,
+      "declaration": "fun testSelectRightBottomFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 410,
+      "declaration": "fun testSelectLeftFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 421,
+      "declaration": "fun testSelectRightFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectSwapFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectSwapFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 432,
+      "declaration": "fun testSelectSwapFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleDockModeFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToggleDockModeFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 443,
+      "declaration": "fun testToggleDockModeFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleFloatingModeFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToggleFloatingModeFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 460,
+      "declaration": "fun testToggleFloatingModeFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleAttachedModeFromButtonRightClick",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToggleAttachedModeFromButtonRightClick",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 479,
+      "declaration": "fun testToggleAttachedModeFromButtonRightClick() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testHideFromButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testHideFromButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 490,
+      "declaration": "fun testHideFromButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAdditionalActionFromButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testAdditionalActionFromButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 502,
+      "declaration": "fun testAdditionalActionFromButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftTopFromGearButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftTopFromGearButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 512,
+      "declaration": "fun testSelectLeftTopFromGearButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftBottomFromGearButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftBottomFromGearButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 517,
+      "declaration": "fun testSelectLeftBottomFromGearButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightTopFromGearButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightTopFromGearButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 522,
+      "declaration": "fun testSelectRightTopFromGearButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightBottomFromGearButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightBottomFromGearButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 527,
+      "declaration": "fun testSelectRightBottomFromGearButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectLeftFromGearButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectLeftFromGearButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 545,
+      "declaration": "fun testSelectLeftFromGearButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectRightFromGearButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectRightFromGearButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 556,
+      "declaration": "fun testSelectRightFromGearButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSelectSwapFromGearButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSelectSwapFromGearButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 566,
+      "declaration": "fun testSelectSwapFromGearButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleDockModeFromGearButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToggleDockModeFromGearButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 577,
+      "declaration": "fun testToggleDockModeFromGearButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testToggleFloatingModeFromGearButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testToggleFloatingModeFromGearButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 594,
+      "declaration": "fun testToggleFloatingModeFromGearButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSearchButtonInHeader",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSearchButtonInHeader",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 613,
+      "declaration": "fun testSearchButtonInHeader() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testSearchTextChangesAreSentToContent",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testSearchTextChangesAreSentToContent",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 646,
+      "declaration": "fun testSearchTextChangesAreSentToContent() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testAcceptedSearchesAreStoredInHistory",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testAcceptedSearchesAreStoredInHistory",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 658,
+      "declaration": "fun testAcceptedSearchesAreStoredInHistory() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testStartSearching",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testStartSearching",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 678,
+      "declaration": "fun testStartSearching() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testStopSearching",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testStopSearching",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 688,
+      "declaration": "fun testStopSearching() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testEscapeClosesSearchFieldIfTextIsEmpty",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testEscapeClosesSearchFieldIfTextIsEmpty",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 700,
+      "declaration": "fun testEscapeClosesSearchFieldIfTextIsEmpty() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testContentIsDisposed",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testContentIsDisposed",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 709,
+      "declaration": "fun testContentIsDisposed() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testDefaultValueDoesNotOverrideActualValue",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testDefaultValueDoesNotOverrideActualValue",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 716,
+      "declaration": "fun testDefaultValueDoesNotOverrideActualValue() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testCommandFStartsFiltering",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testCommandFStartsFiltering",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 729,
+      "declaration": "fun testCommandFStartsFiltering() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt#com.android.tools.adtui.workbench.AttachedToolWindowTest.testActionsEnabledAtStartup",
+      "source": "idea",
+      "suite": "com.android.tools.adtui.workbench.AttachedToolWindowTest",
+      "method": "testActionsEnabledAtStartup",
+      "case": null,
+      "file": {
+        "path": "adt-ui/src/test/java/com/android/tools/adtui/workbench/AttachedToolWindowTest.kt",
+        "sha256": "1be383e37b6c4d0921b7cba125d51b1c51ce92b0dd03ee7d029c619b79aed835"
+      },
+      "line": 744,
+      "declaration": "fun testActionsEnabledAtStartup() {",
+      "copyright": "Copyright (C) 2016 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The method uses the shared inline WorkBench/AttachedToolWindow setup, mocked SideModel/drag listener and PalettePanelToolContent/PropertiesComponentMock helper fixtures retained and hashed in ports/window-inventory.json. It loads no test-data or snapshot file; Swing/platform icons and services remain harness dependencies."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.ModelVersionsTest",
+      "method": "checkModelConsumerVersionOrdering",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+        "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef"
+      },
+      "line": 25,
+      "declaration": "fun checkModelConsumerVersionOrdering() {",
+      "copyright": "Copyright (C) 2024 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original ordinary JUnit4 method constructs model versions and AGP versions in memory; its complete pinned source is retained unchanged under generated_artifacts/ModelVersionsTest.kt."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.ModelVersionsTest",
+      "method": "checkModelVersionOrdering",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+        "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef"
+      },
+      "line": 43,
+      "declaration": "fun checkModelVersionOrdering() {",
+      "copyright": "Copyright (C) 2024 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original ordinary JUnit4 method constructs model versions and AGP versions in memory; its complete pinned source is retained unchanged under generated_artifacts/ModelVersionsTest.kt."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.project.sync.ModelVersionsTest",
+      "method": "checkSupportsParallelSync",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+        "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef"
+      },
+      "line": 61,
+      "declaration": "fun checkSupportsParallelSync() {",
+      "copyright": "Copyright (C) 2024 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original ordinary JUnit4 method constructs model versions and AGP versions in memory; its complete pinned source is retained unchanged under generated_artifacts/ModelVersionsTest.kt."
+    }
+  ]
+}

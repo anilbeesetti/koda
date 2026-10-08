@@ -1,0 +1,24 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--lib",
+    "project_model::tests::default_variants_mismatched_product_flavour_length",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.7161283140012529,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-mismatchedProductFlavourLength.log",
+    "sha256": "1baebb2a84cc42722db78550a8a1aa51ca4a7d5773088619843496e87b4914a9"
+  }
+}

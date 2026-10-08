@@ -1,0 +1,25 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--test",
+    "gradle_import_reference",
+    "circular_dependencies",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.6316591189970495,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testCircularDependencies.log",
+    "sha256": "33e8479486fe0b191e3b7cd82821cd492dafc9fdc56d087608c24266498b4c71"
+  }
+}

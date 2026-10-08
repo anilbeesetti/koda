@@ -1,0 +1,25 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--test",
+    "project_view_preferences_reference",
+    "test_show_visibility_icons_when_option_is_unselected",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.6037236269985442,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
+    "sha256": "1e2ddc77814252c8d67c53a1f2e1cff4e346752c8cb00394bfbb36ed2548696b"
+  }
+}

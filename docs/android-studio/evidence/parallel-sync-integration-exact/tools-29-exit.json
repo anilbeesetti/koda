@@ -1,0 +1,25 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--test",
+    "parallel_sync",
+    "check_supports_parallel_sync",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.6309157580035389,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-ModelVersionsTest-checkSupportsParallelSync.log",
+    "sha256": "b4cc4e3bfd99767829e37c8467878307afbba69add0b3be47ecb760df60243be"
+  }
+}

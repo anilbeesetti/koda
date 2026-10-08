@@ -1,0 +1,1189 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "before_source_guard_proof": "runner-preparation.json",
+  "before_source_snapshot_sha256": "1ee9fccb1197681f050c9c283763fd150e978b1eb0f7915cb8d15463774f1326",
+  "all_4730_source_fixture_hashes_after_retirement_match": true,
+  "git_clean_after_retirement": true,
+  "deleted_path_only": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+  "terminated_status_proofs": [
+    {
+      "pid": 689,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 1393,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 1401,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 1495,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 34966,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 37283,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 37461,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 44286,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 60322,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75296,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75297,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75300,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75310,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75325,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75326,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75327,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75359,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75366,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75374,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75634,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75635,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75636,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75641,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75666,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75669,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75673,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75678,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75699,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 75722,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 79852,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 88779,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 90634,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 91003,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 91341,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 101329,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 103011,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 103662,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104079,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104665,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104669,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104671,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104677,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104698,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104702,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104704,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104719,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104745,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 104755,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 105105,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 111658,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 111706,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 112693,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 116286,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 117214,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 117516,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 118110,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 118207,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 118288,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 121238,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129167,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129227,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129450,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129619,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129621,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129622,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129626,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129651,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129656,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129659,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129660,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129682,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 129712,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 133452,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 134072,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 134519,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 134957,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 141148,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 144295,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 147206,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 147574,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 147851,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 150998,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 152268,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 152556,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 154168,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 154304,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 157315,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 157837,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 158315,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 161277,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 166816,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 167625,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 167627,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 167631,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 167637,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 167657,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 167660,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 167664,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 167680,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 167703,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 167713,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 168276,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 168957,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 169099,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 169100,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 169105,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 169111,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 169130,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 169132,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 169136,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 169150,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 169176,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 169178,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 172879,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173129,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173256,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173262,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173266,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173272,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173294,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173295,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173297,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173307,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173336,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 173339,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 174048,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179721,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179833,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179835,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179838,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179842,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179866,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179867,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179868,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179884,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179911,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 179913,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180371,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180459,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180460,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180463,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180464,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180490,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180491,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180496,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180508,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180538,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 180540,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 182089,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 182969,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 185363,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 190419,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 197388,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 198005,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 208150,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 208827,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 208959,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 209036,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 212000,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 212533,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 213111,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 213972,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220085,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220354,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220487,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220772,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220774,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220790,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220794,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220802,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220804,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220814,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220835,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220851,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 220864,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 221817,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 221819,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 221821,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 221822,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 221846,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 221849,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 221852,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 221869,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 221893,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 221898,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 223975,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 232854,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 238505,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 238506,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 238517,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 238536,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 238537,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 238542,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 238556,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 238570,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 238573,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 238578,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 239227,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 239298,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 239377,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 239647,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 239902,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 245249,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 245250,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 245265,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 245276,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 245281,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 245283,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 245299,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 245309,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 245332,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 245336,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 252244,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 252440,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 252758,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 254002,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 254222,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 258638,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 259533,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 261972,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 264526,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 265009,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 265264,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 265444,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 267447,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 269441,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 269475,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 269569,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 277520,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 284162,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 294096,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    },
+    {
+      "pid": 295309,
+      "original_stat_state": "Z",
+      "status_state_line": "State:\tZ (zombie)"
+    }
+  ],
+  "inaccessible_live_service_uid_proof": [
+    {
+      "pid": 198,
+      "comm": "dockerd",
+      "uid_line": "Uid:\t0\t0\t0\t0",
+      "state_line": "State:\tS (sleeping)"
+    },
+    {
+      "pid": 249,
+      "comm": "containerd",
+      "uid_line": "Uid:\t0\t0\t0\t0",
+      "state_line": "State:\tS (sleeping)"
+    }
+  ],
+  "no_total_system_FD_inspection_claim": true,
+  "file_type_prior_ls_tool_observation": "regular executable file shown in tool chunk5d0c63 before retirement",
+  "exact_file_physical_st_blocks": "unverified; not captured before unlink",
+  "observed_overlay_increase_bytes": 303906816,
+  "overlay_delta_not_exact_file_physical_allocation_claim": true
+}

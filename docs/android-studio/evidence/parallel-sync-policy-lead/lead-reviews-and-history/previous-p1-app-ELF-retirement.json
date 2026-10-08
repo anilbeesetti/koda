@@ -1,0 +1,1056 @@
+{
+  "utc": "2026-10-08T00:49:59.313672+00:00",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "retired": true,
+  "reason": "Completed previous905 generated app only; current4fb normal app independently passes and its first actual SDKsync succeeds. Preserve all source, fixtures, models, logs, screenshots and receipts.",
+  "retired_generated_ELF": {
+    "path": "/tmp/android-studio-link-output/koda-module-presentation-290003",
+    "bytes": 1359451424,
+    "sha256": "9c018912f5622c4b991276a311a1f86bd3544de612537904d299cdc7f0b40891",
+    "nlink": 1,
+    "device": 33,
+    "inode": 94561,
+    "allocated_bytes": 1359454208
+  },
+  "new_verified_app": {
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "-p",
+      "zed",
+      "--bin",
+      "koda"
+    ],
+    "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+    "exit_code": 0,
+    "elapsed_seconds": 623.5448021279954,
+    "log_sha256": "9dff03dff942f7d45b35ec0896a2a03246456ff571ea5c7d678a1295c6ca0d5e",
+    "executable": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+    "executable_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+    "executable_bytes": 1359451600,
+    "cargo_published_executable": "/workspace/.cache/zed/target/debug/koda",
+    "original_linker_output": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+    "only_final_output_argument_changed": true
+  },
+  "new_live_binding": {
+    "pid": 310699,
+    "window_id": 2097153,
+    "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+    "executable": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+    "executable_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+    "command": "/workspace/android-studio-parallel-sync-policy/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/qa/user-data /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/custom-manifest/AndroidManifest.xml ",
+    "utc": "2026-10-08T00:47:01.541371+00:00",
+    "monotonic": 57061.611017955
+  },
+  "new_sdk_sync": {
+    "id": "1791420436306220523-310940",
+    "arguments": [
+      "--init-script",
+      "/tmp/koda-android-model-VM0pj6/export.gradle",
+      "kodaAndroidProjectModel",
+      "--no-configuration-cache",
+      "--console=plain"
+    ],
+    "start_utc": "2026-10-08T00:47:16.306230+00:00",
+    "cwd": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project",
+    "official_wrapper": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/gradlew-original",
+    "official_wrapper_sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+    "init_path": "/tmp/koda-android-model-VM0pj6/export.gradle",
+    "saved_init_path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/native-sync-export-1791420436306220523-310940.gradle",
+    "init_sha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+    "expected_source_bridge_sha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+    "matches_source": true,
+    "finish_utc": "2026-10-08T00:47:19.620143+00:00",
+    "return_code": 0,
+    "raw_stdout_sha256": "33465d7bab991421a34d26285596c4ed2dd6d37b43faf5536dd7328e509212ed"
+  },
+  "new_sdk_sync_capture": {
+    "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/captures/sync1-settled.png",
+    "sha256": "b3ac15fa6208bb19099313fc59006ca7b45b9b5f3712881c8d047381c8d02f7f"
+  },
+  "open_accessible_old_candidate_refs": [],
+  "inaccessible_process_observations": [
+    {
+      "pid": "198",
+      "kind": "executable_permission"
+    },
+    {
+      "pid": "198",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "249",
+      "kind": "executable_permission"
+    },
+    {
+      "pid": "249",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "689",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "1393",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "1401",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "1495",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "34966",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "37283",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "37461",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "44286",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "60322",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75296",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75297",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75300",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75310",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75325",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75326",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75327",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75359",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75366",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75374",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75634",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75635",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75636",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75641",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75666",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75669",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75673",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75678",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75699",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "75722",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "79852",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "88779",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "90634",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "91003",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "91341",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "101329",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "103011",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "103662",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104079",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104665",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104669",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104671",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104677",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104698",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104702",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104704",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104719",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104745",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "104755",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "105105",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "111658",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "111706",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "112693",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "116286",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "117214",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "117516",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "118110",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "118207",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "118288",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "121238",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129167",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129227",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129450",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129619",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129621",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129622",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129626",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129651",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129656",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129659",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129660",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129682",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "129712",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "133452",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "134072",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "134519",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "134957",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "141148",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "144295",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "147206",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "147574",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "147851",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "150998",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "152268",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "152556",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "154168",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "154304",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "157315",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "157837",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "158315",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "161277",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "166816",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "167625",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "167627",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "167631",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "167637",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "167657",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "167660",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "167664",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "167680",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "167703",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "167713",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "168276",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "168957",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "169099",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "169100",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "169105",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "169111",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "169130",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "169132",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "169136",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "169150",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "169176",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "169178",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "172879",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173129",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173256",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173262",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173266",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173272",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173294",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173295",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173297",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173307",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173336",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "173339",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "174048",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179721",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179833",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179835",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179838",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179842",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179866",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179867",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179868",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179884",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179911",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "179913",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180371",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180459",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180460",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180463",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180464",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180490",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180491",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180496",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180508",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180538",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "180540",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "182089",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "182969",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "185363",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "190419",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "197388",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "198005",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "208150",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "208827",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "208959",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "209036",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "212000",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "212533",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "213111",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "213972",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220085",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220354",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220487",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220772",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220774",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220790",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220794",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220802",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220804",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220814",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220835",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220851",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "220864",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "221817",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "221819",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "221821",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "221822",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "221846",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "221849",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "221852",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "221869",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "221893",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "221898",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "223975",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "232854",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "238505",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "238506",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "238517",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "238536",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "238537",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "238542",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "238556",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "238570",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "238573",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "238578",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "239227",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "239298",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "239377",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "239647",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "239902",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "245249",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "245250",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "245265",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "245276",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "245281",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "245283",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "245299",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "245309",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "245332",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "245336",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "252244",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "252440",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "252758",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "254002",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "254222",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "258638",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "259533",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "261972",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "264526",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "265009",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "265264",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "265444",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "267447",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "269441",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "269475",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "269569",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "277520",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "284162",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "294096",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "295309",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "297431",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "297571",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "300696",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "300920",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "301203",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "301469",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "310434",
+      "kind": "fd_directory_permission"
+    },
+    {
+      "pid": "310649",
+      "kind": "fd_directory_permission"
+    }
+  ],
+  "no_whole_system_no_fd_claim": true,
+  "source_files_unchanged": 4730,
+  "source_fixtures_tests_logs_or_other_generated_files_removed": false,
+  "available_tmp_bytes_before": 131928064,
+  "available_tmp_bytes_after": 1491382272
+}

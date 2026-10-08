@@ -1,0 +1,12 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "selected": 95,
+  "ported": 20,
+  "adapted": 16,
+  "unported": 59,
+  "passing": 36,
+  "whole_source_binding_count": 4730,
+  "only_newly_promoted_original": "ModelVersionsTest.checkSupportsParallelSync",
+  "canonical_ledger_sha256": "60a7bf14e904e115359188bf8aed5b067fa82af1f05571040537a345fe6c132d",
+  "manifest_sha256": "2f1e6d709e4a684aca9ca20fc43aae6826b60480f0d70cb8a9aa1b93ce9607c1"
+}

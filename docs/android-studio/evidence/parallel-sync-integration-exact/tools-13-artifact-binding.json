@@ -1,0 +1,40 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+  "retained_at_execution_artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///workspace/android-studio-parallel-sync-policy/crates/android_tools#0.1.0",
+    "manifest_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/Cargo.toml",
+    "target": {
+      "kind": [
+        "test"
+      ],
+      "crate_types": [
+        "bin"
+      ],
+      "name": "gradle_import_reference",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/gradle_import_reference.rs",
+      "edition": "2024",
+      "doc": false,
+      "doctest": false,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 0,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-2c85c020c03fddd8"
+    ],
+    "executable": "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+    "fresh": false,
+    "executable_bytes": 3033536,
+    "executable_sha256": "3e03dfc6a680e6f3cee8a9edb7a69ea8804d6320359f362b953aa2654dfc64f1"
+  },
+  "normal_Cargo_exact_execution": true,
+  "whole_source_binding_count": 4730
+}

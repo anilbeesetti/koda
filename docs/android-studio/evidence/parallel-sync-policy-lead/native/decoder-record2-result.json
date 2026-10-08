@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/runtime-probe",
+    "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project",
+    "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/native-model-record2.log"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.004514981999818701,
+  "input_record_sha256": "1ec17fdcf1776ebe3600f29f7828ced42d2587dd96a139c518a870ec1904016d",
+  "stdout_sha256": "47ab79b91d4ef40240dbc2a81a6a1d9d870a3b7d89f34eb77f623f69c087f2bb",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

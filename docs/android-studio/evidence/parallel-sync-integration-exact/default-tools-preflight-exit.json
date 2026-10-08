@@ -1,0 +1,31 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--lib",
+    "--test",
+    "generated_artifacts",
+    "--test",
+    "gradle_import_reference",
+    "--test",
+    "project_view_preferences_reference",
+    "--test",
+    "parallel_sync",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 12.11561252699903,
+  "log": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/default-tools-preflight.log",
+  "log_sha256": "e27f9dd38764ed471db6dd171e367689d51d8fe2ce6a7f4f1adee7450fee19d7",
+  "source_guard_files": 4730,
+  "source_index_scoped_status_unchanged": true,
+  "canonical_environment": "/workspace/cloud-environment/env.sh",
+  "CARGO_BUILD_JOBS": 1,
+  "normal_linker": true,
+  "executed_tests": false
+}

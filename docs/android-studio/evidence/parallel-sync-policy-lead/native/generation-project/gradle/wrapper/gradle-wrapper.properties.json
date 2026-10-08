@@ -1,0 +1,8 @@
+{
+  "original_path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/gradle/wrapper/gradle-wrapper.properties",
+  "original_bytes": 368,
+  "original_sha256": "89f62533208a72b7a8cc2892b6b3540c445fa6175508297d932dae57d653591a",
+  "content_preserved_byte_exact": true,
+  "encoding": "utf-8",
+  "utf8_content": "distributionBase=GRADLE_USER_HOME\ndistributionPath=wrapper/dists\ndistributionSha256Sum=9c0f7faeeb306cb14e4279a3e084ca6b596894089a0638e68a07c945a32c9e14\ndistributionUrl=https\\://services.gradle.org/distributions/gradle-9.6.1-bin.zip\nnetworkTimeout=10000\nretries=0\nretryBackOffMs=500\nvalidateDistributionUrl=true\nzipStoreBase=GRADLE_USER_HOME\nzipStorePath=wrapper/dists\n"
+}

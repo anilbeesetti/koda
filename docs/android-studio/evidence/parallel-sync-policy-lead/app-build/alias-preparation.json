@@ -1,0 +1,26 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "source_files_unchanged": 4730,
+  "removed_aliases_only": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+      "type": "symlink",
+      "target": "/tmp/android-studio-link-output/koda-module-presentation-290003",
+      "resolved_frozen_app": "/tmp/android-studio-link-output/koda-module-presentation-290003"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/koda",
+      "type": "symlink",
+      "target": "/tmp/android-studio-link-output/koda-module-presentation-290003",
+      "resolved_frozen_app": "/tmp/android-studio-link-output/koda-module-presentation-290003"
+    }
+  ],
+  "older_full_app_preserved": "/tmp/android-studio-link-output/koda-module-presentation-290003",
+  "older_full_app_sha256": "9c018912f5622c4b991276a311a1f86bd3544de612537904d299cdc7f0b40891",
+  "no_accessible_process_executable_is_older_app": true,
+  "inaccessible_process_executable_links": [
+    "198",
+    "249"
+  ],
+  "no_source_fixtures_sdk_logs_or_physical_app_removed": true
+}
