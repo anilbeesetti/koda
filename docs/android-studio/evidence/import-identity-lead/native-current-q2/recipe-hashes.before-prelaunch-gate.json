@@ -1,0 +1,74 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "prepared_only": true,
+  "runtime_executed": false,
+  "payload_count": 13,
+  "total_payload_bytes": 72792,
+  "files": [
+    {
+      "path": "bind-input-plan.py",
+      "bytes": 1221,
+      "sha256": "9e8217dbef5443c04e1718b887bdcc54f5c0f9a801a052cc64a2a349e2df4294"
+    },
+    {
+      "path": "capture-gradle.py",
+      "bytes": 3125,
+      "sha256": "94b55843afae805ccf5b395e11e0622cad3d89a5274f23a5e7af960411fb87e8"
+    },
+    {
+      "path": "compile-decoder.py",
+      "bytes": 2417,
+      "sha256": "f185a668082a11e077c2f081c0ef30aebea0f744b7812e707550dc185094ec16"
+    },
+    {
+      "path": "events.py",
+      "bytes": 5483,
+      "sha256": "39c3595af38b2b5b1f6fe7c92cd5bf3a46941140f28b3fc756f81a550773d1b8"
+    },
+    {
+      "path": "finalize-proof.py",
+      "bytes": 10294,
+      "sha256": "fd84ed9a78a9e96a8f79931a6abbcb7cef8a011bc8c05115a34a6d2209bc2223"
+    },
+    {
+      "path": "guard.py",
+      "bytes": 3750,
+      "sha256": "a1ac2febcc8fcc9315fda6c8eac02af8f09d0618a16abb3a0bbba89ceaf24a2e"
+    },
+    {
+      "path": "input-replay-plan.json",
+      "bytes": 13220,
+      "sha256": "b26ade1ac8c6d9b43ad7539fed6151097275ea1631500bb1b0f8d977b0831a71"
+    },
+    {
+      "path": "prepare.py",
+      "bytes": 4388,
+      "sha256": "3be0479a91c989b0949eb88f8f103b2da7e9ef4706cf1643a67dfae85a01e2ec"
+    },
+    {
+      "path": "retry-preparation-provenance.json",
+      "bytes": 5757,
+      "sha256": "194ea570486236e55c9bb5c8f1a4c9e5f324b5ae0c3cc9f79208f9823d4a61b5"
+    },
+    {
+      "path": "runtime-probe.rs",
+      "bytes": 11789,
+      "sha256": "a967c834d0f786f3779bd7a4b0536e60fca064b9c5f06b52b3baa7d46a50f360"
+    },
+    {
+      "path": "scope.json",
+      "bytes": 764,
+      "sha256": "43ab06faa81287eb9d0b5be021057743646ae4eab02fb670d95608abdffc1090"
+    },
+    {
+      "path": "stop-owned-app.py",
+      "bytes": 1712,
+      "sha256": "cfe30b275b4c305a8c386ecc2d41de49aa34deb3cf0c40e1289d1f0182680333"
+    },
+    {
+      "path": "verify-models.py",
+      "bytes": 8872,
+      "sha256": "8207d926495efeb9686842dac582c1046ebc3d956fe845868881be917352b24b"
+    }
+  ]
+}

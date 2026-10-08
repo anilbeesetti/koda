@@ -1,0 +1,39 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "compiler_artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///workspace/android-studio-import-identity-getters/crates/android_tools#0.1.0",
+    "manifest_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/Cargo.toml",
+    "target": {
+      "kind": [
+        "test"
+      ],
+      "crate_types": [
+        "bin"
+      ],
+      "name": "parallel_sync",
+      "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/parallel_sync.rs",
+      "edition": "2024",
+      "doc": false,
+      "doctest": false,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 0,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "/workspace/.cache/zed/target/debug/deps/parallel_sync-426af02f93fcc41f"
+    ],
+    "executable": "/workspace/.cache/zed/target/debug/deps/parallel_sync-426af02f93fcc41f",
+    "fresh": false,
+    "executable_bytes": 1768800,
+    "executable_sha256": "6d3f10ac7c20f1705f07297e10aaf7895d304f3cb820b7eefacb8cc086706024"
+  },
+  "normal_exact_Cargo_execution": true,
+  "source_files": 4743
+}

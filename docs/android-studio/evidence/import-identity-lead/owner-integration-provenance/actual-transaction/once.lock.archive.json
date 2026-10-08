@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "archive_kind": "reversible_single_file",
+  "original_path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/actual-transaction/once.lock",
+  "recovery_relative_path": "actual-transaction/once.lock",
+  "original_bytes": 0,
+  "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "content_preserved_byte_exact": true,
+  "encoding": "base64",
+  "base64_content": ""
+}

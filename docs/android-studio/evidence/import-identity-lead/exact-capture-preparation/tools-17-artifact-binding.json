@@ -1,0 +1,39 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "compiler_artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///workspace/android-studio-import-identity-getters/crates/android_tools#0.1.0",
+    "manifest_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/Cargo.toml",
+    "target": {
+      "kind": [
+        "test"
+      ],
+      "crate_types": [
+        "bin"
+      ],
+      "name": "gradle_import_reference",
+      "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/gradle_import_reference.rs",
+      "edition": "2024",
+      "doc": false,
+      "doctest": false,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 0,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-2c85c020c03fddd8"
+    ],
+    "executable": "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+    "fresh": false,
+    "executable_bytes": 3061296,
+    "executable_sha256": "3b138348ddda17335ae4ab9321d8739bc490b79ccb849110683b5f221cdeb672"
+  },
+  "normal_exact_Cargo_execution": true,
+  "source_files": 4743
+}

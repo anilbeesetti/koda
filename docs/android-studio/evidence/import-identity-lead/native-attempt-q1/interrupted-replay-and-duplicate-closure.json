@@ -1,0 +1,35 @@
+{
+  "verdict": "INTERRUPTED_NOT_COMPLETE",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "retained_partial_session_binding_sha256": "4ea6002f362ef134903fb8efcf3c8eff879da8b4e52e611eed74895a7f148497",
+  "retained_partial_events_sha256": "7dcd3ed488ce2c8ee24ba1298b175dfe4acec1ecdc5dc87f54e808b17ee864ee",
+  "partial_images": 4,
+  "reason": "Cloud interruption after savedsecondSyncloading; formerapp343982absent. RootaccidentallyrelaunchedsameQA/overwroteitslauncherPTY, thenstoppedonlynew345051launcherexit143. No complete retry1PASS/fulloriginalPTYretentionclaimed. AllremainingrawGradle/model/images/eventevidence retained.",
+  "duplicate_launcher_exit_code": 143,
+  "absent_owned_pids": [
+    343972,
+    343982,
+    345051,
+    345059,
+    345069
+  ],
+  "former_launcher_zombie": {
+    "pid": 343964,
+    "state": "Z",
+    "parent_pid": 1,
+    "start_ticks": 6697008,
+    "descriptor_inspection": {
+      "accessible": false,
+      "result": "PermissionDenied; no descriptor absence claimed"
+    },
+    "not_signaled_or_reaped_by_Root": true,
+    "not_claimed_absent": true
+  },
+  "display_socket_absent": 121,
+  "no_product_source_or_reference_test_changes": true,
+  "new_original_reference_credit": 0,
+  "external_preparation_failures_before_any_mutation": [
+    "Initial alloldPIDabsence assertion correctly rejected zombie343964",
+    "Attempted zombieFDinspection returnedPermissionDenied; now retainedexplicitly withnoFDabsenceclaim"
+  ]
+}

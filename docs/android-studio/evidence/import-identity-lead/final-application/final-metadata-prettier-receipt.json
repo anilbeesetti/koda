@@ -1,0 +1,32 @@
+{
+  "version": "3.5.0",
+  "commands": [
+    {
+      "command": [
+        "node",
+        "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/bin/prettier.cjs",
+        "--write",
+        "/workspace/android-studio-import-identity-getters/docs/android-studio/import-identity-getters-task-report.md",
+        "/workspace/android-studio-import-identity-getters/docs/android-studio/ports/import-identity-getters.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "6486c0754022b55054091571e86addf1a0947b3e3b5f87c8cb94c704fc3165c1",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "node",
+        "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "/workspace/android-studio-import-identity-getters/docs/android-studio/import-identity-getters-task-report.md",
+        "/workspace/android-studio-import-identity-getters/docs/android-studio/ports/import-identity-getters.json"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "only_two_task_metadata_files_formatted": true,
+  "all_port_JSON_semantics_unchanged": true,
+  "no_raw_fixture_or_proof_formatting": true
+}

@@ -1,0 +1,7 @@
+{
+  "authorized": true,
+  "owner": "import_identity_lead_native_validation",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "parent_message": "Root continues authorized lead native validation after five owner reviewers, actual locked full-app build/link PASS, and all36 current exact reference captures PASS. Only12 unchanged authored fixtures and official wrapper, private SDK property/forwarder and installed extension assets may copy; no Source/index/Git/original tests or trust/database copy. Fresh retry2 approved after corrected shell-wrapper static review and one-use gate inspection. Root only executes runtime; no prior profile or prior replay artifacts are copied.",
+  "copy_installed_extension_assets_only": true
+}

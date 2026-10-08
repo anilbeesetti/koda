@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "verdict": "PASS",
+  "review_area": "code",
+  "scope": "static_source_only_runtime_pending",
+  "source_fix_round": 2,
+  "source": "5147e2b577a78d7259c64fb0b3079f2a229aef18",
+  "before_source_commit": "8362e8ca7187164dc7d15173994528790f100368",
+  "timestamp_utc": "2026-10-08T00:53:26.022209+00:00",
+  "worktree": "/workspace/android-studio-import-identity-getters",
+  "changed_files": [
+    "crates/android_tools/src/project_model.gradle",
+    "crates/android_tools/test_data/import_facts/late_configuration.gradle",
+    "docs/android-studio/import-identity-getters-task-report.md",
+    "docs/android-studio/ports/import-identity-getters.json"
+  ],
+  "changed_product_source_files": [
+    "crates/android_tools/src/project_model.gradle",
+    "crates/android_tools/test_data/import_facts/late_configuration.gradle"
+  ],
+  "files": {
+    "crates/android_tools/src/import_facts.rs": {
+      "bytes": 23641,
+      "sha256": "36db0e332e2d981d3c3b9072ea883e1241c58cc30a184fba5a1fce5da4f3c8ad"
+    },
+    "crates/android_tools/src/project_model.gradle": {
+      "bytes": 36402,
+      "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9"
+    },
+    "crates/android_tools/src/android_tools.rs": {
+      "bytes": 33283,
+      "sha256": "3f1c28a5d58541490a34efe8e0756cc1df6dc4069b58b387db0caa5393f7925b"
+    },
+    "crates/android_tools/tests/import_facts.rs": {
+      "bytes": 24440,
+      "sha256": "062bc0523570936375363843c840c69de44326415b8b84f8331b81bcfe0bd6f1"
+    },
+    "crates/android_tools/test_data/import_facts/late_configuration.gradle": {
+      "bytes": 611,
+      "sha256": "c9f33742f6d0d5d9fcd26433f14d084593048597bd1030b17aec4fddcc249dac"
+    }
+  },
+  "resolved_findings": [
+    {
+      "id": "C1",
+      "status": "resolved_static_unchanged"
+    },
+    {
+      "id": "C2",
+      "status": "resolved_static_unchanged"
+    },
+    {
+      "id": "C3",
+      "status": "resolved_static",
+      "file": "crates/android_tools/src/project_model.gradle",
+      "line_start": 63,
+      "line_end": 75,
+      "verification": "Raw capture deferred to graph readiness, after full projectsEvaluated notification and before task execution."
+    }
+  ],
+  "new_blocking_findings": [],
+  "supplementary_test_functions_declared": 28,
+  "previous_28_test_file_byte_equal": true,
+  "supplementary_late_callback_fixture": {
+    "path": "crates/android_tools/test_data/import_facts/late_configuration.gradle",
+    "state": "authored_not_executed",
+    "independent_getter_oracle": true,
+    "original_test_credit": 0
+  },
+  "getter_reference_files_hash_verified": 6,
+  "lifecycle_reference_files_hash_verified": 6,
+  "initial_history_source_and_tests_byte_exact": true,
+  "report": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/code-static-round2.md",
+    "sha256": "692903ee408e7539d8e7abf7dbcbd9c83a8702b4b222daedb53c472aedfa01c5"
+  },
+  "tests_executed": 0,
+  "runtime_executions": 0,
+  "source_mutations": 0,
+  "cache_mutations": 0,
+  "original_test_credit": 0,
+  "pending_gates": [
+    "Compilation",
+    "All tooling tests",
+    "Strict repository clippy",
+    "Formatting",
+    "Actual Gradle/JVM/SDK captures and late-callback comparison",
+    "Full app/native validation",
+    "Root final gates"
+  ]
+}

@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "task": "P2a raw import identity getter transport",
+  "status": "metadata_validation_pass_final_HEAD_CI_pending",
+  "base": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
+  "branch": "android-studio-task/1-import-identity-getters",
+  "tests": [],
+  "new_original_test_credit": 0,
+  "supplemental_tests": {
+    "suite": "crates/android_tools/tests/import_facts.rs",
+    "declared": 30,
+    "executed": 30,
+    "status": "default_and_allfeatures_pass",
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "behavior": "Official Gradle project/root/build identity inputs and nullable Idea plugin names, independently captured without imported-name/facet fallback; Rust validates objects, identity and model/selection freshness.",
+  "reference_files": "crates/android_tools/test_data/import_facts/reference-manifest.json",
+  "reference_status": {
+    "supplementary_helpers": "retained_full_sources_with_hashes_and_Apache_attribution",
+    "original_naming_facet_Kotlin_tree_tests": "applicable_unported",
+    "canonical_census": "incomplete_Root_rebinds36_existing_cases_no_new_original_credit"
+  },
+  "runtime": {
+    "library-build": {
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 7.509161330999632,
+      "log_sha256": "0808ad3e6f89e045b5eceae2dadc625d8a07462a1b2a02922ae61454ec5ecdd5",
+      "whole_source_bindings": 4743,
+      "source_index_status_unchanged": true,
+      "status": "PASS"
+    },
+    "all-features-tests": {
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 17.778245876004803,
+      "log_sha256": "d0abe153b7a7092580e819a6616cf413f7b785f606e5db13712947d16899b662",
+      "whole_source_bindings": 4743,
+      "source_index_status_unchanged": true,
+      "passed": 291,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "status": "PASS"
+    },
+    "strict-clippy": {
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "command": ["./script/clippy", "--locked", "-p", "android_tools"],
+      "exit_code": 0,
+      "elapsed_seconds": 10.110794968997652,
+      "log_sha256": "5a0f3d8cc9062215ede77cfc2ec59a483d0ed57a5ef0d8b39fccd280202ccee7",
+      "whole_source_bindings": 4743,
+      "source_index_status_unchanged": true,
+      "status": "PASS",
+      "effective_mode": "release_all_targets_all_features_deny_warnings",
+      "optional_cargo_shear_typos_buf_not_claimed": true
+    },
+    "format-check": {
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "command": ["cargo", "fmt", "--all", "--", "--check"],
+      "exit_code": 0,
+      "elapsed_seconds": 28.925373188998492,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "whole_source_bindings": 4743,
+      "source_index_status_unchanged": true,
+      "status": "PASS"
+    },
+    "ui-full-default-suite": {
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_ui",
+        "--lib",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 132.50914960400405,
+      "log_sha256": "2488cdaa0fff210d42064ca571adcfdd236fa9afce17ee7a69edb831591491c5",
+      "whole_source_bindings": 4743,
+      "source_index_status_unchanged": true,
+      "passed": 125,
+      "failed": 0,
+      "pre_existing_ignored": 1,
+      "filtered": 0,
+      "status": "PASS"
+    },
+    "official_Gradle_SDK_captures": {
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "source_files": 4743,
+      "actual_capture_count": 8,
+      "actual_supported_scenario_pairs": ["baseline", "nested", "late"],
+      "actual_included_build_guard_rejections": 2,
+      "whole_source_index_unchanged": true,
+      "complete_basic_v2_projections_preserved": true,
+      "actual_rust_identity_decoding_and_late_official_oracle_pass": true,
+      "source_only_original_runtime_test_credit": 0,
+      "non_rust_exception": "official Gradle/AGP model runtime and public getters; serialization-only minimal bridge; all identity policy remains Rust",
+      "status": "PASS",
+      "normalization_performed": false,
+      "supplementary_environment": {
+        "JDK": "21",
+        "Gradle": "9.6.1",
+        "AGP": "9.4.0",
+        "compileSdk": 37,
+        "private_explicit_buildToolsVersion": "37.0.0",
+        "override_files": [
+          "mobile/build.gradle.kts",
+          "greeting/build.gradle.kts"
+        ],
+        "original_source_or_reference_fixtures_changed": false,
+        "failed_default_build_tools_36_epoch_preserved": true
+      }
+    },
+    "five_area_reviews": {
+      "code": {
+        "verdict": "PASS",
+        "json_sha256": "df2b858299843e439a87ed185bfe9d7a8049ab1ccc98fbad82bae928c40c1e4f",
+        "markdown_sha256": "a4e05d90cbb9dec94371df3c2392772674b9ce65707835d6849f05992ac9b49f",
+        "evidence_origin": "reviews/code-final-current-runtime.json"
+      },
+      "ui": {
+        "verdict": "PASS",
+        "json_sha256": "26a403a7078f215f4547f1880642e624e88b7a431be589f84f13f053c17c1c1e",
+        "markdown_sha256": "179c66cfa384dcd47d6f3bd1e86565e82b4794f7a642ee5acd4183108552381a",
+        "evidence_origin": "reviews/ui-final-current-runtime.json"
+      },
+      "ux": {
+        "verdict": "PASS",
+        "json_sha256": "9564ee3ee560dfe4a668aef55f00bef079c89cb10b1ad4236636f747aed0de95",
+        "markdown_sha256": "14c4a174eb85a705753ef820e9ad494d5efe172e951f805d5dacffd356232650",
+        "evidence_origin": "reviews/ux-final-current-runtime.json"
+      },
+      "performance": {
+        "verdict": "PASS",
+        "json_sha256": "2d90da3370e3a4baaa82d59ed40d665b7951459c6f4c7018267f451b6cf6b868",
+        "markdown_sha256": "098b05887d567c7fb73bfab8048ee62d23aab83319843bbbce6606358b12b6cc",
+        "evidence_origin": "reviews/performance-final-current-runtime.json"
+      },
+      "quality": {
+        "verdict": "PASS",
+        "json_sha256": "16bbb1e8276a872aea3e527e829cf1a61a4ee53403263881669b14dbdccf79ef",
+        "markdown_sha256": "5bc515278d39b7073c3f43c4ad77e7158cafd047232b742578bc5429282b5922",
+        "evidence_origin": "reviews/quality-final-current-runtime.json"
+      }
+    },
+    "lead_full_app_full_CI_native_exact_reference_captures": {
+      "status": "metadata_validation_pass_final_HEAD_CI_pending",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "source_file_count": 4743,
+      "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+      "evidence": "docs/android-studio/evidence/import-identity-lead/lead-validation.json",
+      "evidence_sha256": "b8529cb71db32d6897caf832f8ae50cab3e2d95fd8e7564ed3965ebbdcebd489",
+      "normal_app": "PASS",
+      "actual_cc_link_review": "PASS",
+      "current_native": "PASS",
+      "independent_UI_UX_quality": "PASS",
+      "current_Source_full_CI": "PASS",
+      "all36_existing_exact_reference_captures": "PASS",
+      "final_metadata_source_equivalence": {
+        "status": "PASS",
+        "source_files": 4743,
+        "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+        "receipt": "docs/android-studio/evidence/import-identity-lead/final-application/Root-staged-metadata-source-equivalence.json",
+        "receipt_sha256": "db28d664dedec0c5fc8fbe1fbe49fdfb9d5bca2fc6925f6949251bf6e365e234",
+        "scope": "Exact680 reviewed metadata staged; all4743 Source names/hashes/modes/worktree/index/untracked equivalence; subsequent explicit metadata-only application receipts are checked by the final lead review."
+      },
+      "final_metadata_HEAD_CI": "NOT_RUN",
+      "new_original_test_credit": 0,
+      "complete_IDE": false,
+      "canonical_validator": {
+        "status": "PASS",
+        "exit_code": 0,
+        "receipt": "docs/android-studio/evidence/import-identity-lead/final-application/canonical-parity-validator-exit.json",
+        "receipt_sha256": "b678896e963b20c73f77897f1c0b01180e43a4aaf6133c1585619ad2280598bc",
+        "selected": 95,
+        "passing": 36,
+        "unported": 59,
+        "census_complete": false
+      }
+    }
+  },
+  "limitations": [
+    "Included builds remain unsupported",
+    "Standalone Java-only Basic model remains unsupported",
+    "No TAPI IdeaModule name transport",
+    "No authoritative imported naming, Kotlin/facet decision or tree publisher",
+    "Shipping UI remains physical",
+    "No startup, peak-memory, large-project, rendering, hardware or full-app workflow performance claim"
+  ],
+  "non_rust_exceptions": [
+    {
+      "component": "Official Gradle JVM and minimal official getter serialization bridge",
+      "reason": "Evaluate authoritative external Gradle/AGP getters; Rust owns identity validation and import policy. No IntelliJ importer/facet host."
+    }
+  ],
+  "failure_history": [
+    {
+      "kind": "static_code_review",
+      "round": 1,
+      "status": "resolved_and_current_owner_gates_pass",
+      "before_source": "1cd5ff9ad9e6e057d48052e345503eef7c3bd158",
+      "findings": [
+        "Missing explicit T Deserialize bound on GetterObservation remote derive with deserialize_with",
+        "Successful Project.getAllprojects catalogue failed to require observed parent holders"
+      ],
+      "tests_removed_skipped_weakened": 0
+    },
+    {
+      "kind": "static_code_timing_review",
+      "round": 2,
+      "status": "resolved_and_current_owner_gates_pass",
+      "before_source": "8362e8ca7187164dc7d15173994528790f100368",
+      "finding": "Init projectsEvaluated listener captures before later build/plugin projectsEvaluated listeners can finalize Idea module names",
+      "tests_removed_skipped_weakened": 0
+    },
+    {
+      "kind": "actual_default_test_failure",
+      "round": 3,
+      "before_source": "e0cfad266fce1a29e065ef016815f695ced9810b",
+      "failure_boundary": "/importFacts/projectCatalogue/result/value/0/projectName",
+      "status": "resolved_and_current_owner_gates_pass",
+      "tests_removed_skipped_weakened": 0
+    },
+    {
+      "kind": "actual_strict_clippy_failure",
+      "before_source": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+      "status": "resolved_narrow_nonsemantic_ownership_cleanup",
+      "raw_failure_log_sha256": "f732c9e998be247590591a3293d3980c373382c17543bf59c9bab2d0d36f5b3f",
+      "tests_removed_skipped_weakened": 0
+    },
+    {
+      "kind": "corrected_source_infrastructure_ENOSPC",
+      "source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "status": "Root_exact_cache_recovery_then_same_source_normal_gates_pass",
+      "raw_failure_log_sha256": "2a72471d299cf90d0a486aec435d49f4e5b6ff3cd66167fd4585d77295c413e1",
+      "tests_removed_skipped_weakened": 0
+    },
+    {
+      "kind": "supplementary_SDK_default_build_tools_36_unavailable",
+      "source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "status": "distinct_private_explicit_installed_build_tools_37_retry_all_8_captures_pass",
+      "original_test_or_reference_fixture_change": false,
+      "original_reference_test_credit": 0
+    }
+  ],
+  "product_fix_rounds": 3,
+  "owner_plan": "task-plan.json in portable evidence index",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_file_count": 4743,
+  "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+  "dependency_merge": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "protected_dependency": "c1ce5ca16a26fd59984b50500ead45fbafafa5c8",
+  "pull_request": "https://github.com/anilbeesetti/koda/pull/64",
+  "portable_evidence_index": "docs/android-studio/evidence/import-identity-getters/portable-evidence-index.json",
+  "canonical_parity_ledger_modified": true,
+  "additional_nonsemantic_quality_cleanup": {
+    "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+    "change": "remove exactly one unnecessary test clone; all assertions retained",
+    "authorization": "Root under existing continue/no routine questions after user-facing three-round escalation; no new user approval reply claimed"
+  },
+  "preserved_infrastructure_failures": [
+    "Corrected-source ENOSPC before tests; exact independently reviewed cache recovery, no source/test/evidence deletion",
+    "Initial supplementary default build-tools 36 capture decoder failure; distinct private explicit installed build-tools 37 retry",
+    "Two external setup-receipt preparation diagnostics corrected against actual captured baseline witness"
+  ],
+  "canonical_parity_ledger_owner_package_modified": false
+}

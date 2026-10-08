@@ -1,0 +1,21 @@
+{
+  "label": "capture-corrected-xml",
+  "command": [
+    "/usr/bin/import",
+    "-display",
+    ":122",
+    "-window",
+    "2097153",
+    "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/supplemental-captures/editor-xml-restored-corrected.png"
+  ],
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "actual_app_pid": 345903,
+  "window_id": 2097153,
+  "display": ":122",
+  "start_utc": "2026-10-08T03:59:22.724074+00:00",
+  "finish_utc": "2026-10-08T03:59:22.823078+00:00",
+  "elapsed_seconds": 0.09901778798666783,
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": ""
+}

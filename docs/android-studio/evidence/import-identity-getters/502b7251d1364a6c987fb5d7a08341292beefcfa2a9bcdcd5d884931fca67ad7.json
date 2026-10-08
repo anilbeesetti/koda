@@ -1,0 +1,21 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "scenario": "late",
+  "full_legacy_basic_and_v2_projection_exact": true,
+  "all_envelope_values_properties_vector_order_preserved": true,
+  "normalization": "none; same private project path for old and current",
+  "old_envelope_projection_sha256": "81a98990317a817624c1c11d6bfc82afdd953e3fcc535ea6987ae2ce95f366cd",
+  "new_envelope_projection_sha256": "81a98990317a817624c1c11d6bfc82afdd953e3fcc535ea6987ae2ce95f366cd",
+  "raw_identity_record_retained": true,
+  "command": [
+    "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/runtime-probe",
+    "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project",
+    "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/late-current/stdout.log",
+    "late"
+  ],
+  "rust_probe_exit": 0,
+  "rust_probe_elapsed_seconds": 0.012906344003567938,
+  "rust_probe_stdout_sha256": "4c3252a7bc53b1ef724a02fb6989a6e4b5836788b2046089fffb6fad74c59936",
+  "rust_probe_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "canonical_original_test_credit": 0
+}

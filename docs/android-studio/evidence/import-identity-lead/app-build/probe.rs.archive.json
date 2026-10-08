@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "archive_kind": "reversible_single_file",
+  "original_path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/probe.rs",
+  "recovery_relative_path": "app-build/probe.rs",
+  "original_bytes": 82,
+  "original_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+  "content_preserved_byte_exact": true,
+  "encoding": "base64",
+  "base64_content": "Zm4gbWFpbigpIHsgYXNzZXJ0X2VxISgxOSArIDIzLCA0Mik7IHByaW50bG4hKCJyZWFsIFJ1c3QgbGlua2VyIHByb2JlIHBhc3NlZCIpOyB9Cg=="
+}

@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "area": "performance",
+  "verdict": "PASS",
+  "scope": "read-only static equivalence addendum for one nonsemantic authored-test ownership cleanup",
+  "reviewed_at_utc": "2026-10-08T01:54:34.507372+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "parent_source_commit": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "worktree": "/workspace/android-studio-import-identity-getters",
+  "blocking_findings": [],
+  "verification": {
+    "actual_source_path_count": 4743,
+    "all_actual_source_hashes_verified": true,
+    "source_path_set_unchanged": true,
+    "all_other_source_files_byte_identical": 4742,
+    "sole_changed_source": "crates/android_tools/tests/import_facts.rs",
+    "whole_test_file_equals_parent_with_one_exact_replacement": true,
+    "exact_before_assignment": "let mut value = fixture.value.clone();",
+    "exact_after_assignment": "let mut value = fixture.value;",
+    "test_function": "absent_observation_round_trip_does_not_become_bare_null",
+    "test_declarations_preserved": 30,
+    "all_test_assertions_and_mutations_preserved": true,
+    "required_project_clone_preserved": true,
+    "production_performance_delta": false,
+    "tracked_index_and_clean_status_match_snapshot": true,
+    "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+    "fixed_seven_patterns": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ]
+  },
+  "performance_checks": {
+    "production_bridge_decoder_model_UI_policy_byte_identical": true,
+    "catalogue_complexity": "O(P log P + M log P) comparisons plus field-byte validation; other selection/freshness costs retain prior review qualifications",
+    "wire_record_limit_bytes": 16777216,
+    "wire_limit_is_not_peak_heap_or_producer_bound": true,
+    "measured_improvement_claim": false
+  },
+  "authorization_record_scope": {
+    "Root_explicit_nonsemantic_cleanup_record_read": true,
+    "semantic_product_fix_rounds_used": 3,
+    "new_user_reply_or_approval_claimed": false,
+    "this_review_adds_semantic_fix_round": false
+  },
+  "previous_actual_Clippy_failure_log_sha256": "f732c9e998be247590591a3293d3980c373382c17543bf59c9bab2d0d36f5b3f",
+  "previous_independent_quality_verdict": "FAIL",
+  "historical_failure_turned_into_pass": false,
+  "pending_corrected_source_gates": [
+    "all-feature tooling/library",
+    "strict repository Clippy",
+    "UI",
+    "actual Gradle/SDK and late-configuration oracle",
+    "full app/native workflow",
+    "lead CI/merge review",
+    "measured startup, memory, cancellation and large-project performance"
+  ],
+  "performance_measurements_claimed": [],
+  "runtime_commands_run": 0,
+  "source_cache_Git_mutations": 0,
+  "new_original_test_credit": 0,
+  "evidence_sha256": {
+    "/workspace/android-studio-artifacts/import-identity-getters/quality-ownership-cleanup/current-source.json": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0",
+    "/workspace/android-studio-artifacts/import-identity-getters/quality-ownership-cleanup/source-change-receipt.json": "9231cc053d48d2b1942e641a0a20d8c16eb17f821ec13ca186cb19f3ee256db8",
+    "/workspace/android-studio-artifacts/import-identity-getters/quality-ownership-cleanup/authorization-and-plan.json": "5d4a56f7e05e0075af415e2fe8c79f10643eef7806aec33536ed08af125894f3",
+    "/workspace/android-studio-artifacts/import-identity-getters/dependency-merge/current-source.json": "4770fd8f24a9081c0800156caf6aacba107019aa13c73fed91712b3b3a7217a9"
+  },
+  "preserved_prior_reports_and_failure_sha256": {
+    "/workspace/android-studio-artifacts/import-identity-getters/runtime/strict-clippy.log": "f732c9e998be247590591a3293d3980c373382c17543bf59c9bab2d0d36f5b3f",
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/quality-runtime-clippy-failure.md": "a33c0c9ce8f06bf14b1f9da8f13f086f0be01a8d76e1f5c67fb97dd9417280eb",
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/quality-runtime-clippy-failure.json": "37c9bf54146e48ea0d7518b66220b3898aea75da77bf86c6711fe2ec96d46e99",
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-static-current.md": "9f688dc03675422ecc8c9bd6b998a045866df874e3ce23c147067fa24c0cc83a",
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-static-current.json": "94cd802ddea0b1dbbc4928ba7635ffbfcf7af09717c45f706bf0bbeac822bf40",
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-merged-static.md": "9c4b0398ab0f9d702125292a2052bed7e5eff3defd42a7f5d416696512c6021e",
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-merged-static.json": "93fa664ecee6746ee439c96d359a237bd5ce6cbc4d89be4e95df05a08b92edfe"
+  },
+  "reviewed_source_file_sha256": {
+    "crates/android_tools/tests/import_facts.rs": "13744dfb88d81b17fcba3bed9a1d07000d0d8f3cffa4e62232a6f733ca72f319",
+    "crates/android_tools/src/import_facts.rs": "817b9fa28240385e48fd68df1296619c6cb0ff4e6b219ef91b349ec563e3fafa",
+    "crates/android_tools/src/project_model.gradle": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+    "crates/android_tools/src/android_tools.rs": "df93abc2f4455ef81491856a6b3a0d9ea0581647006d9f8deb20610b30be5268",
+    "crates/android_tools/src/parallel_sync.rs": "943e61b9d6e3256275b38750a7f8595cc4aa270a099093f6df8404f6270998e7"
+  },
+  "outputs_only": [
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-ownership-cleanup-static.md",
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-ownership-cleanup-static.json"
+  ],
+  "markdown_sha256": "e25af7ba0720be3aa27ba34d71c70a70d0d00caeb9d5fc321ef76883f8b52ab3"
+}

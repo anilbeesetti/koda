@@ -1,5 +1,6 @@
 pub mod generated_artifacts;
 pub mod gradle_import;
+pub mod import_facts;
 pub mod java_class_facts;
 pub mod logcat;
 pub mod module_presentation;

@@ -1,0 +1,201 @@
+{
+  "verdict": "FAIL",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "scope": "Initial owned native attempt; independent read-only diagnosis, not current product implementation or retry execution.",
+  "review_utc": "2026-10-08T03:27:18.551958+00:00",
+  "blocker": {
+    "id": "N3",
+    "classification": "External native harness invocation mismatch",
+    "finding": "prepare.py emitted a Python gradlew, but the unchanged IDE invokes /bin/sh ./gradlew. Its shebang is ignored and import os, sys is interpreted as a shell command; it resolves to ImageMagick in the launcher environment. The Python capture forwarder is not entered, and the Android model operation times out after 300 seconds.",
+    "reference_lines": {
+      "generator": "prepare.py:46",
+      "sync": "crates/android_ui/src/android_ui.rs:839",
+      "kotlin_generation": "crates/android_ui/src/android_ui.rs:2053",
+      "deadline": "crates/android_ui/src/android_build.rs:1335",
+      "error_await_reporting": "crates/project/src/lsp_store.rs:11362"
+    },
+    "required_retry_gate": "Separate fresh replay directory/profile; POSIX /bin/sh forwarder execs /usr/bin/python3 capture-gradle.py \"$@\"; retained /bin/sh -n and actual argv-preserving shell forwarding probe must pass before the replay. Preserve all initial failure evidence. No product source or original test changes required."
+  },
+  "actual_initial_results": {
+    "trust_capture_exit_code": 0,
+    "first_loading_capture_exit_code": 1,
+    "first_loading_capture_seconds": 91.28090827898995,
+    "first_loading_capture_stderr": "import: unable to open X server `:120' @ error/import.c/ImportImageCommand/348.",
+    "gradle_start_receipts": 0,
+    "gradle_finish_receipts": 0,
+    "model_sync_timeout_seconds": 300,
+    "shell_parse_exit_code_from_retained_receipt": 2,
+    "post_timeout_display_round_trip_exit_code": 0,
+    "post_timeout_geometry_stdout": "1600 1000\n",
+    "diagnostic_error_screen_personally_viewed": true,
+    "owned_launcher_cleanup_exit_code": 143,
+    "owned_pids_independently_absent": {
+      "342449": true,
+      "342467": true,
+      "342457": true
+    },
+    "owned_display_socket_independently_absent": true
+  },
+  "diagnostic_interpretation": {
+    "permanent_app_deadlock_proved": false,
+    "permanent_Xvfb_failure_proved": false,
+    "X11_handshake_temporarily_stalled": true,
+    "LSP_timeout_separate_from_Android_setup_failure": false,
+    "accidental_ImageMagick_command_basis": "POSIX shell interpretation of the retained wrapper; original successful screenshot uses /usr/bin/import; parent diagnosis reports child ImageMagick. No independent child-exec trace was retained, so the exact X11 grab mechanism is not independently proved.",
+    "trace_limit": "Owned app main futex and Xvfb epoll observations are bounded waiting-state samples; neither supplies lock ownership, stack cycle, or a permanent deadlock proof. The later activated client establishes actual X11 setup, requests, stdout and exit 0."
+  },
+  "full_source_read_only_verification": {
+    "files": 4743,
+    "exact_fixed_seven_pathspec": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ],
+    "all_hashes": true,
+    "actual_name_set": true,
+    "raw_index": true,
+    "full_untracked_status": true,
+    "HEAD": true,
+    "snapshot_path": "/workspace/android-studio-artifacts/import-identity-getters/quality-ownership-cleanup/current-source.json",
+    "snapshot_sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0",
+    "critical_source": {
+      "crates/android_ui/src/android_ui.rs": {
+        "sha256": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8",
+        "matches_frozen_source": true
+      },
+      "crates/android_ui/src/android_build.rs": {
+        "sha256": "b54fc43d2c4875e4052af22bff2bf81029da96900d26564533232ce1f763ef8b",
+        "matches_frozen_source": true
+      },
+      "crates/project/src/lsp_store.rs": {
+        "sha256": "241b03b12b1ab92495d4f1a0d42d425b90aaf7ae80f97a4a9f19824e281a0d3d",
+        "matches_frozen_source": true
+      },
+      ".agents/skills/koda-app-validation/scripts/run-app.sh": {
+        "sha256": "c387792dbf97bd99e3937c26b6289d9a14f27818d832ab38eca50f13f25c4596",
+        "matches_frozen_source": true
+      }
+    }
+  },
+  "trust_db_read_only_rows": [],
+  "baseline_POSIX_wrapper": {
+    "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/gradlew",
+    "bytes": 120,
+    "sha256": "f8ecffa7b8922a7cadb177f7365bc1aa647f048a1c135096b6be8daf7fc49957"
+  },
+  "inputs": {
+    "prepare.py": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/prepare.py",
+      "bytes": 3765,
+      "sha256": "258aa9d80fa53c015e9807cc46e15206e3c2f34c5d7c156d56ed878f27c2c0e0"
+    },
+    "generation-project/gradlew": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/generation-project/gradlew",
+      "bytes": 192,
+      "sha256": "14b29ca7602b01ce10610e44b0005abe188f91a6cee1f5f31459f84e8da82fec"
+    },
+    "capture-gradle.py": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/capture-gradle.py",
+      "bytes": 3125,
+      "sha256": "94b55843afae805ccf5b395e11e0622cad3d89a5274f23a5e7af960411fb87e8"
+    },
+    "preparation-proof.json": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/preparation-proof.json",
+      "bytes": 14025,
+      "sha256": "819a060ae17847520e699837077685cdf8734a2fe61b4701a0a21245024f3d43"
+    },
+    "initial-native-failure-proof.json": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/initial-native-failure-proof.json",
+      "bytes": 3942,
+      "sha256": "2ce0dfa8225bc59280b355cc7b266c4f8f1f230bb00341951b50e3cf5f7609a0",
+      "snapshot": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/quality-initial-native-diagnosis/snapshot-initial-native-failure-proof.json"
+    },
+    "cleanup-receipt.json": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/cleanup-receipt.json",
+      "bytes": 332,
+      "sha256": "4ebe0307d0138270bfa8aefdb3a503b72d5a9dc0a0692f082ec22a4b42759be4",
+      "snapshot": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/quality-initial-native-diagnosis/snapshot-cleanup-receipt.json"
+    },
+    "lease-released.json": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/lease-released.json",
+      "bytes": 452,
+      "sha256": "6eb9b01be2b770824b090d31f1540497bf297053c6ff17baa912cb2a2cd3d9b3",
+      "snapshot": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/quality-initial-native-diagnosis/snapshot-lease-released.json"
+    },
+    "wrong-wrapper-shell-parse.log": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/wrong-wrapper-shell-parse.log",
+      "bytes": 144,
+      "sha256": "6892b5f28c8197a4a567ff3e470fa89a27e06ee05e6ab56fe69ce5e4d7006dec"
+    },
+    "events.jsonl": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/events.jsonl",
+      "bytes": 7936,
+      "sha256": "332f2a5478361e8a462bc33a06c597ea7d29f53fbcae91dfaf1ab8f2d75318a4",
+      "snapshot": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/quality-initial-native-diagnosis/snapshot-events.jsonl"
+    },
+    "launcher-pty.log": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/launcher-pty.log",
+      "bytes": 784,
+      "sha256": "36537a6b5f75d1f56c0c899fa7ac571e0f8f53c84577c8586c43b4a4d4919c07",
+      "snapshot": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/quality-initial-native-diagnosis/snapshot-launcher-pty.log"
+    },
+    "session-binding.json": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/session-binding.json",
+      "bytes": 2074,
+      "sha256": "18e11e6c4f484b00511e7ab08b3e6f823e550563c71504137a2fccf497824751"
+    },
+    "current-app-binding.json": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/current-app-binding.json",
+      "bytes": 863,
+      "sha256": "b099a0016262aa2f3c8007cc07c868eccdb0c762a09934ea31a17cb53a70ccb9"
+    },
+    "display-connection-diagnostic.strace": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/display-connection-diagnostic.strace",
+      "bytes": 2495,
+      "sha256": "ec3394acef9972c9920373494c18222f87d1e728a62ab4c92048ef437606859d"
+    },
+    "display-connection-activated-diagnostic.strace": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/display-connection-activated-diagnostic.strace",
+      "bytes": 2853,
+      "sha256": "57eeb00c3a5e05ebb16df8acf82740259c06482592740d56217ddd4c4041afd0"
+    },
+    "display-auth-write-diagnostic.strace": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/display-auth-write-diagnostic.strace",
+      "bytes": 16191,
+      "sha256": "beda62b39655f7a1c87f8d442acbe7c529e5548bd6fdd8ceea49f84691597af4"
+    },
+    "owned-app-diagnostic.strace": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/owned-app-diagnostic.strace",
+      "bytes": 161937,
+      "sha256": "c999b0da7b1e3065034ce664f36c3985c87526a57743ae7d8b8161dbf354388c"
+    },
+    "owned-Xvfb-diagnostic.strace": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/owned-Xvfb-diagnostic.strace",
+      "bytes": 53,
+      "sha256": "0a2736b696e34ef10ab0d2249f115278ca8bc966066eca8cdd4cdb1c59d0bb52"
+    },
+    "captures/trust-prompt.png": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/captures/trust-prompt.png",
+      "bytes": 86793,
+      "sha256": "64db9c233f11a92e59ebe914374190a4b088bb339b5945177fc9fec2764dbc01"
+    },
+    "captures/diagnostic-after-timeout.png": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/captures/diagnostic-after-timeout.png",
+      "bytes": 119494,
+      "sha256": "03869e3272ed9ab7421771eb2d28a6ef98785fb249e9831d5e533a5554d744f1"
+    }
+  },
+  "credits": {
+    "new_original_reference_tests": 0,
+    "successful_current_native_syncs": 0,
+    "new_native_fidelity_or_performance_PASS": 0,
+    "full_task_completion": false
+  },
+  "prior_review_limit": "The prior static native gate missed N3; preparation-only PASS did not establish invocation compatibility or runtime completion. The retry requires the explicit shell syntax and actual argv forwarding checks.",
+  "mutations": "Only new files in this external diagnosis directory. No source, Git, cache, SDK, app, Xvfb, signal or retry changes.",
+  "read_holds_released": true
+}

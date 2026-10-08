@@ -1,0 +1,23 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_ui/Cargo.toml",
+    "-p",
+    "android_ui",
+    "--lib",
+    "tabbed_toolbar::tests::no_close_button_when_no_listener",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 1.2186127149980166,
+  "raw_log": "/workspace/android-studio-artifacts/import-identity-integration/exact-capture/ui-04.log",
+  "raw_log_sha256": "e9c9cb4249bfe452518bd51b3620ecbc949dc7725c519096f276ba7a30a2686c",
+  "source_files": 4743,
+  "full_raw_index_status_and_all_source_hashes_unchanged": true
+}

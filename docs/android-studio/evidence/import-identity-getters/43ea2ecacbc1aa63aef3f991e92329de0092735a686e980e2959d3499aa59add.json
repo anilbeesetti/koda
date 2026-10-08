@@ -1,0 +1,26 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "normal_fresh_library_receipt": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/library-build-verified.json",
+  "normal_fresh_library_compilerJSON_raw": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/library-build.log",
+  "library_sha256": "9c8c3235cac1fcfc10832e8af791487865164786533fb45afecac2440d0be570",
+  "probe_source_sha256": "330abe4e7efb40e81e496d343d4ea5e2ce84811b4efd6d1a8c77fb56fb79a926",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-C",
+    "debuginfo=0",
+    "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime/runtime-probe.rs",
+    "-L",
+    "dependency=/workspace/.cache/zed/target/debug/deps",
+    "--extern",
+    "android_tools=/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+    "--extern",
+    "serde_json=/workspace/.cache/zed/target/debug/deps/libserde_json-dad50efee64284ac.rlib",
+    "--extern",
+    "anyhow=/workspace/.cache/zed/target/debug/deps/libanyhow-18b69cad26582a56.rlib",
+    "-o",
+    "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime/runtime-probe"
+  ],
+  "supplementary_actual_getter_assertion_runner_only": true,
+  "original_test_credit": 0
+}

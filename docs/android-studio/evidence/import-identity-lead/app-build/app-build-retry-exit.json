@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "tested_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "exit_code": 0,
+  "elapsed_seconds": 726.3144619020022,
+  "log_sha256": "9e439ca61fbe2bfd57e8df5a841b9a3e0b14f42c5f95ee440a6c747eb7e1ce39"
+}

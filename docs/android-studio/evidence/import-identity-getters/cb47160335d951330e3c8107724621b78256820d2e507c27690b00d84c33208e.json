@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "verdict": "FAIL",
+  "review_area": "code",
+  "scope": "static_read_only",
+  "timestamp_utc": "2026-10-08T00:45:55.049109+00:00",
+  "worktree": "/workspace/android-studio-import-identity-getters",
+  "head": "1cd5ff9ad9e6e057d48052e345503eef7c3bd158",
+  "files": {
+    "/workspace/android-studio-import-identity-getters/crates/android_tools/src/import_facts.rs": {
+      "bytes": 23149,
+      "sha256": "c93b67f903202ce51eeac25cd3f838281c2e3b49a68b1b744275b132056c67c8"
+    },
+    "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/import_facts.rs": {
+      "bytes": 24150,
+      "sha256": "fcd373edcf5dc97c8a15a5fd0f234547c8547c9443a6766415e1b5e1bb8c167d"
+    },
+    "/workspace/android-studio-import-identity-getters/crates/android_tools/src/project_model.gradle": {
+      "bytes": 36197,
+      "sha256": "09e59928d1a1c4a8c75089f19c491589f706792ee6358ffd3bfef517cea007d6"
+    },
+    "/workspace/android-studio-import-identity-getters/crates/android_tools/src/android_tools.rs": {
+      "bytes": 33283,
+      "sha256": "3f1c28a5d58541490a34efe8e0756cc1df6dc4069b58b387db0caa5393f7925b"
+    }
+  },
+  "findings": [
+    {
+      "id": "C1",
+      "priority": 1,
+      "file": "/workspace/android-studio-import-identity-getters/crates/android_tools/src/import_facts.rs",
+      "line_start": 73,
+      "line_end": 78,
+      "title": "Restore the deserialize bound suppressed by deserialize_with",
+      "detail": "GetterObservation<T>'s result uses deserialize_with=captured_result, which requires T: Deserialize<'de>. The remote derive has no explicit deserialize bound and its only T-bearing field is excluded from Serde's inferred bounds. Locked serde_derive 1.0.229 de.rs:230-238 explicitly excludes deserialize_with fields; de.rs:665-700 generates a wrapper with those same unbounded generics. The generated wrapper therefore cannot call captured_result for arbitrary T. Adding a bound only on the later manual trait implementation does not constrain that independently generated wrapper. Add the appropriate explicit deserialize bound and validate with the normal leased build; retain all existing tests.",
+      "validation": "Static derivation-source proof only; no compiler executed."
+    },
+    {
+      "id": "C2",
+      "priority": 2,
+      "file": "/workspace/android-studio-import-identity-getters/crates/android_tools/src/import_facts.rs",
+      "line_start": 253,
+      "line_end": 279,
+      "related_lines": [
+        364,
+        367
+      ],
+      "title": "Require available parent holders in the complete project catalogue",
+      "detail": "A successful Project.getAllprojects() catalogue is accepted after removing the :nested holder while retaining :nested:library and its available parentProjectPath=:nested. The collection validation requires the root and compiled Basic modules; validate_project checks only that the parent string matches the lexical prefix, never that it resolves in the catalogue. This accepts an incomplete catalogue as authoritative all-project identity data, defeating P2a's holder preservation contract. Validate each available non-null parent against the completed project index without altering order or collapsing duplicate identities. Add a regression that removes only the :nested fixture entry; existing missing-root/compiled-module tests must remain unchanged.",
+      "validation": "Static path-through-code proof only; malformed input was not executed."
+    }
+  ],
+  "reviewed_paths": [
+    "ObjectOnly covers each remote wire struct; captured_result requires object plus explicit value; present nullable observations remain distinct from absent wire members.",
+    "Getter provenance, unavailable capability/detail, and notApplicable rejection are checked before required identity use.",
+    "Raw public build-tree and reference identity paths remain separate; Idea plugin lookup does not apply the plugin or synthesize imported names.",
+    "Catalogue vector order is retained and duplicate project paths are rejected; the parent-holder completeness gap is finding C2.",
+    "Root, ordered Basic module path/directory/kind/variant identities, model revision, selection revision and selected VariantIds bind snapshots; required getter failures do not modify Basic projection.",
+    "One-record and 16 MiB record limits are explicit; existing Basic/V2 export members remain textually unchanged in the additive Gradle diff.",
+    "Included-build and standalone-test rejection remains before capture; all six retained reference files match the declared bytes and SHA-256 hashes.",
+    "Supplementary tests and fixtures claim zero original naming/facet/Kotlin/tree parity credit."
+  ],
+  "reference_hash_verification": [
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/gradle/subprojects/core-api/src/main/java/org/gradle/api/Project.java",
+      "sha256": "f259911bfff32f46c24d9bd1f6f3a577a92c599b9cd995a6e3f852367dd14346",
+      "bytes": 80144,
+      "verified": true
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/gradle/platforms/ide/tooling-api/src/main/java/org/gradle/tooling/model/gradle/BasicGradleProject.java",
+      "sha256": "b7dadfd9fa270fddd4b5d3c85d4ccab634ebddf99d0a3ec52a0b536c0bfadf18",
+      "bytes": 2676,
+      "verified": true
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleProjectUtil.java",
+      "sha256": "49312efd6eb1e7c71230d4e4e6b76a0cf48988846c506724864d8266b629b616",
+      "bytes": 1604,
+      "verified": true
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/model/projectModel/GradleExternalProjectModelBuilder.java",
+      "sha256": "b1255e9ced2ef115f3ce453d1b34d80429a1c63a76daa79575c448ceb4fb0b38",
+      "bytes": 3291,
+      "verified": true
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "sha256": "cc99f71aa146656368b5c62fc88746747ae19d3ecd5b87fea63ef17a6214c6eb",
+      "bytes": 61012,
+      "verified": true
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleIdeaPluginUtil.java",
+      "sha256": "9f47198c20cc8e8b124c45c18fe9c9094f14079c05e17724aca920ec017d879a",
+      "bytes": 3533,
+      "verified": true
+    }
+  ],
+  "supplementary_test_functions": 27,
+  "runtime_executions": 0,
+  "source_mutations": 0,
+  "cache_mutations": 0,
+  "original_test_credit": 0,
+  "report": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/code-static.md",
+    "sha256": "afa04a4db7bfac7ce54a2791688d29af630f135f88689f9ad156decb748d3b88"
+  },
+  "limitations": [
+    "No Cargo/rustc/clippy/formatting execution",
+    "No Gradle/JVM/SDK execution",
+    "No full app/native validation",
+    "Final owner and Root gates remain required"
+  ]
+}

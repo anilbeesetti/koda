@@ -1,0 +1,10 @@
+{
+  "command": [
+    "python3",
+    "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integrate-owner-package.py",
+    "verify-plan"
+  ],
+  "exit_code": 0,
+  "stdout_sha256": "657c02401069b7e0c34ce44cc6aa4a538fca54dcaadb4761c7162ac823cd6551",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

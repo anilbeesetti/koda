@@ -1,0 +1,18 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "stage": "format-check",
+  "lease_granted": "Root exact18 recovery release, currentLIB/all291/strictrepoClippyPASS",
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 28.925373188998492,
+  "log": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/format-check.log",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "whole_source_bindings": 4743,
+  "source_index_status_unchanged": true
+}

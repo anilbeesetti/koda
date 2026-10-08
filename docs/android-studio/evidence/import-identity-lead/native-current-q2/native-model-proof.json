@@ -1,0 +1,93 @@
+{
+  "verdict": "PASS",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "current_complete_models": 2,
+  "current_Rust_decoder_records": [
+    {
+      "command": [
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/runtime-probe",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/native-model-record1.log"
+      ],
+      "binding_environment": {
+        "KODA_IMPORT_MODEL_REVISION": "1",
+        "KODA_IMPORT_SELECTION_REVISION": "1",
+        "KODA_IMPORT_SELECTED_MODULE": ":app",
+        "KODA_IMPORT_SELECTED_VARIANT": "demoDebug"
+      },
+      "exit_code": 0,
+      "elapsed_seconds": 0.0068792840029345825,
+      "input_record_sha256": "38d1355c7dd5687206b804423c40db7f4af9fb5c530a710709df0510a15a4278",
+      "stdout_sha256": "5a1ccf059fdf0b2b7c6c74e569fba0d716910372e0082d8fae338baa5388b59f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "complete_raw_V2_and_import_getters_equal_current_Rust_roundtrip_with_key_and_list_order": true
+    },
+    {
+      "command": [
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/runtime-probe",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/native-model-record2.log"
+      ],
+      "binding_environment": {
+        "KODA_IMPORT_MODEL_REVISION": "2",
+        "KODA_IMPORT_SELECTION_REVISION": "2",
+        "KODA_IMPORT_SELECTED_MODULE": ":app",
+        "KODA_IMPORT_SELECTED_VARIANT": "demoDebug"
+      },
+      "exit_code": 0,
+      "elapsed_seconds": 0.00609372099279426,
+      "input_record_sha256": "38d1355c7dd5687206b804423c40db7f4af9fb5c530a710709df0510a15a4278",
+      "stdout_sha256": "f39f956a8eac5cf888396f12b526db318372062e42a3e5981ce58d1416c08e4e",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "complete_raw_V2_and_import_getters_equal_current_Rust_roundtrip_with_key_and_list_order": true
+    }
+  ],
+  "previous_successful_4fb_full_models": [
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/native-model-complete1.json",
+      "sha256": "7302a1f63349dadc210998fafe90498b6036c0bc96bc605d9ec3de6255f30f21",
+      "complete_4fb_full_model_equal_after_only_importFacts_removal_and_private_root_prefix_normalization": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/native-model-complete2.json",
+      "sha256": "7302a1f63349dadc210998fafe90498b6036c0bc96bc605d9ec3de6255f30f21",
+      "complete_4fb_full_model_equal_after_only_importFacts_removal_and_private_root_prefix_normalization": true
+    }
+  ],
+  "previous_legacy_records": 7,
+  "previous_legacy": [
+    {
+      "path": "/workspace/android-studio-artifacts/tree-native-0e15a3d/native-sync-stdout.log",
+      "sha256": "f4e0d4313886b5ea60830e1630a75dcb6e0c2202960426373dd1ac037a8a6961",
+      "records": 2,
+      "complete_Basic_projection_equal_with_key_and_list_order": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/junit4-native-9315534/native-sync-stdout.log",
+      "sha256": "8d0ce3ce049c2d4c58a726d94a17a3eb03267786c47ba2938039e7592126f3a2",
+      "records": 2,
+      "complete_Basic_projection_equal_with_key_and_list_order": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/native-sync-restored-stdout.log",
+      "sha256": "bde003c4325f1011cdf30487eaf065d92ae97f2d38c81b795f8208334cec3e73",
+      "records": 3,
+      "complete_Basic_projection_equal_with_key_and_list_order": true
+    }
+  ],
+  "4fb_projection_removed_only": [
+    "importFacts"
+  ],
+  "Basic_projection_removed_only": [
+    "generatedArtifacts",
+    "importFacts"
+  ],
+  "complete_raw_models_and_all_sidecars_retained": true,
+  "all_other_nested_values_list_order_and_property_order_compared": true,
+  "only_normalization": "Known exact private-root prefix at a whole string or slash boundary; no substring replacement elsewhere",
+  "model_and_selection_revisions_bound_and_stale_revisions_rejected": true,
+  "source_guard_files_before_after": 4743,
+  "supplementary_SDK_not_pinned_reference_driver": true,
+  "reference_parity_credit": 0,
+  "IntelliJ_naming_or_facet_policy_credit": 0
+}

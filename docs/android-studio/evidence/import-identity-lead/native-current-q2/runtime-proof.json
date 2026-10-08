@@ -1,0 +1,485 @@
+{
+  "verdict": "PASS",
+  "scope": "Current full app positive SDK sync, editor/tool-window keyboard regression, Basic/V2/raw import getter Rust decoding",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "whole_source_files": 4743,
+  "actual_normal_full_app": {
+    "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+    "pid": 345903,
+    "window_id": 2097153,
+    "display": ":122",
+    "app": {
+      "pid": 345903,
+      "parent_pid": 345885,
+      "start_ticks": 6840390,
+      "exe": "/tmp/android-studio-link-output/koda-import-identity-339403",
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "command": "/workspace/android-studio-import-identity-getters/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/qa/user-data /workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project /workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project/app/custom-manifest/AndroidManifest.xml "
+    },
+    "launcher": {
+      "pid": 345885,
+      "parent_pid": 345846,
+      "start_ticks": 6840375,
+      "exe": "/usr/bin/bash",
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "command": "bash .agents/skills/koda-app-validation/scripts/run-app.sh --headless /workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project /workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project/app/custom-manifest/AndroidManifest.xml "
+    },
+    "xvfb": {
+      "pid": 345893,
+      "parent_pid": 345885,
+      "start_ticks": 6840379,
+      "exe": "/workspace/cloud-environment/native/usr/bin/Xvfb",
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "command": "/workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :122 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset "
+    },
+    "executable": "/tmp/android-studio-link-output/koda-import-identity-339403",
+    "executable_sha256": "09d15d2ce3bdb708692254a8365bf94dedaa33a892af2b2a8156a8b75ced60b0",
+    "window_pid_command": [
+      "/workspace/cloud-environment/native/usr/bin/xdotool",
+      "getwindowpid",
+      "2097153"
+    ],
+    "window_pid_stdout": "345903\n",
+    "window_pid_stderr": "",
+    "utc": "2026-10-08T03:56:29.853783+00:00",
+    "monotonic": 68429.923425405
+  },
+  "fresh_profile_fixture_only_trust": true,
+  "sdk_syncs_exit_zero": 2,
+  "actual_sdk_driver": "Official AGP9.4.0, Gradle9.6.1, SDK37, explicit TemurinJDK21; supplementary, not pinned reference driver",
+  "durable_commands_started_and_finished": 53,
+  "all_commands_paired_and_exit_zero": true,
+  "events_sha256": "907fe305f9401f987d73d3e0084ad7a086715e10794ce64c50eeb1ee07f2091b",
+  "raw_attached_PTY_sha256": "48f1edbe1f42a7956fefa1028b751e2d7ff67d89c7dcf314df9f5e38cd5f19bb",
+  "captures": [
+    {
+      "path": "captures/build-sidebar-restored.png",
+      "sha256": "08411a17202ed76f5e746f11753c1026075695453caf08643cc1a51990e0b89c",
+      "inspected": true,
+      "observation": "Build sidebar icon restores successful Sync panel.",
+      "bytes": 117805
+    },
+    {
+      "path": "captures/editor-gradle-tab.png",
+      "sha256": "a9b1232a52b574d66f779af35ef2893d7a2decf46411f1f4391efcf6961c74c5",
+      "inspected": true,
+      "observation": "Double-click app/build.gradle opens an active Gradle tab and source content; existing missing indent-capture diagnostic emitted once.",
+      "bytes": 215484
+    },
+    {
+      "path": "captures/editor-xml-restored.png",
+      "sha256": "995933d3ffc8eb33552582f3e64f579e25ad241261a5623f274b0bd13e19daa8",
+      "inspected": true,
+      "observation": "Original planned x316 click leaves Gradle active; original mislabeled capture retained. Actual XML restore is established by separately planned three-command correction and supplemental image, not by this image.",
+      "bytes": 215465
+    },
+    {
+      "path": "captures/hide-return.png",
+      "sha256": "ff9650e46dff45b3e4106c9050b31cf4c181432f1e5acdf590d8db05fbefcb20",
+      "inspected": true,
+      "observation": "Return hides the Build tool window and expands editor area.",
+      "bytes": 70566
+    },
+    {
+      "path": "captures/narrow-output-focus.png",
+      "sha256": "8143f32c9b406861e9edc196d0aaaa782f6c0487de6c94c0a712f6456dc45c54",
+      "inspected": true,
+      "observation": "At360px Tab visibly focuses Build Output while Sync remains selected.",
+      "bytes": 46194
+    },
+    {
+      "path": "captures/narrow-output-selected.png",
+      "sha256": "68907071d304a7e294d4ffd1b6992767cbf20d8c4bf8f677e19c1b928d50a374",
+      "inspected": true,
+      "observation": "At360px Space selects Build Output and Nothing to show is visible.",
+      "bytes": 40464
+    },
+    {
+      "path": "captures/narrow-reverse-sync-focus.png",
+      "sha256": "2aa735ab37fd985cf38562ea522749b1e49ae9ce2837003cd664dccbd22cee6b",
+      "inspected": true,
+      "observation": "At360px Shift+Tab visibly focuses Sync while Build Output remains selected.",
+      "bytes": 40461
+    },
+    {
+      "path": "captures/narrow-sync-restored.png",
+      "sha256": "900abe5918340d67b0cf1fbd6434cab617ef42483b39a3f2d3fb61cc44717ea8",
+      "inspected": true,
+      "observation": "At360px Space restores selected Sync and success output.",
+      "bytes": 46195
+    },
+    {
+      "path": "captures/narrow-sync.png",
+      "sha256": "96ec452ac60c9a25c4b0711ccbcefdf6d9c71c121fe553b3b490d1b0813a8108",
+      "inspected": true,
+      "observation": "Actual360px window retains Build header, Sync/Output/Hide controls; project tree fills most editor width and Sync content is clipped. No full Android Studio fidelity or usable narrow editor claim.",
+      "bytes": 46090
+    },
+    {
+      "path": "captures/sync1-loading.png",
+      "sha256": "72b960b1beac41af2cce1f5519042e4c224174e0182b70462d76f78dcce483a5",
+      "inspected": true,
+      "observation": "Build Sync spinner and load-project-model running row; editor remains visible.",
+      "bytes": 80235
+    },
+    {
+      "path": "captures/sync1-settled.png",
+      "sha256": "60e7a92e2dc3a3314609de5122f3e94c997aa7aabf68b4545bbd6aa3e20d4fb8",
+      "inspected": true,
+      "observation": "First Sync successful, demoDebug selected, two variants discovered; raw model wire remains visible pending console-filter task.",
+      "bytes": 117069
+    },
+    {
+      "path": "captures/sync2-loading.png",
+      "sha256": "42e7b7f3c1310a7e8d5888263e3a81fc6f2aba2b41506a76b80c305b9293cf84",
+      "inspected": true,
+      "observation": "Keyboard Ctrl+Alt+R starts second Sync and loading row/spinner is visibly active.",
+      "loading_state_observed": true,
+      "bytes": 85182
+    },
+    {
+      "path": "captures/sync2-settled.png",
+      "sha256": "4ff3d0d3153abec7b88cd7aa5ccdd5b5ef70cc67d3d2d647ac562b628d1e0222",
+      "inspected": true,
+      "observation": "Second Sync successful with demoDebug selection and complete output; no failed state.",
+      "bytes": 117930
+    },
+    {
+      "path": "captures/trust-prompt.png",
+      "sha256": "014f50610189951c58d0f220559e20f26f39b7f7da94d4ad7a17ecfe479c5c01",
+      "inspected": true,
+      "observation": "Fresh profile shows restricted-mode prompt for this exact private fixture; trust-all checkbox unchecked.",
+      "bytes": 87259
+    },
+    {
+      "path": "captures/wide-hide-focus.png",
+      "sha256": "3961b6253a9f331278d235308a800633f7645292ae9e36fd9c788cb61f1b3ab9",
+      "inspected": true,
+      "observation": "After1536px restore, two Tabs focus Hide tool window at far right of Build header.",
+      "bytes": 117811
+    },
+    {
+      "path": "captures/wide-output-focus.png",
+      "sha256": "d140761209c191564668e65b575da913331dfb1a521fee609f1581ec6f421c91",
+      "inspected": true,
+      "observation": "Tab focuses Build Output with visible focus highlight while Sync remains selected.",
+      "bytes": 117622
+    },
+    {
+      "path": "captures/wide-output-selected.png",
+      "sha256": "06c6f35401ff8370c9693a576ebebf931767d5a3606920d1c4fa59902a89857e",
+      "inspected": true,
+      "observation": "Space activates Build Output and centered Nothing to show empty state.",
+      "bytes": 73685
+    }
+  ],
+  "keyboard_routes": {
+    "wide-tab-to-output": {
+      "kind": "command-finish",
+      "label": "wide-tab-to-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "Tab"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:57:32.340637+00:00",
+      "monotonic": 68492.410283889,
+      "elapsed_seconds": 0.015109835992916487,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "wide-space-select-output": {
+      "kind": "command-finish",
+      "label": "wide-space-select-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "space"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:57:33.729756+00:00",
+      "monotonic": 68493.799401131,
+      "elapsed_seconds": 0.014918357992428355,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "narrow-tab-to-output": {
+      "kind": "command-finish",
+      "label": "narrow-tab-to-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "Tab"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:57:46.845339+00:00",
+      "monotonic": 68506.914987105,
+      "elapsed_seconds": 0.018156605001422577,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "narrow-space-select-output": {
+      "kind": "command-finish",
+      "label": "narrow-space-select-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "space"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:57:48.131528+00:00",
+      "monotonic": 68508.201167264,
+      "elapsed_seconds": 0.014437079997151159,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "narrow-shift-tab-to-sync": {
+      "kind": "command-finish",
+      "label": "narrow-shift-tab-to-sync",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "shift+Tab"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:57:49.483431+00:00",
+      "monotonic": 68509.553074285,
+      "elapsed_seconds": 0.02784931199857965,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "narrow-space-restore-sync": {
+      "kind": "command-finish",
+      "label": "narrow-space-restore-sync",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "space"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:57:50.750427+00:00",
+      "monotonic": 68510.820067626,
+      "elapsed_seconds": 0.015130236002733,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "hide-return": {
+      "kind": "command-finish",
+      "label": "hide-return",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "Return"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:58:08.081670+00:00",
+      "monotonic": 68528.151314516,
+      "elapsed_seconds": 0.01533690698852297,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "restore-build-sidebar-pointer": {
+      "kind": "command-finish",
+      "label": "restore-build-sidebar-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "18",
+        "930",
+        "click",
+        "1"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:58:09.545207+00:00",
+      "monotonic": 68529.614855412,
+      "elapsed_seconds": 0.10381410499394406,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "open-gradle-tab-pointer": {
+      "kind": "command-finish",
+      "label": "open-gradle-tab-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "114",
+        "293",
+        "click",
+        "--repeat",
+        "2",
+        "--delay",
+        "100",
+        "1"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:58:11.078339+00:00",
+      "monotonic": 68531.147987248,
+      "elapsed_seconds": 0.21218862000387162,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "restore-xml-tab-pointer": {
+      "kind": "command-finish",
+      "label": "restore-xml-tab-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "316",
+        "58",
+        "click",
+        "1"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:58:12.878851+00:00",
+      "monotonic": 68532.948499044,
+      "elapsed_seconds": 0.10294766999140847,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "resync-ctrl-alt-r": {
+      "kind": "command-finish",
+      "label": "resync-ctrl-alt-r",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "ctrl+alt+r"
+      ],
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "display": ":122",
+      "window_id": 2097153,
+      "app_pid": 345903,
+      "utc": "2026-10-08T03:57:16.134874+00:00",
+      "monotonic": 68476.204517828,
+      "elapsed_seconds": 0.039673384992056526,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "full_model_decoder_and_comparison_proof": "native-model-proof.json",
+  "complete_model_comparison": "Two current complete raw models retained; remove only importFacts for the two old 4fb full models, and generatedArtifacts plus importFacts for seven Basic models; all remaining values and key/list order retained",
+  "current_error_state": "Positive native run only; no current error-state screenshot credit",
+  "import_owner_SDK_getter_edge_case_executions_not_duplicated_here": true,
+  "supported_minimum_width": 360,
+  "historical_230px_stress_not_executed_or_credited": true,
+  "known_existing_diagnostics": [
+    {
+      "message": "Found no xinput mouse pointers.",
+      "count": 1,
+      "scope": "Software-X11 startup diagnostic; pointer/keyboard commands functioned."
+    },
+    {
+      "message": "missing required capture(s) in Gradle indents TreeSitter query: indent",
+      "count": 1,
+      "scope": "Existing Gradle language query; affected source file is unchanged in this import bridge task. No indentation completion claim."
+    }
+  ],
+  "no_crash_in_observed_run": true,
+  "performance_scope": "Functional software-X11/Vulkan verification; no CPU/startup/large-project/hardware-GPU measurement",
+  "closure": {
+    "verdict": "PASS",
+    "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+    "utc": "2026-10-08T04:00:29.169782+00:00",
+    "source_before_after_files": 4743,
+    "source_index_worktree_untracked_and_hashes_unchanged": true,
+    "original_and_private_fixture_files_verified": 12,
+    "all_fixture_bytes_and_official_wrapper_unchanged": true,
+    "fixture_only_sdk_properties_unchanged": true,
+    "owned_pids_absent": [
+      345885,
+      345903,
+      345893
+    ],
+    "owned_display_absent": ":122",
+    "official_launcher_exit_code": 143,
+    "unowned_gradle167092_not_signaled": true,
+    "trusted_worktrees_rows": [
+      [
+        1,
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project",
+        null,
+        null
+      ]
+    ],
+    "current_app_sha256": "09d15d2ce3bdb708692254a8365bf94dedaa33a892af2b2a8156a8b75ced60b0",
+    "current_runtime_decoder_library_sha256": "9c8c3235cac1fcfc10832e8af791487865164786533fb45afecac2440d0be570"
+  },
+  "new_original_reference_credit": 0,
+  "IntelliJ_naming_or_Kotlin_facet_or_logical_project_tree_or_Rust_LSP_credit": 0,
+  "parallel_scheduler_or_execution_credit": 0,
+  "phase_or_IDE_complete": false
+}

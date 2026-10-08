@@ -1,0 +1,57 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_files_unchanged": 4743,
+  "removed_aliases_only": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+      "type": "symlink",
+      "target": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+      "resolved_frozen_app": "/tmp/android-studio-link-output/koda-parallel-sync-310075"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/koda",
+      "type": "symlink",
+      "target": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+      "resolved_frozen_app": "/tmp/android-studio-link-output/koda-parallel-sync-310075"
+    }
+  ],
+  "older_full_app_preserved": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+  "older_full_app_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+  "no_accessible_process_executable_is_older_app": true,
+  "accessible_matching_FDs_cwd_executables": [],
+  "active_compilers": [],
+  "UID0_inspection_limits": [
+    {
+      "pid": 198,
+      "uid": "0",
+      "operation": "exe"
+    },
+    {
+      "pid": 198,
+      "uid": "0",
+      "operation": "cwd"
+    },
+    {
+      "pid": 198,
+      "uid": "0",
+      "operation": "fd"
+    },
+    {
+      "pid": 249,
+      "uid": "0",
+      "operation": "exe"
+    },
+    {
+      "pid": 249,
+      "uid": "0",
+      "operation": "cwd"
+    },
+    {
+      "pid": 249,
+      "uid": "0",
+      "operation": "fd"
+    }
+  ],
+  "whole_system_FD_absence_claim": false,
+  "no_source_fixtures_sdk_logs_or_physical_app_removed": true
+}

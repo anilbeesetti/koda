@@ -1,0 +1,32 @@
+{
+  "scope": "Only external validationguards/evidence protections; no productionchange or runtime execution",
+  "files": [
+    {
+      "path": "guarded-app-build.py",
+      "sha256": "9d27d340e721a3e14e2876ceaa53292155bd219a5827c1432dee67c9449c015a",
+      "AST_parse_pass": true,
+      "executed": false
+    },
+    {
+      "path": "retry-app-build.py",
+      "sha256": "1f2afd7b02f1bf7700572ddd75c5b6e9f00a0fb94ca5191f0f46d778407e7282",
+      "AST_parse_pass": true,
+      "executed": false
+    },
+    {
+      "path": "prepare-aliases.py",
+      "sha256": "606a79aea463dad789b9ccf700997f3716bf829911f4b56fb78a022c2f608065",
+      "AST_parse_pass": true,
+      "executed": false
+    }
+  ],
+  "normal_locked_app_command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ]
+}
