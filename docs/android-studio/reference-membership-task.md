@@ -50,13 +50,13 @@ reference manifest, product crates, and existing census contracts are unchanged.
 
 ## Task and acceptance criteria
 
-| Task | Files | Dependencies | Acceptance and reference evidence |
-| --- | --- | --- | --- |
-| Verify complete input boundaries | `reference_membership/selection.json`, `provenance.json`, complete `sources/` | Previously verified retained archive-member identities | Reject changed pins, paths, hashes, lengths, duplicates, symlinks, unsafe paths, and budgets; preserve all original bytes and attribution |
-| Record literal BUILD inputs | `android_reference_membership.rs` | Complete AOSP BUILD files and macro | Preserve literal values, order, aliases, exact spans, and explicit incomplete evidence for unsupported syntax |
-| Link producer and runner evidence | Same Rust module | Complete `bazel.bzl`, `JarTestSuiteRunner`, `TestGroup`, `DelegatingRunnerBuilder`, `IdeaTestSuiteBase`, suite and representative test sources | Keep separate module labels, split/manual/shard facts and source runner witnesses; no compiled membership or runtime inference |
-| Expose deterministic CLI | `main.rs`, `tasks.rs`, task documentation | Input and evidence implementation | Create/check external bounded evidence; refuse replacement; add complete-original and meaningful synthetic boundary/discovery regressions |
-| Validate and integrate | External validation receipts | Lead runtime lease; normal protected dependency merge if integration advances | All five scoped area reviews, normal locked xtask tests and CLI, repository Clippy and formatting, lead full app/current full workspace CI and main/protected guards |
+| Task                              | Files                                                                         | Dependencies                                                                                                                                   | Acceptance and reference evidence                                                                                                                                    |
+| --------------------------------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Verify complete input boundaries  | `reference_membership/selection.json`, `provenance.json`, complete `sources/` | Previously verified retained archive-member identities                                                                                         | Reject changed pins, paths, hashes, lengths, duplicates, symlinks, unsafe paths, and budgets; preserve all original bytes and attribution                            |
+| Record literal BUILD inputs       | `android_reference_membership.rs`                                             | Complete AOSP BUILD files and macro                                                                                                            | Preserve literal values, order, aliases, exact spans, and explicit incomplete evidence for unsupported syntax                                                        |
+| Link producer and runner evidence | Same Rust module                                                              | Complete `bazel.bzl`, `JarTestSuiteRunner`, `TestGroup`, `DelegatingRunnerBuilder`, `IdeaTestSuiteBase`, suite and representative test sources | Keep separate module labels, split/manual/shard facts and source runner witnesses; no compiled membership or runtime inference                                       |
+| Expose deterministic CLI          | `main.rs`, `tasks.rs`, task documentation                                     | Input and evidence implementation                                                                                                              | Create/check external bounded evidence; refuse replacement; add complete-original and meaningful synthetic boundary/discovery regressions                            |
+| Validate and integrate            | External validation receipts                                                  | Lead runtime lease; normal protected dependency merge if integration advances                                                                  | All five scoped area reviews, normal locked xtask tests and CLI, repository Clippy and formatting, lead full app/current full workspace CI and main/protected guards |
 
 The discovery fixture matrix covers all 16 files listed in `selection.json`.
 Every original behavior test in those files remains **unported** by this task.
@@ -82,3 +82,27 @@ performance.
 See [reference census limits](reference-census.md) and
 [JUnit4 declaration evidence](junit4-declaration-task.md) for the independent
 existing contracts and the remaining exhaustive census work.
+
+## Checked owner component
+
+On source `5fbebd9df3a60b6c29e09f7236c1b916fe4c4418`, all five scoped owner
+review areas passed after two semantic fix rounds. The earlier failed code
+reviews, exact pre-fix source, all original fixtures and all earlier test bodies
+remain preserved. The normal locked xtask suite passed 136 tests, including all
+22 membership regressions, with no failed, ignored or filtered tests. Normal
+current-worktree CLI compilation was fresh. Strict scoped repository Clippy and
+workspace Rust formatting passed; optional cargo-shear was unavailable.
+
+Ten actual CLI cases passed their expected results. Create and check emitted
+byte-identical 53,129-byte evidence. Existing-output and mismatched-check cases
+preserved their files; pin, path, byte-count, duplicate, input-budget and changed
+complete-source negatives rejected their inputs without producing output.
+Every gate retained all 4,750 scoped source files and the full index/status.
+
+[Portable evidence](evidence/reference-runner-membership/artifact-manifest.json)
+contains complete UTF-8 payloads with original hashes and lengths, deduplicating
+only byte-identical files. The frozen compiler-generated executable stays
+external; its receipt records its exact hash and size. Full workspace CI,
+current protected dependency integration and lead app/integration gates remain
+pending. These component checks give zero original behavior, runtime membership
+or Android Studio UI fidelity credit.

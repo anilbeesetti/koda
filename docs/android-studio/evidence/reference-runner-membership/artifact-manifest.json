@@ -1,0 +1,937 @@
+{
+  "schema_version": 1,
+  "source_commit": "5fbebd9df3a60b6c29e09f7236c1b916fe4c4418",
+  "source_file_count": 4750,
+  "source_pathspecs_unchanged": true,
+  "destination": "docs/android-studio/evidence/reference-runner-membership",
+  "whole_original_payloads_byte_preserved": true,
+  "logical_entries": [
+    {
+      "logical_path": "reviews/code-static-round1-supplement.json",
+      "original_bytes": 5598,
+      "original_sha256": "3b6f5c8a8d911512fa399e52f02ae4e80e935d32545b747504e78e16b387f5c1",
+      "physical_payload": "payload-0001.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/code-static-round1-supplement.md",
+      "original_bytes": 2258,
+      "original_sha256": "69443123a0b8b1137fc99e3c7f01349623a1c028917a62fda39537c4e170dc0a",
+      "physical_payload": "payload-0002.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/code-static-round1.json",
+      "original_bytes": 10349,
+      "original_sha256": "7d6109b9b4d235cbfcdeaad7e019ad0e2d10af834a4043784e959ce78807e0ef",
+      "physical_payload": "payload-0003.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/code-static-round1.md",
+      "original_bytes": 1709,
+      "original_sha256": "4df8f5e38f2daf13965cbbaa5568350b862e834d087e57bc63a15a54ada4d87b",
+      "physical_payload": "payload-0004.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/code-static-round2.json",
+      "original_bytes": 10182,
+      "original_sha256": "d710ae8ba353c0826f8eae2ceabb898ee2ba07e4c1f7c116eb7a7484d85a7349",
+      "physical_payload": "payload-0005.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/code-static-round2.md",
+      "original_bytes": 2135,
+      "original_sha256": "aaf9e7b6310e8eb8ea6df3861d0ca31d2c6711bb010d170a07157e90d9bfaaa7",
+      "physical_payload": "payload-0006.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/code-static.json",
+      "original_bytes": 10231,
+      "original_sha256": "a51639df4ce009723b331a582cd18b59d5a216ea78d2b808b5e448f08279fa4c",
+      "physical_payload": "payload-0007.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/code-static.md",
+      "original_bytes": 2333,
+      "original_sha256": "8d4bfb23ebe631cdbcdb46109addc27cc87927e0b3ccc14299672eaf71cf459e",
+      "physical_payload": "payload-0008.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/performance-current-runtime.json",
+      "original_bytes": 21996,
+      "original_sha256": "7488245323ae942e37a40099df5320112af77777a66dead804a23c864dd64c7d",
+      "physical_payload": "payload-0009.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/performance-current-runtime.md",
+      "original_bytes": 3128,
+      "original_sha256": "70c6b68f0c41d3729779e199dc25de8b1077ee1a255bd94976c46bbae90ae423",
+      "physical_payload": "payload-0010.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/quality-final-current-runtime.json",
+      "original_bytes": 34785,
+      "original_sha256": "dff69c04b440420641aad299ad02e53502d38b72be1f300e7176d4f13f2c38c9",
+      "physical_payload": "payload-0011.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/quality-final-current-runtime.md",
+      "original_bytes": 2694,
+      "original_sha256": "89d68743c2edf1ee6fd53b7c6c8562998202c69cd9970bb1a94d2cdf82ae733b",
+      "physical_payload": "payload-0012.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/quality-static.json",
+      "original_bytes": 18387,
+      "original_sha256": "94383a68289d57c00cafc00bfe7f97e5e7b6aac04089ae3ab15701b1eef4fd7b",
+      "physical_payload": "payload-0013.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/quality-static.md",
+      "original_bytes": 2787,
+      "original_sha256": "eb808d4473713cc85d65ea0c9fc183388f05d3e1a8f64dd251b4a1fe3dc62b55",
+      "physical_payload": "payload-0014.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/ui-final-current-runtime.json",
+      "original_bytes": 29188,
+      "original_sha256": "48b438d2a6c66a59ad6b2204c1ef42bdc33482511f63d83e3e0d6b7a17c3033b",
+      "physical_payload": "payload-0015.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/ui-final-current-runtime.md",
+      "original_bytes": 2664,
+      "original_sha256": "61b28e90f0f77a3d34ac74c2a7d7bac41b84c4bdffac1767d56b58da9dccde56",
+      "physical_payload": "payload-0016.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/ui-static.json",
+      "original_bytes": 14871,
+      "original_sha256": "b61515c0b2f8dd515b1297ff33a09cceb150f8d995781951dae3e87034259464",
+      "physical_payload": "payload-0017.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/ui-static.md",
+      "original_bytes": 2936,
+      "original_sha256": "d704021497674f910fb05f23b658cc5cbf368d58c72c1804dbfb254a66d64cb2",
+      "physical_payload": "payload-0018.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/ux-final-current-runtime.json",
+      "original_bytes": 27201,
+      "original_sha256": "d9e1ac0dd1b3653cfbe4ceb7280e5c31786eae66459ca677975414983223ce9f",
+      "physical_payload": "payload-0019.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/ux-final-current-runtime.md",
+      "original_bytes": 2941,
+      "original_sha256": "3df1bcde342643924f189f2892a95a4d5721b1e833fed4198c4db36f94b86b00",
+      "physical_payload": "payload-0020.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/ux-static.json",
+      "original_bytes": 14290,
+      "original_sha256": "558b95111d3a826fa5567abb49e42c36609d98f96cd9b153eb31b8bd37ec9a83",
+      "physical_payload": "payload-0021.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/ux-static.md",
+      "original_bytes": 2185,
+      "original_sha256": "8a0c59afae82f048eccc3faae4eb7b37ea8457edbb0f2b74c6480d71d17bbd3f",
+      "physical_payload": "payload-0022.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/actual-cli-summary.json",
+      "original_bytes": 2698,
+      "original_sha256": "3b78619328dffa8eb574173a0cbd19584cb07eca686ac12cb94a3d26493dd38a",
+      "physical_payload": "payload-0023.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/actual-membership.json",
+      "original_bytes": 53129,
+      "original_sha256": "1e55ecb3bbe9273483795d66a349a97043bb870e6cdcf191adc113b09bba7596",
+      "physical_payload": "payload-0024.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-bytes-rejected-runner.log",
+      "original_bytes": 1430,
+      "original_sha256": "b903c5cc2dec20fa5b49c0d8d1a3a4875ea5ff625837e8e2b34678961512da38",
+      "physical_payload": "payload-0025.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-bytes-rejected-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-bytes-rejected.json",
+      "original_bytes": 1430,
+      "original_sha256": "b903c5cc2dec20fa5b49c0d8d1a3a4875ea5ff625837e8e2b34678961512da38",
+      "physical_payload": "payload-0025.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-bytes-rejected.log",
+      "original_bytes": 80,
+      "original_sha256": "912da7da3e7ff068dc7aa4f61929b7d3dc937780855fa0d222f32c618313fe48",
+      "physical_payload": "payload-0027.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-changed-original-rejected-runner.log",
+      "original_bytes": 1473,
+      "original_sha256": "f08e4d45033364d32977023fbe22f50fc83188c6b5cecb435f8d2acde9df4f7c",
+      "physical_payload": "payload-0028.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-changed-original-rejected-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-changed-original-rejected.json",
+      "original_bytes": 1473,
+      "original_sha256": "f08e4d45033364d32977023fbe22f50fc83188c6b5cecb435f8d2acde9df4f7c",
+      "physical_payload": "payload-0028.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-changed-original-rejected.log",
+      "original_bytes": 52,
+      "original_sha256": "8312c34952a45469a53b13a757bd59f65b6672f8bfef21feb162c2046f9d210a",
+      "physical_payload": "payload-0029.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-check-mismatch-rejected-runner.log",
+      "original_bytes": 1485,
+      "original_sha256": "fdf8e1d6ac275ca36e52965833613fdab65d54e02d38186d0ad6eb4c0720051b",
+      "physical_payload": "payload-0030.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-check-mismatch-rejected-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-check-mismatch-rejected.json",
+      "original_bytes": 1485,
+      "original_sha256": "fdf8e1d6ac275ca36e52965833613fdab65d54e02d38186d0ad6eb4c0720051b",
+      "physical_payload": "payload-0030.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-check-mismatch-rejected.log",
+      "original_bytes": 58,
+      "original_sha256": "9cd662be17e99075c85a0ce18d68b0763f11de2b5b3b567c9c2899071827ef95",
+      "physical_payload": "payload-0031.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-check-runner.log",
+      "original_bytes": 1429,
+      "original_sha256": "074f4f7f83ff2b3959cf0f192da43c1d21405a04cc9dc81c1cf3e81b35428341",
+      "physical_payload": "payload-0032.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-check-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-check.json",
+      "original_bytes": 1429,
+      "original_sha256": "074f4f7f83ff2b3959cf0f192da43c1d21405a04cc9dc81c1cf3e81b35428341",
+      "physical_payload": "payload-0032.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-check.log",
+      "original_bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "physical_payload": "payload-0033.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-create-runner.log",
+      "original_bytes": 1417,
+      "original_sha256": "46cf775a9622d7aa3dc05f93bd47e3ab593939615ef4c5f2ff60f620e0b72f77",
+      "physical_payload": "payload-0034.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-create-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-create.json",
+      "original_bytes": 1417,
+      "original_sha256": "46cf775a9622d7aa3dc05f93bd47e3ab593939615ef4c5f2ff60f620e0b72f77",
+      "physical_payload": "payload-0034.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-create.log",
+      "original_bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "physical_payload": "payload-0033.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-duplicate-rejected-runner.log",
+      "original_bytes": 1443,
+      "original_sha256": "720328249948319f9944c4e60d853e32a91e3897d1461cec09639daffa6767e1",
+      "physical_payload": "payload-0035.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-duplicate-rejected-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-duplicate-rejected.json",
+      "original_bytes": 1443,
+      "original_sha256": "720328249948319f9944c4e60d853e32a91e3897d1461cec09639daffa6767e1",
+      "physical_payload": "payload-0035.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-duplicate-rejected.log",
+      "original_bytes": 33,
+      "original_sha256": "3a523ee1ca0410667a2b56a4142302b97bb212c72505fa5f3abc682de05e06e8",
+      "physical_payload": "payload-0036.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-existing-output-rejected-runner.log",
+      "original_bytes": 1473,
+      "original_sha256": "e418e5bc86e50f64a80254ab4b75ebf8c0bcff3e5d2a1eed06648bba17997685",
+      "physical_payload": "payload-0037.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-existing-output-rejected-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-existing-output-rejected.json",
+      "original_bytes": 1473,
+      "original_sha256": "e418e5bc86e50f64a80254ab4b75ebf8c0bcff3e5d2a1eed06648bba17997685",
+      "physical_payload": "payload-0037.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-existing-output-rejected.log",
+      "original_bytes": 164,
+      "original_sha256": "7b05a80220d4fc794b550bd278944072092cc40dbde1a083c8d5c35fe413403c",
+      "physical_payload": "payload-0038.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-path-rejected-runner.log",
+      "original_bytes": 1425,
+      "original_sha256": "6a48618d8ed72eef8036dc83f02ffa688eec41f9f77dc8835db81acebdfd82c6",
+      "physical_payload": "payload-0039.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-path-rejected-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-path-rejected.json",
+      "original_bytes": 1425,
+      "original_sha256": "6a48618d8ed72eef8036dc83f02ffa688eec41f9f77dc8835db81acebdfd82c6",
+      "physical_payload": "payload-0039.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-path-rejected.log",
+      "original_bytes": 46,
+      "original_sha256": "483723a5b53660a47f6111c0ecb0c131ed1047358b236be6fb9e6cb6cefadbef",
+      "physical_payload": "payload-0040.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-revision-rejected-runner.log",
+      "original_bytes": 1445,
+      "original_sha256": "b27e1e8122e126662114cfe6ca9d91b5e379ec4bf18e4f8f302188d60cdd6194",
+      "physical_payload": "payload-0041.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-revision-rejected-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-revision-rejected.json",
+      "original_bytes": 1445,
+      "original_sha256": "b27e1e8122e126662114cfe6ca9d91b5e379ec4bf18e4f8f302188d60cdd6194",
+      "physical_payload": "payload-0041.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-revision-rejected.log",
+      "original_bytes": 80,
+      "original_sha256": "912da7da3e7ff068dc7aa4f61929b7d3dc937780855fa0d222f32c618313fe48",
+      "physical_payload": "payload-0027.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-selection-budget-rejected-runner.log",
+      "original_bytes": 1475,
+      "original_sha256": "0c15bc6be80302ed6497dcdf75c6526a4c522e73485bd0c5fa690d606aa431da",
+      "physical_payload": "payload-0042.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/cli-selection-budget-rejected-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-selection-budget-rejected.json",
+      "original_bytes": 1475,
+      "original_sha256": "0c15bc6be80302ed6497dcdf75c6526a4c522e73485bd0c5fa690d606aa431da",
+      "physical_payload": "payload-0042.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/cli-selection-budget-rejected.log",
+      "original_bytes": 133,
+      "original_sha256": "9d2ff669dd3be9926080887dc64a1548a5c6ea0bcdf1909b706bf134f8f4ce7e",
+      "physical_payload": "payload-0043.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/mismatched-existing.json",
+      "original_bytes": 19,
+      "original_sha256": "4fb3fb38100be0a78a3273edc5d2721fb305953bd652179b17dff64a00cac8bd",
+      "physical_payload": "payload-0044.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/runtime-lease-released.json",
+      "original_bytes": 1330,
+      "original_sha256": "dacdc1c2188ffbe6e5067ba01209329d39d59e4ee7aed10ce431fc4e233cad1e",
+      "physical_payload": "payload-0045.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/workspace-fmt-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/workspace-fmt.json",
+      "original_bytes": 1024,
+      "original_sha256": "9e695c468e9ba7da7baa90112a32a3acc59cb12ff54740803024ef289b37e018",
+      "physical_payload": "payload-0046.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/workspace-fmt.log",
+      "original_bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "physical_payload": "payload-0033.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/xtask-build-compiler-binding.json",
+      "original_bytes": 1183,
+      "original_sha256": "56ab71316405f32d074202bacb0e672ac94d03de6a70f4b90dd5d8292130a0c6",
+      "physical_payload": "payload-0047.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/xtask-build-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/xtask-build.json",
+      "original_bytes": 1053,
+      "original_sha256": "20639fc37f7a113e8ccba37be53bc4299acb77351cc770815338ecc4d4afd4b0",
+      "physical_payload": "payload-0048.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/xtask-build.log",
+      "original_bytes": 236125,
+      "original_sha256": "1a01bf83b38195b32eec704334ce0236e6ece25101fb8796d1d53fa2c6339e4a",
+      "physical_payload": "payload-0049.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/xtask-clippy-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/xtask-clippy.json",
+      "original_bytes": 1021,
+      "original_sha256": "adc7e3b660007407c5a2a9a1ccf1ec74acd552b0849acab1c4e15918f05cbc46",
+      "physical_payload": "payload-0050.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/xtask-clippy.log",
+      "original_bytes": 396,
+      "original_sha256": "baae775ac17e4eb183c4945fae188ef882df22c3f4e05aaba18ef91c797838ba",
+      "physical_payload": "payload-0051.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/xtask-test-compiler-bindings.json",
+      "original_bytes": 3887,
+      "original_sha256": "5466ccd20a7595fd94968f08045e27c738dd8cd94babae6427d9c4f44ec3dc17",
+      "physical_payload": "payload-0052.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/xtask-tests-whole-source-before.json",
+      "original_bytes": 2166070,
+      "original_sha256": "9a731eafa01e12ab5395c9488b82c919f87b4e45eb5567630f5c30ba6402970d",
+      "physical_payload": "payload-0026.json",
+      "exact_byte_deduplication": true
+    },
+    {
+      "logical_path": "runtime/xtask-tests.json",
+      "original_bytes": 1084,
+      "original_sha256": "80b7bb08db4e9c5012ae10159817fb1a201b506836c2d0e233ffd7c0a0b1013d",
+      "physical_payload": "payload-0053.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "runtime/xtask-tests.log",
+      "original_bytes": 269323,
+      "original_sha256": "a90dcf6e89e230d34d492ac2341d31bfdbd6523bf8d4554530b25a4930610d12",
+      "physical_payload": "payload-0054.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "task-plan-and-nonbehavior-matrix.json",
+      "original_bytes": 7725,
+      "original_sha256": "d80ef8a76573175abebe1596e2bc97d9860a42c032129d765d5ff5e5af43f4f5",
+      "physical_payload": "payload-0055.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "source-prepared-unexecuted.json",
+      "original_bytes": 5671,
+      "original_sha256": "2e9c0d65aac592cf721574552f65eac6cfd517adb5f0bb4130d583c447a909f5",
+      "physical_payload": "payload-0056.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "fix-round1-source-only.json",
+      "original_bytes": 832,
+      "original_sha256": "18230cb9201997ee19dd698970ac8eb0a03ca2e7afa1365795e840c502f32fd7",
+      "physical_payload": "payload-0057.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "preserved-source-pre-finish.rs",
+      "original_bytes": 36269,
+      "original_sha256": "c84ed8b651a6c5a66d66ce36933eb6f89886a1a791165e6460273dfe05875aa9",
+      "physical_payload": "payload-0058.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "source-before-fix-round1.rs",
+      "original_bytes": 64280,
+      "original_sha256": "b30138984f6b634ef871a650f7cc7114c567936913e41afcf73c958a8a8e8401",
+      "physical_payload": "payload-0059.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "source-before-fix-round2.rs",
+      "original_bytes": 67144,
+      "original_sha256": "fef14bc8bc85bb76ed9b88578bbeb4390f2d409403b6fcda87e8d040aecb47d9",
+      "physical_payload": "payload-0060.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "run-gate.py",
+      "original_bytes": 3104,
+      "original_sha256": "a97734a524cbde5f7394e9b14dd660782414f67b741052a686cb69ef0e2e5d11",
+      "physical_payload": "payload-0061.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "run-cli-cases.py",
+      "original_bytes": 3999,
+      "original_sha256": "8de9de13d2a3c3a73de91d0f3ffe89e2541cf908458a839ce52e53d4721e0ac3",
+      "physical_payload": "payload-0062.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "run-cli-cases.py.initial-unexecuted",
+      "original_bytes": 3988,
+      "original_sha256": "69c59e9fac72dad0846746773130e391c8dbcdbd3108e14eeb8b3baa19d3bdde",
+      "physical_payload": "payload-0063.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "pr-create-and-attachment-attempt.json",
+      "original_bytes": 619,
+      "original_sha256": "6cf7d5fe0e61a3a340b04efea9e87c849c3a1ab6b05d0d9d010bbae16af4bd85",
+      "physical_payload": "payload-0064.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/quality-portable-preparation.md",
+      "original_bytes": 2425,
+      "original_sha256": "ad136dcee857d68691a4b27942949cf6fb5e3636345b89ff5700e1441f30393b",
+      "physical_payload": "payload-0065.json",
+      "exact_byte_deduplication": false
+    },
+    {
+      "logical_path": "reviews/quality-portable-preparation.json",
+      "original_bytes": 64773,
+      "original_sha256": "88f769a3ee5f0cdd5168fcd0668ccf31d84c3bd80b7a91bdcbf69da7bddda542",
+      "physical_payload": "payload-0066.json",
+      "exact_byte_deduplication": false
+    }
+  ],
+  "physical_payloads": {
+    "payload-0001.json": {
+      "bytes": 6119,
+      "sha256": "27a401d7edc2e59e24b12cd3feaf1f14747faf1c7a5e8eafa10ecc165a24b672"
+    },
+    "payload-0002.json": {
+      "bytes": 2451,
+      "sha256": "f49b9bdae455a38a3637e08baf1b6e5597ed1baf7b13fade3e917b1956d1f3c1"
+    },
+    "payload-0003.json": {
+      "bytes": 11169,
+      "sha256": "fc164b4c3a08991e432723038ac196d8c5f286ff1ad18536799e95312dde6667"
+    },
+    "payload-0004.json": {
+      "bytes": 1904,
+      "sha256": "74b1e3fff0ab423e20b40d99ef033669ea0edcd2a77d88a7cd3e2a6b7b4b57bd"
+    },
+    "payload-0005.json": {
+      "bytes": 11060,
+      "sha256": "04be89f73f395c53017b014132ee95d42a7cf7d1cd106ad00ef2f79ac180fbd4"
+    },
+    "payload-0006.json": {
+      "bytes": 2330,
+      "sha256": "4063cba14f28c9a99ab39463f6217d9f1007373bafa4976f51f00e91c95f344d"
+    },
+    "payload-0007.json": {
+      "bytes": 10977,
+      "sha256": "ecc3446ad8840d15a88ae367756f256ed343beb6299f70f20bcbbeaa9fa46a00"
+    },
+    "payload-0008.json": {
+      "bytes": 2532,
+      "sha256": "97a4d633581c5f6649887a4bd8ed90706498d3a55e838ee97dd3543b11b6b092"
+    },
+    "payload-0009.json": {
+      "bytes": 23487,
+      "sha256": "a5c80ee5153478542c21b892368511a2981f31f39965177efdc7aace071f0285"
+    },
+    "payload-0010.json": {
+      "bytes": 3323,
+      "sha256": "061fe0da39d21fc3b1890431bb01d52556c78f306fecaf0ba33d0128743fbfb5"
+    },
+    "payload-0011.json": {
+      "bytes": 37373,
+      "sha256": "c5e3d440e29c668798008cc75555e09a94c2746abe8687b1e0e23f7e2279035f"
+    },
+    "payload-0012.json": {
+      "bytes": 2893,
+      "sha256": "caa5a121d403c46fce818138434bf430bb84895d59eb634fb3a1726355a900fc"
+    },
+    "payload-0013.json": {
+      "bytes": 19716,
+      "sha256": "682c5f32074eb2022e8ac7b907d027dee5d8548b210cb7cd6fe626b81e94a621"
+    },
+    "payload-0014.json": {
+      "bytes": 2986,
+      "sha256": "5784ece6649fcb35ee0f4fb925a447df33f6b7169c52ae89158835b618070a42"
+    },
+    "payload-0015.json": {
+      "bytes": 31277,
+      "sha256": "91e2720469c49d9878bfbdc6a164a96d8eb7d0ec3ba8d27f465ea1917b808d6c"
+    },
+    "payload-0016.json": {
+      "bytes": 2860,
+      "sha256": "9c85607867b4eeaf4935506c6d4896715b46d194de75aefdbce8e03b3ac33ed5"
+    },
+    "payload-0017.json": {
+      "bytes": 15956,
+      "sha256": "c813dc03644eeaf1894a729e5a35a0f6be9412c90f058f9589a4c8daa8027288"
+    },
+    "payload-0018.json": {
+      "bytes": 3135,
+      "sha256": "5146fb3d36f94be65e76f9ce6d56a053e10cd0c98217ccde71fe6634a4c4675b"
+    },
+    "payload-0019.json": {
+      "bytes": 29207,
+      "sha256": "65c9e507087751a58c1aee6e5f327ca0c87b11f6003bc3b60cee14333428706c"
+    },
+    "payload-0020.json": {
+      "bytes": 3168,
+      "sha256": "e018c5857477d38138da1d8f5dbe2515cf314add5a127bb0abe828bfc57e57e7"
+    },
+    "payload-0021.json": {
+      "bytes": 15351,
+      "sha256": "f34df70016ad2c6cd2f5fa2d532648f4fb61b416250c0443601af6bfa221acf6"
+    },
+    "payload-0022.json": {
+      "bytes": 2404,
+      "sha256": "4884293450a7c6c059ea63491ee06c678c7e1e8ec72d9f0fbedc831f2be98fb0"
+    },
+    "payload-0023.json": {
+      "bytes": 3102,
+      "sha256": "7d97ee6ee7a494859e26db31ee25ee9205a4e01fb78284277fc814244610aed6"
+    },
+    "payload-0024.json": {
+      "bytes": 58081,
+      "sha256": "2ec71e6e59f273c44aec5ae57f0478ab086b5d5ca91310b8af18cc3318b7b6a2"
+    },
+    "payload-0025.json": {
+      "bytes": 1722,
+      "sha256": "458c52c59c253ad21582b5eca9cefd83aa8ed740853e0e287889d0f72bfa8125"
+    },
+    "payload-0026.json": {
+      "bytes": 2237564,
+      "sha256": "c5cd4f1c46efda4c1c55c91e83ea9dcdf83c5ec36b93c91733bbede454094ae8"
+    },
+    "payload-0027.json": {
+      "bytes": 261,
+      "sha256": "206bef48216b2ee47c013a1c208938aed0c51fe5ff5075c394ad15d98c6ae8a8"
+    },
+    "payload-0028.json": {
+      "bytes": 1765,
+      "sha256": "3ab72c1208d258a92d4899e90587d9a75184faf9cd743a6e4f394fb3cf41bb53"
+    },
+    "payload-0029.json": {
+      "bytes": 233,
+      "sha256": "fffa932f3ec1e736cc223be9ce4a42846c77cd99d7a03faca29577b8475e4786"
+    },
+    "payload-0030.json": {
+      "bytes": 1780,
+      "sha256": "9e193166ac407fb51fb2500dcd52d2754962fab806edd61e15a63845f74dbf39"
+    },
+    "payload-0031.json": {
+      "bytes": 239,
+      "sha256": "1815ac45b160ffeb46611be34f592e873a194b2a1f65ca89f004c517e6a97fc0"
+    },
+    "payload-0032.json": {
+      "bytes": 1724,
+      "sha256": "4606740240639ddcc686d650bded8424eda5beaa91f7b2c43a435c5cb7f90e4c"
+    },
+    "payload-0033.json": {
+      "bytes": 179,
+      "sha256": "1bed23c7d76e4fdbc060366236c86a3c8c509a6da0af74a3960f2f779fda590b"
+    },
+    "payload-0034.json": {
+      "bytes": 1709,
+      "sha256": "b680ad7772080115a3e791b66e75858a293ce3f8c7a5dbbda412c34d2e280d5e"
+    },
+    "payload-0035.json": {
+      "bytes": 1735,
+      "sha256": "7e5628e050a5151cdd3097a9cb895dfc2c2e036d74c2cc96fd04badc4fc598b9"
+    },
+    "payload-0036.json": {
+      "bytes": 214,
+      "sha256": "d9f02f1b5addae83cf98e4e3092e200fbcbff5d2d8caf349e6cf4c8a6b6fb2a4"
+    },
+    "payload-0037.json": {
+      "bytes": 1765,
+      "sha256": "06907749f7f45a64f109ad454d4c85c9f9980a4d73190b7abd0161b0605c058c"
+    },
+    "payload-0038.json": {
+      "bytes": 349,
+      "sha256": "ff03e2a508b93aecef87afba83e570cade77a03c4e5ebd5aced885021481c268"
+    },
+    "payload-0039.json": {
+      "bytes": 1717,
+      "sha256": "fd998f299a8c3a1b46050f7f341ea4d736771d2b4fbbcb3dc1528acb16a4cf31"
+    },
+    "payload-0040.json": {
+      "bytes": 227,
+      "sha256": "99f60b9fb33b942114f6c0abcbadece0cfe6bdefc52a0bcf37bcecd86eae1a1d"
+    },
+    "payload-0041.json": {
+      "bytes": 1737,
+      "sha256": "356bc8dc31c63cab4e3c014a53e3b375298321adf7dd76a52d58e2235924011e"
+    },
+    "payload-0042.json": {
+      "bytes": 1767,
+      "sha256": "f0c86d203d70b5714a905e0715d448af0ba1f557023be91544944540f115559a"
+    },
+    "payload-0043.json": {
+      "bytes": 315,
+      "sha256": "48259a2bfa84d5c93cd4742c226112c9359ba828ed4e62ff9d7d92862d9f7eda"
+    },
+    "payload-0044.json": {
+      "bytes": 200,
+      "sha256": "54d13d3211f444321cffd41455cb63872c63a981bf3a79a3f1285152f2e84343"
+    },
+    "payload-0045.json": {
+      "bytes": 1628,
+      "sha256": "f517df3d596b142588857588cc20369ddc80b431b95ddeb16ea7c853669454c1"
+    },
+    "payload-0046.json": {
+      "bytes": 1307,
+      "sha256": "e1e251eb4d6b0d01f8cc6411a19e5c723e1719a16288e384e9da6e56d03a1e8c"
+    },
+    "payload-0047.json": {
+      "bytes": 1488,
+      "sha256": "e7c793d5bbefc120a2557fccb1ec123d52d59852099c7a6bf2a4c8df26221399"
+    },
+    "payload-0048.json": {
+      "bytes": 1339,
+      "sha256": "99a819a9d1f6b1101d513fdc1cc1bb038655a4b320ad63287ed8e4b593b1b01b"
+    },
+    "payload-0049.json": {
+      "bytes": 257077,
+      "sha256": "4ff18642a10098f5a93026da20c978f8d746a95185b90ca5af98fb39c41011bc"
+    },
+    "payload-0050.json": {
+      "bytes": 1301,
+      "sha256": "9128cc985c109a0a9d327291f2ca6f04fadbb3310f9641ca7097a2db92c7692f"
+    },
+    "payload-0051.json": {
+      "bytes": 584,
+      "sha256": "212327b713b10c39e642c96ff072f5de48da5f36976960df651d91ddbfcaefb1"
+    },
+    "payload-0052.json": {
+      "bytes": 4283,
+      "sha256": "0c6334f39a60f8b66299fdb22e1a738f193baffbad6b25cff53c3d08b688b24f"
+    },
+    "payload-0053.json": {
+      "bytes": 1376,
+      "sha256": "172370f6d2ef4c5ef5eff9a740eb6962b4014fc52d2784f944d6ace775064e31"
+    },
+    "payload-0054.json": {
+      "bytes": 290863,
+      "sha256": "95a11df2ebb925eab80dba4d4f89a9d59b46e2308226398d2df878218a8ce911"
+    },
+    "payload-0055.json": {
+      "bytes": 8461,
+      "sha256": "3e25b4eadc71572a5207cbe478584076961207622dd75ca26aa890ae6231680a"
+    },
+    "payload-0056.json": {
+      "bytes": 6179,
+      "sha256": "8648957e1d3fefb881e51e95d12b0090cb6138c31acead8dc7467ecb4d449cf6"
+    },
+    "payload-0057.json": {
+      "bytes": 1079,
+      "sha256": "5a0b6a43b70beb96526d64d25ab4ab8bf9c7c41c7edbe7a623ee301536b78bf0"
+    },
+    "payload-0058.json": {
+      "bytes": 37868,
+      "sha256": "f5ed6e0f07749dc88ed77ec1fc78605c2010f799bf4a94838f75c06c5a624f3f"
+    },
+    "payload-0059.json": {
+      "bytes": 67605,
+      "sha256": "d35c6564336d752a56e04db1af274e0c14a6b8b250940476baf854a3f9ab609d"
+    },
+    "payload-0060.json": {
+      "bytes": 70649,
+      "sha256": "81b1acc90e2b467c64846e5f3c0ddcda59b3999c3dd2fad7364265c2862b4411"
+    },
+    "payload-0061.json": {
+      "bytes": 3320,
+      "sha256": "862b844a7c146baf7668d9efa0feb718013c0c41c0c21c16ee3600ff4f73bf2e"
+    },
+    "payload-0062.json": {
+      "bytes": 4217,
+      "sha256": "0ad7bca6392dc0b42e177d841a31a67e48a10a8f45af46c433ea5cb0a8c53934"
+    },
+    "payload-0063.json": {
+      "bytes": 4206,
+      "sha256": "9fa110fcf620d7a2b75faf8d834f05bdb7a3e4443e26d4cf466ee095d6ed4880"
+    },
+    "payload-0064.json": {
+      "bytes": 854,
+      "sha256": "a6155a17c0662c45cbd6cb06301c148a6572c74e7a05a3ebff5d80d21792abdb"
+    },
+    "payload-0065.json": {
+      "bytes": 2622,
+      "sha256": "1e909902227342b10e7fc3379c9401161b0266c036e4e276d16eef270243e7ec"
+    },
+    "payload-0066.json": {
+      "bytes": 69365,
+      "sha256": "742ac200c8adcca2249c4a85213876260d1cd6877c4c95d1a0ab153d018e04c8"
+    }
+  },
+  "five_area_current_owner_reviews_passed": true,
+  "normal_xtask_passed": 136,
+  "membership_regressions_passed": 22,
+  "actual_cli_expected_result_cases_passed": 10,
+  "strict_scoped_clippy_passed": true,
+  "workspace_fmt_passed": true,
+  "new_original_behavior_credit": 0,
+  "effective_runtime_cases": null,
+  "global_census_complete": false,
+  "canonical95_or_manifest_mutations": false,
+  "full_ci_pending": true,
+  "lead_app_and_integration_pending": true,
+  "frozen_executable_external_only": "/workspace/android-studio-artifacts/reference-runner-membership/runtime/frozen-normal-xtask-5fbebd9",
+  "frozen_executable_sha256": "2e85cbaec3314218506512f52ac4c897b2bdd3abe27402adb7e2d183045de8ae",
+  "metadata_prettier_version": "3.5.0",
+  "metadata_prettier_config": "docs/.prettierrc",
+  "previous_reviewed_pre_format_manifest_sha256": "82832cd9320457a62eefe71bccdd779bfdb549a533b1c457cb0c60212444f5de"
+}

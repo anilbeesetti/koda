@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 164,
+  "original_sha256": "7b05a80220d4fc794b550bd278944072092cc40dbde1a083c8d5c35fe413403c",
+  "contents": "Error: create new evidence /workspace/android-studio-artifacts/reference-runner-membership/runtime/actual-membership.json\n\nCaused by:\n    File exists (os error 17)\n"
+}

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 133,
+  "original_sha256": "9d2ff669dd3be9926080887dc64a1548a5c6ea0bcdf1909b706bf134f8f4ce7e",
+  "contents": "Error: input budget exhausted: /workspace/android-studio-artifacts/reference-runner-membership/cli-inputs/selection-over-budget.json\n"
+}

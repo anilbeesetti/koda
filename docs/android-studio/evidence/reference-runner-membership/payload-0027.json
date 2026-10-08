@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 80,
+  "original_sha256": "912da7da3e7ff068dc7aa4f61929b7d3dc937780855fa0d222f32c618313fe48",
+  "contents": "Error: wrong pinned source revision/path/hash/length/license: idea/adt-ui/BUILD\n"
+}

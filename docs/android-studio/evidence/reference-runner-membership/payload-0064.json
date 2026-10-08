@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 619,
+  "original_sha256": "6cf7d5fe0e61a3a340b04efea9e87c849c3a1ab6b05d0d9d010bbae16af4bd85",
+  "contents": "{\n  \"schema_version\": 1,\n  \"url\": \"https://github.com/anilbeesetti/koda/pull/66\",\n  \"draft\": true,\n  \"branch\": \"android-studio-task/1-reference-runner-membership\",\n  \"source_commit\": \"5fbebd9df3a60b6c29e09f7236c1b916fe4c4418\",\n  \"ordinary_push_completed\": true,\n  \"pr_create_exit_code\": 0,\n  \"artifact_attachment_tool_called\": true,\n  \"artifact_attachment_cell_id\": \"35\",\n  \"artifact_attachment_returned_result\": false,\n  \"artifact_attachment_cell_terminated_after_unresponsive_wait\": true,\n  \"artifact_attached_success_claim\": false,\n  \"current_ci_run\": 37727556335,\n  \"time_utc\": \"2026-10-08T04:29:29.551237+00:00\"\n}\n"
+}
