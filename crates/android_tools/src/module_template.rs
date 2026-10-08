@@ -180,8 +180,7 @@ fn normalize_child(child: &str, separator: char) -> String {
         && normalized.len() > 1
         && !(separator == '\\'
             && (normalized == "\\\\"
-                || (normalized.ends_with(":\\")
-                    && normalized.encode_utf16().take(4).count() == 3)))
+                || (normalized.ends_with(":\\") && normalized.encode_utf16().take(4).count() == 3)))
     {
         normalized.truncate(normalized.len() - 1);
     }
