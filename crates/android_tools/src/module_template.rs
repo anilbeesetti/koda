@@ -174,11 +174,14 @@ fn normalize_child(child: &str, separator: char) -> String {
             normalized.push(character);
         }
     }
+    // The Windows root exception counts UTF-16 units, including multi-byte BMP prefixes.
+    // Four units suffice to distinguish its three-unit root from longer paths.
     while normalized.ends_with(separator)
         && normalized.len() > 1
         && !(separator == '\\'
             && (normalized == "\\\\"
-                || (normalized.len() == 3 && normalized.as_bytes().get(1) == Some(&b':'))))
+                || (normalized.ends_with(":\\")
+                    && normalized.encode_utf16().take(4).count() == 3)))
     {
         normalized.truncate(normalized.len() - 1);
     }
