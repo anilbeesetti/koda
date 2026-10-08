@@ -749,6 +749,8 @@ fn main() {
         outline_panel::init(cx);
         tasks_ui::init(cx);
         android_ui::init(cx);
+        project::lsp_store::enable_managed_kotlin_runtime(cx);
+        android_ui::enable_first_launch_setup(cx);
         snippets_ui::init(cx);
         channel::init(&app_state.client.clone(), app_state.user_store.clone(), cx);
         search::init(cx);

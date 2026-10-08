@@ -4,8 +4,18 @@ This small Compose app tests a module named `mobile`, two product flavors,
 generated `R` and `BuildConfig` symbols, a Kotlin call into Java, and an Android
 library dependency named `greeting`.
 
-The Android tool installers require Python 3.12 or newer. Ensure `python3` on
-your `PATH` meets that requirement (`python3 --version`) before running setup.
+Downloaded Koda apps open **Android Setup** on first launch. You can defer it and
+reopen it with **Android: Setup** in the command palette; missing project
+dependencies also lead back to setup.
+The wizard can download a full Temurin JDK 21 and selected Android SDK packages
+with Java in application storage and SDK packages in Android Studio's usual SDK
+folder, or reuse validated installations. A source checkout
+and shell-exported runtime paths are unnecessary. Kotlin/debugger source
+installation is available under advanced tools. See [Managed tool setup](TOOL_SETUP.md) for prerequisites, repair,
+updates, platform limits and acceptance checks.
+
+Java and SDK onboarding runs natively without Python. The advanced Kotlin/debugger
+source installers still require Python 3.12+ and Apple Silicon macOS prerequisites.
 
 From the repository root, run:
 
@@ -15,13 +25,16 @@ script/android-ide --release examples/android-ide
 ```
 
 Trusted Android projects sync automatically on open and initially select
-**:mobile · demoDebug** in the topbar. Use **Configure official Kotlin** in the Android tools panel. Install the Kotlin extension from Extensions if it is
+**:mobile · demoDebug** in the topbar. Use **Configure Kotlin** from the command palette. Install the Kotlin extension from Extensions if it is
 not already installed. Select a connected device or a stopped emulator in the topbar,
 then **Run**; a stopped emulator is booted before deployment. The app should display `dev.zed.androidsample.demo`. Repeat with
 `fullDebug`; it should display `dev.zed.androidsample.full`. Both variants should
 also display `Android library connected`. Generated symbols refresh automatically
 after switching variants.
-Use **Stop emulator** when finished to release the VM's memory.
+Run and Debug use the selected SDK's `adb` directly. Authorize the device when
+prompted. Existing emulators require the SDK emulator package and an AVD; setup
+does not download emulator images or create virtual devices. Use **Stop emulator**
+when finished to release the VM's memory.
 
 Use **Open Logcat** for the structured device log viewer. See [Logcat](LOGCAT.md)
 for filtering syntax, capture controls, saved files, and validation steps.
@@ -30,7 +43,7 @@ The official JetBrains Kotlin backend is the only supported backend. If you used
 the community backend before, relaunch the IDE and configure Kotlin once to switch
 your existing project settings.
 
-Use **Configure official Kotlin** in the Android tools panel. The pinned
+Use **Configure Kotlin** from the command palette. The pinned
 `263.4702.0+android-6` build includes a source-built native importer patch for
 selected dependency variants, exact library sources, and dynamic features, plus
 semantic Compose completion and naming fixes. It prepares the focused Kotlin
@@ -207,7 +220,7 @@ Do not run builds or other performance probes during timing collection.
 
 Run `script/install-android-kotlin` and `script/install-android-debugger`
 once before launching the IDE. Compose preview dependencies are bundled by Cargo;
-`cargo run --locked -p zed --bin koda` needs no separate preview setup. **Configure Java**
+`cargo run --locked -p zed --bin koda` needs a JDK 21 selection in Android Setup. **Configure Java**
 imports the selected variant into JDT LS. Once configured, managed official Kotlin
 setup refreshes that Java model after variant or Gradle input changes. Java model
 refresh can compile sources; failure leaves Kotlin editing available. Only JDT is
@@ -226,7 +239,7 @@ explicit emulator-only smoke test after building `demoDebug`.
 including multipreview annotations and parameter values. Use **Build & Refresh**
 or leave **Auto** enabled to rebuild after edits, including unsaved Kotlin changes.
 Click a preview to inspect its layout outlines, then click a component to navigate
-to its source. Rendering uses bundled Google tooling, bundled Java 21, and the selected
+to its source. Rendering uses bundled Google tooling, the selected full JDK 21, and the selected
 variant's resources. See [Compose previews](COMPOSE_PREVIEW.md) for controls,
 implementation research, compatibility boundaries, and integration checks.
 

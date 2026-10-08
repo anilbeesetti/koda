@@ -152,7 +152,7 @@ automatic unsaved rebuilds, skeleton selection/source navigation, tab switching,
 divider resizing and zoom controls when the checkout provides those features.
 
 For bundled previews, runtime extraction uses
-`$XDG_CACHE_HOME/koda/compose-preview`, with per-request directories under
+the selected Koda data profile's `android-tools/compose-preview`, with per-request directories under
 `renders`. Verify gallery replacement and closing release request artifacts and
 do not create a project-local `.koda/android-preview` directory. If present,
 follow `examples/android-ide/COMPOSE_PREVIEW.md` and `script/test-android-preview`

@@ -33,7 +33,7 @@ your current directory. Settings and extensions use target/android-ide/dev/profi
 unless --profile is supplied. Existing profile settings are preserved.
 
 Prerequisites: the repository's Rust toolchain, Xcode with Metal tools, Android
-CLI, Android SDK, and a Gradle-compatible JDK. Kotlin setup additionally needs
+SDK, and a Gradle-compatible JDK. Kotlin setup additionally needs
 JDK 21. Run script/install-android-kotlin for the pinned JetBrains Kotlin server
 with its bundled Java 25 runtime. Run Android: Configure Kotlin in the project
 to apply it to existing settings. Set ANDROID_IDE_OFFICIAL_KOTLIN_SERVER to use
@@ -58,12 +58,12 @@ case "$kotlin_backend" in
     *) echo "Unknown Kotlin backend: $kotlin_backend; only official is supported." >&2; exit 2 ;;
 esac
 export ANDROID_IDE_KOTLIN_BACKEND="$kotlin_backend"
-kotlin_official_server="$repository/target/android-ide/dependencies/kotlin-lsp-263.4702.0+android-6/kotlin-server-263.4702.0/bin/intellij-server"
+kotlin_official_server="$repository/target/android-ide/dependencies/kotlin-lsp-263.4702.0+android-8/kotlin-server-263.4702.0/bin/intellij-server"
 if [[ -z ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} && -x "$kotlin_official_server" ]]; then
     export ANDROID_IDE_OFFICIAL_KOTLIN_SERVER="$kotlin_official_server"
 fi
-if [[ ! -f ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} || ! -x ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} ]]; then
-    echo "Missing official Kotlin LSP; run script/install-android-kotlin or set ANDROID_IDE_OFFICIAL_KOTLIN_SERVER." >&2
+if [[ -n ${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-} && ! -x "$ANDROID_IDE_OFFICIAL_KOTLIN_SERVER" ]]; then
+    echo "Missing official Kotlin LSP at the explicit override; clear ANDROID_IDE_OFFICIAL_KOTLIN_SERVER or choose a valid executable." >&2
     exit 1
 fi
 
@@ -119,7 +119,7 @@ cp "$repository/crates/zed/resources/KodaDev.icns" "$bundle/Contents/Resources/K
 cp -c "$binary" "$executable" || cp "$binary" "$executable"
 
 if [[ ! -e "$profile/config/settings.json" ]]; then
-    python3 - "$profile/config/settings.json" "$ANDROID_IDE_OFFICIAL_KOTLIN_SERVER" <<'SETTINGS'
+    python3 - "$profile/config/settings.json" "${ANDROID_IDE_OFFICIAL_KOTLIN_SERVER:-}" <<'SETTINGS'
 import json
 from pathlib import Path
 import sys
@@ -130,10 +130,11 @@ settings = {
     "auto_install_extensions": {"kotlin": True, "java": True},
     "languages": {"Kotlin": {"language_servers": ["kotlin-lsp"]}},
 }
-settings["lsp"] = {"kotlin-lsp": {"binary": {
-    "path": str(Path(sys.argv[2]).resolve()),
-    "arguments": ["--stdio", "--data-sharing=none"],
-}}}
+if sys.argv[2]:
+    settings["lsp"] = {"kotlin-lsp": {"binary": {
+        "path": str(Path(sys.argv[2]).resolve()),
+        "arguments": ["--stdio", "--data-sharing=none"],
+    }}}
 Path(sys.argv[1]).write_text(json.dumps(settings, indent=2) + "\n")
 SETTINGS
 fi

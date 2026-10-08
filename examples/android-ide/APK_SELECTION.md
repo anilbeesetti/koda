@@ -51,8 +51,9 @@ to `ro.product.cpu.abi` and `ro.product.cpu.abi2`. Duplicate ABIs are removed
 without changing order. Empty or malformed properties stop deployment.
 
 `AndroidTarget::apk_for_device` applies the version/ABI ordering above and
-passes exactly one canonical APK path to the existing Android CLI Run/Debug
-flow. Debug still uses the application ID from the selected variant's metadata.
+passes exactly one canonical APK path to the native Android SDK `adb` deployment
+flow used by Run and Debug. Debug uses the application ID from the selected
+variant's metadata.
 A missing winning APK fails rather than silently falling back to a stale output.
 Files for unselected ABI alternatives need not exist.
 

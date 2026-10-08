@@ -21,7 +21,7 @@ pub(super) fn toggle_preview(
     window: &mut Window,
     cx: &mut Context<Workspace>,
 ) {
-    if let Some(panel) = workspace.panel::<AndroidPanel>(cx)
+    if let Some(panel) = controller(workspace, cx)
         && panel.read(cx).compose_preview_enabled
     {
         for editor in workspace.items_of_type::<Editor>(cx).collect::<Vec<_>>() {
@@ -1174,6 +1174,8 @@ impl ComposePreviewView {
                             && view.revision == revision
                     })?, "Discarded an outdated Compose preview request");
                     cx.background_spawn(async move {
+                        let environment = android_tools::managed::command_environment_with(environment.iter())?;
+                        let environment = environment.into_iter().collect::<collections::HashMap<_, _>>();
                         let temporary = preview::prepare()?;
                         let directory = temporary.path();
                         let overlay = preview::write_source_overlay(directory, &sources)?;
@@ -2838,7 +2840,7 @@ mod tests {
             panel.selected_target = Some(target.clone());
             publish_preview_test_model(panel, &target, cx);
         });
-        workspace.add_panel(panel.clone(), window, cx);
+        register_controller(workspace, &panel, cx);
         let pane = workspace.active_pane().clone();
         let editor = pane
             .read(cx)

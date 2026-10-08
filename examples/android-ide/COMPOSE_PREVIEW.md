@@ -2,10 +2,10 @@
 
 Run `cargo run --locked -p zed --bin koda`, open a Kotlin file, and choose
 **Compose preview**. Cargo automatically fetches checksum-pinned preview build
-inputs on the first build. The renderer, native layoutlib, compiled bridge, and
-Eclipse Temurin Java 21 runtime are embedded in the executable and included in
-packaged apps. Previews require no installer, launcher, Java override, or runtime
-download. The app unpacks its bundle into a versioned application cache on first
+inputs on the first build. The renderer, native layoutlib, and compiled bridge are embedded in the executable
+and included in packaged apps. Java is selected separately in **Android Setup**:
+use an existing full JDK 21 or download the managed Temurin JDK 21 into application
+storage. Preview uses that selection without a shell-exported Java path. The app unpacks its bundle into a versioned application cache on first
 use; subsequent refreshes reuse it. Missing or truncated cached files are repaired
 from the app's copy, and concurrent app instances share an extraction lock. The
 gallery appears beside the code inside the selected Kotlin source tab, sharing
@@ -32,8 +32,9 @@ Switching files, projects, or variants cancels the previous request. The toolbar
 shows whether previews are up to date, refreshing, or failed.
 
 Render output, Gradle exporter scripts, and unsaved source copies live in isolated
-temporary directories under the OS application cache's
-`koda/compose-preview/renders` directory, beside the bundled preview runtime.
+temporary directories under the selected Koda data profile's
+`android-tools/compose-preview/renders` directory, beside the bundled preview runtime.
+Stable, Nightly and custom `--user-data-dir` profiles have separate caches.
 Each request gets its own directory, so projects and app instances cannot overwrite
 one another's inputs. The directory is removed when its render fails or is
 cancelled, or when the resulting gallery is replaced or closed. Previews no longer
@@ -106,10 +107,10 @@ its screenshot objects. Its relocated coroutine classes require the regular
 service loader, so the bridge disables the coroutine fast loader. Bridge protocol
 version 2 is packaged together with the renderer. The build uses a pinned Eclipse
 compiler and a host Java runtime, so bridge compilation also needs no local JDK.
-Cross-compiles select separate host and target Java distributions. Pinned inputs
+The build-only Java runtime is never copied into the shipped archive. Pinned inputs
 are cached under Cargo's home (or `KODA_COMPOSE_PREVIEW_ARTIFACT_CACHE`) and checked
 against `crates/android_tools/preview-bundle.json`; binaries carry no build-machine
-paths. Bundled license notices and Java's `legal` directory are preserved.
+paths. Bundled Google tooling license notices are preserved; managed Java retains its own legal files.
 For offline builds, keep the artifact cache and set `CARGO_NET_OFFLINE=true`.
 Build scripts cannot see Cargo's `--offline` flag; this environment setting also
 prevents preview artifact downloads and fails immediately if an input is missing.

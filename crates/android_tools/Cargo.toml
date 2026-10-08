@@ -19,13 +19,22 @@ doctest = false
 anyhow.workspace = true
 chrono.workspace = true
 dirs.workspace = true
-fs2 = { version = "0.4.3", optional = true }
+fs2 = "0.4.3"
+flate2 = "1.1.8"
+reqwest = { workspace = true, features = ["blocking"] }
+sha1 = "0.10"
+tar = "0.4.44"
 regex.workspace = true
+paths.workspace = true
+sha2.workspace = true
+libc.workspace = true
+smol.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tempfile.workspace = true
 which.workspace = true
-zip = { version = "0.6.6", default-features = false, features = ["deflate"], optional = true }
+uuid = { workspace = true, features = ["v4"] }
+zip = { version = "0.6.6", default-features = false, features = ["deflate"] }
 
 [build-dependencies]
 anyhow.workspace = true

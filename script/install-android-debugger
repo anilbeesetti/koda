@@ -2,6 +2,7 @@
 """Build the pinned Kotlin/Java Android debug adapter into the local IDE profile."""
 
 import os
+import hashlib
 from pathlib import Path
 import runpy
 import shutil
@@ -9,20 +10,23 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import zipfile
 
 REVISION = "7f05669b642d21afa46ac7b75307fa5d523a7263"
 SHA256 = "69ae1dc3d97b372bfe326c25a32469adf3bead1a254b0371c2e0ead93fceb6bd"
-VERSION = REVISION + "+android-1"
+VERSION = REVISION + "+android-2"
 SHARED_REVISION = "6d9e61b79d4631e75516def7ab7ff0d8b9310467"
 SHARED_SHA256 = "c82e551b82db7066a8f4c0cc83ce6ef58efb14489882fdf5560af6594bc06ce2"
 JDK_SHA256 = "c487a1c3a56588b3a32d0d07cdd526bf3d401c4b8422be772ca178bfcd647f3f"
+VERIFICATION_SHA256 = "88a11d34dd474c3c5a4c3251c8e4e98c9901448b4880558de9ccc19ef1ffd1c9"
 
 
-def main():
+def main(install_kotlin=True):
     if sys.version_info < (3, 12):
         raise RuntimeError("Android tool installers require Python 3.12 or newer. Put a supported python3 on PATH and retry.")
     bootstrap = runpy.run_path(str(Path(__file__).with_name("install-android-kotlin")))
-    bootstrap["main"]()
+    if install_kotlin:
+        bootstrap["main"]()
     dependencies = bootstrap["DEPENDENCIES"]
     installation = dependencies / "kotlin-debug-adapter"
     if installation.exists():
@@ -54,13 +58,79 @@ def main():
         shared = temporary / f"kotlin-language-server-{SHARED_REVISION}"
         patch = Path(__file__).with_name("android-kotlin-debugger.patch").resolve()
         subprocess.run(["patch", "--batch", "-p1", "-i", str(patch)], cwd=source, check=True)
-        subprocess.run([str(source / "gradlew"), "-p", str(source), "--include-build", str(shared),
-                        "-PkotlinVersion=2.1.0", ":adapter:test", ":adapter:installDist",
-                        "--console=plain", "--max-workers=2"],
-                       env=dict(os.environ, JAVA_HOME=str(java11)), check=True)
+        gradle = source / "gradlew"
+        managed_arguments = []
+        build_environment = dict(os.environ, JAVA_HOME=str(java11))
+        test_tasks = [":adapter:test"]
+        if os.environ.get("KODA_TOOL_DEPENDENCIES"):
+            # Upstream tests start a second, unchecked Gradle wrapper for their
+            # sample project. Run those in development validation, not provisioning.
+            test_tasks = []
+            # Match the client/build JVM so --no-daemon does not fork a detached
+            # single-use daemon. These are Gradle 8.3's required JPMS opens.
+            # Normalize inherited launcher options into both matching JVMs.
+            # Otherwise GRADLE_OPTS/JAVA_TOOL_OPTIONS can reopen the fork path.
+            inherited_options = [build_environment.pop(name, "") for name in
+                                 ("JAVA_OPTS", "GRADLE_OPTS", "JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS")]
+            jvm_arguments = " ".join(option for option in inherited_options if option)
+            jvm_arguments += " -Xmx1536m -Xms256m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8 -Duser.country= -Duser.language=en -Duser.variant="
+            module_opens = " ".join("--add-opens=" + module + "=ALL-UNNAMED" for module in (
+                "java.base/java.util", "java.base/java.lang", "java.base/java.lang.invoke",
+                "java.prefs/java.util.prefs", "java.base/java.nio.charset", "java.base/java.net",
+                "java.base/java.util.concurrent.atomic",
+            ))
+            build_environment["JAVA_OPTS"] = jvm_arguments + " " + module_opens
+            verification = Path(__file__).with_name("android-debugger-verification.xml").read_bytes()
+            if hashlib.sha256(verification).hexdigest() != VERIFICATION_SHA256:
+                raise RuntimeError("Debugger dependency verification manifest changed; update the pinned recipe before building")
+            for build in (source, shared, source / "buildSrc", shared / "buildSrc"):
+                if build.is_dir():
+                    (build / "gradle").mkdir(exist_ok=True)
+                    (build / "gradle/verification-metadata.xml").write_bytes(verification)
+            gradle_archive = bootstrap["download"]("gradle-8.3-bin.zip",
+                "https://services.gradle.org/distributions/gradle-8.3-bin.zip",
+                "591855b517fc635b9e04de1d05d5e76ada3f89f5fc76f87978d1b245b4f69225")
+            with zipfile.ZipFile(gradle_archive) as archive_gradle:
+                archive_gradle.extractall(temporary)
+            gradle = temporary / "gradle-8.3/bin/gradle"
+            gradle.chmod(0o755)
+            guard = temporary / "https-repositories.gradle"
+            guard.write_text('''def requireHttps = { repository ->
+    if (repository instanceof org.gradle.api.artifacts.repositories.MavenArtifactRepository ||
+        repository instanceof org.gradle.api.artifacts.repositories.IvyArtifactRepository) {
+        if (repository.url.scheme != 'https' || repository.allowInsecureProtocol)
+            throw new GradleException('Koda managed debugger builds require HTTPS repositories: ' + repository.name)
+    }
+}
+gradle.beforeSettings { settings ->
+    settings.pluginManagement.repositories.all(requireHttps)
+    settings.dependencyResolutionManagement.repositories.all(requireHttps)
+}
+gradle.beforeProject { project ->
+    project.repositories.all(requireHttps)
+    project.buildscript.repositories.all(requireHttps)
+}
+''')
+            managed_arguments = ["--init-script", str(guard), "--dependency-verification", "strict",
+                                 "-Pkotlin.compiler.execution.strategy=in-process",
+                                 "-Dkotlin.daemon.enabled=false",
+                                 "-Dorg.gradle.jvmargs=" + jvm_arguments,
+                                 # This optional agent requires a separate VM; keep the
+                                 # build in the owned client. Verification remains strict.
+                                 "-Dorg.gradle.internal.instrumentation.agent=false"]
+        subprocess.run([str(gradle), "-p", str(source), "--include-build", str(shared),
+                        "-PkotlinVersion=2.1.0", *test_tasks, ":adapter:installDist",
+                        "--console=plain", "--max-workers=2", "--no-daemon",
+                        *managed_arguments,
+                        *(["--offline"] if os.environ.get("KODA_TOOL_OFFLINE") == "1" else [])],
+                       env=build_environment, check=True)
         distribution = source / "adapter/build/install/adapter"
         shutil.copy2(source / "LICENSE", distribution / "LICENSE.txt")
         shutil.copy2(shared / "LICENSE.txt", distribution / "KOTLIN-SERVER-LICENSE.txt")
+        for name, build in (("adapter", source), ("shared", shared)):
+            metadata = build / "gradle/verification-metadata.xml"
+            if metadata.is_file():
+                shutil.copy2(metadata, distribution / (name + "-download-receipts.xml"))
         (distribution / ".revision").write_text(VERSION + "\n")
         (distribution / "SOURCE.txt").write_text(f"https://github.com/fwcd/kotlin-debug-adapter/tree/{REVISION}\nShared dependency: {SHARED_REVISION}\nPatch: script/android-kotlin-debugger.patch\n")
         distribution.rename(installation)

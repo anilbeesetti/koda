@@ -1,0 +1,301 @@
+#!/usr/bin/env python3
+"""Compile and exercise the production shared Android import validator offline.
+
+Requires an installed JDK 21 or later and Gradle distribution containing the embedded Kotlin
+compiler and kotlinx.serialization JSON jars (Gradle 9.6.1 is known to work).
+The validator is extracted unchanged from android-kotlin-official.patch; only its
+upstream metadata types are replaced by test stubs. This does not start an LSP or
+verify editor navigation. Use test-kotlin-lsp for those integration checks.
+"""
+
+import argparse
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+
+
+REPOSITORY = Path(__file__).resolve().parent.parent
+DECLARATION = "private fun sharedGeneratedSources("
+
+STUBS = r"""import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlinx.serialization.json.*
+
+data class Options(
+    val systemProperties: Map<String, String> = emptyMap(),
+    val environment: Map<String, String> = emptyMap(),
+)
+data class WorkspaceImportParameters(val projectDirectory: Path, val options: Options)
+data class GradleProject(val path: String, val projectDirectory: File, val buildTreePath: String?)
+data class ImportedModule(val name: String, val gradleProject: GradleProject)
+data class IncludedProject(val modules: List<ImportedModule>)
+data class AndroidProject(val buildTreePath: String, val activeVariant: String?)
+data class ProjectMetadata(
+    val includedProjects: List<IncludedProject>,
+    val androidProjects: Map<String, AndroidProject>,
+)
+"""
+
+HARNESS = r"""
+private class Fixture(val root: Path) {
+    val app = root.resolve("app").toFile().apply { check(mkdirs()) }
+    val source = app.resolve("src/main/kotlin").toPath()
+    val model = root.resolve("model.json").toFile()
+    val options get() = Options(environment = mapOf("LSP_ANDROID_MODEL" to model.path))
+
+    fun metadata(
+        buildTreePath: String? = ":app",
+        activeVariant: String? = "demoDebug",
+        includeAndroid: Boolean = true,
+    ): ProjectMetadata = ProjectMetadata(
+        listOf(IncludedProject(listOf(ImportedModule("fixture.app", GradleProject(":app", app, buildTreePath))))),
+        if (includeAndroid) mapOf("fixture.app" to AndroidProject(":app", activeVariant)) else emptyMap(),
+    )
+
+    fun source(path: Path = source, generated: Boolean = false, kind: String = "kotlin"): JsonObject = buildJsonObject {
+        put("kind", kind)
+        put("path", path.toString())
+        put("generated", generated)
+    }
+
+    fun module(
+        directory: File = app,
+        kind: String = "application",
+        variant: String = "demoDebug",
+        sources: List<JsonObject> = listOf(source()),
+    ): JsonObject = buildJsonObject {
+        put("project", ":app")
+        put("directory", directory.path)
+        put("kind", kind)
+        put("variant", variant)
+        putJsonArray("components") {
+            add(buildJsonObject { put("sources", JsonArray(sources)) })
+        }
+    }
+
+    fun evaluate(
+        records: List<JsonObject> = listOf(module()),
+        metadata: ProjectMetadata = metadata(),
+        options: Options = this.options,
+    ): Map<Path, Boolean> {
+        model.writeText(JsonArray(records).toString())
+        return sharedGeneratedSources(WorkspaceImportParameters(root, options), metadata)
+    }
+
+    fun expected(generated: Boolean = false) = mapOf(source.toFile().canonicalFile.toPath() to generated)
+}
+
+private fun rejected(message: String? = null, action: () -> Unit) {
+    try {
+        action()
+    } catch (error: IllegalArgumentException) {
+        if (message != null) check(error.message?.contains(message) == true) {
+            "Expected diagnostic '$message', received '${error.message}'"
+        }
+        return
+    }
+    error("Invalid shared model was accepted")
+}
+
+fun main(arguments: Array<String>) {
+    val selectedCases = arguments.toSet()
+    val root = Files.createTempDirectory("koda-import-contract-")
+    var passed = 0
+    val cases = linkedMapOf<String, (Fixture) -> Unit>(
+        "no-model" to { fixture ->
+            val metadata = ProjectMetadata(emptyList(), emptyMap())
+            check(sharedGeneratedSources(WorkspaceImportParameters(fixture.root, Options()), metadata).isEmpty())
+        },
+        "blank-model" to { fixture ->
+            check(fixture.evaluate(options = Options(environment = mapOf("LSP_ANDROID_MODEL" to " "))).isEmpty())
+        },
+        "system-property-precedence" to { fixture ->
+            check(fixture.evaluate(options = Options(
+                systemProperties = mapOf("lsp.android.model" to fixture.model.path),
+                environment = mapOf("LSP_ANDROID_MODEL" to fixture.root.resolve("absent.json").toString()),
+            )) == fixture.expected())
+        },
+        "android-module" to { fixture -> check(fixture.evaluate() == fixture.expected()) },
+        "missing-build-tree-path" to { fixture ->
+            check(fixture.evaluate(metadata = fixture.metadata(buildTreePath = null)) == fixture.expected())
+        },
+        "different-build-tree-path" to { fixture ->
+            check(fixture.evaluate(metadata = fixture.metadata(buildTreePath = ":included:app")) == fixture.expected())
+        },
+        "android-multiplatform-module" to { fixture ->
+            check(fixture.evaluate(
+                records = listOf(fixture.module(kind = "library", variant = "androidMain")),
+                metadata = fixture.metadata(buildTreePath = null, activeVariant = "androidMain"),
+            ) == fixture.expected())
+        },
+        "included-build-path-collision" to { fixture ->
+            val metadata = fixture.metadata()
+            check(fixture.evaluate(metadata = metadata.copy(androidProjects = metadata.androidProjects +
+                ("included.app" to AndroidProject(":app", "release")))) == fixture.expected())
+        },
+        "missing-android-metadata" to { fixture ->
+            rejected("Android module :app was not imported") {
+                fixture.evaluate(metadata = fixture.metadata(includeAndroid = false))
+            }
+        },
+        "unrelated-android-module" to { fixture ->
+            val metadata = fixture.metadata().copy(androidProjects = mapOf("other.app" to AndroidProject(":app", "demoDebug")))
+            rejected("Android module :app was not imported") { fixture.evaluate(metadata = metadata) }
+        },
+        "wrong-variant" to { fixture ->
+            rejected("Android variant mismatch in :app: Koda selected demoDebug, LSP imported release") {
+                fixture.evaluate(metadata = fixture.metadata(activeVariant = "release"))
+            }
+        },
+        "missing-active-variant" to { fixture ->
+            rejected("LSP imported none") { fixture.evaluate(metadata = fixture.metadata(activeVariant = null)) }
+        },
+        "duplicate-module" to { fixture ->
+            rejected { fixture.evaluate(records = listOf(fixture.module(), fixture.module())) }
+        },
+        "different-module-directory" to { fixture ->
+            rejected { fixture.evaluate(records = listOf(fixture.module(directory = fixture.root.resolve("other").toFile()))) }
+        },
+        "ambiguous-imported-module" to { fixture ->
+            val metadata = fixture.metadata()
+            val imported = metadata.includedProjects.single().modules.single()
+            rejected { fixture.evaluate(metadata = metadata.copy(includedProjects = listOf(IncludedProject(listOf(imported, imported))))) }
+        },
+        "outside-source" to { fixture ->
+            rejected { fixture.evaluate(records = listOf(fixture.module(sources = listOf(fixture.source(path = fixture.root.parent.resolve("outside")))))) }
+        },
+        "sibling-prefix-source" to { fixture ->
+            val sibling = fixture.root.resolveSibling(fixture.root.fileName.toString() + "-outside")
+            rejected { fixture.evaluate(records = listOf(fixture.module(sources = listOf(fixture.source(path = sibling))))) }
+        },
+        "relative-source" to { fixture ->
+            rejected { fixture.evaluate(records = listOf(fixture.module(sources = listOf(fixture.source(path = Path.of("src/main/kotlin")))))) }
+        },
+        "symlink-escape" to { fixture ->
+            val outside = Files.createTempDirectory("koda-import-outside-")
+            try {
+                val link = Files.createSymbolicLink(fixture.root.resolve("escaped"), outside)
+                rejected { fixture.evaluate(records = listOf(fixture.module(sources = listOf(fixture.source(path = link.resolve("kotlin")))))) }
+            } finally {
+                outside.toFile().deleteRecursively()
+            }
+        },
+        "generated-source-or" to { fixture ->
+            val sources = listOf(fixture.source(), fixture.source(generated = true), fixture.source())
+            check(fixture.evaluate(records = listOf(fixture.module(sources = sources))) == fixture.expected(generated = true))
+        },
+        "java-source" to { fixture ->
+            check(fixture.evaluate(records = listOf(fixture.module(sources = listOf(fixture.source(kind = "java"))))) == fixture.expected())
+        },
+        "non-code-source" to { fixture ->
+            val ignored = buildJsonObject { put("kind", "res") }
+            check(fixture.evaluate(records = listOf(fixture.module(sources = listOf(ignored)))).isEmpty())
+        },
+        "jvm-module" to { fixture ->
+            check(fixture.evaluate(records = listOf(fixture.module(kind = "jvm")), metadata = fixture.metadata(includeAndroid = false)) == fixture.expected())
+        },
+        "missing-generated-flag" to { fixture ->
+            val source = JsonObject(fixture.source().filterKeys { it != "generated" })
+            rejected { fixture.evaluate(records = listOf(fixture.module(sources = listOf(source)))) }
+        },
+        "missing-project-field" to { fixture ->
+            rejected { fixture.evaluate(records = listOf(JsonObject(fixture.module().filterKeys { it != "project" }))) }
+        },
+        "non-array-model" to { fixture ->
+            fixture.model.writeText("{}")
+            rejected { sharedGeneratedSources(WorkspaceImportParameters(fixture.root, fixture.options), fixture.metadata()) }
+        },
+        "malformed-json" to { fixture ->
+            fixture.model.writeText("[{")
+            rejected { sharedGeneratedSources(WorkspaceImportParameters(fixture.root, fixture.options), fixture.metadata()) }
+        },
+    )
+    try {
+        check(selectedCases.all { it in cases }) { "Unknown cases: ${selectedCases - cases.keys}" }
+        for ((name, action) in cases) {
+            if (selectedCases.isNotEmpty() && name !in selectedCases) continue
+            val directory = Files.createDirectory(root.resolve(name))
+            try {
+                action(Fixture(directory))
+                passed++
+                println("PASS $name")
+            } catch (error: Throwable) {
+                System.err.println("FAIL $name: ${error.message}")
+                throw error
+            }
+        }
+        println("Shared Android import validator: $passed checks passed")
+    } finally {
+        check(root.toFile().deleteRecursively()) { "Could not remove test fixtures at $root" }
+    }
+}
+"""
+
+
+def extract_validator(patch):
+    lines = patch.read_text().splitlines()
+    starts = [index for index, line in enumerate(lines) if line.startswith("+" + DECLARATION)]
+    if len(starts) != 1:
+        raise ValueError(f"Expected one added {DECLARATION} definition in {patch}")
+    function = []
+    for line in lines[starts[0]:]:
+        if not line.startswith("+") or line.startswith("+++"):
+            break
+        function.append(line[1:])
+        if line == "+}":
+            return "\n".join(function) + "\n"
+    raise ValueError(f"Incomplete added sharedGeneratedSources function in {patch}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--gradle-home", required=True, type=Path, help="Installed Gradle distribution; nothing is downloaded")
+    parser.add_argument("--java-home", type=Path, default=os.environ.get("JAVA_HOME"), help="Installed JDK (defaults to JAVA_HOME)")
+    parser.add_argument("--patch", type=Path, default=REPOSITORY / "script/android-kotlin-official.patch", help="Production patch to exercise")
+    parser.add_argument("--case", action="append", default=[], help="Run only the named contract case; may be repeated")
+    arguments = parser.parse_args()
+    if arguments.java_home is None:
+        parser.error("--java-home or JAVA_HOME is required")
+    java = arguments.java_home / "bin" / ("java.exe" if os.name == "nt" else "java")
+    if not java.is_file():
+        parser.error(f"Java executable not found: {java}")
+    # Restrict the classpath to compiler dependencies, keeping Java's command line
+    # below platform limits even when the distribution lives in a long cache path.
+    prefixes = ("kotlin-", "kotlinx-", "annotations-", "trove4j-", "fastutil-")
+    libraries = sorted(path for path in (arguments.gradle_home / "lib").glob("*.jar") if path.name.startswith(prefixes))
+    for prefix in ("kotlin-compiler-embeddable-", "kotlin-stdlib-", "kotlinx-serialization-core-jvm-", "kotlinx-serialization-json-jvm-"):
+        if not any(path.name.startswith(prefix) for path in libraries):
+            parser.error(f"Gradle distribution does not contain {prefix}*.jar: {arguments.gradle_home}")
+    classpath = os.pathsep.join(str(path.resolve()) for path in libraries)
+    environment = os.environ.copy()
+    # An unrelated shell-exported model must not alter no-model and precedence checks.
+    environment.pop("LSP_ANDROID_MODEL", None)
+    with tempfile.TemporaryDirectory(prefix="koda-import-compiler-") as directory:
+        directory = Path(directory)
+        source = directory / "ImporterContract.kt"
+        source.write_text(STUBS + extract_validator(arguments.patch) + HARNESS)
+        classes = directory / "classes"
+        run([
+            str(java), "-Xmx768m", "-cp", classpath, "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler",
+            "-no-stdlib", "-no-reflect", "-jvm-target", "21", "-classpath", classpath,
+            "-d", str(classes), str(source),
+        ], environment, timeout=180, stage="Kotlin compiler")
+        run([
+            str(java), "-Xmx256m", "-cp", str(classes) + os.pathsep + classpath,
+            "ImporterContractKt", *arguments.case,
+        ], environment, timeout=30, stage="Importer contract tests")
+
+
+def run(command, environment, timeout, stage):
+    try:
+        subprocess.run(command, env=environment, check=True, timeout=timeout)
+    except subprocess.CalledProcessError as error:
+        raise SystemExit(f"{stage} exited with status {error.returncode}")
+    except subprocess.TimeoutExpired:
+        raise SystemExit(f"{stage} exceeded its {timeout}-second timeout")
+
+
+if __name__ == "__main__":
+    main()

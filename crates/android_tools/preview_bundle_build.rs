@@ -30,8 +30,8 @@ struct Manifest {
     protocol: String,
     artifacts: Vec<InstalledArtifact>,
     compiler: Artifact,
-    java: BTreeMap<String, Artifact>,
-    java_source: String,
+    build_java: BTreeMap<String, Artifact>,
+    build_java_source: String,
     layoutlib: BTreeMap<String, Artifact>,
 }
 
@@ -73,13 +73,9 @@ pub fn build() -> Result<()> {
         .next()
         .context("Missing build host architecture")?;
     let host_java = manifest
-        .java
+        .build_java
         .get(&format!("{host_os}-{host_arch}"))
         .context("No pinned Java runtime for the build host")?;
-    let target_java = manifest
-        .java
-        .get(&platform)
-        .context("No pinned preview Java runtime")?;
     let output = PathBuf::from(env::var_os("OUT_DIR").context("Missing OUT_DIR")?);
     let cache = env::var_os("KODA_COMPOSE_PREVIEW_ARTIFACT_CACHE")
         .map(PathBuf::from)
@@ -89,6 +85,14 @@ pub fn build() -> Result<()> {
         .unwrap_or_else(|| output.join("downloads"));
     fs::create_dir_all(&cache)?;
     let client = reqwest::blocking::Client::builder()
+        .https_only(true)
+        .redirect(reqwest::redirect::Policy::custom(|attempt| {
+            if attempt.url().scheme() != "https" || attempt.previous().len() >= 10 {
+                attempt.error("Unsafe Compose preview download redirect")
+            } else {
+                attempt.follow()
+            }
+        }))
         .connect_timeout(Duration::from_secs(30))
         .timeout(Duration::from_secs(600))
         .user_agent("Koda-Compose-Preview-Build")
@@ -106,25 +110,13 @@ pub fn build() -> Result<()> {
     ZipArchive::new(fs::File::open(download(&client, &cache, native)?)?)?
         .extract(distribution.join("layoutlib"))?;
     sources.push(native.url.clone());
+    let compiler_java = staging.path().join("host-java");
     unpack_java(
-        &download(&client, &cache, target_java)?,
-        &target_java.url,
-        &distribution.join("java"),
+        &download(&client, &cache, host_java)?,
+        &host_java.url,
+        &compiler_java,
         staging.path(),
     )?;
-    sources.push(target_java.url.clone());
-    let compiler_java = if target_java.sha256 == host_java.sha256 {
-        distribution.join("java")
-    } else {
-        let directory = staging.path().join("host-java");
-        unpack_java(
-            &download(&client, &cache, host_java)?,
-            &host_java.url,
-            &directory,
-            staging.path(),
-        )?;
-        directory
-    };
     let compiler = download(&client, &cache, &manifest.compiler)?;
     let java_name = if host_os == "windows" {
         "java.exe"
@@ -154,8 +146,8 @@ pub fn build() -> Result<()> {
     fs::write(
         distribution.join("SOURCE.txt"),
         format!(
-            "Google Android tooling: Apache-2.0; preserve JAR and layoutlib notices.\nEclipse Temurin: GPL-2.0 with Classpath Exception; licenses are in java/legal.\nCorresponding Java source: {}\nBuild compiler (not shipped): {}\n{}\n",
-            manifest.java_source,
+            "Google Android tooling: Apache-2.0; preserve JAR and layoutlib notices.\nJava 21 is selected through Android Setup and is not bundled.\nBuild-only Java source (not shipped): {}\nBuild compiler (not shipped): {}\n{}\n",
+            manifest.build_java_source,
             manifest.compiler.url,
             sources.join("\n")
         ),
@@ -191,7 +183,21 @@ fn download(
     cache: &Path,
     artifact: &Artifact,
 ) -> Result<PathBuf> {
+    ensure!(
+        artifact.url.starts_with("https://")
+            && artifact.sha256.len() == 64
+            && artifact.sha256.bytes().all(|byte| byte.is_ascii_hexdigit()),
+        "Invalid pinned preview artifact"
+    );
     let path = cache.join(&artifact.sha256);
+    if let Ok(metadata) = fs::symlink_metadata(&path) {
+        ensure!(
+            metadata.is_file()
+                && !metadata.file_type().is_symlink()
+                && metadata.len() <= 2 * 1024 * 1024 * 1024,
+            "Unsafe preview artifact cache entry"
+        );
+    }
     let lock = fs::OpenOptions::new()
         .read(true)
         .write(true)
@@ -214,9 +220,21 @@ fn download(
     let mut last_error = None;
     for _ in 0..3 {
         let result = (|| {
-            let mut response = client.get(&artifact.url).send()?.error_for_status()?;
+            let response = client.get(&artifact.url).send()?.error_for_status()?;
+            ensure!(
+                response.url().scheme() == "https",
+                "Unsafe preview artifact URL"
+            );
             let mut temporary = tempfile::NamedTempFile::new_in(cache)?;
-            io::copy(&mut response, &mut temporary)?;
+            let maximum = 2 * 1024 * 1024 * 1024;
+            ensure!(
+                response.content_length().is_none_or(|size| size <= maximum),
+                "Preview artifact exceeds 2 GiB"
+            );
+            ensure!(
+                io::copy(&mut response.take(maximum + 1), &mut temporary)? <= maximum,
+                "Preview artifact exceeds 2 GiB"
+            );
             temporary.flush()?;
             ensure!(
                 hash_file(temporary.path())? == artifact.sha256,
@@ -379,7 +397,21 @@ fn bundle(root: &Path, output: &fs::File) -> Result<()> {
         if name.starts_with("java/bin/") || name == "java/lib/jspawnhelper" {
             options = options.unix_permissions(0o755);
         }
-        sizes.insert(name.clone(), fs::metadata(&path)?.len());
+        let mode = if name.starts_with("java/bin/") || name == "java/lib/jspawnhelper" {
+            0o755
+        } else {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt as _;
+                fs::metadata(&path)?.permissions().mode() & 0o777
+            }
+            #[cfg(not(unix))]
+            {
+                0o644
+            }
+        };
+        options = options.unix_permissions(mode);
+        sizes.insert(name.clone(), serde_json::json!({"size": fs::metadata(&path)?.len(), "sha256": hash_file(&path)?, "mode": mode}));
         archive.start_file(name, options)?;
         io::copy(&mut fs::File::open(path)?, &mut archive)?;
     }

@@ -120,6 +120,15 @@ impl Child {
         Ok(())
     }
 
+    pub fn kill_process_only(&mut self) -> Result<()> {
+        // SDK clients can start a shared ADB server that must survive this client.
+        self.preserve_descendants()?;
+        if self.process.try_status()?.is_none() {
+            self.process.kill()?;
+        }
+        Ok(())
+    }
+
     #[cfg(not(windows))]
     pub fn kill(&mut self) -> Result<()> {
         let pid = self.process.id();

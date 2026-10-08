@@ -60,6 +60,10 @@ class KotlinBootstrapTests(unittest.TestCase):
                 for path in distribution.rglob("*"):
                     archive.write(path, path.relative_to(temporary))
             checksum = hashlib.sha256(source.read_bytes()).hexdigest()
+            def local_response(*args, **kwargs):
+                response = source.open("rb")
+                response.url = "https://example.test/pinned.zip"
+                return response
             def patch_fixture(distribution, temporary):
                 server = distribution / f"kotlin-server-{bootstrap['OFFICIAL_VERSION']}"
                 module_path = "plugins/kotlin.lsp/lib/modules/language-server.workspace-import.gradle-plugin.jar"
@@ -87,9 +91,9 @@ class KotlinBootstrapTests(unittest.TestCase):
                     "additional_modules": additional_modules,
                 }))
 
-            with patch.dict(bootstrap["main"].__globals__, {
+            with patch("urllib.request.urlopen", side_effect=local_response), patch.dict(bootstrap["main"].__globals__, {
                 "DEPENDENCIES": dependencies, "OFFICIAL_INSTALLATION": installation,
-                "OFFICIAL_URL": source.as_uri(), "OFFICIAL_SHA256": checksum,
+                "OFFICIAL_URL": "https://example.test/pinned.zip", "OFFICIAL_SHA256": checksum,
                 "patch_official": patch_fixture,
             }):
                 bootstrap["main"]()
@@ -133,8 +137,8 @@ class KotlinBootstrapTests(unittest.TestCase):
                         bootstrap["main"]()
                 cached = dependencies / bootstrap["OFFICIAL_ARCHIVE"]
                 cached.write_bytes(b"corrupted archive")
-                with self.assertRaisesRegex(RuntimeError, "Checksum mismatch"):
-                    bootstrap["download"](cached.name, source.as_uri(), checksum)
+                bootstrap["download"](cached.name, "https://example.test/pinned.zip", checksum)
+                self.assertEqual(hashlib.sha256(cached.read_bytes()).hexdigest(), checksum)
 
     def test_installer_rejects_community_backend(self):
         result = subprocess.run(
@@ -283,7 +287,11 @@ class KotlinBootstrapTests(unittest.TestCase):
             self.assertIn("Missing official Kotlin LSP", launch().stderr)
             environment.pop("ANDROID_IDE_OFFICIAL_KOTLIN_SERVER")
             official.unlink()
-            self.assertIn("Missing official Kotlin LSP", launch().stderr)
+            settings.unlink()
+            result = launch()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIsNone(json.loads(result.stdout.splitlines()[-1])["ANDROID_IDE_OFFICIAL_KOTLIN_SERVER"])
+            self.assertNotIn("lsp", json.loads(settings.read_text()))
 
 
 if __name__ == "__main__":

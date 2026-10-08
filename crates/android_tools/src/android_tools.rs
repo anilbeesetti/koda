@@ -1,6 +1,10 @@
+pub mod deployment;
 pub mod logcat;
+pub mod managed;
 pub mod preview;
 pub mod project_model;
+pub mod provision;
+pub(crate) mod shared_sdk;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
 pub mod kotlin;
@@ -132,6 +136,12 @@ fn sdk_tool_path(directory: &str, name: &str) -> Result<PathBuf> {
     } else {
         name.to_owned()
     };
+    if let Some(root) = managed::environment()?.sdk {
+        provision::validate_managed_path(&root)?;
+        let path = root.join(directory).join(&executable);
+        managed::executable(&path).with_context(|| format!("Saved Android SDK is missing {directory}/{executable}. Run Android: Setup from the command palette, then choose an SDK folder in Change settings."))?;
+        return Ok(path);
+    }
     for variable in ["ANDROID_HOME", "ANDROID_SDK_ROOT"] {
         if let Some(root) = env::var_os(variable).filter(|value| !value.is_empty()) {
             let path = PathBuf::from(root).join(directory).join(&executable);
@@ -158,7 +168,32 @@ fn sdk_tool_path(directory: &str, name: &str) -> Result<PathBuf> {
             return Ok(path);
         }
     }
-    bail!("{executable} was not found. Install Android SDK {directory} and set ANDROID_HOME.")
+    bail!(
+        "{executable} was not found. Install Android SDK {directory} with Android Studio, then run Android: Setup from the command palette to choose its SDK folder."
+    )
+}
+
+pub fn sdk_root() -> Option<PathBuf> {
+    let selected = managed::environment().ok()?;
+    if let Some(path) = selected.sdk {
+        provision::validate_managed_path(&path).ok()?;
+        provision::validate_selected_sdk(&path, selected.sdk_api_level).ok()?;
+        return path.is_dir().then_some(path);
+    }
+    for variable in ["ANDROID_HOME", "ANDROID_SDK_ROOT"] {
+        if let Some(path) = env::var_os(variable).filter(|value| !value.is_empty()) {
+            return Some(PathBuf::from(path));
+        }
+    }
+    let home = dirs::home_dir()?;
+    let path = home.join(if cfg!(target_os = "macos") {
+        "Library/Android/sdk"
+    } else if cfg!(windows) {
+        "AppData/Local/Android/Sdk"
+    } else {
+        "Android/Sdk"
+    });
+    path.is_dir().then_some(path)
 }
 
 pub fn parse_emulators(output: &str) -> Result<Vec<String>> {
@@ -180,11 +215,6 @@ pub fn parse_emulators(output: &str) -> Result<Vec<String>> {
     names.sort();
     names.dedup();
     Ok(names)
-}
-
-pub fn android_cli_path() -> Result<PathBuf> {
-    which::which("android")
-        .context("Android CLI was not found. Install Google's Android CLI and add it to PATH.")
 }
 
 pub fn is_gradle_project(root: &Path) -> bool {
@@ -324,10 +354,6 @@ impl AndroidTarget {
                         && path.extension().is_some_and(|extension| extension == "apk"),
                     "APK output is not an APK inside its metadata directory"
                 );
-                ensure!(
-                    !path.to_string_lossy().contains(','),
-                    "Android CLI cannot accept an APK path containing a comma"
-                );
                 Ok(path)
             })
             .collect::<Result<Vec<_>>>()?;
@@ -336,70 +362,6 @@ impl AndroidTarget {
             application_id: metadata.application_id,
         })
     }
-}
-
-// ponytail: Android CLI 1.0 exposes targets as text; replace this adapter when it offers a versioned JSON command.
-pub fn parse_targets(output: &str) -> Result<Vec<AndroidTarget>> {
-    let mut module = None;
-    let mut variant = None;
-    let mut targets = Vec::new();
-    for line in output.lines().map(str::trim) {
-        if let Some(value) = line.strip_prefix("Task: ") {
-            ensure!(
-                value.starts_with(':')
-                    && value
-                        .chars()
-                        .all(|character| character.is_ascii_alphanumeric()
-                            || ":_-.$".contains(character)),
-                "Android CLI returned an invalid Gradle module path"
-            );
-            module = Some(value.to_owned());
-            variant = None;
-        } else if let Some(value) = line.strip_prefix("Variant: ") {
-            ensure!(
-                !value.is_empty()
-                    && value
-                        .chars()
-                        .all(|character| character.is_ascii_alphanumeric()
-                            || matches!(character, '_' | '-')),
-                "Android CLI returned an invalid variant name"
-            );
-            variant = Some(value.to_owned());
-        } else if let Some(value) = line.strip_prefix("Output Listing File: ") {
-            if value == "null" || value.is_empty() {
-                continue;
-            }
-            let output_listing = PathBuf::from(value);
-            ensure!(
-                output_listing.is_absolute(),
-                "Android CLI returned a relative APK listing path"
-            );
-            let target = AndroidTarget {
-                module: module
-                    .clone()
-                    .context("Android CLI returned a target without a module")?,
-                variant: variant
-                    .clone()
-                    .context("Android CLI returned a target without a variant")?,
-                output_listing,
-            };
-            ensure!(
-                !targets
-                    .iter()
-                    .any(|previous: &AndroidTarget| previous.module == target.module
-                        && previous.variant == target.variant),
-                "Android CLI returned duplicate build targets"
-            );
-            targets.push(target);
-        }
-    }
-    ensure!(
-        !targets.is_empty(),
-        "No Android application variants were found. Open a Gradle project with an Android application module and sync again."
-    );
-    targets
-        .sort_by(|left, right| (&left.module, &left.variant).cmp(&(&right.module, &right.variant)));
-    Ok(targets)
 }
 
 #[derive(Deserialize)]
@@ -697,18 +659,23 @@ mod tests {
         let metadata_path = directory.path().join("output-metadata.json");
         let original: serde_json::Value = serde_json::from_slice(&fs::read(&metadata_path)?)?;
         fs::write(directory.path().join("selected.txt"), b"fixture")?;
-        fs::write(directory.path().join("comma,apk.apk"), b"fixture")?;
         for file in [
             "../outside.apk",
             "/tmp/outside.apk",
             "missing.apk",
             "selected.txt",
-            "comma,apk.apk",
         ] {
             let mut metadata = original.clone();
             metadata["elements"][0]["outputFile"] = file.into();
             fs::write(&metadata_path, serde_json::to_vec(&metadata)?)?;
             assert!(selected_file(&target, &["x86_64"]).is_err());
+        }
+        for file in ["comma,apk.apk", "app 日本語 release.apk"] {
+            fs::write(directory.path().join(file), b"fixture")?;
+            let mut metadata = original.clone();
+            metadata["elements"][0]["outputFile"] = file.into();
+            fs::write(&metadata_path, serde_json::to_vec(&metadata)?)?;
+            assert_eq!(selected_file(&target, &["x86_64"])?, file);
         }
         #[cfg(unix)]
         {
@@ -787,12 +754,11 @@ mod tests {
         assert!(is_gradle_project(&root));
         assert!(!is_gradle_project(directory.path()));
         let output_listing = root.join("redirect.txt");
-        let description = format!(
-            "Task: :mobile:application\n  Variants:\n    Variant: freeDebug\n      Output Listing File: {}\n",
-            output_listing.display()
-        );
-        let targets = parse_targets(&description)?;
-        let target = targets.first().context("Expected the described target")?;
+        let target = AndroidTarget {
+            module: ":mobile:application".into(),
+            variant: "freeDebug".into(),
+            output_listing: output_listing.clone(),
+        };
         assert_eq!(
             target.gradle_task("assemble", ""),
             ":mobile:application:assembleFreeDebug"
@@ -801,23 +767,6 @@ mod tests {
             target.gradle_task("test", "UnitTest"),
             ":mobile:application:testFreeDebugUnitTest"
         );
-        assert!(
-            parse_targets("Task: :app\n Variant: debug\n Output Listing File: relative.json")
-                .is_err()
-        );
-        assert!(parse_targets("Output Listing File: /tmp/metadata.json").is_err());
-        assert!(parse_targets("No variants").is_err());
-        let hyphenated = parse_targets(&format!(
-            "Task: :app\n Variant: debug-non-debuggable\n Output Listing File: {}\n",
-            output_listing.display()
-        ))?;
-        assert_eq!(
-            hyphenated
-                .first()
-                .map(|target| target.gradle_task("assemble", "")),
-            Some(":app:assembleDebug-non-debuggable".into())
-        );
-        assert!(parse_targets(&format!("{description}{description}")).is_err());
         assert!(target.apk_paths().is_err());
 
         fs::write(

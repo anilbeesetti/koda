@@ -16,7 +16,7 @@ def main():
     parser.add_argument("--project", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--installation", type=Path, default=os.environ.get("ANDROID_IDE_COMPOSE_PREVIEW"))
-    parser.add_argument("--java-home", type=Path, help="Override the bundled renderer Java runtime")
+    parser.add_argument("--java-home", type=Path, help="JDK 21 home for the renderer (defaults to JAVA21_HOME or JAVA_HOME)")
     parser.add_argument("--module", default=":mobile")
     parser.add_argument("--variant", default="demoDebug")
     parser.add_argument("--source", default="mobile/src/main/kotlin/dev/zed/androidsample/PreviewGallery.kt")
@@ -37,9 +37,15 @@ def main():
         raise RuntimeError("Could not find the production Gradle exporter")
     init = output / "export.gradle"
     init.write_text(exporter.group(1))
-    java_home = args.java_home.resolve(strict=True) if args.java_home else installation / "java"
+    selected_java = args.java_home or os.environ.get("JAVA21_HOME") or os.environ.get("JAVA_HOME")
+    if not selected_java:
+        parser.error("Pass --java-home with a full JDK 21; Java is not bundled with Preview")
+    java_home = Path(selected_java).resolve(strict=True)
+    compiler = java_home / "bin" / ("javac.exe" if os.name == "nt" else "javac")
+    if not compiler.is_file():
+        parser.error("The selected Java home is not a full JDK (bin/javac is missing)")
     java = java_home / "bin" / ("java.exe" if os.name == "nt" else "java")
-    # Gradle uses the project's JDK; the bundled JRE only runs the renderer.
+    # The renderer uses the same selected JDK 21 as Koda setup.
     environment = dict(os.environ)
     java_args = [str(java), "-Xmx2g", "-Djava.awt.headless=true",
                  "-Dkotlinx.coroutines.fast.service.loader=false", "--enable-native-access=ALL-UNNAMED",
