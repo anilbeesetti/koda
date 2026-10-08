@@ -1786,7 +1786,10 @@ mod tests {
                 assert_eq!(captured, input);
                 let expected = parse_model(&input, &root)?;
                 let actual = parse_model(&captured, &root)?;
-                assert_eq!(actual, expected);
+                assert_eq!(
+                    serde_json::to_value(&actual)?,
+                    serde_json::to_value(&expected)?
+                );
                 assert_eq!(lines.len(), 2);
                 if v2 {
                     let snapshot = parse_generated_artifacts(&captured, &actual, 8, &consumer)?;
