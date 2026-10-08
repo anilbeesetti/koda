@@ -1130,8 +1130,11 @@ impl Panel for BuildPanel {
     fn default_size(&self, _: &Window, _: &App) -> Pixels {
         px(320.)
     }
-    fn icon(&self, _: &Window, _: &App) -> Option<IconName> {
-        Some(IconName::ToolHammer)
+    fn enabled(&self, cx: &App) -> bool {
+        crate::project_surfaces::build_window_available(&self.workspace, cx)
+    }
+    fn icon(&self, _: &Window, cx: &App) -> Option<IconName> {
+        self.enabled(cx).then_some(IconName::ToolHammer)
     }
     fn icon_tooltip(&self, _: &Window, _: &App) -> Option<&'static str> {
         Some("Build")

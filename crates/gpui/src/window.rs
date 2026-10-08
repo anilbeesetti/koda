@@ -6564,6 +6564,17 @@ impl Window {
     /// Returns all available actions for the focused element.
     pub fn available_actions(&self, cx: &App) -> Vec<Box<dyn Action>> {
         let node_id = self.focus_node_id_in_rendered_frame(self.focus);
+        self.available_actions_at(node_id, cx)
+    }
+
+    /// Returns available actions for a particular element without moving focus.
+    /// A released or detached element resolves to this window's root dispatch path.
+    pub fn available_actions_in(&self, focus_handle: &FocusHandle, cx: &App) -> Vec<Box<dyn Action>> {
+        let node_id = self.focus_node_id_in_rendered_frame(Some(focus_handle.id));
+        self.available_actions_at(node_id, cx)
+    }
+
+    fn available_actions_at(&self, node_id: DispatchNodeId, cx: &App) -> Vec<Box<dyn Action>> {
         let mut actions = self.rendered_frame.dispatch_tree.available_actions(node_id);
         for action_type in cx.global_action_listeners.keys() {
             if let Err(ix) = actions.binary_search_by_key(action_type, |a| a.as_any().type_id()) {

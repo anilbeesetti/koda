@@ -5,6 +5,7 @@ mod android_logcat_panel;
 mod android_preview;
 mod android_status;
 mod project_context;
+mod project_surfaces;
 pub mod tabbed_toolbar;
 
 use android_build::{BuildEvent, BuildStatus, BuildTab, ProcessOutput};
@@ -27,6 +28,7 @@ use gpui::{
 };
 use project::{Project, TaskSourceKind, WorktreeId, trusted_worktrees::TrustedWorktrees};
 pub use project_context::ImportGradleProject;
+pub use project_surfaces::{ApplicationMenuTemplates, action_available, application_menus, install_application_menus};
 use settings::{IntoGpui, RegisterSetting, Settings};
 use std::{
     collections::HashMap,
@@ -92,90 +94,11 @@ pub fn init(cx: &mut App) {
         project_context::register(workspace, panel.read(cx).build_panel.clone(), window, cx);
         workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
         android_status::register(&panel, window, cx);
-        workspace.add_panel(panel, window, cx);
+        workspace.add_panel(panel.clone(), window, cx);
         let logcat_panel = cx.new(|cx| LogcatPanel::new(workspace, window, cx));
         workspace.add_panel(logcat_panel, window, cx);
-        workspace
-            .register_action(|workspace, _: &ToggleBuild, window, cx| {
-                workspace.toggle_panel_focus::<BuildPanel>(window, cx);
-            })
-            .register_action(|workspace, _: &ToggleFocus, window, cx| {
-                workspace.toggle_panel_focus::<AndroidPanel>(window, cx);
-            })
-            .register_action(|workspace, _: &SyncProject, window, cx| {
-                with_panel(workspace, window, cx, AndroidPanel::sync_project)
-            })
-            .register_action(|workspace, _: &RefreshDevices, window, cx| {
-                with_panel(workspace, window, cx, |panel, _, cx| {
-                    panel.refresh_devices(cx)
-                })
-            })
-            .register_action(|workspace, _: &StopEmulator, window, cx| {
-                with_panel(workspace, window, cx, AndroidPanel::stop_emulator)
-            })
-            .register_action(|workspace, _: &Build, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Build, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &Run, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Run, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &Debug, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Debug, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &Test, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Test, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &Lint, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Lint, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &android_logcat::Toggle, window, cx| {
-                if workspace
-                    .panel::<LogcatPanel>(cx)
-                    .is_some_and(|panel| panel.read(cx).has_views(cx))
-                {
-                    if !workspace.toggle_panel_focus::<LogcatPanel>(window, cx) {
-                        workspace.close_panel::<LogcatPanel>(window, cx);
-                    }
-                } else {
-                    with_panel(workspace, window, cx, AndroidPanel::logcat);
-                }
-            })
-            .register_action(|workspace, _: &Logcat, window, cx| {
-                with_panel(workspace, window, cx, AndroidPanel::logcat)
-            })
-            .register_action(|workspace, _: &ComposePreview, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Preview, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &ToggleComposePreview, window, cx| {
-                android_preview::toggle_preview(workspace, window, cx);
-            })
-            .register_action(|workspace, _: &ConfigureJava, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Java, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &ConfigureKotlin, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Kotlin, window, cx)
-                })
-            })
-            .register_action(|workspace, _: &ConfigureOfficialKotlin, window, cx| {
-                with_panel(workspace, window, cx, |panel, window, cx| {
-                    panel.gradle(GradleOperation::Kotlin, window, cx)
-                })
-            });
+        project_surfaces::register_actions(workspace);
+        project_surfaces::observe_surfaces(&panel, window, cx);
         cx.notify();
     })
     .detach();
@@ -187,24 +110,27 @@ fn with_panel(
     cx: &mut Context<Workspace>,
     callback: impl FnOnce(&mut AndroidPanel, &mut Window, &mut Context<AndroidPanel>) + 'static,
 ) {
+    let Some(controller) = project_context::for_workspace(&workspace.weak_handle(), cx) else { return; };
+    let Some(owner) = controller.read(cx).action_token(cx) else { return; };
     if let Some(panel) = workspace.panel::<AndroidPanel>(cx) {
         // Task scheduling updates the workspace, so wait until its action handler has returned.
         window.defer(cx, move |window, cx| {
-            panel.update(cx, |panel, cx| callback(panel, window, cx))
+            if controller.read(cx).action_is_current(&owner, cx) {
+                panel.update(cx, |panel, cx| callback(panel, window, cx));
+            }
         });
     }
 }
 
 pub fn toolbar(workspace: &WeakEntity<Workspace>, cx: &App) -> Option<Entity<AndroidToolbar>> {
     let workspace = workspace.upgrade()?;
+    if !project_surfaces::SurfaceState::for_workspace(workspace.read(cx), cx).qualified() { return None; }
     let panel = workspace.read(cx).panel::<AndroidPanel>(cx)?;
     Some(panel.read(cx).toolbar.clone())
 }
 
 pub fn can_preview_compose(workspace: &Workspace, cx: &App) -> bool {
-    workspace
-        .panel::<AndroidPanel>(cx)
-        .is_some_and(|panel| panel.read(cx).auto_sync_candidate(cx).is_some())
+    project_surfaces::SurfaceState::for_workspace(workspace, cx).capabilities.android_compose_preview
 }
 
 #[derive(Clone, Copy)]
@@ -283,6 +209,8 @@ fn java_pause_state(parsed: &serde_json::Value) -> Result<Option<JavaPause>> {
 }
 
 pub struct AndroidPanel {
+    surface_state: project_surfaces::SurfaceState,
+    surface_owner: Option<android_tools::project_context::ActiveContextToken>,
     workspace: WeakEntity<Workspace>,
     project: Entity<Project>,
     toolbar: Entity<AndroidToolbar>,
@@ -380,6 +308,8 @@ impl AndroidPanel {
             _subscription: cx.observe(&panel, |_, _, cx| cx.notify()),
         });
         let mut panel = Self {
+            surface_state: Default::default(),
+            surface_owner: None,
             workspace,
             project,
             toolbar,
@@ -2952,218 +2882,140 @@ impl AndroidPanel {
     }
 
     fn render_toolbar(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let state = project_surfaces::SurfaceState::for_panel(self, cx);
         h_flex()
+            .debug_selector(|| "android-toolbar".into())
             .gap_1()
-            .child(
-                IconButton::new("android-tools", IconName::ToolHammer)
-                    .tab_index(0isize)
-                    .aria_label("Android tools")
-                    .tooltip(|_, cx| Tooltip::for_action("Android", &ToggleFocus, cx))
-                    .on_click(|_, window, cx| {
-                        window.dispatch_action(ToggleFocus.boxed_clone(), cx)
-                    }),
-            )
-            .child(self.target_picker("toolbar-target", cx))
-            .child(self.device_picker("toolbar-device", cx))
-            .child(
-                IconButton::new("android-run", IconName::PlayFilled)
-                    .tab_index(0isize)
-                    .aria_label("Run app")
-                    .icon_color(Color::Success)
-                    .disabled(
-                        self.running
-                            || self.syncing
-                            || self.selected_target.is_none()
-                            || !self.can_run_on_selected_device(),
-                    )
-                    .tooltip(|_, cx| Tooltip::for_action("Run app", &Run, cx))
-                    .on_click(cx.listener(|panel, _, window, cx| {
-                        panel.gradle(GradleOperation::Run, window, cx)
-                    })),
-            )
-            .child(
-                IconButton::new("android-debug", IconName::Debug)
-                    .tab_index(0isize)
-                    .aria_label("Debug app")
-                    .disabled(
-                        self.running
-                            || self.syncing
-                            || self.debug_forward.is_some()
-                            || self.selected_target.is_none()
-                            || !self.can_run_on_selected_device(),
-                    )
-                    .tooltip(|_, cx| Tooltip::for_action("Debug app", &Debug, cx))
-                    .on_click(cx.listener(|panel, _, window, cx| {
-                        panel.gradle(GradleOperation::Debug, window, cx)
-                    })),
-            )
-            .child(
+            .when(state.qualified(), |toolbar| {
+                toolbar.child(
+                    IconButton::new("android-tools", IconName::ToolHammer)
+                        .tab_index(0isize)
+                        .aria_label("Project tools")
+                        .tooltip(|_, cx| Tooltip::for_action("Project tools", &ToggleFocus, cx))
+                        .on_click(|_, window, cx| window.dispatch_action(ToggleFocus.boxed_clone(), cx)),
+                )
+            })
+            .when(state.build, |toolbar| toolbar.child(self.target_picker("toolbar-target", cx)))
+            .when(state.capabilities.android_devices, |toolbar| toolbar.child(self.device_picker("toolbar-device", cx)))
+            .when(state.capabilities.android_run, |toolbar| {
+                toolbar
+                    .child(IconButton::new("android-run", IconName::PlayFilled)
+                        .tab_index(0isize).aria_label("Run app").icon_color(Color::Success)
+                        .disabled(self.running || self.syncing || self.selected_target.is_none() || !self.can_run_on_selected_device())
+                        .tooltip(|_, cx| Tooltip::for_action("Run app", &Run, cx))
+                        .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Run, window, cx))))
+                    .child(IconButton::new("android-debug", IconName::Debug)
+                        .tab_index(0isize).aria_label("Debug app")
+                        .disabled(self.running || self.syncing || self.debug_forward.is_some() || self.selected_target.is_none() || !self.can_run_on_selected_device())
+                        .tooltip(|_, cx| Tooltip::for_action("Debug app", &Debug, cx))
+                        .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Debug, window, cx))))
+            })
+            .when(state.build, |toolbar| toolbar.child(
                 IconButton::new("android-build", IconName::ToolHammer)
-                    .tab_index(0isize)
-                    .aria_label("Build selected variant")
+                    .tab_index(0isize).aria_label("Build selected variant")
                     .disabled(self.running || self.syncing || self.selected_target.is_none())
                     .tooltip(|_, cx| Tooltip::for_action("Build selected variant", &Build, cx))
-                    .on_click(cx.listener(|panel, _, window, cx| {
-                        panel.gradle(GradleOperation::Build, window, cx)
-                    })),
-            )
-            .child(
+                    .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Build, window, cx))),
+            ))
+            .when(state.capabilities.android_sync, |toolbar| toolbar.child(
                 IconButton::new("android-sync", IconName::RefreshTitle)
-                    .tab_index(0isize)
-                    .aria_label("Sync Android project")
+                    .tab_index(0isize).aria_label("Sync Android project")
                     .disabled(self.running || self.syncing)
                     .tooltip(|_, cx| Tooltip::for_action("Sync Android project", &SyncProject, cx))
                     .on_click(cx.listener(|panel, _, window, cx| panel.sync_project(window, cx))),
-            )
+            ))
     }
 }
 
 impl Render for AndroidPanel {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let roots = self.roots(cx);
-        let panel = cx.weak_entity();
-        let root_label = self
-            .root
-            .as_ref()
-            .or_else(|| {
-                if roots.len() == 1 {
-                    roots.first()
-                } else {
-                    None
-                }
-            })
-            .and_then(|root| root.file_name())
-            .map(|name| name.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "Select project".into());
-        let project_picker = PopoverMenu::new("android-project")
-            .trigger(
-                Button::new("project", root_label)
-                    .disabled(self.running || self.syncing)
-                    .tab_index(0isize),
-            )
-            .menu(move |window, cx| {
-                Some(ContextMenu::build(window, cx, |mut menu, _, _| {
-                    for root in &roots {
-                        let panel = panel.clone();
-                        let root = root.clone();
-                        menu =
-                            menu.entry(root.to_string_lossy().into_owned(), None, move |_, cx| {
-                                panel
-                                    .update(cx, |panel, cx| {
-                                        if panel.running
-                                            || panel.syncing
-                                            || !panel.roots(cx).contains(&root)
-                                        {
-                                            return;
-                                        }
-                                        panel.kotlin_refresh_task = None;
-                                        panel.kotlin_refresh_pending = None;
-                                        panel.pending_gradle_operation = None;
-                                        panel.active_operation_id = None;
-                                        panel.invalidate_model(Some(root.clone()), cx);
-                                        panel.root = Some(root.clone());
-                                        panel.targets.clear();
-                                        panel.selected_target = None;
-                                        panel.error = None;
-                                        panel.status =
-                                            "Sync this project to discover its build variants."
-                                                .into();
-                                        cx.notify();
-                                    })
-                                    .log_err();
-                            });
-                    }
-                    menu
-                }))
-            });
+        let state = project_surfaces::SurfaceState::for_panel(self, cx);
+        if !state.qualified() { return gpui::Empty.into_any_element(); }
+        let root = project_context::for_workspace(&self.workspace, cx)
+            .and_then(|controller| controller.read(cx).root(cx));
+        let root_label = root.as_ref().and_then(|root| root.file_name())
+            .map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
         let commands = [
-            (GradleOperation::Build, "Build"),
-            (GradleOperation::Run, "Run"),
-            (GradleOperation::Debug, "Debug"),
-            (GradleOperation::Test, "Test"),
-            (GradleOperation::Lint, "Lint"),
-        ]
-        .into_iter()
-        .map(|(operation, label)| {
+            (GradleOperation::Build, "Build", state.build),
+            (GradleOperation::Run, "Run", state.capabilities.android_run),
+            (GradleOperation::Debug, "Debug", state.capabilities.android_run),
+            (GradleOperation::Test, "Test", state.build),
+            (GradleOperation::Lint, "Lint", state.build),
+        ].into_iter().filter(|(_, _, available)| *available).map(|(operation, label, _)| {
             let is_run = matches!(operation, GradleOperation::Run | GradleOperation::Debug);
             Button::new(label, label)
                 .when(is_run, |button| button.style(ButtonStyle::Filled))
-                .disabled(
-                    self.syncing
-                        || self.running
-                        || self.selected_target.is_none()
-                        || (is_run && !self.can_run_on_selected_device()),
-                )
+                .disabled(self.syncing || self.running || self.selected_target.is_none()
+                    || (is_run && !self.can_run_on_selected_device()))
                 .tab_index(0isize)
-                .on_click(
-                    cx.listener(move |panel, _, window, cx| panel.gradle(operation, window, cx)),
-                )
-        })
-        .collect::<Vec<_>>();
+                .on_click(cx.listener(move |panel, _, window, cx| panel.gradle(operation, window, cx)))
+        }).collect::<Vec<_>>();
         v_flex()
-            .id("android-panel")
-            .key_context("AndroidPanel")
-            .track_focus(&self.focus_handle)
-            .role(gpui::Role::Complementary)
-            .aria_label("Android tools")
-            .size_full()
-            .p_3()
-            .gap_3()
-            .overflow_y_scroll()
+            .id("android-panel").debug_selector(|| "android-panel".into())
+            .key_context("AndroidPanel").track_focus(&self.focus_handle)
+            .role(gpui::Role::Complementary).aria_label("Project tools")
+            .size_full().p_3().gap_3().overflow_y_scroll()
             .child(h_flex().justify_between()
-                .child(Label::new("Android").size(LabelSize::Large))
+                .child(Label::new(if state.capabilities.android_sync { "Android" } else { "Multiplatform" }).size(LabelSize::Large))
                 .child(IconButton::new("close-android", IconName::Close)
-                    .tab_index(0isize).aria_label("Hide Android tools")
-                    .tooltip(Tooltip::text("Hide Android tools"))
+                    .tab_index(0isize).aria_label("Hide project tools")
+                    .tooltip(Tooltip::text("Hide project tools"))
                     .on_click(cx.listener(|_, _, _, cx| cx.emit(PanelEvent::Close)))))
             .child(Label::new("Project").color(Color::Muted))
-            .child(project_picker)
-            .child(Button::new("sync-project", if self.syncing { "Syncing…" } else { "Sync project" })
-                .disabled(self.syncing || self.running).tab_index(0isize)
-                .on_click(cx.listener(|panel, _, window, cx| panel.sync_project(window, cx))))
-            .child(Label::new("Build variant").color(Color::Muted))
-            .child(self.target_picker("panel-target", cx))
-            .child(Label::new("Device").color(Color::Muted))
-            .child(self.device_picker("panel-device", cx))
-            .child(Button::new("refresh-devices", if self.refreshing_devices { "Refreshing…" } else { "Refresh devices" })
-                .disabled(self.refreshing_devices).tab_index(0isize)
-                .on_click(cx.listener(|panel, _, _, cx| panel.refresh_devices(cx))))
-            .when(self.devices.is_empty(), |this| {
-                this.child(div().text_sm().text_color(cx.theme().colors().text_muted)
-                    .child("Start an Android emulator or connect a device with USB debugging, then refresh."))
-            })
-            .child(h_flex().flex_wrap().gap_1()
-                .child(self.emulator_picker(cx))
-                .child(Button::new("stop-emulator", "Stop emulator")
-                    .disabled(self.running || self.syncing || self.selected_emulator().is_err())
-                    .tab_index(0isize)
-                    .tooltip(Tooltip::text("Stop the selected emulator to release its memory. The virtual device is preserved."))
-                    .on_click(cx.listener(|panel, _, window, cx| panel.stop_emulator(window, cx)))))
-            .when_some(self.emulator_error.clone(), |this, error| {
-                this.child(div().text_sm().text_color(cx.theme().status().error).child(error))
-            })
-            .child(h_flex().flex_wrap().gap_1().children(commands))
-            .child(Button::new("configure-official-kotlin", "Configure official Kotlin")
-                .disabled(self.syncing || self.running || self.selected_target.is_none())
-                .tab_index(0isize)
-                .tooltip(Tooltip::text("Use the official Kotlin server with Gradle import. Experimental until editing compatibility checks pass."))
-                .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Kotlin, window, cx))))
-            .child(Button::new("configure-java", "Configure Java")
-                .disabled(self.syncing || self.running || self.selected_target.is_none())
-                .tab_index(0isize)
-                .tooltip(Tooltip::text("Build the selected variant and configure the Java extension with Android sources, generated symbols, and dependencies."))
-                .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Java, window, cx))))
-            .child(Button::new("android-compose-preview", "Compose preview")
-                .disabled(self.running || self.syncing || self.selected_target.is_none()).tab_index(0isize)
-                .tooltip(Tooltip::text("Build the selected variant and render a Compose @Preview beside the code."))
-                .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))
-            .child(Button::new("logcat", "Open Logcat").start_icon(Icon::new(IconName::Logcat))
-                .tab_index(0isize)
-                .on_click(cx.listener(|panel, _, window, cx| panel.logcat(window, cx))))
-            .child(div().text_sm().text_color(cx.theme().colors().text_muted).child(self.status.clone()))
-            .when_some(self.error.clone().or_else(|| self.device_error.clone()), |this, error| {
-                this.child(div().text_sm().text_color(cx.theme().status().error).child(error))
-            })
+            .child(Label::new(root_label))
+            .when(state.capabilities.android_sync, |panel| panel.child(
+                div().debug_selector(|| "android-manual-sync-controls".into()).child(
+                Button::new("sync-project", if self.syncing { "Syncing…" } else { "Sync project" })
+                    .disabled(self.syncing || self.running).tab_index(0isize)
+                    .on_click(cx.listener(|panel, _, window, cx| panel.sync_project(window, cx))))))
+            .when(state.build, |panel| panel
+                .child(Label::new("Build variant").color(Color::Muted))
+                .child(self.target_picker("panel-target", cx)))
+            .when(state.capabilities.android_devices, |panel| panel
+                .child(Label::new("Device").color(Color::Muted))
+                .child(self.device_picker("panel-device", cx))
+                .child(Button::new("refresh-devices", if self.refreshing_devices { "Refreshing…" } else { "Refresh devices" })
+                    .disabled(self.refreshing_devices).tab_index(0isize)
+                    .on_click(cx.listener(|panel, _, _, cx| panel.refresh_devices(cx))))
+                .when(self.devices.is_empty(), |panel| panel.child(div().text_sm().text_color(cx.theme().colors().text_muted)
+                    .child("Start an Android emulator or connect a device with USB debugging, then refresh.")))
+                .child(h_flex().flex_wrap().gap_1()
+                    .debug_selector(|| "android-device-controls".into())
+                    .child(self.emulator_picker(cx))
+                    .child(Button::new("stop-emulator", "Stop emulator")
+                        .disabled(self.running || self.syncing || self.selected_emulator().is_err())
+                        .tab_index(0isize)
+                        .tooltip(Tooltip::text("Stop the selected emulator to release its memory. The virtual device is preserved."))
+                        .on_click(cx.listener(|panel, _, window, cx| panel.stop_emulator(window, cx)))))
+                .when_some(self.emulator_error.clone(), |panel, error| panel.child(
+                    div().text_sm().text_color(cx.theme().status().error).child(error)))
+                .child(Button::new("logcat", "Open Logcat").start_icon(Icon::new(IconName::Logcat))
+                    .tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.logcat(window, cx)))))
+            .when(!commands.is_empty(), |panel| panel.child(
+                h_flex().flex_wrap().gap_1()
+                    .debug_selector(|| "android-build-controls".into()).children(commands)))
+            .when(state.build, |panel| panel
+                .child(v_flex().gap_3()
+                    .debug_selector(|| "android-configuration-controls".into())
+                .child(Button::new("configure-official-kotlin", "Configure official Kotlin")
+                    .disabled(self.syncing || self.running || self.selected_target.is_none()).tab_index(0isize)
+                    .tooltip(Tooltip::text("Use the official Kotlin server with Gradle import. Experimental until editing compatibility checks pass."))
+                    .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Kotlin, window, cx))))
+                .child(Button::new("configure-java", "Configure Java")
+                    .disabled(self.syncing || self.running || self.selected_target.is_none()).tab_index(0isize)
+                    .tooltip(Tooltip::text("Build the selected variant and configure Java with Android sources, generated symbols, and dependencies."))
+                    .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Java, window, cx))))))
+            .when(state.capabilities.android_compose_preview, |panel| panel.child(
+                div().debug_selector(|| "android-compose-controls".into()).child(
+                Button::new("android-compose-preview", "Compose preview")
+                    .disabled(self.running || self.syncing || self.selected_target.is_none()).tab_index(0isize)
+                    .tooltip(Tooltip::text("Build the selected variant and render a Compose @Preview beside the code."))
+                    .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))))
+            .when(state.capabilities.android_sync, |panel| panel
+                .child(div().text_sm().text_color(cx.theme().colors().text_muted).child(self.status.clone()))
+                .when_some(self.error.clone().or_else(|| self.device_error.clone()), |panel, error| panel.child(
+                    div().text_sm().text_color(cx.theme().status().error).child(error))))
+            .into_any_element()
     }
 }
 
@@ -3198,9 +3050,11 @@ impl Panel for AndroidPanel {
     fn default_size(&self, _: &Window, cx: &App) -> Pixels {
         AndroidPanelSettings::get_global(cx).default_width
     }
+    fn enabled(&self, cx: &App) -> bool {
+        project_surfaces::SurfaceState::for_panel(self, cx).qualified()
+    }
     fn icon(&self, _: &Window, cx: &App) -> Option<IconName> {
-        AndroidPanelSettings::get_global(cx)
-            .button
+        (self.enabled(cx) && AndroidPanelSettings::get_global(cx).button)
             .then_some(IconName::ToolHammer)
     }
     fn icon_tooltip(&self, _: &Window, _: &App) -> Option<&'static str> {

@@ -466,13 +466,13 @@ impl TitleBar {
         let application_menu = match platform_style {
             PlatformStyle::Mac => {
                 if option_env!("ZED_USE_CROSS_PLATFORM_MENU").is_some() {
-                    Some(cx.new(|cx| ApplicationMenu::new(window, cx)))
+                    Some(cx.new(|cx| ApplicationMenu::new_for_workspace(workspace.weak_handle(), window, cx)))
                 } else {
                     None
                 }
             }
             PlatformStyle::Linux | PlatformStyle::Windows => {
-                Some(cx.new(|cx| ApplicationMenu::new(window, cx)))
+                Some(cx.new(|cx| ApplicationMenu::new_for_workspace(workspace.weak_handle(), window, cx)))
             }
         };
 

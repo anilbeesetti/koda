@@ -34,6 +34,12 @@ pub(crate) struct AndroidActivity {
 
 impl AndroidActivity {
     fn activity(panel: &AndroidPanel, cx: &App) -> Option<(ActivityToken, SharedString)> {
+        if !crate::project_surfaces::SurfaceState::for_panel(panel, cx).qualified()
+            || crate::project_context::for_workspace(&panel.workspace, cx)
+                .and_then(|controller| controller.read(cx).root(cx)).as_ref() != panel.root.as_ref()
+        {
+            return None;
+        }
         if let Some((tab, id)) = panel.active_build_session {
             let label = match tab {
                 BuildTab::Sync => panel.status.clone(),
@@ -107,10 +113,12 @@ impl Render for AndroidActivity {
                                 let token = token.clone();
                                 move |_, window, cx| {
                                     let Some((build_panel, workspace)) = panel
-                                        .read_with(cx, |panel, _| {
-                                            (panel.build_panel.clone(), panel.workspace.clone())
+                                        .read_with(cx, |panel, cx| {
+                                            Self::activity(panel, cx).filter(|(current, _)| current == &token)
+                                                .map(|_| (panel.build_panel.clone(), panel.workspace.clone()))
                                         })
                                         .log_err()
+                                        .flatten()
                                     else {
                                         return;
                                     };
@@ -233,6 +241,7 @@ mod tests {
         cx: &mut TestAppContext,
     ) {
         let _app_state = cx.update(AppState::test);
+        cx.update(|cx| project::trusted_worktrees::init(Default::default(), cx));
         cx.update(|cx| cx.set_reduce_motion(true));
         let fs = FakeFs::new(cx.executor());
         fs.insert_tree("/android", serde_json::json!({"settings.gradle.kts": ""}))
@@ -240,12 +249,18 @@ mod tests {
         let project = Project::test(fs, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
         panel.update(cx, |panel, _| {
+            panel.root = Some("/android".into());
             // Keep host ADB processes out of this deterministic status test.
             panel.refreshing_devices = true;
         });
         workspace.update_in(cx, |workspace, window, cx| {
+            crate::project_surfaces::tests::trust(&project, cx).expect("Fixture owning-root trust");
+            crate::project_context::register(workspace, panel.read(cx).build_panel.clone(), window, cx);
+            crate::project_surfaces::tests::publish_catalogue(&project, Path::new("/android"),
+                &[android_tools::project_context::PluginId::AndroidApplication], &[("android", "androidJvm")], true, cx)
+                .expect("Affirmative Android fixture facts");
             workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
             workspace.add_panel(panel.clone(), window, cx);
             workspace.reveal_panel::<AndroidPanel>(window, cx);
