@@ -4,10 +4,12 @@ mod android_logcat;
 mod android_logcat_panel;
 mod android_preview;
 mod android_status;
+mod project_context;
 pub mod tabbed_toolbar;
 
 use android_build::{BuildEvent, BuildStatus, BuildTab, ProcessOutput};
 pub use android_build::{BuildPanel, ToggleBuild};
+pub use project_context::ImportGradleProject;
 use android_logcat_panel::LogcatPanel;
 use android_tools::{
     AndroidTarget, Device, adb_path, android_cli_path, emulator_path, is_gradle_project,
@@ -87,6 +89,7 @@ pub fn init(cx: &mut App) {
         let panel = cx
             .new(|cx| AndroidPanel::new(workspace.weak_handle(), workspace.project().clone(), cx));
         panel.update(cx, |panel, cx| panel.observe_project_open(window, cx));
+        project_context::register(workspace, panel.read(cx).build_panel.clone(), window, cx);
         workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
         android_status::register(&panel, window, cx);
         workspace.add_panel(panel, window, cx);
@@ -443,7 +446,11 @@ impl AndroidPanel {
             |panel, _, event: &BuildEvent, window, cx| {
                 if let BuildEvent::Rerun(tab) = event {
                     match tab {
-                        BuildTab::Sync => panel.sync_project(window, cx),
+                        BuildTab::Sync => {
+                            if !project_context::for_workspace(&panel.workspace, cx).is_some_and(|controller| controller.read(cx).owns_sync_session(cx)) {
+                                panel.sync_project(window, cx);
+                            }
+                        }
                         BuildTab::Output => {
                             if let Some(operation) = panel.last_build_operation {
                                 panel.gradle(operation, window, cx);
@@ -468,12 +475,13 @@ impl AndroidPanel {
             &self.project,
             window,
             |panel, _, event, window, cx| {
-                if let project::Event::WorktreeAdded(worktree_id) = event
-                    && let Some(worktree) = panel.project.read(cx).worktree_for_id(*worktree_id, cx)
-                    && worktree.read(cx).is_visible()
-                {
-                    let root = worktree.read(cx).abs_path().to_path_buf();
-                    panel.coordinate_kotlin_setup(root, true, window, cx);
+                if let project::Event::AndroidProjectContextChanged = event {
+                    cx.defer_in(window, |panel, window, cx| {
+                        if let Some(root) = panel.auto_sync_candidate(cx) {
+                            panel.coordinate_kotlin_setup(root, true, window, cx);
+                        }
+                        panel.auto_sync_project(window, cx);
+                    });
                 }
                 if let project::Event::WorktreeUpdatedEntries(worktree_id, changes) = event {
                     let selected_root_changed = panel
@@ -516,9 +524,6 @@ impl AndroidPanel {
                 },
             ));
         }
-        for root in self.roots(cx) {
-            self.coordinate_kotlin_setup(root, true, window, cx);
-        }
     }
 
     fn coordinate_kotlin_setup(
@@ -528,6 +533,9 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self.auto_sync_candidate(cx).as_ref() != Some(&root) {
+            return;
+        }
         let store = self.project.read(cx).lsp_store();
         let settings = store.update(cx, |store, cx| store.wait_for_local_settings(cx));
         let task = cx.spawn_in(window, {
@@ -588,29 +596,15 @@ impl AndroidPanel {
     }
 
     fn auto_sync_candidate(&self, cx: &App) -> Option<PathBuf> {
-        let root = self.trusted_root(cx).ok()?;
-        let worktree = self
-            .project
-            .read(cx)
-            .visible_worktrees(cx)
-            .find(|worktree| worktree.read(cx).abs_path().as_ref() == root.as_path())?;
-        let snapshot = worktree.read(cx).snapshot();
-        let has_file = |name: &str| {
-            RelPath::new(Path::new(name), snapshot.path_style())
-                .log_err()
-                .and_then(|path| snapshot.entry_for_path(&path))
-                .is_some_and(|entry| entry.is_file())
-        };
-        (["gradlew", "gradlew.bat"].into_iter().any(has_file)
-            && [
-                "settings.gradle.kts",
-                "settings.gradle",
-                "build.gradle.kts",
-                "build.gradle",
-            ]
-            .into_iter()
-            .any(has_file))
-        .then_some(root)
+        let controller = project_context::for_workspace(&self.workspace, cx)?;
+        let controller = controller.read(cx);
+        controller.capabilities(Default::default(), cx).automatic_android_sync.then(|| controller.root(cx)).flatten()
+    }
+
+    fn android_context_capabilities(&self, cx: &App) -> android_tools::project_context::ContextCapabilities {
+        project_context::for_workspace(&self.workspace, cx).map_or_else(Default::default, |controller| {
+            controller.read(cx).capabilities(Default::default(), cx)
+        })
     }
 
     fn cancel_build(&mut self, tab: BuildTab, cx: &mut Context<Self>) {
@@ -800,6 +794,10 @@ impl AndroidPanel {
                 return;
             }
         };
+        if !self.android_context_capabilities(cx).android_sync {
+            self.fail(anyhow::anyhow!("Import the trusted Gradle project to discover Android plugins before syncing."), window, cx);
+            return;
+        }
         self.coordinate_kotlin_setup(root.clone(), false, window, cx);
         self.root = Some(root.clone());
         self.auto_sync_root = Some(root.clone());
@@ -809,7 +807,9 @@ impl AndroidPanel {
         self.error = None;
         self.kotlin_setup_error = None;
         self.status = "Syncing Android project…".into();
-        self.refresh_devices(cx);
+        if self.android_context_capabilities(cx).android_devices {
+            self.refresh_devices(cx);
+        }
         let (session_id, output, logs) = self.build_panel.update(cx, |panel, cx| {
             panel.begin(
                 BuildTab::Sync,
@@ -3197,7 +3197,7 @@ impl Panel for AndroidPanel {
         10
     }
     fn set_active(&mut self, active: bool, _: &mut Window, cx: &mut Context<Self>) {
-        if active && self.devices.is_empty() {
+        if active && self.devices.is_empty() && self.android_context_capabilities(cx).android_devices {
             self.refresh_devices(cx);
         }
     }

@@ -1,6 +1,7 @@
 use android_tools::project_context::{
     ActiveContext, ContextCapabilities, ContextSnapshot, ContextStore, MAX_CONTEXT_RECORD_BYTES,
     ModuleOwner, ObservationPhase, OperationalReadiness, PluginId, decode_context_record,
+    CONTEXT_OUTPUT_PREFIX, decode_context_output,
 };
 use anyhow::{Context as _, Result};
 use serde_json::{Value, json};
@@ -10,6 +11,142 @@ fn project_root(name: &str) -> PathBuf {
     std::env::temp_dir()
         .join("koda-project-context-policy")
         .join(name)
+}
+
+#[test]
+fn java_only_android_uses_public_agp_facts_without_inventing_kotlin_targets() -> Result<()> {
+    let root = project_root("java-only-android");
+    let mut value = catalogue(&root, vec![module(&root, ":", "", &[], &[]), module(&root, ":app", "app", &[PluginId::AndroidApplication], &[])]);
+    value["modules"][1]["targets"] = json!({"status": "unavailable", "value": {"detail": "Kotlin extension has no public getTargets() API"}});
+    let without_agp = decode(&root, &value)?;
+    assert!(!without_agp.capabilities(None, readiness(&root)).android_devices);
+    value["modules"][1]["android"] = json!({"status": "available", "value": {"pluginVersion": "9.2.0"}});
+    let snapshot = decode(&root, &value)?;
+    let capabilities = snapshot.capabilities(Some(&root.join("app/src/Main.java")), readiness(&root));
+    assert!(capabilities.android_devices);
+    assert!(capabilities.android_run);
+    assert!(!capabilities.android_compose_preview);
+    assert!(matches!(snapshot.modules().find(|module| module.path() == ":app").context("App module")?.targets(), android_tools::project_context::TargetCatalogue::Unavailable(_)));
+    value["modules"][1]["android"] = json!({"status": "unavailable", "value": {"detail": "Unsupported AndroidComponents getter"}});
+    assert!(!decode(&root, &value)?.capabilities(None, readiness(&root)).android_devices);
+    value["modules"][0]["android"] = json!({"status": "available", "value": {"pluginVersion": "9.2.0"}});
+    assert!(decode(&root, &value).is_err());
+    Ok(())
+}
+
+#[test]
+fn context_transport_accepts_only_exact_bounded_consistent_records() -> Result<()> {
+    let root = project_root("context-transport");
+    let complete = android_catalogue(&root);
+    let payload = serde_json::to_string(&complete)?;
+    let output = format!("ordinary log\n {CONTEXT_OUTPUT_PREFIX}{payload}\n{CONTEXT_OUTPUT_PREFIX}{payload}\r\n");
+    assert_eq!(decode_context_output(&output, &root)?.len(), 1);
+    assert!(decode_context_output(&format!(" {CONTEXT_OUTPUT_PREFIX}{payload}\n"), &root).is_err());
+    assert!(decode_context_output(&format!("{CONTEXT_OUTPUT_PREFIX}{payload}\n{CONTEXT_OUTPUT_PREFIX}{payload}\n"), &root).is_err());
+    assert!(decode_context_output(&format!("{CONTEXT_OUTPUT_PREFIX}{payload}\n"), &project_root("wrong-root")).is_err());
+    let mut partial = complete.clone();
+    partial["phase"] = json!("partial");
+    for module in partial["modules"].as_array_mut().context("Modules")? {
+        module["plugins"].as_array_mut().context("Plugins")?.retain(|plugin| plugin["applied"] == true);
+        module["targets"] = json!({"status":"unavailable", "value":{"detail":"Configuration failed"}});
+    }
+    let partial = serde_json::to_string(&partial)?;
+    assert_eq!(decode_context_output(&format!("{CONTEXT_OUTPUT_PREFIX}{partial}\n{CONTEXT_OUTPUT_PREFIX}{payload}\n"), &root)?.len(), 2);
+    assert!(decode_context_output(&format!("{CONTEXT_OUTPUT_PREFIX}{partial}\n{CONTEXT_OUTPUT_PREFIX}{partial}\n{CONTEXT_OUTPUT_PREFIX}{payload}\n"), &root).is_err());
+    Ok(())
+}
+
+fn convention_catalogue(root: &Path) -> Value {
+    let mut value = android_catalogue(root);
+    value["buildLogicDirectories"] = json!([root.join("buildSrc"), root.parent().map(|parent| parent.join("external-logic"))]);
+    value["buildLayouts"] = json!([
+        {"directory": root, "buildDirectory": root.join("out"), "sourceDirectories": []},
+        {"directory": root.join("app"), "buildDirectory": root.join("app/custom-output"), "sourceDirectories": [root.join("app/src")]},
+        {"directory": root.join("buildSrc"), "buildDirectory": root.join("buildSrc/convention-output"), "sourceDirectories": [root.join("buildSrc/src"), root.join("buildSrc/convention-output/generated")]}
+    ]);
+    value
+}
+
+#[test]
+fn configured_outputs_and_caches_are_excluded_from_build_logic_input_changes() -> Result<()> {
+    let root = project_root("convention-inputs");
+    let snapshot = decode(&root, &convention_catalogue(&root))?;
+    for path in ["build.gradle.kts", "local.properties", "gradle.lockfile", "gradle/libs.versions.toml", "gradle/verification-metadata.xml", "buildSrc/src/main/kotlin/Convention.kt", "buildSrc/src/main/resources/META-INF/plugin.properties"] {
+        assert!(snapshot.is_input(&root.join(path)), "{path}");
+    }
+    for path in ["buildSrc/convention-output/classes/Convention.class", "buildSrc/convention-output/resources/META-INF/plugin.properties", "buildSrc/convention-output/generated/Generated.kt", "buildSrc/.gradle/cache.properties", "buildSrc/.kotlin/session", "buildSrc/.git/objects/abc", "app/src/main/Main.kt", "app/custom-output/gradle.properties", "main.py", "index.html"] {
+        assert!(!snapshot.is_input(&root.join(path)), "{path}");
+    }
+    assert!(snapshot.is_input(&root.parent().context("Parent")?.join("external-logic/src/Convention.kt")));
+    Ok(())
+}
+
+#[test]
+fn generated_pending_writes_do_not_stale_import_but_actual_inputs_do() -> Result<()> {
+    let root = project_root("pending-convention");
+    let mut store = ContextStore::default();
+    let handle = store.add_root(1, root.clone(), true)?;
+    let token = store.begin_import(handle)?;
+    assert!(store.observe_input_change(&root.join("buildSrc/convention-output/resources/plugin.properties"))?.is_empty());
+    assert!(store.observe_input_change(&root.join("app/src/main/Main.kt"))?.is_empty());
+    let snapshot = decode(&root, &convention_catalogue(&root))?;
+    store.verify_import_inputs(&token, &snapshot)?;
+    assert!(store.snapshot(handle).is_none(), "First-pass provenance must not publish capabilities");
+    store.publish(&token, snapshot)?;
+    let before = store.token(handle).context("Current token")?;
+    assert!(store.observe_input_change(&root.join("buildSrc/convention-output/classes/Convention.class"))?.is_empty());
+    assert!(store.is_current(&before));
+    assert_eq!(store.observe_input_change(&root.join("buildSrc/src/main/kotlin/Convention.kt"))?, vec![handle]);
+    assert!(!store.is_current(&before));
+    let token = store.begin_import(handle)?;
+    store.observe_input_change(&root.join("buildSrc/src/main/kotlin/Convention.kt"))?;
+    assert!(store.publish(&token, decode(&root, &convention_catalogue(&root))?).is_err());
+    assert!(store.snapshot(handle).is_none());
+    assert!(!store.import_is_current(&token));
+    Ok(())
+}
+
+#[test]
+fn invalid_layouts_and_excessive_pending_change_sets_are_rejected() -> Result<()> {
+    let root = project_root("invalid-provenance");
+    let mut value = convention_catalogue(&root);
+    value["buildLayouts"][0]["buildDirectory"] = json!(&root);
+    assert!(decode(&root, &value).is_err());
+    let mut value = convention_catalogue(&root);
+    value["buildLayouts"][0]["sourceDirectories"] = json!([root.join("src"), root.join("src")]);
+    assert!(decode(&root, &value).is_err());
+    let mut store = ContextStore::default();
+    let handle = store.add_root(1, root.clone(), true)?;
+    let token = store.begin_import(handle)?;
+    for index in 0..16385 {
+        store.observe_input_change(&root.join(format!("unresolved/{index}")))?;
+    }
+    assert!(!store.import_is_current(&token));
+    assert!(store.publish(&token, decode(&root, &convention_catalogue(&root))?).is_err());
+    Ok(())
+}
+
+#[test]
+fn unrelated_project_events_do_not_exhaust_another_pending_import() -> Result<()> {
+    let root = project_root("isolated-pending");
+    let other = project_root("busy-unrelated-root");
+    let external = project_root("owned-external-logic");
+    let mut store = ContextStore::default();
+    let handle = store.add_root(1, root.clone(), true)?;
+    let other_handle = store.add_root(2, other.clone(), true)?;
+    let discovery = store.begin_import(handle)?;
+    let other_discovery = store.begin_import(other_handle)?;
+    for index in 0..66 {
+        store.observe_input_change(&other.join(format!("{index}-{}", "x".repeat(16384))))?;
+    }
+    assert!(store.import_is_current(&discovery));
+    assert!(!store.import_is_current(&other_discovery));
+    let mut value = convention_catalogue(&root);
+    value["buildLogicDirectories"] = json!([external]);
+    store.observe_root_input_change(handle, &external.join("src/Convention.kt"))?;
+    assert!(store.publish(&discovery, decode(&root, &value)?).is_err());
+    assert!(!store.import_is_current(&discovery));
+    Ok(())
 }
 
 fn module(

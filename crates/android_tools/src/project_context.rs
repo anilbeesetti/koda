@@ -7,6 +7,7 @@ use std::{
 };
 
 pub const CONTEXT_OUTPUT_PREFIX: &str = "KODA_PROJECT_CONTEXT=";
+pub const CONTEXT_TASK: &str = "kodaProjectContext";
 pub const CONTEXT_SCHEMA: u32 = 1;
 pub const MAX_CONTEXT_RECORD_BYTES: usize = 1024 * 1024;
 const MAX_MODULES: usize = 4096;
@@ -103,6 +104,27 @@ pub enum TargetCatalogue {
     Unavailable(GetterUnavailable),
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(remote = "Self", rename_all = "camelCase", deny_unknown_fields)]
+pub struct AndroidPluginVersion {
+    pub plugin_version: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(tag = "status", content = "value", rename_all = "camelCase", deny_unknown_fields)]
+pub enum AndroidPluginApi {
+    Available(AndroidPluginVersion),
+    Unavailable(GetterUnavailable),
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(remote = "Self", rename_all = "camelCase", deny_unknown_fields)]
+pub struct BuildLayout {
+    pub directory: PathBuf,
+    pub build_directory: PathBuf,
+    pub source_directories: Vec<PathBuf>,
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(remote = "Self", deny_unknown_fields)]
 struct AppliedPlugin {
@@ -117,6 +139,8 @@ struct RawModule {
     directory: PathBuf,
     plugins: Vec<AppliedPlugin>,
     targets: TargetCatalogue,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    android: Option<AndroidPluginApi>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -127,6 +151,10 @@ struct RawContext {
     gradle_version: String,
     phase: ObservationPhase,
     modules: Vec<RawModule>,
+    #[serde(default)]
+    build_logic_directories: Vec<PathBuf>,
+    #[serde(default)]
+    build_layouts: Vec<BuildLayout>,
 }
 
 struct ObjectOnly<D>(D);
@@ -166,6 +194,8 @@ macro_rules! object_serde {
 object_serde!(
     TargetFact,
     GetterUnavailable,
+    AndroidPluginVersion,
+    BuildLayout,
     AppliedPlugin,
     RawModule,
     RawContext
@@ -190,6 +220,7 @@ pub struct ModuleContext {
     directory: PathBuf,
     applied_plugins: BTreeSet<PluginId>,
     targets: TargetCatalogue,
+    android: Option<AndroidPluginApi>,
 }
 
 impl ModuleContext {
@@ -206,8 +237,15 @@ impl ModuleContext {
         &self.targets
     }
 
+    pub fn android_plugin_api(&self) -> Option<&AndroidPluginApi> {
+        self.android.as_ref()
+    }
+
     fn android_target(&self) -> bool {
-        matches!(&self.targets, TargetCatalogue::Available(targets)
+        // Java-only AGP has no Kotlin target container. A successful evaluated AGP
+        // extension observation establishes its Android platform independently.
+        matches!(self.android, Some(AndroidPluginApi::Available(_)))
+            || matches!(&self.targets, TargetCatalogue::Available(targets)
             if targets.iter().any(|target| target.platform == TargetPlatform::AndroidJvm))
     }
 }
@@ -218,6 +256,8 @@ pub struct ContextSnapshot {
     gradle_version: String,
     phase: ObservationPhase,
     modules: BTreeMap<String, ModuleContext>,
+    build_logic_directories: Vec<PathBuf>,
+    build_layouts: Vec<BuildLayout>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -259,6 +299,27 @@ impl ContextSnapshot {
     }
     pub fn modules(&self) -> impl Iterator<Item = &ModuleContext> {
         self.modules.values()
+    }
+
+    pub fn build_logic_directories(&self) -> &[PathBuf] {
+        &self.build_logic_directories
+    }
+
+    pub fn is_input(&self, path: &Path) -> bool {
+        if self.build_layouts.iter().any(|layout| path.starts_with(&layout.build_directory))
+            || path.components().any(|part| matches!(part, Component::Normal(name) if name == ".gradle" || name == ".kotlin" || name == ".git")) {
+            return false;
+        }
+        if self.build_layouts.iter().any(|layout| self.build_logic_directories.iter().any(|directory| layout.directory.starts_with(directory))
+            && layout.source_directories.iter().any(|source| path.starts_with(source))) {
+            return true;
+        }
+        (path.starts_with(&self.root) && is_context_input(path))
+            || self.build_logic_directories.iter().any(|directory| path.starts_with(directory))
+    }
+
+    pub fn build_layouts(&self) -> &[BuildLayout] {
+        &self.build_layouts
     }
 
     pub fn ecosystems(&self) -> Ecosystems {
@@ -364,7 +425,8 @@ impl ContextSnapshot {
     }
 
     fn preserves(&self, previous: &Self) -> bool {
-        previous.modules.values().all(|previous_module| {
+        previous.build_logic_directories.iter().all(|directory| self.build_logic_directories.contains(directory))
+            && previous.modules.values().all(|previous_module| {
             self.modules
                 .get(&previous_module.path)
                 .is_some_and(|module| {
@@ -372,6 +434,11 @@ impl ContextSnapshot {
                         && previous_module
                             .applied_plugins
                             .is_subset(&module.applied_plugins)
+                        && match (&previous_module.android, &module.android) {
+                            (Some(AndroidPluginApi::Available(previous)), Some(AndroidPluginApi::Available(current))) => previous == current,
+                            (Some(AndroidPluginApi::Available(_)), _) => false,
+                            _ => true,
+                        }
                         && match (&previous_module.targets, &module.targets) {
                             (
                                 TargetCatalogue::Available(previous),
@@ -406,6 +473,26 @@ pub fn decode_context_record(record: &[u8], expected_root: &Path) -> Result<Cont
         "Project context belongs to a different root"
     );
     validate_text(&raw.gradle_version)?;
+    ensure!(raw.build_logic_directories.len() <= MAX_MODULES, "Too many evaluated build-logic directories");
+    let mut input_directories = BTreeSet::new();
+    for directory in &raw.build_logic_directories {
+        validate_path(directory)?;
+        ensure!(input_directories.insert(directory), "Duplicate evaluated build-logic directory");
+    }
+    ensure!(raw.build_layouts.len() <= MAX_MODULES, "Too many evaluated build layouts");
+    let mut layout_directories = BTreeSet::new();
+    for layout in &raw.build_layouts {
+        validate_path(&layout.directory)?;
+        validate_path(&layout.build_directory)?;
+        ensure!(layout_directories.insert(&layout.directory), "Duplicate evaluated build layout");
+        ensure!(!layout.directory.starts_with(&layout.build_directory), "Build output directory overlaps its project inputs");
+        ensure!(layout.source_directories.len() <= MAX_TARGETS, "Too many evaluated source directories");
+        let mut sources = BTreeSet::new();
+        for directory in &layout.source_directories {
+            validate_path(directory)?;
+            ensure!(sources.insert(directory), "Duplicate evaluated source directory");
+        }
+    }
     ensure!(
         raw.modules.len() <= MAX_MODULES,
         "Project context has too many modules"
@@ -473,6 +560,16 @@ pub fn decode_context_record(record: &[u8], expected_root: &Path) -> Result<Cont
             }
             TargetCatalogue::Unavailable(unavailable) => validate_text(&unavailable.detail)?,
         }
+        if let Some(android) = &module.android {
+            ensure!(
+                applied_plugins.iter().any(|plugin| plugin.is_android()),
+                "Android API observation has no evaluated Android plugin"
+            );
+            match android {
+                AndroidPluginApi::Available(version) => validate_text(&version.plugin_version)?,
+                AndroidPluginApi::Unavailable(unavailable) => validate_text(&unavailable.detail)?,
+            }
+        }
         let path = module.path.clone();
         ensure!(
             modules
@@ -482,7 +579,8 @@ pub fn decode_context_record(record: &[u8], expected_root: &Path) -> Result<Cont
                         path: module.path,
                         directory: module.directory,
                         applied_plugins,
-                        targets: module.targets
+                        targets: module.targets,
+                        android: module.android,
                     }
                 )
                 .is_none(),
@@ -498,7 +596,52 @@ pub fn decode_context_record(record: &[u8], expected_root: &Path) -> Result<Cont
         gradle_version: raw.gradle_version,
         phase: raw.phase,
         modules,
+        build_logic_directories: raw.build_logic_directories,
+        build_layouts: raw.build_layouts,
     })
+}
+
+/// Decode transport records separately from the human-readable Gradle diagnostic.
+/// A failed evaluation can retain affirmative partial facts without becoming runnable.
+pub fn decode_context_output(output: &str, expected_root: &Path) -> Result<Vec<ContextSnapshot>> {
+    let mut snapshots = Vec::new();
+    for record in output.lines().filter_map(|line| line.strip_prefix(CONTEXT_OUTPUT_PREFIX)) {
+        ensure!(snapshots.len() < 2, "Too many project context records");
+        let snapshot = decode_context_record(record.as_bytes(), expected_root)?;
+        if let Some(previous) = snapshots.last() {
+            let previous: &ContextSnapshot = previous;
+            ensure!(
+                previous.phase == ObservationPhase::Partial
+                    && snapshot.phase == ObservationPhase::Complete
+                    && previous.gradle_version == snapshot.gradle_version
+                    && snapshot.preserves(previous),
+                "Contradictory or repeated project context records"
+            );
+        }
+        snapshots.push(snapshot);
+    }
+    ensure!(!snapshots.is_empty(), "Gradle did not emit evaluated project context");
+    Ok(snapshots)
+}
+
+pub fn prepare() -> Result<tempfile::TempDir> {
+    let directory = tempfile::tempdir().context("Create Gradle context adapter directory")?;
+    std::fs::write(directory.path().join("context.gradle"), include_str!("project_context.gradle"))
+        .context("Write Gradle context getter adapter")?;
+    Ok(directory)
+}
+
+/// Build-logic edits invalidate observations, but ordinary editor edits do not.
+/// Convention and included-build source changes are conservative until import
+/// provenance records their complete evaluated input graph.
+pub fn is_context_input(path: &Path) -> bool {
+    let name = path.file_name().and_then(|name| name.to_str()).unwrap_or_default();
+    matches!(name, "settings.gradle" | "settings.gradle.kts" | "build.gradle" | "build.gradle.kts" | "gradle.properties" | "local.properties" | "gradle.lockfile" | "gradlew" | "gradlew.bat")
+        || path.components().any(|part| matches!(part, Component::Normal(name) if name == "buildSrc" || name == "build-logic"))
+        || path.extension().is_some_and(|extension| extension == "gradle")
+        || name.ends_with(".gradle.kts")
+        || (path.components().any(|part| matches!(part, Component::Normal(name) if name == "gradle"))
+            && (matches!(path.extension().and_then(|extension| extension.to_str()), Some("toml" | "properties" | "jar")) || name == "verification-metadata.xml"))
 }
 
 fn validate_text(text: &str) -> Result<()> {
@@ -542,6 +685,12 @@ pub struct RootHandle {
     incarnation: u64,
 }
 
+impl RootHandle {
+    pub fn worktree(&self) -> u64 {
+        self.worktree
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct RootToken {
     root: RootHandle,
@@ -558,6 +707,8 @@ struct RootContext {
     generation: u64,
     snapshot: Option<ContextSnapshot>,
     pending: Option<DiscoveryToken>,
+    pending_changes: BTreeSet<PathBuf>,
+    pending_change_bytes: usize,
 }
 
 #[derive(Default)]
@@ -567,6 +718,13 @@ pub struct ContextStore {
 }
 
 impl ContextStore {
+    pub fn handle(&self, worktree: u64) -> Option<RootHandle> {
+        self.roots.get(&worktree).map(|entry| entry.handle)
+    }
+
+    pub fn handles(&self) -> impl Iterator<Item = RootHandle> + '_ {
+        self.roots.values().map(|entry| entry.handle)
+    }
     pub fn add_root(&mut self, worktree: u64, path: PathBuf, trusted: bool) -> Result<RootHandle> {
         validate_path(&path)?;
         ensure!(
@@ -591,6 +749,8 @@ impl ContextStore {
                 generation: 0,
                 snapshot: None,
                 pending: None,
+                pending_changes: BTreeSet::new(),
+                pending_change_bytes: 0,
             },
         );
         Ok(handle)
@@ -624,6 +784,8 @@ impl ContextStore {
             .context("Context generation space exhausted")?;
         entry.snapshot = None;
         entry.pending = None;
+        entry.pending_changes.clear();
+        entry.pending_change_bytes = 0;
         Ok(())
     }
 
@@ -672,7 +834,12 @@ impl ContextStore {
         Ok(token)
     }
 
+    pub fn import_is_current(&self, token: &DiscoveryToken) -> bool {
+        self.is_current(&token.0) && self.entry(token.0.root).is_some_and(|entry| entry.pending.as_ref() == Some(token))
+    }
+
     pub fn publish(&mut self, token: &DiscoveryToken, snapshot: ContextSnapshot) -> Result<()> {
+        self.verify_import_inputs(token, &snapshot)?;
         ensure!(
             self.is_current(&token.0),
             "Discarded an outdated project context result"
@@ -699,6 +866,52 @@ impl ContextStore {
         Ok(())
     }
 
+    pub fn verify_import_inputs(&mut self, token: &DiscoveryToken, snapshot: &ContextSnapshot) -> Result<()> {
+        ensure!(self.is_current(&token.0), "Discarded outdated Gradle input observations");
+        let entry = self.entry_mut(token.0.root)?;
+        ensure!(entry.pending.as_ref() == Some(token) && snapshot.root == entry.path, "Gradle input observations have a different owner");
+        if entry.pending_changes.iter().any(|path| snapshot.is_input(path)) {
+            self.invalidate(token.0.root)?;
+            anyhow::bail!("Project build inputs changed during Gradle evaluation; import again explicitly");
+        }
+        entry.pending_changes.clear();
+        entry.pending_change_bytes = 0;
+        Ok(())
+    }
+
+    pub fn observe_input_change(&mut self, path: &Path) -> Result<Vec<RootHandle>> {
+        validate_path(path)?;
+        let owners = self.roots.values().filter(|entry| path.starts_with(&entry.path)
+            || entry.snapshot.as_ref().is_some_and(|snapshot| snapshot.is_input(path)))
+            .map(|entry| entry.handle).collect::<Vec<_>>();
+        let mut invalidated = Vec::new();
+        for owner in owners {
+            if self.observe_root_input_change(owner, path)? { invalidated.push(owner); }
+        }
+        Ok(invalidated)
+    }
+
+    pub fn observe_root_input_change(&mut self, root: RootHandle, path: &Path) -> Result<bool> {
+        validate_path(path)?;
+        if path.components().any(|part| matches!(part, Component::Normal(name) if name == ".gradle" || name == ".kotlin" || name == ".git")) {
+            return Ok(false);
+        }
+        let entry = self.entry_mut(root)?;
+        if !entry.trusted { return Ok(false); }
+        let invalidated = if entry.pending.is_some() {
+            // Generated convention-plugin output can precede its final layout
+            // getter. Only the root owning this observer buffers those changes.
+            if entry.pending_changes.insert(path.to_path_buf()) {
+                entry.pending_change_bytes += path.as_os_str().len();
+            }
+            entry.pending_changes.len() > 16384 || entry.pending_change_bytes > MAX_CONTEXT_RECORD_BYTES
+        } else {
+            entry.snapshot.as_ref().is_some_and(|snapshot| snapshot.is_input(path))
+        };
+        if invalidated { self.invalidate(root)?; }
+        Ok(invalidated)
+    }
+
     pub fn finish_failed_import(&mut self, token: &DiscoveryToken) -> Result<()> {
         ensure!(
             self.is_current(&token.0),
@@ -711,6 +924,8 @@ impl ContextStore {
         );
         // Affirmative plugin facts retain an explicit repair Sync after SDK failure; the partial phase denies automatic work and device/run/preview tools.
         entry.pending = None;
+        entry.pending_changes.clear();
+        entry.pending_change_bytes = 0;
         Ok(())
     }
 }
@@ -730,6 +945,9 @@ pub struct ActiveContext {
 }
 
 impl ActiveContext {
+    pub fn root(&self) -> Option<RootHandle> {
+        self.root
+    }
     pub fn select(&mut self, root: Option<RootHandle>, owner_path: Option<PathBuf>) -> Result<()> {
         ensure!(
             root.is_some() || owner_path.is_none(),
