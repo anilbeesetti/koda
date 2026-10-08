@@ -2044,7 +2044,7 @@ mod tests {
                 "-c",
                 "printf 'KODA_ANDROID_PROJECT_MODEL={}\\nready\\n'; exec sleep 30",
             ]);
-            let (sender, mut receiver) = mpsc::channel(1);
+            let (sender, mut receiver) = mpsc::channel::<OutputLine>(1);
             let (cancel, cancelled) = oneshot::channel();
             let receive = async {
                 let line = receiver
