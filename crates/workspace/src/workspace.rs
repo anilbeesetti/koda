@@ -4607,17 +4607,18 @@ impl Workspace {
 
         let dock = self.dock_at_position(dock_side);
         dock.update(cx, |dock, cx| {
-            dock.set_open(!was_visible, window, cx);
-
-            if dock.active_panel().is_none() {
+            if dock.active_panel().is_none_or(|panel| !panel.enabled(cx)) {
                 let Some(panel_ix) = dock
                     .first_enabled_panel_idx(cx)
                     .log_with_level(log::Level::Info)
                 else {
+                    dock.set_open(false, window, cx);
                     return;
                 };
                 dock.activate_panel(panel_ix, window, cx);
             }
+
+            dock.set_open(!was_visible, window, cx);
 
             if let Some(active_panel) = dock.active_panel() {
                 if was_visible {
