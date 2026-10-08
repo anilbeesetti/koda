@@ -481,19 +481,25 @@ impl AndroidPanel {
                     });
                 }
                 if let project::Event::WorktreeUpdatedEntries(worktree_id, changes) = event {
-                    let selected_root_changed = panel
+                    let selected_inputs_changed = panel
                         .project
                         .read(cx)
                         .worktree_for_id(*worktree_id, cx)
                         .is_some_and(|worktree| {
-                            Some(worktree.read(cx).abs_path().as_ref()) == panel.root.as_deref()
+                            let root = worktree.read(cx).abs_path();
+                            changes.iter().any(|(path, _, change)| {
+                                *change != project::PathChange::Loaded
+                                    && if Some(root.as_ref()) == panel.root.as_deref() {
+                                        panel.model_input_changed(path, cx)
+                                    } else {
+                                        panel.model_absolute_input_changed(
+                                            &root.join(path.as_std_path()),
+                                            cx,
+                                        )
+                                    }
+                            })
                         });
-                    if selected_root_changed
-                        && changes.iter().any(|(path, _, change)| {
-                            *change != project::PathChange::Loaded
-                                && panel.model_input_changed(path, cx)
-                        })
-                    {
+                    if selected_inputs_changed {
                         panel.queue_official_kotlin_refresh(window, cx);
                     }
                 }
@@ -1173,24 +1179,6 @@ impl AndroidPanel {
                     match result {
                         Ok(Some(model)) => {
                             let diagnostics = model.diagnostics.join("\n");
-                            panel.model_input_roots =
-                                model
-                                    .modules
-                                    .iter()
-                                    .flat_map(|module| &module.variants)
-                                    .flat_map(|variant| &variant.components)
-                                    .flat_map(|component| &component.sources)
-                                    .filter(|source| {
-                                        matches!(source.kind,
-                                    android_tools::project_model::SourceKind::Resources
-                                    | android_tools::project_model::SourceKind::Manifest)
-                                    })
-                                    .filter_map(|source| {
-                                        source.path.strip_prefix(&model.root).ok().map(|relative| {
-                                            (expected_root.join(relative), source.generated)
-                                        })
-                                    })
-                                    .collect();
                             let targets = model.targets();
                             if let Err(error) = panel.project.update(cx, |project, cx| {
                                 project.publish_android_model(&model_token, model, cx)
@@ -1494,18 +1482,40 @@ impl AndroidPanel {
         }
     }
 
-    fn model_input_changed(&self, path: &RelPath, _cx: &App) -> bool {
+    fn model_input_changed(&self, path: &RelPath, cx: &App) -> bool {
         self.root
             .as_ref()
-            .and_then(|root| {
-                let absolute = root.join(path.as_std_path());
-                self.model_input_roots
-                    .iter()
-                    .filter(|(source, _)| absolute.starts_with(source))
-                    .max_by_key(|(source, _)| source.components().count())
-                    .map(|(_, generated)| !generated)
+            .is_some_and(|root| {
+                self.model_absolute_input_changed(&root.join(path.as_std_path()), cx)
             })
-            .unwrap_or_else(|| android_model_input(path))
+    }
+
+    fn model_absolute_input_changed(&self, path: &Path, cx: &App) -> bool {
+        let Some(root) = &self.root else {
+            return false;
+        };
+        let project = self.project.read(cx);
+        let store = project.android_context();
+        let Some(snapshot) = store.handles().find_map(|handle| {
+            (store.root_path(handle) == Some(root.as_path()))
+                .then(|| store.snapshot(handle))
+                .flatten()
+        }) else {
+            return false;
+        };
+        if !matches!(snapshot.module_owner(path), android_tools::project_context::ModuleOwner::Module(_)) {
+            return false;
+        }
+        self.model_input_roots
+            .iter()
+            .filter(|(source, _)| path.starts_with(source))
+            .max_by_key(|(source, _)| source.components().count())
+            .map(|(_, excluded)| !excluded)
+            .unwrap_or_else(|| {
+                path.strip_prefix(root).ok()
+                    .and_then(|path| RelPath::new(path, util::paths::PathStyle::local()).ok())
+                    .is_some_and(|path| android_model_input(&path))
+            })
     }
 
     fn model_inputs_dirty(&self, cx: &App) -> bool {
@@ -1518,13 +1528,9 @@ impl AndroidPanel {
                 let buffer = buffer.read(cx);
                 buffer.is_dirty()
                     && buffer.file().is_some_and(|file| {
-                        self.project
-                            .read(cx)
-                            .worktree_for_id(file.worktree_id(cx), cx)
-                            .is_some_and(|worktree| {
-                                Some(worktree.read(cx).abs_path().as_ref()) == self.root.as_deref()
-                            })
-                            && self.model_input_changed(file.path(), cx)
+                        file.as_local().is_some_and(|file| {
+                            self.model_absolute_input_changed(&file.abs_path(cx), cx)
+                        })
                     })
             })
     }
@@ -2862,7 +2868,48 @@ impl AndroidPanel {
             .as_ref()
             .map(android_tools::project_model::VariantId::from);
         self.project
-            .update(cx, |project, cx| project.select_android_variant(id, cx))
+            .update(cx, |project, cx| project.select_android_variant(id, cx))?;
+        self.model_input_roots = self.selected_model_input_roots(cx);
+        Ok(())
+    }
+
+    fn selected_model_input_roots(&self, cx: &App) -> Vec<(PathBuf, bool)> {
+        use android_tools::project_model::{SourceKind, SourceScope};
+        let Some(root) = &self.root else {
+            return Vec::new();
+        };
+        let project = self.project.read(cx);
+        let Some(selected) = &project.android_model().selected else {
+            return Vec::new();
+        };
+        let store = project.android_context();
+        let Some(snapshot) = store.handles().find_map(|handle| {
+            (store.root_path(handle) == Some(root.as_path()))
+                .then(|| store.snapshot(handle))
+                .flatten()
+        }) else {
+            return Vec::new();
+        };
+        let visible = selected.visible_modules(&selected.selected.module, SourceScope::Main);
+        selected.modules().flat_map(|(module, variant)| {
+            let directory = snapshot.modules().find(|candidate| candidate.path() == module.path)
+                .map(|module| module.directory());
+            let visible = visible.contains(&module.path);
+            variant.components.iter().flat_map(move |component| {
+                component.sources.iter().filter_map(move |source| {
+                    if !matches!(source.kind, SourceKind::Resources | SourceKind::Manifest) {
+                        return None;
+                    }
+                    let path = if let Ok(relative) = source.path.strip_prefix(&selected.model.root) {
+                        root.join(relative)
+                    } else {
+                        directory?.join(source.path.strip_prefix(&module.directory).ok()?)
+                    };
+                    matches!(snapshot.module_owner(&path), android_tools::project_context::ModuleOwner::Module(_))
+                        .then_some((path, source.generated || !visible || component.scope != SourceScope::Main))
+                })
+            })
+        }).collect()
     }
 
     fn apply_targets(&mut self, targets: Vec<AndroidTarget>, cx: &App) {
@@ -5030,6 +5077,154 @@ mod tests {
             panel.invalidate_model(Some("/another".into()), cx);
             assert!(panel.model_input_roots.is_empty());
         });
+    }
+
+    #[gpui::test]
+    async fn sibling_model_inputs_reconcile_dirty_and_saved_resources_without_unrelated_refreshes(
+        cx: &mut TestAppContext,
+    ) -> Result<()> {
+        use android_tools::project_context::{ActiveContext, PluginId, decode_context_record};
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            project::trusted_worktrees::init(Default::default(), cx);
+            crate::init(cx);
+        });
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem.insert_tree("/input-parent", json!({
+            "settings.gradle.kts":"include(\":app\"); project(\":app\").projectDir = file(\"../input-sibling\")", "gradlew":""
+        })).await;
+        filesystem.insert_tree("/input-sibling", json!({
+            "build.gradle.kts":"", "Main.kt":"fun main() {}",
+            "inputs":{
+                "values":{"strings.xml":"<resources/>"},
+                "generated":{"values":{"strings.xml":"<resources/>"}},
+                "tests":{"values":{"strings.xml":"<resources/>"}}
+            },
+            "manifest":{"custom.xml":"<manifest/>"},
+            "release-res":{"values":{"strings.xml":"<resources/>"}}
+        })).await;
+        filesystem.insert_tree("/input-unrelated", json!({
+            "src":{"main":{"res":{"values":{"strings.xml":"<resources/>"}}}},
+            "main.py":"print(1)"
+        })).await;
+        let project = Project::test_with_worktree_trust(filesystem,
+            [Path::new("/input-parent"), Path::new("/input-sibling"), Path::new("/input-unrelated")], cx).await;
+        cx.update(|cx| {
+            project_surfaces::tests::trust(&project, cx)?;
+            let record = json!({"schema":1,"root":"/input-parent","gradleVersion":"9.6.1","phase":"complete", "modules":[
+                (":", "/input-parent", false), (":app", "/input-sibling", true)
+            ].map(|(module,directory,android)|json!({"path":module,"directory":directory,
+                "plugins":PluginId::ALL.map(|plugin|json!({"plugin":plugin,"applied":android && matches!(plugin, PluginId::AndroidApplication | PluginId::ComposeCompiler)})),
+                "targets":{"status":"available","value":if android {vec![json!({"name":"android","platform":"androidJvm"})]} else {vec![]}}}))});
+            let snapshot = decode_context_record(&serde_json::to_vec(&record)?, Path::new("/input-parent"))?;
+            project.update(cx, |project, cx| {
+                let worktree = project.visible_worktrees(cx)
+                    .find(|worktree| worktree.read(cx).abs_path().as_ref() == Path::new("/input-parent"))
+                    .context("Parent worktree")?.read(cx).id();
+                let handle = project.ensure_android_context(worktree, true, cx)?;
+                let discovery = project.begin_android_context_import(handle, cx)?;
+                let mut active = ActiveContext::default();
+                active.select(Some(handle), None)?;
+                let owner = active.discovery_token(project.android_context()).context("Import owner")?;
+                project.publish_android_context(&active, &owner, &discovery, snapshot, cx)
+            })
+        })?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/input-sibling/Main.kt"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        let panel = workspace.read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx).context("Android panel"))?;
+        let target = AndroidTarget {
+            module: ":app".into(), variant: "debug".into(),
+            output_listing: PathBuf::from("/input-sibling/output.json"),
+        };
+        let model = serde_json::from_value::<android_tools::project_model::ProjectModel>(json!({
+            "version":1,"root":"/canonical-parent","diagnostics":[],"modules":[{
+                "path":":app","directory":"/canonical-sibling","kind":"application","namespace":"sample",
+                "variants":[
+                    {"name":"debug","outputListing":target.output_listing,"components":[
+                        {"name":"debug","scope":"main","dependencies":[],"sources":[
+                            {"path":"/canonical-sibling/inputs","kind":"resources","generated":false},
+                            {"path":"/canonical-sibling/manifest/custom.xml","kind":"manifest","generated":false},
+                            {"path":"/canonical-sibling/inputs/generated","kind":"resources","generated":true}
+                        ]},
+                        {"name":"debugUnitTest","scope":"unitTest","dependencies":[],"sources":[
+                            {"path":"/canonical-sibling/inputs/tests","kind":"resources","generated":false}
+                        ]}
+                    ]},
+                    {"name":"release","components":[{"name":"release","scope":"main","dependencies":[],"sources":[
+                        {"path":"/canonical-sibling/release-res","kind":"resources","generated":false}
+                    ]}]}
+                ]
+            }]
+        }))?;
+        let publish_model = |panel: &mut AndroidPanel, cx: &mut Context<AndroidPanel>| -> Result<()> {
+            panel.targets = vec![target.clone()];
+            panel.selected_target = Some(target.clone());
+            panel.project.update(cx, |project, cx| {
+                let token = project.invalidate_android_model(Some(PathBuf::from("/input-parent")), cx);
+                project.publish_android_model(&token, model.clone(), cx)
+            })?;
+            panel.publish_selection(cx)?;
+            // A busy operation preserves queued model reconciliation while this
+            // test observes saves without executing SDK or Gradle processes.
+            panel.running = true;
+            Ok(())
+        };
+        panel.update(visual, publish_model)?;
+        panel.read_with(visual, |panel, _| {
+            assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/inputs"), false)));
+            assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/manifest/custom.xml"), false)));
+            assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/inputs/generated"), true)));
+            assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/inputs/tests"), true)));
+            assert!(!panel.model_input_roots.iter().any(|(path, _)| path.starts_with("/canonical-sibling") || path.starts_with("/input-unrelated")));
+        });
+        let roots = project.read_with(visual, |project, cx| project.visible_worktrees(cx)
+            .map(|worktree| {let worktree = worktree.read(cx); (worktree.id(), worktree.abs_path())})
+            .collect::<HashMap<_, _>>());
+        let events = std::rc::Rc::new(RefCell::new(Vec::new()));
+        let _events_subscription = visual.update(|_, cx| {
+            let events = events.clone();
+            cx.subscribe(&project, move |_, event, _| {
+                if let project::Event::WorktreeUpdatedEntries(worktree, changes) = event
+                    && let Some(root) = roots.get(worktree)
+                {
+                    events.borrow_mut().extend(changes.iter().map(|(path, _, change)| (root.join(path.as_std_path()), *change)));
+                }
+            })
+        });
+        for (path, refresh) in [
+            ("/input-sibling/inputs/generated/values/strings.xml", false),
+            ("/input-sibling/inputs/tests/values/strings.xml", false),
+            ("/input-sibling/release-res/values/strings.xml", false),
+            ("/input-unrelated/src/main/res/values/strings.xml", false),
+            ("/input-sibling/inputs/values/strings.xml", true),
+            ("/input-sibling/manifest/custom.xml", true),
+        ] {
+            panel.update(visual, publish_model)?;
+            let buffer = project.update(visual, |project, cx| project.open_local_buffer(path, cx)).await?;
+            visual.run_until_parked();
+            assert!(panel.read_with(visual, |panel, _| panel.kotlin_refresh_task.is_none() && panel.kotlin_refresh_pending.is_none()));
+            buffer.update(visual, |buffer, cx| buffer.edit([(0..0, " ")], None, cx));
+            assert_eq!(panel.read_with(visual, |panel, cx| panel.model_inputs_dirty(cx)), refresh, "Dirty resource ownership: {path}");
+            events.borrow_mut().clear();
+            project.update(visual, |project, cx| project.save_buffer(buffer.clone(), cx)).await?;
+            visual.run_until_parked();
+            assert!(!buffer.read_with(visual, |buffer, _| buffer.is_dirty()));
+            assert!(events.borrow().iter().any(|(changed, change)| changed == Path::new(path) && *change != project::PathChange::Loaded), "Actual saved worktree event: {path}");
+            panel.update(visual, |panel, cx| {
+                assert!(!panel.model_inputs_dirty(cx));
+                assert_eq!(panel.kotlin_refresh_task.is_some() || panel.kotlin_refresh_pending.as_deref() == Some(Path::new("/input-parent")), refresh, "Saved resource ownership: {path}");
+                assert!(panel.build_task.is_none() && panel.sync_task.is_none() && panel.kotlin_task.is_none());
+                panel.kotlin_refresh_task = None;
+                panel.kotlin_refresh_pending = None;
+            });
+        }
+        panel.update(visual, |panel, _| panel.running = false);
+        Ok(())
     }
 
     #[gpui::test]
