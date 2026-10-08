@@ -1,0 +1,356 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "scope": "Source-bound fresh full-app keyboard replay; closes exact Tab/Space/ShiftTab/Return evidence gap only.",
+  "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "app_executable_sha256": "577814b594205348eab4869aef4f3d0dc0377bbd6fe4acc9bb40ca7788b89c3e",
+  "successful_attempt": "attempt2",
+  "actual_command_count": 48,
+  "all_commands_paired_and_exit_zero": true,
+  "raw_input_journal_sha256": "32c7e4ce64c1d63d665fa8d572d52388a215c2a4250b930833f8b1001c26bed6",
+  "raw_pty_sha256": "e24991d28eb5e7283c8c875f7cfee0d19466ff27aa3aaec6491178747b7255c4",
+  "routes": [
+    {
+      "route": "wide",
+      "verdict": "PASS",
+      "focus_command": {
+        "kind": "command-finish",
+        "label": "wide-tab-to-output",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "Tab"
+        ],
+        "cwd": "/workspace/android-studio-source-providers",
+        "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+        "display": ":119",
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "utc": "2026-10-07T22:58:49.472348+00:00",
+        "monotonic": 50569.541996195,
+        "elapsed_seconds": 0.01793466899835039,
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "activation_command": {
+        "kind": "command-finish",
+        "label": "wide-space-select-output",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "space"
+        ],
+        "cwd": "/workspace/android-studio-source-providers",
+        "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+        "display": ":119",
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "utc": "2026-10-07T22:59:05.339791+00:00",
+        "monotonic": 50585.409431728,
+        "elapsed_seconds": 0.014576219000446144,
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "visually_verified_captures": [
+        "wide-output-focus.png",
+        "wide-output-selected.png"
+      ]
+    },
+    {
+      "route": "narrow_forward",
+      "verdict": "PASS",
+      "focus_command": {
+        "kind": "command-finish",
+        "label": "narrow-tab-to-output",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "Tab"
+        ],
+        "cwd": "/workspace/android-studio-source-providers",
+        "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+        "display": ":119",
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "utc": "2026-10-07T22:59:25.413311+00:00",
+        "monotonic": 50605.482953238,
+        "elapsed_seconds": 0.015411486994707957,
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "activation_command": {
+        "kind": "command-finish",
+        "label": "narrow-space-select-output",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "space"
+        ],
+        "cwd": "/workspace/android-studio-source-providers",
+        "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+        "display": ":119",
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "utc": "2026-10-07T22:59:26.545351+00:00",
+        "monotonic": 50606.614991891,
+        "elapsed_seconds": 0.01455518100556219,
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "visually_verified_captures": [
+        "narrow-output-focus.png",
+        "narrow-output-selected.png"
+      ]
+    },
+    {
+      "route": "narrow_reverse",
+      "verdict": "PASS",
+      "focus_command": {
+        "kind": "command-finish",
+        "label": "narrow-shift-tab-to-sync",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "shift+Tab"
+        ],
+        "cwd": "/workspace/android-studio-source-providers",
+        "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+        "display": ":119",
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "utc": "2026-10-07T22:59:43.867252+00:00",
+        "monotonic": 50623.936897241,
+        "elapsed_seconds": 0.030282156003522687,
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "activation_command": {
+        "kind": "command-finish",
+        "label": "narrow-space-restore-sync",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "space"
+        ],
+        "cwd": "/workspace/android-studio-source-providers",
+        "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+        "display": ":119",
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "utc": "2026-10-07T22:59:45.010747+00:00",
+        "monotonic": 50625.080388505,
+        "elapsed_seconds": 0.018558331998065114,
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "visually_verified_captures": [
+        "narrow-reverse-sync-focus.png",
+        "narrow-sync-restored.png"
+      ]
+    },
+    {
+      "route": "hide",
+      "verdict": "PASS",
+      "focus_command": {
+        "kind": "command-finish",
+        "label": "hide-second-tab-hide",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "Tab"
+        ],
+        "cwd": "/workspace/android-studio-source-providers",
+        "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+        "display": ":119",
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "utc": "2026-10-07T23:00:07.174524+00:00",
+        "monotonic": 50647.244164411,
+        "elapsed_seconds": 0.015052118003950454,
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "activation_command": {
+        "kind": "command-finish",
+        "label": "hide-return",
+        "command": [
+          "/workspace/cloud-environment/native/usr/bin/xdotool",
+          "key",
+          "--window",
+          "2097153",
+          "Return"
+        ],
+        "cwd": "/workspace/android-studio-source-providers",
+        "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+        "display": ":119",
+        "window_id": 2097153,
+        "app_pid": 278956,
+        "utc": "2026-10-07T23:00:08.420273+00:00",
+        "monotonic": 50648.489920021,
+        "elapsed_seconds": 0.014994762001151685,
+        "exit_code": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "visually_verified_captures": [
+        "wide-hide-focus.png",
+        "hide-return.png"
+      ]
+    }
+  ],
+  "captures": [
+    {
+      "path": "attempt2/captures/build-sidebar-restored.png",
+      "sha256": "18972b54e91d2bd9edd037ae7b314988b5b813d5b3c78ac1fd0b9b9ac7955f27",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/editor-gradle-tab.png",
+      "sha256": "db89f763bb56503c0fea070b052aeea5490878ff163a1646a38f286f05481a6b",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/editor-xml-restored.png",
+      "sha256": "e00e2ab3e133ac1104cc409dc51d62fbed996d86138c83acca16e87de41d794e",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/hide-return.png",
+      "sha256": "0dec97fd767c8a3f468fe313d725dc0de89eca434e7d16318bd8fc6e5db8fb5b",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/narrow-output-focus.png",
+      "sha256": "453d5f938e492248c847c3591ac8cb846ceae71711fca95dd40d89495fb90e36",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/narrow-output-selected.png",
+      "sha256": "32278e6fdcacdc9accbd56a37d48a186100be55fdb38be2e07b5359311e66d02",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/narrow-reverse-sync-focus.png",
+      "sha256": "f56b74808bb4a03d5f510bea4e923d87073b0df6434dc26e02384761178019ba",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/narrow-sync-restored.png",
+      "sha256": "8a0caef8a65526c098e5b193dd7907496b342548ecd1ef3b47790bd02c09e06c",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/narrow-sync.png",
+      "sha256": "f7995cbc27c7fd10519cb945b05b3cf2c4d40a7cc35992107de86b89e5149587",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/sync-current.png",
+      "sha256": "4fe9ca2f6269e0589d166a777ccb1ed7185e4dffc8146015c3e7e5e9dd7eebda",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/trust-prompt.png",
+      "sha256": "b94e027542a3ef3e439d54f061e268dde463c51fe0230944d5bdb927f17db267",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/wide-hide-focus.png",
+      "sha256": "0700c6c36477708189e9d2cf0cf27c8bfc9d0c0ec9fb5f6eeb6442dbb8345e7f",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/wide-output-focus.png",
+      "sha256": "008082558fc49045ecc08d0e8385dd763c442c1c2ff31fe7b112964bf9fd8bc7",
+      "visually_inspected": true
+    },
+    {
+      "path": "attempt2/captures/wide-output-selected.png",
+      "sha256": "0eb1baea6c54c4571014f7a0bc4e94fd45a405c18c9e33fb56b573d8a8e39d30",
+      "visually_inspected": true
+    }
+  ],
+  "final_closure_and_guard": {
+    "schema_version": 1,
+    "verdict": "PASS",
+    "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+    "git_tree": "6b84b2d512405eba30658cc9d92577570f4e4796",
+    "final_guard_utc": "2026-10-07T23:03:09.478655+00:00",
+    "whole_source_files_verified": 4712,
+    "fixed_metadata_exclusions": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ],
+    "source_index_worktree_untracked_and_file_hashes_match": true,
+    "original_and_each_private_fixture_files_verified": 12,
+    "private_fixture_copies": 2,
+    "all_fixture_hashes_and_official_wrappers_unchanged": true,
+    "original_native_manifest655_files_plus_manifest_byte_unchanged": true,
+    "current_app_sha256": "577814b594205348eab4869aef4f3d0dc0377bbd6fe4acc9bb40ca7788b89c3e",
+    "successful_attempt_owned_pids_absent": [
+      278936,
+      278956,
+      278946
+    ],
+    "failed_attempt_owned_pids_absent": [
+      278199,
+      278219,
+      278209
+    ],
+    "display119_absent": true,
+    "successful_launcher_exec_session": 48564,
+    "successful_launcher_exit_code": 143,
+    "failed_launcher_exec_session": 9374,
+    "failed_launcher_exit_code": 143,
+    "unowned_gradle167092_present": true,
+    "no_unrelated_processes_signaled": true,
+    "successful_profile_only_trust_row": [
+      [
+        1,
+        "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/generation-project",
+        null,
+        null
+      ]
+    ],
+    "event_commands_started_and_finished": 48,
+    "all_successful_attempt_commands_exit_zero": true,
+    "events_sha256": "32c7e4ce64c1d63d665fa8d572d52388a215c2a4250b930833f8b1001c26bed6",
+    "raw_attached_pty_sha256": "e24991d28eb5e7283c8c875f7cfee0d19466ff27aa3aaec6491178747b7255c4",
+    "recorded_preexisting_gradle_indentation_query_diagnostic": true,
+    "new_original_reference_test_credit": 0,
+    "phase_or_IDE_complete": false
+  },
+  "preserved_first_attempt": "preparation assertion, libxdo command exit127 and invalid default JAVA_HOME SDK sync failure313ms retained without original evidence/source/test changes",
+  "original_native_report_unchanged_and_specific_key_route_limit_retained": true,
+  "new_source_changes": 0,
+  "new_reference_parity_credit": 0,
+  "new_Cargo_builds": 0,
+  "CPU_or_full_model_comparison_repeated": false,
+  "phase_or_IDE_complete": false
+}

@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "review_status": "final local/native scoped review; full workspace CI remains lead gate",
+  "scope": "Independent current-source full-app visual/UI-state regression audit for the bounded V2 generated-artifact facts and AGP correction; not complete IDE fidelity.",
+  "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "audit_utc": "2026-10-07T23:06:12.581894+00:00",
+  "independent_byte_audit": {
+    "path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/ui-runtime-independent-byte-audit-round3.json",
+    "sha256": "7a2a2971cd23afa8f5239492bbf991f9fbdfdd435e3470ad5907147666d3a262"
+  },
+  "checks": {
+    "all4712_current_source_bindings": true,
+    "app_executable_current_source_sha256": "577814b594205348eab4869aef4f3d0dc0377bbd6fe4acc9bb40ca7788b89c3e",
+    "actual_full_app_build_exit": 0,
+    "actual_default_ui_passed": 125,
+    "actual_default_ui_failed": 0,
+    "actual_pre_existing_ignored": 1,
+    "actual_tools_all_features_passed": 231,
+    "actual_tools_failed_ignored_filtered": 0,
+    "exact_current_reference_tests_passing": 35,
+    "frozen_validator_exit": 0,
+    "partial_census": {
+      "selected": 95,
+      "ported": 19,
+      "adapted": 16,
+      "unported": 60,
+      "passing": 35
+    },
+    "strict_clippy_exit": 0,
+    "workspace_format_exit": 0,
+    "original_native_pngs_visually_inspected": 23,
+    "original_painted_native_states": 22,
+    "original_blank_prepaint_retained": true
+  },
+  "current_native_observations": [
+    "Fixture trust dialog leaves broader trust checkbox unchecked.",
+    "Both actual syncs show loading then successful variant discovery and :app / demoDebug.",
+    "XML and Gradle editor tabs show highlighted source and restoration.",
+    "Sync and Build Output focus/selection are visibly distinct; empty output shows Nothing to show.",
+    "At230px, toolbar reveals forward/reverse targets while previous pane selection persists; labels and the overall app are clipped.",
+    "Hide focus, hidden Build tool window, sidebar restoration and final XML/Sync restoration are visible."
+  ],
+  "findings": [
+    {
+      "id": "existing-sync-raw-model-output",
+      "severity": "tracked foundation UI limitation",
+      "detail": "Raw KODA_ANDROID_PROJECT_MODEL JSON is visible in Sync console. The inherited transport leakage must be addressed by a separate stream/presentation change preserving decoder data and raw evidence. It does not earn visual polish or Studio fidelity credit.",
+      "separate_pending_plan": {
+        "path": "/workspace/android-studio-artifacts/sync-console-model-record-filter-plan.json",
+        "sha256": "fc70a081c1b69ef5f3ca74c3a2c8464e9c2a475ad8f0fb9a902aa6afc4a9885c",
+        "status": "planned_not_implemented",
+        "canonical_parity_credit": 0
+      }
+    },
+    {
+      "id": "below-usable-width-clipping",
+      "severity": "scope limit",
+      "detail": "230px app width clips Project labels/editor space and toolbar labels. These captures verify overflow state transitions only, not a usable complete Android Studio layout at this width."
+    }
+  ],
+  "blocking_new_source_ui_findings": [],
+  "keyboard_workflow_gate": "PASS from separate actual attempt2; original-session exact routes remain UNVERIFIED in history",
+  "fresh_replay_directory": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc",
+  "full_workspace_CI_gate": "PENDING37695121709; no inferred success or workspace count",
+  "full_IDE_Android_Studio_fidelity_complete": false,
+  "logical_Android_tree_complete": false,
+  "original_generated_tree_test_credit": 0,
+  "Rust_LSP_completion_credit": 0,
+  "reviewer_started_Cargo_Gradle_SDK_or_app": false,
+  "reviewer_source_or_existing_evidence_edits": false,
+  "fresh_replay_attempt1_observation": {
+    "scope": "Actual prior attempt captures only; attempt2 runtime pending independent review",
+    "images": [
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/captures/trust-prompt.png",
+        "bytes": 86238,
+        "sha256": "fb250c93c78833674ae30c4cbb9e361218af9b81add7d8d7a48b124dee01b5f0",
+        "dimensions": [
+          1600,
+          1000
+        ],
+        "visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/captures/sync-loading.png",
+        "bytes": 86123,
+        "sha256": "7740a2328d706d8e7eff8edb56523ab0bc1e498cc07cb462a4ca722d93494873",
+        "dimensions": [
+          1600,
+          1000
+        ],
+        "visually_inspected": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/captures/after-trust-settled.png",
+        "bytes": 122937,
+        "sha256": "6aacd941e8e85a94c3edf9cbcdd4f59a1cff132c98f9b6c9aef6e2f9a02ca4d0",
+        "dimensions": [
+          1600,
+          1000
+        ],
+        "visually_inspected": true
+      }
+    ],
+    "sync_loading_capture_actually_still_trust_dialog": true,
+    "after_trust_settled_actual_state": "Sync Failed313ms; JAVA_HOME points at invalid `/workspace/android-studio-artifacts/source-providers-smoke/app-runtime/jdk/jdk-21.0.12+1`",
+    "runtime_gate_success_credit": false,
+    "failure_history_preserved": true,
+    "source_defect_inferred": false
+  },
+  "fresh_replay_attempt2": {
+    "independent_audit": {
+      "path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/ui-keyboard-independent-byte-audit-round3.json",
+      "sha256": "52d40d46dbe7d7f181ccc9b8dc5590ea59bce89c7267574ce1bf79a7c24a4960"
+    },
+    "event_records": 97,
+    "actual_complete_command_start_finish_pairs": 48,
+    "nonzero_command_exits": 0,
+    "events_sha256": "32c7e4ce64c1d63d665fa8d572d52388a215c2a4250b930833f8b1001c26bed6",
+    "visually_inspected_painted_captures": 14,
+    "key_routes": [
+      {
+        "label": "wide-tab-to-output",
+        "result": "PASS",
+        "observed": "Output focused while Sync content remains selected"
+      },
+      {
+        "label": "wide-space-select-output",
+        "result": "PASS",
+        "observed": "Output selected with Nothing to show"
+      },
+      {
+        "label": "narrow-tab-to-output",
+        "result": "PASS",
+        "observed": "Output header revealed/focused while Sync content persists"
+      },
+      {
+        "label": "narrow-space-select-output",
+        "result": "PASS",
+        "observed": "Output selected with Nothing to show"
+      },
+      {
+        "label": "narrow-shift-tab-to-sync",
+        "result": "PASS",
+        "observed": "Sync header revealed/focused while empty Output content persists"
+      },
+      {
+        "label": "narrow-space-restore-sync",
+        "result": "PASS",
+        "observed": "Sync content restored with Sync underline"
+      },
+      {
+        "label": "hide-return",
+        "result": "PASS",
+        "observed": "Build tool window hidden and editor extends down"
+      }
+    ],
+    "all4712_source_bindings_unchanged": true,
+    "closure": {
+      "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/final-closure-and-guard.json",
+      "sha256": "a8a6e0d223e0173268a33458b9f19a637ff00165492f1bba5d2c0d0d25ea983d",
+      "actual_all6_owned_processes_absent": true,
+      "actual_display119_absent": true,
+      "unowned_gradle167092_preserved": true,
+      "successful_launcher_exit": 143,
+      "failed_launcher_exit": 143,
+      "actual_only_trusted_private_fixture": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/generation-project",
+      "guarded_original_native_files": 655,
+      "original_and_each_private_fixture_files": 12,
+      "private_fixture_copies": 2
+    },
+    "actual_sync_success_seconds": 2,
+    "selected_variant": ":app / demoDebug",
+    "new_original_test_credit": 0,
+    "preexisting_gradle_indentation_query_diagnostic_retained": true,
+    "complete_manifest_and_fixture_audit": [
+      {
+        "path": "/workspace/android-studio-artifacts/v2-native-9b9cbbc/artifact-manifest.json",
+        "sha256": "f7a91e815c69ff6d712ab862bc2c289b658450bf7f9346fd4992ba013e77ff5d",
+        "actual_file_count": 655,
+        "all_file_bytes_and_hashes_match": true,
+        "actual_path_set_matches": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/artifact-manifest.json",
+        "sha256": "df0385ea8d149359a5630ed0a58dd9694e4eb96abcb05fb44edb290b7349a6dc",
+        "actual_file_count": 1228,
+        "all_file_bytes_and_hashes_match": true,
+        "actual_path_set_matches": true
+      }
+    ],
+    "all12_original_and2_copies_hashes_directly_verified": true
+  },
+  "original_session_routes_remain_unverified": true,
+  "interim_review_history_retained": true
+}

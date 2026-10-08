@@ -1,0 +1,21 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "/workspace/android-studio-artifacts/v2-artifact-integration/sdk-decoder/runtime-probe.rs",
+    "-L",
+    "dependency=/workspace/.cache/zed/target/debug/deps",
+    "--extern",
+    "android_tools=/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+    "--extern",
+    "serde_json=/workspace/.cache/zed/target/debug/deps/libserde_json-dad50efee64284ac.rlib",
+    "--extern",
+    "anyhow=/workspace/.cache/zed/target/debug/deps/libanyhow-18b69cad26582a56.rlib",
+    "-o",
+    "/workspace/android-studio-artifacts/v2-artifact-integration/sdk-decoder/runtime-probe"
+  ],
+  "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "library_sha256": "fb116a4b204c848ccd86ada7f50cd90ea81f8fba98511a067b72dd5d99c712b4",
+  "probe_source_sha256": "5551985487b7e87f31963365ccf203f138de5f7bb4ebb2d5f4ca9d9b9a971dca",
+  "current_normal_231_test_library": true
+}
