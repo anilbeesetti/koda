@@ -1,0 +1,1 @@
+["--init-script", "path with spaces", "literal\"quote", "literal$HOME", "literal`command`", "literal\\backslash", "line\nargument", "", "--console=plain"]

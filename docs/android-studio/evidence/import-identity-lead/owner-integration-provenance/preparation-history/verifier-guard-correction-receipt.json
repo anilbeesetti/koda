@@ -1,0 +1,22 @@
+{
+  "actual_command": [
+    "python3",
+    "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integrate-owner-package.py",
+    "verify-plan"
+  ],
+  "actual_exit_code": 0,
+  "actual_stdout_sha256": "657c02401069b7e0c34ce44cc6aa4a538fca54dcaadb4761c7162ac823cd6551",
+  "actual_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "script_sha256": "17f170531ec767456eba8e2f6559fa68a905107f3242a575134b5020182e04dd",
+  "guide_sha256": "1148e6a6be7be8ee79c5fa92c06f749094e4ed8e39ac8dcf068430044bab6f22",
+  "plan_sha256": "80ba1959c27763808c35d9a7fa545f6a96d43f6f5bec0e5df822d12c894cecc7",
+  "original_reviewed_payload_unchanged": true,
+  "guard_change": "strict deterministic verify-applied rebinds Source/head/index/main/protected/canonical/status and exactwritten169 plus guard booleans; template-marker rejection",
+  "Source_semantic_product_fix_round_increment": 0,
+  "Root_hold": "ACTIVE",
+  "native_initial_live": "NOT_PASS",
+  "Root_release_received": false,
+  "apply_executed": false,
+  "verify_applied_executed": false,
+  "WT_Git_index_source_cache_native_reads_or_changes": 0
+}

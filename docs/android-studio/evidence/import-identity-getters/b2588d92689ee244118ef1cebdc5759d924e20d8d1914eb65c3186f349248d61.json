@@ -1,0 +1,6 @@
+{
+  "exit_code": 1,
+  "stderr": "Error: Malformed generatedArtifacts: invalid type: sequence, expected struct ModelVersion\n",
+  "compiled_probe_source": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "only_input_edit": "producer object replaced with array holding identical major/minor/description"
+}

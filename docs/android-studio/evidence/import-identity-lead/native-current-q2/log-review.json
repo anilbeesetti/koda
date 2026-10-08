@@ -1,0 +1,20 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "launcher_pty_sha256": "48f1edbe1f42a7956fefa1028b751e2d7ff67d89c7dcf314df9f5e38cd5f19bb",
+  "no_crash_in_observed_run": true,
+  "no_repeated_unexpected_failure_in_observed_run": true,
+  "known_diagnostics": [
+    {
+      "message": "Found no xinput mouse pointers.",
+      "count": 1,
+      "scope": "Software-X11 startup diagnostic; pointer/keyboard commands functioned."
+    },
+    {
+      "message": "missing required capture(s) in Gradle indents TreeSitter query: indent",
+      "count": 1,
+      "scope": "Existing Gradle language query; affected source file is unchanged in this import bridge task. No indentation completion claim."
+    }
+  ],
+  "all_original_and_supplemental_inputs_exit_zero": true,
+  "official_exit_code": 143
+}

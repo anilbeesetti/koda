@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "area": "performance",
+  "verdict": "PASS",
+  "scope": "read-only ordinary dependency merge static equivalence addendum",
+  "reviewed_at_utc": "2026-10-08T01:39:15.807077+00:00",
+  "source_commit": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "parents": [
+    "6fb7f94173320326bd523a8af67db77916ac7da3",
+    "c1ce5ca16a26fd59984b50500ead45fbafafa5c8"
+  ],
+  "worktree": "/workspace/android-studio-import-identity-getters",
+  "previous_review": {
+    "source_commit": "6fb7f94173320326bd523a8af67db77916ac7da3",
+    "verdict": "PASS",
+    "markdown_sha256": "9f688dc03675422ecc8c9bd6b998a045866df874e3ce23c147067fa24c0cc83a",
+    "json_sha256": "94cd802ddea0b1dbbc4928ba7635ffbfcf7af09717c45f706bf0bbeac822bf40"
+  },
+  "blocking_findings": [],
+  "verification": {
+    "source_hashes_verified": 4743,
+    "previous_source_files_byte_identical": 4737,
+    "only_existing_source_changed": "crates/android_tools/src/android_tools.rs",
+    "exact_export_addition": "pub mod parallel_sync; after pub mod module_presentation;",
+    "new_files_byte_equal_protected_parent": [
+      "crates/android_tools/src/parallel_sync.rs",
+      "crates/android_tools/test_data/parallel_sync/AgpVersion.kt",
+      "crates/android_tools/test_data/parallel_sync/LICENSE-APACHE",
+      "crates/android_tools/test_data/parallel_sync/NOTICE",
+      "crates/android_tools/tests/parallel_sync.rs"
+    ],
+    "all_import_implementation_tests_references_byte_identical": true,
+    "tracked_index_and_clean_status_match_snapshot": true,
+    "source_digest": "39194d542ee78357f75a8fec0b28bb4cdfa1dc73c7ca88f0c6b12500e52efe9d",
+    "fixed_seven_patterns": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ]
+  },
+  "performance_checks": {
+    "identity_catalogue": "Ordered vector plus BTreeMap; O(P log P + M log P) catalogue/Basic-module matching comparisons, field-byte validation extra",
+    "unchanged_costs": [
+      "Selection validation variant scans",
+      "Owned model identity reconstruction on freshness validation",
+      "Canonical-path filesystem getters",
+      "Combined Basic/V2/import sidecar uses existing 16 MiB total stdout capture budget"
+    ],
+    "parallel_policy_max_accepted_version_bytes": 64,
+    "parallel_policy_production_callers": 0,
+    "new_Gradle_tasks_scheduler_IO_or_Provider_realization": false
+  },
+  "pending_runtime_gates": [
+    "Combined-source all-feature tests/build and strict Clippy",
+    "UI suite",
+    "Actual Gradle/SDK and late-configuration oracle",
+    "Full app/native workflow",
+    "Startup, memory and representative large-project performance measurements",
+    "Lead full CI and merge review"
+  ],
+  "previous_default_30_test_receipt_credit": "Previous-source execution only, unchanged P2 bytes independently verified; no combined-source rerun",
+  "runtime_commands_run": 0,
+  "source_cache_Git_mutations": 0,
+  "new_original_test_credit": 0,
+  "product_fix_rounds_added": 0,
+  "performance_measurements_claimed": [],
+  "evidence_sha256": {
+    "/workspace/android-studio-artifacts/import-identity-getters/dependency-merge/current-source.json": "4770fd8f24a9081c0800156caf6aacba107019aa13c73fed91712b3b3a7217a9",
+    "/workspace/android-studio-artifacts/import-identity-getters/dependency-merge/merge-verified.json": "0ce07e2b15d891d8883d268c190b39efc072b122fcb09710f1df4ca0b9159ac3"
+  },
+  "reviewed_file_sha256": {
+    "crates/android_tools/src/import_facts.rs": "817b9fa28240385e48fd68df1296619c6cb0ff4e6b219ef91b349ec563e3fafa",
+    "crates/android_tools/src/project_model.gradle": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+    "crates/android_tools/tests/import_facts.rs": "622dfb8c33596a9546583afefe0d65d21530e7fc933b87690c327616c4d976bc",
+    "crates/android_tools/src/android_tools.rs": "df93abc2f4455ef81491856a6b3a0d9ea0581647006d9f8deb20610b30be5268",
+    "crates/android_tools/src/parallel_sync.rs": "943e61b9d6e3256275b38750a7f8595cc4aa270a099093f6df8404f6270998e7",
+    "crates/android_tools/test_data/parallel_sync/AgpVersion.kt": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb",
+    "crates/android_tools/test_data/parallel_sync/LICENSE-APACHE": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+    "crates/android_tools/test_data/parallel_sync/NOTICE": "96fe5c3fbdbdfe71b4b00a6a979f0d96fc248be3e921893b9908a3014de6c6dc",
+    "crates/android_tools/tests/parallel_sync.rs": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77"
+  },
+  "outputs_only": [
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-merged-static.md",
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-merged-static.json"
+  ],
+  "markdown_sha256": "9c4b0398ab0f9d702125292a2052bed7e5eff3defd42a7f5d416696512c6021e"
+}

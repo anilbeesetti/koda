@@ -1,0 +1,26 @@
+{
+  "authorization": "Root explicit one-line nonsemanticownershipcleanup under existing user continue/no routine questions; after current immutableUI epoch finishes",
+  "user_facing_escalation": "Root delivered after actualClippyFAIL following three semantic productfix rounds",
+  "new_user_approval_reply_received": false,
+  "semantic_product_fix_rounds_used": 3,
+  "additional_nonsemantic_quality_cleanup": true,
+  "allowed_exact_test": "absent_observation_round_trip_does_not_become_bare_null",
+  "allowed_edit": "remove only .clone() from let mut value = fixture.value.clone();",
+  "all_test_mutations_and_assertions_preserved": true,
+  "required_project_clone_unchanged": true,
+  "before_test_source_sha256": "622dfb8c33596a9546583afefe0d65d21530e7fc933b87690c327616c4d976bc",
+  "predicted_after_test_source_sha256": "13744dfb88d81b17fcba3bed9a1d07000d0d8f3cffa4e62232a6f733ca72f319",
+  "before_source_commit": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "edit_performed": false,
+  "actual_strictClippy_FAILURE_log_sha256": "f732c9e998be247590591a3293d3980c373382c17543bf59c9bab2d0d36f5b3f",
+  "prior_independent_quality_failure_preserved": true,
+  "required_corrected_source_checks": [
+    "all291normalallfeaturetools",
+    "normalfreshallfeaturelib",
+    "strictrepoClippy",
+    "workspacefmt",
+    "freshdefaultUI",
+    "actualSDKidentitylateIdeaOracle",
+    "all5finalreviews"
+  ]
+}

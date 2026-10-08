@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integrate-owner-package.py",
+    "verify-plan"
+  ],
+  "actual_exit_code": 0,
+  "actual_stdout": "{\"external_plan\": \"PASS\", \"files\": 169, \"WT_Git_index_cache_read_or_mutation\": false}\n",
+  "apply_executed": false,
+  "verify_applied_executed": false,
+  "Root_release_received": false,
+  "repository_or_shared_cache_reads_mutations_performed": false
+}

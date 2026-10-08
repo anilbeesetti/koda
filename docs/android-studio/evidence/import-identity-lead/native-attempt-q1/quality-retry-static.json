@@ -1,0 +1,86 @@
+{
+  "verdict": "PASS",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "scope": "Separate prepared retry recipes and retained actual harmless shell-forwarding compatibility receipts only. No SDK/native replay or Rust decoder run.",
+  "review_utc": "2026-10-08T03:31:00.584556+00:00",
+  "manifest": {
+    "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/recipe-hashes.json",
+    "sha256": "ec8288902a7beb86b3cea0299ae4afd73952c3696b0b76c0511bd64d48b99ebe",
+    "payload_count": 25,
+    "payload_bytes": 86932,
+    "all_actual_payload_hashes_sizes_and_regular_files_matched": true
+  },
+  "fixed_N3": {
+    "initial_verdict": "FAIL retained",
+    "corrected_prepare_sha256": "3be0479a91c989b0949eb88f8f103b2da7e9ef4706cf1643a67dfae85a01e2ec",
+    "POSIX_forwarder": true,
+    "capture_path_shell_quoted": true,
+    "all_argv_quoted": true,
+    "actual_generated_fixture_shell_syntax_check_required": true,
+    "actual_generator_AST_expression_matches_probe_wrapper_byte_exact": true,
+    "harmless_actual_shell_probe_exit": 0,
+    "harmless_actual_syntax_exit": 0,
+    "raw_stdout_exact_nine_args": true,
+    "argv": [
+      "--init-script",
+      "path with spaces",
+      "literal\"quote",
+      "literal$HOME",
+      "literal`command`",
+      "literal\\backslash",
+      "line\nargument",
+      "",
+      "--console=plain"
+    ],
+    "proof_sha256": "cc5d16e70bd9571dbfe5ce513e3b79f332536681cb50a0f3b320ff56dc52bf67",
+    "product_source_or_original_test_changes": false
+  },
+  "invariant_review": {
+    "all_12_core_recipe_provenance_bindings_verified": true,
+    "only_recipe_change": "prepare.py POSIX forwarder and syntax gate",
+    "all_guard_model_finalize_events_capture_cleanup_decoder_scope_bind_input_recipes_byte_identical": true,
+    "plan_records": 53,
+    "only_plan_changes": 17,
+    "plan_change_kind": "Screenshot destination directory prefix only",
+    "all_other_labels_args_coordinates_preserved": true,
+    "minimum_width": 360,
+    "actual_visual_coordinate_confirmation_required": true,
+    "all_4743_Source_names_hashes_raw_index_full_status_HEAD_guards_preserved": true,
+    "known_root_before_normalization_checks_preserved": true,
+    "strict_key_list_order_revision_stale_rejection_and_full_models_2_legacy_projections_7_preserved": true,
+    "only_importFacts_removed_for_full_comparison": true,
+    "only_importFacts_generatedArtifacts_removed_for_basic_comparison": true,
+    "owned_cleanup_source_and_12_fixture_checks_preserved": true
+  },
+  "fresh_runtime_artifacts_absent": [
+    "generation-project",
+    "qa",
+    "lease-granted.json",
+    "session-binding.json",
+    "preparation-proof.json",
+    "runtime-probe",
+    "current-decoder-build-proof.json"
+  ],
+  "requirements_before_actual_run": [
+    "Exclusive Root runtime lease",
+    "Fresh fixture/profile and actual generated /bin/sh -n receipt",
+    "Current normal app executable/build/link binding",
+    "Current fresh normal library/compiler binding",
+    "Owned session/display/window/PID binding",
+    "Actual visual coordinate confirmation"
+  ],
+  "corrected_metadata_wording_verified": true,
+  "initial_failure_review": {
+    "json_sha256": "39dd0bafcbf5d23815fb2321df7d77ea74c597bd19875e5f1d5c44a32de74783",
+    "md_sha256": "27d0fdf56a923e7e852d672caefffd4e2693302aeeaf09c706fb8bf89eba7422"
+  },
+  "credits": {
+    "initial_native_attempt": "FAIL",
+    "retry_native_attempt": "NOT RUN",
+    "original_reference_credit": 0,
+    "native_fidelity_performance_PASS": 0,
+    "full_task_complete": false
+  },
+  "mutations": "Only these new external review reports. No Source/Git/cache/SDK/native/app/process/fixture changes.",
+  "read_holds_released": true
+}

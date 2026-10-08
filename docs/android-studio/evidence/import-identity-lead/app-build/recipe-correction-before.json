@@ -1,0 +1,21 @@
+{
+  "scope": "External validation guards/evidence preservation only; production/tests/flags unchanged",
+  "files": [
+    {
+      "path": "guarded-app-build.py",
+      "preserved": "guarded-app-build.py.initial-unexecuted",
+      "sha256": "49f5a79022897ed1c380d663c5c77c014075893c70013ed0cdbda513bcba32ab"
+    },
+    {
+      "path": "retry-app-build.py",
+      "preserved": "retry-app-build.py.initial-unexecuted",
+      "sha256": "221ac26f7560f6f7ad12bc2c6abb0dd69cddf5eff360c660dfc8a557b21ef320"
+    },
+    {
+      "path": "prepare-aliases.py",
+      "preserved": "prepare-aliases.py.initial-unexecuted",
+      "sha256": "5a8cb0daaf1ec6e3b0c567758f9412b4f720cbbc01ffdf1afd46ca4214c366b8"
+    }
+  ],
+  "executed": false
+}

@@ -1,0 +1,566 @@
+{
+  "supplementaryOnly": true,
+  "originalReferenceTestCredit": 0,
+  "scenario": "late",
+  "root": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project",
+  "actualGradleVersion": "9.6.1",
+  "callerModelRevision": 1,
+  "callerSelectionRevision": 1,
+  "callerSelectedVariants": [
+    {
+      "module": ":mobile",
+      "variant": "demoDebug"
+    }
+  ],
+  "basicCompiledModules": 4,
+  "rawProjectCatalogueCount": 7,
+  "orderedRawProjectCatalogue": [
+    {
+      "projectName": {
+        "getter": "org.gradle.api.Project.getName()",
+        "result": {
+          "status": "available",
+          "value": "Explicit Identity Root"
+        }
+      },
+      "projectPath": {
+        "getter": "org.gradle.api.Project.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":"
+        }
+      },
+      "projectDirectory": {
+        "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project"
+        }
+      },
+      "rootName": {
+        "getter": "org.gradle.api.Project.getRootProject().getName()",
+        "result": {
+          "status": "available",
+          "value": "Explicit Identity Root"
+        }
+      },
+      "rootDirectory": {
+        "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project"
+        }
+      },
+      "parentProjectPath": {
+        "getter": "org.gradle.api.Project.getParent()?.getPath()",
+        "result": {
+          "status": "available",
+          "value": null
+        }
+      },
+      "buildTreePath": {
+        "getter": "org.gradle.api.Project.getBuildTreePath()",
+        "result": {
+          "status": "available",
+          "value": ":"
+        }
+      },
+      "referenceIdentityPath": {
+        "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+        "result": {
+          "status": "available",
+          "value": ":"
+        }
+      },
+      "ideaPluginPresent": {
+        "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+        "result": {
+          "status": "available",
+          "value": false
+        }
+      },
+      "ideaModuleName": {
+        "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+        "result": {
+          "status": "available",
+          "value": null
+        }
+      }
+    },
+    {
+      "projectName": {
+        "getter": "org.gradle.api.Project.getName()",
+        "result": {
+          "status": "available",
+          "value": "greeting"
+        }
+      },
+      "projectPath": {
+        "getter": "org.gradle.api.Project.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":greeting"
+        }
+      },
+      "projectDirectory": {
+        "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project/greeting"
+        }
+      },
+      "rootName": {
+        "getter": "org.gradle.api.Project.getRootProject().getName()",
+        "result": {
+          "status": "available",
+          "value": "Explicit Identity Root"
+        }
+      },
+      "rootDirectory": {
+        "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project"
+        }
+      },
+      "parentProjectPath": {
+        "getter": "org.gradle.api.Project.getParent()?.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":"
+        }
+      },
+      "buildTreePath": {
+        "getter": "org.gradle.api.Project.getBuildTreePath()",
+        "result": {
+          "status": "available",
+          "value": ":greeting"
+        }
+      },
+      "referenceIdentityPath": {
+        "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+        "result": {
+          "status": "available",
+          "value": ":greeting"
+        }
+      },
+      "ideaPluginPresent": {
+        "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+        "result": {
+          "status": "available",
+          "value": false
+        }
+      },
+      "ideaModuleName": {
+        "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+        "result": {
+          "status": "available",
+          "value": null
+        }
+      }
+    },
+    {
+      "projectName": {
+        "getter": "org.gradle.api.Project.getName()",
+        "result": {
+          "status": "available",
+          "value": "left"
+        }
+      },
+      "projectPath": {
+        "getter": "org.gradle.api.Project.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":left"
+        }
+      },
+      "projectDirectory": {
+        "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project/left"
+        }
+      },
+      "rootName": {
+        "getter": "org.gradle.api.Project.getRootProject().getName()",
+        "result": {
+          "status": "available",
+          "value": "Explicit Identity Root"
+        }
+      },
+      "rootDirectory": {
+        "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project"
+        }
+      },
+      "parentProjectPath": {
+        "getter": "org.gradle.api.Project.getParent()?.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":"
+        }
+      },
+      "buildTreePath": {
+        "getter": "org.gradle.api.Project.getBuildTreePath()",
+        "result": {
+          "status": "available",
+          "value": ":left"
+        }
+      },
+      "referenceIdentityPath": {
+        "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+        "result": {
+          "status": "available",
+          "value": ":left"
+        }
+      },
+      "ideaPluginPresent": {
+        "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+        "result": {
+          "status": "available",
+          "value": false
+        }
+      },
+      "ideaModuleName": {
+        "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+        "result": {
+          "status": "available",
+          "value": null
+        }
+      }
+    },
+    {
+      "projectName": {
+        "getter": "org.gradle.api.Project.getName()",
+        "result": {
+          "status": "available",
+          "value": "mobile"
+        }
+      },
+      "projectPath": {
+        "getter": "org.gradle.api.Project.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":mobile"
+        }
+      },
+      "projectDirectory": {
+        "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project/mobile"
+        }
+      },
+      "rootName": {
+        "getter": "org.gradle.api.Project.getRootProject().getName()",
+        "result": {
+          "status": "available",
+          "value": "Explicit Identity Root"
+        }
+      },
+      "rootDirectory": {
+        "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project"
+        }
+      },
+      "parentProjectPath": {
+        "getter": "org.gradle.api.Project.getParent()?.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":"
+        }
+      },
+      "buildTreePath": {
+        "getter": "org.gradle.api.Project.getBuildTreePath()",
+        "result": {
+          "status": "available",
+          "value": ":mobile"
+        }
+      },
+      "referenceIdentityPath": {
+        "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+        "result": {
+          "status": "available",
+          "value": ":mobile"
+        }
+      },
+      "ideaPluginPresent": {
+        "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+        "result": {
+          "status": "available",
+          "value": false
+        }
+      },
+      "ideaModuleName": {
+        "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+        "result": {
+          "status": "available",
+          "value": null
+        }
+      }
+    },
+    {
+      "projectName": {
+        "getter": "org.gradle.api.Project.getName()",
+        "result": {
+          "status": "available",
+          "value": "right"
+        }
+      },
+      "projectPath": {
+        "getter": "org.gradle.api.Project.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":right"
+        }
+      },
+      "projectDirectory": {
+        "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project/right"
+        }
+      },
+      "rootName": {
+        "getter": "org.gradle.api.Project.getRootProject().getName()",
+        "result": {
+          "status": "available",
+          "value": "Explicit Identity Root"
+        }
+      },
+      "rootDirectory": {
+        "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project"
+        }
+      },
+      "parentProjectPath": {
+        "getter": "org.gradle.api.Project.getParent()?.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":"
+        }
+      },
+      "buildTreePath": {
+        "getter": "org.gradle.api.Project.getBuildTreePath()",
+        "result": {
+          "status": "available",
+          "value": ":right"
+        }
+      },
+      "referenceIdentityPath": {
+        "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+        "result": {
+          "status": "available",
+          "value": ":right"
+        }
+      },
+      "ideaPluginPresent": {
+        "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+        "result": {
+          "status": "available",
+          "value": false
+        }
+      },
+      "ideaModuleName": {
+        "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+        "result": {
+          "status": "available",
+          "value": null
+        }
+      }
+    },
+    {
+      "projectName": {
+        "getter": "org.gradle.api.Project.getName()",
+        "result": {
+          "status": "available",
+          "value": "shared"
+        }
+      },
+      "projectPath": {
+        "getter": "org.gradle.api.Project.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":left:shared"
+        }
+      },
+      "projectDirectory": {
+        "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project/jvm-one"
+        }
+      },
+      "rootName": {
+        "getter": "org.gradle.api.Project.getRootProject().getName()",
+        "result": {
+          "status": "available",
+          "value": "Explicit Identity Root"
+        }
+      },
+      "rootDirectory": {
+        "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project"
+        }
+      },
+      "parentProjectPath": {
+        "getter": "org.gradle.api.Project.getParent()?.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":left"
+        }
+      },
+      "buildTreePath": {
+        "getter": "org.gradle.api.Project.getBuildTreePath()",
+        "result": {
+          "status": "available",
+          "value": ":left:shared"
+        }
+      },
+      "referenceIdentityPath": {
+        "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+        "result": {
+          "status": "available",
+          "value": ":left:shared"
+        }
+      },
+      "ideaPluginPresent": {
+        "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+        "result": {
+          "status": "available",
+          "value": true
+        }
+      },
+      "ideaModuleName": {
+        "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+        "result": {
+          "status": "available",
+          "value": "configured-after-project-evaluation"
+        }
+      }
+    },
+    {
+      "projectName": {
+        "getter": "org.gradle.api.Project.getName()",
+        "result": {
+          "status": "available",
+          "value": "shared"
+        }
+      },
+      "projectPath": {
+        "getter": "org.gradle.api.Project.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":right:shared"
+        }
+      },
+      "projectDirectory": {
+        "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project/jvm-two"
+        }
+      },
+      "rootName": {
+        "getter": "org.gradle.api.Project.getRootProject().getName()",
+        "result": {
+          "status": "available",
+          "value": "Explicit Identity Root"
+        }
+      },
+      "rootDirectory": {
+        "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project"
+        }
+      },
+      "parentProjectPath": {
+        "getter": "org.gradle.api.Project.getParent()?.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":right"
+        }
+      },
+      "buildTreePath": {
+        "getter": "org.gradle.api.Project.getBuildTreePath()",
+        "result": {
+          "status": "available",
+          "value": ":right:shared"
+        }
+      },
+      "referenceIdentityPath": {
+        "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+        "result": {
+          "status": "available",
+          "value": ":right:shared"
+        }
+      },
+      "ideaPluginPresent": {
+        "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+        "result": {
+          "status": "available",
+          "value": true
+        }
+      },
+      "ideaModuleName": {
+        "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+        "result": {
+          "status": "available",
+          "value": "shared-collision"
+        }
+      }
+    }
+  ],
+  "buildIdentity": {
+    "rootName": {
+      "getter": "org.gradle.api.Project.getRootProject().getName()",
+      "result": {
+        "status": "available",
+        "value": "Explicit Identity Root"
+      }
+    },
+    "rootDirectory": {
+      "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+      "result": {
+        "status": "available",
+        "value": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project"
+      }
+    },
+    "projectPath": {
+      "getter": "org.gradle.api.Project.getPath()",
+      "result": {
+        "status": "available",
+        "value": ":"
+      }
+    },
+    "buildTreePath": {
+      "getter": "org.gradle.api.Project.getBuildTreePath()",
+      "result": {
+        "status": "available",
+        "value": ":"
+      }
+    },
+    "referenceIdentityPath": {
+      "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+      "result": {
+        "status": "available",
+        "value": ":"
+      }
+    }
+  },
+  "independentLateIdeaOracle": {
+    "module": ":left:shared",
+    "ideaModuleName": "configured-after-project-evaluation"
+  },
+  "basicAndV2AndImportFactsDecoded": true,
+  "freshnessBindingVerified": true
+}

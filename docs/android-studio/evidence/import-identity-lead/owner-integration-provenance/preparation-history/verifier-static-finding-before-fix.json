@@ -1,0 +1,10 @@
+{
+  "finding": "verify-applied did not bind deterministic transaction path or compare current HEAD/index/main/protected/canonical/status to saved before/after, or validate delivered/written guard claims",
+  "review_status": "FAIL_static_external_only",
+  "before_script_sha256": "3c5a3d0727cc2060ebef6550cd42248f4e9d8aea1a12b99622602462938a84f0",
+  "actual_apply_executed": false,
+  "Source_product_semantic_fix_round_increment": 0,
+  "WT_Git_index_cache_native_read_mutation": false,
+  "Root_hold": "ACTIVE",
+  "live_native": "NOT_PASS"
+}

@@ -1,0 +1,23 @@
+{
+  "label": "restore-xml-corrected-tab-coordinate",
+  "command": [
+    "/workspace/cloud-environment/native/usr/bin/xdotool",
+    "mousemove",
+    "--window",
+    "2097153",
+    "434",
+    "58",
+    "click",
+    "1"
+  ],
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "actual_app_pid": 345903,
+  "window_id": 2097153,
+  "display": ":122",
+  "start_utc": "2026-10-08T03:59:22.216218+00:00",
+  "finish_utc": "2026-10-08T03:59:22.319012+00:00",
+  "elapsed_seconds": 0.10280269899521954,
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": ""
+}

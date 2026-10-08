@@ -1,0 +1,24 @@
+{
+  "id": "1791430414398222532-344349",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "arguments": [
+    "--init-script",
+    "/tmp/koda-android-model-b1Y2L1/export.gradle",
+    "kodaAndroidProjectModel",
+    "--no-configuration-cache",
+    "--console=plain"
+  ],
+  "start_utc": "2026-10-08T03:33:34.398330+00:00",
+  "cwd": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/generation-project",
+  "official_wrapper": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/generation-project/gradlew-original",
+  "official_wrapper_sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+  "init_path": "/tmp/koda-android-model-b1Y2L1/export.gradle",
+  "saved_init_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/native-sync-export-1791430414398222532-344349.gradle",
+  "init_sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+  "expected_source_bridge_sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+  "matches_source": true,
+  "finish_utc": "2026-10-08T03:33:37.789529+00:00",
+  "return_code": 0,
+  "raw_stdout_sha256": "08ea24cf2b42467ef2829f4c0b94fd885c3e1ce0614256d38898ffa68d5d8163",
+  "raw_stderr_sha256": "f136f0eff26bc2d1ac4bbfacb3ad4a669b419287e5e6f1e702f8209eee07d62b"
+}

@@ -1,0 +1,4 @@
+   Compiling android_tools v0.1.0 (/workspace/android-studio-import-identity-getters/crates/android_tools)
+    Finished `test` profile [unoptimized] target(s) in 1.27s
+     Running tests/import_facts.rs (/workspace/.cache/zed/target/debug/deps/import_facts-15da250992a95fc0)
+error: test failed, to rerun pass `-p android_tools --test import_facts`

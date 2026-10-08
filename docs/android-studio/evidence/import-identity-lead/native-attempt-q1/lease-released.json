@@ -1,0 +1,9 @@
+{
+  "released": true,
+  "owner": "import_identity_lead_native_validation",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "runtime_verdict": "INTERRUPTED_NOT_COMPLETE",
+  "no_live_owned_process_or_display_remains": true,
+  "former_launcher343964_zombie_not_absent": true,
+  "utc": "2026-10-08T03:47:29.425782+00:00"
+}

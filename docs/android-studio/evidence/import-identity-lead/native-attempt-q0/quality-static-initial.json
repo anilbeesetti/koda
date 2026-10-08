@@ -1,0 +1,240 @@
+{
+  "verdict": "FAIL",
+  "scope": "Initial independent source-only static review of unexecuted native recipes; no runtime or current cache reads",
+  "reviewed_at_utc": "2026-10-08T03:00:41.420856+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "blocking_findings": [
+    {
+      "id": "N1",
+      "file": "guard.py",
+      "finding": "Full status uses porcelain-v1 without --untracked-files=all, and actual fixed7 tracked names are not explicitly compared to the frozen4743 file set.",
+      "required_fix": "Use the exact full untracked-inclusive status command and assert git ls-files -z -- fixed7 set equals frozen files with count4743 before hashing. Retain full raw staged-entry and HEAD checks.",
+      "scope": "External validation guard; no product fix round."
+    },
+    {
+      "id": "N2",
+      "file": "verify-models.py",
+      "finding": "Root-prefix normalization trusts each model root instead of checking the known fixture directory first. An incorrect producer root could be erased by normalization.",
+      "required_fix": "Assert current model roots equal QA/generation-project, old4fb roots equal OLD/generation-project, and each legacy root equals its known log-parent/generation-project. Normalize only those declared exact roots at whole-string/slash boundaries. Keep importFacts-only and Basic projections unchanged.",
+      "scope": "External comparison guard; no product fix round."
+    }
+  ],
+  "otherwise_verified": {
+    "manifest_payload_count": 35,
+    "manifest_payload_bytes": 190767,
+    "all_payload_sizes_hashes_and_Python_AST_parse_pass": true,
+    "all9_retained_prior_recipe_copies_equal_original_bytes": true,
+    "Rust_probe_recorded_additions_reversed_to_exact_prior4fb_probe": true,
+    "same_supplied_model_revision_used_by_V2_and_import_binding": true,
+    "independent_stale_model_and_selection_checks_retained": true,
+    "separate_full4fb_and_Basic_projection_exclusions_unchanged": true,
+    "all_other_nested_values_key_and_list_order_compared": true,
+    "planned_commands": 53,
+    "unique_command_labels": 53,
+    "planned_images": 17,
+    "supported_narrow_width": 360,
+    "historical230_stress_replaced_without_fidelity_credit": true,
+    "actual_per_image_and_source_bound_log_review_required": true,
+    "owned_launcher_ONLY_TERM_and_PID_start_tick_parentage_checks": true,
+    "fixture12_BT37_already_explicit_no_private_override": true,
+    "Rootactualapp_library_bindings_and_exclusive_lease_mandatory": true
+  },
+  "runtime_executed": false,
+  "new_product_reference_UI_performance_or_phase_completion_credit": 0,
+  "reviewer_source_Git_cache_Cargo_SDK_native_alias_or_existing_evidence_mutations": false,
+  "initial_review_inputs": {
+    "manifest": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/recipe-hashes.json",
+      "bytes": 6550,
+      "sha256": "879c82c399180281cb8153b541e1aced518dc7bf43f7282a2b83f5ab69186a0f"
+    },
+    "report": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/report.md",
+      "bytes": 9953,
+      "sha256": "aa7a4b6f8971cea16961c4d095a647e651805a27c0a961069fe3178e053dd256"
+    },
+    "scope": {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/scope.json",
+      "bytes": 764,
+      "sha256": "43ab06faa81287eb9d0b5be021057743646ae4eab02fb670d95608abdffc1090"
+    },
+    "files": [
+      {
+        "path": "V2-revision-rebind-receipt.json",
+        "bytes": 1830,
+        "sha256": "889ad4cb3750654ce19408f999f0ccfc258f0a3dbaee9752b0ed3376d3c362ea"
+      },
+      {
+        "path": "before-V2-revision-rebind/decoder-addition.json",
+        "bytes": 2614,
+        "sha256": "530d36239cb9df1813f05b34a670baa927124700df10c273e332c16031e61629"
+      },
+      {
+        "path": "before-V2-revision-rebind/recipe-hashes.json",
+        "bytes": 5230,
+        "sha256": "fff42385db1e3c26a0e1bd2fe838ad658800310c94aeaf68643f742e29a908bd"
+      },
+      {
+        "path": "before-V2-revision-rebind/report.md",
+        "bytes": 8936,
+        "sha256": "218d22153bbb36ee94a371af00f4577cd8c1cd4389b13bb8374ecc93f6ecb7aa"
+      },
+      {
+        "path": "before-V2-revision-rebind/runtime-probe.rs",
+        "bytes": 11763,
+        "sha256": "e20fb08e3632fdbf0acd1412ecadcbff37553eeaad999f080a2c13a594fae75e"
+      },
+      {
+        "path": "before-V2-revision-rebind/static-preflight.json",
+        "bytes": 1844,
+        "sha256": "622a6053f1bd8b255acd96154085858ec5fb65376db47c35b252ff9aeb75fcf7"
+      },
+      {
+        "path": "bind-input-plan.py",
+        "bytes": 1221,
+        "sha256": "9e8217dbef5443c04e1718b887bdcc54f5c0f9a801a052cc64a2a349e2df4294"
+      },
+      {
+        "path": "build-tools-native-preflight.json",
+        "bytes": 8422,
+        "sha256": "3a3bcc25860e924a482aba8d2cce251c85d15e2b1a1988e1991188dcbb6910d1"
+      },
+      {
+        "path": "capture-gradle.py",
+        "bytes": 3125,
+        "sha256": "94b55843afae805ccf5b395e11e0622cad3d89a5274f23a5e7af960411fb87e8"
+      },
+      {
+        "path": "compile-decoder.py",
+        "bytes": 2417,
+        "sha256": "f185a668082a11e077c2f081c0ef30aebea0f744b7812e707550dc185094ec16"
+      },
+      {
+        "path": "decoder-addition.json",
+        "bytes": 3453,
+        "sha256": "619c3ade618306f8081068f7d371f0a3883274ccb8b97f1b2badbe5913fa2b7b"
+      },
+      {
+        "path": "events.py",
+        "bytes": 5483,
+        "sha256": "39c3595af38b2b5b1f6fe7c92cd5bf3a46941140f28b3fc756f81a550773d1b8"
+      },
+      {
+        "path": "finalize-proof.py",
+        "bytes": 10294,
+        "sha256": "fd84ed9a78a9e96a8f79931a6abbcb7cef8a011bc8c05115a34a6d2209bc2223"
+      },
+      {
+        "path": "guard.py",
+        "bytes": 3517,
+        "sha256": "be40f7dae0ab44db6164b4130d18b51749ebd0005a2c46b3e9d1b5dea438bafd"
+      },
+      {
+        "path": "initial-unexecuted-preparation/recipe-hashes.json",
+        "bytes": 4234,
+        "sha256": "e4539393f4a4d191dcabb19e3230b8635bd0313d1b14478009473142c567a237"
+      },
+      {
+        "path": "initial-unexecuted-preparation/report.md",
+        "bytes": 7223,
+        "sha256": "5d51c3116fbe06aad0c6ee30a432885fed49e11fcd099bcd14dc091c211c09b8"
+      },
+      {
+        "path": "initial-unexecuted-preparation/static-preflight.json",
+        "bytes": 1844,
+        "sha256": "622a6053f1bd8b255acd96154085858ec5fb65376db47c35b252ff9aeb75fcf7"
+      },
+      {
+        "path": "input-replay-plan.json",
+        "bytes": 13101,
+        "sha256": "fe521ae9c53b13640a89c7d84e2fe2160d2543044a53a6969fab7398340702be"
+      },
+      {
+        "path": "prepare.py",
+        "bytes": 3765,
+        "sha256": "258aa9d80fa53c015e9807cc46e15206e3c2f34c5d7c156d56ed878f27c2c0e0"
+      },
+      {
+        "path": "previous-recipe-manifest.json",
+        "bytes": 3187,
+        "sha256": "a9f69d47351cccdecb681cee3bbc7b3cb5d066fe3f9521a4c99c6a66fcbdb0fd"
+      },
+      {
+        "path": "previous-recipes/capture-gradle.py",
+        "bytes": 1950,
+        "sha256": "2c71815a6addad3da116c1e8ed4924e2ea6a7b40960c413a12884cfbf6b0335e"
+      },
+      {
+        "path": "previous-recipes/events.py",
+        "bytes": 3833,
+        "sha256": "687e73bd962eeac9d87cdef1abd790b225e56bd56c640d1ad85802234d2a6ba0"
+      },
+      {
+        "path": "previous-recipes/finalize-proof.py",
+        "bytes": 11035,
+        "sha256": "dd7ae82e5fb3dccedc5431d37d122c29c45c533204fe88ce8e9f666f70fba64c"
+      },
+      {
+        "path": "previous-recipes/guard.py",
+        "bytes": 2181,
+        "sha256": "50325449b6005756e508a827c6b6f1818a2f668e7dc033f2bde7e6bb69fd36a4"
+      },
+      {
+        "path": "previous-recipes/input-replay-plan.json",
+        "bytes": 12343,
+        "sha256": "1200f28c64278a8c39c90eb6f795126842b79a74ecc9ffc64ae5dcfb35f039f2"
+      },
+      {
+        "path": "previous-recipes/prepare.py",
+        "bytes": 4985,
+        "sha256": "6b0c5a16f2182f342d11c6b925f792a27b08992809883b474f9fc1695c01babf"
+      },
+      {
+        "path": "previous-recipes/runtime-probe.rs",
+        "bytes": 9689,
+        "sha256": "0e6cb4ff731f9b228334e6dc19094d04b2e247dc1e93ebf709c0cbd7e6c1e5cc"
+      },
+      {
+        "path": "previous-recipes/stop-owned-app.py",
+        "bytes": 1970,
+        "sha256": "62d0df10364be8addc7fb8605148ce95ac0fe3827c6973f50cbfc4bd6675f3ce"
+      },
+      {
+        "path": "previous-recipes/verify-models.py",
+        "bytes": 4533,
+        "sha256": "08051c9733bdb074a7cf884815c4d2aaa057874fcafcc6381db6d4109e19ae0e"
+      },
+      {
+        "path": "report.md",
+        "bytes": 9953,
+        "sha256": "aa7a4b6f8971cea16961c4d095a647e651805a27c0a961069fe3178e053dd256"
+      },
+      {
+        "path": "runtime-probe.rs",
+        "bytes": 11789,
+        "sha256": "a967c834d0f786f3779bd7a4b0536e60fca064b9c5f06b52b3baa7d46a50f360"
+      },
+      {
+        "path": "scope.json",
+        "bytes": 764,
+        "sha256": "43ab06faa81287eb9d0b5be021057743646ae4eab02fb670d95608abdffc1090"
+      },
+      {
+        "path": "static-preflight.json",
+        "bytes": 2131,
+        "sha256": "0c231b34f073d0a7722a9213a7dcaef91a0298cc1efe550e65e6307d00ff57a6"
+      },
+      {
+        "path": "stop-owned-app.py",
+        "bytes": 1712,
+        "sha256": "cfe30b275b4c305a8c386ecc2d41de49aa34deb3cf0c40e1289d1f0182680333"
+      },
+      {
+        "path": "verify-models.py",
+        "bytes": 8396,
+        "sha256": "4490d1ab184113a157472b41ff5beab4e6c53d3197065f0fcc69800d75356c75"
+      }
+    ]
+  },
+  "read_holds_released": true
+}

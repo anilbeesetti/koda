@@ -1,0 +1,19 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--tests",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 14.909924054998555,
+  "raw_log": "/workspace/android-studio-artifacts/import-identity-integration/exact-capture/default-tools-preflight.log",
+  "raw_log_sha256": "f3c85c60e3a459efe7ba199c3f8bb4681cb4c502b67c5921567d124a431701da",
+  "source_files": 4743,
+  "full_raw_index_status_and_all_source_hashes_unchanged": true
+}

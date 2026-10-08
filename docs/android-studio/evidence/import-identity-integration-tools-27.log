@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized] target(s) in 0.52s
+     Running tests/generated_artifacts.rs (/workspace/.cache/zed/target/debug/deps/generated_artifacts-a8cb0ab117142344)
+
+running 1 test
+test check_model_consumer_version_ordering ... ok
+
+successes:
+
+successes:
+    check_model_consumer_version_ordering
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 29 filtered out; finished in 0.00s
+

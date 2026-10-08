@@ -1,0 +1,16 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "command": [
+    "/tmp/android-studio-junit4-integration/xtask",
+    "android-parity",
+    "--repository",
+    "/workspace/android-studio-import-identity-getters",
+    "--reference-root",
+    "/workspace/android-studio-references"
+  ],
+  "exit_code": 1,
+  "log_sha256": "af64b276e3a6b76dc65d18c96e84d903810b67e4ed3b1ef134c8430d6b597d58",
+  "expected": "Old4fbpassing36metadata now stale due new7e3 Source; all36 must be recaptured before finalparity acceptance",
+  "canonical_rows_modified": false,
+  "utc": "2026-10-08T02:16:14.820192+00:00"
+}
