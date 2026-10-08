@@ -14787,8 +14787,9 @@ mod tests {
             DockPosition::Bottom,
         ] {
             let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
-            let (workspace, cx) =
-                cx.add_window_view(|window, cx| Workspace::test_new(project, window, cx));
+            let (multi_workspace, cx) =
+                cx.add_window_view(|window, cx| MultiWorkspace::test_new(project, window, cx));
+            let workspace = multi_workspace.read_with(cx, |mw, _| mw.workspace().clone());
             let panel = workspace.update_in(cx, |workspace, window, cx| {
                 let panel = cx.new(|cx| RailTestPanel::<0>::new(position, cx));
                 workspace.add_panel(panel.clone(), window, cx);
@@ -14843,12 +14844,21 @@ mod tests {
                     .expect("rail button");
                 cx.simulate_click(bounds.origin + offset, gpui::Modifiers::none());
                 workspace.update_in(cx, |workspace, window, cx| {
-                    assert!(workspace.dock_at_position(position).read(cx).is_open());
-                    assert!(panel.focus_handle(cx).is_focused(window));
+                    assert!(
+                        workspace.dock_at_position(position).read(cx).is_open(),
+                        "{position:?} rail click at offset {offset:?} must open dock"
+                    );
+                    assert!(
+                        panel.focus_handle(cx).is_focused(window),
+                        "{position:?} rail click at offset {offset:?} must focus panel"
+                    );
                 });
                 cx.simulate_click(bounds.origin + offset, gpui::Modifiers::none());
                 workspace.update_in(cx, |workspace, window, cx| {
-                    assert!(!workspace.dock_at_position(position).read(cx).is_open());
+                    assert!(
+                        !workspace.dock_at_position(position).read(cx).is_open(),
+                        "{position:?} rail click at offset {offset:?} must hide dock"
+                    );
                     assert!(
                         workspace
                             .active_pane()
@@ -14865,8 +14875,14 @@ mod tests {
                     keystroke: gpui::Keystroke::parse(key).expect("activation key"),
                 });
                 workspace.update_in(cx, |workspace, window, cx| {
-                    assert!(workspace.dock_at_position(position).read(cx).is_open());
-                    assert!(panel.focus_handle(cx).is_focused(window));
+                    assert!(
+                        workspace.dock_at_position(position).read(cx).is_open(),
+                        "{position:?} rail activation with {key} must open dock"
+                    );
+                    assert!(
+                        panel.focus_handle(cx).is_focused(window),
+                        "{position:?} rail activation with {key} must focus panel"
+                    );
                     workspace.toggle_dock(position, window, cx);
                 });
                 cx.run_until_parked();
