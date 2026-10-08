@@ -1,0 +1,1217 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "root_authorization": "Recover only the owned failed290MBunitobject with exact proof; preserve Source and first failure; no broaddeletes",
+  "failed_raw_log": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/all-features-tests.log",
+  "failed_raw_log_sha256": "88c4bc56be2f85a0bc3c0b54c08cfa866b1df3a1fe5a386e73702a51de4bde25",
+  "failure": "Explicit ENOSPC and LLD SIGBUS before any tests",
+  "candidate": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.10.rcgu.o",
+  "bytes": 290576408,
+  "physical_bytes": 290582528,
+  "sha256": "4f85e49d99d7a2d91a377f692c9fcdf69bd55f41f57b7d25338e307029cc1795",
+  "regular_file": true,
+  "nlink": 1,
+  "device": 27,
+  "inode": 1090937,
+  "candidate_ownership": "Unit codegen object created by the only failed Source4fb compiler attempt; same exact target733/codegen2180 stem observed after failure",
+  "observed_live_processes": 9,
+  "observed_descriptors": 553,
+  "matching_fds_or_executable": [],
+  "active_accessible_compilers": [],
+  "inaccessible_live_infrastructure_links": [
+    {
+      "pid": 198,
+      "kind": "exe",
+      "comm": "dockerd",
+      "uid_line": "Uid:\t0\t0\t0\t0"
+    },
+    {
+      "pid": 198,
+      "kind": "fd_directory",
+      "comm": "dockerd",
+      "uid_line": "Uid:\t0\t0\t0\t0"
+    },
+    {
+      "pid": 249,
+      "kind": "exe",
+      "comm": "containerd",
+      "uid_line": "Uid:\t0\t0\t0\t0"
+    },
+    {
+      "pid": 249,
+      "kind": "fd_directory",
+      "comm": "containerd",
+      "uid_line": "Uid:\t0\t0\t0\t0"
+    }
+  ],
+  "terminated_process_status_observations": [
+    {
+      "pid": 689,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 1393,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 1401,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 1495,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 34966,
+      "state": "Z",
+      "comm": "Xvfb"
+    },
+    {
+      "pid": 37283,
+      "state": "Z",
+      "comm": "Xvfb"
+    },
+    {
+      "pid": 37461,
+      "state": "Z",
+      "comm": "java"
+    },
+    {
+      "pid": 44286,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 60322,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75296,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75297,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75300,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75310,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75325,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75326,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75327,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75359,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75366,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75374,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75634,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75635,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75636,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75641,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75666,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75669,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75673,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75678,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75699,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 75722,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 79852,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 88779,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 90634,
+      "state": "Z",
+      "comm": "sleep"
+    },
+    {
+      "pid": 91003,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 91341,
+      "state": "Z",
+      "comm": "sleep"
+    },
+    {
+      "pid": 101329,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 103011,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 103662,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104079,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104665,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104669,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104671,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104677,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104698,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104702,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104704,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104719,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104745,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 104755,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 105105,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 111658,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 111706,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 112693,
+      "state": "Z",
+      "comm": "gzip"
+    },
+    {
+      "pid": 116286,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 117214,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 117516,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 118110,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 118207,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 118288,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 121238,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 129167,
+      "state": "Z",
+      "comm": "rustc"
+    },
+    {
+      "pid": 129227,
+      "state": "Z",
+      "comm": "llvm-symbolizer"
+    },
+    {
+      "pid": 129450,
+      "state": "Z",
+      "comm": "sleep"
+    },
+    {
+      "pid": 129619,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 129621,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 129622,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 129626,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 129651,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 129656,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 129659,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 129660,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 129682,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 129712,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 133452,
+      "state": "Z",
+      "comm": "rustc"
+    },
+    {
+      "pid": 134072,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 134519,
+      "state": "Z",
+      "comm": "java"
+    },
+    {
+      "pid": 134957,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 141148,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 144295,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 147206,
+      "state": "Z",
+      "comm": "sleep"
+    },
+    {
+      "pid": 147574,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 147851,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 150998,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 152268,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 152556,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 154168,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 154304,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 157315,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 157837,
+      "state": "Z",
+      "comm": "sh"
+    },
+    {
+      "pid": 158315,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 161277,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 166816,
+      "state": "Z",
+      "comm": "llvm-symbolizer"
+    },
+    {
+      "pid": 167625,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 167627,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 167631,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 167637,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 167657,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 167660,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 167664,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 167680,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 167703,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 167713,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 168276,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 168957,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 169099,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 169100,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 169105,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 169111,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 169130,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 169132,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 169136,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 169150,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 169176,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 169178,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 172879,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173129,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173256,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173262,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173266,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173272,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173294,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173295,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173297,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173307,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173336,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 173339,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 174048,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179721,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179833,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179835,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179838,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179842,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179866,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179867,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179868,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179884,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179911,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 179913,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180371,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180459,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180460,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180463,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180464,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180490,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180491,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180496,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180508,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180538,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 180540,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 182089,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 182969,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 185363,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 190419,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 197388,
+      "state": "Z",
+      "comm": "sleep"
+    },
+    {
+      "pid": 198005,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 208150,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 208827,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 208959,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 209036,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 212000,
+      "state": "Z",
+      "comm": "llvm-symbolizer"
+    },
+    {
+      "pid": 212533,
+      "state": "Z",
+      "comm": "sleep"
+    },
+    {
+      "pid": 213111,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 213972,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220085,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220354,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220487,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220772,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220774,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220790,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220794,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220802,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220804,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220814,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220835,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220851,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 220864,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 221817,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 221819,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 221821,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 221822,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 221846,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 221849,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 221852,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 221869,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 221893,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 221898,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 223975,
+      "state": "Z",
+      "comm": "sleep"
+    },
+    {
+      "pid": 232854,
+      "state": "Z",
+      "comm": "koda"
+    },
+    {
+      "pid": 238505,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 238506,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 238517,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 238536,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 238537,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 238542,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 238556,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 238570,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 238573,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 238578,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 239227,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 239298,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 239377,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 239647,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 239902,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 245249,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 245250,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 245265,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 245276,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 245281,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 245283,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 245299,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 245309,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 245332,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 245336,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 252244,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 252440,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 252758,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 254002,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 254222,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 258638,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 259533,
+      "state": "Z",
+      "comm": "llvm-symbolizer"
+    },
+    {
+      "pid": 261972,
+      "state": "Z",
+      "comm": "sleep"
+    },
+    {
+      "pid": 264526,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 265009,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 265264,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 265444,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 267447,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 269441,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 269475,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 269569,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 277520,
+      "state": "Z",
+      "comm": "sleep"
+    },
+    {
+      "pid": 284162,
+      "state": "Z",
+      "comm": "git"
+    },
+    {
+      "pid": 294096,
+      "state": "Z",
+      "comm": "sh"
+    },
+    {
+      "pid": 295309,
+      "state": "Z",
+      "comm": "git"
+    }
+  ],
+  "no_whole_system_inspection_claim": true,
+  "all_4730_source_and_fixture_hashes_before_match": true,
+  "git_clean_before": true,
+  "overlay_before_bytes": 253714432,
+  "retired": true,
+  "incomplete_final_unit_tmp_candidates": [],
+  "all_4730_source_and_fixture_hashes_after_match": true,
+  "git_clean_after": true,
+  "overlay_after_bytes": 544276480
+}

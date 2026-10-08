@@ -1,0 +1,32 @@
+{
+  "source": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "files": [
+    {
+      "file": "cc.rs",
+      "original_sha256": "4c1afa55f6bce97b187de02f0049e91004487d3a798eb198f1aa152f146909a9",
+      "new_sha256": "986a3ee63a40b574ada793cf241a8db0cd640fadf8708cbc3bceec597bacfa09",
+      "reversed_path_and_output_label_substitutions_are_exact": true
+    },
+    {
+      "file": "guarded-app-build.py",
+      "original_sha256": "d79fe89eaef3a8a760bf50910db88da1db3ddd4be8d3aeaaeb34a572ead5ad2d",
+      "new_sha256": "d66b54feaa259d7ec1586df3348d43f936f132f9f1beacd387cf604048915031",
+      "reversed_path_and_output_label_substitutions_are_exact": true
+    },
+    {
+      "file": "retry-app-build.py",
+      "original_sha256": "80cdd3b099bc290c7e6038dad267ed732f774bb2b2514e1c64b1f0b50b8148c3",
+      "new_sha256": "766a67612018ae4b6168025214d807d0a94370869b7247bc54b1305e07dedea3",
+      "reversed_path_and_output_label_substitutions_are_exact": true
+    },
+    {
+      "file": "probe.rs",
+      "original_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+      "new_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+      "reversed_path_and_output_label_substitutions_are_exact": true
+    }
+  ],
+  "compiled_or_executed": false,
+  "shared_cache_or_product_mutation": false,
+  "review_required_before_runtime": true
+}

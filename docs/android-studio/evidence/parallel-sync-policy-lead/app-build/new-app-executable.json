@@ -1,0 +1,21 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "exit_code": 0,
+  "elapsed_seconds": 623.5448021279954,
+  "log_sha256": "9dff03dff942f7d45b35ec0896a2a03246456ff571ea5c7d678a1295c6ca0d5e",
+  "executable": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+  "executable_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+  "executable_bytes": 1359451600,
+  "cargo_published_executable": "/workspace/.cache/zed/target/debug/koda",
+  "original_linker_output": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+  "only_final_output_argument_changed": true
+}

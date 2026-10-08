@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized] target(s) in 0.63s
+     Running unittests src/android_tools.rs (/workspace/.cache/zed/target/debug/deps/android_tools-fb2c5fb7656d5f8d)
+
+running 1 test
+test project_model::tests::default_variants_preferred_build_type ... ok
+
+successes:
+
+successes:
+    project_model::tests::default_variants_preferred_build_type
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 79 filtered out; finished in 0.00s
+

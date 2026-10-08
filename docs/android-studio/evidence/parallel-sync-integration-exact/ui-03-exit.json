@@ -1,0 +1,24 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_ui/Cargo.toml",
+    "-p",
+    "android_ui",
+    "--lib",
+    "tabbed_toolbar::tests::closed_is_called_when_clicked",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 1.036584433997632,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-closedIsCalledWhenClicked.log",
+    "sha256": "82d3fb9a0290bfe12fee3715dfe3b592f7202d6e0afcbabe78bfc9129a4f2c90"
+  }
+}

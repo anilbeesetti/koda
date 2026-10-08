@@ -1,0 +1,10 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "executable": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+  "executable_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+  "executable_bytes": 1359451600,
+  "normal_full_app_build_receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/app-build/new-app-executable.json",
+  "normal_build_receipt_sha256": "cbf8f4b5b3429f79a28862a8ee2bdbf5a6147cd6316e75ee4b3bbf8bd8e2b3c9",
+  "normal_build_elapsed_seconds": 623.5448021279954,
+  "binding_prepared_utc": "2026-10-08T00:44:20.175612+00:00"
+}

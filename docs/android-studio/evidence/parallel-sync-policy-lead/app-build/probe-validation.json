@@ -1,0 +1,22 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "whole_source_files_unchanged": 4730,
+  "helper_source_sha256": "986a3ee63a40b574ada793cf241a8db0cd640fadf8708cbc3bceec597bacfa09",
+  "helper_binary_sha256": "8485db252685bd86596dc6b2a8a7bd2aa48ec2d267bf38eab93d55b265d660ac",
+  "probe_source_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+  "actual_receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/app-build/probe-304281.json",
+  "receipt_sha256": "5e42a467b093a4a8f9dc34e626a2e16f40b9069c48986b22235e37317e0dc9fe",
+  "arguments": 47,
+  "changed_indices": [
+    42
+  ],
+  "all_other_actual_arguments_equal": true,
+  "all_actual_arguments_ASCII": true,
+  "real_cc": "/usr/bin/cc",
+  "exit_code": 0,
+  "executable": "/tmp/android-studio-link-output/probe-304281",
+  "ELF_bytes": 4506752,
+  "ELF_sha256": "10ce59496b3f0682104a4f3fa9f68e823ede597c4bb0675e9ef29ed04d60050c",
+  "stdout_sha256": "09397da5e4ca42fcbaf16c84742601a70d34414c8b5322b8cb52bbfd7d1bbc2a",
+  "compile_commands_exit_zero": true
+}

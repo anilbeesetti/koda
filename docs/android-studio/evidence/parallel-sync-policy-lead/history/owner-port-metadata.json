@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "task": "1-parallel-sync-policy",
+  "branch": "android-studio-task/1-parallel-sync-policy",
+  "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+  "status": "owner_component_verified_lead_integration_pending",
+  "scope": "Pure pinned parallel-sync eligibility policy, not scheduling or observed concurrent Gradle execution",
+  "canonical_matrix_changed": false,
+  "global_census_complete": false,
+  "tests": [],
+  "reference": {
+    "repository": "platform/tools/adt/idea",
+    "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "suite": "com.android.tools.idea.gradle.project.sync.ModelVersionsTest",
+    "license": "Apache-2.0",
+    "files": [
+      {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+        "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+        "retained_path": "crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt"
+      }
+    ]
+  },
+  "proposed_tests": [
+    {
+      "reference_test": "checkSupportsParallelSync",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+      "status": "unported",
+      "execution_status": "owner_passed_lead_capture_pending",
+      "package": "android_tools",
+      "integration_target": "parallel_sync",
+      "test_name": "check_supports_parallel_sync",
+      "original_assertions": 9,
+      "reason": "All nine exact original AGP assertions, order, named messages, signed MIN model tuple and empty description retained. The unused null minimum consumer is represented unavailable without being consulted. Owner unfiltered and exact Rust executions passed. Canonical promotion awaits matching-source lead capture and integration gates.",
+      "proposed_status_after_actual_and_lead_gates": "ported"
+    }
+  ],
+  "policy_sources": [
+    {
+      "repository": "platform/tools/adt/idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/BasicModules.kt",
+      "sha256": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed"
+    },
+    {
+      "repository": "platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "sdk-common/src/main/java/com/android/ide/common/repository/AgpVersion.kt",
+      "sha256": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb",
+      "retained_path": "crates/android_tools/test_data/parallel_sync/AgpVersion.kt"
+    }
+  ],
+  "non_rust_exceptions_added": [],
+  "new_declared_rust_tests": 10,
+  "new_tests_executed": true,
+  "runtime_lease": "Completed bounded checks; no owned processes remain; released to Root",
+  "approved_imported_root_correction": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "previous_source_snapshots_retained": true,
+  "lead_full_app_native_ci_parity_merge": "pending",
+  "new_original_method_tests": 1,
+  "new_supplemental_tests": 9,
+  "canonical_original_test_credit": 0,
+  "owner_all_features_tests": {
+    "passed": 241,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "owner_five_reviews": {
+    "code": {
+      "verdict": "PASS",
+      "scope": "static and bounded owner runtime; lead gates pending",
+      "static_sha256": "c87e35b9adfbed915da7f53dbe9508ef22047664f45cade8ebf57da9c94f0252",
+      "runtime_sha256": "66bfe73f4eddb48f484eb15ca58c7a072ba93aa3493af7365e0fb9ba48d3b603"
+    },
+    "ui": {
+      "verdict": "PASS",
+      "scope": "static and bounded owner runtime; lead gates pending",
+      "static_sha256": "26964876cfb394efe8c4ce963a6158bd4deebd450da04d8f91bd14f62e64ab1a",
+      "runtime_sha256": "31118934f5e24bcf95c1237f39405738102d2cf1aaace47a32a3ecbc26672ab0"
+    },
+    "ux": {
+      "verdict": "PASS",
+      "scope": "static and bounded owner runtime; lead gates pending",
+      "static_sha256": "5501a829184656a755d644b1546babae4a6f901967754f0718015b566bfc0bb9",
+      "runtime_sha256": "87576c4d85d70eb6bfd18fcf2b99c7f920e7f7455272c291c76c9a01af013607"
+    },
+    "performance": {
+      "verdict": "PASS",
+      "scope": "static and bounded owner runtime; lead gates pending",
+      "static_sha256": "71795b1c303b10a11325ef9e122b731776e7f0ce202823844a3c354fbf95590b",
+      "runtime_sha256": "435db247364b33b092ea275f40a3e551e26a29adb2f1ff4f385b50b0aa2b1aaa"
+    },
+    "quality": {
+      "verdict": "PASS",
+      "scope": "static and bounded owner runtime; lead gates pending",
+      "static_sha256": "d707659b72b6902c52014def7df9f4149468243a8ff6204c8e01ab37aa9e072e",
+      "runtime_sha256": "9dbac2adebdd2365e7921a9d86d58213eabbb5b80f42de350281fd9b2292b193"
+    }
+  },
+  "owner_evidence": "docs/android-studio/evidence/parallel-sync-policy/manifest.json"
+}

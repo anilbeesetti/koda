@@ -1,0 +1,8 @@
+{
+  "action": "Read-only preparation plus proposed scoped completed unit retirement",
+  "failure": "SyntaxError at quoted keyword in record.update; script did not execute any imports, checks, mutation or unlink",
+  "script_sha256": "3f44303af97d5742c2757fff41f146617ae12e49a62098e0277796604315d599",
+  "no_runtime_source_or_cache_action_executed": true,
+  "exact_error": "SyntaxError: expression cannot contain assignment, perhaps you meant \"==\"?",
+  "correction": "Unquote Python keyword name; keep exact receipt and scope checks unchanged."
+}

@@ -1,0 +1,854 @@
+{
+  "schema_version": 1,
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "created_at_utc": "2026-10-08T00:24:50.059816+00:00",
+  "scope": "Exact36/current default-target compiler receipts/current-source guards/controlled completed-cache retirements/parity validation; every copied payload byte-identical. Component raw261+125/library/clippy/fmt remain in external runtime and Root will integrate component evidence separately.",
+  "global_census_complete": false,
+  "selected": 95,
+  "passing": 36,
+  "ported": 20,
+  "adapted": 16,
+  "unported": 59,
+  "payload_count": 133,
+  "payload_bytes": 5091068,
+  "files": [
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/completed-current-ui-ELF-retirement-before.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/completed-current-ui-ELF-retirement-before.json",
+      "bytes": 44095,
+      "sha256": "ce33a8dc8ec4fcbcd224b4c7ec6c76b28edae70d50ceb08261e536fd780d7493"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/completed-current-ui-ELF-retirement.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/completed-current-ui-ELF-retirement.json",
+      "bytes": 44203,
+      "sha256": "52d85264afc682ec284ad3d9fe346a17d211404529192ac209a0096e9ba51834"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/completed-current-unit-ELF-retirement-before.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/completed-current-unit-ELF-retirement-before.json",
+      "bytes": 45145,
+      "sha256": "506dedc9aaad590faba8ef9b46aa2fc80f894f3ed1ae7adf781ebafa1da7bae3"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/completed-current-unit-ELF-retirement.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/completed-current-unit-ELF-retirement.json",
+      "bytes": 45250,
+      "sha256": "3fc400e25062c39a5add5b1a04aa3829368d827444315c556e12d0632d18a58f"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/default-tools-preflight-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/default-tools-preflight-exit.json",
+      "bytes": 871,
+      "sha256": "019ce1d5d101bb9883abfbe30a95a463f15c16479a1bb6b5c636be5b586e700c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/default-tools-preflight-source-after.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/default-tools-preflight-source-after.json",
+      "bytes": 1643484,
+      "sha256": "6f6501a3198da883b71852bb74a51ff356bea62b39a7aab8bd38efc3f553539c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/default-tools-preflight-source-before.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/default-tools-preflight-source-before.json",
+      "bytes": 1643484,
+      "sha256": "6f6501a3198da883b71852bb74a51ff356bea62b39a7aab8bd38efc3f553539c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/default-tools-preflight-source-freshness.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/default-tools-preflight-source-freshness.json",
+      "bytes": 1388,
+      "sha256": "79d2d5a1dcd5e7775e438dc5c832d360760ebf176164c3ed30943f1f0c4f79f0"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/default-tools-preflight-verified.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/default-tools-preflight-verified.json",
+      "bytes": 6970,
+      "sha256": "e19e75b893cd829c7f4e232d57bda98b4a53b6b6aaab0384f70404257d32999c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/default-tools-preflight.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/default-tools-preflight.log",
+      "bytes": 50143,
+      "sha256": "e27f9dd38764ed471db6dd171e367689d51d8fe2ce6a7f4f1adee7450fee19d7"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/finalized-ledger.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/finalized-ledger.json",
+      "bytes": 457,
+      "sha256": "7e0095488f64b0ab530649b841954a31e398255d46701f7b44b610badd936058"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/jobs36.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/jobs36.json",
+      "bytes": 61011,
+      "sha256": "80284c05ae40507dbe5108fcc1514e58e7213c76f9f77368c0738750fc632653"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/metadata-baseline-import.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/metadata-baseline-import.json",
+      "bytes": 2100,
+      "sha256": "5088ee030dc2ab5ca7d6deb64afa447ea573daf79f97c07b99badddbd9e5f988"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/parity-validator-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/parity-validator-exit.json",
+      "bytes": 732,
+      "sha256": "f33806486dc69009950eaa80d1943e0d2dadd2b7f26762b4558f8ba9651b84db"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/parity-validator.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/parity-validator.log",
+      "bytes": 400,
+      "sha256": "d36d3229331febf3b06cac59ec45a72913525ec6ffd2c61af326ca5c1d48b011"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/preparation.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/preparation.json",
+      "bytes": 744,
+      "sha256": "fa0fbfce08ad7175d00bd710d15ef5733cc81ef68fc67d635be2aa1f03937ab6"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-01-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-01-artifact-binding.json",
+      "bytes": 1525,
+      "sha256": "2ebb4e71f98a5c29b8159d9e11a1b7758132922a202392e09b6fb62659fdf4a0"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-01-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-01-exit.json",
+      "bytes": 839,
+      "sha256": "02b26980cca1eaa8d39a8a8264f1512a49610341c652b926352a11a1318741ac"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-02-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-02-artifact-binding.json",
+      "bytes": 1529,
+      "sha256": "c7fb34ff513bafb78bee8c501b4837bbb1923273b12f6648bc7949c41507e018"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-02-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-02-exit.json",
+      "bytes": 850,
+      "sha256": "03750ae806f3a0dfc399f2e19e4c028fe4d634a007ebb686f57ecc0910275bb3"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-03-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-03-artifact-binding.json",
+      "bytes": 1533,
+      "sha256": "15150c794022714f1cc9fc951dbc1a01e54a5d25c75b75e5785a7cde0d2ae8e5"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-03-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-03-exit.json",
+      "bytes": 864,
+      "sha256": "a087440ce1d2d196f635f8316bcf5217ab434a6bde9ebbb9041f61a0de6c2a7c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-04-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-04-artifact-binding.json",
+      "bytes": 1555,
+      "sha256": "ae86595172b4465a3ba371d9de9ec7e2179b2372eeb4767f7c8001de2d08fa76"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-04-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-04-exit.json",
+      "bytes": 934,
+      "sha256": "98c1a578d5a7521575f8075091f670795598eee548d6fccfd75af02d66fc5470"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-05-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-05-artifact-binding.json",
+      "bytes": 1546,
+      "sha256": "e9a9f51143ec24eedd750fa976f26f850da05d24da3f3ec727c351855b045a1f"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-05-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-05-exit.json",
+      "bytes": 905,
+      "sha256": "041a0cc85e4bbaa2aa5f9981ed80b1aa28724d263cbd23445239edaf0ec4aa9f"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-06-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-06-artifact-binding.json",
+      "bytes": 1551,
+      "sha256": "fe51a9db37ff0c8a752980683a96c29f2c698383eb139ed5d4954101d857985e"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-06-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-06-exit.json",
+      "bytes": 921,
+      "sha256": "4a232ecebf81d97208d3b1ba0374b12f1ead3943a2499b9017c963e29943bec7"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-07-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-07-artifact-binding.json",
+      "bytes": 1545,
+      "sha256": "4c11d5674db6dd53412f3479d2c643cfa2e9b305f7f69ae224ecf481fa4fd402"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-07-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-07-exit.json",
+      "bytes": 901,
+      "sha256": "4b927be041e64ce5f3db95ae2b70b8cdc267959801b4f0b00e757b0dd12a8700"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-08-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-08-artifact-binding.json",
+      "bytes": 1522,
+      "sha256": "f3c9ad9c813db6d5271baea6f0740c635ac4631ebb613ab7d6e46912c6744d93"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-08-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-08-exit.json",
+      "bytes": 830,
+      "sha256": "9e4fb40b965dbeffc9a8006f9fe48d4d3bdd05de81fbceacc906e818bac6ed91"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-09-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-09-artifact-binding.json",
+      "bytes": 1573,
+      "sha256": "2892942d6fe4ff478ede0ca7a7a0243f2927f7c3fff55a170b1468bf476dc43a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-09-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-09-exit.json",
+      "bytes": 875,
+      "sha256": "3e448d870b6fed75e8d2decadbda7d11130e9bf9d656c4b1fd97fc8bfc95bbd2"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-10-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-10-artifact-binding.json",
+      "bytes": 1565,
+      "sha256": "ebfe3f1c7c80d1dce02abe8c46b0d44ff4b9cea5f810f4dfaea0c95fe776a11f"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-10-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-10-exit.json",
+      "bytes": 850,
+      "sha256": "a7e26d26c8ff65992ba7889e5726e90b33a7fdb0649564e1638686593977b92d"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-11-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-11-artifact-binding.json",
+      "bytes": 1585,
+      "sha256": "64efce538dd025ce045bd6e5277784585e0e547530111b51ecafcf353ea77e0e"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-11-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-11-exit.json",
+      "bytes": 912,
+      "sha256": "27bd33501029ce189243fbc7850b0cfc810e39e1d7160c9bc789746de7b1d439"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-12-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-12-artifact-binding.json",
+      "bytes": 1582,
+      "sha256": "0e233d2ed009ace9a44cec1811c06cbf6058f2ce3d360295163c7b2e666ee7ff"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-12-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-12-exit.json",
+      "bytes": 904,
+      "sha256": "b3afc0f0aba7e98f1ca88d15f977776e7aca2bd2aa28107b6c0285b3c42ed8d1"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-13-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-13-artifact-binding.json",
+      "bytes": 1564,
+      "sha256": "32907bc92a32c0ffec90a9df87fc987ee8b58a41a7acd8ab74094cbd9291ddc3"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-13-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-13-exit.json",
+      "bytes": 847,
+      "sha256": "a3f56b7a75fa385f643519471e5fcdec4a26390ec270267572ad9d28c745748d"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-14-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-14-artifact-binding.json",
+      "bytes": 1571,
+      "sha256": "28d42c44f6ecac267681d13edc1051147d883218b25f020a4f7d391ccd516efe"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-14-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-14-exit.json",
+      "bytes": 869,
+      "sha256": "1ebb740db9dc77f9d258ad788ab5124ac6e2b013f5474887e1cccd73843186f5"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-15-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-15-artifact-binding.json",
+      "bytes": 1571,
+      "sha256": "ee43aa3359d788320db0c5c563b59dcb86c438d22095ee6b1f499aa96d8808a1"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-15-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-15-exit.json",
+      "bytes": 869,
+      "sha256": "8bd741b48f23c69e5acd268b371206107b9d520d5295b74515901fbe45964050"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-16-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-16-artifact-binding.json",
+      "bytes": 1570,
+      "sha256": "b572ef1844c8c8bd981b6bdf06a15afc44a3b83d094c01dfbf713f9b50f0fe0c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-16-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-16-exit.json",
+      "bytes": 865,
+      "sha256": "8ccd4c09fa76559a39521047d2dad8391db7844568ed268f6afad002b6d2a1ea"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-17-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-17-artifact-binding.json",
+      "bytes": 1568,
+      "sha256": "6ac201a473b4c957f62c200a1595443fd986d6114e81188acbb1dc87d982b158"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-17-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-17-exit.json",
+      "bytes": 859,
+      "sha256": "d80636e1fa6229bdbd0044af22ea6aa2b3bf1598b71dd3510c7add981b8ef135"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-18-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-18-artifact-binding.json",
+      "bytes": 1624,
+      "sha256": "a6b536609c2956890f5d69e5b602e10e02dbbf428c4429613c9f1d8391003253"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-18-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-18-exit.json",
+      "bytes": 930,
+      "sha256": "4ad34b691e5fea333db78f52b1d4d8306b07e8fe5997f2c9825a464489528c20"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-19-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-19-artifact-binding.json",
+      "bytes": 1626,
+      "sha256": "94afbabe649e03793dfdc720c224cba7beb2a90eef10f6057d4b7d5c610d9e96"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-19-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-19-exit.json",
+      "bytes": 936,
+      "sha256": "a94a802a62b77220752fa1c2598cb0f8e5a9d0c632406c7a85cb74a1dc8b1c18"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-20-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-20-artifact-binding.json",
+      "bytes": 1605,
+      "sha256": "39e3d0260cf5ec5fd85f1eeacd8298cd613f6345bdcfeafd68d688f31127a2ec"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-20-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-20-exit.json",
+      "bytes": 869,
+      "sha256": "20e658080b19a399145c549cffb4dac26f169e96cfbabe4c609061f98e6a1d3d"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-21-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-21-artifact-binding.json",
+      "bytes": 1632,
+      "sha256": "15a4c1134f94b3e89c39bce751426096a81edc713e7841f2b24cb5d6937227f1"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-21-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-21-exit.json",
+      "bytes": 955,
+      "sha256": "5edd633e06087e15ea3da51593089ba1a2a5e99120a6490450928a5761052293"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-22-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-22-artifact-binding.json",
+      "bytes": 1625,
+      "sha256": "7873547f06cf0ffeef97009f8437367acf4a0d564843fedb6980d7853c4ded32"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-22-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-22-exit.json",
+      "bytes": 934,
+      "sha256": "f593fadf9cbf402f6d45766f413bfc330d4b9c2a7ba3ec1438697a9d0386cfa2"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-23-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-23-artifact-binding.json",
+      "bytes": 1627,
+      "sha256": "5cd685b791629eff0397178510464206e63c26d965f5621dcf393f804cf7be41"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-23-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-23-exit.json",
+      "bytes": 939,
+      "sha256": "723b13d48c5e32eab917e5291eceaff533891c0f701718181a23ddb313ca33d2"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-24-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-24-artifact-binding.json",
+      "bytes": 1651,
+      "sha256": "8f5274f43bf5ad2e2ad46a8d589fd602fb5091c34f7f452597063e9ff7cc9f6c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-24-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-24-exit.json",
+      "bytes": 1015,
+      "sha256": "d3b28901e1f4e627b5aba5136ca4bbc4278f520714b2a4c4d68ca369b86a1cfa"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-25-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-25-artifact-binding.json",
+      "bytes": 1653,
+      "sha256": "58ea9027eb2e4f476f5a6419fcb1efe8ec37be87b438ea6bce2ddc6817fe2346"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-25-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-25-exit.json",
+      "bytes": 1022,
+      "sha256": "87a2809eee1b46e27b0bf96a32d79340f32936cfea5426e86f72b071de97a781"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-26-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-26-artifact-binding.json",
+      "bytes": 1612,
+      "sha256": "20064c6d8771be4efda7d6a4cb91c172f78d5fa33fd519b5fdcb07d52c7c1697"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-26-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-26-exit.json",
+      "bytes": 892,
+      "sha256": "514828cc98f0ccebb156d350a1c5969f7c31898ffc05551fff6eb7f395c8287e"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-27-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-27-artifact-binding.json",
+      "bytes": 1571,
+      "sha256": "0a91b6ff9c1e100e3a87a421493448c2ee58628cffd63e5e8a0013551c1443f3"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-27-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-27-exit.json",
+      "bytes": 894,
+      "sha256": "ce2a8fed3410f0ddb5170e006c2478e0f1d82b436b94ab573cff63eb7d3d0030"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-28-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-28-artifact-binding.json",
+      "bytes": 1563,
+      "sha256": "86cd4dba952ee3368106f243f08e123fc601ae3420ba022a0b3dda7e9f39f733"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-28-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-28-exit.json",
+      "bytes": 869,
+      "sha256": "1e852c6411c2d6e4ec4b045359123ac1328707ad978f346ea904382459d343c8"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-29-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-29-artifact-binding.json",
+      "bytes": 1539,
+      "sha256": "e2bf4fdc5ff68f66799cde72c1c5cd5d6431c9198ba8671d5963ecb491e9ebfd"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-29-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-29-exit.json",
+      "bytes": 863,
+      "sha256": "79036d20434fdd1af793496aa90ca9ef221b5c44d31b9b5eda71f0b7b34d750b"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/tools-captures.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/tools-captures.json",
+      "bytes": 48769,
+      "sha256": "0de2f33188ec6f4adfe5901c81880175f1c2da4baf785abb88b167ffa212ada1"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-01-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-01-artifact-binding.json",
+      "bytes": 1462,
+      "sha256": "eb4acdbed1604904ab86eebfac3415875a2e4dd2d46a9f18e63852bf52ee2aef"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-01-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-01-exit.json",
+      "bytes": 800,
+      "sha256": "0e1d4d962204e95913229d22832a42e0fa9627fb7af6e7c82d0b42e4d9d3e43a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-02-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-02-artifact-binding.json",
+      "bytes": 1449,
+      "sha256": "491490c2da7b92fb28b6dc186db9d3c0f27e51c7df19b09739f485566280bf05"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-02-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-02-exit.json",
+      "bytes": 760,
+      "sha256": "88b1edf038f3aff53f6d547a4347a762fdd7d22e8c4f1345fb685f0d7a29a368"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-03-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-03-artifact-binding.json",
+      "bytes": 1464,
+      "sha256": "91047cbc160c46d54caa486f3111bcfed8ff7dd17c6c69502a96f79eb99993c0"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-03-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-03-exit.json",
+      "bytes": 806,
+      "sha256": "fdf788249dbeb8f0773733930b9cc00393f0a9aac1c4c153aa750efb9bc8482d"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-04-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-04-artifact-binding.json",
+      "bytes": 1466,
+      "sha256": "8eb17278010028dc2a98d77cd0c649e3cbfe432552a34ed70164a4c77ea476ad"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-04-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-04-exit.json",
+      "bytes": 814,
+      "sha256": "4c8f285f13ffe8ac24c6359ee206b0309cc6a52d53a0a8965faf6c2627f4055c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-05-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-05-artifact-binding.json",
+      "bytes": 1469,
+      "sha256": "dd609cab2a1057767aa725bced9378d40353beb6b97c2c91cde0a35efd9c1bee"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-05-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-05-exit.json",
+      "bytes": 822,
+      "sha256": "23a0f3033ad5492e231147bbe1eb5b7e299938875a4af79c47477ef719c834de"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-06-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-06-artifact-binding.json",
+      "bytes": 1462,
+      "sha256": "eed3fbc9ae994f5ae7dccebdda31e2c196508b137c9e0ec37f97e5452449d5c0"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-06-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-06-exit.json",
+      "bytes": 797,
+      "sha256": "047a3a8607234b66ad56352bd7deb19f9adb9c503fa652b508ffd0b1a7a301d9"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-07-artifact-binding.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-07-artifact-binding.json",
+      "bytes": 1484,
+      "sha256": "b4cd0311ad1bc4328dc9030b556d448e0919307ea4dda04939ec75db64589037"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-07-exit.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-07-exit.json",
+      "bytes": 862,
+      "sha256": "a52dd468ceb0f6e3f3567e66957ab0e359df155f630311e68d8b66d8ad83370f"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/ui-captures.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/ui-captures.json",
+      "bytes": 12720,
+      "sha256": "14c313267424d23f6434713dbc2cef62ea1111ae0bc350a6f16ae9df72fdd4f5"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/unit-retirement-first-attempt-preparation-failure.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/unit-retirement-first-attempt-preparation-failure.json",
+      "bytes": 547,
+      "sha256": "4f49b31182abf8b5f286385f8df232453aa94b2203d9a3c41e4452d024402070"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/pre-copy-local/reference-manifest.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/pre-copy-local/reference-manifest.json",
+      "bytes": 162362,
+      "sha256": "e23b942ee6e3e39ac869de13ad762ce4f8cb75eb6233695e90036d8b3f3dc1c2",
+      "scope": "Immutable pre-import historical metadata; canonical ledger is only docs/android-studio/test-parity.json."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/pre-copy-local/test-parity.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/pre-copy-local/test-parity.json",
+      "bytes": 104199,
+      "sha256": "96a84124391978ff96192552d891f848a3375981d8cb04fdeef4d841974fc736",
+      "scope": "Immutable pre-import historical metadata; canonical ledger is only docs/android-studio/test-parity.json."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/protected-baseline/reference-manifest.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/protected-baseline/reference-manifest.json",
+      "bytes": 165554,
+      "sha256": "2f1e6d709e4a684aca9ca20fc43aae6826b60480f0d70cb8a9aa1b93ce9607c1",
+      "scope": "Immutable pre-import historical metadata; canonical ledger is only docs/android-studio/test-parity.json."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-exact/protected-baseline/test-parity.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/protected-baseline/test-parity.json",
+      "bytes": 108709,
+      "sha256": "70451da02ef580904e59865bd1b4f21152465eb8a70c85882141c1bfa284ea4d",
+      "scope": "Immutable pre-import historical metadata; canonical ledger is only docs/android-studio/test-parity.json."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-componentIsAddedElement.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-TabbedToolbarTest-componentIsAddedElement.log",
+      "bytes": 426,
+      "sha256": "cd4e236bef45a68db5cd7606b4b01d05e3104ab7b78dd3896490721750244351",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-tabIsAdded.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-TabbedToolbarTest-tabIsAdded.log",
+      "bytes": 398,
+      "sha256": "1431a38af3269a182e1a1340d83f215f941b261386d6a347a7bd057f25be1a69",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-closedIsCalledWhenClicked.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-TabbedToolbarTest-closedIsCalledWhenClicked.log",
+      "bytes": 432,
+      "sha256": "82d3fb9a0290bfe12fee3715dfe3b592f7202d6e0afcbabe78bfc9129a4f2c90",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-noCloseButtonWhenNoListener.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-TabbedToolbarTest-noCloseButtonWhenNoListener.log",
+      "bytes": 438,
+      "sha256": "1a16f0a831bea5e4bfd2e86eb1f87d3c859c150ecc08966b732b14a88f15cc66",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-iconButtonsCallbackWhenClicked.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-TabbedToolbarTest-iconButtonsCallbackWhenClicked.log",
+      "bytes": 442,
+      "sha256": "a240bd1e491c2d4e0bc007e3ec5c482b33eea03770771949cfcdfab673526a82",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-can select tab by index.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-TabbedToolbarTest-can select tab by index.log",
+      "bytes": 420,
+      "sha256": "d43df0b25c09b6882039b15307d81720580dfb02c4d99387698fe75804f0f772",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-adding tab should not trigger select listener.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-TabbedToolbarTest-adding tab should not trigger select listener.log",
+      "bytes": 464,
+      "sha256": "ef52098cbc5ed088bd4683ec03850b91ceaf50b9812f445814091c2eff32e77e",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-oneVariant.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-DefaultVariantsTest-oneVariant.log",
+      "bytes": 433,
+      "sha256": "44697bb3bb596c7ee6d69c7ea8c699635f695b892e0548c183b3829c59b29b65",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-debugPreferred.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-DefaultVariantsTest-debugPreferred.log",
+      "bytes": 441,
+      "sha256": "5ee506649e06e738fdb7ce4eebc927ffa3bc9d365d46ba2dfdb66056f5843cfd",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-preferredBuildType.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-DefaultVariantsTest-preferredBuildType.log",
+      "bytes": 451,
+      "sha256": "86948bf6753a355c6f84da73e980126db2f473a6fda0256c5dc7ee802f8869c1",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-preferredProductFlavorOverDebugBuildType.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-DefaultVariantsTest-preferredProductFlavorOverDebugBuildType.log",
+      "bytes": 503,
+      "sha256": "5a1ebd6b23f447222ea9ced8eb499020ac52f5329e7aadb4d34f6406ba229a48",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-preferredFlavorsInTwoDimensions.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-DefaultVariantsTest-preferredFlavorsInTwoDimensions.log",
+      "bytes": 481,
+      "sha256": "fdd9655db6cecb5e5cd24b57bda36e64780593ad451e6a61be5ee141f90f7ea6",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
+      "bytes": 493,
+      "sha256": "ac2d027867d52d4aa35c93e9c9dc6af302136926827c0e1265fa51d87556b9cb",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-mismatchedProductFlavourLength.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-DefaultVariantsTest-mismatchedProductFlavourLength.log",
+      "bytes": 477,
+      "sha256": "1baebb2a84cc42722db78550a8a1aa51ca4a7d5773088619843496e87b4914a9",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-onEmpty.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-DefaultVariantsTest-onEmpty.log",
+      "bytes": 427,
+      "sha256": "769ec41edbc333d533514cabd7ccb32e493c6517e601cb3c1f1714f7ac756c37",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testImportSimpleGradleProject.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-GradleModuleImportTest-testImportSimpleGradleProject.log",
+      "bytes": 401,
+      "sha256": "14ba7a4bb59c8d617767bda1d7bf5867e13efd478614bbc4fd95221877751b7a",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testImportSubprojects.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-GradleModuleImportTest-testImportSubprojects.log",
+      "bytes": 381,
+      "sha256": "3cb70742b052a431812dd05bb4a9a8d676329a3ccb71dc49e8a7658ed5212bce",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testImportSubProjectsWithMissingSubModule.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-GradleModuleImportTest-testImportSubProjectsWithMissingSubModule.log",
+      "bytes": 427,
+      "sha256": "4f645cda9ab283878346a652337255efe451fd0c1d9b013761f95c7d157d3b56",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testImportSubProjectWithCustomLocation.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-GradleModuleImportTest-testImportSubProjectWithCustomLocation.log",
+      "bytes": 421,
+      "sha256": "a01db3cae45d732df67e3f272519e26b4c2d4a8503465d34ff150a594805e8ee",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testRequiredProjects.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-GradleModuleImportTest-testRequiredProjects.log",
+      "bytes": 379,
+      "sha256": "ca1ba8984563da6ea22bb2fa902193c2488128123cab9019cb6b7b293533c7e0",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testMissingRequiredProjects.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-GradleModuleImportTest-testMissingRequiredProjects.log",
+      "bytes": 395,
+      "sha256": "e8a7611c6a6f7f55f0101d6137e0429d07c62973beae973c430a2d28dc95647a",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testMissingEnclosingProject.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-GradleModuleImportTest-testMissingEnclosingProject.log",
+      "bytes": 395,
+      "sha256": "98f1ed872d32769dbfc7f0eaf5cc5ff7aab00873df0dcee11d17756723971dbe",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testTransitiveDependencies.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-GradleModuleImportTest-testTransitiveDependencies.log",
+      "bytes": 391,
+      "sha256": "52fe29dcb83eae4110302bc124ae7dd841fd2a61d1926b1dff27e132b7c69bea",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testCircularDependencies.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-GradleModuleImportTest-testCircularDependencies.log",
+      "bytes": 387,
+      "sha256": "33e8479486fe0b191e3b7cd82821cd492dafc9fdc56d087608c24266498b4c71",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsSelected.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsSelected.log",
+      "bytes": 467,
+      "sha256": "7cb9450fca9e7a9424246f28f1306ceaf1acc96ae750bc279afb02160daa2a46",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
+      "bytes": 471,
+      "sha256": "1e2ddc77814252c8d67c53a1f2e1cff4e346752c8cb00394bfbb36ed2548696b",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefault.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefault.log",
+      "bytes": 423,
+      "sha256": "c232cebee6b3bd4b68b9f674ec11c9d6185d1e8e564bca223d7d20755d67b3e1",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
+      "bytes": 485,
+      "sha256": "cbcff0f162f25fa01f8489516c6ebce40ca106009a5ea3636c26a3d223524a85",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInNonAndroidProject.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInNonAndroidProject.log",
+      "bytes": 471,
+      "sha256": "e9e74b9f6148ce52a8cfad5d020ad514e3fc2d242767e567922783b3d4686503",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
+      "bytes": 473,
+      "sha256": "b20f5422e62a718d821592db910dab826561e1be73a75f345a88525911e6412e",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
+      "bytes": 529,
+      "sha256": "837d9f95327e36e039ffb1daf2147c8c171b2f74065924f45bfd750ca0c836d0",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
+      "bytes": 535,
+      "sha256": "c42242653b72fb0cadb4efb646f6d56f0f14704198e3121100d7b78ec1e809e9",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultMetrics.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultMetrics.log",
+      "bytes": 439,
+      "sha256": "da628ffe800d97b9beb177cd69c30f3b438d00f1e4b269118fffe05d82bfd6b6",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-ModelVersionsTest-checkModelConsumerVersionOrdering.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-ModelVersionsTest-checkModelConsumerVersionOrdering.log",
+      "bytes": 411,
+      "sha256": "64b859e1779fc4e99101cb280a4eab990ecb849070257b6a259e7c533cd9493b",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-ModelVersionsTest-checkModelVersionOrdering.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-ModelVersionsTest-checkModelVersionOrdering.log",
+      "bytes": 393,
+      "sha256": "6eaad07117bf1dbff19b748f009faaacf716495a8b883c4426655e55000d3079",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-ModelVersionsTest-checkSupportsParallelSync.log",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-ModelVersionsTest-checkSupportsParallelSync.log",
+      "bytes": 380,
+      "sha256": "b4cc4e3bfd99767829e37c8467878307afbba69add0b3be47ecb760df60243be",
+      "scope": "Actual normal Cargo exact mapped command; one original case passed."
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-source-snapshot.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-source-snapshot.json",
+      "bytes": 732753,
+      "sha256": "a4212b938fab428e2a66609e6748031f065f36dbeda995a78742f0eb46635c36"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-integration-targets.json",
+      "external_source": "/workspace/android-studio-artifacts/parallel-sync-integration/exact-capture/canonical-exact-log-copies/parallel-sync-integration-targets.json",
+      "bytes": 61486,
+      "sha256": "669359528cacfdc93ca196878b593c00e8f3dad07cb5c6f2c3538cda042abb28"
+    }
+  ]
+}

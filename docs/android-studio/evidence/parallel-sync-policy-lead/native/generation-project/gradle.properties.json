@@ -1,0 +1,8 @@
+{
+  "original_path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/gradle.properties",
+  "original_bytes": 78,
+  "original_sha256": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2",
+  "content_preserved_byte_exact": true,
+  "encoding": "utf-8",
+  "utf8_content": "org.gradle.jvmargs=-Xmx768m\norg.gradle.workers.max=2\nandroid.useAndroidX=true\n"
+}

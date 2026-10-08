@@ -2,12 +2,54 @@
   "schema_version": 1,
   "task": "1-parallel-sync-policy",
   "branch": "android-studio-task/1-parallel-sync-policy",
-  "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
-  "status": "owner_component_verified_lead_integration_pending",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "status": "lead_implementation_runtime_verified_protected_merge_pending",
   "scope": "Pure pinned parallel-sync eligibility policy, not scheduling or observed concurrent Gradle execution",
-  "canonical_matrix_changed": false,
+  "canonical_matrix_changed": true,
   "global_census_complete": false,
-  "tests": [],
+  "tests": [
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+      "port_status": "ported",
+      "reason": null,
+      "target": {
+        "package": "android_tools",
+        "integration_target": "parallel_sync",
+        "test_name": "check_supports_parallel_sync",
+        "manifest": {
+          "path": "crates/android_tools/Cargo.toml",
+          "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+        },
+        "source": {
+          "path": "crates/android_tools/tests/parallel_sync.rs",
+          "sha256": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77"
+        },
+        "run": {
+          "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "command": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "parallel_sync",
+            "check_supports_parallel_sync",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "exit_code": 0,
+          "log": {
+            "path": "docs/android-studio/evidence/parallel-sync-integration-ModelVersionsTest-checkSupportsParallelSync.log",
+            "sha256": "b4cc4e3bfd99767829e37c8467878307afbba69add0b3be47ecb760df60243be"
+          }
+        }
+      }
+    }
+  ],
   "reference": {
     "repository": "platform/tools/adt/idea",
     "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
@@ -25,13 +67,13 @@
     {
       "reference_test": "checkSupportsParallelSync",
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
-      "status": "unported",
-      "execution_status": "owner_passed_lead_capture_pending",
+      "status": "ported",
+      "execution_status": "lead_exact_original_capture_passed",
       "package": "android_tools",
       "integration_target": "parallel_sync",
       "test_name": "check_supports_parallel_sync",
       "original_assertions": 9,
-      "reason": "All nine exact original AGP assertions, order, named messages, signed MIN model tuple and empty description retained. The unused null minimum consumer is represented unavailable without being consulted. Owner unfiltered and exact Rust executions passed. Canonical promotion awaits matching-source lead capture and integration gates.",
+      "reason": "All nine original assertions executed unchanged on the combined source; canonical credit one after actual lead exact capture.",
       "proposed_status_after_actual_and_lead_gates": "ported"
     }
   ],
@@ -56,10 +98,10 @@
   "runtime_lease": "Completed bounded checks; no owned processes remain; released to Root",
   "approved_imported_root_correction": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
   "previous_source_snapshots_retained": true,
-  "lead_full_app_native_ci_parity_merge": "pending",
+  "lead_full_app_native_ci_parity_merge": "app/native/CI/parity PASS; protected merge pending",
   "new_original_method_tests": 1,
   "new_supplemental_tests": 9,
-  "canonical_original_test_credit": 0,
+  "canonical_original_test_credit": 1,
   "owner_all_features_tests": {
     "passed": 241,
     "failed": 0,
@@ -98,5 +140,857 @@
       "runtime_sha256": "9dbac2adebdd2365e7921a9d86d58213eabbb5b80f42de350281fd9b2292b193"
     }
   },
-  "owner_evidence": "docs/android-studio/evidence/parallel-sync-policy/manifest.json"
+  "owner_evidence": "docs/android-studio/evidence/parallel-sync-policy/manifest.json",
+  "owner_source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+  "lead_evidence": "docs/android-studio/evidence/parallel-sync-policy-lead/manifest.json",
+  "lead_checks": {
+    "schema_version": 1,
+    "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+    "source_tree": "9659baeb98fcf7111435169eb04490ba3952989d",
+    "scope": "Actual implementation, runtime and independent final metadata review passed; Root conflict/main/protected merge remain pending.",
+    "owner_five_static_runtime_reviews": "PASS; original owner evidence unchanged",
+    "component": {
+      "tools_passed": 261,
+      "ui_passed": 125,
+      "ui_preexisting_ignored": 1,
+      "fresh_library": true,
+      "strict_repository_clippy": true,
+      "workspace_fmt": true
+    },
+    "canonical_parity": {
+      "selected": 95,
+      "ported": 20,
+      "adapted": 16,
+      "unported": 59,
+      "passing": 36,
+      "prior35_statuses_reasons_targets_preserved": true,
+      "new_original_credit": 1,
+      "new_supplemental_tests": 9,
+      "global_census_complete": false
+    },
+    "actual_app": {
+      "command": ["cargo", "build", "--locked", "-p", "zed", "--bin", "koda"],
+      "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "exit_code": 0,
+      "elapsed_seconds": 623.5448021279954,
+      "log_sha256": "9dff03dff942f7d45b35ec0896a2a03246456ff571ea5c7d678a1295c6ca0d5e",
+      "executable": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+      "executable_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+      "executable_bytes": 1359451600,
+      "cargo_published_executable": "/workspace/.cache/zed/target/debug/koda",
+      "original_linker_output": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+      "only_final_output_argument_changed": true
+    },
+    "actual_native": {
+      "verdict": "PASS",
+      "scope": "Current combined source full native positive SDK sync, existing editor/tool-window keyboard regression, current Rust full model decoder and parallel capability; policy does not schedule work.",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "whole_source_files": 4730,
+      "actual_normal_full_app": {
+        "pid": 310699,
+        "window_id": 2097153,
+        "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+        "executable": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+        "executable_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+        "command": "/workspace/android-studio-parallel-sync-policy/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/qa/user-data /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/custom-manifest/AndroidManifest.xml ",
+        "utc": "2026-10-08T00:47:01.541371+00:00",
+        "monotonic": 57061.611017955
+      },
+      "fresh_profile_fixture_only_trust": true,
+      "sdk_syncs_exit_zero": 2,
+      "actual_sdk_driver": "Official AGP9.4.0, Gradle9.6.1, SDK37, explicit TemurinJDK21; supplementary, not the pinned reference driver",
+      "durable_commands_started_and_finished": 51,
+      "all_commands_paired_and_exit_zero": true,
+      "events_sha256": "fbefc5f36c22e639c83a3b9459d0c25e2ac0de349fbc1b08b887187154081986",
+      "raw_attached_PTY_sha256": "2c9c5138e6b565751e26a6a6367cc1fdbcfcd5858e350f7cb9a88d301008f014",
+      "captures": [
+        {
+          "path": "captures/build-sidebar-restored.png",
+          "sha256": "9a8af9035d8e9b310b96b41046ead0513f3b84128d205aac03b59194d788e808",
+          "bytes": 112606,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/editor-gradle-tab.png",
+          "sha256": "02c87110c5b414abab638ed168b6cbd0df0ebe7a15fda4396692f4b3faa8e735",
+          "bytes": 209306,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/editor-xml-restored.png",
+          "sha256": "d01031577686d9936734eada812686eec35dbaf88f794d6a98e145a970643553",
+          "bytes": 113740,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/hide-return.png",
+          "sha256": "59bcc002c9235bb35f6823db9cca769378b7002624b87bd911774d0194687300",
+          "bytes": 66220,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/narrow-output-focus.png",
+          "sha256": "46c9c71e689fae5ad3c56eb3583efbfa9c4f947b7a5e3bf2d3c1128b908f71e5",
+          "bytes": 32035,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/narrow-output-selected.png",
+          "sha256": "c48833a0dc9c67a2e25033b4728976e5e36822b76dfd5ff109bc5f44b84db46b",
+          "bytes": 31177,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/narrow-reverse-sync-focus.png",
+          "sha256": "7f5309a34335b988a276d24fe1ed4357824032cb6985a5ee310681dbc7f1c365",
+          "bytes": 31270,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/narrow-sync-restored.png",
+          "sha256": "9b2d3d6581c9239605c376c587029bbb1b177f9e959c54caf4b5d175b8258b55",
+          "bytes": 32154,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/narrow-sync.png",
+          "sha256": "6f3b829c7deb8a95c10375e94ed2213b5841084d2afca2aac8594d341e8cb639",
+          "bytes": 32227,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/sync1-loading.png",
+          "sha256": "577d347be67bf59e72c976a8f68ec9042eea29b5cf27ea64b9cb218cd0e77966",
+          "bytes": 87365,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/sync1-settled.png",
+          "sha256": "b3ac15fa6208bb19099313fc59006ca7b45b9b5f3712881c8d047381c8d02f7f",
+          "bytes": 116386,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/sync2-loading.png",
+          "sha256": "cf3689e250714c6fecaa9564438624fa9308d14d90a5e82d2aa9566586ff1216",
+          "bytes": 92852,
+          "visually_inspected": true,
+          "loading_state_credit": true
+        },
+        {
+          "path": "captures/sync2-settled.png",
+          "sha256": "e66b04c5bfe751c6febd14f3efad92d5c8ff7d3a7b5c1a63fef45486120688dd",
+          "bytes": 117115,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/trust-prompt.png",
+          "sha256": "694195ae7db47617156045f0cac45d36d9d33d7af221fd4e41d37aad466bb4d5",
+          "bytes": 87476,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/wide-hide-focus.png",
+          "sha256": "22b0650d3df11eb2f4a33f74589faa8aac1a48a836c69ace9cac6c0dc12213ac",
+          "bytes": 112606,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/wide-output-focus.png",
+          "sha256": "09a57a89e7075ebb444000e81c35db78de5d86de30e22d943a907e9ffe9737fa",
+          "bytes": 116809,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        },
+        {
+          "path": "captures/wide-output-selected.png",
+          "sha256": "06c6f35401ff8370c9693a576ebebf931767d5a3606920d1c4fa59902a89857e",
+          "bytes": 73685,
+          "visually_inspected": true,
+          "loading_state_credit": false
+        }
+      ],
+      "keyboard_routes": {
+        "wide-tab-to-output": {
+          "kind": "command-finish",
+          "label": "wide-tab-to-output",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "key",
+            "--window",
+            "2097153",
+            "Tab"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:51:07.928531+00:00",
+          "monotonic": 57307.998171287,
+          "elapsed_seconds": 0.0148445829981938,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "wide-space-select-output": {
+          "kind": "command-finish",
+          "label": "wide-space-select-output",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "key",
+            "--window",
+            "2097153",
+            "space"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:51:08.558151+00:00",
+          "monotonic": 57308.627790988,
+          "elapsed_seconds": 0.014311331004137173,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "narrow-tab-to-output": {
+          "kind": "command-finish",
+          "label": "narrow-tab-to-output",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "key",
+            "--window",
+            "2097153",
+            "Tab"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:51:18.648945+00:00",
+          "monotonic": 57318.718586223,
+          "elapsed_seconds": 0.015491138998186216,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "narrow-space-select-output": {
+          "kind": "command-finish",
+          "label": "narrow-space-select-output",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "key",
+            "--window",
+            "2097153",
+            "space"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:51:19.200139+00:00",
+          "monotonic": 57319.269779782,
+          "elapsed_seconds": 0.015189003002888057,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "narrow-shift-tab-to-sync": {
+          "kind": "command-finish",
+          "label": "narrow-shift-tab-to-sync",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "key",
+            "--window",
+            "2097153",
+            "shift+Tab"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:51:19.772992+00:00",
+          "monotonic": 57319.842639238,
+          "elapsed_seconds": 0.03179862200340722,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "narrow-space-restore-sync": {
+          "kind": "command-finish",
+          "label": "narrow-space-restore-sync",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "key",
+            "--window",
+            "2097153",
+            "space"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:51:20.319154+00:00",
+          "monotonic": 57320.388796762,
+          "elapsed_seconds": 0.01468305099842837,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "hide-return": {
+          "kind": "command-finish",
+          "label": "hide-return",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "key",
+            "--window",
+            "2097153",
+            "Return"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:51:31.514234+00:00",
+          "monotonic": 57331.583881758,
+          "elapsed_seconds": 0.015682997000112664,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "restore-build-sidebar-pointer": {
+          "kind": "command-finish",
+          "label": "restore-build-sidebar-pointer",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "mousemove",
+            "--window",
+            "2097153",
+            "18",
+            "930",
+            "click",
+            "1"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:51:32.272342+00:00",
+          "monotonic": 57332.341989841,
+          "elapsed_seconds": 0.1028472259931732,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "open-gradle-tab-pointer": {
+          "kind": "command-finish",
+          "label": "open-gradle-tab-pointer",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "mousemove",
+            "--window",
+            "2097153",
+            "114",
+            "293",
+            "click",
+            "--repeat",
+            "2",
+            "--delay",
+            "100",
+            "1"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:51:33.153859+00:00",
+          "monotonic": 57333.223507162,
+          "elapsed_seconds": 0.21054690399614628,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "restore-xml-tab-pointer": {
+          "kind": "command-finish",
+          "label": "restore-xml-tab-pointer",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "mousemove",
+            "--window",
+            "2097153",
+            "316",
+            "58",
+            "click",
+            "1"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:51:34.283625+00:00",
+          "monotonic": 57334.353275871,
+          "elapsed_seconds": 0.1034696439965046,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        },
+        "resync-ctrl-alt-r": {
+          "kind": "command-finish",
+          "label": "resync-ctrl-alt-r",
+          "command": [
+            "/workspace/cloud-environment/native/usr/bin/xdotool",
+            "key",
+            "--window",
+            "2097153",
+            "ctrl+alt+r"
+          ],
+          "cwd": "/workspace/android-studio-parallel-sync-policy",
+          "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+          "display": ":119",
+          "window_id": 2097153,
+          "app_pid": 310699,
+          "utc": "2026-10-08T00:48:17.135056+00:00",
+          "monotonic": 57137.204702384,
+          "elapsed_seconds": 0.040188004000810906,
+          "exit_code": 0,
+          "stdout": "",
+          "stderr": ""
+        }
+      },
+      "full_model_decoder_and_comparison_proof": "native-model-proof.json",
+      "complete_model_comparison": "Both current full models including generatedArtifacts equal both retained successful905 full models after only exact known private-root-prefix replacement; all7 older legacy projections retain all other values/list order.",
+      "current_error_state": "No SDK error was triggered in this positive native run; no current error-state screenshot credit claimed. Prior wrong-JDK errors belong earlier preserved runs and receive no current runtime credit.",
+      "first_loading_capture_limit": "sync1-loading.png still shows trust prompt and receives zero loading-state credit; sync2-loading.png visibly shows Syncing/load model and status progress",
+      "known_existing_diagnostics": [
+        "Software-X11 Found no xinput mouse pointers",
+        "Gradle TreeSitter indents query missing required indent capture"
+      ],
+      "no_crash_in_observed_run": true,
+      "performance_scope": "No CPU, startup, large-project or hardware GPU performance measurement; software X11/Vulkan functional checks only",
+      "closure": {
+        "verdict": "PASS",
+        "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+        "utc": "2026-10-08T00:54:42.911499+00:00",
+        "source_before_after_files": 4730,
+        "source_index_worktree_untracked_and_hashes_unchanged": true,
+        "original_and_private_fixture_files_verified": 12,
+        "all_fixture_bytes_and_official_wrapper_unchanged": true,
+        "fixture_only_sdk_properties_unchanged": true,
+        "owned_pids_absent": [310681, 310699, 310689],
+        "display119_absent": true,
+        "launcher_exec_session": 61721,
+        "launcher_exit_code": 143,
+        "unowned_gradle167092_present_and_never_signaled": true,
+        "no_unrelated_processes_signaled": true,
+        "trusted_worktrees_rows": [
+          [
+            1,
+            "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project",
+            null,
+            null
+          ]
+        ],
+        "current_app_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+        "current_runtime_decoder_library_sha256": "df1784c08f936efbc397f77d690ee04427691bf61571652696a73883e4f63db8"
+      },
+      "current_Rust_parallel_capability_proof": "current-parallel-capability-proof.json",
+      "command_count_includes_inputs_screenshots_geometry_discovery_and_settle_delays": true,
+      "actual_commands_match_prior51_route_plan": true,
+      "no_parallel_scheduler_or_execution_credit": true,
+      "narrow_width_limit": "230px intentionally exercises tool-window tab overflow below a usable editor width; unrelated clipped UI is not a fidelity claim.",
+      "new_original_reference_credit": 0,
+      "no_logical_project_tree_or_Rust_LSP_or_Kotlin_facet_credit": true,
+      "phase_or_IDE_complete": false
+    },
+    "actual_CI": {
+      "run_id": 37703317253,
+      "head_sha": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "all_three_jobs": "success",
+      "workspace_tests": {
+        "passed": 10510,
+        "failed": 0,
+        "pre_existing_skipped": 23,
+        "execution_seconds": 1542.726
+      },
+      "CI_synthetic_merge": "8b4f48cbe5905baef4610a4d52732bf152e565bc",
+      "CI_synthetic_tree": "9659baeb98fcf7111435169eb04490ba3952989d",
+      "synthetic_tree_equals_tested_source_tree": true,
+      "raw_log_bytes": 430953,
+      "raw_log_sha256": "15a2ad1d1fe1b9a388d9e05d9309640573de2c80c2657e247c2bae4ce1338fe4",
+      "raw_summary": "2026-10-08T00:28:51.1440045Z      Summary [1542.726s] 10510 tests run: 10510 passed, 23 skipped",
+      "app_build_step": "success",
+      "local_native_and_fullapp_gates": "pending"
+    },
+    "actual_parallel_capability": {
+      "verdict": "PASS",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "policy_source_sha256": "943e61b9d6e3256275b38750a7f8595cc4aa270a099093f6df8404f6270998e7",
+      "probe_base_sha256": "5551985487b7e87f31963365ccf203f138de5f7bb4ebb2d5f4ca9d9b9a971dca",
+      "probe_added_only_two_external_current_policy_statements": true,
+      "probe_source_sha256": "0e6cb4ff731f9b228334e6dc19094d04b2e247dc1e93ebf709c0cbd7e6c1e5cc",
+      "probe_executable_sha256": "b5cca1a9b6853ea370b045be63e47741ca38017e1294685490263f5b11d60f0d",
+      "normal_library_sha256": "df1784c08f936efbc397f77d690ee04427691bf61571652696a73883e4f63db8",
+      "model_inputs": [
+        {
+          "record": 1,
+          "module": ":app",
+          "captured_versions": {
+            "status": "available",
+            "value": {
+              "agp": "9.4.0",
+              "producer": {
+                "major": 23,
+                "minor": 0,
+                "description": "Android Gradle Plugin 9.1"
+              },
+              "minimumConsumer": {
+                "status": "available",
+                "value": {
+                  "major": 66,
+                  "minor": 1,
+                  "description": "Android Studio Iguana"
+                }
+              },
+              "models": [
+                {
+                  "name": "basic_android_project",
+                  "version": {
+                    "major": 0,
+                    "minor": 1,
+                    "description": null
+                  }
+                },
+                {
+                  "name": "android_project",
+                  "version": {
+                    "major": 0,
+                    "minor": 1,
+                    "description": null
+                  }
+                },
+                {
+                  "name": "android_dsl",
+                  "version": {
+                    "major": 0,
+                    "minor": 1,
+                    "description": null
+                  }
+                },
+                {
+                  "name": "variant_dependencies",
+                  "version": {
+                    "major": 0,
+                    "minor": 1,
+                    "description": null
+                  }
+                },
+                {
+                  "name": "native_module",
+                  "version": {
+                    "major": 0,
+                    "minor": 1,
+                    "description": null
+                  }
+                },
+                {
+                  "name": "model_producer",
+                  "version": {
+                    "major": 23,
+                    "minor": 0,
+                    "description": "Android Gradle Plugin 9.1"
+                  }
+                },
+                {
+                  "name": "minimum_model_consumer",
+                  "version": {
+                    "major": 66,
+                    "minor": 1,
+                    "description": "Android Studio Iguana"
+                  }
+                }
+              ]
+            }
+          },
+          "current_Rust_supports_parallel_sync_assertion_passed": true,
+          "schedules_parallel_work": false
+        },
+        {
+          "record": 2,
+          "module": ":app",
+          "captured_versions": {
+            "status": "available",
+            "value": {
+              "agp": "9.4.0",
+              "producer": {
+                "major": 23,
+                "minor": 0,
+                "description": "Android Gradle Plugin 9.1"
+              },
+              "minimumConsumer": {
+                "status": "available",
+                "value": {
+                  "major": 66,
+                  "minor": 1,
+                  "description": "Android Studio Iguana"
+                }
+              },
+              "models": [
+                {
+                  "name": "basic_android_project",
+                  "version": {
+                    "major": 0,
+                    "minor": 1,
+                    "description": null
+                  }
+                },
+                {
+                  "name": "android_project",
+                  "version": {
+                    "major": 0,
+                    "minor": 1,
+                    "description": null
+                  }
+                },
+                {
+                  "name": "android_dsl",
+                  "version": {
+                    "major": 0,
+                    "minor": 1,
+                    "description": null
+                  }
+                },
+                {
+                  "name": "variant_dependencies",
+                  "version": {
+                    "major": 0,
+                    "minor": 1,
+                    "description": null
+                  }
+                },
+                {
+                  "name": "native_module",
+                  "version": {
+                    "major": 0,
+                    "minor": 1,
+                    "description": null
+                  }
+                },
+                {
+                  "name": "model_producer",
+                  "version": {
+                    "major": 23,
+                    "minor": 0,
+                    "description": "Android Gradle Plugin 9.1"
+                  }
+                },
+                {
+                  "name": "minimum_model_consumer",
+                  "version": {
+                    "major": 66,
+                    "minor": 1,
+                    "description": "Android Studio Iguana"
+                  }
+                }
+              ]
+            }
+          },
+          "current_Rust_supports_parallel_sync_assertion_passed": true,
+          "schedules_parallel_work": false
+        }
+      ],
+      "policy_executed_by_current_Rust_library_for_both_complete_models": true,
+      "no_scheduler_or_parallel_execution_claim": true,
+      "supplementary_SDK_not_pinned_reference_driver": true,
+      "current_Rust_parallel_capability_proof": "current-parallel-capability-proof.json",
+      "command_count_includes_inputs_screenshots_geometry_discovery_and_settle_delays": true,
+      "actual_commands_match_prior51_route_plan": true,
+      "no_parallel_scheduler_or_execution_credit": true,
+      "narrow_width_limit": "230px intentionally exercises tool-window tab overflow below a usable editor width; unrelated clipped UI is not a fidelity claim.",
+      "new_original_reference_credit": 0
+    },
+    "lead_visual_inspection": {
+      "scope": "Lead actual screenshot inspection of current native regression; full Android Studio fidelity and IDE completion remain pending",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "app_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+      "captures": [
+        {
+          "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/captures/sync1-settled.png",
+          "sha256": "b3ac15fa6208bb19099313fc59006ca7b45b9b5f3712881c8d047381c8d02f7f",
+          "width_height": [1536, 1000],
+          "lead_personally_viewed": true
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/captures/sync2-loading.png",
+          "sha256": "cf3689e250714c6fecaa9564438624fa9308d14d90a5e82d2aa9566586ff1216",
+          "width_height": [1536, 1000],
+          "lead_personally_viewed": true
+        },
+        {
+          "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/captures/narrow-output-focus.png",
+          "sha256": "46c9c71e689fae5ad3c56eb3583efbfa9c4f947b7a5e3bf2d3c1128b908f71e5",
+          "width_height": [230, 1000],
+          "lead_personally_viewed": true
+        }
+      ],
+      "observations": [
+        "Wide settled window shows the project tree, XML editor tab/breadcrumbs, toolbar, Build/Sync/Build Output tool-window controls and status bar. SDK reports BUILD SUCCESSFUL in 3s and two variants.",
+        "Second-sync loading shows running project-model task and syncing status/progress.",
+        "Keyboard output-focus stress capture forces230px width below application declared360px minimum (crates/zed/src/zed.rs). Captions/editor/output clipping in that image does not demonstrate supported-window layout fidelity."
+      ],
+      "known_remaining_work": [
+        "Logical Android project-tree publication and original workflow tests remain unported.",
+        "Raw machine project-model JSON is still visible in Sync output; the independent console-filter task plan and bounded reference preflight track this existing behavior.",
+        "Rust LSP completion, device/emulator/run/Logcat workflows and later phases are not certified by these captures."
+      ],
+      "no_new_feature_completion_or_hardware_performance_credit": true
+    },
+    "native_archive_scope": {
+      "full_manifest_files": 677,
+      "full_manifest_bytes": 54689888,
+      "full_manifest_sha256": "ca258cdf7b9a4f802daece0955e8877dccfe568877e854bc3404155843b957cb",
+      "selected_native_manifest_payloads": 91,
+      "selected_native_paths": [
+        "capture-gradle.py",
+        "captures/build-sidebar-restored.png",
+        "captures/editor-gradle-tab.png",
+        "captures/editor-xml-restored.png",
+        "captures/hide-return.png",
+        "captures/narrow-output-focus.png",
+        "captures/narrow-output-selected.png",
+        "captures/narrow-reverse-sync-focus.png",
+        "captures/narrow-sync-restored.png",
+        "captures/narrow-sync.png",
+        "captures/sync1-loading.png",
+        "captures/sync1-settled.png",
+        "captures/sync2-loading.png",
+        "captures/sync2-settled.png",
+        "captures/trust-prompt.png",
+        "captures/wide-hide-focus.png",
+        "captures/wide-output-focus.png",
+        "captures/wide-output-selected.png",
+        "cleanup-receipt.json",
+        "current-app-binding.json",
+        "current-decoder-build-proof.json",
+        "current-library-read-only-verification.json",
+        "current-parallel-capability-proof.json",
+        "decoder-build.log",
+        "decoder-record1-result.json",
+        "decoder-record1-stderr.log",
+        "decoder-record1.log",
+        "decoder-record2-result.json",
+        "decoder-record2-stderr.log",
+        "decoder-record2.log",
+        "events.jsonl",
+        "events.py",
+        "final-closure-and-guard.json",
+        "final-verification.log",
+        "finalize-proof.py",
+        "gradle-finish-1791420436306220523-310940.json",
+        "gradle-finish-1791420497291462093-311160.json",
+        "gradle-start-1791420436306220523-310940.json",
+        "gradle-start-1791420497291462093-311160.json",
+        "guard.py",
+        "input-replay-plan.json",
+        "jdk-version.log",
+        "launch-request.json",
+        "launcher-pty.log",
+        "lease-granted.json",
+        "lease-released.json",
+        "model-verification.log",
+        "native-model-complete1.json",
+        "native-model-complete2.json",
+        "native-model-proof.json",
+        "native-model-record1.log",
+        "native-model-record2.log",
+        "native-sync-export-1791420436306220523-310940.gradle",
+        "native-sync-export-1791420497291462093-311160.gradle",
+        "native-sync-stdout-1791420436306220523-310940.log",
+        "native-sync-stdout-1791420497291462093-311160.log",
+        "native-sync-stdout.log",
+        "package-evidence.py",
+        "packaging-source-guard.log",
+        "packaging-verification.json",
+        "preparation-authorized.json",
+        "preparation-proof.json",
+        "prepare.py",
+        "readiness.json",
+        "report-format-proof.json",
+        "report-prettier-1.log",
+        "report-prettier-2.log",
+        "review-report.md",
+        "runtime-probe.rs",
+        "runtime-proof.json",
+        "session-binding.json",
+        "stop-owned-app.log",
+        "stop-owned-app.py",
+        "stop-request.json",
+        "verify-models.py",
+        "generation-project/README.md",
+        "generation-project/app/build.gradle",
+        "generation-project/app/custom-manifest/AndroidManifest.xml",
+        "generation-project/app/flavor-assets/demo.txt",
+        "generation-project/app/main/resources/resources.properties",
+        "generation-project/app/provider-res/layout/sample.xml",
+        "generation-project/app/unrelated-assets/sample.txt",
+        "generation-project/build.gradle",
+        "generation-project/gradle.properties",
+        "generation-project/model.json",
+        "generation-project/provenance.json",
+        "generation-project/settings.gradle",
+        "generation-project/gradlew",
+        "generation-project/gradle/wrapper/gradle-wrapper.jar",
+        "generation-project/gradle/wrapper/gradle-wrapper.properties",
+        "generation-project/local.properties"
+      ],
+      "selected_native_original_bytes": 2424910,
+      "PNG_wrappers": 17,
+      "excluded": "Generated Gradle build/cache outputs, QA databases, libraries and executable binaries remain external. The complete native manifest is copied but is not a claim that all677 payloads are copied."
+    },
+    "whole_source_files": 4730,
+    "fixed_source_pathspec": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ],
+    "exact133_manifest_unchanged": true,
+    "new_non_Rust_exceptions": [],
+    "scheduler_or_UI_capability_credit": false,
+    "phase_or_IDE_complete": false,
+    "protected_merge": "pending Root final checks",
+    "root_gate_input_sha256": "90359b2d72e45d122f6b21bb9f31ac1fbf521ff1134f4afc084a4d4aecc9ce5f",
+    "final_independent_metadata_review": {
+      "verdict": "PASS",
+      "manifest": "docs/android-studio/evidence/parallel-sync-final-review/manifest.json",
+      "review_sha256": "1f7fdf8bb8d994f8047e6377db27a311013c4687472847c8c0b9a51799c0ce3a",
+      "review_text_sha256": "cebe1c4592e89b86d4ca99ae3e41146ed1623b3ec3f8e3e99b57acdacb9e4f86"
+    }
+  }
 }

@@ -1,0 +1,101 @@
+{
+  "review": "PR63 independent lead-readiness quality preflight",
+  "completed_prerequisites_verdict": "PASS",
+  "overall_task_and_merge_verdict": "PENDING",
+  "blocking_findings_in_reviewed_scope": [],
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "recorded_source_tree": "9659baeb98fcf7111435169eb04490ba3952989d",
+  "independently_rehashed_source_paths": 4730,
+  "nested_source_port_records": 103,
+  "p1_source_paths_retained": 4725,
+  "p1_common_source_equivalence": "All common bytes unchanged except one added pub mod parallel_sync; line in the crate root",
+  "new_source_paths": [
+    "crates/android_tools/src/parallel_sync.rs",
+    "crates/android_tools/test_data/parallel_sync/AgpVersion.kt",
+    "crates/android_tools/test_data/parallel_sync/LICENSE-APACHE",
+    "crates/android_tools/test_data/parallel_sync/NOTICE",
+    "crates/android_tools/tests/parallel_sync.rs"
+  ],
+  "fixed_source_pathspec": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "owner_evidence": {
+    "historical_source": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+    "manifest_payloads_byte_hash_checked": 45,
+    "static_and_runtime_reports_hash_checked": 10,
+    "all_five_areas": "PASS for recorded owner scope",
+    "historical_tests": 241,
+    "owner_handoff_lead_pending_status_preserved": true
+  },
+  "current_component_gates": {
+    "android_tooling_passed": 261,
+    "android_tooling_failed": 0,
+    "android_tooling_ignored": 0,
+    "android_tooling_filtered": 0,
+    "fresh_executable_test_artifacts_with_current_source_paths": 9,
+    "default_ui_passed": 125,
+    "default_ui_failed": 0,
+    "default_ui_pre_existing_ignored": 1,
+    "library": "PASS",
+    "repository_strict_clippy": "PASS",
+    "format": "PASS",
+    "recorded_before_after_source_guards": "Equal and inspected",
+    "initial_exit_101_retained": true,
+    "initial_and_successful_retry_commands_identical": true,
+    "normal_command": "cargo test --locked -p android_tools --all-features --message-format=json",
+    "initial_raw_log_sha256": "88c4bc56be2f85a0bc3c0b54c08cfa866b1df3a1fe5a386e73702a51de4bde25",
+    "successful_retry_raw_log_sha256": "8dc03d1c16198c0b7a4aa62802e8b78541822a7fe87ee4f33fe9b22c8d0e954b"
+  },
+  "reference_scope": {
+    "selected_methods": 95,
+    "ported": 20,
+    "adapted": 16,
+    "unported": 59,
+    "passing_captures_independently_checked": 36,
+    "not_run": 59,
+    "failing": 0,
+    "not_applicable": 0,
+    "original_parallel_method_assertions_retained": 9,
+    "new_original_method_credit": 1,
+    "supplemental_tests_receiving_original_credit": 0,
+    "global_reference_census": "Unverified and partial",
+    "test_credit_is_final_task_approval": false,
+    "scheduler_tree_lsp_ide_or_product_performance_credit": false
+  },
+  "ci": {
+    "run_id": 37703317253,
+    "all_three_jobs": "SUCCESS",
+    "synthetic_merge_commit": "8b4f48cbe5905baef4610a4d52732bf152e565bc",
+    "recorded_synthetic_tree": "9659baeb98fcf7111435169eb04490ba3952989d",
+    "recorded_current_source_tree_equal": true,
+    "actual_decoded_workspace_raw_log_bytes": 430953,
+    "actual_decoded_workspace_raw_log_sha256": "15a2ad1d1fe1b9a388d9e05d9309640573de2c80c2657e247c2bae4ce1338fe4",
+    "passed": 10510,
+    "failed": 0,
+    "pre_existing_skipped": 23,
+    "seconds": 1542.726,
+    "remote_app_build_step": "SUCCESS",
+    "remote_step_substitutes_for_current_local_app_and_native_gates": false
+  },
+  "review_operations": {
+    "source_and_artifact_file_reads_and_hashes": true,
+    "external_review_report_writes": true,
+    "git_commands_or_mutations": false,
+    "cargo_compiler_sdk_native_or_cache_operations": false,
+    "independent_git_ref_index_status_guard_rerun": false,
+    "whole_system_fd_or_exact_physical_allocation_claim": false
+  },
+  "pending_gates": [
+    "Current local full-application build and independent output-only linker review",
+    "Current native validation, both SDK comparisons, durable keyboard events and final cleanup",
+    "Final portable manifest, payload, wrapper and citation audit",
+    "Final source/ref/index/worktree/main/conflict verification",
+    "Final metadata, ordinary integration merge and authorized push"
+  ]
+}

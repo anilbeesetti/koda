@@ -1,0 +1,19 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "executable_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+  "cwd": "/workspace/android-studio-parallel-sync-policy",
+  "official_launcher_command": [
+    "bash",
+    ".agents/skills/koda-app-validation/scripts/run-app.sh",
+    "--headless",
+    "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project",
+    "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/custom-manifest/AndroidManifest.xml"
+  ],
+  "stdout_capture": "util-linux script --quiet --flush --return; outer exec_command tty true",
+  "JAVA_HOME": "/workspace/android-studio-artifacts/jdk21/jdk-21.0.12.1+1",
+  "java_version_log_sha256": "6a92cfe4f307247e58adea2dca434a8767a115a9c58aa6d8d76a8fb088c2f03f",
+  "KODA_QA_DIRECTORY": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/qa",
+  "display": ":119",
+  "display119_free_before_launch": true,
+  "utc": "2026-10-08T00:46:28.381204+00:00"
+}

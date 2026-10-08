@@ -1,0 +1,39 @@
+{
+  "verdict": "PASS",
+  "scope": "Read-only independent current app-helper actual Rust link probe audit; full normal app build remains pending",
+  "reviewed_at_utc": "2026-10-08T00:31:52.808614+00:00",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "validation_json_sha256": "3fb8c4a31d62ba8a293d8fd08e5201f0da1b7bc5b77d2c6793caf92976e22c0b",
+  "helper_source_sha256": "986a3ee63a40b574ada793cf241a8db0cd640fadf8708cbc3bceec597bacfa09",
+  "helper_binary_sha256": "8485db252685bd86596dc6b2a8a7bd2aa48ec2d267bf38eab93d55b265d660ac",
+  "probe_source_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+  "probe_reference_byte_identical": true,
+  "receipt_path": "/workspace/android-studio-artifacts/parallel-sync-integration/app-build/probe-304281.json",
+  "receipt_sha256": "5e42a467b093a4a8f9dc34e626a2e16f40b9069c48986b22235e37317e0dc9fe",
+  "actual_argument_count": 47,
+  "changed_argument_indexes": [
+    42
+  ],
+  "single_o_index": 41,
+  "all_actual_argument_strings_ASCII_UTF8_without_replacement": true,
+  "all_other_actual_flags_and_inputs_unchanged": true,
+  "real_cc": "/usr/bin/cc",
+  "real_cc_exit_code": 0,
+  "published_private_symlink": "/workspace/android-studio-artifacts/parallel-sync-integration/app-build/probe-output",
+  "regular_ELF": "/tmp/android-studio-link-output/probe-304281",
+  "ELF_bytes": 4506752,
+  "ELF_sha256": "10ce59496b3f0682104a4f3fa9f68e823ede597c4bb0675e9ef29ed04d60050c",
+  "exact_stdout_sha256": "09397da5e4ca42fcbaf16c84742601a70d34414c8b5322b8cb52bbfd7d1bbc2a",
+  "helper_compile_log_empty_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "probe_compile_log_empty_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "compile_commands_exit_zero_record_verified": true,
+  "whole_source_files_checked": 4730,
+  "all4730_source_hashes_and_fixed_seven_commit_index_worktree_untracked_guards_pass": true,
+  "reviewer_ran_compiler_tests_helper_probe_native_or_mutated_cache_source_git_original_raw_records": false,
+  "findings": [],
+  "remaining": [
+    "Current full normal app build/final real-link receipt/executable verification",
+    "Native SDK/model/keyboard/cleanup",
+    "Full workspace CI and lead protected merge"
+  ]
+}

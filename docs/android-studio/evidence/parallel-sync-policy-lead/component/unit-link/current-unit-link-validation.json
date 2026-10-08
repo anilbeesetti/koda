@@ -1,0 +1,64 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/android-tools-parallel-unit-298321.json",
+  "receipt_sha256": "3238b96ffe921f49570ed956fda8871db89050edcca7ae80df336c25ef3b5c88",
+  "argument_count": 103,
+  "changed_indexes": [
+    97
+  ],
+  "only_final_o_argument_changed": true,
+  "all_arguments_ASCII_UTF8": true,
+  "real_cc_exit_code": 0,
+  "actual_linked_ELF": "/tmp/android-studio-link-output/android-tools-parallel-unit-298321",
+  "ELF_sha256": "cc057a4cfa9df4f9eacda0b581803c9062697db9edd4cfd4c0c651ab86512ea1",
+  "ELF_bytes": 303989152,
+  "normal_Cargo_unit_artifact_matches_actual_linked_ELF": true,
+  "tests": {
+    "passed": 261,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "whole_source_binding_count": 4730,
+  "test_raw_log_sha256": "8dc03d1c16198c0b7a4aa62802e8b78541822a7fe87ee4f33fe9b22c8d0e954b",
+  "frozen_policy_executable": {
+    "path": "/tmp/parallel-sync-integration-verified-binaries/parallel-sync-tests10",
+    "bytes": 1762488,
+    "sha256": "18f4b143970b3ce0cab30050572d2bb781ffedf2c81780d647ace083a4f49f23",
+    "source_artifact": {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/parallel_sync-46aceb136bb01d88",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/parallel_sync-46aceb136bb01d88"
+      ],
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "parallel_sync",
+        "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/parallel_sync.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/parallel_sync-46aceb136bb01d88",
+          "bytes": 1762488,
+          "sha256": "18f4b143970b3ce0cab30050572d2bb781ffedf2c81780d647ace083a4f49f23"
+        }
+      ]
+    }
+  }
+}

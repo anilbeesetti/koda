@@ -1,0 +1,40 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+  "retained_at_execution_artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///workspace/android-studio-parallel-sync-policy/crates/android_tools#0.1.0",
+    "manifest_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "android_tools",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/src/android_tools.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": false,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 0,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "/workspace/.cache/zed/target/debug/deps/android_tools-fb2c5fb7656d5f8d"
+    ],
+    "executable": "/workspace/.cache/zed/target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+    "fresh": false,
+    "executable_bytes": 13421872,
+    "executable_sha256": "b46051d5be17173232b5e9049dad99f1b347f057cc76add572dfbe4f10c81896"
+  },
+  "normal_Cargo_exact_execution": true,
+  "whole_source_binding_count": 4730
+}

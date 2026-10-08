@@ -1,0 +1,69 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "protected_head": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
+  "captured_at_utc": "2026-10-08T00:16:27.153068+00:00",
+  "records": [
+    {
+      "label": "pre-copy-local",
+      "root": "/workspace/android-studio-parallel-sync-policy",
+      "head": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "metadata": {
+        "reference-manifest.json": {
+          "sha256": "e23b942ee6e3e39ac869de13ad762ce4f8cb75eb6233695e90036d8b3f3dc1c2",
+          "bytes": 162362,
+          "selected_tests": 92,
+          "census_complete": false
+        },
+        "test-parity.json": {
+          "sha256": "96a84124391978ff96192552d891f848a3375981d8cb04fdeef4d841974fc736",
+          "bytes": 104199,
+          "selected_rows": 92,
+          "port_counts": {
+            "ported": 17,
+            "unported": 59,
+            "adapted": 16
+          },
+          "run_counts": {
+            "passing": 33,
+            "not_run": 59
+          }
+        }
+      }
+    },
+    {
+      "label": "protected-baseline",
+      "root": "/workspace/android-studio-target",
+      "head": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
+      "metadata": {
+        "reference-manifest.json": {
+          "sha256": "2f1e6d709e4a684aca9ca20fc43aae6826b60480f0d70cb8a9aa1b93ce9607c1",
+          "bytes": 165554,
+          "selected_tests": 95,
+          "census_complete": false
+        },
+        "test-parity.json": {
+          "sha256": "70451da02ef580904e59865bd1b4f21152465eb8a70c85882141c1bfa284ea4d",
+          "bytes": 108709,
+          "selected_rows": 95,
+          "port_counts": {
+            "ported": 19,
+            "unported": 60,
+            "adapted": 16
+          },
+          "run_counts": {
+            "passing": 35,
+            "not_run": 60
+          }
+        }
+      }
+    }
+  ],
+  "copied_only": [
+    "docs/android-studio/reference-manifest.json",
+    "docs/android-studio/test-parity.json"
+  ],
+  "source_guard_files": 4730,
+  "source_guard_unchanged": true,
+  "canonical_source_exclusion_count": 7,
+  "no_ledger_promotion_yet": true
+}

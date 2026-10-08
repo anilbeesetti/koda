@@ -1,0 +1,30 @@
+{
+  "verdict": "PASS",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "utc": "2026-10-08T00:54:42.911499+00:00",
+  "source_before_after_files": 4730,
+  "source_index_worktree_untracked_and_hashes_unchanged": true,
+  "original_and_private_fixture_files_verified": 12,
+  "all_fixture_bytes_and_official_wrapper_unchanged": true,
+  "fixture_only_sdk_properties_unchanged": true,
+  "owned_pids_absent": [
+    310681,
+    310699,
+    310689
+  ],
+  "display119_absent": true,
+  "launcher_exec_session": 61721,
+  "launcher_exit_code": 143,
+  "unowned_gradle167092_present_and_never_signaled": true,
+  "no_unrelated_processes_signaled": true,
+  "trusted_worktrees_rows": [
+    [
+      1,
+      "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project",
+      null,
+      null
+    ]
+  ],
+  "current_app_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+  "current_runtime_decoder_library_sha256": "df1784c08f936efbc397f77d690ee04427691bf61571652696a73883e4f63db8"
+}

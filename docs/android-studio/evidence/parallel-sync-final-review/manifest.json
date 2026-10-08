@@ -1,0 +1,18 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "verdict": "PASS",
+  "files_count": 2,
+  "total_bytes": 13640,
+  "files": [
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-final-review/final-portable-quality-review.json",
+      "bytes": 7267,
+      "sha256": "1f7fdf8bb8d994f8047e6377db27a311013c4687472847c8c0b9a51799c0ce3a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-final-review/review.md.json",
+      "bytes": 6373,
+      "sha256": "bfcafa4eb6a55a96ba4495b3e7b20078d6c1dc2c7febb9d73d96c34b87fa5c5c"
+    }
+  ]
+}
