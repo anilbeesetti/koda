@@ -268,6 +268,22 @@ pub(crate) fn observe_surfaces(panel: &gpui::Entity<AndroidPanel>, window: &mut 
         }));
         panel.context_surfaces_changed(true, window, cx);
     });
+    let panel = panel.downgrade();
+    // A Workspace may be constructed while its MultiWorkspace root is still
+    // being installed. Retained workspaces later change that root's chrome
+    // ownership without changing project facts or platform window activation.
+    window.defer(cx, move |window, cx| {
+        let Some(multi_workspace) = window.root::<workspace::MultiWorkspace>().flatten() else { return; };
+        panel.update(cx, |panel, cx| {
+            panel._startup_subscriptions.push(cx.subscribe_in(&multi_workspace, window, |panel, multi, event, window, cx| {
+                if matches!(event, workspace::MultiWorkspaceEvent::ActiveWorkspaceChanged { .. })
+                    && multi.read(cx).workspace().entity_id() == panel.workspace.entity_id()
+                {
+                    panel.context_surfaces_changed(true, window, cx);
+                }
+            }));
+        }).log_err();
+    });
 }
 
 impl AndroidPanel {
@@ -331,7 +347,9 @@ pub(crate) mod tests {
     use workspace::AppState;
 
     fn initialize(cx: &mut App) {
-        AppState::test(cx);
+        let app_state = AppState::test(cx);
+        editor::init(cx);
+        workspace::init(app_state, cx);
         trusted_worktrees::init(Default::default(), cx);
         crate::init(cx);
         install_application_menus(vec![Menu::new("Run").items([
@@ -578,6 +596,57 @@ pub(crate) mod tests {
         android_visual.run_until_parked();
         assert!(android_visual.debug_bounds("android-panel").is_none());
         assert!(android.read_with(&android_visual, |workspace, cx| crate::toolbar(&workspace.weak_handle(), cx).is_none()));
+        Ok(())
+    }
+
+    #[gpui::test]
+    async fn native_menus_follow_retained_workspace_switches_in_the_same_window(cx: &mut TestAppContext) -> Result<()> {
+        cx.update(initialize);
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem.insert_tree("/retained-android", json!({"Main.java":"class Main {}"})).await;
+        filesystem.insert_tree("/retained-generic", json!({"main.py":"print(1)"})).await;
+        let android_project = Project::test_with_worktree_trust(filesystem.clone(), [Path::new("/retained-android")], cx).await;
+        let generic_project = Project::test_with_worktree_trust(filesystem, [Path::new("/retained-generic")], cx).await;
+        cx.update(|cx| { trust(&android_project, cx)?; trust(&generic_project, cx) })?;
+        let (multi, visual) = cx.add_window_view(|window, cx| workspace::MultiWorkspace::test_new(android_project.clone(), window, cx));
+        let android = multi.read_with(visual, |multi, _| multi.workspace().clone());
+        visual.update(|window, _| window.activate_window());
+        visual.update(|_, cx| publish_catalogue(&android_project, Path::new("/retained-android"), &[PluginId::AndroidApplication], &[], false, cx))?;
+        visual.run_until_parked();
+        visual.update(|window, cx| {
+            assert!(window.is_window_active());
+            let menus = cx.get_menus().expect("Installed native menus");
+            assert!(menu_has(&menus, &SyncProject));
+            assert!(menu_has(&menus, &workspace::ToggleBottomDock));
+        });
+        let generic = multi.update_in(visual, |multi, window, cx| {
+            multi.retain_active_workspace(cx);
+            let generic = multi.test_add_workspace(generic_project, window, cx);
+            multi.retain_active_workspace(cx);
+            generic
+        });
+        visual.run_until_parked();
+        for _ in 0..2 {
+            visual.update(|window, cx| {
+                assert!(window.is_window_active());
+                let menus = cx.get_menus().expect("Generic native menus");
+                assert!(!menu_has(&menus, &SyncProject));
+                assert!(!menu_has(&menus, &ToggleFocus));
+                assert!(menu_has(&menus, &workspace::ToggleBottomDock));
+                assert!(menus.iter().all(|menu| !matches!(menu.items.first(), Some(OwnedMenuItem::Separator)) && !matches!(menu.items.last(), Some(OwnedMenuItem::Separator))));
+            });
+            multi.update_in(visual, |multi, window, cx| multi.activate(android.clone(), None, window, cx));
+            visual.run_until_parked();
+            visual.update(|window, cx| {
+                assert!(window.is_window_active());
+                let menus = cx.get_menus().expect("Android native menus");
+                assert!(menu_has(&menus, &SyncProject));
+                assert!(menu_has(&menus, &ToggleFocus));
+                assert!(menu_has(&menus, &workspace::ToggleBottomDock));
+            });
+            multi.update_in(visual, |multi, window, cx| multi.activate(generic.clone(), None, window, cx));
+            visual.run_until_parked();
+        }
         Ok(())
     }
 
