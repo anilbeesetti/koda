@@ -27,7 +27,8 @@
     "formatting": "not_run",
     "official_Gradle_SDK_captures": "not_run",
     "five_area_reviews": "pending",
-    "lead_full_app_full_CI_native": "Root_pending"
+    "lead_full_app_full_CI_native": "Root_pending",
+    "late_configuration_probe": "not_run"
   },
   "limitations": [
     "Included builds remain unsupported",
@@ -53,8 +54,16 @@
         "Successful Project.getAllprojects catalogue failed to require observed parent holders"
       ],
       "tests_removed_skipped_weakened": 0
+    },
+    {
+      "kind": "static_code_timing_review",
+      "round": 2,
+      "status": "source_fixed_actual_Gradle_regression_pending",
+      "before_source": "8362e8ca7187164dc7d15173994528790f100368",
+      "finding": "Init projectsEvaluated listener captures before later build/plugin projectsEvaluated listeners can finalize Idea module names",
+      "tests_removed_skipped_weakened": 0
     }
   ],
-  "product_fix_rounds": 1,
+  "product_fix_rounds": 2,
   "owner_plan": "/workspace/android-studio-artifacts/import-identity-getters/task-plan.json"
 }

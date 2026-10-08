@@ -8,6 +8,11 @@ without applying a plugin, and nullable module names stay distinct from failed
 or missing getters. The complete six API/helper sources and Apache attribution
 are retained under `crates/android_tools/test_data/import_facts`.
 
+The bridge captures at task-graph readiness after all project-evaluation
+callbacks, preserving names changed by late build/plugin configuration. An
+authored Java+Idea fixture records an independent final getter oracle; its real
+Gradle execution is still pending.
+
 Rust checks object-only decoding, explicit nullable result payloads, getter
 provenance, duplicate identities and contradictory available observations. The
 raw ordered catalogue retains root holders beyond compiled Basic modules, with

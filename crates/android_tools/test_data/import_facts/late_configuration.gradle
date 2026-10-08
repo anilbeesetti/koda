@@ -1,0 +1,17 @@
+// Authored supplemental fixture; not an original upstream test.
+// Apply only to a private Java module in an Android build, never in the bridge.
+apply plugin: 'idea'
+
+gradle.projectsEvaluated {
+    idea.module.name = 'configured-after-project-evaluation'
+}
+
+tasks.register('kodaIdentityOracle') {
+    doLast {
+        def plugin = project.getPlugins().findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)
+        println('KODA_IDENTITY_ORACLE=' + groovy.json.JsonOutput.toJson([
+            module: project.getPath(),
+            ideaModuleName: plugin.getModel().getModule().getName()
+        ]))
+    }
+}

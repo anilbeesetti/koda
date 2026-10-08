@@ -60,14 +60,19 @@ gradle.projectsEvaluated {
              project.getPlugins().findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)?.getModel()?.getModule()?.getName()
          }]
     }
-    // Configuration is complete here; no extra task or foreign project lock is needed.
-    def importRoot = importProject(root)
-    def importCatalogue = importGetter('org.gradle.api.Project.getAllprojects()') {
-        root.getAllprojects().collect { importProject(it) }
+    def importCatalogue = null
+    def importBuildIdentity = null
+    // Build/plugin projectsEvaluated listeners may still change Idea module names.
+    // Graph readiness follows all of them, before tasks or foreign resolution run.
+    gradle.taskGraph.whenReady {
+        def importRoot = importProject(root)
+        importCatalogue = importGetter('org.gradle.api.Project.getAllprojects()') {
+            root.getAllprojects().collect { importProject(it) }
+        }
+        importBuildIdentity = [rootName: importRoot.rootName, rootDirectory: importRoot.rootDirectory,
+            projectPath: importRoot.projectPath, buildTreePath: importRoot.buildTreePath,
+            referenceIdentityPath: importRoot.referenceIdentityPath]
     }
-    def importBuildIdentity = [rootName: importRoot.rootName, rootDirectory: importRoot.rootDirectory,
-        projectPath: importRoot.projectPath, buildTreePath: importRoot.buildTreePath,
-        referenceIdentityPath: importRoot.referenceIdentityPath]
     def attributes = { configuration ->
         configuration.attributes.keySet().findAll { it.name == 'com.android.build.api.attributes.BuildTypeAttr' || it.name.startsWith('com.android.build.api.attributes.ProductFlavor:') }.collectEntries {
             [(it.name): configuration.attributes.getAttribute(it).toString()]
