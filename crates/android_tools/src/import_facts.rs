@@ -71,7 +71,7 @@ fn unavailable(reason: FactsUnavailableReason, detail: impl Into<String>) -> Fac
 
 /// A getter invocation under the snapshot's observed Gradle version.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(remote = "Self", deny_unknown_fields)]
+#[serde(remote = "Self", deny_unknown_fields, bound(deserialize = "T: Deserialize<'de>"))]
 pub struct GetterObservation<T> {
     pub getter: String,
     #[serde(deserialize_with = "captured_result")]
@@ -256,6 +256,15 @@ pub fn parse_import_facts(output: &str, model: &ProjectModel, binding: ImportFac
         let path = required(&project.project_path, PROJECT_PATH)?;
         if project_index.insert(path.clone(), index).is_some() {
             return Err(unavailable(FactsUnavailableReason::Malformed, format!("Duplicate raw Gradle project identity {path:?}")));
+        }
+    }
+    for project in projects {
+        if let Some(parent) = &project.parent_project_path {
+            if let CapturedField::Available(Some(parent)) = &parent.result {
+                if !project_index.contains_key(parent) {
+                    return Err(unavailable(FactsUnavailableReason::MissingMetadata, format!("Raw parent project {parent:?} is absent from the successful Gradle catalogue")));
+                }
+            }
         }
     }
     let root_project = project_index.get(":").and_then(|index| projects.get(*index))

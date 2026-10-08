@@ -8,7 +8,7 @@
   "new_original_test_credit": 0,
   "supplemental_tests": {
     "suite": "crates/android_tools/tests/import_facts.rs",
-    "declared": 27,
+    "declared": 28,
     "executed": 0,
     "status": "not_run"
   },
@@ -42,7 +42,19 @@
       "reason": "Evaluate authoritative external Gradle/AGP getters; Rust owns identity validation and import policy. No IntelliJ importer/facet host."
     }
   ],
-  "failure_history": [],
-  "product_fix_rounds": 0,
+  "failure_history": [
+    {
+      "kind": "static_code_review",
+      "round": 1,
+      "status": "source_fixed_runtime_pending",
+      "before_source": "1cd5ff9ad9e6e057d48052e345503eef7c3bd158",
+      "findings": [
+        "Missing explicit T Deserialize bound on GetterObservation remote derive with deserialize_with",
+        "Successful Project.getAllprojects catalogue failed to require observed parent holders"
+      ],
+      "tests_removed_skipped_weakened": 0
+    }
+  ],
+  "product_fix_rounds": 1,
   "owner_plan": "/workspace/android-studio-artifacts/import-identity-getters/task-plan.json"
 }

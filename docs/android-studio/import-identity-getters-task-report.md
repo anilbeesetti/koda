@@ -15,7 +15,7 @@ an index for lookups. Captures bind exact Basic module/directory/kind/variant
 identity and caller model/selection revisions. Missing required observations
 return typed errors; they do not replace or erase the caller's Basic model.
 
-Twenty-seven authored supplemental tests cover transport, identity, nullable
+Twenty-eight authored supplemental tests cover transport, identity, nullable
 observations and stale bindings. They are not yet executed. The current lease
 authorizes source-only work; formatting, library/test/Clippy checks and real
 Gradle/SDK captures await an exclusive runtime slot. All five independent owner

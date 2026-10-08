@@ -415,3 +415,11 @@ fn repeated_root_build_getters_cannot_disagree() -> Result<()> {
     }
     Ok(())
 }
+
+#[test]
+fn successful_all_projects_catalogue_requires_observed_parent_holders() -> Result<()> {
+    let fixture=fixture()?;
+    let mut value=fixture.value.clone();catalogue(&mut value)?.remove(1);
+    assert_failure(&fixture,&value,FactsUnavailableReason::MissingMetadata)?;
+    Ok(())
+}
