@@ -1,11 +1,11 @@
 use crate::{LocationLink, Project, ProjectPath};
 use anyhow::Result;
 use futures::StreamExt as _;
-use gpui::{Context, Entity, Task};
+use gpui::{App, Context, Entity, Task};
 use language::{Buffer, Location, PointUtf16, ToOffset};
 use quick_xml::{Reader, events::Event};
 use regex::Regex;
-use std::{ops::Range, sync::LazyLock};
+use std::{ops::Range, path::PathBuf, sync::LazyLock};
 use util::ResultExt;
 
 static RESOURCE: LazyLock<Result<Regex, regex::Error>> = LazyLock::new(|| {
@@ -19,6 +19,32 @@ static IMPORT: LazyLock<Result<Regex, regex::Error>> =
     LazyLock::new(|| Regex::new(r"(?m)^\s*import\s+([\w.]+)\.R\s*;?\s*$"));
 
 impl Project {
+    /// Finds Android Gradle roots without running build tools or requiring project trust.
+    pub fn android_project_roots(&self, cx: &App) -> Vec<PathBuf> {
+        self.visible_worktrees(cx)
+            .filter_map(|worktree| {
+                let snapshot = worktree.read(cx).snapshot();
+                let has_file = |path: &str| {
+                    util::rel_path::RelPath::from_unix_str(path)
+                        .ok()
+                        .and_then(|path| snapshot.entry_for_path(path))
+                        .is_some_and(|entry| entry.is_file())
+                };
+                crate::android_project_detection::is_android_gradle_project(
+                    snapshot
+                        .files(false, 0)
+                        .map(|entry| entry.path.as_unix_str()),
+                    has_file,
+                )
+                .then(|| snapshot.abs_path().to_path_buf())
+            })
+            .collect()
+    }
+
+    pub fn is_android_project(&self, cx: &App) -> bool {
+        !self.android_project_roots(cx).is_empty()
+    }
+
     pub fn android_model(&self) -> &android_tools::project_model::ModelState {
         &self.android_model
     }

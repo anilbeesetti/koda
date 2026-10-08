@@ -108,6 +108,18 @@ impl LogcatPanel {
             .any(|pane| pane.read(cx).items_len() > 0)
     }
 
+    pub(super) fn stop_for_project_close(&mut self, cx: &mut Context<Self>) {
+        for pane in self.center.panes() {
+            let views = pane
+                .read(cx)
+                .items_of_type::<LogcatView>()
+                .collect::<Vec<_>>();
+            for view in views {
+                view.update(cx, |view, cx| view.stop_for_project_close(cx));
+            }
+        }
+    }
+
     pub(super) fn show_logs(
         &mut self,
         root: PathBuf,
@@ -262,8 +274,24 @@ impl Panel for LogcatPanel {
     fn min_size(&self, _: &Window, _: &App) -> Option<Pixels> {
         Some(px(120.))
     }
-    fn icon(&self, _: &Window, _: &App) -> Option<IconName> {
-        Some(IconName::Logcat)
+    fn icon(&self, _: &Window, cx: &App) -> Option<IconName> {
+        self.enabled(cx).then_some(IconName::Logcat)
+    }
+    fn enabled(&self, cx: &App) -> bool {
+        self.project.read(cx).is_android_project(cx)
+    }
+    fn set_active(&mut self, active: bool, _: &mut Window, cx: &mut Context<Self>) {
+        if active && self.enabled(cx) {
+            for pane in self.center.panes() {
+                let views = pane
+                    .read(cx)
+                    .items_of_type::<LogcatView>()
+                    .collect::<Vec<_>>();
+                for view in views {
+                    view.update(cx, |view, cx| view.resume_device_discovery(cx));
+                }
+            }
+        }
     }
     fn icon_tooltip(&self, _: &Window, _: &App) -> Option<&'static str> {
         Some("Logcat")

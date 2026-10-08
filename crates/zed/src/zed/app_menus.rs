@@ -7,6 +7,18 @@ use terminal_view::terminal_panel;
 use zed_actions::{Quit, assistant, debug_panel, dev, git_panel, project_panel};
 
 pub fn app_menus(cx: &mut App) -> Vec<Menu> {
+    let is_android_project = cx
+        .active_window()
+        .and_then(|window| window.downcast::<workspace::MultiWorkspace>())
+        .and_then(|window| window.read(cx).ok())
+        .is_some_and(|multi_workspace| {
+            multi_workspace
+                .workspace()
+                .read(cx)
+                .project()
+                .read(cx)
+                .is_android_project(cx)
+        });
     let mut view_items = vec![
         MenuItem::action(
             "Zoom In",
@@ -269,45 +281,30 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
         Menu {
             name: "Run".into(),
             disabled: false,
-            items: vec![
-                MenuItem::action("Run App", android_ui::Run),
-                MenuItem::action("Debug App", android_ui::Debug),
-                MenuItem::action("Compose Preview", android_ui::ComposePreview),
-                MenuItem::action("Build Selected Variant", android_ui::Build),
-                MenuItem::action("Run Unit Tests", android_ui::Test),
-                MenuItem::action("Run Android Lint", android_ui::Lint),
-                MenuItem::separator(),
-                MenuItem::action("Sync Android Project", android_ui::SyncProject),
-                MenuItem::action("Android Tools", android_ui::ToggleFocus),
-                MenuItem::action(
-                    "Configure Kotlin for Selected Variant",
-                    android_ui::ConfigureKotlin,
-                ),
-                MenuItem::action("Refresh Android Devices", android_ui::RefreshDevices),
-                MenuItem::action("Stop Selected Emulator", android_ui::StopEmulator),
-                MenuItem::action("Build Window", android_ui::ToggleBuild),
-                MenuItem::action("Logcat", android_ui::Logcat),
-                MenuItem::separator(),
-                MenuItem::action(
-                    "Spawn Task",
-                    zed_actions::Spawn::ViaModal {
-                        reveal_target: None,
-                    },
-                ),
-                MenuItem::action("Start Debugger", debugger_ui::Start),
-                MenuItem::separator(),
-                MenuItem::action("Edit tasks.json…", zed_actions::OpenProjectTasks),
-                MenuItem::action("Edit debug.json…", zed_actions::OpenProjectDebugTasks),
-                MenuItem::separator(),
-                MenuItem::action("Continue", debugger_ui::Continue),
-                MenuItem::action("Step Over", debugger_ui::StepOver),
-                MenuItem::action("Step Into", debugger_ui::StepInto),
-                MenuItem::action("Step Out", debugger_ui::StepOut),
-                MenuItem::separator(),
-                MenuItem::action("Toggle Breakpoint", editor::actions::ToggleBreakpoint),
-                MenuItem::action("Edit Breakpoint", editor::actions::EditLogBreakpoint),
-                MenuItem::action("Clear All Breakpoints", debugger_ui::ClearAllBreakpoints),
-            ],
+            items: android_run_items(is_android_project)
+                .into_iter()
+                .chain([
+                    MenuItem::action(
+                        "Spawn Task",
+                        zed_actions::Spawn::ViaModal {
+                            reveal_target: None,
+                        },
+                    ),
+                    MenuItem::action("Start Debugger", debugger_ui::Start),
+                    MenuItem::separator(),
+                    MenuItem::action("Edit tasks.json…", zed_actions::OpenProjectTasks),
+                    MenuItem::action("Edit debug.json…", zed_actions::OpenProjectDebugTasks),
+                    MenuItem::separator(),
+                    MenuItem::action("Continue", debugger_ui::Continue),
+                    MenuItem::action("Step Over", debugger_ui::StepOver),
+                    MenuItem::action("Step Into", debugger_ui::StepInto),
+                    MenuItem::action("Step Out", debugger_ui::StepOut),
+                    MenuItem::separator(),
+                    MenuItem::action("Toggle Breakpoint", editor::actions::ToggleBreakpoint),
+                    MenuItem::action("Edit Breakpoint", editor::actions::EditLogBreakpoint),
+                    MenuItem::action("Clear All Breakpoints", debugger_ui::ClearAllBreakpoints),
+                ])
+                .collect(),
         },
         Menu {
             name: "Window".into(),
@@ -356,4 +353,58 @@ pub fn app_menus(cx: &mut App) -> Vec<Menu> {
             ],
         },
     ]
+}
+
+fn android_run_items(is_android_project: bool) -> Vec<MenuItem> {
+    if !is_android_project {
+        return Vec::new();
+    }
+    vec![
+        MenuItem::action("Run App", android_ui::Run),
+        MenuItem::action("Debug App", android_ui::Debug),
+        MenuItem::action("Compose Preview", android_ui::ComposePreview),
+        MenuItem::action("Build Selected Variant", android_ui::Build),
+        MenuItem::action("Run Unit Tests", android_ui::Test),
+        MenuItem::action("Run Android Lint", android_ui::Lint),
+        MenuItem::separator(),
+        MenuItem::action("Sync Android Project", android_ui::SyncProject),
+        MenuItem::action("Android Tools", android_ui::ToggleFocus),
+        MenuItem::action(
+            "Configure Kotlin for Selected Variant",
+            android_ui::ConfigureKotlin,
+        ),
+        MenuItem::action("Refresh Android Devices", android_ui::RefreshDevices),
+        MenuItem::action("Stop Selected Emulator", android_ui::StopEmulator),
+        MenuItem::action("Build Window", android_ui::ToggleBuild),
+        MenuItem::action("Logcat", android_ui::Logcat),
+        MenuItem::separator(),
+    ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn android_run_menu_requires_an_android_project() {
+        assert!(android_run_items(false).is_empty());
+        let names = android_run_items(true)
+            .into_iter()
+            .filter_map(|item| match item {
+                MenuItem::Action { name, .. } => Some(name.to_string()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        for name in [
+            "Run App",
+            "Build Selected Variant",
+            "Sync Android Project",
+            "Android Tools",
+            "Build Window",
+            "Stop Selected Emulator",
+            "Logcat",
+        ] {
+            assert!(names.iter().any(|actual| actual == name), "Missing {name}");
+        }
+    }
 }

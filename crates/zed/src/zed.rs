@@ -445,6 +445,26 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
             return;
         };
 
+        cx.observe_window_activation(window, |_, window, cx| {
+            if window.is_window_active() {
+                cx.defer(|cx| reload_menus(cx));
+            }
+        })
+        .detach();
+        cx.subscribe(
+            &cx.entity(),
+            |_, _, event: &workspace::MultiWorkspaceEvent, cx| {
+                if matches!(
+                    event,
+                    workspace::MultiWorkspaceEvent::ActiveWorkspaceChanged { .. }
+                ) {
+                    cx.defer(|cx| reload_menus(cx));
+                }
+            },
+        )
+        .detach();
+        cx.defer(|cx| reload_menus(cx));
+
         #[cfg(feature = "track-project-leak")]
         {
             let multi_workspace_handle = cx.weak_entity();
@@ -554,6 +574,23 @@ pub fn initialize_workspace(app_state: Arc<AppState>, cx: &mut App) {
         };
 
         let workspace_handle = cx.entity();
+        let project = workspace.project().clone();
+        let mut was_android = project.read(cx).is_android_project(cx);
+        cx.subscribe(&project, move |_, project, event, cx| {
+            if matches!(
+                event,
+                project::Event::WorktreeAdded(_)
+                    | project::Event::WorktreeRemoved(_)
+                    | project::Event::WorktreeUpdatedEntries(_, _)
+            ) {
+                let is_android = project.read(cx).is_android_project(cx);
+                if is_android != was_android {
+                    was_android = is_android;
+                    cx.defer(|cx| reload_menus(cx));
+                }
+            }
+        })
+        .detach();
         let center_pane = workspace.active_pane().clone();
         initialize_pane(workspace, &center_pane, window, cx);
 
@@ -2327,6 +2364,24 @@ fn show_markdown_app_notification<F>(
 fn reload_menus(cx: &mut App) {
     let menus = app_menus(cx);
     cx.set_menus(menus);
+    let titlebars = cx
+        .windows()
+        .into_iter()
+        .filter_map(|window| {
+            let window = window.downcast::<MultiWorkspace>()?;
+            window
+                .read(cx)
+                .ok()?
+                .workspace()
+                .read(cx)
+                .titlebar_item()?
+                .downcast::<title_bar::TitleBar>()
+                .ok()
+        })
+        .collect::<Vec<_>>();
+    for titlebar in titlebars {
+        titlebar.update(cx, |titlebar, cx| titlebar.refresh_application_menu(cx));
+    }
 }
 
 fn reload_keymaps(cx: &mut App, mut user_key_bindings: Vec<KeyBinding>) {

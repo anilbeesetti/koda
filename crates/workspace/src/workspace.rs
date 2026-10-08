@@ -1974,9 +1974,9 @@ impl Workspace {
         let left_dock = Dock::new(DockPosition::Left, modal_layer.clone(), window, cx);
         let bottom_dock = Dock::new(DockPosition::Bottom, modal_layer.clone(), window, cx);
         let right_dock = Dock::new(DockPosition::Right, modal_layer.clone(), window, cx);
-        let left_dock_buttons = cx.new(|cx| PanelButtons::new(left_dock.clone(), cx));
-        let bottom_dock_buttons = cx.new(|cx| PanelButtons::new(bottom_dock.clone(), cx));
-        let right_dock_buttons = cx.new(|cx| PanelButtons::new(right_dock.clone(), cx));
+        let left_dock_buttons = cx.new(|cx| PanelButtons::new(left_dock.clone(), &project, cx));
+        let bottom_dock_buttons = cx.new(|cx| PanelButtons::new(bottom_dock.clone(), &project, cx));
+        let right_dock_buttons = cx.new(|cx| PanelButtons::new(right_dock.clone(), &project, cx));
         let multi_workspace = window
             .root::<MultiWorkspace>()
             .flatten()
@@ -4606,6 +4606,9 @@ impl Workspace {
         let dock = self.dock_at_position(dock_side);
         dock.update(cx, |dock, cx| {
             dock.set_open(!was_visible, window, cx);
+            if !was_visible && !dock.is_open() {
+                return;
+            }
 
             if dock.active_panel().is_none() {
                 let Some(panel_ix) = dock
@@ -4822,6 +4825,12 @@ impl Workspace {
             if let Some(panel_index) = dock.read(cx).panel_index_for_type::<T>() {
                 let mut focus_center = false;
                 let panel = dock.update(cx, |dock, cx| {
+                    if !dock
+                        .panel::<T>()
+                        .is_some_and(|panel| panel.read(cx).enabled(cx))
+                    {
+                        return None;
+                    }
                     dock.activate_panel(panel_index, window, cx);
 
                     let panel = dock.active_panel().cloned();

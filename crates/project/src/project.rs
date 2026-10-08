@@ -1,5 +1,6 @@
 pub mod agent_registry_store;
 pub mod agent_server_store;
+mod android_project_detection;
 mod android_resources;
 pub mod bookmark_store;
 pub mod buffer_store;

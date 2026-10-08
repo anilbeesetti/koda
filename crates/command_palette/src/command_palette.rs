@@ -107,8 +107,16 @@ impl CommandPalette {
         };
 
         let entity = cx.weak_entity();
+        let is_android_project = workspace.project().read(cx).is_android_project(cx);
         workspace.toggle_modal(window, cx, move |window, cx| {
-            CommandPalette::new(previous_focus_handle, query, entity, window, cx)
+            CommandPalette::new(
+                previous_focus_handle,
+                query,
+                entity,
+                is_android_project,
+                window,
+                cx,
+            )
         });
     }
 
@@ -116,6 +124,7 @@ impl CommandPalette {
         previous_focus_handle: FocusHandle,
         query: &str,
         entity: WeakEntity<Workspace>,
+        is_android_project: bool,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
@@ -125,6 +134,12 @@ impl CommandPalette {
             .available_actions(cx)
             .into_iter()
             .filter_map(|action| {
+                if !is_android_project
+                    && (action.name().starts_with("android::")
+                        || action.name().starts_with("android_logcat::"))
+                {
+                    return None;
+                }
                 if filter.is_some_and(|filter| filter.is_hidden(&*action)) {
                     return None;
                 }

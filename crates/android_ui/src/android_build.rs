@@ -5,7 +5,7 @@ use futures::{
     future::{Either, select},
 };
 use gpui::{
-    App, BackgroundExecutor, ClipboardItem, Context, EventEmitter, FocusHandle, Focusable,
+    App, BackgroundExecutor, ClipboardItem, Context, Entity, EventEmitter, FocusHandle, Focusable,
     FontWeight, ListHorizontalSizingBehavior, ScrollStrategy, Task, UniformListScrollHandle,
     WeakEntity, uniform_list,
 };
@@ -440,6 +440,7 @@ fn elapsed_label(elapsed: Duration) -> String {
 
 pub struct BuildPanel {
     workspace: WeakEntity<Workspace>,
+    project: Entity<project::Project>,
     focus_handle: FocusHandle,
     sessions: [Option<BuildSession>; 2],
     selected: BuildTab,
@@ -449,9 +450,14 @@ pub struct BuildPanel {
 }
 
 impl BuildPanel {
-    pub(crate) fn new(workspace: WeakEntity<Workspace>, cx: &mut Context<Self>) -> Self {
+    pub(crate) fn new(
+        workspace: WeakEntity<Workspace>,
+        project: Entity<project::Project>,
+        cx: &mut Context<Self>,
+    ) -> Self {
         Self {
             workspace,
+            project,
             focus_handle: cx.focus_handle(),
             sessions: [None, None],
             selected: BuildTab::Sync,
@@ -1083,8 +1089,11 @@ impl Panel for BuildPanel {
     fn default_size(&self, _: &Window, _: &App) -> Pixels {
         px(320.)
     }
-    fn icon(&self, _: &Window, _: &App) -> Option<IconName> {
-        Some(IconName::ToolHammer)
+    fn icon(&self, _: &Window, cx: &App) -> Option<IconName> {
+        self.enabled(cx).then_some(IconName::ToolHammer)
+    }
+    fn enabled(&self, cx: &App) -> bool {
+        self.project.read(cx).is_android_project(cx)
     }
     fn icon_tooltip(&self, _: &Window, _: &App) -> Option<&'static str> {
         Some("Build")
@@ -1330,9 +1339,10 @@ mod tests {
             .await;
         let project = project::Project::test(fs, [std::path::Path::new("/project")], cx).await;
         let workspace = cx
-            .add_window_view(|window, cx| Workspace::test_new(project, window, cx))
+            .add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx))
             .0;
-        let (pane, cx) = cx.add_window_view(|_, cx| BuildPanel::new(workspace.downgrade(), cx));
+        let (pane, cx) =
+            cx.add_window_view(|_, cx| BuildPanel::new(workspace.downgrade(), project.clone(), cx));
         cx.run_until_parked();
         assert!(cx.debug_bounds("build-empty").is_some());
         pane.update_in(cx, |pane, window, cx| {
@@ -1606,9 +1616,10 @@ mod tests {
             .await;
         let project = project::Project::test(fs, [std::path::Path::new("/project")], cx).await;
         let workspace = cx
-            .add_window_view(|window, cx| Workspace::test_new(project, window, cx))
+            .add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx))
             .0;
-        let (pane, cx) = cx.add_window_view(|_, cx| BuildPanel::new(workspace.downgrade(), cx));
+        let (pane, cx) =
+            cx.add_window_view(|_, cx| BuildPanel::new(workspace.downgrade(), project.clone(), cx));
         pane.update_in(cx, |pane, window, cx| {
             let (id, output, logs) =
                 pane.begin(BuildTab::Sync, "Sync project".into(), false, window, cx);
