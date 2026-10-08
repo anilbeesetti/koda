@@ -1210,18 +1210,119 @@ impl ProcessOutput {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum OutputPolicy {
+    Preserve,
+    AndroidProjectModel,
+}
+
+#[derive(Clone, Copy)]
+enum LinePresentation {
+    Prefix,
+    Visible,
+    Hidden,
+}
+
+struct OutputPresentation {
+    pending: Vec<u8>,
+    line: LinePresentation,
+    hide_model: bool,
+    carriage_return: bool,
+}
+
+impl OutputPresentation {
+    fn new(hide_model: bool) -> Self {
+        Self {
+            pending: Vec::new(),
+            line: if hide_model {
+                LinePresentation::Prefix
+            } else {
+                LinePresentation::Visible
+            },
+            hide_model,
+            carriage_return: false,
+        }
+    }
+
+    fn push(&mut self, byte: u8) -> Option<String> {
+        if byte == b'\n' && self.carriage_return {
+            self.carriage_return = false;
+            return None;
+        }
+        self.carriage_return = byte == b'\r';
+        if byte == b'\n' || byte == b'\r' {
+            let text = match self.line {
+                LinePresentation::Hidden => None,
+                _ => Some(String::from_utf8_lossy(&self.pending).into_owned()),
+            };
+            self.pending.clear();
+            self.line = if self.hide_model {
+                LinePresentation::Prefix
+            } else {
+                LinePresentation::Visible
+            };
+            return text;
+        }
+        if matches!(self.line, LinePresentation::Hidden) {
+            return None;
+        }
+        self.pending.push(byte);
+        if matches!(self.line, LinePresentation::Prefix) {
+            let prefix = android_tools::project_model::MODEL_OUTPUT_PREFIX.as_bytes();
+            if !prefix.starts_with(&self.pending) {
+                self.line = LinePresentation::Visible;
+            } else if prefix.len() == self.pending.len() {
+                self.pending.clear();
+                self.line = LinePresentation::Hidden;
+                return None;
+            }
+        }
+        if self.pending.len() >= MAX_LINE_BYTES {
+            let end = match std::str::from_utf8(&self.pending) {
+                Err(error) if error.error_len().is_none() => error.valid_up_to(),
+                _ => self.pending.len(),
+            };
+            let text = String::from_utf8_lossy(&self.pending[..end]).into_owned();
+            self.pending.drain(..end);
+            return Some(text);
+        }
+        None
+    }
+
+    fn finish(self) -> Option<String> {
+        if self.pending.is_empty() {
+            None
+        } else {
+            Some(String::from_utf8_lossy(&self.pending).into_owned())
+        }
+    }
+}
+
 async fn read_output(
+    reader: impl AsyncRead + Unpin,
+    stderr: bool,
+    sender: mpsc::Sender<OutputLine>,
+    capture: bool,
+) -> Result<String> {
+    read_output_with_policy(reader, stderr, sender, capture, OutputPolicy::Preserve).await
+}
+
+async fn read_output_with_policy(
     reader: impl AsyncRead + Unpin,
     stderr: bool,
     mut sender: mpsc::Sender<OutputLine>,
     capture: bool,
+    policy: OutputPolicy,
 ) -> Result<String> {
     let mut reader = reader;
     let mut buffer = [0; 8192];
-    let mut pending = Vec::new();
+    let hide_model = policy == OutputPolicy::AndroidProjectModel && !stderr;
+    let mut presentation = OutputPresentation::new(hide_model);
     let mut captured = Vec::new();
-    let mut carriage_return = false;
     loop {
+        if hide_model {
+            ensure!(!sender.is_closed(), "Build output window closed");
+        }
         let count = reader.read(&mut buffer).await?;
         if count == 0 {
             break;
@@ -1234,49 +1335,45 @@ async fn read_output(
             captured.extend_from_slice(&buffer[..count]);
         }
         for &byte in &buffer[..count] {
-            if byte == b'\n' && carriage_return {
-                carriage_return = false;
-                continue;
-            }
-            carriage_return = byte == b'\r';
-            if byte == b'\n' || byte == b'\r' {
+            if let Some(text) = presentation.push(byte) {
                 sender
-                    .send(OutputLine {
-                        text: String::from_utf8_lossy(&pending).into_owned(),
-                        stderr,
-                    })
+                    .send(OutputLine { text, stderr })
                     .await
                     .context("Build output window closed")?;
-                pending.clear();
-            } else {
-                pending.push(byte);
-                if pending.len() >= MAX_LINE_BYTES {
-                    let end = match std::str::from_utf8(&pending) {
-                        Err(error) if error.error_len().is_none() => error.valid_up_to(),
-                        _ => pending.len(),
-                    };
-                    sender
-                        .send(OutputLine {
-                            text: String::from_utf8_lossy(&pending[..end]).into_owned(),
-                            stderr,
-                        })
-                        .await
-                        .context("Build output window closed")?;
-                    pending.drain(..end);
-                }
             }
         }
     }
-    if !pending.is_empty() {
+    if let Some(text) = presentation.finish() {
         sender
-            .send(OutputLine {
-                text: String::from_utf8_lossy(&pending).into_owned(),
-                stderr,
-            })
+            .send(OutputLine { text, stderr })
             .await
             .context("Build output window closed")?;
     }
-    Ok(String::from_utf8_lossy(&captured).into_owned())
+    if hide_model {
+        ensure!(!sender.is_closed(), "Build output window closed");
+        String::from_utf8(captured).context("Android project description is not valid UTF-8")
+    } else {
+        Ok(String::from_utf8_lossy(&captured).into_owned())
+    }
+}
+
+pub(crate) async fn project_model_output(
+    command: Command,
+    executor: &BackgroundExecutor,
+    timeout: Duration,
+    sender: mpsc::Sender<OutputLine>,
+    cancel: oneshot::Receiver<()>,
+) -> Result<ProcessOutput> {
+    command_output_inner_with_policy(
+        command,
+        timeout,
+        sender,
+        cancel,
+        true,
+        executor.timer(timeout),
+        OutputPolicy::AndroidProjectModel,
+    )
+    .await
 }
 
 pub(crate) async fn command_output(
@@ -1302,9 +1399,30 @@ async fn command_output_inner(
     command: Command,
     timeout: Duration,
     sender: mpsc::Sender<OutputLine>,
+    cancel: oneshot::Receiver<()>,
+    capture: bool,
+    deadline: impl std::future::Future<Output = ()> + Send,
+) -> Result<ProcessOutput> {
+    command_output_inner_with_policy(
+        command,
+        timeout,
+        sender,
+        cancel,
+        capture,
+        deadline,
+        OutputPolicy::Preserve,
+    )
+    .await
+}
+
+async fn command_output_inner_with_policy(
+    command: Command,
+    timeout: Duration,
+    sender: mpsc::Sender<OutputLine>,
     mut cancel: oneshot::Receiver<()>,
     capture: bool,
     deadline: impl std::future::Future<Output = ()> + Send,
+    policy: OutputPolicy,
 ) -> Result<ProcessOutput> {
     if cancel.try_recv()?.is_some() {
         return Ok(ProcessOutput::Cancelled);
@@ -1320,7 +1438,7 @@ async fn command_output_inner(
     let stderr = child.stderr.take().context("Missing command stderr")?;
     let run = async {
         let (stdout, _) = futures::try_join!(
-            read_output(stdout, false, sender.clone(), capture),
+            read_output_with_policy(stdout, false, sender.clone(), capture, policy),
             read_output(stderr, true, sender, false)
         )?;
         let status = child.status().await?;
@@ -1361,6 +1479,584 @@ mod tests {
     use super::*;
     use futures::{executor::block_on, future, io::Cursor};
     use util::command::new_std_command as new_command;
+
+    struct ChunkedReader {
+        bytes: Vec<u8>,
+        offset: usize,
+        chunks: VecDeque<usize>,
+        maximum: usize,
+    }
+
+    impl AsyncRead for ChunkedReader {
+        fn poll_read(
+            mut self: std::pin::Pin<&mut Self>,
+            _cx: &mut std::task::Context<'_>,
+            buffer: &mut [u8],
+        ) -> std::task::Poll<std::io::Result<usize>> {
+            let count = self
+                .chunks
+                .pop_front()
+                .unwrap_or(self.maximum)
+                .max(1)
+                .min(buffer.len())
+                .min(self.bytes.len() - self.offset);
+            buffer[..count].copy_from_slice(&self.bytes[self.offset..self.offset + count]);
+            self.offset += count;
+            std::task::Poll::Ready(Ok(count))
+        }
+    }
+
+    async fn present_model_chunks(
+        bytes: &[u8],
+        chunks: VecDeque<usize>,
+        maximum: usize,
+        stderr: bool,
+    ) -> Result<(String, Vec<OutputLine>)> {
+        let (sender, receiver) = mpsc::channel(1);
+        let (captured, lines) = futures::join!(
+            read_output_with_policy(
+                ChunkedReader {
+                    bytes: bytes.to_vec(),
+                    offset: 0,
+                    chunks,
+                    maximum,
+                },
+                stderr,
+                sender,
+                true,
+                OutputPolicy::AndroidProjectModel,
+            ),
+            receiver.collect::<Vec<_>>()
+        );
+        Ok((captured?, lines))
+    }
+
+    #[test]
+    fn model_console_filters_only_exact_leading_stdout_records() -> Result<()> {
+        block_on(async {
+            let input = concat!(
+                "KODA_ANDROID_PROJECT_MODEL={\"machine\":true}\n",
+                " KODA_ANDROID_PROJECT_MODEL=ordinary\n",
+                "warning: KODA_ANDROID_PROJECT_MODEL=ordinary\n",
+                "KODA_ANDROID_PROJECT_MODEL ordinary\n",
+                "koda_android_project_model=ordinary\n",
+                "AGPBI: {\"kind\":\"warning\"}\n",
+                "[databinding] {\"msg\":\"error\"}\n",
+                "{\"ordinary\":\"JSON\"}\n"
+            );
+            let (captured, lines) =
+                present_model_chunks(input.as_bytes(), VecDeque::new(), 1, false).await?;
+            assert_eq!(captured.as_bytes(), input.as_bytes());
+            assert_eq!(
+                lines
+                    .iter()
+                    .map(|line| line.text.as_str())
+                    .collect::<Vec<_>>(),
+                input.lines().skip(1).collect::<Vec<_>>()
+            );
+            assert!(lines.iter().all(|line| !line.stderr));
+            let (captured, lines) =
+                present_model_chunks(input.as_bytes(), VecDeque::new(), 7, true).await?;
+            assert_eq!(captured, input);
+            assert_eq!(
+                lines
+                    .iter()
+                    .map(|line| line.text.as_str())
+                    .collect::<Vec<_>>(),
+                input.lines().collect::<Vec<_>>()
+            );
+            assert!(lines.iter().all(|line| line.stderr));
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_matches_prefix_across_every_read_split() -> Result<()> {
+        block_on(async {
+            let prefix = android_tools::project_model::MODEL_OUTPUT_PREFIX;
+            let input = format!("{prefix}{{\"name\":\"東京€\"}}\nwarning: café 東京€\n");
+            for split in 1..=prefix.len() {
+                let (captured, lines) =
+                    present_model_chunks(input.as_bytes(), VecDeque::from([split]), 1, false)
+                        .await?;
+                assert_eq!(captured, input, "split {split}");
+                assert_eq!(lines.len(), 1, "split {split}");
+                assert_eq!(lines[0].text, "warning: café 東京€", "split {split}");
+            }
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_preserves_line_endings_blanks_and_unterminated_lines() -> Result<()> {
+        block_on(async {
+            for ending in ["\n", "\r", "\r\n"] {
+                for final_record in [false, true] {
+                    let input = format!(
+                        "first{ending}{ending}KODA_ANDROID_PROJECT_MODEL={{}}{ending}last{ending}{}",
+                        if final_record {
+                            "KODA_ANDROID_PROJECT_MODEL={}"
+                        } else {
+                            "tail"
+                        }
+                    );
+                    let (captured, lines) =
+                        present_model_chunks(input.as_bytes(), VecDeque::new(), 1, false).await?;
+                    assert_eq!(captured, input);
+                    let mut expected = vec!["first", "", "last"];
+                    if !final_record {
+                        expected.push("tail");
+                    }
+                    assert_eq!(
+                        lines
+                            .iter()
+                            .map(|line| line.text.as_str())
+                            .collect::<Vec<_>>(),
+                        expected
+                    );
+                }
+            }
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_retains_partial_prefix_at_eof_and_after_mismatch() -> Result<()> {
+        block_on(async {
+            let prefix = android_tools::project_model::MODEL_OUTPUT_PREFIX;
+            for end in 1..prefix.len() {
+                let text = &prefix[..end];
+                let (captured, lines) =
+                    present_model_chunks(text.as_bytes(), VecDeque::new(), 1, false).await?;
+                assert_eq!(captured, text);
+                assert_eq!(lines.len(), 1);
+                assert_eq!(lines[0].text, text);
+                let text = format!("{text}!ordinary\n");
+                let (captured, lines) =
+                    present_model_chunks(text.as_bytes(), VecDeque::new(), 1, false).await?;
+                assert_eq!(captured, text);
+                assert_eq!(lines[0].text, text.trim_end_matches('\n'));
+            }
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_chunks_unicode_without_restarting_prefix_detection() -> Result<()> {
+        block_on(async {
+            let body = format!(
+                "{}€東京KODA_ANDROID_PROJECT_MODEL=ordinary{}",
+                "a".repeat(MAX_LINE_BYTES - 1),
+                "é".repeat(MAX_LINE_BYTES)
+            );
+            let input = format!("{body}\nKODA_ANDROID_PROJECT_MODEL={{}}\n");
+            let (captured, lines) =
+                present_model_chunks(input.as_bytes(), VecDeque::new(), 1, false).await?;
+            assert_eq!(captured, input);
+            assert!(lines.len() >= 3);
+            assert!(lines.iter().all(|line| line.text.len() <= MAX_LINE_BYTES));
+            assert!(lines.iter().all(|line| !line.text.contains('\u{fffd}')));
+            assert_eq!(
+                lines
+                    .iter()
+                    .map(|line| line.text.as_str())
+                    .collect::<String>(),
+                body
+            );
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_hidden_record_does_not_buffer_its_payload() {
+        let mut presentation = OutputPresentation::new(true);
+        let prefix = android_tools::project_model::MODEL_OUTPUT_PREFIX.as_bytes();
+        for &byte in prefix {
+            assert!(presentation.push(byte).is_none());
+            assert!(presentation.pending.len() < prefix.len());
+        }
+        for _ in 0..4 * 1024 * 1024 {
+            assert!(presentation.push(b'x').is_none());
+            assert!(presentation.pending.is_empty());
+        }
+        assert!(presentation.push(b'\r').is_none());
+        assert!(presentation.push(b'\n').is_none());
+        for &byte in b"warning" {
+            assert!(presentation.push(byte).is_none());
+        }
+        assert_eq!(presentation.finish().as_deref(), Some("warning"));
+    }
+
+    #[test]
+    fn model_console_capture_limit_applies_to_hidden_records() -> Result<()> {
+        block_on(async {
+            let prefix = android_tools::project_model::MODEL_OUTPUT_PREFIX;
+            let input = format!("{prefix}{}", "x".repeat(MAX_MODEL_BYTES - prefix.len()));
+            let (captured, lines) =
+                present_model_chunks(input.as_bytes(), VecDeque::new(), 8192, false).await?;
+            assert_eq!(captured, input);
+            assert!(lines.is_empty());
+            let oversized = format!("{input}x");
+            let error = present_model_chunks(oversized.as_bytes(), VecDeque::new(), 8192, false)
+                .await
+                .err()
+                .context("Oversized hidden capture must fail")?;
+            assert!(error.to_string().contains("exceeded 16 MiB"));
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_invalid_utf8_does_not_become_a_successful_raw_model() -> Result<()> {
+        block_on(async {
+            let mut input = b"KODA_ANDROID_PROJECT_MODEL={\"name\":\"".to_vec();
+            input.extend_from_slice(&[0xff, b'"', b'}', b'\n']);
+            let error = present_model_chunks(&input, VecDeque::new(), 1, false)
+                .await
+                .err()
+                .context("Invalid UTF-8 must fail raw capture")?;
+            assert!(error.to_string().contains("not valid UTF-8"));
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_preserves_upstream_diagnostic_fixture_contents() -> Result<()> {
+        block_on(async {
+            for fixture in [
+                include_str!("../tests/fixtures/sync_console/androidGradlePluginErrors.txt"),
+                include_str!("../tests/fixtures/sync_console/xmlParsingError.txt"),
+                include_str!("../tests/fixtures/sync_console/xmlParsingErrorsDuringSync.txt"),
+            ] {
+                let mut input = String::new();
+                for line in fixture.split_inclusive('\n') {
+                    input.push_str("KODA_ANDROID_PROJECT_MODEL={\"supplemental\":true}\n");
+                    input.push_str(line);
+                }
+                let (captured, lines) =
+                    present_model_chunks(input.as_bytes(), VecDeque::new(), 13, false).await?;
+                assert_eq!(captured.as_bytes(), input.as_bytes());
+                assert_eq!(
+                    lines
+                        .iter()
+                        .map(|line| line.text.as_str())
+                        .collect::<Vec<_>>(),
+                    fixture.lines().collect::<Vec<_>>()
+                );
+            }
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_retains_basic_and_v2_decoding_and_validation() -> Result<()> {
+        block_on(async {
+            use android_tools::{
+                generated_artifacts::{ModelConsumerVersion, parse_generated_artifacts},
+                project_model::parse_model,
+                project_tree_facts::FactsUnavailableReason,
+            };
+            let directory = tempfile::tempdir()?;
+            let root = directory.path().canonicalize()?;
+            let mut value = serde_json::json!({
+                "version": 1, "root": root, "diagnostics": [],
+                "modules": [{"path": ":app", "directory": root,
+                    "namespace": "dev.sample", "kind": "application", "variants": []}]
+            });
+            let prefix = android_tools::project_model::MODEL_OUTPUT_PREFIX;
+            let consumer = ModelConsumerVersion {
+                major: 66,
+                minor: 1,
+                description: None,
+            };
+            for v2 in [false, true] {
+                if v2 {
+                    value["generatedArtifacts"] = serde_json::json!({
+                        "schema": 1, "root": root,
+                        "modules": [{"module": ":app", "directory": root,
+                            "versions": {"status": "unavailable", "value": {
+                                "capability": "Versions", "detail": "Supplemental fixture getter unavailable"}},
+                            "buildFolder": {"status": "available", "value": root.join("build")},
+                            "variants": {"status": "available", "value": []}}]
+                    });
+                }
+                let input = format!("Configure project\n{prefix}{value}\nBUILD SUCCESSFUL\n");
+                let (captured, lines) =
+                    present_model_chunks(input.as_bytes(), VecDeque::new(), 3, false).await?;
+                assert_eq!(captured, input);
+                let expected = parse_model(&input, &root)?;
+                let actual = parse_model(&captured, &root)?;
+                assert_eq!(actual, expected);
+                assert_eq!(lines.len(), 2);
+                if v2 {
+                    let snapshot = parse_generated_artifacts(&captured, &actual, 8, &consumer)?;
+                    snapshot.ensure_current(&actual, 8)?;
+                    assert_eq!(snapshot.modules().len(), 1);
+                    assert_eq!(snapshot.modules()[0].module, ":app");
+                    assert!(snapshot.modules()[0].variants.available()?.is_empty());
+                } else {
+                    assert_eq!(
+                        parse_generated_artifacts(&captured, &actual, 8, &consumer)
+                            .expect_err("Legacy sidecar remains unavailable")
+                            .reason,
+                        FactsUnavailableReason::MissingMetadata
+                    );
+                }
+                let duplicate = format!("{captured}{prefix}{value}\n");
+                let (captured, lines) =
+                    present_model_chunks(duplicate.as_bytes(), VecDeque::new(), 5, false).await?;
+                assert_eq!(captured, duplicate);
+                assert_eq!(lines.len(), 2);
+                assert!(parse_model(&captured, &root).is_err());
+                assert_eq!(
+                    parse_generated_artifacts(&captured, &actual, 8, &consumer)
+                        .expect_err("Duplicate model remains malformed")
+                        .reason,
+                    FactsUnavailableReason::Malformed
+                );
+            }
+            let malformed = "KODA_ANDROID_PROJECT_MODEL={malformed}\nwarning: retained\n";
+            let (captured, lines) =
+                present_model_chunks(malformed.as_bytes(), VecDeque::new(), 1, false).await?;
+            assert_eq!(captured, malformed);
+            assert_eq!(lines[0].text, "warning: retained");
+            assert!(parse_model(&captured, &root).is_err());
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_propagates_closed_output_even_for_hidden_only_input() -> Result<()> {
+        block_on(async {
+            let (sender, receiver) = mpsc::channel(1);
+            drop(receiver);
+            let result = read_output_with_policy(
+                Cursor::new(b"KODA_ANDROID_PROJECT_MODEL={}\n"),
+                false,
+                sender,
+                true,
+                OutputPolicy::AndroidProjectModel,
+            )
+            .await;
+            assert!(result.is_err_and(|error| error.to_string().contains("output window closed")));
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_visible_output_obeys_backpressure() -> Result<()> {
+        block_on(async {
+            let input = format!(
+                "KODA_ANDROID_PROJECT_MODEL={{}}\n{}",
+                "warning: live\n".repeat(50)
+            );
+            let (sender, receiver) = mpsc::channel(0);
+            let read = read_output_with_policy(
+                Cursor::new(input.as_bytes()),
+                false,
+                sender,
+                true,
+                OutputPolicy::AndroidProjectModel,
+            );
+            futures::pin_mut!(read);
+            assert!(read.as_mut().now_or_never().is_none());
+            let (captured, lines) = futures::join!(read, receiver.collect::<Vec<_>>());
+            assert_eq!(captured?, input);
+            assert_eq!(lines.len(), 50);
+            assert!(lines.iter().all(|line| line.text == "warning: live"));
+            Ok(())
+        })
+    }
+
+    #[test]
+    fn model_console_sync_and_build_sessions_keep_distinct_visible_output() -> Result<()> {
+        block_on(async {
+            let text = "> Task :app:model\nKODA_ANDROID_PROJECT_MODEL={}\nw: visible warning\n";
+            let (captured, lines) =
+                present_model_chunks(text.as_bytes(), VecDeque::new(), 2, false).await?;
+            assert_eq!(captured, text);
+            let mut sync = BuildSession::new(1, "Sync project".into());
+            for line in lines {
+                sync.append(line);
+            }
+            let (sender, receiver) = mpsc::channel(1);
+            let (captured, lines) = futures::join!(
+                read_output(Cursor::new(text.as_bytes()), false, sender, true),
+                receiver.collect::<Vec<_>>()
+            );
+            assert_eq!(captured?, text);
+            let mut build = BuildSession::new(2, "Build project".into());
+            for line in lines {
+                build.append(line);
+            }
+            assert_eq!(sync.lines.len(), 2);
+            assert_eq!(build.lines.len(), 3);
+            assert_eq!(sync.tasks.len(), 1);
+            assert_eq!(build.tasks.len(), 1);
+            assert_eq!(sync.messages.len(), 1);
+            assert_eq!(build.messages.len(), 1);
+            assert!(
+                sync.lines
+                    .iter()
+                    .all(|line| !line.text.starts_with("KODA_ANDROID_PROJECT_MODEL="))
+            );
+            assert!(
+                build
+                    .lines
+                    .iter()
+                    .any(|line| line.text.as_ref() == "KODA_ANDROID_PROJECT_MODEL={}")
+            );
+            Ok(())
+        })
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn model_console_real_command_preserves_stderr_failure_and_normal_command_output() -> Result<()>
+    {
+        block_on(async {
+            for (policy, succeeds) in [
+                (OutputPolicy::AndroidProjectModel, true),
+                (OutputPolicy::AndroidProjectModel, false),
+                (OutputPolicy::Preserve, true),
+            ] {
+                let mut command = new_command("/bin/sh");
+                command.args(["-c", if succeeds {
+                    "printf 'progress\\nKODA_ANDROID_PROJECT_MODEL={}\\n'; printf 'KODA_ANDROID_PROJECT_MODEL=stderr\\nwarning: retained\\n' >&2"
+                } else {
+                    "printf 'progress\\nKODA_ANDROID_PROJECT_MODEL={}\\n'; printf 'warning: retained\\n' >&2; exit 7"
+                }]);
+                let (sender, receiver) = mpsc::channel(1);
+                let (_cancel, cancelled) = oneshot::channel();
+                let (result, lines) = futures::join!(
+                    command_output_inner_with_policy(
+                        command,
+                        Duration::from_secs(30),
+                        sender,
+                        cancelled,
+                        true,
+                        future::pending(),
+                        policy
+                    ),
+                    receiver.collect::<Vec<_>>()
+                );
+                if succeeds {
+                    assert_eq!(
+                        result?.stdout()?,
+                        "progress\nKODA_ANDROID_PROJECT_MODEL={}\n"
+                    );
+                } else {
+                    assert!(result.is_err());
+                }
+                assert!(
+                    lines
+                        .iter()
+                        .any(|line| line.text == "progress" && !line.stderr)
+                );
+                assert!(
+                    lines
+                        .iter()
+                        .any(|line| line.text == "warning: retained" && line.stderr)
+                );
+                assert_eq!(
+                    lines
+                        .iter()
+                        .any(|line| line.text == "KODA_ANDROID_PROJECT_MODEL={}" && !line.stderr),
+                    policy == OutputPolicy::Preserve
+                );
+                if succeeds {
+                    assert!(lines.iter().any(|line| line.text
+                        == "KODA_ANDROID_PROJECT_MODEL=stderr"
+                        && line.stderr));
+                }
+            }
+            Ok(())
+        })
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn model_console_real_command_can_cancel_after_hidden_transport() -> Result<()> {
+        block_on(async {
+            let mut command = new_command("/bin/sh");
+            command.args([
+                "-c",
+                "printf 'KODA_ANDROID_PROJECT_MODEL={}\\nready\\n'; exec sleep 30",
+            ]);
+            let (sender, mut receiver) = mpsc::channel(1);
+            let (cancel, cancelled) = oneshot::channel();
+            let receive = async {
+                let line = receiver
+                    .next()
+                    .await
+                    .context("Missing live Sync progress")?;
+                assert_eq!(line.text, "ready");
+                cancel
+                    .send(())
+                    .map_err(|_| anyhow::anyhow!("Sync cancellation receiver closed"))?;
+                while receiver.next().await.is_some() {}
+                Ok::<_, anyhow::Error>(())
+            };
+            let (result, received) = futures::join!(
+                command_output_inner_with_policy(
+                    command,
+                    Duration::from_secs(30),
+                    sender,
+                    cancelled,
+                    true,
+                    future::pending(),
+                    OutputPolicy::AndroidProjectModel
+                ),
+                receive
+            );
+            received?;
+            assert!(matches!(result?, ProcessOutput::Cancelled));
+            Ok(())
+        })
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn model_console_timeout_and_preexisting_cancel_prevent_success() -> Result<()> {
+        block_on(async {
+            let mut command = new_command("/bin/sh");
+            command.args(["-c", "exec sleep 30"]);
+            let (sender, receiver) = mpsc::channel(1);
+            let (_cancel, cancelled) = oneshot::channel();
+            let (result, _) = futures::join!(
+                command_output_inner_with_policy(
+                    command,
+                    Duration::from_secs(30),
+                    sender,
+                    cancelled,
+                    true,
+                    future::ready(()),
+                    OutputPolicy::AndroidProjectModel
+                ),
+                receiver.collect::<Vec<_>>()
+            );
+            assert!(result.is_err_and(|error| error.to_string().contains("timed out")));
+            let (sender, _receiver) = mpsc::channel(1);
+            let (cancel, cancelled) = oneshot::channel();
+            cancel
+                .send(())
+                .map_err(|_| anyhow::anyhow!("Missing Sync cancellation receiver"))?;
+            assert!(matches!(
+                command_output_inner_with_policy(
+                    new_command("/nonexistent/program"),
+                    Duration::from_secs(30),
+                    sender,
+                    cancelled,
+                    true,
+                    future::pending(),
+                    OutputPolicy::AndroidProjectModel,
+                )
+                .await?,
+                ProcessOutput::Cancelled
+            ));
+            Ok(())
+        })
+    }
 
     #[gpui::test]
     async fn pane_renders_empty_and_split_output_and_keeps_both_sessions(

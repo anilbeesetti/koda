@@ -1,0 +1,41 @@
+{
+  "license": "Apache-2.0",
+  "reference_revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+  "fixture_bytes_unchanged": true,
+  "original_test_credit": 0,
+  "fixtures": [
+    {
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_path": "project-system-gradle/testData/buildOutput/androidGradlePluginErrors/gradleOutput.txt",
+      "path": "crates/android_ui/tests/fixtures/sync_console/androidGradlePluginErrors.txt",
+      "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/testData/buildOutput/androidGradlePluginErrors/gradleOutput.txt",
+      "sha256": "d565cbf58e29e18dff748990d7a00c94fe93a8ad749ca5a19f9253295916f939",
+      "bytes": 3367,
+      "license": "Apache-2.0; complete original bytes; fixture attribution through manifest",
+      "role": "external_fixture",
+      "original_retained_path": "/workspace/android-studio-artifacts/sync-console-reference-preflight/references/idea/project-system-gradle/testData/buildOutput/androidGradlePluginErrors/gradleOutput.txt"
+    },
+    {
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_path": "project-system-gradle/testData/buildOutput/xmlParsingError/gradleOutput.txt",
+      "path": "crates/android_ui/tests/fixtures/sync_console/xmlParsingError.txt",
+      "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/testData/buildOutput/xmlParsingError/gradleOutput.txt",
+      "sha256": "e6701fbc010570fff11c6403176ef4bfc05e3700341b4b10795a1e4dd3e25a8e",
+      "bytes": 853,
+      "license": "Apache-2.0; complete original bytes; fixture attribution through manifest",
+      "role": "external_fixture",
+      "original_retained_path": "/workspace/android-studio-artifacts/sync-console-reference-preflight/references/idea/project-system-gradle/testData/buildOutput/xmlParsingError/gradleOutput.txt"
+    },
+    {
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "source_path": "project-system-gradle/testData/buildOutput/xmlParsingErrorsDuringSync/gradleOutput.txt",
+      "path": "crates/android_ui/tests/fixtures/sync_console/xmlParsingErrorsDuringSync.txt",
+      "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle/testData/buildOutput/xmlParsingErrorsDuringSync/gradleOutput.txt",
+      "sha256": "b086f49631ff37c5ad72e8ab969c4dd2a9c6bf4275346e6eb236d7b39ce6e3b8",
+      "bytes": 71391,
+      "license": "Apache-2.0; complete original bytes; fixture attribution through manifest",
+      "role": "external_fixture",
+      "original_retained_path": "/workspace/android-studio-artifacts/sync-console-reference-preflight/references/idea/project-system-gradle/testData/buildOutput/xmlParsingErrorsDuringSync/gradleOutput.txt"
+    }
+  ]
+}
