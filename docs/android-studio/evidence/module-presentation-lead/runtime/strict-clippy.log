@@ -1,0 +1,6 @@
++ cargo clippy --locked -p android_tools --release --all-targets --all-features -- --deny warnings
+    Checking android_tools v0.1.0 (/workspace/android-studio-module-presentation/crates/android_tools)
+    Finished `release` profile [optimized + debuginfo] target(s) in 4.41s
++ [[ -z '' ]]
++ which cargo-shear
++ exit 0

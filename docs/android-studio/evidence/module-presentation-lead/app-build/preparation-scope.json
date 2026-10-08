@@ -1,0 +1,8 @@
+{
+  "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+  "original_helper_sha256": "acbf2e889b39f01f4558e2c70e5e005560707b0d2cba3a5ccc09650e901a2dd7",
+  "helper_sha256": "4c1afa55f6bce97b187de02f0049e91004487d3a798eb198f1aa152f146909a9",
+  "only_helper_changes": "Receipt/probe directory and output label strings; EXPECTED artifact, real/usr/bin/cc, argument forwarding, refusal/cleanup and error semantics remain unchanged.",
+  "helper_reverse_substitutions_byte_identical": true,
+  "fixed_seven_source_exclusions_unchanged": true
+}

@@ -1,0 +1,21 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "tested_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "exit_code": 0,
+  "elapsed_seconds": 201.78104909200192,
+  "log_sha256": "d574d6f8c5e583edc99da4ebc0725b608502af0b6fb902975ae5a20e65886a4f",
+  "executable": "/tmp/android-studio-link-output/koda-v2-artifact-273741",
+  "executable_sha256": "577814b594205348eab4869aef4f3d0dc0377bbd6fe4acc9bb40ca7788b89c3e",
+  "executable_bytes": 1359451320,
+  "cargo_published_executable": "/workspace/.cache/zed/target/debug/koda",
+  "original_linker_output": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+  "only_final_output_argument_changed": true
+}

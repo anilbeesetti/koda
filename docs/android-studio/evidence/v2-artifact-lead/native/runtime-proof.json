@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "scope": "Read-only recovery of already-completed actual native runtime. Exact keyboard input routes remain UNVERIFIED.",
+  "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "git_tree": "6b84b2d512405eba30658cc9d92577570f4e4796",
+  "audit_utc": "2026-10-07T22:47:10.313614+00:00",
+  "new_native_or_sdk_or_cargo_processes_started": false,
+  "original_raw_artifact_files": 651,
+  "original_raw_bytes_unchanged": true,
+  "fixed_metadata_exclusions": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "whole_source_files_verified": 4712,
+  "source_snapshot_path": "/workspace/android-studio-artifacts/v2-artifact-integration/app-build/whole-product-source-snapshot.json",
+  "source_snapshot_sha256": "928fdeec085af1a5798549cc64d928c168cffd7f2a2196fbf25dafe28a8dbea5",
+  "original_and_private_fixture_files_verified": 12,
+  "normal_full_app_build": {
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "-p",
+      "zed",
+      "--bin",
+      "koda"
+    ],
+    "tested_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+    "exit_code": 0,
+    "elapsed_seconds": 201.78104909200192,
+    "log_sha256": "d574d6f8c5e583edc99da4ebc0725b608502af0b6fb902975ae5a20e65886a4f",
+    "executable": "/tmp/android-studio-link-output/koda-v2-artifact-273741",
+    "executable_sha256": "577814b594205348eab4869aef4f3d0dc0377bbd6fe4acc9bb40ca7788b89c3e",
+    "executable_bytes": 1359451320,
+    "cargo_published_executable": "/workspace/.cache/zed/target/debug/koda",
+    "original_linker_output": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+    "only_final_output_argument_changed": true
+  },
+  "both_process_identity_records_match_executable": true,
+  "captured_official_bridge_equals_current_source": true,
+  "full_new_models": 2,
+  "legacy_records_compared": 7,
+  "legacy_comparison_excludes_only_additive_generatedArtifacts": true,
+  "only_legacy_normalization": "Exact known private root prefix in JSON strings; no other field/value/list order changes.",
+  "full_new_models_retained_with_generatedArtifacts": true,
+  "both_current_Rust_decoder_roundtrip_modules_equal_every_raw_value_and_list_order": true,
+  "decoder_binary_and_normal_231_test_library_byte_bindings_verified": true,
+  "decoder_assertions_run_here": false,
+  "source_generated_artifacts_sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+  "source_bridge_sha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+  "captures_visually_inspected": [
+    "captures/build-sidebar-restored.png",
+    "captures/editor-second-tab-settled.png",
+    "captures/editor-second-tab.png",
+    "captures/editor-tab-final-restored.png",
+    "captures/editor-tab-restored.png",
+    "captures/hide-return.png",
+    "captures/initial-window.png",
+    "captures/narrow230-output-focus.png",
+    "captures/narrow230-output-selected.png",
+    "captures/narrow230-reverse-sync-focus.png",
+    "captures/narrow230-sync-restored.png",
+    "captures/narrow230-sync.png",
+    "captures/repeated-sync-loading.png",
+    "captures/repeated-sync-success.png",
+    "captures/settled-editor-caret.png",
+    "captures/sync-after-trust.png",
+    "captures/sync-console-restored.png",
+    "captures/sync-success.png",
+    "captures/trust-prompt.png",
+    "captures/wide-hide-focus.png",
+    "captures/wide-output-focus.png",
+    "captures/wide-output-selected.png",
+    "captures/wide-sync-restored-after-narrow.png"
+  ],
+  "capture_png_files": 23,
+  "painted_full_app_states": 22,
+  "prepaint_capture_retained": "captures/initial-window.png",
+  "specific_input_events": {
+    "Tab": "UNVERIFIED",
+    "Space": "UNVERIFIED",
+    "Shift+Tab": "UNVERIFIED",
+    "Return": "UNVERIFIED"
+  },
+  "missing_evidence": "No executed xdotool command/event transcript survives in this native artifact set. Screenshot names establish visible states, not exact keystrokes.",
+  "fresh_profile_settings_verified": {
+    "telemetry": {
+      "diagnostics": false,
+      "metrics": false
+    },
+    "auto_update": false,
+    "enable_language_server": false,
+    "restore_on_startup": "none",
+    "theme": "One Dark"
+  },
+  "fixture_only_persistent_trust_verified": {
+    "columns": [
+      "trust_id",
+      "absolute_path",
+      "user_name",
+      "host_name"
+    ],
+    "rows": [
+      [
+        1,
+        "/workspace/android-studio-artifacts/v2-native-9b9cbbc/generation-project",
+        null,
+        null
+      ]
+    ],
+    "method": "Read-only SQLite query of a disposable byte copy; originals and WAL remain unchanged."
+  },
+  "idle_samples": [
+    {
+      "path": "idle-settled-editor-caret.json",
+      "elapsed_seconds": 10.009221319000062,
+      "cpu_ticks_delta": 346,
+      "one_core_cpu_percent": 34.568123630476975,
+      "rss_after_kib": 668904
+    },
+    {
+      "path": "idle-settled-toolbar-focus.json",
+      "elapsed_seconds": 10.00740651000524,
+      "cpu_ticks_delta": 16,
+      "one_core_cpu_percent": 1.5988158354518192,
+      "rss_after_kib": 668980
+    }
+  ],
+  "performance_limits": "Software Vulkan/Xvfb; no hardware, startup, large-project or fair predecessor comparison. Preserve active-caret 34.568% and toolbar 1.5988% samples.",
+  "current_owned_processes_and_display_absent": true,
+  "unowned_gradle167092_currently_present": true,
+  "launcher_exit_code_recorded": 143,
+  "pty_app_diagnostic_transcript_preserved": false,
+  "reported_preexisting_Java_Gradle_indentation_diagnostic": "Reported by original worker/Root; original PTY diagnostic bytes are not in this artifact set and are not independently attested here.",
+  "logical_android_project_tree_wiring_complete": false,
+  "original_generated_tree_reference_test_credit": 0,
+  "Rust_language_server_completion_claim": false,
+  "full_IDE_or_phase_complete": false
+}

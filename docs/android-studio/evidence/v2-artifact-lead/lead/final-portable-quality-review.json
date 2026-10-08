@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "review_area": "final_portable_metadata_and_source_equivalence",
+  "verdict": "PASS",
+  "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "git_tree": "6b84b2d512405eba30658cc9d92577570f4e4796",
+  "checkout": "/workspace/android-studio-source-providers",
+  "remaining_blocking_findings": [],
+  "resolved_findings": [
+    {
+      "finding": "Port scope incorrectly denied canonical promotion while promoting two ordering cases.",
+      "resolution": "Scope now describes the two exact original ordering promotions and excludes generated-tree/LSP/IDE completion credit.",
+      "status": "fixed"
+    },
+    {
+      "finding": "Portable keyboard journal and PTY covered the failed first replay instead of successful attempt2.",
+      "resolution": "First-attempt history preserved; exact successful journal, PTY and final guard added under keyboard/attempt2 and independently verified.",
+      "status": "fixed"
+    }
+  ],
+  "portable_snapshot": {
+    "payload_files": 107,
+    "payload_bytes": 4390661,
+    "raw_byte_identical_files": 71,
+    "exact_decoded_wrappers": 33,
+    "new_local_receipts": 3,
+    "all_paths_bytes_and_hashes_match": true,
+    "manifest_sha256": "95201d0f9ee0e796c6ff82d5fe35716ebbeeb2447adbd990b3534bb2fbe7024f",
+    "lead_report_sha256": "1dcc2aa7b91fb4b3df3fdd78d805e1edd5391e0fe07605e865eee9e703844282",
+    "port_manifest_sha256": "5c62645e1fed36794b3b2cdf9a02fbd03dff130fc821f0ea3147e7ec50c79fa0"
+  },
+  "source_guards": {
+    "whole_source_files_independently_hashed": 4712,
+    "nested_port_records_retained": 103,
+    "index_worktree_untracked_and_source_hashes_match": true,
+    "exact_seven_exclusions_unchanged": true
+  },
+  "selected_parity": {
+    "selected": 95,
+    "ported": 19,
+    "adapted": 16,
+    "unported": 60,
+    "not_applicable": 0,
+    "passing": 35,
+    "failing": 0,
+    "all_35_exact_current_logs_and_source_bindings_checked": true,
+    "parallel_sync_original_method_remains_unported": true,
+    "global_census_complete": false
+  },
+  "test_preservation": {
+    "pre_fix_source_and_test_equal_immutable_b23": true,
+    "current_test_reconstructs_original_with_only_two_added_tests_and_documented_DEV_tuple_reversed": true,
+    "wrong_supplemental_DEV_expectation_flagged": true,
+    "upstream_tests_deleted_skipped_or_weakened": false
+  },
+  "runtime_receipts": {
+    "five_final_review_reports_hashes_verdicts_and_source_match": true,
+    "tooling_passed": 231,
+    "normal_non_test_library_actual_current_compiler_artifact_verified": true,
+    "normal_test_artifacts": 7,
+    "all_test_artifacts_not_fresh": true,
+    "frozen_SDK_decoder_sha256": "2b2a4ac53ddc4ca22f08142711254ca37eb00cb83b3eb5960d6eda501a74e271",
+    "shared_generated_cache_is_not_immutable_source_evidence": true,
+    "retired_generated_ELF_not_required_to_persist": true,
+    "successful_keyboard_attempt": "attempt2",
+    "successful_command_pairs_independently_checked": 48,
+    "input_journal_sha256": "32c7e4ce64c1d63d665fa8d572d52388a215c2a4250b930833f8b1001c26bed6",
+    "raw_pty_sha256": "e24991d28eb5e7283c8c875f7cfee0d19466ff27aa3aaec6491178747b7255c4",
+    "first_attempt_failure_and_original_missing_keyboard_transcript_limit_preserved": true
+  },
+  "CI": {
+    "run_id": 37695121709,
+    "all_three_jobs": "success",
+    "workspace_passed": 10480,
+    "workspace_failed": 0,
+    "pre_existing_skipped": 23,
+    "execution_seconds": 2300.758,
+    "raw_log_bytes": 425715,
+    "raw_log_sha256": "4b636089a7a2cfbf8888f1d0a6390cd48f8903e583d2eeb42a99534a3ed97d39",
+    "synthetic_merge": "d34988bd9c8535f4499a99164c2130d47c2c66b4",
+    "synthetic_tree_equals_source_tree": true
+  },
+  "documentation": {
+    "changed_report_format_log_checked": true,
+    "final_frozen_validator_log_checked": true,
+    "broad_mdbook_formatting_success_claimed": false
+  },
+  "review_tooling_history": "Initial normal-library selector included its unit-test artifact; corrected read-only selector uses profile.test false for ordinary library and true plus executable for test artifacts. Normal test run/raw output unchanged.",
+  "protected_merge_performed_by_reviewer": false,
+  "phase_1_complete": false,
+  "full_IDE_complete": false,
+  "reviewer_execution": {
+    "Cargo_rustc_Gradle_or_native_started": false,
+    "product_tests_fixtures_rawlogs_portable_payload_or_git_changed": false,
+    "writes": [
+      "/workspace/android-studio-artifacts/v2-artifact-integration/final-portable-quality-review.md",
+      "/workspace/android-studio-artifacts/v2-artifact-integration/final-portable-quality-review.json"
+    ]
+  }
+}

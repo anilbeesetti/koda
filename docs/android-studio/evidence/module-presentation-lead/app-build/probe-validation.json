@@ -1,0 +1,9 @@
+{
+  "real_rustc_linker_probe": "PASS",
+  "receipt": "/workspace/android-studio-artifacts/module-presentation-integration/app-build/probe-284215.json",
+  "changed_argument_indexes": [
+    42
+  ],
+  "only_final_output_argument_changed": true,
+  "normal_probe_stdout_sha256": "09397da5e4ca42fcbaf16c84742601a70d34414c8b5322b8cb52bbfd7d1bbc2a"
+}

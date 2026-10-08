@@ -1,0 +1,162 @@
+from pathlib import Path
+import argparse
+import hashlib
+import json
+import os
+import re
+import shlex
+import subprocess
+import time
+
+ROOT = Path('/workspace/android-studio-module-presentation')
+ARTIFACTS = Path('/workspace/android-studio-artifacts/module-presentation-integration/runtime')
+SOURCE = '905012f11885a86c9e8e18710ead07897d941d40'
+PATHS = ['.', ':(glob,exclude)docs/android-studio/*.md',
+         ':(exclude)docs/android-studio/reference-manifest.json',
+         ':(exclude)docs/android-studio/test-parity.json',
+         ':(glob,exclude)docs/android-studio/ports/*.json',
+         ':(glob,exclude)docs/android-studio/evidence/**/*.log',
+         ':(glob,exclude)docs/android-studio/evidence/**/*.json']
+
+def sha(path):
+    with path.open('rb') as stream:
+        return hashlib.file_digest(stream, 'sha256').hexdigest()
+
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=ROOT)
+
+def snapshot():
+    assert git('rev-parse', 'HEAD').decode().strip() == SOURCE
+    for cached in [False, True]:
+        command = ['git', 'diff', '--quiet'] + (['--cached'] if cached else [])
+        subprocess.run(command + [SOURCE, '--', *PATHS], cwd=ROOT, check=True)
+    assert not git('ls-files', '--others', '--exclude-standard', '--', *PATHS)
+    paths = [p.decode() for p in git('ls-files', '-z', '--', *PATHS).split(b'\0') if p]
+    bindings = {p: sha(ROOT / p) for p in paths if (ROOT / p).is_file()}
+    assert len(bindings) == 4725, len(bindings)
+    expected = json.loads((ARTIFACTS / 'whole-source-static-guard.json').read_text())
+    assert bindings == expected['files']
+    return {'source_commit': SOURCE, 'tree': git('rev-parse', SOURCE + '^{tree}').decode().strip(),
+            'fixed_source_pathspec': PATHS, 'files': bindings,
+            'index_hex': git('ls-files', '--stage', '-z').hex(),
+            'status_hex': git('status', '--porcelain=v1', '-z').hex()}
+
+def touch_roots(label):
+    paths = [ROOT / 'crates/android_tools/src/android_tools.rs']
+    paths += sorted((ROOT / 'crates/android_tools/tests').glob('*.rs'))
+    records = []
+    for path in paths:
+        digest = sha(path)
+        before = path.stat().st_mtime_ns
+        os.utime(path, None)
+        assert sha(path) == digest
+        records.append({'path': str(path.relative_to(ROOT)), 'sha256': digest,
+                        'before_mtime_ns': before, 'after_mtime_ns': path.stat().st_mtime_ns})
+    (ARTIFACTS / (label + '-source-freshness.json')).write_text(json.dumps({
+        'source_commit': SOURCE, 'roots': records, 'source_bytes_unchanged': True,
+        'reason': 'Prevent falsely fresh compiler results from shared relative dependency paths.'
+    }, indent=2) + '\n')
+
+def compiler_artifacts(raw):
+    records = []
+    for line in raw.splitlines():
+        if not line.startswith('{'):
+            continue
+        item = json.loads(line)
+        if item.get('reason') != 'compiler-artifact':
+            continue
+        if not item.get('package_id', '').split('#')[0].endswith('android_tools'):
+            continue
+        assert item['target']['src_path'].startswith(str(ROOT) + '/')
+        record = {key: item.get(key) for key in ['fresh', 'executable', 'filenames', 'target', 'profile']}
+        record['file_bindings'] = []
+        for filename in item['filenames']:
+            path = Path(filename)
+            if path.is_file():
+                record['file_bindings'].append({'path': filename, 'bytes': path.stat().st_size,
+                                                'sha256': sha(path)})
+        records.append(record)
+    return records
+
+parser = argparse.ArgumentParser()
+parser.add_argument('stage', choices=['all-features-tests', 'library-build', 'strict-clippy', 'format-check'])
+parser.add_argument('--lease-granted', required=True,
+                    help='Root message identifier or explicit lease authorization record')
+args = parser.parse_args()
+commands = {
+    'all-features-tests': ['cargo', 'test', '--locked', '-p', 'android_tools', '--all-features',
+                          '--message-format=json'],
+    'library-build': ['cargo', 'build', '--locked', '-p', 'android_tools', '--all-features',
+                      '--message-format=json'],
+    'strict-clippy': ['./script/clippy', '--locked', '-p', 'android_tools'],
+    'format-check': ['cargo', 'fmt', '--all', '--', '--check'],
+    'exact-original': ['cargo', 'test', '--locked', '--manifest-path', str(ROOT / 'Cargo.toml'),
+                       '-p', 'android_tools', '--test', 'parallel_sync',
+                       'check_supports_parallel_sync', '--message-format=json', '--',
+                       '--exact', '--show-output'],
+}
+before = snapshot()
+before_path = ARTIFACTS / (args.stage + '-source-before.json')
+assert not before_path.exists(), 'Never overwrite an earlier attempt.'
+before_path.write_text(json.dumps(before, indent=2) + '\n')
+if args.stage in ['all-features-tests', 'library-build', 'exact-original']:
+    touch_roots(args.stage)
+    assert snapshot() == before
+command = commands[args.stage]
+started = time.monotonic()
+log = ARTIFACTS / (args.stage + '.log')
+with log.open('xb') as output:
+    run = subprocess.run(['bash', '-lc', 'source /workspace/cloud-environment/env.sh\n' + shlex.join(command)],
+                         cwd=ROOT, stdout=output, stderr=subprocess.STDOUT)
+after = snapshot()
+receipt = {'source_commit': SOURCE, 'stage': args.stage, 'lease_granted': args.lease_granted,
+           'command': command, 'exit_code': run.returncode,
+           'elapsed_seconds': time.monotonic() - started, 'log': str(log), 'log_sha256': sha(log),
+           'whole_source_bindings': len(after['files']), 'source_index_status_unchanged': after == before}
+(ARTIFACTS / (args.stage + '-exit.json')).write_text(json.dumps(receipt, indent=2) + '\n')
+(ARTIFACTS / (args.stage + '-source-after.json')).write_text(json.dumps(after, indent=2) + '\n')
+assert after == before, 'Source, index or Git status changed during execution.'
+assert run.returncode == 0, receipt
+if args.stage in ['all-features-tests', 'exact-original']:
+    raw = log.read_text()
+    groups = [tuple(map(int, item)) for item in re.findall(
+        r'^test result: ok\. (\d+) passed; (\d+) failed; (\d+) ignored; (\d+) measured; (\d+) filtered out;',
+        raw, re.M)]
+    artifacts = compiler_artifacts(raw)
+    if args.stage == 'all-features-tests':
+        assert len(groups) == 8 and sum(item[0] for item in groups) == 251, groups
+        assert all(item[1:] == (0, 0, 0, 0) for item in groups), groups
+        test_artifacts = [item for item in artifacts if item['executable'] and item['profile']['test']]
+        assert len(test_artifacts) == 8, test_artifacts
+        assert all(not item['fresh'] for item in test_artifacts), test_artifacts
+        selected = next(item for item in test_artifacts if item['target']['name'] == 'module_presentation')
+        original = Path(selected['executable'])
+        frozen = Path('/tmp/module-presentation-integration-verified-binaries/module-presentation-tests20')
+        frozen.parent.mkdir(exist_ok=True)
+        assert not frozen.exists()
+        try:
+            os.link(original, frozen)
+        except OSError:
+            import shutil
+            shutil.copy2(original, frozen)
+        assert sha(frozen) == sha(original)
+        receipt['frozen_policy_executable'] = {'path': str(frozen), 'bytes': frozen.stat().st_size,
+                                                'sha256': sha(frozen), 'source_artifact': selected}
+        receipt.update(passed=251, failed=0, ignored=0, filtered=0)
+    else:
+        assert groups == [(1, 0, 0, 0, 9)], groups
+        selected = [item for item in artifacts if item['executable'] and item['target']['name'] == 'module_presentation']
+        assert len(selected) == 1 and not selected[0]['fresh'], selected
+        receipt.update(passed=1, failed=0, ignored=0, filtered=9,
+                       original_method='checkSupportsParallelSync', original_assertions=9,
+                       canonical_parity_credit=0, lead_exact_capture='pending')
+    receipt.update(groups=groups, compiler_artifacts=artifacts)
+elif args.stage == 'library-build':
+    artifacts = compiler_artifacts(log.read_text())
+    assert any(item['target']['src_path'] == str(ROOT / 'crates/android_tools/src/android_tools.rs')
+               and item['target']['kind'] == ['lib'] and not item['fresh'] for item in artifacts), artifacts
+    receipt['compiler_artifacts'] = artifacts
+(ARTIFACTS / (args.stage + '-verified.json')).write_text(json.dumps(receipt, indent=2) + '\n')
+print(json.dumps(receipt if args.stage in ['strict-clippy', 'format-check'] else {
+    key: value for key, value in receipt.items() if key not in ['compiler_artifacts', 'frozen_policy_executable']
+}, indent=2), flush=True)

@@ -1,0 +1,14 @@
+{
+  "verdict": "PASS",
+  "current_source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "helper_source_sha256": "acbf2e889b39f01f4558e2c70e5e005560707b0d2cba3a5ccc09650e901a2dd7",
+  "helper_executable_sha256": "aa03d3383d37a2ec31268fb42c921fef293f593a2ab3d33c1ff810ea82a1c7e3",
+  "probe_source_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+  "probe_ELF_sha256": "46c04fb39b8f447daed823a71a680b651c494f9f7d1623f8413225e2b4ca0ba8",
+  "one_output_argument_only": true,
+  "all_other_real_cc_arguments_unchanged": true,
+  "runtime_output_bytes_equal_previously_verified_original": true,
+  "real_compiler_driver": "/usr/bin/cc",
+  "receipt": "probe-269393.json",
+  "canonical_environment": "/workspace/cloud-environment/env.sh"
+}
