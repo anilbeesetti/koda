@@ -14786,13 +14786,55 @@ mod tests {
             DockPosition::Right,
             DockPosition::Bottom,
         ] {
-            let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
+            let fs = FakeFs::new(cx.executor());
+            fs.insert_tree(
+                path!("/rail-project"),
+                json!({ "settings.gradle": "rootProject.name = 'rail-fixture'\n" }),
+            )
+            .await;
+            let project = Project::test(fs, [path!("/rail-project").as_ref()], cx).await;
+            project.read_with(cx, |project, cx| {
+                assert!(
+                    project.visible_worktrees(cx).next().is_some(),
+                    "rail fixture must have a visible project worktree"
+                );
+            });
             let (multi_workspace, cx) =
                 cx.add_window_view(|window, cx| MultiWorkspace::test_new(project, window, cx));
             let workspace = multi_workspace.read_with(cx, |mw, _| mw.workspace().clone());
+            let rail_button_focus_handles = Rc::new(RefCell::new(Vec::<FocusHandle>::new()));
+            // This fixture has one rail button. Observe its actual keyed state,
+            // retaining both selected-state identities if either is reused.
+            let _observe_rail_button_focus_handles = cx.update({
+                let rail_button_focus_handles = rail_button_focus_handles.clone();
+                move |window, cx| {
+                    let test_window = window.window_handle();
+                    cx.observe_new(move |handles: &mut (FocusHandle, FocusHandle), window, _| {
+                        if window.is_some_and(|window| window.window_handle() == test_window) {
+                            rail_button_focus_handles
+                                .borrow_mut()
+                                .push(handles.0.clone());
+                        }
+                    })
+                }
+            });
             let panel = workspace.update_in(cx, |workspace, window, cx| {
                 let panel = cx.new(|cx| RailTestPanel::<0>::new(position, cx));
                 workspace.add_panel(panel.clone(), window, cx);
+                for dock_position in [
+                    DockPosition::Left,
+                    DockPosition::Right,
+                    DockPosition::Bottom,
+                ] {
+                    assert_eq!(
+                        workspace
+                            .dock_at_position(dock_position)
+                            .read(cx)
+                            .panels_len(),
+                        usize::from(dock_position == position),
+                        "{position:?} fixture must contain exactly its single rail panel"
+                    );
+                }
                 workspace.register_action::<ToggleFirstRailPanel>(|workspace, _, window, cx| {
                     workspace.toggle_panel_focus::<RailTestPanel<0>>(window, cx);
                 });
@@ -14868,8 +14910,30 @@ mod tests {
                 });
             }
             for key in ["space", "enter"] {
-                workspace.update_in(cx, |_, window, cx| window.focus_next(cx));
+                workspace.update_in(cx, |workspace, window, cx| {
+                    assert!(
+                        workspace.active_pane().focus_handle(cx).is_focused(window),
+                        "{position:?} navigation before {key} must start at the center pane"
+                    );
+                    // Left and bottom buttons precede the pane in the render
+                    // order; right buttons follow it. The status-bar tab group
+                    // comes later, so a single global next is not always a rail.
+                    match position {
+                        DockPosition::Left | DockPosition::Bottom => window.focus_prev(cx),
+                        DockPosition::Right => window.focus_next(cx),
+                    }
+                });
                 cx.run_until_parked();
+                workspace.update_in(cx, |_, window, cx| {
+                    let rail_button_focus_handles = rail_button_focus_handles.borrow();
+                    assert!(
+                        rail_button_focus_handles
+                            .iter()
+                            .any(|handle| handle.is_focused(window)),
+                        "{position:?} focus before {key}: expected an observed rail {rail_button_focus_handles:?}, actual {:?}",
+                        window.focused(cx)
+                    );
+                });
                 cx.simulate_keystrokes(key);
                 cx.simulate_event(gpui::KeyUpEvent {
                     keystroke: gpui::Keystroke::parse(key).expect("activation key"),
