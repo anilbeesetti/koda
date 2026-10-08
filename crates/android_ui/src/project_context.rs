@@ -129,16 +129,7 @@ struct ImportOwner {
 type Cancellation = Shared<BoxFuture<'static, ()>>;
 
 fn observer_directories(snapshot: &ContextSnapshot) -> Result<Vec<PathBuf>> {
-    let mut directories = snapshot.build_logic_directories().to_vec();
-    for layout in snapshot.build_layouts().iter().filter(|layout| snapshot.build_logic_directories().iter().any(|directory| layout.directory.starts_with(directory))) {
-        directories.extend(layout.source_directories.iter().filter(|directory| snapshot.is_input(directory)).cloned());
-    }
-    directories.sort();
-    directories.dedup();
-    let candidates = directories.iter().cloned().collect::<std::collections::BTreeSet<_>>();
-    directories.retain(|directory| !directory.ancestors().skip(1).any(|parent| candidates.contains(parent)));
-    ensure!(directories.len() <= 4096, "Too many evaluated build-logic input observers");
-    Ok(directories)
+    snapshot.observer_directories()
 }
 
 async fn evaluate(root: PathBuf, executor: BackgroundExecutor, output: mpsc::Sender<android_build::OutputLine>, cancelled: Cancellation) -> Result<CapturedProcessOutput> {

@@ -136,10 +136,14 @@ async fn real_linux_new_evaluated_build_logic_inside_old_output_installs_deep_co
     raw["buildLayouts"].as_array_mut().context("Build layouts")?.push(json!({"directory":&child,
         "buildDirectory":child.join("generated"),"sourceDirectories":[child.join("src")]}));
     let snapshot = decode_context_record(&serde_json::to_vec(&raw)?, &root)?;
-    assert!(project.update(cx, |project, cx| project.observe_android_context_inputs(handle, discovery.clone(), vec![child.clone()], Some(snapshot.clone()), cx)).await?);
+    let directories = snapshot.observer_directories()?;
+    assert!(directories.contains(&logic));
+    assert!(directories.contains(&child));
+    assert!(directories.contains(&child.join("src")));
+    assert!(project.update(cx, |project, cx| project.observe_android_context_inputs(handle, discovery.clone(), directories.clone(), Some(snapshot.clone()), cx)).await?);
     let source_directory = child_source.parent().context("Child source parent")?;
     assert!(recording.snapshot().watchers.iter().flat_map(|watcher| &watcher.roots).any(|registered| registered.path == source_directory.to_string_lossy()));
-    project.update(cx, |project, cx| project.verify_android_context_observers(handle, discovery.clone(), vec![logic.clone(), child.clone()], cx)).await?;
+    project.update(cx, |project, cx| project.verify_android_context_observers(handle, discovery.clone(), directories, cx)).await?;
     project.update(cx, |project, cx| project.publish_android_context(&active, &owner, &discovery, snapshot, cx))?;
     let token = project.read_with(cx, |project, _| project.android_context().token(handle)).context("New layout root")?;
     std::fs::write(&child_source, "changed evaluated source")?;

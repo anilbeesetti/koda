@@ -322,6 +322,19 @@ impl ContextSnapshot {
         &self.build_layouts
     }
 
+    pub fn observer_directories(&self) -> Result<Vec<PathBuf>> {
+        let mut directories = self.build_logic_directories.clone();
+        for layout in self.build_layouts.iter().filter(|layout| self.build_logic_directories.iter().any(|directory| layout.directory.starts_with(directory))) {
+            directories.extend(layout.source_directories.iter().filter(|directory| self.is_input(directory)).cloned());
+        }
+        directories.sort();
+        directories.dedup();
+        // An evaluated child can live inside an ancestor's previously excluded
+        // output. An ancestor key alone cannot prove that child's coverage.
+        ensure!(directories.len() <= 4096, "Too many evaluated Gradle input folders");
+        Ok(directories)
+    }
+
     pub fn is_generated_output(&self, path: &Path) -> bool {
         self.build_layouts.iter().filter(|layout| path.starts_with(&layout.build_directory)).any(|output| {
             // A separately evaluated project can live under another project's

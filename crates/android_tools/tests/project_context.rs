@@ -164,6 +164,11 @@ fn evaluated_build_logic_inside_parent_output_keeps_its_own_inputs() -> Result<(
     assert!(snapshot.is_generated_output(&logic.join("generated/classes/Convention.class")));
     assert!(!snapshot.is_input(&logic.join("generated/classes/Convention.class")));
     assert!(snapshot.is_generated_output(&root.join("out/unrelated-output")));
+    value["buildLogicDirectories"] = json!([&root, &logic]);
+    let nested = decode(&root, &value)?.observer_directories()?;
+    assert!(nested.contains(&root));
+    assert!(nested.contains(&logic));
+    assert!(nested.contains(&logic.join("src")));
     Ok(())
 }
 
