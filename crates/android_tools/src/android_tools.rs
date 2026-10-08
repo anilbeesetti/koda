@@ -4,6 +4,7 @@ pub mod import_facts;
 pub mod java_class_facts;
 pub mod logcat;
 pub mod module_presentation;
+pub mod parallel_sync;
 pub mod preview;
 pub mod project_model;
 pub mod project_tree;

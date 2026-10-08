@@ -1,0 +1,29 @@
+{
+  "verdict": "PASS",
+  "utc": "2026-10-08T00:56:53.455704+00:00",
+  "only_external_report_formatted": true,
+  "commands": [
+    {
+      "command": [
+        "node",
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/qa/user-data/prettier/node_modules/prettier/bin/prettier.cjs",
+        "--write",
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/review-report.md"
+      ],
+      "exit_code": 0,
+      "log": "report-prettier-1.log",
+      "log_sha256": "5fac767cceaa012d67a7f8086309c3ff9b46701d3b292d3c0c7730bd7e01e4a0"
+    },
+    {
+      "command": [
+        "node",
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/qa/user-data/prettier/node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/review-report.md"
+      ],
+      "exit_code": 0,
+      "log": "report-prettier-2.log",
+      "log_sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+    }
+  ]
+}

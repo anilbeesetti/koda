@@ -1,0 +1,40 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+  "retained_at_execution_artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///workspace/android-studio-parallel-sync-policy/crates/android_ui#0.1.0",
+    "manifest_path": "/workspace/android-studio-parallel-sync-policy/crates/android_ui/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "android_ui",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_ui/src/android_ui.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": false,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 0,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf"
+    ],
+    "executable": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+    "fresh": false,
+    "executable_bytes": 451815736,
+    "executable_sha256": "ff714b206f2f4c062680f85ada3714812ee21b1bd36c4f0b4830fa9d58450b1a"
+  },
+  "normal_Cargo_exact_execution": true,
+  "whole_source_binding_count": 4730
+}

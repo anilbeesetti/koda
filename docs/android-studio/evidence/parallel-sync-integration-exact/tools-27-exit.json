@@ -1,0 +1,25 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--test",
+    "generated_artifacts",
+    "check_model_consumer_version_ordering",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.6827580419994774,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-ModelVersionsTest-checkModelConsumerVersionOrdering.log",
+    "sha256": "64b859e1779fc4e99101cb280a4eab990ecb849070257b6a259e7c533cd9493b"
+  }
+}

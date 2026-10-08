@@ -1,0 +1,72 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "fixture_files": [
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/README.md",
+      "copy": "generation-project/README.md",
+      "sha256": "1cb9b07ab2aa3329998d7ff24de213f1830d2529b2c27024c00dbcec8cf6bd03"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/build.gradle",
+      "copy": "generation-project/app/build.gradle",
+      "sha256": "522e77481cf8d0f3ef0d379373c665447aaa99d5f7b40ec43de3dfa601243564"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/custom-manifest/AndroidManifest.xml",
+      "copy": "generation-project/app/custom-manifest/AndroidManifest.xml",
+      "sha256": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/flavor-assets/demo.txt",
+      "copy": "generation-project/app/flavor-assets/demo.txt",
+      "sha256": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/main/resources/resources.properties",
+      "copy": "generation-project/app/main/resources/resources.properties",
+      "sha256": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/provider-res/layout/sample.xml",
+      "copy": "generation-project/app/provider-res/layout/sample.xml",
+      "sha256": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/unrelated-assets/sample.txt",
+      "copy": "generation-project/app/unrelated-assets/sample.txt",
+      "sha256": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/build.gradle",
+      "copy": "generation-project/build.gradle",
+      "sha256": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/gradle.properties",
+      "copy": "generation-project/gradle.properties",
+      "sha256": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+      "copy": "generation-project/model.json",
+      "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/provenance.json",
+      "copy": "generation-project/provenance.json",
+      "sha256": "73879ce3d81ef14bc4fd091a986f1ca785633ed35388dedc7e69ce43a0c39620"
+    },
+    {
+      "source": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/settings.gradle",
+      "copy": "generation-project/settings.gradle",
+      "sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c"
+    }
+  ],
+  "official_wrapper_sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+  "fixture_only_sdk_properties": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/local.properties",
+  "fresh_profile_no_databases_or_trust_copied": true,
+  "installed_extension_assets_copied": true,
+  "source_guard_files": 4730,
+  "source_before_after_unchanged": true,
+  "launcher_or_sdk_processes_started": false
+}

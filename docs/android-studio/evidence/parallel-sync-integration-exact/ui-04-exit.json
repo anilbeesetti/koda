@@ -1,0 +1,24 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_ui/Cargo.toml",
+    "-p",
+    "android_ui",
+    "--lib",
+    "tabbed_toolbar::tests::no_close_button_when_no_listener",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 1.0214200499976869,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-noCloseButtonWhenNoListener.log",
+    "sha256": "1a16f0a831bea5e4bfd2e86eb1f87d3c859c150ecc08966b732b14a88f15cc66"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "verdict": "PASS",
+  "scope": "Read-only independent current normal full-app build and output-only final real linker audit; native and CI/merge remain separate",
+  "reviewed_at_utc": "2026-10-08T00:44:54.859555+00:00",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 623.5448021279954,
+  "raw_log_sha256": "9dff03dff942f7d45b35ec0896a2a03246456ff571ea5c7d678a1295c6ca0d5e",
+  "new_app_receipt_sha256": "cbf8f4b5b3429f79a28862a8ee2bdbf5a6147cd6316e75ee4b3bbf8bd8e2b3c9",
+  "final_link_receipt_sha256": "a655a0c39faf78f05c0363fdcf956f7a18f2bc4d99d7acd87ad6afae85217aa4",
+  "actual_final_cc_argument_count": 1206,
+  "changed_argument_indexes": [
+    1199
+  ],
+  "single_o_index": 1198,
+  "all_receipt_argument_strings_ASCII_UTF8_without_replacement": true,
+  "all_other_actual_flags_inputs_unchanged": true,
+  "real_cc": "/usr/bin/cc",
+  "real_cc_exit_code": 0,
+  "regular_app_ELF": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+  "app_ELF_bytes": 1359451600,
+  "app_ELF_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+  "both_normal_Cargo_aliases_resolve_current_actual_ELF": true,
+  "all4_mtime_freshness_roots_byte_unchanged": true,
+  "normal_raw_current_checkout_compiled_crates": 164,
+  "total_raw_compile_lines": 169,
+  "required_tools_ui_icons_zed_current_checkout_compile_lines_verified": true,
+  "whole4730_snapshot_hashes_and_fixed7_commit_index_worktree_untracked_guards_pass": true,
+  "outer_guard_exit_and_exact_all_file_bindings_match": true,
+  "helper_and_runner_exact_reviewed_sources_unchanged": true,
+  "prior905_physical_app_retained_sha256": "9c018912f5622c4b991276a311a1f86bd3544de612537904d299cdc7f0b40891",
+  "prior_alias_removal_only_and_UID0_inspection_limits_retained": true,
+  "reviewer_runtime_compilation_cache_source_git_original_log_receipt_mutations": false,
+  "findings": [],
+  "remaining": [
+    "Native current SDK/models/keyboard/cleanup validation",
+    "Full workspace CI",
+    "Lead protected merge"
+  ],
+  "no_startup_performance_or_IDE_completion_credit": true
+}

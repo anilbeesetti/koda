@@ -1,0 +1,10 @@
+{
+  "pid": 310699,
+  "window_id": 2097153,
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "executable": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+  "executable_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+  "command": "/workspace/android-studio-parallel-sync-policy/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/qa/user-data /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/custom-manifest/AndroidManifest.xml ",
+  "utc": "2026-10-08T00:47:01.541371+00:00",
+  "monotonic": 57061.611017955
+}

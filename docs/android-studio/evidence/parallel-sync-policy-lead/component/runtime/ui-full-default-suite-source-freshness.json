@@ -1,0 +1,18 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "roots": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "c2d16dbce3363069e8af245bac59a2aa133db0e3794aa50bc84fbb48d0283944",
+      "before_mtime_ns": 1791417652710785120,
+      "after_mtime_ns": 1791417909321682063
+    },
+    {
+      "path": "crates/android_ui/src/android_ui.rs",
+      "sha256": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8",
+      "before_mtime_ns": 1791410986489061436,
+      "after_mtime_ns": 1791417909321682063
+    }
+  ],
+  "only_source_mtime_changed": true
+}

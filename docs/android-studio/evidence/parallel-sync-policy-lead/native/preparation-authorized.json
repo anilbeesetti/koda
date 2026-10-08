@@ -1,0 +1,16 @@
+{
+  "authorized": true,
+  "owner": "module_presentation_native_validation",
+  "received_utc": "2026-10-08T00:44:20.175857+00:00",
+  "parent_message": "Source4fb fullapp finishedPASS normal623.5448021279954s; newapp receipt /workspace/android-studio-artifacts/parallel-sync-integration/app-build/new-app-executable.json withELF /tmp/android-studio-link-output/koda-parallel-sync-310075 size1359451600 SHAeac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34. Wholeproduct4730/index/untracked guardsPASS afterbuild. Appindependentreview running in parallel_link_harness_quality; nativeRUNTIME LEASE notyetgranteduntilits immediatePASS. You may now prepare ownfreshprofile/fixture/launcher/executablebinding and revalidate your normalcurrentRustlibrary receipt/decoder recipe without launchingCargo/rustc/JVM/Gradle/native/app untilRoot grants. tmp131932160Bremaining: no largeunit/appCargo; directsmallfreshRustdecoder expectedfits. ExistingpreviousP1 physical9c keptuntilnew4fb actualSDKsuccess. NextmessagewillgrantcurrentnativeonceappreviewPASS.",
+  "runtime_lease_granted": false,
+  "prohibited_before_runtime_grant": [
+    "Cargo",
+    "rustc",
+    "JVM",
+    "Gradle",
+    "SDK",
+    "native",
+    "app"
+  ]
+}

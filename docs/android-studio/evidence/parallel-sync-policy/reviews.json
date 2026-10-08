@@ -1,0 +1,37 @@
+{
+  "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+  "areas": {
+    "code": {
+      "verdict": "PASS",
+      "scope": "static and bounded owner runtime; lead gates pending",
+      "static_sha256": "c87e35b9adfbed915da7f53dbe9508ef22047664f45cade8ebf57da9c94f0252",
+      "runtime_sha256": "66bfe73f4eddb48f484eb15ca58c7a072ba93aa3493af7365e0fb9ba48d3b603"
+    },
+    "ui": {
+      "verdict": "PASS",
+      "scope": "static and bounded owner runtime; lead gates pending",
+      "static_sha256": "26964876cfb394efe8c4ce963a6158bd4deebd450da04d8f91bd14f62e64ab1a",
+      "runtime_sha256": "31118934f5e24bcf95c1237f39405738102d2cf1aaace47a32a3ecbc26672ab0"
+    },
+    "ux": {
+      "verdict": "PASS",
+      "scope": "static and bounded owner runtime; lead gates pending",
+      "static_sha256": "5501a829184656a755d644b1546babae4a6f901967754f0718015b566bfc0bb9",
+      "runtime_sha256": "87576c4d85d70eb6bfd18fcf2b99c7f920e7f7455272c291c76c9a01af013607"
+    },
+    "performance": {
+      "verdict": "PASS",
+      "scope": "static and bounded owner runtime; lead gates pending",
+      "static_sha256": "71795b1c303b10a11325ef9e122b731776e7f0ce202823844a3c354fbf95590b",
+      "runtime_sha256": "435db247364b33b092ea275f40a3e551e26a29adb2f1ff4f385b50b0aa2b1aaa"
+    },
+    "quality": {
+      "verdict": "PASS",
+      "scope": "static and bounded owner runtime; lead gates pending",
+      "static_sha256": "d707659b72b6902c52014def7df9f4149468243a8ff6204c8e01ab37aa9e072e",
+      "runtime_sha256": "9dbac2adebdd2365e7921a9d86d58213eabbb5b80f42de350281fd9b2292b193"
+    }
+  },
+  "all_five_static_and_owner_runtime_pass": true,
+  "lead_app_native_workspace_ci_parity_merge": "pending"
+}
