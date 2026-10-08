@@ -347,7 +347,9 @@ pub(crate) mod tests {
     use workspace::AppState;
 
     fn initialize(cx: &mut App) {
-        AppState::test(cx);
+        let app_state = AppState::test(cx);
+        editor::init(cx);
+        workspace::init(app_state, cx);
         trusted_worktrees::init(Default::default(), cx);
         crate::init(cx);
         install_application_menus(vec![Menu::new("Run").items([
