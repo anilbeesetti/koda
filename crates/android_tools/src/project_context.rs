@@ -709,6 +709,12 @@ pub struct RootToken {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct DiscoveryToken(RootToken);
 
+impl DiscoveryToken {
+    pub fn root(&self) -> RootHandle {
+        self.0.root
+    }
+}
+
 struct RootContext {
     handle: RootHandle,
     path: PathBuf,

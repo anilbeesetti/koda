@@ -65,13 +65,13 @@ mod tests {
             register(workspace, build_panel.clone(), window, cx);
         });
         visual.run_until_parked();
-        let controller = cx.read(|cx| for_workspace(&workspace.downgrade(), cx)).context("Context controller")?;
-        assert_eq!(controller.read_with(cx, |controller, cx| controller.import_candidate(cx)), Some(root.clone()));
-        let handle = project.read_with(cx, |project, _| project.android_context().handle(worktree.to_proto())).context("Fixture root handle")?;
-        assert!(!project.read_with(cx, |project, _| project.android_context_observes(handle, &root)));
+        let controller = visual.update(|_, cx| for_workspace(&workspace.downgrade(), cx)).context("Context controller")?;
+        assert_eq!(controller.read_with(visual, |controller, cx| controller.import_candidate(cx)), Some(root.clone()));
+        let handle = project.read_with(visual, |project, _| project.android_context().handle(worktree.to_proto())).context("Fixture root handle")?;
+        assert!(!project.read_with(visual, |project, _| project.android_context_observes(handle, &root)));
         visual.dispatch_action(ImportGradleProject);
         visual.run_until_parked();
-        assert!(build_panel.read_with(cx, |panel, _| panel.session_id(BuildTab::Sync).is_some()));
+        assert!(build_panel.read_with(visual, |panel, _| panel.session_id(BuildTab::Sync).is_some()));
         cx.condition(&project, |project, _| project.android_context().snapshot(handle).is_some()).await;
         controller.read_with(cx, |controller, cx| {
             assert_eq!(controller.capabilities(OperationalReadiness::default(), cx), ContextCapabilities::default());
@@ -315,11 +315,25 @@ impl ProjectContextController {
         self.active.capabilities(self.project.read(cx).android_context(), readiness)
     }
 
-    pub(crate) fn owns_sync_session(&self, cx: &App) -> bool {
-        self.last_import_session.is_some_and(|(_, session)| self.build_panel.read(cx).session_id(BuildTab::Sync) == Some(session))
+    pub(crate) fn action_token(&self, cx: &App) -> Option<ActiveContextToken> {
+        self.active.token(self.project.read(cx).android_context())
     }
 
-    fn import_candidate(&self, cx: &App) -> Option<PathBuf> {
+    pub(crate) fn action_is_current(&self, token: &ActiveContextToken, cx: &App) -> bool {
+        self.active.is_current(token, self.project.read(cx).android_context())
+    }
+
+    pub(crate) fn owns_sync_session(&self, cx: &App) -> bool {
+        self.last_import_session.is_some_and(|(root, session)| self.active.root() == Some(root)
+            && self.project.read(cx).android_context().token(root).is_some()
+            && self.build_panel.read(cx).session_id(BuildTab::Sync) == Some(session))
+    }
+
+    pub(crate) fn import_in_progress(&self, cx: &App) -> bool {
+        self.import_owner.as_ref().is_some_and(|owner| self.active.is_current(&owner.active, self.project.read(cx).android_context()))
+    }
+
+    pub(crate) fn import_candidate(&self, cx: &App) -> Option<PathBuf> {
         let root = self.root(cx)?;
         (self.project.read(cx).is_local() && android_tools::is_gradle_project(&root)).then_some(root)
     }
@@ -404,9 +418,11 @@ impl ProjectContextController {
                     if status.success() {
                         let snapshots = decode_context_output(stdout, &root)?;
                         let snapshot = snapshots.last().context("Gradle verification emitted no context")?;
-                        let directories = observer_directories(snapshot)?;
-                        ensure!(project.read_with(cx, |project, _| directories.iter().all(|directory| project.android_context_observes(handle, directory))),
-                            "Gradle evaluation introduced unwatched or unavailable external inputs; import again explicitly after establishing their directories");
+                        let mut directories = observer_directories(snapshot)?;
+                        directories.push(root.clone());
+                        directories.sort();
+                        directories.dedup();
+                        project.update(cx, |project, cx| project.verify_android_context_observers(handle, discovery.clone(), directories, cx)).await?;
                     }
                 }
                 Ok::<_, anyhow::Error>(result)

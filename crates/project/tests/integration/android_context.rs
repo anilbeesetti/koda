@@ -7,14 +7,18 @@ use serde_json::json;
 use std::path::Path;
 use util::path;
 
-fn observed_fixture(root: &Path, logic: &Path) -> Result<ContextSnapshot> {
-    let raw = json!({"schema":1,"root":root,"gradleVersion":"9.4","phase":"complete",
+fn observed_fixture_record(root: &Path, logic: &Path) -> serde_json::Value {
+    json!({"schema":1,"root":root,"gradleVersion":"9.4","phase":"complete",
         "modules":[{"path":":","directory":root,
             "plugins":PluginId::ALL.map(|plugin| json!({"plugin":plugin,"applied":plugin==PluginId::AndroidApplication})),
             "targets":{"status":"unavailable","value":{"detail":"Java-only fixture"}},
             "android":{"status":"available","value":{"pluginVersion":"9.2.0"}}}],
         "buildLogicDirectories":[logic],
-        "buildLayouts":[{"directory":logic,"buildDirectory":logic.join("custom-output"),"sourceDirectories":[logic.join("src")]}]});
+        "buildLayouts":[{"directory":logic,"buildDirectory":logic.join("custom-output"),"sourceDirectories":[logic.join("src")]}]})
+}
+
+fn observed_fixture(root: &Path, logic: &Path) -> Result<ContextSnapshot> {
+    let raw = observed_fixture_record(root, logic);
     decode_context_record(&serde_json::to_vec(&raw)?, root)
 }
 
@@ -50,6 +54,96 @@ async fn context_input_observers_preserve_outputs_and_invalidate_real_external_i
     cx.executor().run_until_parked();
     assert!(!project.read_with(cx, |project, _| project.android_context().is_current(&token)));
     assert!(project.read_with(cx, |project, _| project.android_context().snapshot(handle).is_none()));
+    assert_eq!(project.read_with(cx, |project, cx| project.visible_worktrees(cx).count()), 1);
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+#[gpui::test]
+async fn real_linux_deleted_input_root_requires_ready_reinstallation_before_reimport(cx: &mut TestAppContext) -> Result<()> {
+    use fs::RealFs;
+    cx.executor().allow_parking();
+    let fixture = tempfile::TempDir::new()?;
+    let root = fixture.path().join("project");
+    let logic = fixture.path().join("external-logic");
+    let source = logic.join("src/deep/Convention.kt");
+    std::fs::create_dir_all(&root)?;
+    std::fs::create_dir_all(source.parent().context("Source parent")?)?;
+    std::fs::write(root.join("build.gradle"), "")?;
+    std::fs::write(&source, "original")?;
+    let project = Project::test(RealFs::new(None, cx.executor()), [root.as_path()], cx).await;
+    let worktree = project.read_with(cx, |project, cx| project.visible_worktrees(cx).next().map(|worktree| worktree.read(cx).id())).context("Root worktree")?;
+    let handle = project.update(cx, |project, cx| project.ensure_android_context(worktree, true, cx))?;
+    let discovery = project.update(cx, |project, cx| project.begin_android_context_import(handle, cx))?;
+    let mut active = ActiveContext::default();
+    active.select(Some(handle), None)?;
+    let owner = project.read_with(cx, |project, _| active.discovery_token(project.android_context())).context("Import owner")?;
+    let snapshot = observed_fixture(&root, &logic)?;
+    assert!(project.update(cx, |project, cx| project.observe_android_context_inputs(handle, discovery.clone(), vec![logic.clone()], Some(snapshot.clone()), cx)).await?);
+    std::fs::remove_dir_all(&logic)?;
+    cx.condition(&project, |project, _| !project.android_context().import_is_current(&discovery)).await;
+    assert!(!project.read_with(cx, |project, _| project.android_context_observes(handle, &logic)));
+    assert!(project.update(cx, |project, cx| project.publish_android_context(&active, &owner, &discovery, snapshot, cx)).is_err());
+    std::fs::create_dir_all(source.parent().context("Recreated source parent")?)?;
+    std::fs::write(&source, "recreated input")?;
+    assert!(!project.read_with(cx, |project, _| project.android_context_observes(handle, &logic)));
+    let discovery = project.update(cx, |project, cx| project.begin_android_context_import(handle, cx))?;
+    let owner = project.read_with(cx, |project, _| active.discovery_token(project.android_context())).context("Reimport owner")?;
+    let snapshot = observed_fixture(&root, &logic)?;
+    assert!(project.update(cx, |project, cx| project.observe_android_context_inputs(handle, discovery.clone(), vec![logic.clone()], Some(snapshot.clone()), cx)).await?);
+    project.update(cx, |project, cx| project.verify_android_context_observers(handle, discovery.clone(), vec![logic.clone()], cx)).await?;
+    project.update(cx, |project, cx| project.publish_android_context(&active, &owner, &discovery, snapshot, cx))?;
+    let token = project.read_with(cx, |project, _| project.android_context().token(handle)).context("Recreated root")?;
+    std::fs::write(&source, "changed after reimport")?;
+    cx.condition(&project, |project, _| !project.android_context().is_current(&token)).await;
+    assert_eq!(project.read_with(cx, |project, cx| project.visible_worktrees(cx).count()), 1);
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+#[gpui::test]
+async fn real_linux_new_evaluated_build_logic_inside_old_output_installs_deep_coverage(cx: &mut TestAppContext) -> Result<()> {
+    use fs::{Fs as _, RealFs};
+    cx.executor().allow_parking();
+    let fixture = tempfile::TempDir::new()?;
+    let root = fixture.path().join("project");
+    let logic = fixture.path().join("external-logic");
+    let child = logic.join("custom-output/child-logic");
+    let child_source = child.join("src/deep/Convention.kt");
+    std::fs::create_dir_all(&root)?;
+    std::fs::create_dir_all(logic.join("src"))?;
+    std::fs::create_dir_all(logic.join("custom-output"))?;
+    std::fs::write(root.join("build.gradle"), "")?;
+    let filesystem = RealFs::new(None, cx.executor());
+    let recording = filesystem.record_watcher_diagnostics().context("Native watcher diagnostics")?;
+    let project = Project::test(filesystem, [root.as_path()], cx).await;
+    let worktree = project.read_with(cx, |project, cx| project.visible_worktrees(cx).next().map(|worktree| worktree.read(cx).id())).context("Root worktree")?;
+    let handle = project.update(cx, |project, cx| project.ensure_android_context(worktree, true, cx))?;
+    let discovery = project.update(cx, |project, cx| project.begin_android_context_import(handle, cx))?;
+    let mut active = ActiveContext::default();
+    active.select(Some(handle), None)?;
+    let owner = project.read_with(cx, |project, _| active.discovery_token(project.android_context())).context("Import owner")?;
+    let snapshot = observed_fixture(&root, &logic)?;
+    assert!(project.update(cx, |project, cx| project.observe_android_context_inputs(handle, discovery.clone(), vec![logic.clone()], Some(snapshot.clone()), cx)).await?);
+    project.update(cx, |project, cx| project.publish_android_context(&active, &owner, &discovery, snapshot, cx))?;
+    std::fs::create_dir_all(child_source.parent().context("Child source parent")?)?;
+    std::fs::write(&child_source, "new evaluated source")?;
+    assert!(!project.read_with(cx, |project, _| project.android_context_observes(handle, &child)));
+    let discovery = project.update(cx, |project, cx| project.begin_android_context_import(handle, cx))?;
+    let owner = project.read_with(cx, |project, _| active.discovery_token(project.android_context())).context("Reimport owner")?;
+    let mut raw = observed_fixture_record(&root, &logic);
+    raw["buildLogicDirectories"] = json!([&logic, &child]);
+    raw["buildLayouts"].as_array_mut().context("Build layouts")?.push(json!({"directory":&child,
+        "buildDirectory":child.join("generated"),"sourceDirectories":[child.join("src")]}));
+    let snapshot = decode_context_record(&serde_json::to_vec(&raw)?, &root)?;
+    assert!(project.update(cx, |project, cx| project.observe_android_context_inputs(handle, discovery.clone(), vec![child.clone()], Some(snapshot.clone()), cx)).await?);
+    let source_directory = child_source.parent().context("Child source parent")?;
+    assert!(recording.snapshot().watchers.iter().flat_map(|watcher| &watcher.roots).any(|registered| registered.path == source_directory.to_string_lossy()));
+    project.update(cx, |project, cx| project.verify_android_context_observers(handle, discovery.clone(), vec![logic.clone(), child.clone()], cx)).await?;
+    project.update(cx, |project, cx| project.publish_android_context(&active, &owner, &discovery, snapshot, cx))?;
+    let token = project.read_with(cx, |project, _| project.android_context().token(handle)).context("New layout root")?;
+    std::fs::write(&child_source, "changed evaluated source")?;
+    cx.condition(&project, |project, _| !project.android_context().is_current(&token)).await;
     assert_eq!(project.read_with(cx, |project, cx| project.visible_worktrees(cx).count()), 1);
     Ok(())
 }
@@ -204,6 +298,9 @@ async fn root_removal_releases_only_owned_inputs_and_keeps_other_worktrees(cx: &
     let handle_a = project.update(cx, |project, cx| project.ensure_android_context(worktree_a, true, cx))?;
     let handle_b = project.update(cx, |project, cx| project.ensure_android_context(worktree_b, true, cx))?;
     assert!(!project.read_with(cx, |project, _| project.android_context_observes(handle_a, logic_a)));
+    assert!(!project.read_with(cx, |project, _| project.android_context_observes(handle_b, logic_b)));
+    let wrong_owner = project.update(cx, |project, cx| project.begin_android_context_import(handle_a, cx))?;
+    assert!(project.update(cx, |project, cx| project.observe_android_context_inputs(handle_b, wrong_owner, vec![logic_b.to_path_buf()], None, cx)).await.is_err());
     assert!(!project.read_with(cx, |project, _| project.android_context_observes(handle_b, logic_b)));
     for (handle, logic) in [(handle_a, logic_a), (handle_b, logic_b)] {
         let discovery = project.update(cx, |project, cx| project.begin_android_context_import(handle, cx))?;
