@@ -1496,16 +1496,16 @@ impl AndroidPanel {
         };
         let project = self.project.read(cx);
         let store = project.android_context();
-        let Some(snapshot) = store.handles().find_map(|handle| {
+        let snapshot = store.handles().find_map(|handle| {
             (store.root_path(handle) == Some(root.as_path()))
                 .then(|| store.snapshot(handle))
                 .flatten()
-        }) else {
-            return false;
-        };
-        if !matches!(snapshot.module_owner(path), android_tools::project_context::ModuleOwner::Module(_)) {
+        });
+        if snapshot.is_some_and(|snapshot| !matches!(snapshot.module_owner(path), android_tools::project_context::ModuleOwner::Module(_))) {
             return false;
         }
+        // Invalidation retains only this project's previously evaluated inputs.
+        // Operational context gates still require a fresh trusted snapshot.
         self.model_input_roots
             .iter()
             .filter(|(source, _)| path.starts_with(source))
@@ -2883,33 +2883,43 @@ impl AndroidPanel {
             return Vec::new();
         };
         let store = project.android_context();
-        let Some(snapshot) = store.handles().find_map(|handle| {
+        let snapshot = store.handles().find_map(|handle| {
             (store.root_path(handle) == Some(root.as_path()))
                 .then(|| store.snapshot(handle))
                 .flatten()
-        }) else {
-            return Vec::new();
-        };
+        });
         let visible = selected.visible_modules(&selected.selected.module, SourceScope::Main);
-        selected.modules().flat_map(|(module, variant)| {
-            let directory = snapshot.modules().find(|candidate| candidate.path() == module.path)
-                .map(|module| module.directory());
-            let visible = visible.contains(&module.path);
-            variant.components.iter().flat_map(move |component| {
-                component.sources.iter().filter_map(move |source| {
-                    if !matches!(source.kind, SourceKind::Resources | SourceKind::Manifest) {
-                        return None;
-                    }
-                    let path = if let Ok(relative) = source.path.strip_prefix(&selected.model.root) {
-                        root.join(relative)
-                    } else {
-                        directory?.join(source.path.strip_prefix(&module.directory).ok()?)
-                    };
-                    matches!(snapshot.module_owner(&path), android_tools::project_context::ModuleOwner::Module(_))
-                        .then_some((path, source.generated || !visible || component.scope != SourceScope::Main))
+        let inputs = selected.model.modules.iter().flat_map(|module| {
+            let directory = snapshot.and_then(|snapshot| snapshot.modules()
+                .find(|candidate| candidate.path() == module.path)
+                .map(|module| module.directory()));
+            let module_visible = visible.contains(&module.path);
+            module.variants.iter().flat_map(move |variant| {
+                let variant_visible = selected.variants.get(&module.path) == Some(&variant.name);
+                variant.components.iter().flat_map(move |component| {
+                    component.sources.iter().filter_map(move |source| {
+                        if !matches!(source.kind, SourceKind::Resources | SourceKind::Manifest) {
+                            return None;
+                        }
+                        let path = if let Ok(relative) = source.path.strip_prefix(&selected.model.root) {
+                            root.join(relative)
+                        } else {
+                            directory?.join(source.path.strip_prefix(&module.directory).ok()?)
+                        };
+                        let owned = snapshot.map_or_else(|| path.starts_with(root), |snapshot|
+                            matches!(snapshot.module_owner(&path), android_tools::project_context::ModuleOwner::Module(_)));
+                        owned.then_some((path, source.generated || !module_visible || !variant_visible || component.scope != SourceScope::Main))
+                    })
                 })
             })
-        }).collect()
+        });
+        let mut roots = std::collections::BTreeMap::new();
+        for (path, excluded) in inputs {
+            // A shared resource directory is active when the selected variant
+            // uses it, even if other variants expose the same directory.
+            roots.entry(path).and_modify(|previous: &mut bool| *previous &= excluded).or_insert(excluded);
+        }
+        roots.into_iter().collect()
     }
 
     fn apply_targets(&mut self, targets: Vec<AndroidTarget>, cx: &App) {
@@ -5103,7 +5113,8 @@ mod tests {
                 "tests":{"values":{"strings.xml":"<resources/>"}}
             },
             "manifest":{"custom.xml":"<manifest/>"},
-            "release-res":{"values":{"strings.xml":"<resources/>"}}
+            "release-res":{"values":{"strings.xml":"<resources/>"}},
+            "src":{"release":{"res":{"values":{"strings.xml":"<resources/>"}}}}
         })).await;
         filesystem.insert_tree("/input-unrelated", json!({
             "src":{"main":{"res":{"values":{"strings.xml":"<resources/>"}}}},
@@ -5156,7 +5167,9 @@ mod tests {
                         ]}
                     ]},
                     {"name":"release","components":[{"name":"release","scope":"main","dependencies":[],"sources":[
-                        {"path":"/canonical-sibling/release-res","kind":"resources","generated":false}
+                        {"path":"/canonical-sibling/release-res","kind":"resources","generated":false},
+                        {"path":"/canonical-sibling/src/release/res","kind":"resources","generated":false},
+                        {"path":"/canonical-sibling/inputs","kind":"resources","generated":false}
                     ]}]}
                 ]
             }]
@@ -5180,6 +5193,7 @@ mod tests {
             assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/manifest/custom.xml"), false)));
             assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/inputs/generated"), true)));
             assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/inputs/tests"), true)));
+            assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/src/release/res"), true)));
             assert!(!panel.model_input_roots.iter().any(|(path, _)| path.starts_with("/canonical-sibling") || path.starts_with("/input-unrelated")));
         });
         let roots = project.read_with(visual, |project, cx| project.visible_worktrees(cx)
@@ -5200,6 +5214,7 @@ mod tests {
             ("/input-sibling/inputs/generated/values/strings.xml", false),
             ("/input-sibling/inputs/tests/values/strings.xml", false),
             ("/input-sibling/release-res/values/strings.xml", false),
+            ("/input-sibling/src/release/res/values/strings.xml", false),
             ("/input-unrelated/src/main/res/values/strings.xml", false),
             ("/input-sibling/inputs/values/strings.xml", true),
             ("/input-sibling/manifest/custom.xml", true),
@@ -5223,6 +5238,21 @@ mod tests {
                 panel.kotlin_refresh_pending = None;
             });
         }
+        let retained = project.update(visual, |project, cx| {
+            project.open_local_buffer("/input-sibling/inputs/values/strings.xml", cx)
+        }).await?;
+        retained.update(visual, |buffer, cx| buffer.edit([(0..0, " ")], None, cx));
+        project.update(visual, |project, cx| {
+            project.invalidate_android_context_for_repository(Path::new("/input-sibling"), cx)
+        });
+        visual.run_until_parked();
+        panel.read_with(visual, |panel, cx| {
+            assert!(panel.model_inputs_dirty(cx), "Previously owned sibling inputs remain dirty during invalidation");
+            for operation in [AndroidOperation::Build, AndroidOperation::Devices, AndroidOperation::Run, AndroidOperation::Preview] {
+                assert!(panel.operation_owner(operation, cx).is_err(), "Retained dirty inputs never grant an operational context");
+            }
+            assert!(!panel.model_absolute_input_changed(Path::new("/input-unrelated/src/main/res/values/strings.xml"), cx));
+        });
         panel.update(visual, |panel, _| panel.running = false);
         Ok(())
     }
