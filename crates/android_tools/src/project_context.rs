@@ -111,7 +111,12 @@ pub struct AndroidPluginVersion {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(tag = "status", content = "value", rename_all = "camelCase", deny_unknown_fields)]
+#[serde(
+    tag = "status",
+    content = "value",
+    rename_all = "camelCase",
+    deny_unknown_fields
+)]
 pub enum AndroidPluginApi {
     Available(AndroidPluginVersion),
     Unavailable(GetterUnavailable),
@@ -310,12 +315,22 @@ impl ContextSnapshot {
             || path.components().any(|part| matches!(part, Component::Normal(name) if name == ".gradle" || name == ".kotlin" || name == ".git")) {
             return false;
         }
-        if self.build_layouts.iter().any(|layout| self.build_logic_directories.iter().any(|directory| layout.directory.starts_with(directory))
-            && layout.source_directories.iter().any(|source| path.starts_with(source))) {
+        if self.build_layouts.iter().any(|layout| {
+            self.build_logic_directories
+                .iter()
+                .any(|directory| layout.directory.starts_with(directory))
+                && layout
+                    .source_directories
+                    .iter()
+                    .any(|source| path.starts_with(source))
+        }) {
             return true;
         }
         (path.starts_with(&self.root) && is_context_input(path))
-            || self.build_logic_directories.iter().any(|directory| path.starts_with(directory))
+            || self
+                .build_logic_directories
+                .iter()
+                .any(|directory| path.starts_with(directory))
     }
 
     pub fn build_layouts(&self) -> &[BuildLayout] {
@@ -324,24 +339,43 @@ impl ContextSnapshot {
 
     pub fn observer_directories(&self) -> Result<Vec<PathBuf>> {
         let mut directories = self.build_logic_directories.clone();
-        for layout in self.build_layouts.iter().filter(|layout| self.build_logic_directories.iter().any(|directory| layout.directory.starts_with(directory))) {
-            directories.extend(layout.source_directories.iter().filter(|directory| self.is_input(directory)).cloned());
+        for layout in self.build_layouts.iter().filter(|layout| {
+            self.build_logic_directories
+                .iter()
+                .any(|directory| layout.directory.starts_with(directory))
+        }) {
+            directories.extend(
+                layout
+                    .source_directories
+                    .iter()
+                    .filter(|directory| self.is_input(directory))
+                    .cloned(),
+            );
         }
         directories.sort();
         directories.dedup();
         // An evaluated child can live inside an ancestor's previously excluded
         // output. An ancestor key alone cannot prove that child's coverage.
-        ensure!(directories.len() <= 4096, "Too many evaluated Gradle input folders");
+        ensure!(
+            directories.len() <= 4096,
+            "Too many evaluated Gradle input folders"
+        );
         Ok(directories)
     }
 
     pub fn is_generated_output(&self, path: &Path) -> bool {
-        self.build_layouts.iter().filter(|layout| path.starts_with(&layout.build_directory)).any(|output| {
-            // A separately evaluated project can live under another project's
-            // output directory; its own layout defines its input/output boundary.
-            !self.build_layouts.iter().any(|owner| owner.directory != output.directory
-                && owner.directory.starts_with(&output.build_directory) && path.starts_with(&owner.directory))
-        })
+        self.build_layouts
+            .iter()
+            .filter(|layout| path.starts_with(&layout.build_directory))
+            .any(|output| {
+                // A separately evaluated project can live under another project's
+                // output directory; its own layout defines its input/output boundary.
+                !self.build_layouts.iter().any(|owner| {
+                    owner.directory != output.directory
+                        && owner.directory.starts_with(&output.build_directory)
+                        && path.starts_with(&owner.directory)
+                })
+            })
     }
 
     pub fn ecosystems(&self) -> Ecosystems {
@@ -447,33 +481,39 @@ impl ContextSnapshot {
     }
 
     fn preserves(&self, previous: &Self) -> bool {
-        previous.build_logic_directories.iter().all(|directory| self.build_logic_directories.contains(directory))
+        previous
+            .build_logic_directories
+            .iter()
+            .all(|directory| self.build_logic_directories.contains(directory))
             && previous.modules.values().all(|previous_module| {
-            self.modules
-                .get(&previous_module.path)
-                .is_some_and(|module| {
-                    module.directory == previous_module.directory
-                        && previous_module
-                            .applied_plugins
-                            .is_subset(&module.applied_plugins)
-                        && match (&previous_module.android, &module.android) {
-                            (Some(AndroidPluginApi::Available(previous)), Some(AndroidPluginApi::Available(current))) => previous == current,
-                            (Some(AndroidPluginApi::Available(_)), _) => false,
-                            _ => true,
-                        }
-                        && match (&previous_module.targets, &module.targets) {
-                            (
-                                TargetCatalogue::Available(previous),
-                                TargetCatalogue::Available(current),
-                            ) => previous.iter().all(|target| current.contains(target)),
-                            (
-                                TargetCatalogue::Available(previous),
-                                TargetCatalogue::Unavailable(_),
-                            ) => previous.is_empty(),
-                            (TargetCatalogue::Unavailable(_), _) => true,
-                        }
-                })
-        })
+                self.modules
+                    .get(&previous_module.path)
+                    .is_some_and(|module| {
+                        module.directory == previous_module.directory
+                            && previous_module
+                                .applied_plugins
+                                .is_subset(&module.applied_plugins)
+                            && match (&previous_module.android, &module.android) {
+                                (
+                                    Some(AndroidPluginApi::Available(previous)),
+                                    Some(AndroidPluginApi::Available(current)),
+                                ) => previous == current,
+                                (Some(AndroidPluginApi::Available(_)), _) => false,
+                                _ => true,
+                            }
+                            && match (&previous_module.targets, &module.targets) {
+                                (
+                                    TargetCatalogue::Available(previous),
+                                    TargetCatalogue::Available(current),
+                                ) => previous.iter().all(|target| current.contains(target)),
+                                (
+                                    TargetCatalogue::Available(previous),
+                                    TargetCatalogue::Unavailable(_),
+                                ) => previous.is_empty(),
+                                (TargetCatalogue::Unavailable(_), _) => true,
+                            }
+                    })
+            })
     }
 }
 
@@ -495,24 +535,45 @@ pub fn decode_context_record(record: &[u8], expected_root: &Path) -> Result<Cont
         "Project context belongs to a different root"
     );
     validate_text(&raw.gradle_version)?;
-    ensure!(raw.build_logic_directories.len() <= MAX_MODULES, "Too many evaluated build-logic directories");
+    ensure!(
+        raw.build_logic_directories.len() <= MAX_MODULES,
+        "Too many evaluated build-logic directories"
+    );
     let mut input_directories = BTreeSet::new();
     for directory in &raw.build_logic_directories {
         validate_path(directory)?;
-        ensure!(input_directories.insert(directory), "Duplicate evaluated build-logic directory");
+        ensure!(
+            input_directories.insert(directory),
+            "Duplicate evaluated build-logic directory"
+        );
     }
-    ensure!(raw.build_layouts.len() <= MAX_MODULES, "Too many evaluated build layouts");
+    ensure!(
+        raw.build_layouts.len() <= MAX_MODULES,
+        "Too many evaluated build layouts"
+    );
     let mut layout_directories = BTreeSet::new();
     for layout in &raw.build_layouts {
         validate_path(&layout.directory)?;
         validate_path(&layout.build_directory)?;
-        ensure!(layout_directories.insert(&layout.directory), "Duplicate evaluated build layout");
-        ensure!(!layout.directory.starts_with(&layout.build_directory), "Build output directory overlaps its project inputs");
-        ensure!(layout.source_directories.len() <= MAX_TARGETS, "Too many evaluated source directories");
+        ensure!(
+            layout_directories.insert(&layout.directory),
+            "Duplicate evaluated build layout"
+        );
+        ensure!(
+            !layout.directory.starts_with(&layout.build_directory),
+            "Build output directory overlaps its project inputs"
+        );
+        ensure!(
+            layout.source_directories.len() <= MAX_TARGETS,
+            "Too many evaluated source directories"
+        );
         let mut sources = BTreeSet::new();
         for directory in &layout.source_directories {
             validate_path(directory)?;
-            ensure!(sources.insert(directory), "Duplicate evaluated source directory");
+            ensure!(
+                sources.insert(directory),
+                "Duplicate evaluated source directory"
+            );
         }
     }
     ensure!(
@@ -627,7 +688,10 @@ pub fn decode_context_record(record: &[u8], expected_root: &Path) -> Result<Cont
 /// A failed evaluation can retain affirmative partial facts without becoming runnable.
 pub fn decode_context_output(output: &str, expected_root: &Path) -> Result<Vec<ContextSnapshot>> {
     let mut snapshots = Vec::new();
-    for record in output.lines().filter_map(|line| line.strip_prefix(CONTEXT_OUTPUT_PREFIX)) {
+    for record in output
+        .lines()
+        .filter_map(|line| line.strip_prefix(CONTEXT_OUTPUT_PREFIX))
+    {
         ensure!(snapshots.len() < 2, "Too many project context records");
         let snapshot = decode_context_record(record.as_bytes(), expected_root)?;
         if let Some(previous) = snapshots.last() {
@@ -642,14 +706,20 @@ pub fn decode_context_output(output: &str, expected_root: &Path) -> Result<Vec<C
         }
         snapshots.push(snapshot);
     }
-    ensure!(!snapshots.is_empty(), "Gradle did not emit evaluated project context");
+    ensure!(
+        !snapshots.is_empty(),
+        "Gradle did not emit evaluated project context"
+    );
     Ok(snapshots)
 }
 
 pub fn prepare() -> Result<tempfile::TempDir> {
     let directory = tempfile::tempdir().context("Create Gradle context adapter directory")?;
-    std::fs::write(directory.path().join("context.gradle"), include_str!("project_context.gradle"))
-        .context("Write Gradle context getter adapter")?;
+    std::fs::write(
+        directory.path().join("context.gradle"),
+        include_str!("project_context.gradle"),
+    )
+    .context("Write Gradle context getter adapter")?;
     Ok(directory)
 }
 
@@ -657,7 +727,10 @@ pub fn prepare() -> Result<tempfile::TempDir> {
 /// Convention and included-build source changes are conservative until import
 /// provenance records their complete evaluated input graph.
 pub fn is_context_input(path: &Path) -> bool {
-    let name = path.file_name().and_then(|name| name.to_str()).unwrap_or_default();
+    let name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or_default();
     matches!(name, "settings.gradle" | "settings.gradle.kts" | "build.gradle" | "build.gradle.kts" | "gradle.properties" | "local.properties" | "gradle.lockfile" | "gradlew" | "gradlew.bat")
         || path.components().any(|part| matches!(part, Component::Normal(name) if name == "buildSrc" || name == "build-logic"))
         || path.extension().is_some_and(|extension| extension == "gradle")
@@ -863,7 +936,10 @@ impl ContextStore {
     }
 
     pub fn import_is_current(&self, token: &DiscoveryToken) -> bool {
-        self.is_current(&token.0) && self.entry(token.0.root).is_some_and(|entry| entry.pending.as_ref() == Some(token))
+        self.is_current(&token.0)
+            && self
+                .entry(token.0.root)
+                .is_some_and(|entry| entry.pending.as_ref() == Some(token))
     }
 
     pub fn publish(&mut self, token: &DiscoveryToken, snapshot: ContextSnapshot) -> Result<()> {
@@ -894,13 +970,29 @@ impl ContextStore {
         Ok(())
     }
 
-    pub fn verify_import_inputs(&mut self, token: &DiscoveryToken, snapshot: &ContextSnapshot) -> Result<()> {
-        ensure!(self.is_current(&token.0), "Discarded outdated Gradle input observations");
+    pub fn verify_import_inputs(
+        &mut self,
+        token: &DiscoveryToken,
+        snapshot: &ContextSnapshot,
+    ) -> Result<()> {
+        ensure!(
+            self.is_current(&token.0),
+            "Discarded outdated Gradle input observations"
+        );
         let entry = self.entry_mut(token.0.root)?;
-        ensure!(entry.pending.as_ref() == Some(token) && snapshot.root == entry.path, "Gradle input observations have a different owner");
-        if entry.pending_changes.iter().any(|path| snapshot.is_input(path)) {
+        ensure!(
+            entry.pending.as_ref() == Some(token) && snapshot.root == entry.path,
+            "Gradle input observations have a different owner"
+        );
+        if entry
+            .pending_changes
+            .iter()
+            .any(|path| snapshot.is_input(path))
+        {
             self.invalidate(token.0.root)?;
-            anyhow::bail!("Project build inputs changed during Gradle evaluation; import again explicitly");
+            anyhow::bail!(
+                "Project build inputs changed during Gradle evaluation; import again explicitly"
+            );
         }
         entry.pending_changes.clear();
         entry.pending_change_bytes = 0;
@@ -909,12 +1001,23 @@ impl ContextStore {
 
     pub fn observe_input_change(&mut self, path: &Path) -> Result<Vec<RootHandle>> {
         validate_path(path)?;
-        let owners = self.roots.values().filter(|entry| path.starts_with(&entry.path)
-            || entry.snapshot.as_ref().is_some_and(|snapshot| snapshot.is_input(path)))
-            .map(|entry| entry.handle).collect::<Vec<_>>();
+        let owners = self
+            .roots
+            .values()
+            .filter(|entry| {
+                path.starts_with(&entry.path)
+                    || entry
+                        .snapshot
+                        .as_ref()
+                        .is_some_and(|snapshot| snapshot.is_input(path))
+            })
+            .map(|entry| entry.handle)
+            .collect::<Vec<_>>();
         let mut invalidated = Vec::new();
         for owner in owners {
-            if self.observe_root_input_change(owner, path)? { invalidated.push(owner); }
+            if self.observe_root_input_change(owner, path)? {
+                invalidated.push(owner);
+            }
         }
         Ok(invalidated)
     }
@@ -925,18 +1028,26 @@ impl ContextStore {
             return Ok(false);
         }
         let entry = self.entry_mut(root)?;
-        if !entry.trusted { return Ok(false); }
+        if !entry.trusted {
+            return Ok(false);
+        }
         let invalidated = if entry.pending.is_some() {
             // Generated convention-plugin output can precede its final layout
             // getter. Only the root owning this observer buffers those changes.
             if entry.pending_changes.insert(path.to_path_buf()) {
                 entry.pending_change_bytes += path.as_os_str().len();
             }
-            entry.pending_changes.len() > 16384 || entry.pending_change_bytes > MAX_CONTEXT_RECORD_BYTES
+            entry.pending_changes.len() > 16384
+                || entry.pending_change_bytes > MAX_CONTEXT_RECORD_BYTES
         } else {
-            entry.snapshot.as_ref().is_some_and(|snapshot| snapshot.is_input(path))
+            entry
+                .snapshot
+                .as_ref()
+                .is_some_and(|snapshot| snapshot.is_input(path))
         };
-        if invalidated { self.invalidate(root)?; }
+        if invalidated {
+            self.invalidate(root)?;
+        }
         Ok(invalidated)
     }
 

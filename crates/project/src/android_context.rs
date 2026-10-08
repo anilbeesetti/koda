@@ -6,7 +6,12 @@ use anyhow::{Context as _, Result};
 use futures::StreamExt as _;
 use gpui::{Context, Task};
 use parking_lot::Mutex;
-use std::{collections::{BTreeMap, BTreeSet, VecDeque}, path::{Component, Path, PathBuf}, sync::Arc, time::Duration};
+use std::{
+    collections::{BTreeMap, BTreeSet, VecDeque},
+    path::{Component, Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
 use util::ResultExt as _;
 use worktree::{PathChange, UpdatedEntriesSet};
 
@@ -19,11 +24,24 @@ struct GitHead {
     resolved: Option<String>,
 }
 
-async fn bounded_git_file(filesystem: &Arc<dyn fs::Fs>, path: &Path, limit: u64) -> Result<Option<String>> {
-    let Some(metadata) = filesystem.metadata(path).await? else { return Ok(None); };
-    anyhow::ensure!(!metadata.is_dir && !metadata.is_fifo && metadata.len <= limit, "Git provenance file is unsupported or too large: {}", path.display());
+async fn bounded_git_file(
+    filesystem: &Arc<dyn fs::Fs>,
+    path: &Path,
+    limit: u64,
+) -> Result<Option<String>> {
+    let Some(metadata) = filesystem.metadata(path).await? else {
+        return Ok(None);
+    };
+    anyhow::ensure!(
+        !metadata.is_dir && !metadata.is_fifo && metadata.len <= limit,
+        "Git provenance file is unsupported or too large: {}",
+        path.display()
+    );
     let value = filesystem.load(path).await?;
-    anyhow::ensure!(value.len() as u64 <= limit, "Git provenance changed beyond its byte limit");
+    anyhow::ensure!(
+        value.len() as u64 <= limit,
+        "Git provenance changed beyond its byte limit"
+    );
     Ok(Some(value))
 }
 
@@ -34,48 +52,106 @@ fn valid_git_object(value: &str) -> bool {
 async fn git_head(filesystem: &Arc<dyn fs::Fs>, root: &Path) -> Result<Option<GitHead>> {
     let mut root = root.to_path_buf();
     let metadata = loop {
-        if let Some(metadata) = filesystem.metadata(&root.join(".git")).await? { break metadata; }
-        if !root.pop() { return Ok(None); }
+        if let Some(metadata) = filesystem.metadata(&root.join(".git")).await? {
+            break metadata;
+        }
+        if !root.pop() {
+            return Ok(None);
+        }
     };
     let dot_git = root.join(".git");
-    let directory = if metadata.is_dir { dot_git } else {
-        let file = bounded_git_file(filesystem, &dot_git, 32768).await?.context("Git directory reference disappeared")?;
-        let reference = file.trim().strip_prefix("gitdir: ").context("Invalid Gradle input Git directory reference")?;
+    let directory = if metadata.is_dir {
+        dot_git
+    } else {
+        let file = bounded_git_file(filesystem, &dot_git, 32768)
+            .await?
+            .context("Git directory reference disappeared")?;
+        let reference = file
+            .trim()
+            .strip_prefix("gitdir: ")
+            .context("Invalid Gradle input Git directory reference")?;
         filesystem.canonicalize(&root.join(reference)).await?
     };
-    let common_directory = if let Some(common) = bounded_git_file(filesystem, &directory.join("commondir"), 32768).await? {
-        filesystem.canonicalize(&directory.join(common.trim())).await?
-    } else { directory.clone() };
-    let head = bounded_git_file(filesystem, &directory.join("HEAD"), 4096).await?.context("Gradle input Git HEAD is unavailable")?.trim().to_owned();
+    let common_directory = if let Some(common) =
+        bounded_git_file(filesystem, &directory.join("commondir"), 32768).await?
+    {
+        filesystem
+            .canonicalize(&directory.join(common.trim()))
+            .await?
+    } else {
+        directory.clone()
+    };
+    let head = bounded_git_file(filesystem, &directory.join("HEAD"), 4096)
+        .await?
+        .context("Gradle input Git HEAD is unavailable")?
+        .trim()
+        .to_owned();
     let resolved = if let Some(reference) = head.strip_prefix("ref: ") {
         let reference = Path::new(reference);
-        anyhow::ensure!(reference.starts_with("refs") && reference.components().all(|component| matches!(component, Component::Normal(_)))
-            && !head.chars().any(|character| character.is_control()), "Unsupported Gradle input Git reference");
+        anyhow::ensure!(
+            reference.starts_with("refs")
+                && reference
+                    .components()
+                    .all(|component| matches!(component, Component::Normal(_)))
+                && !head.chars().any(|character| character.is_control()),
+            "Unsupported Gradle input Git reference"
+        );
         let loose = bounded_git_file(filesystem, &directory.join(reference), 4096).await?;
         let loose = match loose {
             Some(value) => Some(value),
-            None if common_directory != directory => bounded_git_file(filesystem, &common_directory.join(reference), 4096).await?,
+            None if common_directory != directory => {
+                bounded_git_file(filesystem, &common_directory.join(reference), 4096).await?
+            }
             None => None,
         };
-        if let Some(value) = loose { Some(value.trim().to_owned()) } else {
-            let packed = bounded_git_file(filesystem, &common_directory.join("packed-refs"), 8 * 1024 * 1024).await?;
+        if let Some(value) = loose {
+            Some(value.trim().to_owned())
+        } else {
+            let packed = bounded_git_file(
+                filesystem,
+                &common_directory.join("packed-refs"),
+                8 * 1024 * 1024,
+            )
+            .await?;
             let name = reference.to_str().context("Non-UTF-8 Git reference")?;
-            packed.as_deref().and_then(|packed| packed.lines().find_map(|line| {
-                let (object, candidate) = line.split_once(' ')?;
-                (candidate == name).then(|| object.to_owned())
-            }))
+            packed.as_deref().and_then(|packed| {
+                packed.lines().find_map(|line| {
+                    let (object, candidate) = line.split_once(' ')?;
+                    (candidate == name).then(|| object.to_owned())
+                })
+            })
         }
     } else {
-        anyhow::ensure!(valid_git_object(&head), "Unsupported detached Gradle input Git HEAD");
+        anyhow::ensure!(
+            valid_git_object(&head),
+            "Unsupported detached Gradle input Git HEAD"
+        );
         Some(head.clone())
     };
-    anyhow::ensure!(resolved.as_ref().is_none_or(|value| valid_git_object(value)), "Invalid Gradle input Git object");
-    Ok(Some(GitHead { work_directory: root, directory, common_directory, head, resolved }))
+    anyhow::ensure!(
+        resolved
+            .as_ref()
+            .is_none_or(|value| valid_git_object(value)),
+        "Invalid Gradle input Git object"
+    );
+    Ok(Some(GitHead {
+        work_directory: root,
+        directory,
+        common_directory,
+        head,
+        resolved,
+    }))
 }
 
 fn register_ready(watcher: &Arc<dyn fs::Watcher>, directory: &Path) -> Result<()> {
-    watcher.add(directory).context("Establish Gradle input observer")?;
-    anyhow::ensure!(watcher.is_watching(directory), "Gradle input observer is pending or unavailable: {}", directory.display());
+    watcher
+        .add(directory)
+        .context("Establish Gradle input observer")?;
+    anyhow::ensure!(
+        watcher.is_watching(directory),
+        "Gradle input observer is pending or unavailable: {}",
+        directory.display()
+    );
     Ok(())
 }
 
@@ -99,42 +175,89 @@ pub(super) struct InputObserver {
 }
 
 impl InputCoverage {
-    fn nearest_observed_directory(&self, filesystem: &dyn fs::Fs, directory: &Path) -> Option<PathBuf> {
-        if !filesystem.path_exists(&self.root) || !self.watcher.is_watching(&self.root) { return None; }
-        let existing = directory.ancestors().find(|path| filesystem.path_exists(path))?;
-        (existing.starts_with(&self.root) && self.directories.lock().contains_key(existing)
-            && self.watcher.is_watching(existing)).then(|| existing.to_path_buf())
+    fn nearest_observed_directory(
+        &self,
+        filesystem: &dyn fs::Fs,
+        directory: &Path,
+    ) -> Option<PathBuf> {
+        if !filesystem.path_exists(&self.root) || !self.watcher.is_watching(&self.root) {
+            return None;
+        }
+        let existing = directory
+            .ancestors()
+            .find(|path| filesystem.path_exists(path))?;
+        (existing.starts_with(&self.root)
+            && self.directories.lock().contains_key(existing)
+            && self.watcher.is_watching(existing))
+        .then(|| existing.to_path_buf())
     }
 
     async fn current(&self, filesystem: &Arc<dyn fs::Fs>, directory: &Path) -> Result<bool> {
         let root = filesystem.metadata(&self.root).await?;
-        anyhow::ensure!(root.is_some_and(|metadata| metadata.is_dir && !metadata.is_symlink && metadata.inode == self.root_inode)
-            && self.watcher.is_watching(&self.root), "Gradle input observation root changed: {}", self.root.display());
-        let Some(existing) = self.nearest_observed_directory(filesystem.as_ref(), directory) else { return Ok(false); };
+        anyhow::ensure!(
+            root.is_some_and(|metadata| metadata.is_dir
+                && !metadata.is_symlink
+                && metadata.inode == self.root_inode)
+                && self.watcher.is_watching(&self.root),
+            "Gradle input observation root changed: {}",
+            self.root.display()
+        );
+        let Some(existing) = self.nearest_observed_directory(filesystem.as_ref(), directory) else {
+            return Ok(false);
+        };
         let expected = self.directories.lock().get(&existing).copied();
         let current = filesystem.metadata(&existing).await?;
-        anyhow::ensure!(current.is_some_and(|metadata| metadata.is_dir && !metadata.is_symlink && Some(metadata.inode) == expected)
-            && self.watcher.is_watching(&existing), "Gradle input directory changed while observed: {}", existing.display());
+        anyhow::ensure!(
+            current.is_some_and(|metadata| metadata.is_dir
+                && !metadata.is_symlink
+                && Some(metadata.inode) == expected)
+                && self.watcher.is_watching(&existing),
+            "Gradle input directory changed while observed: {}",
+            existing.display()
+        );
         Ok(true)
     }
 }
 
-async fn scan_inputs(filesystem: &Arc<dyn fs::Fs>, watcher: &Arc<dyn fs::Watcher>, roots: Vec<PathBuf>,
-    watched: &mut BTreeMap<PathBuf, u64>, provenance: Option<&ContextSnapshot>) -> Result<InputScan> {
+async fn scan_inputs(
+    filesystem: &Arc<dyn fs::Fs>,
+    watcher: &Arc<dyn fs::Watcher>,
+    roots: Vec<PathBuf>,
+    watched: &mut BTreeMap<PathBuf, u64>,
+    provenance: Option<&ContextSnapshot>,
+) -> Result<InputScan> {
     let mut queue = VecDeque::from(roots);
     let mut discovered = Vec::new();
     let mut git_roots = BTreeSet::new();
     let mut entries = 0;
     while let Some(directory) = queue.pop_front() {
-        if provenance.is_some_and(|snapshot| snapshot.is_generated_output(&directory)) { continue; }
-        let Some(metadata) = filesystem.metadata(&directory).await? else { continue; };
-        if !metadata.is_dir || metadata.is_symlink { continue; }
-        if watched.get(&directory) == Some(&metadata.inode) { continue; }
-        if watched.contains_key(&directory) {
-            let previous = watched.keys().filter(|path| path.starts_with(&directory)).cloned().collect::<Vec<_>>();
-            for path in previous { watcher.remove(&path)?; watched.remove(&path); }
+        if provenance.is_some_and(|snapshot| snapshot.is_generated_output(&directory)) {
+            continue;
         }
-        anyhow::ensure!(watched.len() < 32768, "Gradle input tree exceeds its directory observation limit");
+        let Some(metadata) = filesystem.metadata(&directory).await? else {
+            continue;
+        };
+        if !metadata.is_dir || metadata.is_symlink {
+            continue;
+        }
+        if watched.get(&directory) == Some(&metadata.inode) {
+            continue;
+        }
+        if watched.contains_key(&directory) {
+            let previous = watched
+                .keys()
+                .filter(|path| path.starts_with(&directory))
+                .cloned()
+                .collect::<Vec<_>>();
+            for path in previous {
+                watcher.remove(&path)?;
+                watched.remove(&path);
+            }
+        }
+        anyhow::ensure!(
+            watched.len() < 32768,
+            "Gradle input tree exceeds its directory observation limit"
+        );
         register_ready(watcher, &directory)?;
         watched.insert(directory.clone(), metadata.inode);
         discovered.push(directory.clone());
@@ -142,40 +265,89 @@ async fn scan_inputs(filesystem: &Arc<dyn fs::Fs>, watcher: &Arc<dyn fs::Watcher
         while let Some(child) = children.next().await {
             let child = child?;
             entries += 1;
-            anyhow::ensure!(entries <= 262144, "Gradle input scan exceeds its entry limit");
+            anyhow::ensure!(
+                entries <= 262144,
+                "Gradle input scan exceeds its entry limit"
+            );
             if child.file_name().is_some_and(|name| name == ".git") {
                 git_roots.insert(directory.clone());
                 continue;
             }
-            if child.file_name().is_some_and(|name| name == ".gradle" || name == ".kotlin")
-                || provenance.is_some_and(|snapshot| snapshot.is_generated_output(&child)) { continue; }
+            if child
+                .file_name()
+                .is_some_and(|name| name == ".gradle" || name == ".kotlin")
+                || provenance.is_some_and(|snapshot| snapshot.is_generated_output(&child))
+            {
+                continue;
+            }
             discovered.push(child.clone());
-            if filesystem.metadata(&child).await?.is_some_and(|metadata| metadata.is_dir && !metadata.is_symlink) { queue.push_back(child); }
+            if filesystem
+                .metadata(&child)
+                .await?
+                .is_some_and(|metadata| metadata.is_dir && !metadata.is_symlink)
+            {
+                queue.push_back(child);
+            }
         }
     }
-    Ok(InputScan { discovered, git_roots })
+    Ok(InputScan {
+        discovered,
+        git_roots,
+    })
 }
 
-async fn register_current_ref(filesystem: &Arc<dyn fs::Fs>, watcher: &Arc<dyn fs::Watcher>, directory: &Path, head: &GitHead) -> Result<()> {
-    let Some(reference) = head.head.strip_prefix("ref: ") else { return Ok(()); };
-    let mut parent = directory.join(reference).parent().context("Git reference has no parent")?.to_path_buf();
-    while !filesystem.metadata(&parent).await?.is_some_and(|metadata| metadata.is_dir) {
-        anyhow::ensure!(parent.pop() && parent.starts_with(directory), "Git reference parent is unavailable");
+async fn register_current_ref(
+    filesystem: &Arc<dyn fs::Fs>,
+    watcher: &Arc<dyn fs::Watcher>,
+    directory: &Path,
+    head: &GitHead,
+) -> Result<()> {
+    let Some(reference) = head.head.strip_prefix("ref: ") else {
+        return Ok(());
+    };
+    let mut parent = directory
+        .join(reference)
+        .parent()
+        .context("Git reference has no parent")?
+        .to_path_buf();
+    while !filesystem
+        .metadata(&parent)
+        .await?
+        .is_some_and(|metadata| metadata.is_dir)
+    {
+        anyhow::ensure!(
+            parent.pop() && parent.starts_with(directory),
+            "Git reference parent is unavailable"
+        );
     }
     register_ready(watcher, &parent)
 }
 
 fn may_change_git_head(path: &Path, root: &Path, head: Option<&GitHead>) -> bool {
     let dot_git = root.join(".git");
-    if path == dot_git || dot_git.starts_with(path) { return true; }
+    if path == dot_git || dot_git.starts_with(path) {
+        return true;
+    }
     let Some(head) = head else {
-        return path.starts_with(dot_git) && path.file_name().is_some_and(|name| name == "HEAD" || name == "commondir" || name == "packed-refs");
+        return path.starts_with(dot_git)
+            && path.file_name().is_some_and(|name| {
+                name == "HEAD" || name == "commondir" || name == "packed-refs"
+            });
     };
-    [head.directory.join("HEAD"), head.directory.join("commondir"), head.common_directory.join("packed-refs")]
-        .into_iter().any(|required| required == path || required.starts_with(path))
+    [
+        head.directory.join("HEAD"),
+        head.directory.join("commondir"),
+        head.common_directory.join("packed-refs"),
+    ]
+    .into_iter()
+    .any(|required| required == path || required.starts_with(path))
         || head.head.strip_prefix("ref: ").is_some_and(|reference| {
-            [head.directory.join(reference), head.common_directory.join(reference)]
-                .into_iter().any(|required| required == path || required.starts_with(path))
+            [
+                head.directory.join(reference),
+                head.common_directory.join(reference),
+            ]
+            .into_iter()
+            .any(|required| required == path || required.starts_with(path))
         })
 }
 
@@ -190,15 +362,20 @@ impl Project {
         trusted: bool,
         cx: &mut Context<Self>,
     ) -> Result<RootHandle> {
-        let path = self.worktree_for_id(worktree, cx)
+        let path = self
+            .worktree_for_id(worktree, cx)
             .context("Project root is no longer open")?
-            .read(cx).abs_path().to_path_buf();
+            .read(cx)
+            .abs_path()
+            .to_path_buf();
         if let Some(handle) = self.android_context.handle(worktree.to_proto()) {
             if self.android_context.root_path(handle) == Some(path.as_path()) {
                 let previous = self.android_context.token(handle);
                 self.android_context.set_trusted(handle, trusted)?;
                 if self.android_context.token(handle) != previous {
-                    if !trusted { self.android_context_observers.remove(&handle); }
+                    if !trusted {
+                        self.android_context_observers.remove(&handle);
+                    }
                     self.clear_android_model_for_root(&path, cx);
                     cx.emit(crate::Event::AndroidProjectContextChanged);
                     cx.notify();
@@ -207,10 +384,15 @@ impl Project {
             }
             self.remove_android_context(worktree, cx);
         }
-        self.android_context.add_root(worktree.to_proto(), path, trusted)
+        self.android_context
+            .add_root(worktree.to_proto(), path, trusted)
     }
 
-    pub fn begin_android_context_import(&mut self, root: RootHandle, cx: &mut Context<Self>) -> Result<DiscoveryToken> {
+    pub fn begin_android_context_import(
+        &mut self,
+        root: RootHandle,
+        cx: &mut Context<Self>,
+    ) -> Result<DiscoveryToken> {
         let token = self.android_context.begin_import(root)?;
         if let Some(path) = self.android_context.root_path(root).map(Path::to_path_buf) {
             self.clear_android_model_for_root(&path, cx);
@@ -234,41 +416,85 @@ impl Project {
         Ok(())
     }
 
-    pub fn verify_android_context_inputs(&mut self, token: &DiscoveryToken, snapshot: &ContextSnapshot) -> Result<()> {
+    pub fn verify_android_context_inputs(
+        &mut self,
+        token: &DiscoveryToken,
+        snapshot: &ContextSnapshot,
+    ) -> Result<()> {
         self.android_context.verify_import_inputs(token, snapshot)
     }
 
     pub fn android_context_observes(&self, root: RootHandle, directory: &Path) -> bool {
-        self.android_context_coverage(root, directory).iter()
-            .any(|coverage| coverage.nearest_observed_directory(self.fs().as_ref(), directory).is_some())
+        self.android_context_coverage(root, directory)
+            .iter()
+            .any(|coverage| {
+                coverage
+                    .nearest_observed_directory(self.fs().as_ref(), directory)
+                    .is_some()
+            })
     }
 
     fn android_context_coverage(&self, root: RootHandle, directory: &Path) -> Vec<InputCoverage> {
-        let Some(observers) = self.android_context_observers.get(&root) else { return Vec::new(); };
-        directory.ancestors().filter_map(|ancestor| observers.get(ancestor).map(|observer| observer.coverage.clone())).collect()
+        let Some(observers) = self.android_context_observers.get(&root) else {
+            return Vec::new();
+        };
+        directory
+            .ancestors()
+            .filter_map(|ancestor| {
+                observers
+                    .get(ancestor)
+                    .map(|observer| observer.coverage.clone())
+            })
+            .collect()
     }
 
-    pub fn verify_android_context_observers(&mut self, root: RootHandle, token: DiscoveryToken, directories: Vec<PathBuf>, cx: &mut Context<Self>) -> Task<Result<()>> {
-        if directories.len() > 4096 { return Task::ready(Err(anyhow::anyhow!("Too many evaluated Gradle input folders"))); }
-        if token.root() != root || !self.android_context.import_is_current(&token) { return Task::ready(Err(anyhow::anyhow!("Project changed before checking Gradle inputs"))); }
+    pub fn verify_android_context_observers(
+        &mut self,
+        root: RootHandle,
+        token: DiscoveryToken,
+        directories: Vec<PathBuf>,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<()>> {
+        if directories.len() > 4096 {
+            return Task::ready(Err(anyhow::anyhow!(
+                "Too many evaluated Gradle input folders"
+            )));
+        }
+        if token.root() != root || !self.android_context.import_is_current(&token) {
+            return Task::ready(Err(anyhow::anyhow!(
+                "Project changed before checking Gradle inputs"
+            )));
+        }
         let filesystem = self.fs().clone();
-        let directories = directories.into_iter().map(|directory| {
-            let observers = self.android_context_coverage(root, &directory);
-            (directory, observers)
-        }).collect::<Vec<_>>();
+        let directories = directories
+            .into_iter()
+            .map(|directory| {
+                let observers = self.android_context_coverage(root, &directory);
+                (directory, observers)
+            })
+            .collect::<Vec<_>>();
         cx.spawn(async move |project, cx| {
-            let result = cx.background_spawn(async move {
-                for (directory, observers) in directories {
-                    let mut covered = false;
-                    for observer in observers {
-                        covered |= observer.current(&filesystem, &directory).await?;
+            let result = cx
+                .background_spawn(async move {
+                    for (directory, observers) in directories {
+                        let mut covered = false;
+                        for observer in observers {
+                            covered |= observer.current(&filesystem, &directory).await?;
+                        }
+                        anyhow::ensure!(
+                            covered,
+                            "Evaluated Gradle input coverage is unavailable: {}",
+                            directory.display()
+                        );
                     }
-                    anyhow::ensure!(covered, "Evaluated Gradle input coverage is unavailable: {}", directory.display());
-                }
-                Ok::<_, anyhow::Error>(())
-            }).await;
+                    Ok::<_, anyhow::Error>(())
+                })
+                .await;
             project.update(cx, |project, cx| {
-                anyhow::ensure!(project.android_context.import_is_current(&token), "Gradle observer owner changed during verification");
+                anyhow::ensure!(
+                    project.android_context.import_is_current(&token),
+                    "Gradle observer owner changed during verification"
+                );
                 if result.is_err() {
                     project.android_context_observers.remove(&root);
                     project.invalidate_android_context_handle(root, cx)?;
@@ -278,16 +504,38 @@ impl Project {
         })
     }
 
-    pub fn observe_android_context_inputs(&mut self, root: RootHandle, token: DiscoveryToken, directories: Vec<PathBuf>, provenance: Option<ContextSnapshot>, cx: &mut Context<Self>) -> Task<Result<bool>> {
-        if directories.len() > 4096 { return Task::ready(Err(anyhow::anyhow!("Too many evaluated Gradle observer roots"))); }
-        if token.root() != root || !self.android_context.import_is_current(&token) { return Task::ready(Err(anyhow::anyhow!("Project changed before Gradle input setup"))); }
-        if provenance.as_ref().is_some_and(|snapshot| self.android_context.root_path(root) != Some(snapshot.root())) {
-            return Task::ready(Err(anyhow::anyhow!("Gradle inputs belong to another project")));
+    pub fn observe_android_context_inputs(
+        &mut self,
+        root: RootHandle,
+        token: DiscoveryToken,
+        directories: Vec<PathBuf>,
+        provenance: Option<ContextSnapshot>,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<bool>> {
+        if directories.len() > 4096 {
+            return Task::ready(Err(anyhow::anyhow!(
+                "Too many evaluated Gradle observer roots"
+            )));
+        }
+        if token.root() != root || !self.android_context.import_is_current(&token) {
+            return Task::ready(Err(anyhow::anyhow!(
+                "Project changed before Gradle input setup"
+            )));
+        }
+        if provenance
+            .as_ref()
+            .is_some_and(|snapshot| self.android_context.root_path(root) != Some(snapshot.root()))
+        {
+            return Task::ready(Err(anyhow::anyhow!(
+                "Gradle inputs belong to another project"
+            )));
         }
         let provenance = provenance.map(Arc::new);
         if let Some(snapshot) = &provenance {
             if let Some(observers) = self.android_context_observers.get(&root) {
-                for observer in observers.values() { *observer.coverage.provenance.lock() = Some(snapshot.clone()); }
+                for observer in observers.values() {
+                    *observer.coverage.provenance.lock() = Some(snapshot.clone());
+                }
             }
         }
         let filesystem = self.fs().clone();
@@ -471,18 +719,38 @@ impl Project {
         })
     }
 
-    pub fn finish_failed_android_context_import(&mut self, token: &DiscoveryToken, cx: &mut Context<Self>) -> Result<()> {
+    pub fn finish_failed_android_context_import(
+        &mut self,
+        token: &DiscoveryToken,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
         self.android_context.finish_failed_import(token)?;
         cx.emit(crate::Event::AndroidProjectContextChanged);
         cx.notify();
         Ok(())
     }
 
-    pub fn invalidate_android_context_for_repository(&mut self, directory: &Path, cx: &mut Context<Self>) {
-        let handles = self.android_context.handles().filter(|handle| {
-            self.android_context.root_path(*handle).is_some_and(|root| root.starts_with(directory) || directory.starts_with(root))
-                || self.android_context.snapshot(*handle).is_some_and(|snapshot| snapshot.build_logic_directories().iter().any(|root| root.starts_with(directory) || directory.starts_with(root)))
-        }).collect::<Vec<_>>();
+    pub fn invalidate_android_context_for_repository(
+        &mut self,
+        directory: &Path,
+        cx: &mut Context<Self>,
+    ) {
+        let handles =
+            self.android_context
+                .handles()
+                .filter(|handle| {
+                    self.android_context.root_path(*handle).is_some_and(|root| {
+                        root.starts_with(directory) || directory.starts_with(root)
+                    }) || self
+                        .android_context
+                        .snapshot(*handle)
+                        .is_some_and(|snapshot| {
+                            snapshot.build_logic_directories().iter().any(|root| {
+                                root.starts_with(directory) || directory.starts_with(root)
+                            })
+                        })
+                })
+                .collect::<Vec<_>>();
         for handle in handles {
             self.invalidate_android_context_handle(handle, cx).log_err();
         }
@@ -494,8 +762,15 @@ impl Project {
         }
     }
 
-    fn invalidate_android_context_handle(&mut self, handle: RootHandle, cx: &mut Context<Self>) -> Result<()> {
-        let path = self.android_context.root_path(handle).map(Path::to_path_buf);
+    fn invalidate_android_context_handle(
+        &mut self,
+        handle: RootHandle,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
+        let path = self
+            .android_context
+            .root_path(handle)
+            .map(Path::to_path_buf);
         self.android_context.invalidate(handle)?;
         if let Some(path) = path {
             self.clear_android_model_for_root(&path, cx);
@@ -507,7 +782,10 @@ impl Project {
 
     pub(crate) fn remove_android_context(&mut self, worktree: WorktreeId, cx: &mut Context<Self>) {
         if let Some(handle) = self.android_context.handle(worktree.to_proto()) {
-            let path = self.android_context.root_path(handle).map(Path::to_path_buf);
+            let path = self
+                .android_context
+                .root_path(handle)
+                .map(Path::to_path_buf);
             if self.android_context.remove_root(handle) {
                 self.android_context_observers.remove(&handle);
                 if let Some(path) = path {
@@ -519,10 +797,20 @@ impl Project {
         }
     }
 
-    pub(crate) fn invalidate_android_context_inputs(&mut self, worktree: WorktreeId, changes: &UpdatedEntriesSet, cx: &mut Context<Self>) {
-        let Some(worktree) = self.worktree_for_id(worktree, cx) else { return };
+    pub(crate) fn invalidate_android_context_inputs(
+        &mut self,
+        worktree: WorktreeId,
+        changes: &UpdatedEntriesSet,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(worktree) = self.worktree_for_id(worktree, cx) else {
+            return;
+        };
         let directory = worktree.read(cx).abs_path();
-        for (path, _, _) in changes.iter().filter(|(_, _, change)| *change != PathChange::Loaded) {
+        for (path, _, _) in changes
+            .iter()
+            .filter(|(_, _, change)| *change != PathChange::Loaded)
+        {
             let absolute = directory.join(path.as_std_path());
             self.on_android_context_input_change(&absolute, cx);
         }
@@ -530,20 +818,36 @@ impl Project {
 
     fn on_android_context_input_change(&mut self, absolute: &Path, cx: &mut Context<Self>) {
         match self.android_context.observe_input_change(absolute) {
-            Ok(handles) => for handle in handles { self.notify_android_context_input_invalidation(handle, cx); },
+            Ok(handles) => {
+                for handle in handles {
+                    self.notify_android_context_input_invalidation(handle, cx);
+                }
+            }
             Err(error) => log::error!("Cannot track Gradle input change: {error:#}"),
         }
     }
 
-    fn on_owned_android_context_input_change(&mut self, root: RootHandle, absolute: &Path, cx: &mut Context<Self>) {
-        match self.android_context.observe_root_input_change(root, absolute) {
+    fn on_owned_android_context_input_change(
+        &mut self,
+        root: RootHandle,
+        absolute: &Path,
+        cx: &mut Context<Self>,
+    ) {
+        match self
+            .android_context
+            .observe_root_input_change(root, absolute)
+        {
             Ok(true) => self.notify_android_context_input_invalidation(root, cx),
             Ok(false) => {}
             Err(error) => log::error!("Cannot track owned Gradle input change: {error:#}"),
         }
     }
 
-    fn notify_android_context_input_invalidation(&mut self, root: RootHandle, cx: &mut Context<Self>) {
+    fn notify_android_context_input_invalidation(
+        &mut self,
+        root: RootHandle,
+        cx: &mut Context<Self>,
+    ) {
         if let Some(path) = self.android_context.root_path(root).map(Path::to_path_buf) {
             self.clear_android_model_for_root(&path, cx);
         }
