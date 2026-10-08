@@ -1,0 +1,33 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "library_sha256": "9c8c3235cac1fcfc10832e8af791487865164786533fb45afecac2440d0be570",
+  "probe_source_sha256": "a967c834d0f786f3779bd7a4b0536e60fca064b9c5f06b52b3baa7d46a50f360",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/runtime-probe.rs",
+    "-L",
+    "dependency=/workspace/.cache/zed/target/debug/deps",
+    "--extern",
+    "android_tools=/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+    "--extern",
+    "serde_json=/workspace/.cache/zed/target/debug/deps/libserde_json-dad50efee64284ac.rlib",
+    "--extern",
+    "anyhow=/workspace/.cache/zed/target/debug/deps/libanyhow-18b69cad26582a56.rlib",
+    "-o",
+    "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/runtime-probe"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 2.0671695670025656,
+  "normal_library_receipt": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/library-build-verified.json",
+  "guard_before_after_files": 4743,
+  "no_Cargo_rebuild": true,
+  "only_external_probe_output_written": true,
+  "dependency_hashes_before_after": {
+    "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib": "9c8c3235cac1fcfc10832e8af791487865164786533fb45afecac2440d0be570",
+    "/workspace/.cache/zed/target/debug/deps/libserde_json-dad50efee64284ac.rlib": "6d2d7d84c8ec0a2ce9a03a837853f16d018bcfb0bfafc1b5db0f52ff2661c540",
+    "/workspace/.cache/zed/target/debug/deps/libanyhow-18b69cad26582a56.rlib": "5f38438c63ce0b49d3cbc0b6023bf7772b72df55bfd85afbdf65ad131be0cd5e"
+  },
+  "probe_executable_sha256": "1ca776b87f21dfbaa24bbfa5494bad55b05c6e849fc02ebafee6c58996d70519",
+  "probe_executable_bytes": 10124888
+}

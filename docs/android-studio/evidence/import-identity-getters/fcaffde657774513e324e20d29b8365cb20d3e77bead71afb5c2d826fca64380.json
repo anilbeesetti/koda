@@ -1,0 +1,19 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+  "source_files": 4743,
+  "current_compiled_library": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+  "bytes": 315735670,
+  "sha256": "9c8c3235cac1fcfc10832e8af791487865164786533fb45afecac2440d0be570",
+  "normal_fresh_library_receipt": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/library-build-verified.json",
+  "normal_fresh_library_receipt_sha256": "683faaa7da63a865ae0bb519d3f83369d61937d76b59e909143b746d6fe65573",
+  "normal_fresh_library_compilerJSON": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/library-build.log",
+  "compilerJSON_sha256": "0808ad3e6f89e045b5eceae2dadc625d8a07462a1b2a02922ae61454ec5ecdd5",
+  "current_absolute_WT_src_path_and_fresh_false_verified": true,
+  "huge_artifact_copy_created": false,
+  "frozen_import30": "/tmp/import-identity-getters-frozen/all-feature-7e3f72-tests30",
+  "owner_all_new_tests_and_allfeature291_actual_pass": true,
+  "SDK8_actual_pass_summary": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/summary.json",
+  "exclusive_Cargo_SDK_lease_released_to_Root_now": true,
+  "owner_future_work": "read-only five finalreviews and external packaging, no Cargo/JVM/SDK/native or Source/Git mutation during Root current7UI captures"
+}

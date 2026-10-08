@@ -1,0 +1,102 @@
+{
+  "prepared_only": true,
+  "runtime_executed": false,
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "previous_retry_static_review": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/quality-retry-static.json",
+  "previous_retry_static_review_sha256": "46395de55fa5ab2df1531b0f9b49ff0c377fde18aaa189924cdf2af63a2db59a",
+  "shell_forwarding_probe": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/shell-forwarding-compatibility-proof.json",
+  "shell_forwarding_probe_sha256": "cc5d16e70bd9571dbfe5ce513e3b79f332536681cb50a0f3b320ff56dc52bf67",
+  "interrupted_prior_replay": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/interrupted-replay-and-duplicate-closure.json",
+  "interrupted_prior_replay_sha256": "ef3a46cfef046baf1b9e1b07cfc053147fbed00001560c703990b0236e970dda",
+  "initialfailedreplay": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/initial-native-failure-proof.json",
+  "files": [
+    {
+      "path": "guard.py",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/guard.py",
+      "previous_sha256": "a1ac2febcc8fcc9315fda6c8eac02af8f09d0618a16abb3a0bbba89ceaf24a2e",
+      "current_sha256": "a1ac2febcc8fcc9315fda6c8eac02af8f09d0618a16abb3a0bbba89ceaf24a2e",
+      "unchanged": true
+    },
+    {
+      "path": "prepare.py",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/prepare.py",
+      "previous_sha256": "3be0479a91c989b0949eb88f8f103b2da7e9ef4706cf1643a67dfae85a01e2ec",
+      "current_sha256": "3be0479a91c989b0949eb88f8f103b2da7e9ef4706cf1643a67dfae85a01e2ec",
+      "unchanged": true
+    },
+    {
+      "path": "capture-gradle.py",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/capture-gradle.py",
+      "previous_sha256": "94b55843afae805ccf5b395e11e0622cad3d89a5274f23a5e7af960411fb87e8",
+      "current_sha256": "94b55843afae805ccf5b395e11e0622cad3d89a5274f23a5e7af960411fb87e8",
+      "unchanged": true
+    },
+    {
+      "path": "events.py",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/events.py",
+      "previous_sha256": "39c3595af38b2b5b1f6fe7c92cd5bf3a46941140f28b3fc756f81a550773d1b8",
+      "current_sha256": "39c3595af38b2b5b1f6fe7c92cd5bf3a46941140f28b3fc756f81a550773d1b8",
+      "unchanged": true
+    },
+    {
+      "path": "bind-input-plan.py",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/bind-input-plan.py",
+      "previous_sha256": "9e8217dbef5443c04e1718b887bdcc54f5c0f9a801a052cc64a2a349e2df4294",
+      "current_sha256": "9e8217dbef5443c04e1718b887bdcc54f5c0f9a801a052cc64a2a349e2df4294",
+      "unchanged": true
+    },
+    {
+      "path": "compile-decoder.py",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/compile-decoder.py",
+      "previous_sha256": "f185a668082a11e077c2f081c0ef30aebea0f744b7812e707550dc185094ec16",
+      "current_sha256": "f185a668082a11e077c2f081c0ef30aebea0f744b7812e707550dc185094ec16",
+      "unchanged": true
+    },
+    {
+      "path": "verify-models.py",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/verify-models.py",
+      "previous_sha256": "8207d926495efeb9686842dac582c1046ebc3d956fe845868881be917352b24b",
+      "current_sha256": "8207d926495efeb9686842dac582c1046ebc3d956fe845868881be917352b24b",
+      "unchanged": true
+    },
+    {
+      "path": "stop-owned-app.py",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/stop-owned-app.py",
+      "previous_sha256": "cfe30b275b4c305a8c386ecc2d41de49aa34deb3cf0c40e1289d1f0182680333",
+      "current_sha256": "cfe30b275b4c305a8c386ecc2d41de49aa34deb3cf0c40e1289d1f0182680333",
+      "unchanged": true
+    },
+    {
+      "path": "finalize-proof.py",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/finalize-proof.py",
+      "previous_sha256": "fd84ed9a78a9e96a8f79931a6abbcb7cef8a011bc8c05115a34a6d2209bc2223",
+      "current_sha256": "fd84ed9a78a9e96a8f79931a6abbcb7cef8a011bc8c05115a34a6d2209bc2223",
+      "unchanged": true
+    },
+    {
+      "path": "runtime-probe.rs",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/runtime-probe.rs",
+      "previous_sha256": "a967c834d0f786f3779bd7a4b0536e60fca064b9c5f06b52b3baa7d46a50f360",
+      "current_sha256": "a967c834d0f786f3779bd7a4b0536e60fca064b9c5f06b52b3baa7d46a50f360",
+      "unchanged": true
+    },
+    {
+      "path": "scope.json",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/scope.json",
+      "previous_sha256": "43ab06faa81287eb9d0b5be021057743646ae4eab02fb670d95608abdffc1090",
+      "current_sha256": "43ab06faa81287eb9d0b5be021057743646ae4eab02fb670d95608abdffc1090",
+      "unchanged": true
+    },
+    {
+      "path": "input-replay-plan.json",
+      "previous_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/input-replay-plan.json",
+      "previous_sha256": "acc3c0992bbb4626727b9393ab31434cf0df462da31e5e30afc5ea55ae7c5e81",
+      "current_sha256": "b26ade1ac8c6d9b43ad7539fed6151097275ea1631500bb1b0f8d977b0831a71",
+      "unchanged": false
+    }
+  ],
+  "only_change": "17 imageprivateQA destinationprefixes; allothercommands/Source/modelassertionssame",
+  "launch_must_refuse_existing_launcher_PTY_or_session_or_events_or_old_profile_databases": true,
+  "currentnormalapp_and_library_reused_not_rebuilt": true,
+  "new_original_credit": 0
+}

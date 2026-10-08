@@ -1,0 +1,7 @@
+{
+  "infrastructure_only": true,
+  "failure": "Setup compared os.walk insertion order for the two changed paths to an alphabetical list; two allowed changes were correct, path-order assertion failed",
+  "runtime_started_after_shell_continued_to_next_newline": true,
+  "corrected_receipt_checks_exact_changed_path_set_and_each_before_plus_exact_added_bytes": true,
+  "SDK_capture_assertions_or_Source_not_changed": true
+}

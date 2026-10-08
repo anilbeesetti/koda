@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "verdict": "FAIL",
+  "review_area": "code",
+  "scope": "static_source_only_runtime_pending",
+  "source_fix_round": 1,
+  "source": "8362e8ca7187164dc7d15173994528790f100368",
+  "timestamp_utc": "2026-10-08T00:51:34.783139+00:00",
+  "supersedes_overall_verdict_only": "code-static-round1.json",
+  "resolved_findings": [
+    "C1",
+    "C2"
+  ],
+  "findings": [
+    {
+      "id": "C3",
+      "priority": 2,
+      "file": "crates/android_tools/src/project_model.gradle",
+      "line_start": 64,
+      "line_end": 67,
+      "title": "Capture after all project-evaluation callbacks",
+      "trigger": "Later build-script gradle.projectsEvaluated callback sets idea.module.name='final-name'.",
+      "effect": "Retained sidecar catalogue exposes the earlier official getter result rather than the completed configuration value.",
+      "suggested_fix": "Move raw capture to taskGraph.whenReady; add actual late-callback supplementary bridge fixture/probe.",
+      "validation": "Pinned source ordering proof only; not executed."
+    }
+  ],
+  "reference_records": [
+    {
+      "source_path": "subprojects/core/src/main/java/org/gradle/invocation/DefaultGradle.java",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/timing-source-reference/subprojects/core/src/main/java/org/gradle/invocation/DefaultGradle.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "source_url": "https://raw.githubusercontent.com/gradle/gradle/309d128bd9fe8c0b71311878fc660b9cbaa07c51/subprojects/core/src/main/java/org/gradle/invocation/DefaultGradle.java",
+      "bytes": 24156,
+      "sha256": "a7cb9a368b1a18d1eead62d17ffd9ff41cc2bbfd49a75183798b23b86b29f0d6",
+      "attribution": "Complete original copyright/header retained; Apache-2.0 Gradle source; supplementary static evidence only."
+    },
+    {
+      "source_path": "platforms/core-runtime/messaging/src/main/java/org/gradle/internal/event/BroadcastDispatch.java",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/timing-source-reference/platforms/core-runtime/messaging/src/main/java/org/gradle/internal/event/BroadcastDispatch.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "source_url": "https://raw.githubusercontent.com/gradle/gradle/309d128bd9fe8c0b71311878fc660b9cbaa07c51/platforms/core-runtime/messaging/src/main/java/org/gradle/internal/event/BroadcastDispatch.java",
+      "bytes": 12620,
+      "sha256": "9e7be3bda05d188275156058210d762d81ec72ba9b1f71d363cfc8874b87aac5",
+      "attribution": "Complete original copyright/header retained; Apache-2.0 Gradle source; supplementary static evidence only."
+    },
+    {
+      "source_path": "platforms/core-runtime/messaging/src/main/java/org/gradle/internal/event/AbstractBroadcastDispatch.java",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/timing-source-reference/platforms/core-runtime/messaging/src/main/java/org/gradle/internal/event/AbstractBroadcastDispatch.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "source_url": "https://raw.githubusercontent.com/gradle/gradle/309d128bd9fe8c0b71311878fc660b9cbaa07c51/platforms/core-runtime/messaging/src/main/java/org/gradle/internal/event/AbstractBroadcastDispatch.java",
+      "bytes": 4342,
+      "sha256": "4af04a99472585181ce1f8306cb2f3898fc564e9be3289184b15483857452617",
+      "attribution": "Complete original copyright/header retained; Apache-2.0 Gradle source; supplementary static evidence only."
+    },
+    {
+      "source_path": "platforms/ide/ide-plugins/src/main/java/org/gradle/plugins/ide/idea/model/IdeaModule.java",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/timing-source-reference/platforms/ide/ide-plugins/src/main/java/org/gradle/plugins/ide/idea/model/IdeaModule.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "source_url": "https://raw.githubusercontent.com/gradle/gradle/309d128bd9fe8c0b71311878fc660b9cbaa07c51/platforms/ide/ide-plugins/src/main/java/org/gradle/plugins/ide/idea/model/IdeaModule.java",
+      "bytes": 22179,
+      "sha256": "62786202974c7fb0bb79db9be065639d57f7511fd0a549f1308cd9cc78910609",
+      "attribution": "Complete original copyright/header retained; Apache-2.0 Gradle source; supplementary static evidence only."
+    },
+    {
+      "source_path": "subprojects/core-api/src/main/java/org/gradle/api/execution/TaskExecutionGraph.java",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/timing-source-reference/subprojects/core-api/src/main/java/org/gradle/api/execution/TaskExecutionGraph.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "source_url": "https://raw.githubusercontent.com/gradle/gradle/309d128bd9fe8c0b71311878fc660b9cbaa07c51/subprojects/core-api/src/main/java/org/gradle/api/execution/TaskExecutionGraph.java",
+      "bytes": 6807,
+      "sha256": "ac2e1531de24c97a625d60b9bba5b299a7593d0bf4d3c319fa28d3f6e43a0598",
+      "attribution": "Complete original copyright/header retained; Apache-2.0 Gradle source; supplementary static evidence only."
+    },
+    {
+      "source_path": "subprojects/core/src/main/java/org/gradle/configuration/DefaultProjectsPreparer.java",
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/timing-source-reference/subprojects/core/src/main/java/org/gradle/configuration/DefaultProjectsPreparer.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "source_url": "https://raw.githubusercontent.com/gradle/gradle/309d128bd9fe8c0b71311878fc660b9cbaa07c51/subprojects/core/src/main/java/org/gradle/configuration/DefaultProjectsPreparer.java",
+      "bytes": 2301,
+      "sha256": "4235ec2ce8432012066807a1d7f6d4cf50d84a216936f405af4dfd02dd89d89c",
+      "attribution": "Complete original copyright/header retained; Apache-2.0 Gradle source; supplementary static evidence only."
+    }
+  ],
+  "history_source_and_test_copies_verified_byte_exact": true,
+  "report": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/code-static-round1-timing.md",
+    "sha256": "02339a4ad639816e13daeb931662dc11c0945fa890344bc3571f5029ffbbf71f"
+  },
+  "runtime_executions": 0,
+  "tests_executed": 0,
+  "source_mutations": 0,
+  "cache_mutations": 0,
+  "original_test_credit": 0
+}

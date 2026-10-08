@@ -1,0 +1,7 @@
+{
+  "infrastructure_only": true,
+  "second_setup_receipt_attempt_failed": "Current private fixture already advanced from baseline to authorized nested/late scenarios, so current settings differ by planned scenario mutation",
+  "correct_baseline_witness": "baseline-old/private-inputs-before.json captured before actual SDK baseline run",
+  "all_actual_source_probe_capture_assertions_unchanged": true,
+  "fixture_or_source_not_changed_by_receipt_attempt": true
+}

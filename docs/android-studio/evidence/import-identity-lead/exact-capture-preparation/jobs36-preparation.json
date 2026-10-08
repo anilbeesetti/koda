@@ -1,0 +1,1659 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "fixed_source_pathspec": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "source_files": 4743,
+  "selected_manifest_rows": 95,
+  "new_original_test_credit": 0,
+  "jobs": [
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_one_variant",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_one_variant",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-oneVariant.log",
+              "sha256": "44697bb3bb596c7ee6d69c7ea8c699635f695b892e0548c183b3829c59b29b65"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_debug_preferred",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_debug_preferred",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-debugPreferred.log",
+              "sha256": "5ee506649e06e738fdb7ce4eebc927ffa3bc9d365d46ba2dfdb66056f5843cfd"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_build_type",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_build_type",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-preferredBuildType.log",
+              "sha256": "86948bf6753a355c6f84da73e980126db2f473a6fda0256c5dc7ee802f8869c1"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-preferredProductFlavorOverDebugBuildType.log",
+              "sha256": "5a1ebd6b23f447222ea9ced8eb499020ac52f5329e7aadb4d34f6406ba229a48"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-preferredFlavorsInTwoDimensions.log",
+              "sha256": "fdd9655db6cecb5e5cd24b57bda36e64780593ad451e6a61be5ee141f90f7ea6"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
+              "sha256": "ac2d027867d52d4aa35c93e9c9dc6af302136926827c0e1265fa51d87556b9cb"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_mismatched_product_flavour_length",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-mismatchedProductFlavourLength.log",
+              "sha256": "1baebb2a84cc42722db78550a8a1aa51ca4a7d5773088619843496e87b4914a9"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_on_empty",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_on_empty",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-onEmpty.log",
+              "sha256": "769ec41edbc333d533514cabd7ccb32e493c6517e601cb3c1f1714f7ac756c37"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_simple_gradle_project",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_simple_gradle_project",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testImportSimpleGradleProject.log",
+              "sha256": "14ba7a4bb59c8d617767bda1d7bf5867e13efd478614bbc4fd95221877751b7a"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_subprojects",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_subprojects",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testImportSubprojects.log",
+              "sha256": "3cb70742b052a431812dd05bb4a9a8d676329a3ccb71dc49e8a7658ed5212bce"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_subprojects_with_missing_submodule",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_subprojects_with_missing_submodule",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testImportSubProjectsWithMissingSubModule.log",
+              "sha256": "4f645cda9ab283878346a652337255efe451fd0c1d9b013761f95c7d157d3b56"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "import_subproject_with_custom_location",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "import_subproject_with_custom_location",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testImportSubProjectWithCustomLocation.log",
+              "sha256": "a01db3cae45d732df67e3f272519e26b4c2d4a8503465d34ff150a594805e8ee"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "required_projects",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "required_projects",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testRequiredProjects.log",
+              "sha256": "ca1ba8984563da6ea22bb2fa902193c2488128123cab9019cb6b7b293533c7e0"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "missing_required_projects",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "missing_required_projects",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testMissingRequiredProjects.log",
+              "sha256": "e8a7611c6a6f7f55f0101d6137e0429d07c62973beae973c430a2d28dc95647a"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "missing_enclosing_project",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "missing_enclosing_project",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testMissingEnclosingProject.log",
+              "sha256": "98f1ed872d32769dbfc7f0eaf5cc5ff7aab00873df0dcee11d17756723971dbe"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "transitive_dependencies",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "transitive_dependencies",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testTransitiveDependencies.log",
+              "sha256": "52fe29dcb83eae4110302bc124ae7dd841fd2a61d1926b1dff27e132b7c69bea"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "test_name": "circular_dependencies",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "circular_dependencies",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testCircularDependencies.log",
+              "sha256": "33e8479486fe0b191e3b7cd82821cd492dafc9fdc56d087608c24266498b4c71"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_show_visibility_icons_when_option_is_selected",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_show_visibility_icons_when_option_is_selected",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsSelected.log",
+              "sha256": "7cb9450fca9e7a9424246f28f1306ceaf1acc96ae750bc279afb02160daa2a46"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_show_visibility_icons_when_option_is_unselected",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_show_visibility_icons_when_option_is_unselected",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
+              "sha256": "1e2ddc77814252c8d67c53a1f2e1cff4e346752c8cb00394bfbb36ed2548696b"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefault.log",
+              "sha256": "c232cebee6b3bd4b68b9f674ec11c9d6185d1e8e564bca223d7d20755d67b3e1"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_not_visible_in_unsupported_project_system",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_not_visible_in_unsupported_project_system",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
+              "sha256": "cbcff0f162f25fa01f8489516c6ebce40ca106009a5ea3636c26a3d223524a85"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_not_visible_in_non_android_project",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_not_visible_in_non_android_project",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInNonAndroidProject.log",
+              "sha256": "e9e74b9f6148ce52a8cfad5d020ad514e3fc2d242767e567922783b3d4686503"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_custom_property_handling",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_custom_property_handling",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
+              "sha256": "b20f5422e62a718d821592db910dab826561e1be73a75f345a88525911e6412e"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
+              "sha256": "837d9f95327e36e039ffb1daf2147c8c171b2f74065924f45bfd750ca0c836d0"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
+              "sha256": "c42242653b72fb0cadb4efb646f6d56f0f14704198e3121100d7b78ec1e809e9"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "test_name": "test_android_view_is_default_metrics",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "test_android_view_is_default_metrics",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-AndroidProjectViewTest-testAndroidViewIsDefaultMetrics.log",
+              "sha256": "da628ffe800d97b9beb177cd69c30f3b438d00f1e4b269118fffe05d82bfd6b6"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::component_is_added_element",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::component_is_added_element",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-componentIsAddedElement.log",
+              "sha256": "cd4e236bef45a68db5cd7606b4b01d05e3104ab7b78dd3896490721750244351"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::tab_is_added",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::tab_is_added",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-tabIsAdded.log",
+              "sha256": "1431a38af3269a182e1a1340d83f215f941b261386d6a347a7bd057f25be1a69"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::closed_is_called_when_clicked",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-closedIsCalledWhenClicked.log",
+              "sha256": "82d3fb9a0290bfe12fee3715dfe3b592f7202d6e0afcbabe78bfc9129a4f2c90"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::no_close_button_when_no_listener",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-noCloseButtonWhenNoListener.log",
+              "sha256": "1a16f0a831bea5e4bfd2e86eb1f87d3c859c150ecc08966b732b14a88f15cc66"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-iconButtonsCallbackWhenClicked.log",
+              "sha256": "a240bd1e491c2d4e0bc007e3ec5c482b33eea03770771949cfcdfab673526a82"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::can_select_tab_by_index",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::can_select_tab_by_index",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-can select tab by index.log",
+              "sha256": "d43df0b25c09b6882039b15307d81720580dfb02c4d99387698fe75804f0f772"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+      "port_status": "adapted",
+      "run_status": "passing",
+      "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_ui",
+          "integration_target": null,
+          "test_name": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+          "manifest": {
+            "path": "crates/android_ui/Cargo.toml",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+          },
+          "source": {
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-adding tab should not trigger select listener.log",
+              "sha256": "ef52098cbc5ed088bd4683ec03850b91ceaf50b9812f445814091c2eff32e77e"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "generated_artifacts",
+          "test_name": "check_model_consumer_version_ordering",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/generated_artifacts.rs",
+            "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "generated_artifacts",
+              "check_model_consumer_version_ordering",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-ModelVersionsTest-checkModelConsumerVersionOrdering.log",
+              "sha256": "64b859e1779fc4e99101cb280a4eab990ecb849070257b6a259e7c533cd9493b"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "generated_artifacts",
+          "test_name": "check_model_version_ordering",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/generated_artifacts.rs",
+            "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "generated_artifacts",
+              "check_model_version_ordering",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-ModelVersionsTest-checkModelVersionOrdering.log",
+              "sha256": "6eaad07117bf1dbff19b748f009faaacf716495a8b883c4426655e55000d3079"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+      "port_status": "ported",
+      "run_status": "passing",
+      "reason": null,
+      "run_blocker": null,
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "parallel_sync",
+          "test_name": "check_supports_parallel_sync",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/parallel_sync.rs",
+            "sha256": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77"
+          },
+          "run": {
+            "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "parallel_sync",
+              "check_supports_parallel_sync",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/parallel-sync-integration-ModelVersionsTest-checkSupportsParallelSync.log",
+              "sha256": "b4cc4e3bfd99767829e37c8467878307afbba69add0b3be47ecb760df60243be"
+            }
+          }
+        }
+      ],
+      "fixtures": []
+    }
+  ],
+  "status": "Prepared only; all actual7e3 normal captures still pending. Currentowner exclusiveCargo lease untouched."
+}

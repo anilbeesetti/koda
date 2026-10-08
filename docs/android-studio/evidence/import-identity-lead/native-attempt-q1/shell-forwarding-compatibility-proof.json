@@ -1,0 +1,29 @@
+{
+  "verdict": "PASS",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "scope": "Isolated external replay-forwarder compatibility under actual product /bin/sh invocation",
+  "actual_generator_AST_expression_used": true,
+  "generator_sha256": "3be0479a91c989b0949eb88f8f103b2da7e9ef4706cf1643a67dfae85a01e2ec",
+  "generated_probe_wrapper_sha256": "14ae5510ebb3d4267353bdf43ba7c99cdd8335e62e941c644372e9337cba8cb1",
+  "capture_path_includes_spaces_and_apostrophes": true,
+  "actual_command": [
+    "/bin/sh",
+    "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/shell-forwarding-compatibility-probe/gradlew",
+    "--init-script",
+    "path with spaces",
+    "literal\"quote",
+    "literal$HOME",
+    "literal`command`",
+    "literal\\backslash",
+    "line\nargument",
+    "",
+    "--console=plain"
+  ],
+  "exit_code": 0,
+  "shell_syntax_exit_code": 0,
+  "all_arguments_exact_order_empty_newline_metacharacters_preserved": true,
+  "raw_stdout_sha256": "106e7314e7f2b902395eedc86d6d283de5c6b65cdb9e3cc8ab1edf1e21c86683",
+  "raw_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "no_Gradle_SDK_X11_app_or_product_source_execution_or_change": true,
+  "new_original_reference_credit": 0
+}

@@ -1,0 +1,61 @@
+{
+  "files": [
+    {
+      "name": "completed-ELFs-failed-objects-preflight.json",
+      "bytes": 8707,
+      "sha256": "dc422a86183fecaeb5968168122e7f43bc472a6da1fd3199aad463d64dfc7b84"
+    },
+    {
+      "name": "exact18-action-before.json",
+      "bytes": 8711,
+      "sha256": "f86984ae3fa3c1588e0cd8484845674f2cac43512fb99368f33b4c2dc74d85e5"
+    },
+    {
+      "name": "exact18-action-executed.json",
+      "bytes": 11070,
+      "sha256": "7ae5f1adf7d87d4c42ca6ffc6534c7cb89d07c5d47f8207569086e2d40d0f672"
+    },
+    {
+      "name": "execute-exact18.py",
+      "bytes": 3303,
+      "sha256": "5944043bfac47fe745c08ab4963ec04bdcfbaef465e8d4b214ac9573e595bd46"
+    },
+    {
+      "name": "independent-scoped-cache-audit-results.json",
+      "bytes": 10993,
+      "sha256": "ad3c1be1e8b0a59a108b6579af35529e5ed496dcc0a52ed35502d9f5b8b8bd1b"
+    },
+    {
+      "name": "independent-scoped-cache-audit.initial-filtered-index.py",
+      "bytes": 11873,
+      "sha256": "72939b3a2b39253ca97b6621896622ce0b93de4dc4897c9efc7f8628eb6b2696"
+    },
+    {
+      "name": "independent-scoped-cache-audit.py",
+      "bytes": 11825,
+      "sha256": "3d6b37fa7d70fd8296776d2a198081f69610bbaefcfc8701a6067a83651c899f"
+    },
+    {
+      "name": "public-rlib-dedup-executed.json",
+      "bytes": 618,
+      "sha256": "11d346383e175d43f5b74b6906d0b31c31dfe7f363214288762601fcdac033f5"
+    },
+    {
+      "name": "public-rlib-dedup-preflight.json",
+      "bytes": 1034,
+      "sha256": "0d98b55873bdf7873f2908692f8caf77021a10844d8862c099205304d2934327"
+    },
+    {
+      "name": "scoped-review.json",
+      "bytes": 14442,
+      "sha256": "b92d20f96c8866857fff01c5ea69a3ee912bc7797a8686a95e744a9119490f30"
+    },
+    {
+      "name": "scoped-review.md",
+      "bytes": 4509,
+      "sha256": "d7fa815f58a74d7a9003f9347bded39fd7e3dce522e1e65cd91a83620d3aa507"
+    }
+  ],
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "copies_only": true
+}

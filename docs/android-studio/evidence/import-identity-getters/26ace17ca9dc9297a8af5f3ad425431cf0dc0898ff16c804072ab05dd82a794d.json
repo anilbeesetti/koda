@@ -1,0 +1,20 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "stage": "all-features-tests",
+  "lease_granted": "Root exact18 recovery release, normal LIB-first nowPASS, tests-only root freshness avoids duplicated public library",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 17.778245876004803,
+  "log": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/all-features-tests.log",
+  "log_sha256": "d0abe153b7a7092580e819a6616cf413f7b785f606e5db13712947d16899b662",
+  "whole_source_bindings": 4743,
+  "source_index_status_unchanged": true
+}

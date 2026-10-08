@@ -1,0 +1,75 @@
+{
+  "verdict": "FAIL",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "actual_current_normal_app_started": true,
+  "owned_session_binding": {
+    "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+    "pid": 342467,
+    "window_id": 2097153,
+    "display": ":120",
+    "app": {
+      "pid": 342467,
+      "parent_pid": 342449,
+      "start_ticks": 6585360,
+      "exe": "/tmp/android-studio-link-output/koda-import-identity-339403",
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "command": "/workspace/android-studio-import-identity-getters/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/import-identity-native-7e3f72e/qa/user-data /workspace/android-studio-artifacts/import-identity-native-7e3f72e/generation-project /workspace/android-studio-artifacts/import-identity-native-7e3f72e/generation-project/app/custom-manifest/AndroidManifest.xml "
+    },
+    "launcher": {
+      "pid": 342449,
+      "parent_pid": 342442,
+      "start_ticks": 6585345,
+      "exe": "/usr/bin/bash",
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "command": "bash .agents/skills/koda-app-validation/scripts/run-app.sh --headless /workspace/android-studio-artifacts/import-identity-native-7e3f72e/generation-project /workspace/android-studio-artifacts/import-identity-native-7e3f72e/generation-project/app/custom-manifest/AndroidManifest.xml "
+    },
+    "xvfb": {
+      "pid": 342457,
+      "parent_pid": 342449,
+      "start_ticks": 6585349,
+      "exe": "/workspace/cloud-environment/native/usr/bin/Xvfb",
+      "cwd": "/workspace/android-studio-import-identity-getters",
+      "command": "/workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :120 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset "
+    },
+    "executable": "/tmp/android-studio-link-output/koda-import-identity-339403",
+    "executable_sha256": "09d15d2ce3bdb708692254a8365bf94dedaa33a892af2b2a8156a8b75ced60b0",
+    "window_pid_command": [
+      "/workspace/cloud-environment/native/usr/bin/xdotool",
+      "getwindowpid",
+      "2097153"
+    ],
+    "window_pid_stdout": "342467\n",
+    "window_pid_stderr": "",
+    "utc": "2026-10-08T03:14:12.359288+00:00",
+    "monotonic": 65892.428932073
+  },
+  "fixture_only_trust_row_verified": true,
+  "successful_Gradle_captures": 0,
+  "failure": "Replay-only Python gradlew is explicitly invoked by product via /bin/sh; shell import line calls ImageMagick and blocks X11. Model operation timedout300s; capture-first-sync-loading failed91.2809s unableopenXserver. External harness error, not a product source change.",
+  "source_product_shell_call": "crates/android_ui/src/android_ui.rs:839",
+  "wrong_private_forwarder_sha256": "14b29ca7602b01ce10610e44b0005abe188f91a6cee1f5f31459f84e8da82fec",
+  "actual_shell_parse_check_exit_code": 2,
+  "actual_shell_parse_log_sha256": "6892b5f28c8197a4a567ff3e470fa89a27e06ee05e6ab56fe69ce5e4d7006dec",
+  "actual_loading_capture_exit_code": 1,
+  "recovery_post_timeout_display_geometry_diagnostic_exit_code": 0,
+  "complete_initial_events_retained_sha256": "332f2a5478361e8a462bc33a06c597ea7d29f53fbcae91dfaf1ab8f2d75318a4",
+  "complete_initial_raw_launcher_PTY_sha256": "36537a6b5f75d1f56c0c899fa7ac571e0f8f53c84577c8586c43b4a4d4919c07",
+  "images": [
+    {
+      "path": "captures/diagnostic-after-timeout.png",
+      "sha256": "03869e3272ed9ab7421771eb2d28a6ef98785fb249e9831d5e533a5554d744f1",
+      "bytes": 119494
+    },
+    {
+      "path": "captures/trust-prompt.png",
+      "sha256": "64db9c233f11a92e59ebe914374190a4b088bb339b5945177fc9fec2764dbc01",
+      "bytes": 86793
+    }
+  ],
+  "no_owned_capture_tool_signal_sent": true,
+  "owned_cleanup": true,
+  "new_original_reference_credit": 0,
+  "positive_native_parity_or_full_task_completion_credit": 0,
+  "full_source_files": 4743,
+  "no_product_source_or_original_test_change": true
+}

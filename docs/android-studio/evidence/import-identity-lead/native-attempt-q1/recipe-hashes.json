@@ -1,0 +1,134 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "prepared_only": true,
+  "runtime_executed": false,
+  "payload_count": 25,
+  "total_payload_bytes": 86932,
+  "files": [
+    {
+      "path": "bind-input-plan.py",
+      "bytes": 1221,
+      "sha256": "9e8217dbef5443c04e1718b887bdcc54f5c0f9a801a052cc64a2a349e2df4294"
+    },
+    {
+      "path": "capture-gradle.py",
+      "bytes": 3125,
+      "sha256": "94b55843afae805ccf5b395e11e0622cad3d89a5274f23a5e7af960411fb87e8"
+    },
+    {
+      "path": "compile-decoder.py",
+      "bytes": 2417,
+      "sha256": "f185a668082a11e077c2f081c0ef30aebea0f744b7812e707550dc185094ec16"
+    },
+    {
+      "path": "events.py",
+      "bytes": 5483,
+      "sha256": "39c3595af38b2b5b1f6fe7c92cd5bf3a46941140f28b3fc756f81a550773d1b8"
+    },
+    {
+      "path": "finalize-proof.py",
+      "bytes": 10294,
+      "sha256": "fd84ed9a78a9e96a8f79931a6abbcb7cef8a011bc8c05115a34a6d2209bc2223"
+    },
+    {
+      "path": "guard.py",
+      "bytes": 3750,
+      "sha256": "a1ac2febcc8fcc9315fda6c8eac02af8f09d0618a16abb3a0bbba89ceaf24a2e"
+    },
+    {
+      "path": "input-replay-plan.json",
+      "bytes": 13220,
+      "sha256": "acc3c0992bbb4626727b9393ab31434cf0df462da31e5e30afc5ea55ae7c5e81"
+    },
+    {
+      "path": "prepare.py",
+      "bytes": 4388,
+      "sha256": "3be0479a91c989b0949eb88f8f103b2da7e9ef4706cf1643a67dfae85a01e2ec"
+    },
+    {
+      "path": "prepare.py.before-shell-forwarder-fix",
+      "bytes": 3765,
+      "sha256": "258aa9d80fa53c015e9807cc46e15206e3c2f34c5d7c156d56ed878f27c2c0e0"
+    },
+    {
+      "path": "report.md",
+      "bytes": 1243,
+      "sha256": "2e707c7c0f1dc0ff14b3d8136f6ee84fd0c922a0d5310df4619949c2e3adedd1"
+    },
+    {
+      "path": "retry-preparation-provenance.json",
+      "bytes": 5904,
+      "sha256": "e808f10eae2e331922b7f2bde9ebe64b5e22e7bcad4748f681f476309fbe3d3c"
+    },
+    {
+      "path": "runtime-probe.rs",
+      "bytes": 11789,
+      "sha256": "a967c834d0f786f3779bd7a4b0536e60fca064b9c5f06b52b3baa7d46a50f360"
+    },
+    {
+      "path": "scope.json",
+      "bytes": 764,
+      "sha256": "43ab06faa81287eb9d0b5be021057743646ae4eab02fb670d95608abdffc1090"
+    },
+    {
+      "path": "stop-owned-app.py",
+      "bytes": 1712,
+      "sha256": "cfe30b275b4c305a8c386ecc2d41de49aa34deb3cf0c40e1289d1f0182680333"
+    },
+    {
+      "path": "verify-models.py",
+      "bytes": 8872,
+      "sha256": "8207d926495efeb9686842dac582c1046ebc3d956fe845868881be917352b24b"
+    },
+    {
+      "path": "recipe-hashes.before-shell-compatibility.json",
+      "bytes": 2475,
+      "sha256": "1afad58cb08aff143b1ead4f9875c75512f7bfc76473bafb50a96d5fafcde261"
+    },
+    {
+      "path": "shell-forwarding-compatibility-proof.json",
+      "bytes": 1261,
+      "sha256": "cc5d16e70bd9571dbfe5ce513e3b79f332536681cb50a0f3b320ff56dc52bf67"
+    },
+    {
+      "path": "shell-forwarding-compatibility-probe/argv-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "shell-forwarding-compatibility-probe/argv-stdout.log",
+      "bytes": 155,
+      "sha256": "106e7314e7f2b902395eedc86d6d283de5c6b65cdb9e3cc8ab1edf1e21c86683"
+    },
+    {
+      "path": "shell-forwarding-compatibility-probe/capture 'quoted' path.py",
+      "bytes": 69,
+      "sha256": "67d5e9c4bd76a8b4df6909f1a33ad1ae2599191b65112bd6624e2465747e22ac"
+    },
+    {
+      "path": "shell-forwarding-compatibility-probe/gradlew",
+      "bytes": 183,
+      "sha256": "14ae5510ebb3d4267353bdf43ba7c99cdd8335e62e941c644372e9337cba8cb1"
+    },
+    {
+      "path": "shell-forwarding-compatibility-probe/shell-syntax-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "shell-forwarding-compatibility-probe/shell-syntax-stdout.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "report.before-forwarding-status.md",
+      "bytes": 885,
+      "sha256": "1e0b2f22dd88bb76c2549d3a7730c9fe10fe0a248b8921e632ff0d45dae1b55b"
+    },
+    {
+      "path": "recipe-hashes.before-forwarding-status.json",
+      "bytes": 3957,
+      "sha256": "a79c3635b86ffd6589b64d03c4ad0dc7ba6193784169ae4001b857f1e6193a84"
+    }
+  ]
+}

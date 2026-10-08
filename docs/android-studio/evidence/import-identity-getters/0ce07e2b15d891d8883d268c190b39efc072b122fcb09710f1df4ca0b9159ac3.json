@@ -1,0 +1,28 @@
+{
+  "authorization": "Root ordinary dependency merge preserving all P2/source/old Basic/V2; outside semantic fix rounds",
+  "command": [
+    "git",
+    "merge",
+    "--no-ff",
+    "--no-edit",
+    "c1ce5ca16a26fd59984b50500ead45fbafafa5c8"
+  ],
+  "before_head": "6fb7f94173320326bd523a8af67db77916ac7da3",
+  "protected_dependency": "c1ce5ca16a26fd59984b50500ead45fbafafa5c8",
+  "exit_code": 0,
+  "after_head": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "source_file_count": 4743,
+  "source_digest": "39194d542ee78357f75a8fec0b28bb4cdfa1dc73c7ca88f0c6b12500e52efe9d",
+  "existing_changed_source": [
+    "crates/android_tools/src/android_tools.rs"
+  ],
+  "new_source_files": [
+    "crates/android_tools/src/parallel_sync.rs",
+    "crates/android_tools/test_data/parallel_sync/AgpVersion.kt",
+    "crates/android_tools/test_data/parallel_sync/LICENSE-APACHE",
+    "crates/android_tools/test_data/parallel_sync/NOTICE",
+    "crates/android_tools/tests/parallel_sync.rs"
+  ],
+  "all_p2_bytes_preserved": true,
+  "clean": true
+}

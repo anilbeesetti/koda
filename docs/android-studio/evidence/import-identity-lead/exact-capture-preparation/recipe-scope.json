@@ -1,0 +1,13 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "script_sha256": "7ba1ae50f6be6afe998348c1d034ede7edd15923087c2a7a3f48a0c5bdc7ed8f",
+  "executed": false,
+  "commands_default_features_unchanged": true,
+  "source_guard_all4743_fixed7_fullindex_status": true,
+  "normal_test_freshness_bytepreserving_mtime_only": true,
+  "all36previous_mappings_no_new_reference_credit": true,
+  "prior_parent_recipe": "/workspace/android-studio-artifacts/parallel-sync-integration/capture-reference-tests.py",
+  "logs_external_until_parentmetadatafinalization": true,
+  "ui_receipt_schema_pre_existing_ignored": true,
+  "local_runtime_lease_required": true
+}

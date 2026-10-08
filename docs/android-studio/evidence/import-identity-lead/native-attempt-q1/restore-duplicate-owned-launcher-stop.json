@@ -1,0 +1,34 @@
+{
+  "utc": "2026-10-08T03:43:58.601647+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "owned_processes": [
+    {
+      "pid": 345051,
+      "parent_pid": 345044,
+      "start_ticks": 6757883,
+      "exe": "/usr/bin/bash",
+      "command": "bash .agents/skills/koda-app-validation/scripts/run-app.sh --headless /workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/generation-project /workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/generation-project/app/custom-manifest/AndroidManifest.xml "
+    },
+    {
+      "pid": 345069,
+      "parent_pid": 345051,
+      "start_ticks": 6757898,
+      "exe": "/tmp/android-studio-link-output/koda-import-identity-339403",
+      "command": "/workspace/android-studio-import-identity-getters/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/qa/user-data /workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/generation-project /workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/generation-project/app/custom-manifest/AndroidManifest.xml "
+    },
+    {
+      "pid": 345059,
+      "parent_pid": 345051,
+      "start_ticks": 6757887,
+      "exe": "/workspace/cloud-environment/native/usr/bin/Xvfb",
+      "command": "/workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :121 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset "
+    }
+  ],
+  "signal_target": 345051,
+  "signal": 15,
+  "reason": "Restored retry1 already contained old343982 session/partialfourimages throughsecondSyncloading; Root accidentally relaunched sameQA withoutchecking. Stoponlynewownedlauncher; preserveallremainingpartialevidence, no nativePASS.",
+  "launcher_PTY_overwritten_by_duplicate_launch": true,
+  "old_original_PTY_not_recoverable_from_this_current_file": true,
+  "no_Product_source_or_reference_test_change": true,
+  "no_unowned_process_signaled": true
+}

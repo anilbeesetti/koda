@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integrate-owner-package.py",
+    "apply",
+    "--release-receipt",
+    "/workspace/android-studio-artifacts/import-identity-integration/Root-source-index-hold-release.json"
+  ],
+  "exit_code": 0,
+  "stdout_sha256": "c566d82e073b8de64c15553ef9c470db12aa047e16d67ece346a74f20a727680",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

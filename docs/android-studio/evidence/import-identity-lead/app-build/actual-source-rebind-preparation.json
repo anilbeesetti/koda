@@ -1,0 +1,61 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "preparation_prior_context": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "current_owner_snapshot": "../combined-whole-source-snapshot.json",
+  "current_source_files": 4743,
+  "files": [
+    {
+      "path": "cc.rs",
+      "sha256": "1be51b477135a4be865650db1b09747fc9b0b20b4a31cddcd6d0e90d609daf9f",
+      "bytes": 4466
+    },
+    {
+      "path": "bin/cc",
+      "sha256": "e21ba9925188f76a5872b62fba400401d1e5832e94f158e231e2f7fddf563a43",
+      "bytes": 4594128
+    },
+    {
+      "path": "retry-app-build.py",
+      "sha256": "1f2afd7b02f1bf7700572ddd75c5b6e9f00a0fb94ca5191f0f46d778407e7282",
+      "bytes": 3721
+    },
+    {
+      "path": "guarded-app-build.py",
+      "sha256": "9d27d340e721a3e14e2876ceaa53292155bd219a5827c1432dee67c9449c015a",
+      "bytes": 3313
+    },
+    {
+      "path": "prepare-aliases.py",
+      "sha256": "606a79aea463dad789b9ccf700997f3716bf829911f4b56fb78a022c2f608065",
+      "bytes": 4950
+    },
+    {
+      "path": "quality-build-recipes-static.json",
+      "sha256": "c23c9e3d63e52aa8544b3bb0533570479d3c52080b189b7fa323da8d131043ec",
+      "bytes": 9450
+    },
+    {
+      "path": "probe-validation.json",
+      "sha256": "3c2f0ee2a1f2afec44b85b8c91cc3a0f3ac35f58d9bd18393da14fab21300d2a",
+      "bytes": 2152
+    },
+    {
+      "path": "quality-runtime-probe.json",
+      "sha256": "899659c71634a7355d94f9d100a0209dda32dd694e12ce387831d26cd0796c7e",
+      "bytes": 2345
+    }
+  ],
+  "historical_probe_only_PASS": true,
+  "actual_app_build_pending": true,
+  "five_final_owner_reviews_pending": true,
+  "normal_command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "physical_old4fb_app_preserved": true
+}

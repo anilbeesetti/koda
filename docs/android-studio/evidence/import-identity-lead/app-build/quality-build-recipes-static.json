@@ -1,0 +1,183 @@
+{
+  "verdict": "PASS",
+  "scope": "Independent static re-review of unexecuted external app-build recipes; final exact18 cache recovery receipt reconciliation only",
+  "reviewed_at_utc": "2026-10-08T02:22:58.290877+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "blocking_findings": [],
+  "initial_review_verdict": "FAIL",
+  "initial_unexecuted_findings": [
+    {
+      "id": "R1",
+      "finding": "Initial recipes did not compare full raw index/status and all fixed7 source paths against the frozen owner snapshot.",
+      "current_status": "RESOLVED",
+      "evidence": "Guarded recipe binds frozen COMMIT, exact fixed7, actual 4743 path set and every digest, full ls-files --stage -z and porcelain-v1 untracked-all status before/after. Alias recipe compares frozen source/raw index/status/actual path set/hashes; its snapshot is byte-identical to verified owner 4743 file map."
+    },
+    {
+      "id": "R2",
+      "finding": "Initial alias recipe checked exe links only and did not assert the physical app digest after unlinking aliases.",
+      "current_status": "RESOLVED",
+      "evidence": "Corrected recipe checks accessible exe/cwd/FD targets and active compiler commands, records only known UID0 198/249 limitations, rechecks both exact symlinks before unlink, and asserts retained prior ELF size and digest afterwards."
+    },
+    {
+      "id": "R3",
+      "finding": "Initial retry wrote fixed evidence outputs with overwrite modes, risking loss of earlier failed-attempt evidence.",
+      "current_status": "RESOLVED",
+      "evidence": "Corrected retry refuses all four existing outputs and any prior final-link receipt before mtime actions; writes exclusive x/xb. Guard and alias receipts also use x with existing-output rejection. Initial unexecuted scripts and initial prepared manifest remain exact, with separate correction-after hashes."
+    }
+  ],
+  "current_recipe_hashes": {
+    "guarded-app-build.py": "9d27d340e721a3e14e2876ceaa53292155bd219a5827c1432dee67c9449c015a",
+    "retry-app-build.py": "1f2afd7b02f1bf7700572ddd75c5b6e9f00a0fb94ca5191f0f46d778407e7282",
+    "prepare-aliases.py": "606a79aea463dad789b9ccf700997f3716bf829911f4b56fb78a022c2f608065"
+  },
+  "normal_cargo_command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "Cargo_flags_profile_rustflags_or_shell_recipe_changes": false,
+  "mandatory_frozen_source_file_count": 4743,
+  "mandatory_fixed_source_pathspec": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "full_raw_index_status_HEAD_and_every_source_digest_comparisons": true,
+  "helper_and_actual_tiny_probe_prior_review": "Existing static and actual tiny Rust/real-cc probe PASS retained; sole final-output argument relocation only. This review does not repeat either runtime.",
+  "alias_removal_scope": {
+    "paths": [
+      "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+      "/workspace/.cache/zed/target/debug/koda"
+    ],
+    "symlinks_only": true,
+    "physical_app_preserved": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+    "physical_app_bytes": 1359451600,
+    "physical_app_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+    "accessible_exe_cwd_FD_and_compiler_barrier": true,
+    "known_UID0_inspection_limits": [
+      198,
+      249
+    ],
+    "whole_system_FD_absence_claim": false
+  },
+  "exact18_final_receipt": {
+    "verdict": "PASS",
+    "files": 18,
+    "logical_bytes": 1060117152,
+    "allocated_and_observed_free_increase_bytes": 1055301632,
+    "every_prior_reviewed_hash_inode_size_mtime_binding_and_exact_removed_list_reconciled": true,
+    "Source4743_index_status_refs_before_after_pass_recorded": true,
+    "raw_success_failure_logs_probes_app_Rlib_preserved_recorded": true,
+    "whole_system_FD_absence_claim": false,
+    "completed_receipt_only_no_current_cache_inspection": true
+  },
+  "limits": [
+    "All three current app recipes remain unexecuted: no current full app, alias action, successful Cargo build, native run or new source gate credit.",
+    "This static PASS is bound to the exact scripts, frozen snapshot and input hashes in this report. Root must verify them immediately before execution and hold the Cargo/SDK/source lease.",
+    "Main/protected refs are not independently read by these child scripts. Root owns before/after reference and whole-source guards, as explicitly stated for the planned app run. Capture those guards for the actual action.",
+    "Receipt reconciliation verifies the completed exact18 action evidence, not the present cache: the owner may legitimately re-create generated outputs.",
+    "External validation guard corrections do not constitute a product fix round."
+  ],
+  "reviewer_source_index_Git_cache_SDK_runtime_alias_or_log_mutations": false,
+  "read_holds_released": true,
+  "input_bindings": [
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/guarded-app-build.py.initial-unexecuted",
+      "bytes": 2376,
+      "sha256": "49f5a79022897ed1c380d663c5c77c014075893c70013ed0cdbda513bcba32ab"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/retry-app-build.py.initial-unexecuted",
+      "bytes": 3392,
+      "sha256": "221ac26f7560f6f7ad12bc2c6abb0dd69cddf5eff360c660dfc8a557b21ef320"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/prepare-aliases.py.initial-unexecuted",
+      "bytes": 2763,
+      "sha256": "5a8cb0daaf1ec6e3b0c567758f9412b4f720cbbc01ffdf1afd46ca4214c366b8"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/guarded-app-build.py",
+      "bytes": 3313,
+      "sha256": "9d27d340e721a3e14e2876ceaa53292155bd219a5827c1432dee67c9449c015a"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/retry-app-build.py",
+      "bytes": 3721,
+      "sha256": "1f2afd7b02f1bf7700572ddd75c5b6e9f00a0fb94ca5191f0f46d778407e7282"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/prepare-aliases.py",
+      "bytes": 4950,
+      "sha256": "606a79aea463dad789b9ccf700997f3716bf829911f4b56fb78a022c2f608065"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/prepared-build-recipes.json",
+      "bytes": 1707,
+      "sha256": "189328b237e7209363227cf6c41fde75e1f5ab177a746302e15f9239cb69674f"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/recipe-correction-before.json",
+      "bytes": 723,
+      "sha256": "9dba4d5c421a90a32831af19f5283dd20998a64a5d567a12db5408ba68233c21"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/recipe-correction-after.json",
+      "bytes": 816,
+      "sha256": "277098084137757a1de3caca9b5a985a963b65312d8317a880b2bff34412e7d0"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/cc.rs",
+      "bytes": 4466,
+      "sha256": "1be51b477135a4be865650db1b09747fc9b0b20b4a31cddcd6d0e90d609daf9f"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/quality-static.json",
+      "bytes": 4235,
+      "sha256": "bddffe27bc765b72ea74823b3362502d03a246c4a05c6c777dcecfdeeaa8f2ea"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/app-build/quality-runtime-probe.json",
+      "bytes": 2345,
+      "sha256": "899659c71634a7355d94f9d100a0209dda32dd694e12ce387831d26cd0796c7e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/combined-whole-source-snapshot.json",
+      "bytes": 1850434,
+      "sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/quality-ownership-cleanup/current-source.json",
+      "bytes": 1850434,
+      "sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/cache-recovery/exact18-action-executed.json",
+      "bytes": 11070,
+      "sha256": "7ae5f1adf7d87d4c42ca6ffc6534c7cb89d07c5d47f8207569086e2d40d0f672"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/cache-recovery/completed-ELFs-failed-objects-preflight.json",
+      "bytes": 8707,
+      "sha256": "dc422a86183fecaeb5968168122e7f43bc472a6da1fd3199aad463d64dfc7b84"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/cache-recovery/scoped-review.json",
+      "bytes": 14442,
+      "sha256": "b92d20f96c8866857fff01c5ea69a3ee912bc7797a8686a95e744a9119490f30"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-getters/cache-recovery/independent-scoped-cache-audit-results.json",
+      "bytes": 10993,
+      "sha256": "ad3c1be1e8b0a59a108b6579af35529e5ed496dcc0a52ed35502d9f5b8b8bd1b"
+    }
+  ]
+}

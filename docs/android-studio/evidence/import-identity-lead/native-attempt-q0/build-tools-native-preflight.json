@@ -1,0 +1,131 @@
+{
+  "prepared_only": true,
+  "runtime_executed": false,
+  "utc": "2026-10-08T02:32:00.299784+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "targeted_question": "Does the one-module native generation fixture require private Build Tools override after separate import-owner two-module SDK capture failure?",
+  "finding": "No private override is needed. Both authored current-source fixture and old 4fb native fixture already explicitly select Build Tools 37.0.0.",
+  "native_Android_modules": [
+    ":app"
+  ],
+  "root_project_is_Android_module": false,
+  "app_build_gradle_sha256": "522e77481cf8d0f3ef0d379373c665447aaa99d5f7b40ec43de3dfa601243564",
+  "settings_gradle_sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c",
+  "explicit_build_tools": "37.0.0",
+  "compileSdk": 37,
+  "AGP": "9.4.0",
+  "gradle_driver": "9.6.1 supplementary",
+  "planned_JDK": "21 supplementary",
+  "SDK_build_tools37_directory_present": true,
+  "original_and_previous_private_fixtures": [
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/README.md",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/README.md",
+      "sha256": "1cb9b07ab2aa3329998d7ff24de213f1830d2529b2c27024c00dbcec8cf6bd03",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/build.gradle",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/build.gradle",
+      "sha256": "522e77481cf8d0f3ef0d379373c665447aaa99d5f7b40ec43de3dfa601243564",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/custom-manifest/AndroidManifest.xml",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/custom-manifest/AndroidManifest.xml",
+      "sha256": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/flavor-assets/demo.txt",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/flavor-assets/demo.txt",
+      "sha256": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/main/resources/resources.properties",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/main/resources/resources.properties",
+      "sha256": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/provider-res/layout/sample.xml",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/provider-res/layout/sample.xml",
+      "sha256": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/unrelated-assets/sample.txt",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/unrelated-assets/sample.txt",
+      "sha256": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/build.gradle",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/build.gradle",
+      "sha256": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/gradle.properties",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/gradle.properties",
+      "sha256": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/model.json",
+      "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/provenance.json",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/provenance.json",
+      "sha256": "73879ce3d81ef14bc4fd091a986f1ca785633ed35388dedc7e69ce43a0c39620",
+      "unchanged": true
+    },
+    {
+      "source": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/source_providers/gradle-smoke-generation/settings.gradle",
+      "previous_private_copy": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/settings.gradle",
+      "sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c",
+      "unchanged": true
+    }
+  ],
+  "private_input_changes": [],
+  "unexecuted_runtime_recipes_changed": [],
+  "runtime_recipe_hashes_unchanged": {
+    "events.py": "39c3595af38b2b5b1f6fe7c92cd5bf3a46941140f28b3fc756f81a550773d1b8",
+    "verify-models.py": "4490d1ab184113a157472b41ff5beab4e6c53d3197065f0fcc69800d75356c75",
+    "runtime-probe.rs": "e20fb08e3632fdbf0acd1412ecadcbff37553eeaad999f080a2c13a594fae75e",
+    "bind-input-plan.py": "9e8217dbef5443c04e1718b887bdcc54f5c0f9a801a052cc64a2a349e2df4294",
+    "capture-gradle.py": "94b55843afae805ccf5b395e11e0622cad3d89a5274f23a5e7af960411fb87e8",
+    "guard.py": "be40f7dae0ab44db6164b4130d18b51749ebd0005a2c46b3e9d1b5dea438bafd",
+    "compile-decoder.py": "f185a668082a11e077c2f081c0ef30aebea0f744b7812e707550dc185094ec16",
+    "input-replay-plan.json": "fe521ae9c53b13640a89c7d84e2fe2160d2543044a53a6969fab7398340702be",
+    "stop-owned-app.py": "cfe30b275b4c305a8c386ecc2d41de49aa34deb3cf0c40e1289d1f0182680333",
+    "finalize-proof.py": "fd84ed9a78a9e96a8f79931a6abbcb7cef8a011bc8c05115a34a6d2209bc2223",
+    "prepare.py": "258aa9d80fa53c015e9807cc46e15206e3c2f34c5d7c156d56ed878f27c2c0e0"
+  },
+  "initial_manifest_sha256": "e4539393f4a4d191dcabb19e3230b8635bd0313d1b14478009473142c567a237",
+  "initial_report_sha256": "5d51c3116fbe06aad0c6ee30a432885fed49e11fcd099bcd14dc091c211c09b8",
+  "initial_unexecuted_state_preserved": "initial-unexecuted-preparation",
+  "comparator_change_needed": false,
+  "old4fb_full_comparison_removes_only_importFacts": true,
+  "additional_old_exporter_runtime_needed_solely_for_BT_override": false,
+  "separate_import_owner_two_Android_module_fixtures_not_reused_as_native_fixture": true,
+  "new_runtime_or_original_test_credit": 0,
+  "source_guard": {
+    "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+    "whole_source_files": 4743,
+    "exact_fixed_source_exclusions": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ],
+    "source_index_worktree_untracked_and_all_hashes_unchanged": true
+  }
+}

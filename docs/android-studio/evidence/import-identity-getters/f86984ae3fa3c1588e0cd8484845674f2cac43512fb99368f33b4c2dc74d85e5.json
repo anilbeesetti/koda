@@ -1,0 +1,249 @@
+{
+  "utc": "2026-10-08T02:13:40.110414+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "review_SHA256": "b92d20f96c8866857fff01c5ea69a3ee912bc7797a8686a95e744a9119490f30",
+  "exact18": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "kind": "completed_a418_tools_ELF",
+      "bytes": 303996256,
+      "allocated": 303931392,
+      "inode": 1051299,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791423571092133672,
+      "sha256": "e0bf30cddd0b389ff945ee5ea0fdafbf97f84aa752c714537c43dcf9d1c9f59f"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+      "kind": "completed_a418_UI_ELF",
+      "bytes": 451852448,
+      "allocated": 447070208,
+      "inode": 1051179,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424232831052622,
+      "sha256": "d4c29f7eba6e7e4dd77165b8fd0670dc10c076b5012e26e6fc85d302f7f1be33"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.00.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 1439272,
+      "allocated": 1441792,
+      "inode": 1051504,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362085208754,
+      "sha256": "0a21ff058546c6be3bee35edd5071229ef9f08da28ea6a8c8dc7b62d692dfed5"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.01.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 1042288,
+      "allocated": 1044480,
+      "inode": 1051513,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362301212350,
+      "sha256": "ad0d2272d46a6b3c38a20e168a63b9cdbf31ddaf93ca52351316c93b59dab187"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.02.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 401744,
+      "allocated": 405504,
+      "inode": 1051515,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362497215612,
+      "sha256": "1b092a72d0f86d1755e407646eea27ea0f1f08f1b562659fbd84f2d75074cef3"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.03.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 961008,
+      "allocated": 962560,
+      "inode": 1051518,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362737219607,
+      "sha256": "f2979abf271de4200561c196c7d4254aba1af710d20037d2bc4bf4800ceb5062"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.04.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 923848,
+      "allocated": 925696,
+      "inode": 1051520,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362945223069,
+      "sha256": "ba1555f160bd40c353a52ac60121852906cc0b05e79e2917fce99fed6647287c"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.05.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 941656,
+      "allocated": 942080,
+      "inode": 1051525,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363149226465,
+      "sha256": "18615f8b5bd670364c66136b18b866cab4d381fe32ebc411cb019c501facde1f"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.06.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 820648,
+      "allocated": 823296,
+      "inode": 1051527,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363789237118,
+      "sha256": "5c9e30d577a8d287384a2660810c9cd949142a7a9bbb0abd9bccba72ea389165"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.07.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 828072,
+      "allocated": 831488,
+      "inode": 1051529,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363989240448,
+      "sha256": "7c360e8f768794653027cac6927568b08072a2afc1a36a06d838c97de490f3da"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.08.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 593312,
+      "allocated": 593920,
+      "inode": 1051530,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424364057241579,
+      "sha256": "b3e4b7c30a9261ae7682794ff6ae88062097a67f4de02717ac510df8fa85eb0f"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.09.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 932888,
+      "allocated": 933888,
+      "inode": 1051528,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363893238849,
+      "sha256": "e077b33db11e0621d10ad8b938b60fd7c8eb03cdb923cd5071d638ed210d0e6d"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.10.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 290576408,
+      "allocated": 290582528,
+      "inode": 1051526,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363701235653,
+      "sha256": "0ce630ba7819ec79b09251161b1c24ae76fe5480d0cb702bb54adf7ec0e77209"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.11.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 929176,
+      "allocated": 929792,
+      "inode": 1051523,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363053224867,
+      "sha256": "2417d1a0ad2ac7b59fa5175a15738c9f33ca20b01dc52bd9adcfe272bb1f5193"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.12.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 744800,
+      "allocated": 745472,
+      "inode": 1051519,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362825221072,
+      "sha256": "bbf7baaa3271f0878e59b24fad780ac572fdfe8c8e167d979294d63a1655668a"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.13.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 1525984,
+      "allocated": 1527808,
+      "inode": 1051517,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362629217809,
+      "sha256": "a85942e936f15ccf3623a3b5bcad466df840f3233eb7bed10248ebd601835496"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.14.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 982784,
+      "allocated": 983040,
+      "inode": 1051514,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362433214547,
+      "sha256": "3342dc4a2b61352d97c2bcedd02f88f2368365e824f129236378d7d9d726cf5c"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.15.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 624560,
+      "allocated": 626688,
+      "inode": 1051509,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362149209820,
+      "sha256": "ed7249f63da57d5d6560e2c5a013ee0ed1b29df4ecb97f95fb5a2ac90968d314"
+    }
+  ],
+  "Source4743_index_status_refs_before_pass": true,
+  "accessible_FD_matches": [],
+  "active_compilers": [],
+  "UID0_inspection_limits": [
+    {
+      "pid": 198,
+      "state": "State:\tS (sleeping)",
+      "uid": "0",
+      "operation": "cwd"
+    },
+    {
+      "pid": 198,
+      "state": "State:\tS (sleeping)",
+      "uid": "0",
+      "operation": "exe"
+    },
+    {
+      "pid": 198,
+      "state": "State:\tS (sleeping)",
+      "uid": "0",
+      "operation": "fd"
+    },
+    {
+      "pid": 249,
+      "state": "State:\tS (sleeping)",
+      "uid": "0",
+      "operation": "cwd"
+    },
+    {
+      "pid": 249,
+      "state": "State:\tS (sleeping)",
+      "uid": "0",
+      "operation": "exe"
+    },
+    {
+      "pid": 249,
+      "state": "State:\tS (sleeping)",
+      "uid": "0",
+      "operation": "fd"
+    }
+  ],
+  "whole_system_FD_absence_claim": false,
+  "free_before": 241807360,
+  "removed": []
+}

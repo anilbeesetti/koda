@@ -1,0 +1,11 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "owner": "import_identity_lead_native_validation",
+  "released": true,
+  "runtime_verdict": "PASS_WITH_EXPLICIT_ADDITIVE_XML_COORDINATE_CORRECTION",
+  "lead_native_result_sha256": "1fe08f5d293c03e6eeeb2a44856c1bd7c64076c1da9508bedb12c167414fc03e",
+  "owned_current_launcher_app_Xvfb_absent": true,
+  "owned_display_socket_and_lock_absent": true,
+  "source_and_full_index_hold_still_active": true,
+  "utc": "2026-10-08T04:00:51.091940+00:00"
+}

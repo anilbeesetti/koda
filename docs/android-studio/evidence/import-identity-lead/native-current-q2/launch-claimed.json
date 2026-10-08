@@ -1,0 +1,19 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "utc": "2026-10-08T03:56:03.680464+00:00",
+  "gate_pid": 345853,
+  "replay_directory": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2",
+  "lease_source_and_actual_app_guards_passed": true,
+  "existing_launcher_session_events_profile_databases_absent": true,
+  "actual_generated_wrapper_shell_syntax_bound": true,
+  "launcher_environment": {
+    "KODA_QA_DIRECTORY": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/qa",
+    "KODA_TEST_DISPLAY": ":122",
+    "KODA_REPOSITORY": "/workspace/android-studio-import-identity-getters"
+  },
+  "owned_display_socket_and_lock_absent": true,
+  "launcher_pty_destination": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/launcher-pty.log",
+  "claim_is_one_shot_even_after_interruption": true,
+  "native_or_sdk_started_by_gate": false,
+  "launcher_recorder_must_append": "script -a -q -e -f"
+}

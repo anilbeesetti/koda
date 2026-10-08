@@ -1,0 +1,48 @@
+{
+  "prepared_only": true,
+  "runtime_recipes_executed": false,
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_files": 4743,
+  "actual_current_read_only_source_guard_passed": true,
+  "entire_git_index_snapshot_records": 6271,
+  "Python_recipe_AST_parsed": [
+    "bind-input-plan.py",
+    "capture-gradle.py",
+    "compile-decoder.py",
+    "events.py",
+    "finalize-proof.py",
+    "guard.py",
+    "prepare.py",
+    "stop-owned-app.py",
+    "verify-models.py"
+  ],
+  "Rust_probe_compiled": false,
+  "Rust_probe_exact_additions_reverse_to_preserved_base": true,
+  "comparison_algorithm_checked_only_on_previous_saved_evidence": true,
+  "prior_full_models_ordered_equal": 2,
+  "prior_Basic_records_ordered_equal": 7,
+  "private_root_prefix_boundaries_read_only_checked": true,
+  "new_model_runtime_credit": 0,
+  "reference_parity_credit": 0,
+  "fixture_profile_extensions_copied": false,
+  "no_Cargo_SDK_or_source_mutation": true,
+  "source_final_git_status_hex": "",
+  "final_read_only_source_guard": {
+    "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+    "whole_source_files": 4743,
+    "exact_fixed_source_exclusions": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ],
+    "source_index_worktree_untracked_and_all_hashes_unchanged": true
+  },
+  "all_current_prepared_recipes_AST_and_JSON_verified_after_final_edit": true,
+  "raw_previous_recipes_byte_identical_to_originals": true,
+  "no_runtime_or_fixture_profile_outputs_exist": true,
+  "utc": "2026-10-08T02:27:27.721589+00:00"
+}

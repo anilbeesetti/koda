@@ -1,0 +1,101 @@
+{
+  "verdict": "PASS",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "scope": "Exact current CI run, immutable raw Linux log and full Git-tree equivalence; no native replay, merge or full-product completion review.",
+  "review_utc": "2026-10-08T04:00:48.135723+00:00",
+  "pr": 64,
+  "run_id": 37716917444,
+  "run_url": "https://github.com/anilbeesetti/koda/actions/runs/37716917444",
+  "run_attempt": 1,
+  "run_status": "completed",
+  "run_conclusion": "success",
+  "run_metadata_head_sha": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "actual_checkout_commit": "7a05fb23fb76f2b6616d1d8375545a22b596b4a3",
+  "actual_checkout_evidence": "Full synthetic SHA and checkout HEAD line in retained raw job log; GitHub run/job metadata separately names the task head.",
+  "synthetic_parents": [
+    "c1ce5ca16a26fd59984b50500ead45fbafafa5c8",
+    "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a"
+  ],
+  "full_tree_equivalence": {
+    "local_source_tree": "f18fa92ba5a951f71bb66bbf28e218b9aa179ed9",
+    "actual_API_source_tree": "f18fa92ba5a951f71bb66bbf28e218b9aa179ed9",
+    "actual_API_synthetic_tree": "f18fa92ba5a951f71bb66bbf28e218b9aa179ed9",
+    "all_equal": true
+  },
+  "jobs": [
+    {
+      "id": 113115780049,
+      "name": "Formatting and scripts",
+      "head_sha": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-08T02:16:15Z",
+      "completed_at": "2026-10-08T02:17:15Z"
+    },
+    {
+      "id": 113116049136,
+      "name": "macOS application check",
+      "head_sha": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-08T02:17:22Z",
+      "completed_at": "2026-10-08T02:31:09Z"
+    },
+    {
+      "id": 113116049199,
+      "name": "Linux build and workspace tests",
+      "head_sha": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-08T02:17:18Z",
+      "completed_at": "2026-10-08T03:32:25Z"
+    }
+  ],
+  "linux_test_and_app_steps_success": true,
+  "raw_log": {
+    "path": "/workspace/android-studio-artifacts/import-identity-integration/current-ci/linux-workspace-and-app.log",
+    "bytes": 425860,
+    "sha256": "05420760826450e4024dc6e73044ec84923627602ae8ff515334d231d394b52f",
+    "new_independent_connector_download_matches_retained_bytes_including_BOM_ANSI": true,
+    "original_raw_log_unchanged": true
+  },
+  "tests": {
+    "mode": "full",
+    "filter": "",
+    "passed": 10540,
+    "failed": 0,
+    "reported_skips": 23,
+    "binaries": 212,
+    "execution_seconds": 2183.069,
+    "build_and_execution_seconds": 3540.3,
+    "stage_exit_code": 0,
+    "command": "cargo nextest run --locked --workspace \"${filter_args[@]}\" --no-fail-fast --no-tests=warn --test-threads \"$CI_TEST_THREADS\" --status-level=fail --final-status-level=fail",
+    "skip_scope": "23 reported inherited baseline skips. Nextest config and CI workflow byte-identical to protected base; no added ignore annotation in task Rust diff. With fail-only status output, the log does not identify each skipped test by name."
+  },
+  "normal_CI_app_build": {
+    "command": "cargo build --locked --keep-going -p zed --bin koda",
+    "dev_profile_unoptimized": true,
+    "exit_code": 0,
+    "seconds": 612.1,
+    "CI_environment_limit": "Existing CI sets CARGO_PROFILE_DEV_DEBUG=0 and CARGO_INCREMENTAL=0; this is distinct from the separately reviewed normal cloud executable build."
+  },
+  "baseline_policy": {
+    "nextest_config_sha256": "b97556a2c899faa0ece719c4f3ade8800dbb8806bb5596ae8e6250cd911dbe71",
+    "workflow_sha256": "f3be7e8a712b7dbbd3965fb230545faef3382cd0cbf7cba37edd047c674493e1",
+    "both_equal_protected_base": true,
+    "new_ignored_Rust_annotations": []
+  },
+  "github_read_receipts": {
+    "path": "/workspace/android-studio-artifacts/import-identity-integration/current-ci/lead-ci-github-read-receipts.json",
+    "bytes": 516630,
+    "sha256": "42c55977a5b5a1099dd1a4d87e2f3ad5af77b5d2a67b378cb05a5201bb72a858",
+    "kind": "Actual connected GitHub read-only decoded API/job log responses; no HTTP wire-byte claim"
+  },
+  "credits": {
+    "new_original_reference_tests": 0,
+    "native_runtime_or_fidelity": 0,
+    "full_task_complete": false
+  },
+  "mutations": "Only new external API receipts and this review; no Source/index/Git refs/cache/runtime mutations or live retry 2 image reads.",
+  "read_holds_released": true
+}

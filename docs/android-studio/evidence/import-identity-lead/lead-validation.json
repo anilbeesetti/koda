@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "status": "lead_gates_pass_final_metadata_source_equivalence_and_final_HEAD_CI_pending",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_tree": "f18fa92ba5a951f71bb66bbf28e218b9aa179ed9",
+  "source_file_count": 4743,
+  "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+  "fixed_source_pathspec": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "normal_app": {
+    "status": "PASS",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "-p",
+      "zed",
+      "--bin",
+      "koda"
+    ],
+    "elapsed_seconds": 726.3144619020022,
+    "physical_ELF_bytes": 1359509184,
+    "physical_ELF_sha256": "09d15d2ce3bdb708692254a8365bf94dedaa33a892af2b2a8156a8b75ced60b0",
+    "actual_cc_only_final_output_argument_changed": true,
+    "compiler_JSON": "docs/android-studio/evidence/import-identity-lead/app-build/koda-import-identity-339403.json",
+    "raw_log": "docs/android-studio/evidence/import-identity-lead/app-build/app-build-retry.log",
+    "independent_link_review": "docs/android-studio/evidence/import-identity-lead/app-build/quality-actual-full-app-link.json",
+    "full4743_index_status_guards": "PASS"
+  },
+  "current_Source_CI": {
+    "status": "PASS",
+    "run_id": 37716917444,
+    "run_url": "https://github.com/anilbeesetti/koda/actions/runs/37716917444",
+    "all_three_jobs": "success",
+    "workspace_passed": 10540,
+    "failed": 0,
+    "reported_inherited_baseline_skips": 23,
+    "actual_synthetic_checkout": "7a05fb23fb76f2b6616d1d8375545a22b596b4a3",
+    "actual_synthetic_full_tree_equals_Source_tree": true,
+    "review": "docs/android-studio/evidence/import-identity-lead/current-ci/lead-ci-source-review.json",
+    "raw_linux_log": "docs/android-studio/evidence/import-identity-lead/current-ci/linux-workspace-and-app.log"
+  },
+  "native": {
+    "status": "PASS",
+    "strict_original_replay": {
+      "commands": 53,
+      "images": 17,
+      "proof": "docs/android-studio/evidence/import-identity-lead/native-current-q2/runtime-proof.json",
+      "events": "docs/android-studio/evidence/import-identity-lead/native-current-q2/events.jsonl.archive.json",
+      "original_final_XML_coordinate_wrong": true,
+      "original_XML_capture_restore_credit": 0
+    },
+    "separate_prior_planned_additive_XML_correction": {
+      "commands": 3,
+      "images": 1,
+      "proof": "docs/android-studio/evidence/import-identity-lead/native-current-q2/xml-tab-correction-proof.json",
+      "restoration_observed": true
+    },
+    "total_actual_commands": 56,
+    "total_actual_images": 18,
+    "actual_SDK_syncs_exit_zero": 2,
+    "current_complete_Rust_raw_model_checks": 2,
+    "previous_full_4fb_models": 2,
+    "previous_legacy_Basic_records": 7,
+    "full_4fb_removed_only": [
+      "importFacts"
+    ],
+    "legacy_Basic_removed_only": [
+      "generatedArtifacts",
+      "importFacts"
+    ],
+    "normalization": "Known exact private-root prefix at a whole string or slash boundary; no substring replacement elsewhere",
+    "all_other_nested_values_list_order_and_property_order_retained": true,
+    "model_selection_revisions_and_stale_revision_rejection": "PASS",
+    "fresh_profile_private_fixture_only_trust": true,
+    "owned_pids_absent": [
+      345885,
+      345903,
+      345893
+    ],
+    "owned_display_absent": ":122",
+    "official_launcher_exit_code": 143,
+    "independent_UI_UX_and_quality_reviews": "PASS",
+    "limits": [
+      "Supplementary SDK driver, not pinned reference runtime",
+      "360px controls function, but project tree consumes editor and output is clipped",
+      "No full Android Studio fidelity, startup, hardware, memory or performance credit"
+    ],
+    "new_original_reference_credit": 0
+  },
+  "existing_exact_reference_captures": {
+    "status": "PASS",
+    "tools": 29,
+    "UI": 7,
+    "cases": 36,
+    "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+    "canonical_selected": 95,
+    "ported": 20,
+    "adapted": 16,
+    "unported": 59,
+    "passing": 36,
+    "new_original_credit": 0,
+    "canonical39_payload_separate_and_immutable": true,
+    "canonical_preparation_receipt": {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/exact-capture/canonical-metadata-preparation/preparation-receipt.json",
+      "bytes": 8632,
+      "sha256": "31b64860f62c5ff3c79124901c41445fbd9506f7ab13b9b3701076d6ec6b7f7d"
+    }
+  },
+  "final_metadata_source_equivalence": {
+    "status": "PENDING_Root_after_apply_stage"
+  },
+  "final_metadata_HEAD_CI": {
+    "status": "NOT_RUN",
+    "must_succeed_before_completion": true
+  },
+  "Root_apply_stage_validator_commit_final_CI": "PENDING",
+  "complete_IDE": false,
+  "new_original_test_credit": 0,
+  "failure_history": [
+    {
+      "attempt": "q0",
+      "verdict": "FAIL",
+      "reason": "External Python gradlew invoked via /bin/sh, calling ImageMagick; original raw proof and assets retained",
+      "proof": "docs/android-studio/evidence/import-identity-lead/native-attempt-q0/initial-native-failure-proof.json"
+    },
+    {
+      "attempt": "q1",
+      "verdict": "INTERRUPTED_NOT_COMPLETE",
+      "reason": "Original launcher PTY was lost when an accidental duplicate launch truncated it; remaining partial events/images/Gradle/model and current duplicate PTY retained",
+      "former_launcher343964": "zombie explicitly not claimed absent; descriptor inspection PermissionDenied",
+      "full_original_PTY_retention_claimed": false,
+      "proof": "docs/android-studio/evidence/import-identity-lead/native-attempt-q1/interrupted-replay-and-duplicate-closure.json"
+    }
+  ],
+  "owner_all_five_reviews_8SDK_three_projection_pairs_30supplements_and_failures": "Preserved in separate immutable owner169 package",
+  "portable_evidence_index": "docs/android-studio/evidence/import-identity-lead/portable-evidence-index.json"
+}

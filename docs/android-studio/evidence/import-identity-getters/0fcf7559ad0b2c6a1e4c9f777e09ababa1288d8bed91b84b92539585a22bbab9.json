@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "review_area": "UI",
+  "verdict": "PASS",
+  "scope": "Current-source UI static source-equivalence addendum; Root current app/native pending",
+  "source_head": "6fb7f94173320326bd523a8af67db77916ac7da3",
+  "prior_review_head": "e0cfad266fce1a29e065ef016815f695ced9810b",
+  "timestamp_utc": "2026-10-08T01:31:56.917493+00:00",
+  "prior_receipt_sha256": "c70a083fd3d560b8a6bef68b74e61c91b78deeed6795b076355da3d53809b762",
+  "prior_report_sha256": "31a6e36c196c7e819b823884514de67bf816659f84d124fccd78057b3cea27a4",
+  "source_snapshot": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/current-source-6fb7.json",
+    "sha256": "34d2424d84996fa63a899a6d7493458ccbe90317db1a55135c73c61c9e15a908",
+    "verified_tracked_files": 4738,
+    "source_digest": "65c59b01984c8243e6a1595ffbc577c5004d47dc66185b3f77c7faf3a176e91c",
+    "fixed_seven_patterns": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ],
+    "matches_default_validation_epoch": true
+  },
+  "changed_source_files": {
+    "crates/android_tools/src/import_facts.rs": {
+      "bytes": 28049,
+      "sha256": "817b9fa28240385e48fd68df1296619c6cb0ff4e6b219ef91b349ec563e3fafa"
+    },
+    "crates/android_tools/tests/import_facts.rs": {
+      "bytes": 30852,
+      "sha256": "622dfb8c33596a9546583afefe0d65d21530e7fc933b87690c327616c4d976bc"
+    }
+  },
+  "unchanged_consumers_and_bridge": {
+    "crates/android_tools/src/project_model.rs": {
+      "bytes": 69027,
+      "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c",
+      "byte_equal_to_prior_and_base": true
+    },
+    "crates/android_tools/src/generated_artifacts.rs": {
+      "bytes": 29465,
+      "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+      "byte_equal_to_prior_and_base": true
+    },
+    "crates/android_ui/src/android_ui.rs": {
+      "bytes": 260293,
+      "sha256": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8",
+      "byte_equal_to_prior_and_base": true
+    },
+    "crates/android_ui/src/android_build.rs": {
+      "bytes": 77987,
+      "sha256": "b54fc43d2c4875e4052af22bff2bf81029da96900d26564533232ce1f763ef8b",
+      "byte_equal_to_prior_and_base": true
+    },
+    "crates/android_tools/src/project_model.gradle": {
+      "bytes": 36402,
+      "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+      "byte_equal_to_prior": true
+    },
+    "crates/android_tools/src/android_tools.rs": {
+      "bytes": 33283,
+      "sha256": "3f1c28a5d58541490a34efe8e0756cc1df6dc4069b58b387db0caa5393f7925b",
+      "byte_equal_to_prior": true
+    },
+    "crates/android_tools/test_data/import_facts/late_configuration.gradle": {
+      "bytes": 611,
+      "sha256": "c9f33742f6d0d5d9fcd26433f14d084593048597bd1030b17aec4fddcc249dac",
+      "byte_equal_to_prior": true
+    }
+  },
+  "ui_project_editor_theme_diff": [],
+  "production_delta_exactly_qualified_trait_deserialization": true,
+  "test_preservation": {
+    "prior_test_count": 28,
+    "current_test_count": 30,
+    "unchanged_prior_test_bodies": 27,
+    "diagnostic_only_prior_test_body": "positional_arrays_are_rejected_at_every_object_boundary",
+    "equivalent_error_reason": "Malformed",
+    "added_tests": [
+      "nullable_observation_wrappers_reject_positional_arrays",
+      "unavailable_failure_payload_requires_an_object"
+    ],
+    "removed_skipped_weakened": 0
+  },
+  "inspected_default_validation": {
+    "tests": {
+      "receipt_path": "/workspace/android-studio-artifacts/import-identity-getters/fix-round-3/default-validation/tests-receipt.json",
+      "receipt_sha256": "e5896aa713c88e6ea88c59feb6bd03bb9f5a9ed9624012a50f88121b5abd3888",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--test",
+        "import_facts",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 7.179189419002796,
+      "stdout_sha256": "daa8a4e3b07be60c545d74eaba47fd9282b69c7109ce164e08e569f8cafe55a9",
+      "stderr_sha256": "9de1258d4da04c4b2b0d20945f13a11f41d16debf5ede461a4a715f8c31088b3",
+      "test_results": [
+        "test result: ok. 30 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s"
+      ],
+      "target_bindings": [
+        {
+          "name": "android_tools",
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/src/android_tools.rs",
+          "fresh": false,
+          "executable": null,
+          "filenames": [
+            "/workspace/.cache/zed/target/debug/deps/libandroid_tools-74f2aa7a6e3d3fac.rlib",
+            "/workspace/.cache/zed/target/debug/deps/libandroid_tools-74f2aa7a6e3d3fac.rmeta"
+          ]
+        },
+        {
+          "name": "import_facts",
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/import_facts.rs",
+          "fresh": false,
+          "executable": "/workspace/.cache/zed/target/debug/deps/import_facts-15da250992a95fc0",
+          "filenames": [
+            "/workspace/.cache/zed/target/debug/deps/import_facts-15da250992a95fc0"
+          ],
+          "bytes": 5955440,
+          "sha256": "35a0a53780b5421d93dadb4a62829767f5a64a8f0dbd8cd872213ec901110827"
+        }
+      ],
+      "executed_by_this_reviewer": false
+    },
+    "library": {
+      "receipt_path": "/workspace/android-studio-artifacts/import-identity-getters/fix-round-3/default-validation/library-receipt.json",
+      "receipt_sha256": "1c146a6879ffd28ea46a38ed0437146c0113d0f856fe752615aa2ba11c14f966",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--lib",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.6582163069979288,
+      "stdout_sha256": "3d9c1662eb6a17a8ac07e4aeb23a679cf65f28460f1cabd035e49f49e89ccd20",
+      "stderr_sha256": "35fc72bacfe065673ddba4b566b6467dc5b94a887c640891f8cbf1f5e1028448",
+      "test_results": [],
+      "target_bindings": [
+        {
+          "name": "android_tools",
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/src/android_tools.rs",
+          "fresh": true,
+          "executable": null,
+          "filenames": [
+            "/workspace/.cache/zed/target/debug/libandroid_tools.rlib",
+            "/workspace/.cache/zed/target/debug/deps/libandroid_tools-74f2aa7a6e3d3fac.rmeta"
+          ]
+        }
+      ],
+      "executed_by_this_reviewer": false
+    },
+    "format": {
+      "receipt_path": "/workspace/android-studio-artifacts/import-identity-getters/fix-round-3/default-validation/format-receipt.json",
+      "receipt_sha256": "2c44dc79ced1e4cab11b65ee68e6ea6dc6ab16b83a91358058d84949dfeb3670",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.302955678002036,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "test_results": [],
+      "target_bindings": [],
+      "executed_by_this_reviewer": false
+    }
+  },
+  "findings": [],
+  "pending_gates": [
+    "Actual Gradle/SDK getter capture and late-name oracle",
+    "All-feature tooling regressions and strict repository Clippy",
+    "Root current full app/full CI/native visual and cleanup checks",
+    "All reviewer runtime addenda"
+  ],
+  "runtime_or_visual_pass_by_reviewer": false,
+  "runtime_commands_by_reviewer": [],
+  "source_cache_sdk_native_mutations": 0,
+  "original_test_credit_added": 0,
+  "report_sha256": "4ae776400a22d7072ae3c66297fd2091492bb68685a323fd27bd6e6543c8f7fb"
+}

@@ -1,0 +1,20 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "stage": "library-build",
+  "lease_granted": "Root exact18 recovery release, exclusive owner normal LIB-first to all291 and remaining gates",
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 7.509161330999632,
+  "log": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/library-build.log",
+  "log_sha256": "0808ad3e6f89e045b5eceae2dadc625d8a07462a1b2a02922ae61454ec5ecdd5",
+  "whole_source_bindings": 4743,
+  "source_index_status_unchanged": true
+}

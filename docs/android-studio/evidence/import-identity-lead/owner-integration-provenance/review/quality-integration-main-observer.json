@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "review_area": "code_quality_external_main_observer_binding",
+  "verdict": "PASS",
+  "scope": "Static/external-only main-observer correction review; no direct checkout/Git/index/ref/cache/SDK/JVM/native reads, no actual apply/verify-applied/rollback.",
+  "reviewed_at_UTC": "2026-10-08T04:08:36.842666+00:00",
+  "script_sha256": "c9afdb8183f8d685de655e28497c4e97dd6fadf94c64ab33c9877bfed4963a00",
+  "prior_reviewed_script_archive_sha256": "17f170531ec767456eba8e2f6559fa68a905107f3242a575134b5020182e04dd",
+  "guide_sha256": "fef91c13309fee987dee8b967a5c05cd246d5ad4ad11717aae502cf8e20c0840",
+  "template_sha256": "a4b3ce046876ab7e2723aa750e640060587d7f8cff247702878192fc23f9c061",
+  "immutable_plan_sha256": "80ba1959c27763808c35d9a7fa545f6a96d43f6f5bec0e5df822d12c894cecc7",
+  "baseline_receipt_sha256": "48ab0ad54b62f3eb8c37e87be16087cfb6f98cf748d550bd204b203b18655e2c",
+  "correction_receipt_sha256": "59cfa8178637758dc509b1ae20db3009539ec8f2c323ce242766ca2362a63dec",
+  "parent_update_sha256": "838ff95c9186de43babab1b58f1ef752cfe9528c606029bd6b5d4d4b0500fc91",
+  "blocking_findings": [],
+  "verified_behavior": [
+    "Only exact local-main probe exit1 maps to JSON null; exit0 resolves actual OID, other nonzero errors fail",
+    "GIT_OPTIONAL_LOCKS=0 is retained for both probe and Git observations",
+    "Missing local main does not trigger branch/ref creation",
+    "Origin/main and actual /workspace/koda path/HEAD/branch/full status/full staged-index hash are explicit release fields",
+    "Expected keys must exist, including expected_main_ref:null; missing key cannot substitute for null",
+    "Shared STABLE_FIELDS protects all main observations during apply before/after and strict verify-applied current comparison",
+    "Protected android-studio ref is pinned to c1ce; owner Source/index/canonical/status guards and strict completed169 verifier remain",
+    "Destination whitelist, external plan validation and destination verification helpers are unchanged",
+    "False/template-marked release still blocks apply; current baseline receipt is not authorization"
+  ],
+  "external_plan_payload_verified": {
+    "files": 169,
+    "bytes": 10838027,
+    "all_expected_size_hashes_match": true,
+    "fixed_exclusions_broadened": false
+  },
+  "actual_external_verify_plan_by_reviewer": {
+    "exit_code": 0,
+    "status": "PASS",
+    "files": 169,
+    "checkout_or_cache_reads": false
+  },
+  "provided_readonly_baseline_not_independently_refreshed": {
+    "main_ref": null,
+    "origin_main_ref": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+    "main_worktree_path": "/workspace/koda",
+    "main_worktree_head": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+    "main_worktree_branch": "work",
+    "main_worktree_status_hex": "",
+    "main_worktree_index_sha256": "16ee081c02cd9696f322258285177cb15df9d22c43d5be9439f9cd75f8c1967d",
+    "protected_ref": "c1ce5ca16a26fd59984b50500ead45fbafafa5c8"
+  },
+  "parent_reported_latest_lead_status_only": {
+    "normal_app": "PASS_parent_reported",
+    "exact_reference_captures": {
+      "status": "PASS_parent_reported",
+      "total": 36
+    },
+    "full_CI": {
+      "status": "ALL_SUCCESS_parent_reported",
+      "passed": 10540
+    },
+    "corrected_native_replays": {
+      "status": "PASS_parent_reported",
+      "replay_count": 2
+    },
+    "final_independent_native_review": "running_parent_reported"
+  },
+  "Root_hold": "ACTIVE",
+  "Root_release_received": false,
+  "apply_authorized_by_this_review": false,
+  "future_Root_fresh_observations_required": true,
+  "prior_review_reports_preserved": {
+    "quality-integration-script.md": "9911bbd6d2450fbb0a8fe3d496c04d0085fa7ddca541665b27f2a9e6d4166ea0",
+    "quality-integration-script.json": "f5a0c9c86a383ca8e8b4f1f4bb65a307192ffce44a1ae4257fdc473bbe8c1f6b",
+    "quality-integration-script-guard-fixed.md": "70aa6c23e24a6bd9482b1cd7976b8d5669898bbdc6322c95a4705b25bd8d82b7",
+    "quality-integration-script-guard-fixed.json": "d1730351f8685d42c96cacf525251c19dc84b3f08046352939bd174caf1b7c4b"
+  },
+  "Source_semantic_product_fix_round_increment": 0,
+  "new_original_P2a_credit": 0,
+  "full_IDE_complete": false,
+  "reviewer_external_read_hold_released": true
+}

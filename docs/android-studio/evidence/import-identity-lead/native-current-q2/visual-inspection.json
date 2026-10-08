@@ -1,0 +1,119 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "actual_full_app_images_inspected": true,
+  "captures": [
+    {
+      "path": "captures/trust-prompt.png",
+      "sha256": "014f50610189951c58d0f220559e20f26f39b7f7da94d4ad7a17ecfe479c5c01",
+      "inspected": true,
+      "observation": "Fresh profile shows restricted-mode prompt for this exact private fixture; trust-all checkbox unchecked."
+    },
+    {
+      "path": "captures/sync1-loading.png",
+      "sha256": "72b960b1beac41af2cce1f5519042e4c224174e0182b70462d76f78dcce483a5",
+      "inspected": true,
+      "observation": "Build Sync spinner and load-project-model running row; editor remains visible."
+    },
+    {
+      "path": "captures/sync1-settled.png",
+      "sha256": "60e7a92e2dc3a3314609de5122f3e94c997aa7aabf68b4545bbd6aa3e20d4fb8",
+      "inspected": true,
+      "observation": "First Sync successful, demoDebug selected, two variants discovered; raw model wire remains visible pending console-filter task."
+    },
+    {
+      "path": "captures/sync2-loading.png",
+      "sha256": "42e7b7f3c1310a7e8d5888263e3a81fc6f2aba2b41506a76b80c305b9293cf84",
+      "inspected": true,
+      "observation": "Keyboard Ctrl+Alt+R starts second Sync and loading row/spinner is visibly active.",
+      "loading_state_observed": true
+    },
+    {
+      "path": "captures/sync2-settled.png",
+      "sha256": "4ff3d0d3153abec7b88cd7aa5ccdd5b5ef70cc67d3d2d647ac562b628d1e0222",
+      "inspected": true,
+      "observation": "Second Sync successful with demoDebug selection and complete output; no failed state."
+    },
+    {
+      "path": "captures/wide-output-focus.png",
+      "sha256": "d140761209c191564668e65b575da913331dfb1a521fee609f1581ec6f421c91",
+      "inspected": true,
+      "observation": "Tab focuses Build Output with visible focus highlight while Sync remains selected."
+    },
+    {
+      "path": "captures/wide-output-selected.png",
+      "sha256": "06c6f35401ff8370c9693a576ebebf931767d5a3606920d1c4fa59902a89857e",
+      "inspected": true,
+      "observation": "Space activates Build Output and centered Nothing to show empty state."
+    },
+    {
+      "path": "captures/narrow-sync.png",
+      "sha256": "96ec452ac60c9a25c4b0711ccbcefdf6d9c71c121fe553b3b490d1b0813a8108",
+      "inspected": true,
+      "observation": "Actual360px window retains Build header, Sync/Output/Hide controls; project tree fills most editor width and Sync content is clipped. No full Android Studio fidelity or usable narrow editor claim."
+    },
+    {
+      "path": "captures/narrow-output-focus.png",
+      "sha256": "8143f32c9b406861e9edc196d0aaaa782f6c0487de6c94c0a712f6456dc45c54",
+      "inspected": true,
+      "observation": "At360px Tab visibly focuses Build Output while Sync remains selected."
+    },
+    {
+      "path": "captures/narrow-output-selected.png",
+      "sha256": "68907071d304a7e294d4ffd1b6992767cbf20d8c4bf8f677e19c1b928d50a374",
+      "inspected": true,
+      "observation": "At360px Space selects Build Output and Nothing to show is visible."
+    },
+    {
+      "path": "captures/narrow-reverse-sync-focus.png",
+      "sha256": "2aa735ab37fd985cf38562ea522749b1e49ae9ce2837003cd664dccbd22cee6b",
+      "inspected": true,
+      "observation": "At360px Shift+Tab visibly focuses Sync while Build Output remains selected."
+    },
+    {
+      "path": "captures/narrow-sync-restored.png",
+      "sha256": "900abe5918340d67b0cf1fbd6434cab617ef42483b39a3f2d3fb61cc44717ea8",
+      "inspected": true,
+      "observation": "At360px Space restores selected Sync and success output."
+    },
+    {
+      "path": "captures/wide-hide-focus.png",
+      "sha256": "3961b6253a9f331278d235308a800633f7645292ae9e36fd9c788cb61f1b3ab9",
+      "inspected": true,
+      "observation": "After1536px restore, two Tabs focus Hide tool window at far right of Build header."
+    },
+    {
+      "path": "captures/hide-return.png",
+      "sha256": "ff9650e46dff45b3e4106c9050b31cf4c181432f1e5acdf590d8db05fbefcb20",
+      "inspected": true,
+      "observation": "Return hides the Build tool window and expands editor area."
+    },
+    {
+      "path": "captures/build-sidebar-restored.png",
+      "sha256": "08411a17202ed76f5e746f11753c1026075695453caf08643cc1a51990e0b89c",
+      "inspected": true,
+      "observation": "Build sidebar icon restores successful Sync panel."
+    },
+    {
+      "path": "captures/editor-gradle-tab.png",
+      "sha256": "a9b1232a52b574d66f779af35ef2893d7a2decf46411f1f4391efcf6961c74c5",
+      "inspected": true,
+      "observation": "Double-click app/build.gradle opens an active Gradle tab and source content; existing missing indent-capture diagnostic emitted once."
+    },
+    {
+      "path": "captures/editor-xml-restored.png",
+      "sha256": "995933d3ffc8eb33552582f3e64f579e25ad241261a5623f274b0bd13e19daa8",
+      "inspected": true,
+      "observation": "Original planned x316 click leaves Gradle active; original mislabeled capture retained. Actual XML restore is established by separately planned three-command correction and supplemental image, not by this image."
+    }
+  ],
+  "supported_360px_alignment_and_keyboard_routes_inspected": true,
+  "tabs_focus_hide_restore_and_sync_success_observed": true,
+  "narrow_scope_limitation": "Controls functional; project tree consumes editor width and model output clipped. No full IDE/fidelity/performance completion.",
+  "xml_restoration_requires_supplemental_correction": true,
+  "supplemental_capture": {
+    "path": "supplemental-captures/editor-xml-restored-corrected.png",
+    "sha256": "c6f3e7b776dc7a06f77e4799d943af6a16963aa7795d0363c69606c1a784dd65",
+    "inspected": true,
+    "observation": "Corrected x434 click activates AndroidManifest.xml with manifest source visible; Gradle tab remains open but inactive."
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "archive_kind": "reversible_single_file",
+  "original_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/owned-Xvfb-diagnostic.strace",
+  "recovery_relative_path": "native-attempt-q0/owned-Xvfb-diagnostic.strace",
+  "original_bytes": 53,
+  "original_sha256": "0a2736b696e34ef10ab0d2249f115278ca8bc966066eca8cdd4cdb1c59d0bb52",
+  "content_preserved_byte_exact": true,
+  "encoding": "base64",
+  "base64_content": "MzQyNDU3IDAzOjE4OjIyLjA5MjE3NyBlcG9sbF93YWl0KDMsICA8ZGV0YWNoZWQgLi4uPgo="
+}

@@ -1,0 +1,21 @@
+{
+  "prepared_only": true,
+  "runtime_executed": false,
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_files": 4743,
+  "source_snapshot": "/workspace/android-studio-artifacts/import-identity-getters/quality-ownership-cleanup/current-source.json",
+  "source_snapshot_sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0",
+  "preparation_owner": "import_identity_native_preparation",
+  "runtime_owner": "import_identity_lead_native_validation",
+  "prohibited_during_preparation": [
+    "Cargo",
+    "rustc",
+    "SDK or Gradle",
+    "app or Xvfb",
+    "Git or source mutations",
+    "cache writes",
+    "app aliases",
+    "profile or extension copies"
+  ],
+  "runtime_requires_root_review_and_exclusive_lease": true
+}

@@ -1,46 +1,115 @@
-# Raw import identity getter transport: source draft
+# Raw import identity getter transport
 
-The additive `importFacts` sidecar preserves the existing Basic model and V2
-artifact fields. It captures official Gradle project names, local paths, project
-directories, root names/directories and parent paths, plus public build-tree and
-internal reference identity paths independently. Idea plugin lookup is observed
-without applying a plugin, and nullable module names stay distinct from failed
-or missing getters. The complete six API/helper sources and Apache attribution
-are retained under `crates/android_tools/test_data/import_facts`.
+Owner component and Gradle validation gates pass on Source
+7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a: 4,743 source files, digest
+d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1.
+All five owner reviewers passed this source. The actual normal full-app build,
+actual cc/link review, current native validation, independent UI/UX/quality
+reviews, current Source CI and all 36 existing exact reference captures pass.
+Final metadata source equivalence and the canonical validator pass; their
+application receipts are retained under
+`docs/android-studio/evidence/import-identity-lead/final-application`. The final
+metadata commit and its successful CI remain pending. The complete IDE remains
+unfinished.
 
-The bridge captures at task-graph readiness after all project-evaluation
-callbacks, preserving names changed by late build/plugin configuration. An
-authored Java+Idea fixture records an independent final getter oracle; its real
-Gradle execution is still pending.
+The additive importFacts sidecar records official Gradle project/root names,
+paths/directories, parent paths and build identity. Public build-tree and
+internal reference identity paths carry separate getter provenance. Idea plugin
+presence and nullable module names are observed without applying plugins in the
+bridge. The ordered catalogue includes root/intermediate holders independently
+of compiled Basic modules; task-graph readiness captures final evaluation callbacks.
+Rust validates object-only wire data, explicit missing/unavailable/nullable/empty
+payload distinctions, identity and caller model/selection freshness. Ordered
+vectors remain raw before validation. The existing 16 MiB record limit remains.
+Typed unavailable errors do not erase the Basic model. Imported naming, facets,
+collision-resolution policy and tree publication are dependent work.
 
-Rust checks object-only decoding, explicit nullable result payloads, getter
-provenance, duplicate identities and contradictory available observations. The
-raw ordered catalogue retains root holders beyond compiled Basic modules, with
-an index for lookups. Captures bind exact Basic module/directory/kind/variant
-identity and caller model/selection revisions. Missing required observations
-return typed errors; they do not replace or erase the caller's Basic model.
+The normal all-feature library build and 291 tooling tests, including all 30
+new supplemental tests, pass. Ten test targets are fresh current-checkout builds;
+the library was freshly compiled immediately beforehand. Strict repository
+Clippy and workspace formatting pass. The default UI suite passes 125 tests
+with its single inherited ignored native test unchanged. Compiler JSON, raw
+exits and source/index/status guards bind every gate to the frozen source.
+Optional cargo-shear, typos and buf checks are not claimed.
 
-Thirty authored supplemental tests cover transport, identity, nullable
-observations and stale bindings. All 30 pass under normal default-feature Cargo execution, with zero failed,
-ignored or filtered tests. The default library build and full workspace Rust
-formatting pass. Compiler JSON binds freshly compiled library/tests to this
-checkout; all 4,738 source hashes, index and untracked set stayed unchanged
-through the gates. The initial 27-pass/one-failure output and its exact positional
-wrapper boundary remain preserved. The third fix qualifies object-only trait
-decoding; all earlier expectations remain, with two added regressions.
+Eight actual Gradle captures pass: old/current bridge pairs for baseline,
+nested-directory and late-callback scenarios, plus both explicit included-build
+rejections. Complete Basic and V2 projections match after removing only
+importFacts, preserving property/vector order with no path normalization.
+Current Rust probes validate observed root-name/folder mismatches, custom Java
+directories, holder catalogues, raw colliding names, nullable observations,
+separate identity getters and freshness. The late observed Idea name equals an
+independent official-getter oracle.
 
-All-feature tooling tests/build, strict repository Clippy and actual Gradle/SDK
-probes remain pending. Owner static reviews and Root full-app/full-CI/native
-gates do not become runtime passes from these default component checks. No
-scoped completion or original-test credit is claimed.
+These captures use supplementary JDK 21, Gradle 9.6.1, AGP 9.4.0 and SDK 37.
+The initial two captures retain an unavailable default build-tools 36 getter
+and decoder failure. A distinct retry pins installed build tools 37.0.0 in
+only two private DSL copies. Original source, fixtures and assertions remain
+unchanged; no original runner equivalence or original-test credit is claimed.
 
-Included builds and standalone Java-only Basic imports remain unsupported. TAPI
-IdeaModule names, imported-name collision resolution, Kotlin/facet capability
-import and tree publication are dependent tasks. Original naming/facet/Kotlin
-and generated-tree methods remain applicable/unported; the canonical parity
-ledger is unchanged and the global census remains incomplete.
+All history remains available. Three semantic fixes addressed Serde bounds and
+parent holders, callback timing and positional-object decoding. Original 28
+expectations remain, with two added object-wrapper regressions. A subsequent
+strict-Clippy failure was escalated to the user; Root authorized one unnecessary
+test-clone removal under the existing continue instruction. No new user approval
+reply is claimed. Corrected-source ENOSPC was recovered through independently
+reviewed exact generated-cache retirement, preserving source/tests/failure
+proofs. Two external setup-receipt diagnostics were corrected against actual
+captured baseline inputs; no acceptance checks changed.
 
-The official Gradle JVM and minimal getter serialization are existing necessary
-non-Rust exceptions. IDE identity validation and import policy stay in Rust; no
-IntelliJ importer or facet runtime is hosted. No startup, memory, large-project,
-hardware rendering or native workflow performance claim is made by this draft.
+All six supplementary API/helper sources and Apache license attribution remain
+under crates/android_tools/test_data/import_facts. The owner package leaves the canonical parity
+ledger unchanged. Root separately rebinds all 36 existing cases to current
+Source: 95 selected, 20 ported, 16 adapted, 59 unported and 36 passing.
+Newly ported/adapted/not-applicable original tests are each zero; `tests=[]`
+and zero new P2a original-test credit remain unchanged.
+Original naming/facet/Kotlin/generated-tree tests remain applicable/unported;
+the exhaustive census is incomplete. Included builds and standalone Java-only
+Basic imports remain unsupported. TAPI IdeaModule transport, Kotlin/facet facts,
+imported-name policy and tree publication remain dependent tasks.
+
+The official Gradle/AGP JVM runtime and minimal getter serialization are necessary
+non-Rust exceptions to evaluate external build-model APIs. IDE identity validation
+and policy remain Rust. Small supplementary captures and component timings do
+not establish startup, peak-memory, large-project, rendering or native workflow
+performance. Portable byte-preserved raw proof and reversible review/source
+wrappers are indexed by
+docs/android-studio/evidence/import-identity-getters/portable-evidence-index.json.
+Task metadata is docs/android-studio/ports/import-identity-getters.json.
+
+Lead validation retains the successful locked normal app build (726.314 seconds,
+1,359,509,184-byte physical ELF, SHA-256
+`09d15d2ce3bdb708692254a8365bf94dedaa33a892af2b2a8156a8b75ced60b0`).
+Actual cc arguments preserve the full normal link except its sole final output
+path. Current Source CI run 37716917444 succeeds in all three jobs, with 10,540
+workspace tests passed, zero failed and 23 reported inherited baseline skips.
+The actual CI synthetic full tree equals Source. This source CI does not establish
+the pending final metadata-HEAD CI.
+
+Current native proof preserves its strict original 53 exit-zero commands and 17
+images. Its original final XML coordinate was wrong; that image remains retained
+and receives no restoration credit. A separate prior-planned additive correction
+records three actual exit-zero commands and one inspected XML-restoration image:
+56 commands and 18 images total. Two complete current Rust/revision/raw model
+checks pass. Both complete parent 4fb models match after removing only importFacts;
+seven older Basic records match after removing only generatedArtifacts and
+importFacts. Only an exact independently asserted private-root prefix changes,
+at whole-string or slash boundaries; all other nested values and property/vector
+order remain. The fresh profile trusts only the private fixture. Current owned
+app, launcher and Xvfb PIDs are absent, display122 is gone and the official
+launcher exit is 143. At 360px the controls and keyboard routes function, but the
+project tree consumes the editor and Sync output clips. No full Android Studio
+fidelity or native performance credit is claimed.
+
+The initial q0 native attempt failed because the external Python wrapper was
+invoked through sh and called ImageMagick. Retry q1 is INTERRUPTED_NOT_COMPLETE:
+its original launcher PTY was lost when an accidental duplicate launch truncated
+it. Remaining partial events, images, Gradle/model proof and the duplicate PTY
+remain. Former launcher343964 is a zombie explicitly not claimed absent; its
+descriptor inspection returned PermissionDenied. Neither attempt receives
+complete-PASS credit, and no all-original-PTY-retention claim is made.
+
+Portable lead validation and the actual hashes/byte counts are indexed by
+docs/android-studio/evidence/import-identity-lead/portable-evidence-index.json.
+The immutable owner169 and Root canonical39 packages remain separate. Final metadata source equivalence and the canonical validator pass. The commit,
+final-HEAD CI and protected merge remain Root-owned pending steps.
