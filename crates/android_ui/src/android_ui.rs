@@ -31,9 +31,10 @@ pub use project_context::ImportGradleProject;
 pub use project_surfaces::{ApplicationMenuTemplates, action_available, application_menus, install_application_menus};
 use settings::{IntoGpui, RegisterSetting, Settings};
 use std::{
+    cell::RefCell,
     collections::HashMap,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{Arc, Weak, atomic::{AtomicBool, Ordering}},
     time::Duration,
 };
 use task::{RevealStrategy, SaveStrategy, TaskContext, TaskTemplate};
@@ -92,6 +93,7 @@ pub fn init(cx: &mut App) {
             .new(|cx| AndroidPanel::new(workspace.weak_handle(), workspace.project().clone(), cx));
         panel.update(cx, |panel, cx| panel.observe_project_open(window, cx));
         project_context::register(workspace, panel.read(cx).build_panel.clone(), window, cx);
+        panel.update(cx, |panel, cx| panel.observe_context_operations(window, cx));
         workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
         android_status::register(&panel, window, cx);
         workspace.add_panel(panel.clone(), window, cx);
@@ -145,6 +147,29 @@ enum GradleOperation {
     Preview,
 }
 
+#[derive(Clone, Copy)]
+enum AndroidOperation {
+    Sync,
+    Devices,
+    Build,
+    Run,
+    Preview,
+}
+
+#[derive(Clone)]
+struct AndroidOperationOwner {
+    context: android_tools::project_context::ActiveContextToken,
+    root: PathBuf,
+    cancelled: Arc<AtomicBool>,
+}
+
+impl AndroidOperationOwner {
+    fn ensure_active(&self) -> Result<()> {
+        ensure!(!self.cancelled.load(Ordering::Acquire), "The active Android project changed. Retry the operation in its owning project.");
+        Ok(())
+    }
+}
+
 enum AfterTask {
     Deploy(AndroidTarget, String, bool),
     DeployOnEmulator(AndroidTarget, String, bool),
@@ -154,12 +179,24 @@ enum AfterTask {
     RefreshDevices,
 }
 
+impl AfterTask {
+    fn operation(task: Option<&Self>) -> AndroidOperation {
+        match task {
+            Some(Self::Deploy(..) | Self::DeployOnEmulator(..) | Self::AttachDebugger(..)) => AndroidOperation::Run,
+            Some(Self::Preview(..)) => AndroidOperation::Preview,
+            Some(Self::RefreshDevices) => AndroidOperation::Devices,
+            Some(Self::Java(..)) | None => AndroidOperation::Build,
+        }
+    }
+}
+
 const EMULATOR_BOOT_TIMEOUT: Duration = Duration::from_secs(120);
 const EMULATOR_START_TIMEOUT: Duration = Duration::from_secs(180);
 
 struct EmulatorStartup {
     root: PathBuf,
     name: String,
+    owner: AndroidOperationOwner,
     ready: Shared<Task<std::result::Result<(), String>>>,
     error_reported: bool,
 }
@@ -209,6 +246,8 @@ fn java_pause_state(parsed: &serde_json::Value) -> Result<Option<JavaPause>> {
 }
 
 pub struct AndroidPanel {
+    backend_owner: Option<android_tools::project_context::ActiveContextToken>,
+    operation_owners: RefCell<Vec<(android_tools::project_context::ActiveContextToken, Weak<AtomicBool>)>>,
     surface_state: project_surfaces::SurfaceState,
     surface_owner: Option<android_tools::project_context::ActiveContextToken>,
     workspace: WeakEntity<Workspace>,
@@ -221,7 +260,7 @@ pub struct AndroidPanel {
     last_build_operation: Option<GradleOperation>,
     next_operation_id: u64,
     active_operation_id: Option<u64>,
-    pending_gradle_operation: Option<(PathBuf, GradleOperation)>,
+    pending_gradle_operation: Option<(PathBuf, GradleOperation, AndroidOperationOwner)>,
     model_input_roots: Vec<(PathBuf, bool)>,
     followup_model_token: Option<android_tools::project_model::ModelToken>,
     _build_subscription: Subscription,
@@ -264,6 +303,7 @@ pub struct AndroidPanel {
         PathBuf,
         serde_json::Value,
         android_tools::project_model::ModelToken,
+        AndroidOperationOwner,
     )>,
     java_status_subscription: Option<lsp::Subscription>,
     _project_subscription: Subscription,
@@ -308,6 +348,8 @@ impl AndroidPanel {
             _subscription: cx.observe(&panel, |_, _, cx| cx.notify()),
         });
         let mut panel = Self {
+            backend_owner: None,
+            operation_owners: RefCell::default(),
             surface_state: Default::default(),
             surface_owner: None,
             workspace,
@@ -448,14 +490,95 @@ impl AndroidPanel {
             self._startup_subscriptions.push(cx.subscribe_in(
                 &trusted,
                 window,
-                |_, _, _, window, cx| {
+                |panel, _, event, window, cx| {
                     // Trust events are emitted while the trust store is being updated.
+                    if let project::trusted_worktrees::TrustedWorktreesEvent::Restricted(store, paths) = event {
+                        if *store == panel.project.read(cx).worktree_store().downgrade()
+                            && project_context::for_workspace(&panel.workspace, cx).is_some_and(|controller| controller.read(cx).owns_restricted_worktree(paths)) {
+                            panel.cancel_obsolete_operation_owners(None);
+                        }
+                    }
                     cx.defer_in(window, |panel, window, cx| {
                         panel.auto_sync_project(window, cx)
                     });
                 },
             ));
         }
+    }
+
+    fn observe_context_operations(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(controller) = project_context::for_workspace(&self.workspace, cx) else {
+            return;
+        };
+        self._startup_subscriptions.push(cx.observe_in(&controller, window, |panel, controller, window, cx| {
+            panel.cancel_obsolete_operation_owners(controller.read(cx).action_token(cx).as_ref());
+            cx.defer_in(window, |panel, _, cx| panel.context_operations_changed(cx));
+        }));
+    }
+
+    fn cancel_obsolete_operation_owners(&self, current: Option<&android_tools::project_context::ActiveContextToken>) {
+        self.operation_owners.borrow_mut().retain(|(context, cancellation)| {
+            let Some(cancellation) = cancellation.upgrade() else { return false; };
+            if Some(context) != current {
+                cancellation.store(true, Ordering::Release);
+                return false;
+            }
+            true
+        });
+    }
+
+    fn context_operations_changed(&mut self, cx: &mut Context<Self>) {
+        let controller = project_context::for_workspace(&self.workspace, cx);
+        let owner = controller.as_ref().and_then(|controller| controller.read(cx).action_token(cx));
+        self.cancel_obsolete_operation_owners(owner.as_ref());
+        if owner == self.backend_owner {
+            return;
+        }
+        let root = controller.and_then(|controller| controller.read(cx).root(cx));
+        let reset_selection = owner.is_none() || self.root != root;
+        self.backend_owner = owner;
+        if let Some(cancel) = self.command_cancel.take() {
+            if cancel.send(()).is_err() {
+                log::debug!("Android command already stopped during context change");
+            }
+        }
+        if let Some((tab, session)) = self.active_build_session.take() {
+            self.build_panel.update(cx, |panel, cx| panel.finish(tab, session, BuildStatus::Cancelled,
+                "Android operation cancelled because the active project or editor changed.".into(), cx));
+        }
+        self.active_operation_id = None;
+        self.pending_gradle_operation = None;
+        self.sync_task = None;
+        self.build_task = None;
+        self.device_task = None;
+        self.deploy_task = None;
+        self.debug_task = None;
+        self.debug_forward = None;
+        self.kotlin_task = None;
+        self.kotlin_refresh_task = None;
+        self.kotlin_refresh_pending = None;
+        self.java_task = None;
+        self.java_refresh = None;
+        self.java_status_subscription = None;
+        self.emulator_task = None;
+        self.emulator_startup = None;
+        self.running = false;
+        self.syncing = false;
+        self.refreshing_devices = false;
+        if reset_selection {
+            self.devices.clear();
+            self.emulators.clear();
+            self.emulator_serials.clear();
+            self.selected_serial = None;
+            self.selected_avd = None;
+            self.targets.clear();
+            self.selected_target = None;
+        }
+        self.root = root;
+        self.auto_sync_root = None;
+        self.preview_view = None;
+        android_preview::suspend_previews(&self.workspace, cx);
+        cx.notify();
     }
 
     fn coordinate_kotlin_setup(
@@ -470,6 +593,27 @@ impl AndroidPanel {
         }
         let store = self.project.read(cx).lsp_store();
         let settings = store.update(cx, |store, cx| store.wait_for_local_settings(cx));
+        self.coordinate_kotlin_setup_after_settings(root, startup, settings, window, cx);
+    }
+
+    fn coordinate_kotlin_setup_after_settings(
+        &self,
+        root: PathBuf,
+        startup: bool,
+        settings: Task<Result<()>>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.auto_sync_candidate(cx).as_ref() != Some(&root) {
+            return;
+        }
+        let Ok(owner) = self.operation_owner(AndroidOperation::Sync, cx) else {
+            return;
+        };
+        if owner.root != root {
+            return;
+        }
+        let store = self.project.read(cx).lsp_store();
         let task = cx.spawn_in(window, {
             let root = root.clone();
             async move |panel, cx| {
@@ -477,20 +621,25 @@ impl AndroidPanel {
                 let (sender, receiver) = oneshot::channel();
                 let mut sender = Some(sender);
                 let subscription = panel.update_in(cx, |panel, window, cx| {
+                    panel.verify_operation_owner(&owner, AndroidOperation::Sync, cx)?;
+                    panel.backend_owner = Some(owner.context.clone());
                     if startup {
                         panel.startup_settings_ready = true;
                         panel.auto_sync_project(window, cx);
                     }
+                    let observer_owner = owner.clone();
                     let subscription = cx.observe(&cx.entity(), move |panel, _, cx| {
-                        if panel.syncing
+                        let current = panel.verify_operation_owner(&observer_owner, AndroidOperation::Sync, cx);
+                        if current.is_ok() && (panel.syncing
                             || panel.kotlin_task.is_some()
                             || panel.kotlin_refresh_task.is_some()
-                            || panel.kotlin_refresh_pending.is_some()
-                        {
+                            || panel.kotlin_refresh_pending.is_some()) {
                             return;
                         }
                         if let Some(sender) = sender.take() {
-                            let result = if !panel.roots(cx).contains(&root) {
+                            let result = if let Err(error) = current {
+                                Err(error)
+                            } else if !panel.roots(cx).contains(&root) {
                                 Err(anyhow::anyhow!(
                                     "The library document's owning workspace was removed"
                                 ))
@@ -515,13 +664,15 @@ impl AndroidPanel {
                         }
                     });
                     cx.notify();
-                    subscription
-                })?;
+                    Ok::<_, anyhow::Error>(subscription)
+                })??;
                 let result = receiver
                     .await
                     .context("Android project setup was cancelled")?;
                 drop(subscription);
-                result
+                result?;
+                panel.update(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Sync, cx))??;
+                Ok(())
             }
         });
         store.update(cx, |store, cx| store.set_kotlin_setup_task(root, task, cx));
@@ -589,9 +740,14 @@ impl AndroidPanel {
         if !self.startup_settings_ready {
             return;
         }
-        if self.root.is_some()
-            && self.trusted_root(cx).is_err()
-            && self.project.read(cx).android_model().root().is_some()
+        let model_root = self.project.read(cx).android_model().root().map(PathBuf::from);
+        let model_restricted = model_root.as_ref().is_some_and(|root| {
+            TrustedWorktrees::try_get_global(cx).is_none_or(|trust| {
+                trust.read(cx).restricted_worktrees(&self.project.read(cx).worktree_store(), cx)
+                    .iter().any(|(_, path)| path.as_ref() == root.as_path())
+            })
+        });
+        if self.root.is_some() && self.root == model_root && model_restricted
         {
             self.pending_gradle_operation = None;
             self.active_operation_id = None;
@@ -602,7 +758,9 @@ impl AndroidPanel {
             self.debug_task = None;
             self.emulator_task = None;
             self.emulator_startup = None;
-            self.invalidate_model(None, cx);
+            if self.project.read(cx).android_model().root() == self.root.as_deref() {
+                self.invalidate_model(None, cx);
+            }
             self.running = false;
             self.targets.clear();
             self.selected_target = None;
@@ -648,7 +806,9 @@ impl AndroidPanel {
             if self.kotlin_task.take().is_some() {
                 self.running = false;
             }
-            self.invalidate_model(None, cx);
+            if self.project.read(cx).android_model().root() == self.root.as_deref() {
+                self.invalidate_model(None, cx);
+            }
             self.pending_gradle_operation = None;
             self.active_operation_id = None;
             self.deploy_task = None;
@@ -681,32 +841,80 @@ impl AndroidPanel {
     }
 
     fn trusted_root(&self, cx: &App) -> Result<PathBuf> {
-        let project = self.project.read(cx);
         ensure!(
-            project.is_local(),
+            self.project.read(cx).is_local(),
             "Android tools currently support local projects only."
         );
-        ensure!(
-            !TrustedWorktrees::has_restricted_worktrees(&project.worktree_store(), cx),
-            "Trust the project using the title bar's Restricted Mode control before running Android tools."
-        );
-        if let Some(root) = &self.root {
-            ensure!(
-                self.roots(cx).contains(root),
-                "The selected project is no longer open."
-            );
-            return Ok(root.clone());
+        let controller = project_context::for_workspace(&self.workspace, cx)
+            .context("Select an open project before running Android tools.")?;
+        let root = controller.read(cx).root(cx).context(
+            "Select and trust the owning project using the title bar before running Android tools.",
+        )?;
+        ensure!(self.root.as_ref().is_none_or(|model_root| model_root == &root),
+            "The Android panel is still changing to the active project. Try again once its current model is ready.");
+        let project = self.project.read(cx);
+        ensure!(project.visible_worktrees(cx).any(|worktree| worktree.read(cx).abs_path().as_ref() == root.as_path()),
+            "The owning Android project is no longer open.");
+        if let Some(trust) = TrustedWorktrees::try_get_global(cx) {
+            ensure!(!trust.read(cx).restricted_worktrees(&project.worktree_store(), cx).iter().any(|(_, path)| path.as_ref() == root.as_path()),
+                "Trust the owning project using the title bar before running Android tools.");
         }
-        let roots = self.roots(cx);
-        ensure!(!roots.is_empty(), "Open an Android Gradle project first.");
+        Ok(root)
+    }
+
+    fn operation_permitted(&self, operation: AndroidOperation, cx: &App) -> bool {
+        let state = project_surfaces::SurfaceState::for_panel(self, cx);
+        match operation {
+            AndroidOperation::Sync => state.capabilities.android_sync,
+            AndroidOperation::Devices => state.capabilities.android_devices,
+            AndroidOperation::Build => state.build,
+            AndroidOperation::Run => state.capabilities.android_run,
+            AndroidOperation::Preview => state.capabilities.android_compose_preview,
+        }
+    }
+
+    fn operation_owner(&self, operation: AndroidOperation, cx: &App) -> Result<AndroidOperationOwner> {
         ensure!(
-            roots.len() == 1,
-            "Select a project folder in the Android panel before syncing."
+            self.operation_permitted(operation, cx),
+            "The active project does not support this Android operation. Import or sync the owning Gradle project first."
         );
-        roots
-            .into_iter()
-            .next()
-            .context("Open an Android Gradle project first.")
+        let controller = project_context::for_workspace(&self.workspace, cx)
+            .context("The Android project's window is no longer available.")?;
+        let controller = controller.read(cx);
+        let context = controller.action_token(cx)
+            .context("The active Android project changed. Select the project and try again.")?;
+        let root = self.trusted_root(cx)?;
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let mut owners = self.operation_owners.borrow_mut();
+        owners.retain(|(_, cancellation)| cancellation.strong_count() > 0);
+        owners.push((context.clone(), Arc::downgrade(&cancelled)));
+        Ok(AndroidOperationOwner { context, root, cancelled })
+    }
+
+    fn verify_operation_owner(
+        &self,
+        owner: &AndroidOperationOwner,
+        operation: AndroidOperation,
+        cx: &App,
+    ) -> Result<()> {
+        self.verify_context_owner(owner, cx)?;
+        ensure!(
+            self.operation_permitted(operation, cx),
+            "The active project no longer supports this Android operation."
+        );
+        Ok(())
+    }
+
+    fn verify_context_owner(&self, owner: &AndroidOperationOwner, cx: &App) -> Result<()> {
+        owner.ensure_active()?;
+        let controller = project_context::for_workspace(&self.workspace, cx)
+            .context("The Android project's window is no longer available.")?;
+        ensure!(
+            controller.read(cx).action_is_current(&owner.context, cx)
+                && self.trusted_root(cx)? == owner.root,
+            "The active Android project or editor changed. Select the project and try again."
+        );
+        Ok(())
     }
 
     fn fail(&mut self, error: anyhow::Error, window: &mut Window, cx: &mut Context<Self>) {
@@ -727,13 +935,15 @@ impl AndroidPanel {
         if self.syncing || self.running {
             return;
         }
-        let root = match self.trusted_root(cx) {
-            Ok(root) => root,
+        let owner = match self.operation_owner(AndroidOperation::Sync, cx) {
+            Ok(owner) => owner,
             Err(error) => {
                 self.fail(error, window, cx);
                 return;
             }
         };
+        let root = owner.root.clone();
+        self.backend_owner = Some(owner.context.clone());
         if !self.android_context_capabilities(cx).android_sync {
             self.fail(
                 anyhow::anyhow!(
@@ -774,7 +984,9 @@ impl AndroidPanel {
         let executor = cx.background_executor().clone();
         self.sync_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let expected_root = root.clone();
-            let result = cx
+            let result = async {
+                panel.update(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Sync, cx))??;
+                cx
                 .background_spawn(async move {
                     ensure!(
                         is_gradle_project(&root),
@@ -818,7 +1030,8 @@ impl AndroidPanel {
                         ProcessOutput::Cancelled => Ok(None),
                     }
                 })
-                .await;
+                .await
+            }.await;
             logs.await;
             panel
                 .update_in(cx, |panel, window, cx| {
@@ -829,6 +1042,7 @@ impl AndroidPanel {
                     panel.command_cancel = None;
                     panel.syncing = false;
                     let result = result.and_then(|targets| {
+                        panel.verify_operation_owner(&owner, AndroidOperation::Sync, cx)?;
                         ensure!(
                             panel.trusted_root(cx)? == expected_root
                                 && panel
@@ -946,9 +1160,28 @@ impl AndroidPanel {
         if self.refreshing_devices {
             return;
         }
+        let Ok(owner) = self.operation_owner(AndroidOperation::Devices, cx) else {
+            return;
+        };
+        self.backend_owner = Some(owner.context.clone());
         self.refreshing_devices = true;
         let executor = cx.background_executor().clone();
         self.device_task = Some(cx.spawn(async move |panel, cx| {
+            match panel.update(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Devices, cx)) {
+                Ok(Ok(())) => {}
+                Ok(Err(error)) => {
+                    panel.update(cx, |panel, cx| {
+                        panel.refreshing_devices = false;
+                        cx.notify();
+                    }).log_err();
+                    log::debug!("Android device discovery cancelled: {error:#}");
+                    return;
+                }
+                Err(error) => {
+                    log::debug!("Android device discovery cancelled: {error:#}");
+                    return;
+                }
+            }
             let (devices, emulators) = cx
                 .background_spawn(async move {
                     futures::join!(connected_devices(&executor), async {
@@ -967,6 +1200,13 @@ impl AndroidPanel {
             panel
                 .update(cx, |panel, cx| {
                     panel.refreshing_devices = false;
+                    if panel.verify_operation_owner(&owner, AndroidOperation::Devices, cx).is_err() {
+                        panel.devices.clear();
+                        panel.emulators.clear();
+                        panel.emulator_serials.clear();
+                        cx.notify();
+                        return;
+                    }
                     match devices {
                         Ok((devices, emulator_serials)) => {
                             panel.device_error = None;
@@ -1022,6 +1262,23 @@ impl AndroidPanel {
     }
 
     fn gradle(&mut self, operation: GradleOperation, window: &mut Window, cx: &mut Context<Self>) {
+        let context_operation = match operation {
+            GradleOperation::Run | GradleOperation::Debug => AndroidOperation::Run,
+            GradleOperation::Preview => AndroidOperation::Preview,
+            _ => AndroidOperation::Build,
+        };
+        let preparation = if matches!(context_operation, AndroidOperation::Build)
+            && !self.operation_permitted(AndroidOperation::Build, cx)
+            && self.operation_permitted(AndroidOperation::Devices, cx) {
+            AndroidOperation::Sync
+        } else { context_operation };
+        let owner = match self.operation_owner(preparation, cx) {
+            Ok(owner) => owner,
+            Err(error) => {
+                self.fail(error, window, cx);
+                return;
+            }
+        };
         if matches!(operation, GradleOperation::Preview) {
             self.show_compose_preview(window, cx);
             return;
@@ -1036,7 +1293,7 @@ impl AndroidPanel {
                 return Ok(());
             }
             if self.kotlin_refresh_task.is_some() || self.kotlin_refresh_pending.is_some() {
-                self.pending_gradle_operation = Some((root, operation));
+                self.pending_gradle_operation = Some((root, operation, owner));
                 cx.notify();
                 return Ok(());
             }
@@ -1176,7 +1433,29 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        self.pending_gradle_operation = Some((root.clone(), operation));
+        let context_operation = match operation {
+            GradleOperation::Run | GradleOperation::Debug => AndroidOperation::Run,
+            GradleOperation::Preview => AndroidOperation::Preview,
+            _ => AndroidOperation::Build,
+        };
+        let preparation = if matches!(context_operation, AndroidOperation::Build)
+            && !self.operation_permitted(AndroidOperation::Build, cx)
+            && self.operation_permitted(AndroidOperation::Devices, cx) {
+            AndroidOperation::Sync
+        } else { context_operation };
+        let owner = match self.operation_owner(preparation, cx) {
+            Ok(owner) if owner.root == root => owner,
+            Ok(_) => {
+                self.fail(anyhow::anyhow!("The Android project changed before saving."), window, cx);
+                return;
+            }
+            Err(error) => {
+                self.fail(error, window, cx);
+                return;
+            }
+        };
+        self.backend_owner = Some(owner.context.clone());
+        self.pending_gradle_operation = Some((root.clone(), operation, owner.clone()));
         self.next_operation_id += 1;
         let operation_id = self.next_operation_id;
         self.active_operation_id = Some(operation_id);
@@ -1188,6 +1467,13 @@ impl AndroidPanel {
             panel
                 .update_in(cx, |panel, window, cx| {
                     if panel.active_operation_id != Some(operation_id) {
+                        return;
+                    }
+                    if let Err(error) = panel.verify_operation_owner(&owner, preparation, cx) {
+                        panel.pending_gradle_operation = None;
+                        panel.active_operation_id = None;
+                        panel.running = false;
+                        panel.fail(error, window, cx);
                         return;
                     }
                     panel.active_operation_id = None;
@@ -1228,10 +1514,11 @@ impl AndroidPanel {
         {
             return;
         }
-        let Some((root, operation)) = self.pending_gradle_operation.as_ref() else {
+        let Some((root, operation, owner)) = self.pending_gradle_operation.as_ref() else {
             return;
         };
-        if !self.trusted_root(cx).is_ok_and(|current| &current == root) {
+        if !self.trusted_root(cx).is_ok_and(|current| &current == root)
+            || self.verify_context_owner(owner, cx).is_err() {
             self.pending_gradle_operation = None;
             return;
         }
@@ -1263,6 +1550,10 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Result<()> {
+        let operation = AfterTask::operation(after_task.as_ref());
+        let owner = self.operation_owner(operation, cx)?;
+        ensure!(owner.root == root, "The Android project changed before building.");
+        self.backend_owner = Some(owner.context.clone());
         let worktree_id = self
             .project
             .read(cx)
@@ -1306,6 +1597,7 @@ impl AndroidPanel {
             environment.extend(terminal_environment);
             let valid = panel
                 .read_with(cx, |panel, cx| {
+                    panel.verify_operation_owner(&owner, operation, cx)?;
                     panel.trusted_root(cx).and_then(|current| {
                         ensure!(
                             current == root,
@@ -1351,6 +1643,10 @@ impl AndroidPanel {
             logs.await;
             panel
                 .update_in(cx, |panel, window, cx| {
+                    let result = result.and_then(|result| {
+                        panel.verify_operation_owner(&owner, operation, cx)?;
+                        Ok(result)
+                    });
                     panel.complete_build(
                         &root,
                         worktree_id,
@@ -1430,6 +1726,10 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Result<()> {
+        let operation = AfterTask::operation(after_task.as_ref());
+        let owner = self.operation_owner(operation, cx)?;
+        ensure!(owner.root == root, "The Android project changed before scheduling the task.");
+        self.backend_owner = Some(owner.context.clone());
         let worktree_id = self
             .project
             .read(cx)
@@ -1467,6 +1767,14 @@ impl AndroidPanel {
                 move |result, cx| {
                     panel
                         .update_in(cx, |panel, window, cx| {
+                            if let Err(error) = panel.verify_operation_owner(&owner, operation, cx) {
+                                if panel.active_operation_id == Some(operation_id) {
+                                    panel.active_operation_id = None;
+                                    panel.running = false;
+                                    panel.fail(error, window, cx);
+                                }
+                                return;
+                            }
                             panel.complete_terminal_task(
                                 operation_id,
                                 &root,
@@ -1651,18 +1959,34 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        let owner = match self.operation_owner(AndroidOperation::Run, cx) {
+            Ok(owner) => owner,
+            Err(error) => {
+                self.fail(error, window, cx);
+                return;
+            }
+        };
+        if !self.project.read(cx).android_model().is_current(&model_token) {
+            self.fail(anyhow::anyhow!("The Android model changed before deployment."), window, cx);
+            return;
+        }
+        self.backend_owner = Some(owner.context.clone());
         self.running = true;
         self.followup_model_token = Some(model_token.clone());
         self.status = "Preparing APK for deployment…".into();
-        let root = self.root.clone();
+        let root = owner.root.clone();
         let executor = cx.background_executor().clone();
         let deployment_root = root.clone();
         let device_serial = serial.clone();
         self.deploy_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let target_for_apk = target.clone();
-            let result = cx
+            let result = async {
+                panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Run, cx))??;
+                let deployment_owner = owner.clone();
+                cx
                 .background_spawn(async move {
-                    let root = deployment_root.context("The Android project was closed.")?;
+                    let root = deployment_root;
+                    deployment_owner.ensure_active()?;
                     let properties = tool_output(
                         adb_path()?,
                         vec!["-s".into(), device_serial, "shell".into(), "getprop".into()],
@@ -1671,6 +1995,7 @@ impl AndroidPanel {
                         Duration::from_secs(15),
                     )
                     .await?;
+                    deployment_owner.ensure_active()?;
                     let abis = parse_device_abis(&properties)?;
                     let apk = target_for_apk.apk_for_device(&abis)?;
                     let application_id = if debug {
@@ -1688,7 +2013,8 @@ impl AndroidPanel {
                         application_id,
                     ))
                 })
-                .await;
+                .await
+            }.await;
             panel
                 .update_in(cx, |panel, window, cx| {
                     if !panel
@@ -1702,7 +2028,7 @@ impl AndroidPanel {
                     panel.followup_model_token = None;
                     panel.running = false;
                     let result = result.and_then(|(program, apks, application_id)| {
-                        let root = root.context("The Android project was closed.")?;
+                        panel.verify_operation_owner(&owner, AndroidOperation::Run, cx)?;
                         ensure!(
                             panel.trusted_root(cx)? == root,
                             "The selected Android project changed during the build."
@@ -1805,6 +2131,10 @@ impl AndroidPanel {
         let Some(root) = &self.root else {
             return Ok(());
         };
+        if !self.operation_permitted(AndroidOperation::Sync, cx)
+            || !self.trusted_root(cx).is_ok_and(|owner| &owner == root) {
+            return Ok(());
+        }
         if !android_tools::java::is_configured(root) {
             return Ok(());
         }
@@ -1817,6 +2147,11 @@ impl AndroidPanel {
     }
 
     fn queue_official_kotlin_refresh(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let owner = match self.operation_owner(AndroidOperation::Sync, cx) {
+            Ok(owner) => owner,
+            Err(error) => { self.fail(error, window, cx); return; }
+        };
+        self.backend_owner = Some(owner.context.clone());
         self.invalidate_model(self.root.clone(), cx);
         if let Some(root) = self.root.clone() {
             self.coordinate_kotlin_setup(root, false, window, cx);
@@ -1830,6 +2165,10 @@ impl AndroidPanel {
             panel
                 .update_in(cx, |panel, window, cx| {
                     panel.kotlin_refresh_task = None;
+                    if panel.verify_operation_owner(&owner, AndroidOperation::Sync, cx).is_err() {
+                        panel.kotlin_refresh_pending = None;
+                        return;
+                    }
                     panel.kotlin_refresh_pending = root;
                     if panel.take_official_kotlin_refresh(cx) {
                         panel.sync_project(window, cx);
@@ -1844,7 +2183,7 @@ impl AndroidPanel {
         let Some(root) = &self.kotlin_refresh_pending else {
             return false;
         };
-        if self.root.as_ref() != Some(root) || self.trusted_root(cx).is_err() {
+        if self.root.as_ref() != Some(root) || self.operation_owner(AndroidOperation::Sync, cx).is_err() {
             self.kotlin_refresh_pending = None;
             return false;
         }
@@ -1928,13 +2267,14 @@ impl AndroidPanel {
         cx: &mut Context<Self>,
     ) {
         use android_tools::kotlin;
-        let root = match self.trusted_root(cx) {
-            Ok(root) => root,
+        let owner = match self.operation_owner(AndroidOperation::Build, cx) {
+            Ok(owner) => owner,
             Err(error) => {
                 self.fail(error, window, cx);
                 return;
             }
         };
+        let root = owner.root.clone();
         if self.running || self.syncing {
             return;
         }
@@ -1960,6 +2300,7 @@ impl AndroidPanel {
             return;
         }
         let kotlin_variants = selected_model.kotlin_variants();
+        self.backend_owner = Some(owner.context.clone());
         self.running = true;
         self.error = None;
         self.coordinate_kotlin_setup(root.clone(), false, window, cx);
@@ -1980,13 +2321,17 @@ impl AndroidPanel {
         let executor = cx.background_executor().clone();
         self.kotlin_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let result = async {
+                panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Build, cx))??;
                 let (java_home, server_binary, previous, resource_guard, selection) = cx.background_spawn({
                     let root = root.clone();
                     let selected_model = selected_model.clone();
+                    let owner = owner.clone();
                     async move {
+                        owner.ensure_active()?;
                         Ok::<_, anyhow::Error>((kotlin::java_home()?, kotlin::official_server_binary()?, kotlin::read_settings(&root)?, kotlin::prepare_official_resource_generation(&root)?, android_tools::project_model::install_selection(&root, &selected_model)?))
                     }
                 }).await?;
+                panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Build, cx))??;
                 let generation_error = cx.background_spawn({
                     let root = root.clone();
                     let target = target.clone();
@@ -1994,7 +2339,9 @@ impl AndroidPanel {
                     let server_binary = server_binary.clone();
                     let kotlin_variants = kotlin_variants.clone();
                     let selection = selection.clone();
+                    let owner = owner.clone();
                     async move {
+                        owner.ensure_active()?;
                         let program = if cfg!(windows) { root.join("gradlew.bat") } else { PathBuf::from("/bin/sh") };
                         let mut arguments = if cfg!(windows) { Vec::new() } else { vec!["./gradlew".into()] };
                         let server = server_binary.parent().and_then(Path::parent).context("The Kotlin server has no distribution directory")?;
@@ -2009,6 +2356,7 @@ impl AndroidPanel {
                 }).await.err();
                 if generation_error.as_ref().is_some_and(|error| error.is::<android_build::CommandCancelled>()) { return Err(android_build::CommandCancelled.into()); }
                 let mut refresh = panel.update_in(cx, |panel, _, cx| {
+                    panel.verify_operation_owner(&owner, AndroidOperation::Build, cx)?;
                     ensure!(panel.project.read(cx).android_model().is_current(&model_token), "Discarded outdated Kotlin setup after Android model changes");
                     panel.validate_official_kotlin_target(&root, &target, cx)?;
                     let updated = official_kotlin_settings(previous.clone(), &root, &target, &java_home, &server_binary, cx)?;
@@ -2026,9 +2374,11 @@ impl AndroidPanel {
                     Ok::<_, anyhow::Error>(refresh)
                 })??;
                 refresh.next().await;
+                panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Build, cx))??;
                 panel.read_with(cx, |panel, cx| panel.project.read(cx).lsp_store())?
                     .update(cx, |store, cx| store.wait_for_local_settings(cx)).await?;
                 panel.update_in(cx, |panel, _, cx| {
+                    panel.verify_operation_owner(&owner, AndroidOperation::Build, cx)?;
                     ensure!(panel.project.read(cx).android_model().is_current(&model_token), "Discarded outdated Kotlin restart after Android model changes");
                     panel.validate_official_kotlin_target(&root, &target, cx)?;
                     Ok::<_, anyhow::Error>(panel.restart_language_server(&root, "kotlin-lsp", cx))
@@ -2050,6 +2400,7 @@ impl AndroidPanel {
                 panel.running = false;
                 panel.kotlin_task = None;
                 let result = result.and_then(|value| {
+                    panel.verify_operation_owner(&owner, AndroidOperation::Build, cx)?;
                     ensure!(panel.project.read(cx).android_model().is_current(&model_token), "Discarded outdated Kotlin setup completion");
                     Ok(value)
                 });
@@ -2079,13 +2430,14 @@ impl AndroidPanel {
         cx: &mut Context<Self>,
     ) {
         use android_tools::{java, kotlin};
-        let root = match self.trusted_root(cx) {
-            Ok(root) => root,
+        let owner = match self.operation_owner(AndroidOperation::Build, cx) {
+            Ok(owner) => owner,
             Err(error) => {
                 self.fail(error, window, cx);
                 return;
             }
         };
+        let root = owner.root.clone();
         let selected_model = match self.project.read(cx).android_model().selected.clone() {
             Some(selected) => selected,
             None => {
@@ -2102,6 +2454,7 @@ impl AndroidPanel {
             return;
         }
         let model_token = self.project.read(cx).android_model().token();
+        self.backend_owner = Some(owner.context.clone());
         self.running = true;
         self.status = "Preparing the selected Android Java model…".into();
         let (session_id, output, logs) = self.build_panel.update(cx, |panel, cx| {
@@ -2119,11 +2472,14 @@ impl AndroidPanel {
         let executor = cx.background_executor().clone();
         self.java_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let result = async {
+                panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Build, cx))??;
                 let (models, previous) = cx.background_spawn({
                     let root = root.clone();
                     let target = target.clone();
                     let selected_model = selected_model.clone();
+                    let owner = owner.clone();
                     async move {
+                        owner.ensure_active()?;
                         let (init, selection) = java::prepare_selected(&root, &selected_model)?;
                         let program = if cfg!(windows) { root.join("gradlew.bat") } else { PathBuf::from("/bin/sh") };
                         let mut args = if cfg!(windows) { Vec::new() } else { vec!["./gradlew".into()] };
@@ -2133,12 +2489,14 @@ impl AndroidPanel {
                         let mut command = util::command::new_std_command(program);
                         command.args(args).current_dir(&root);
                         let output = android_build::command_output(command, &executor, Duration::from_secs(300), output, cancelled, true).await?.stdout()?;
+                        owner.ensure_active()?;
                         let models = java::parse_model(&output, &root, &target)?;
                         java::validate_selection(&models, &selected_model)?;
                         Ok::<_, anyhow::Error>((models, kotlin::read_settings(&root)?))
                     }
                 }).await?;
                 let updated = panel.update_in(cx, |panel, _, cx| {
+                    panel.verify_operation_owner(&owner, AndroidOperation::Build, cx)?;
                     ensure!(panel.trusted_root(cx)? == root && panel.project.read(cx).android_model().is_current(&model_token), "The Android project model changed during Java setup");
                     ensure!(panel.selected_target.as_ref() == Some(&target) && panel.targets.contains(&target),
                         "The selected Android variant changed during Java setup. Retry to refresh the current variant.");
@@ -2150,10 +2508,11 @@ impl AndroidPanel {
                 // Check and publish in one foreground turn, as with Kotlin settings, so
                 // a variant change cannot race the filesystem commit between awaits.
                 panel.update_in(cx, |panel, _, cx| {
+                    panel.verify_operation_owner(&owner, AndroidOperation::Build, cx)?;
                     ensure!(panel.trusted_root(cx)? == root && panel.project.read(cx).android_model().is_current(&model_token), "Discarded outdated Java model publication");
                     java::finish(&root, &models, &previous, &updated)
                 })??;
-                Ok::<_, anyhow::Error>((root, serde_json::json!({"identifiers": [{"uri": uri}]}), model_token.clone()))
+                Ok::<_, anyhow::Error>((root, serde_json::json!({"identifiers": [{"uri": uri}]}), model_token.clone(), owner.clone()))
             }.await;
             logs.await;
             panel.update_in(cx, |panel, window, cx| {
@@ -2169,7 +2528,8 @@ impl AndroidPanel {
                 panel.running = false;
                 match result {
                     Ok(refresh) => {
-                        if !panel.project.read(cx).android_model().is_current(&refresh.2) {
+                        if !panel.project.read(cx).android_model().is_current(&refresh.2)
+                            || panel.verify_operation_owner(&refresh.3, AndroidOperation::Build, cx).is_err() {
                             cx.notify();
                             return;
                         }
@@ -2192,9 +2552,12 @@ impl AndroidPanel {
         worktree_id: Option<project::WorktreeId>,
         cx: &mut Context<Self>,
     ) {
-        let Some((root, parameters, model_token)) = &self.java_refresh else {
+        let Some((root, parameters, model_token, owner)) = &self.java_refresh else {
             return;
         };
+        if self.verify_operation_owner(owner, AndroidOperation::Build, cx).is_err() {
+            return;
+        }
         let project = self.project.read(cx);
         let Some(worktree) = worktree_id.and_then(|id| project.worktree_for_id(id, cx)) else {
             return;
@@ -2209,6 +2572,7 @@ impl AndroidPanel {
         let root = root.clone();
         let parameters = parameters.clone();
         let model_token = model_token.clone();
+        let owner = owner.clone();
         let panel = cx.weak_entity();
         self.java_status_subscription = project
             .lsp_store()
@@ -2237,6 +2601,7 @@ impl AndroidPanel {
                                 return;
                             }
                             let result = (|| {
+                                panel.verify_operation_owner(&owner, AndroidOperation::Build, cx)?;
                                 ensure!(
                                     panel.trusted_root(cx)? == root,
                                     "The Android project changed before Java import"
@@ -2259,7 +2624,9 @@ impl AndroidPanel {
 
     fn logcat(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let result = (|| {
-            let root = self.trusted_root(cx)?;
+            let owner = self.operation_owner(AndroidOperation::Devices, cx)?;
+            let root = owner.root.clone();
+            let panel = cx.weak_entity();
             let workspace = self.workspace.clone();
             let serial = self.selected_serial.clone();
             let targets = self
@@ -2268,6 +2635,9 @@ impl AndroidPanel {
                 .map(|target| vec![target])
                 .unwrap_or_else(|| self.targets.clone());
             window.defer(cx, move |window, cx| {
+                if !panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Devices, cx).is_ok()).unwrap_or(false) {
+                    return;
+                }
                 workspace
                     .update(cx, |workspace, cx| {
                         android_logcat::open(workspace, root, serial, targets, window, cx);
@@ -2605,6 +2975,18 @@ impl AndroidPanel {
     }
 
     fn start_emulator_background(&mut self, name: String, root: PathBuf, cx: &mut Context<Self>) {
+        let owner = match self.operation_owner(AndroidOperation::Devices, cx) {
+            Ok(owner) if owner.root == root => owner,
+            Ok(_) => {
+                self.notify_emulator_error("The Android project changed before emulator startup.".into(), cx);
+                return;
+            }
+            Err(error) => {
+                self.notify_emulator_error(format!("{error:#}"), cx);
+                return;
+            }
+        };
+        self.backend_owner = Some(owner.context.clone());
         let environment =
             self.project
                 .read(cx)
@@ -2628,7 +3010,10 @@ impl AndroidPanel {
             .spawn({
                 let name = name.clone();
                 let root = root.clone();
+                let owner = owner.clone();
                 async move |panel, cx| {
+                    panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Devices, cx))
+                        .and_then(|result| result).map_err(|error| format!("{error:#}"))?;
                     let running = cx
                         .background_spawn({
                             let executor = executor.clone();
@@ -2639,7 +3024,10 @@ impl AndroidPanel {
                         })
                         .await;
                     match running {
-                        Ok(true) => return Ok(()),
+                        Ok(true) => {
+                            return panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Devices, cx))
+                                .and_then(|result| result).map_err(|error| format!("{error:#}"));
+                        }
                         Ok(false) => {}
                         Err(error) => {
                             return Err(format!("Could not check emulator {name}: {error:#}"));
@@ -2649,6 +3037,7 @@ impl AndroidPanel {
                     environment.extend(terminal_environment);
                     let valid = panel
                         .read_with(cx, |panel, cx| {
+                            panel.verify_operation_owner(&owner, AndroidOperation::Devices, cx)?;
                             ensure!(
                                 panel.trusted_root(cx)? == root,
                                 "The Android project changed before emulator startup."
@@ -2659,7 +3048,9 @@ impl AndroidPanel {
                     let result = match valid {
                         Ok(()) => {
                             let name = name.clone();
+                            let owner = owner.clone();
                             cx.background_spawn(async move {
+                                owner.ensure_active()?;
                                 let mut command =
                                     util::command::new_std_command(android_cli_path()?);
                                 command
@@ -2673,13 +3064,16 @@ impl AndroidPanel {
                         }
                         Err(error) => Err(error),
                     };
-                    result.map_err(|error| format!("Could not start emulator {name}: {error:#}"))
+                    result.map_err(|error| format!("Could not start emulator {name}: {error:#}"))?;
+                    panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Devices, cx))
+                        .and_then(|result| result).map_err(|error| format!("{error:#}"))
                 }
             })
             .shared();
         self.emulator_startup = Some(EmulatorStartup {
             root: root.clone(),
             name: name.clone(),
+            owner: owner.clone(),
             ready: ready.clone(),
             error_reported: false,
         });
@@ -2687,6 +3081,9 @@ impl AndroidPanel {
             if let Err(message) = ready.await {
                 panel
                     .update(cx, |panel, cx| {
+                        if panel.verify_operation_owner(&owner, AndroidOperation::Devices, cx).is_err() {
+                            return;
+                        }
                         if let Some(startup) = &mut panel.emulator_startup
                             && startup.root == root
                             && startup.name == name
@@ -2705,7 +3102,7 @@ impl AndroidPanel {
             return;
         }
         let result = (|| {
-            let root = self.trusted_root(cx)?;
+            let root = self.operation_owner(AndroidOperation::Devices, cx)?.root;
             ensure!(
                 self.emulators.contains(&name),
                 "Refresh devices and select an available emulator first."
@@ -2751,10 +3148,22 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        let operation = if deployment.is_some() { AndroidOperation::Run } else { AndroidOperation::Devices };
+        let owner = match self.operation_owner(operation, cx) {
+            Ok(owner) if owner.root == root => owner,
+            Ok(_) => {
+                self.notify_emulator_error("The Android project changed before waiting for the emulator.".into(), cx);
+                return;
+            }
+            Err(error) => {
+                self.notify_emulator_error(format!("{error:#}"), cx);
+                return;
+            }
+        };
         let Some(startup) = self
             .emulator_startup
             .as_ref()
-            .filter(|startup| startup.name == name && startup.root == root)
+            .filter(|startup| startup.name == name && startup.root == root && startup.owner.context == owner.context)
         else {
             self.clear_emulator_wait(cx);
             self.notify_emulator_error(
@@ -2774,6 +3183,9 @@ impl AndroidPanel {
             });
         }
         self.emulator_task = Some(cx.spawn_in(window, async move |panel, cx| {
+            if !panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, operation, cx).is_ok()).unwrap_or(false) {
+                return;
+            }
             let boot = async {
                 cx.background_spawn({
                     let executor = executor.clone();
@@ -2791,6 +3203,7 @@ impl AndroidPanel {
                 panel.running = false;
                 panel.clear_emulator_wait(cx);
                 let result = result.and_then(|(devices, serials, serial)| {
+                    panel.verify_operation_owner(&owner, operation, cx)?;
                     ensure!(panel.trusted_root(cx)? == root, "The Android project changed while the emulator was starting.");
                     if let Some((target, _)) = &deployment {
                         ensure!(panel.selected_target.as_ref() == Some(target) && panel.targets.contains(target), "The selected Android variant changed while the emulator was starting.");
@@ -3828,7 +4241,155 @@ mod tests {
         trusted_worktrees::{self, PathTrust},
     };
     use serde_json::json;
+
+    #[gpui::test]
+    async fn managed_kotlin_settings_readiness_rejects_changed_active_project(cx: &mut TestAppContext) -> Result<()> {
+        use android_tools::project_context::PluginId;
+        cx.update(|cx| {
+            let app_state = AppState::test(cx);
+            project::trusted_worktrees::init(Default::default(), cx);
+            editor::init(cx);
+            workspace::init(app_state, cx);
+            crate::init(cx);
+        });
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem.insert_tree("/android", json!({"Main.kt":"fun main() {}"})).await;
+        filesystem.insert_tree("/python", json!({"main.py":"print(1)"})).await;
+        let project = Project::test_with_worktree_trust(filesystem, [Path::new("/android"), Path::new("/python")], cx).await;
+        cx.update(|cx| {
+            project_surfaces::tests::trust(&project, cx)?;
+            project_surfaces::tests::publish_catalogue(&project, Path::new("/android"), &[PluginId::AndroidApplication], &[("android", "androidJvm")], true, cx)
+        })?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        workspace.update_in(visual, |workspace, window, cx| workspace.open_abs_path(Path::new("/android/Main.kt"), Default::default(), window, cx)).await?;
+        visual.run_until_parked();
+        let panel = workspace.read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx)).context("Android panel")?;
+        let (release, pending) = oneshot::channel();
+        let settings = visual.update(|_, cx| cx.background_spawn(async move {
+            pending.await.context("Settings readiness sender dropped")?;
+            Ok(())
+        }));
+        panel.update_in(visual, |panel, window, cx| {
+            assert_eq!(panel.auto_sync_candidate(cx).as_deref(), Some(Path::new("/android")));
+            assert!(!panel.startup_settings_ready);
+            panel.coordinate_kotlin_setup_after_settings(PathBuf::from("/android"), true, settings, window, cx);
+        });
+        visual.run_until_parked();
+        workspace.update_in(visual, |workspace, window, cx| workspace.open_abs_path(Path::new("/python/main.py"), Default::default(), window, cx)).await?;
+        visual.run_until_parked();
+        workspace.update_in(visual, |workspace, window, cx| workspace.open_abs_path(Path::new("/android/Main.kt"), Default::default(), window, cx)).await?;
+        visual.run_until_parked();
+        release.send(()).map_err(|_| anyhow::anyhow!("Pending settings task was unexpectedly cancelled"))?;
+        visual.run_until_parked();
+        panel.read_with(visual, |panel, _| {
+            assert!(!panel.startup_settings_ready);
+            assert!(panel.sync_task.is_none());
+            assert!(panel.device_task.is_none());
+            assert!(panel.kotlin_task.is_none());
+            assert!(panel.kotlin_refresh_task.is_none());
+            assert!(panel.auto_sync_root.is_none());
+        });
+        Ok(())
+    }
+
+    #[gpui::test]
+    async fn direct_android_backend_calls_reject_desktop_and_generic_projects(cx: &mut TestAppContext) -> Result<()> {
+        use android_tools::project_context::PluginId;
+        cx.update(|cx| {
+            let app_state = AppState::test(cx);
+            project::trusted_worktrees::init(Default::default(), cx);
+            editor::init(cx);
+            workspace::init(app_state, cx);
+            crate::init(cx);
+        });
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem.insert_tree("/desktop", json!({"Main.kt":"fun main() {}"})).await;
+        filesystem.insert_tree("/generic", json!({"main.py":"print(1)","index.html":"<p>Hello</p>","Main.kt":"fun main() {}"})).await;
+        let project = Project::test_with_worktree_trust(filesystem, [Path::new("/desktop"), Path::new("/generic")], cx).await;
+        cx.update(|cx| {
+            project_surfaces::tests::trust(&project, cx)?;
+            project_surfaces::tests::publish_catalogue(&project, Path::new("/desktop"), &[PluginId::KotlinMultiplatform, PluginId::ComposeMultiplatform, PluginId::ComposeCompiler], &[("desktop", "jvm")], true, cx)
+        })?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let panel = workspace.read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx)).context("Android panel")?;
+        for path in ["/desktop/Main.kt", "/generic/main.py", "/generic/index.html", "/generic/Main.kt"] {
+            workspace.update_in(visual, |workspace, window, cx| workspace.open_abs_path(Path::new(path), Default::default(), window, cx)).await?;
+            visual.run_until_parked();
+            panel.update_in(visual, |panel, window, cx| {
+                assert!(panel.operation_owner(AndroidOperation::Sync, cx).is_err());
+                assert!(panel.operation_owner(AndroidOperation::Devices, cx).is_err());
+                assert!(panel.operation_owner(AndroidOperation::Run, cx).is_err());
+                assert!(panel.operation_owner(AndroidOperation::Preview, cx).is_err());
+                panel.refresh_devices(cx);
+                panel.sync_project(window, cx);
+                for operation in [GradleOperation::Build, GradleOperation::Run, GradleOperation::Debug, GradleOperation::Preview, GradleOperation::Kotlin, GradleOperation::Java] {
+                    panel.gradle(operation, window, cx);
+                }
+                panel.coordinate_kotlin_setup(Path::new(path).parent().context("Fixture parent")?.to_path_buf(), true, window, cx);
+                assert!(!panel.running && !panel.syncing && !panel.refreshing_devices);
+                assert!(!panel.startup_settings_ready);
+                assert!(panel.build_task.is_none() && panel.sync_task.is_none() && panel.device_task.is_none());
+                assert!(panel.kotlin_task.is_none() && panel.java_task.is_none() && panel.preview_view.is_none());
+                Ok::<_, anyhow::Error>(())
+            })?;
+            visual.run_until_parked();
+        }
+        Ok(())
+    }
     use workspace::AppState;
+
+    fn new_test_android_panel(
+        workspace: &Entity<Workspace>,
+        project: Entity<Project>,
+        cx: &mut gpui::VisualTestContext,
+    ) -> Entity<AndroidPanel> {
+        let root = cx.update(|_, cx| {
+            if TrustedWorktrees::try_get_global(cx).is_none() {
+                trusted_worktrees::init(Default::default(), cx);
+            }
+            project_surfaces::tests::trust(&project, cx).expect("Trust explicit Android fixture");
+            let roots = project.read(cx).visible_worktrees(cx)
+                .map(|worktree| (worktree.read(cx).id(), worktree.read(cx).abs_path()))
+                .collect::<Vec<_>>();
+            for (_, root) in &roots {
+                publish_test_android_catalogue(&project, root, cx).expect("Qualify explicit Android fixture");
+            }
+            roots.first().expect("Android fixture worktree").0
+        });
+        let panel = workspace.update_in(cx, |workspace, window, cx| {
+            let panel = cx.new(|cx| AndroidPanel::new(workspace.weak_handle(), project, cx));
+            project_context::register(workspace, panel.read(cx).build_panel.clone(), window, cx);
+            panel.update(cx, |panel, cx| panel.observe_context_operations(window, cx));
+            panel
+        });
+        let controller = cx.update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx)
+            .expect("Production context controller"));
+        controller.update(cx, |controller, cx| controller.select_fixture_root(root, cx))
+            .expect("Select explicit Android fixture root");
+        panel.update(cx, |panel, cx| panel.context_operations_changed(cx));
+        panel
+    }
+
+    pub(super) fn publish_test_android_catalogue(project: &Entity<Project>, root: &Path, cx: &mut App) -> Result<()> {
+        use android_tools::project_context::{ActiveContext, PluginId, decode_context_record};
+        // These evaluated-getter records qualify inherited backend fixtures. Actual Gradle evaluation remains a separate test gate.
+        let payload = json!({"schema":1,"root":root,"gradleVersion":"9.6.1","phase":"complete",
+            "modules":[(":",root.to_path_buf()),(":app",root.join("app")),(":mobile",root.join("mobile"))].map(|(module,directory)|json!({
+                "path":module,"directory":directory,
+                "plugins":PluginId::ALL.map(|plugin|json!({"plugin":plugin,"applied":matches!(plugin, PluginId::AndroidApplication | PluginId::KotlinAndroid | PluginId::ComposeCompiler)})),
+                "targets":{"status":"available","value":[{"name":"android","platform":"androidJvm"}]}}))});
+        let snapshot = decode_context_record(&serde_json::to_vec(&payload)?, root)?;
+        project.update(cx, |project, cx| {
+            let worktree = project.visible_worktrees(cx).find(|worktree| worktree.read(cx).abs_path().as_ref() == root)
+                .context("Android fixture worktree")?.read(cx).id();
+            let handle = project.ensure_android_context(worktree, true, cx)?;
+            let discovery = project.begin_android_context_import(handle, cx)?;
+            let mut active = ActiveContext::default();
+            active.select(Some(handle), None)?;
+            let owner = active.discovery_token(project.android_context()).context("Android fixture owner")?;
+            project.publish_android_context(&active, &owner, &discovery, snapshot, cx)
+        })
+    }
 
     pub(super) fn publish_test_android_model(
         panel: &mut AndroidPanel,
@@ -3871,7 +4432,7 @@ mod tests {
         });
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = new_test_android_panel(&workspace, project, cx);
         panel.update_in(cx, |panel, window, cx| {
             let root = PathBuf::from("/android");
             let target = AndroidTarget {
@@ -3945,7 +4506,7 @@ mod tests {
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = new_test_android_panel(&workspace, project, cx);
         panel.update_in(cx, |panel, window, cx| {
             let root = PathBuf::from("/android");
             let target = AndroidTarget {
@@ -4007,7 +4568,7 @@ mod tests {
             .expect("Open resource");
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = new_test_android_panel(&workspace, project.clone(), cx);
         workspace.update_in(cx, |workspace, window, cx| {
             let editor = cx.new(|cx| {
                 editor::Editor::for_buffer(buffer.clone(), Some(project.clone()), window, cx)
@@ -4057,7 +4618,7 @@ mod tests {
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = new_test_android_panel(&workspace, project, cx);
         panel.update(cx, |panel, cx| {
             panel.root = Some("/android".into());
             panel.model_input_roots = vec![
@@ -4211,7 +4772,7 @@ mod tests {
         let project = Project::test(filesystem, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = new_test_android_panel(&workspace, project.clone(), cx);
         panel.update(cx, |panel, cx| {
             let root = PathBuf::from("/android");
             let target = AndroidTarget {
@@ -4282,7 +4843,7 @@ mod tests {
         let project = Project::test(fs, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = new_test_android_panel(&workspace, project, cx);
         panel.update_in(cx, |panel, window, cx| {
             panel.root = Some(PathBuf::from("/android"));
             let target = AndroidTarget {
@@ -4403,7 +4964,7 @@ mod tests {
         });
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = new_test_android_panel(&workspace, project, cx);
         let activity = cx.new(|cx| android_status::AndroidActivity::new(&panel, cx));
         workspace.update_in(cx, |workspace, window, cx| {
             workspace
@@ -4425,6 +4986,7 @@ mod tests {
             panel.emulator_startup = Some(EmulatorStartup {
                 root: root.clone(),
                 name: "Selected".into(),
+                owner: panel.operation_owner(AndroidOperation::Devices, cx).expect("Current Android emulator fixture"),
                 error_reported: false,
                 ready: cx
                     .spawn(async move |_, _| startup.await.map_err(|error| error.to_string()))
@@ -4764,7 +5326,7 @@ fi
         let project = Project::test(fs, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = new_test_android_panel(&workspace, project, cx);
         let (send_cancel, receiver) = oneshot::channel();
         drop(receiver);
         panel.update_in(cx, |panel, window, cx| {
@@ -4820,7 +5382,7 @@ fi
         });
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = new_test_android_panel(&workspace, project.clone(), cx);
         let target = AndroidTarget {
             module: ":mobile".into(),
             variant: "debug".into(),
@@ -4894,7 +5456,7 @@ fi
         let project = Project::test(fs, [root.as_path()], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = new_test_android_panel(&workspace, project.clone(), cx);
         let target = AndroidTarget {
             module: ":mobile".into(),
             variant: "demoDebug".into(),
@@ -5072,11 +5634,12 @@ fi
         let location = serde_json::from_value(serde_json::to_value(location).unwrap()).unwrap();
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = new_test_android_panel(&workspace, project.clone(), cx);
         panel.update_in(cx, |panel, window, cx| {
             panel.root = Some(PathBuf::from("/project"));
             panel.syncing = true;
             panel.observe_project_open(window, cx);
+            panel.coordinate_kotlin_setup(PathBuf::from("/project"), true, window, cx);
         });
         let mut restore = store.update(cx, |store, cx| {
             store.restore_language_server_document(location, cx)
@@ -5112,6 +5675,70 @@ fi
                 replacement.server.server_id()
             );
         });
+    }
+
+    #[gpui::test]
+    async fn generic_kotlin_extension_restores_library_documents_without_android_bootstrap(cx: &mut TestAppContext) -> Result<()> {
+        use futures::StreamExt as _;
+        use language::{FakeLspAdapter, Language, LanguageConfig, LanguageMatcher};
+        enum ImportState {}
+        impl lsp::notification::Notification for ImportState {
+            type Params = serde_json::Value;
+            const METHOD: &'static str = "intellij/workspaceImportState";
+        }
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            project::trusted_worktrees::init(Default::default(), cx);
+            crate::init(cx);
+        });
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem.insert_tree("/generic-kotlin", json!({"Main.kt":"fun main() {}"})).await;
+        let project = Project::test_with_worktree_trust(filesystem, [Path::new("/generic-kotlin")], cx).await;
+        cx.update(|cx| project_surfaces::tests::trust(&project, cx))?;
+        let languages = project.read_with(cx, |project, _|project.languages().clone());
+        languages.add(Arc::new(Language::new(LanguageConfig {
+            name:"Kotlin".into(), matcher:LanguageMatcher {path_suffixes:vec!["kt".into()], ..Default::default()}.into(), ..Default::default()
+        }, None)));
+        let mut capabilities = lsp::LanguageServer::full_capabilities();
+        capabilities.execute_command_provider = Some(lsp::ExecuteCommandOptions {commands:vec!["decompile".into()], ..Default::default()});
+        let mut servers = languages.register_fake_lsp("Kotlin", FakeLspAdapter {
+            name:"kotlin-lsp", capabilities,
+            initializer:Some(Box::new(|server| {
+                server.set_request_handler::<lsp::request::Shutdown, _, _>(|_, _| async {Ok(())});
+                server.set_request_handler::<lsp::request::ExecuteCommand, _, _>(|_, _| async {Ok(Some(json!({"code":"fun library() {}","language":"Kotlin"})))});
+            })), ..Default::default()
+        });
+        let (_source, _handle) = project.update(cx, |project, cx|project.open_local_buffer_with_lsp(Path::new("/generic-kotlin/Main.kt"), cx)).await?;
+        let server = servers.next().await.context("Configured generic Kotlin language server")?;
+        server.notify::<ImportState>(json!({"phase":"FINISHED","folders":[{"status":"SUCCESS"}]}));
+        cx.run_until_parked();
+        let library = project.update(cx, |project, cx|project.open_local_buffer_via_lsp("jar:///cache/library.jar!/Library.class".parse().expect("Library URI"), server.server.server_id(), cx)).await?;
+        let store = project.read_with(cx, |project, _|project.lsp_store());
+        let location = store.read_with(cx, |store, cx|store.language_server_document_location(library.read(cx), cx))?.context("Library location")?;
+        let persisted = serde_json::from_value(serde_json::to_value(location)?)?;
+        let (workspace, visual) = cx.add_window_view(|window, cx|Workspace::test_new(project.clone(), window, cx));
+        workspace.update_in(visual, |workspace, window, cx|workspace.open_abs_path(Path::new("/generic-kotlin/Main.kt"), Default::default(), window, cx)).await?;
+        visual.run_until_parked();
+        let restore = store.update(visual, |store, cx|store.restore_language_server_document(persisted, cx));
+        let timeout = visual.background_executor.timer(Duration::from_secs(5));
+        let restored = match select(Box::pin(restore), Box::pin(timeout)).await {
+            Either::Left((result, _)) => result?,
+            Either::Right(_) => bail!("Generic Kotlin restoration waited for an Android setup task"),
+        };
+        restored.read_with(visual, |buffer, _| {
+            assert_eq!(buffer.capability(), language::Capability::ReadOnly);
+            assert_eq!(buffer.language_server_document().expect("Restored document").server_id, server.server.server_id());
+        });
+        workspace.read_with(visual, |workspace, cx| {
+            let panel = workspace.panel::<AndroidPanel>(cx).expect("Contextual panel owner");
+            let panel = panel.read(cx);
+            assert!(panel.kotlin_task.is_none() && panel.java_task.is_none() && panel.sync_task.is_none() && panel.device_task.is_none());
+            assert!(panel.auto_sync_root.is_none());
+            assert!(!project_surfaces::SurfaceState::for_workspace(workspace, cx).qualified());
+        });
+        Ok(())
     }
 
     #[gpui::test]
@@ -5180,7 +5807,7 @@ fi
         }
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project.clone(), cx));
+        let panel = new_test_android_panel(&workspace, project.clone(), cx);
         panel.update(cx, |panel, cx| {
             panel
                 .restart_language_server(Path::new("/first"), "kotlin-lsp", cx)
@@ -5440,7 +6067,7 @@ fi
         let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = new_test_android_panel(&workspace, project, cx);
         panel.update(cx, |panel, _| {
             // Supply completion below instead of running host SDK processes.
             panel.refreshing_devices = true;
@@ -5488,7 +6115,7 @@ fi
         let project = Project::test(fs, [Path::new("/gradle-default-model")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = new_test_android_panel(&workspace, project, cx);
         panel.update(cx, |panel, cx| {
             let root = PathBuf::from("/gradle-default-model");
             panel.root = Some(root.clone());
@@ -5549,7 +6176,7 @@ fi
         let project = Project::test(fs, [root.as_path()], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = new_test_android_panel(&workspace, project, cx);
         let model = |names: &[&str]| {
             let variants = names.iter().map(|name| json!({
                 "name": name, "outputListing": root.join(name).join("output.json"),
@@ -5639,7 +6266,7 @@ fi
         let project = Project::test(fs, [Path::new("/android")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let panel = cx.new(|cx| AndroidPanel::new(workspace.downgrade(), project, cx));
+        let panel = new_test_android_panel(&workspace, project, cx);
         for (index, (variants, expected)) in [
             (
                 vec![
@@ -5868,6 +6495,13 @@ fi
                         cx,
                     )
                 });
+        });
+        cx.run_until_parked();
+        cx.update(|_, cx| publish_test_android_catalogue(&project, Path::new("/android"), cx))
+            .expect("Evaluated Android facts after owning-root trust");
+        cx.run_until_parked();
+        panel.update_in(cx, |panel, window, cx| {
+            panel.coordinate_kotlin_setup(PathBuf::from("/android"), true, window, cx);
         });
         cx.run_until_parked();
         panel.read_with(cx, |panel, cx| {

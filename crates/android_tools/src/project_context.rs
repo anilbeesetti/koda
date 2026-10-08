@@ -326,7 +326,9 @@ impl ContextSnapshot {
         }) {
             return true;
         }
-        (path.starts_with(&self.root) && is_context_input(path))
+        ((path.starts_with(&self.root)
+            || self.modules.values().any(|module| path.starts_with(&module.directory)))
+            && is_context_input(path))
             || self
                 .build_logic_directories
                 .iter()
@@ -339,6 +341,9 @@ impl ContextSnapshot {
 
     pub fn observer_directories(&self) -> Result<Vec<PathBuf>> {
         let mut directories = self.build_logic_directories.clone();
+        directories.extend(self.modules.values()
+            .filter(|module| !module.directory.starts_with(&self.root))
+            .map(|module| module.directory.clone()));
         for layout in self.build_layouts.iter().filter(|layout| {
             self.build_logic_directories
                 .iter()
@@ -396,9 +401,6 @@ impl ContextSnapshot {
         if validate_path(path).is_err() {
             return ModuleOwner::Unresolved;
         }
-        if !path.starts_with(&self.root) {
-            return ModuleOwner::OutsideRoot;
-        }
         let mut owner = None;
         let mut depth = 0;
         let mut ambiguous = false;
@@ -419,7 +421,10 @@ impl ContextSnapshot {
         if ambiguous {
             ModuleOwner::Ambiguous
         } else {
-            owner.map_or(ModuleOwner::Unresolved, ModuleOwner::Module)
+            owner.map_or_else(
+                || if path.starts_with(&self.root) { ModuleOwner::Unresolved } else { ModuleOwner::OutsideRoot },
+                ModuleOwner::Module,
+            )
         }
     }
 
@@ -429,7 +434,9 @@ impl ContextSnapshot {
         readiness: OperationalReadiness<'_>,
     ) -> ContextCapabilities {
         if owner_path
-            .is_some_and(|path| validate_path(path).is_err() || !path.starts_with(&self.root))
+            .is_some_and(|path| validate_path(path).is_err()
+                || (!path.starts_with(&self.root)
+                    && !matches!(self.module_owner(path), ModuleOwner::Module(_))))
         {
             return ContextCapabilities::default();
         }
@@ -1081,6 +1088,9 @@ pub struct ActiveContext {
     generation: u64,
     root: Option<RootHandle>,
     owner_path: Option<PathBuf>,
+    // Retained only to offer an explicit neutral reimport after invalidation.
+    // Fresh evaluated ownership is still required for every operational token.
+    external_owner_directory: Option<PathBuf>,
 }
 
 impl ActiveContext {
@@ -1088,6 +1098,35 @@ impl ActiveContext {
         self.root
     }
     pub fn select(&mut self, root: Option<RootHandle>, owner_path: Option<PathBuf>) -> Result<()> {
+        self.select_with_owner(root, owner_path, None)
+    }
+
+    /// Select a pane owned by a current evaluated module. Retained external
+    /// ownership permits explicit reimport after invalidation, never operation.
+    pub fn select_evaluated_owner(&mut self, root: Option<RootHandle>, owner_path: Option<PathBuf>, store: &ContextStore) -> Result<()> {
+        let external_owner = root.zip(owner_path.as_deref()).and_then(|(root, path)| {
+            let directory = store.root_path(root)?;
+            if path.starts_with(directory) { return None; }
+            if let Some(snapshot) = store.snapshot(root) {
+                match snapshot.module_owner(path) {
+                    ModuleOwner::Module(module) => snapshot.modules.get(module).map(|module| module.directory.clone()),
+                    _ => None,
+                }
+            } else if self.root == Some(root) {
+                self.external_owner_directory.as_ref().filter(|directory| path.starts_with(directory)).cloned()
+            } else { None }
+        });
+        self.select_with_owner(root, owner_path, external_owner)
+    }
+
+    /// Whether this unchanged selection can request a neutral reimport.
+    pub fn retained_external_owner(&self, root: RootHandle, path: &Path, store: &ContextStore) -> bool {
+        self.root == Some(root) && store.snapshot(root).is_none()
+            && store.token(root).is_some()
+            && self.external_owner_directory.as_ref().is_some_and(|directory| path.starts_with(directory))
+    }
+
+    fn select_with_owner(&mut self, root: Option<RootHandle>, owner_path: Option<PathBuf>, external_owner_directory: Option<PathBuf>) -> Result<()> {
         ensure!(
             root.is_some() || owner_path.is_none(),
             "A pane owner requires a project root"
@@ -1095,13 +1134,14 @@ impl ActiveContext {
         if let Some(path) = &owner_path {
             validate_path(path)?;
         }
-        if self.root != root || self.owner_path != owner_path {
+        if self.root != root || self.owner_path != owner_path || self.external_owner_directory != external_owner_directory {
             self.generation = self
                 .generation
                 .checked_add(1)
                 .context("Active context generation space exhausted")?;
             self.root = root;
             self.owner_path = owner_path;
+            self.external_owner_directory = external_owner_directory;
         }
         Ok(())
     }
@@ -1113,12 +1153,12 @@ impl ActiveContext {
 
     pub fn discovery_token(&self, store: &ContextStore) -> Option<ActiveContextToken> {
         let root = self.root?;
-        if self.owner_path.as_ref().is_some_and(|path| {
-            store
-                .root_path(root)
-                .is_none_or(|root| !path.starts_with(root))
-        }) {
-            return None;
+        if let Some(path) = &self.owner_path {
+            if !path.starts_with(store.root_path(root)?) {
+                if let Some(snapshot) = store.snapshot(root) {
+                    if !matches!(snapshot.module_owner(path), ModuleOwner::Module(_)) { return None; }
+                } else if !self.retained_external_owner(root, path, store) { return None; }
+            }
         }
         Some(ActiveContextToken {
             generation: self.generation,

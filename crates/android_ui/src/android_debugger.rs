@@ -8,7 +8,7 @@ use dap::{
     },
     client::SessionId,
 };
-use gpui::AsyncApp;
+use gpui::{AsyncApp, EntityId, Global};
 use project::debugger::dap_store::DapStoreEvent;
 use serde_json::{Value, json};
 use task::{DebugScenario, ZedDebugConfig};
@@ -17,6 +17,10 @@ pub(super) const ADAPTER: &str = "Android Kotlin";
 
 // ponytail: the community adapter maps JVM lines; advanced Kotlin inline/SMAP support needs a compiler-aware adapter.
 pub(super) struct AndroidKotlinAdapter;
+
+#[derive(Default)]
+struct DebuggerAttachments(HashMap<EntityId, WeakEntity<AndroidPanel>>);
+impl Global for DebuggerAttachments {}
 
 pub(super) fn binary() -> Result<PathBuf> {
     let path = std::env::var_os("ANDROID_IDE_KOTLIN_DEBUGGER").map(PathBuf::from)
@@ -40,13 +44,31 @@ impl DebugAdapter for AndroidKotlinAdapter {
 
     async fn get_binary(
         &self,
-        _: &Arc<dyn DapDelegate>,
+        delegate: &Arc<dyn DapDelegate>,
         config: &DebugTaskDefinition,
         user_installed_path: Option<PathBuf>,
         user_args: Option<Vec<String>>,
         user_env: Option<HashMap<String, String>>,
-        _: &mut AsyncApp,
+        cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
+        let root = config.config.get("projectRoot").and_then(Value::as_str)
+            .map(PathBuf::from).context("Android debugging requires its owning project root")?;
+        ensure!(root == delegate.worktree_root_path(), "The Android debugger belongs to a different project");
+        ensure!(cx.update(|cx| {
+            cx.try_global::<DebuggerAttachments>().is_some_and(|attachments| {
+                attachments.0.values().filter_map(WeakEntity::upgrade).any(|panel| {
+                    let panel = panel.read(cx);
+                    panel.debug_forward.as_ref().is_some_and(|forward| {
+                        forward.owner.root == root
+                            && config.label == forward.label
+                            && config.config["hostName"] == "127.0.0.1"
+                            && config.config["port"].as_u64() == Some(u64::from(forward.port))
+                            && panel.project.read(cx).android_model().is_current(&forward.model_token)
+                            && panel.verify_operation_owner(&forward.owner, AndroidOperation::Run, cx).is_ok()
+                    })
+                })
+            })
+        })?, "Use Android: Debug in the active Android application to establish a current device attachment");
         let executable = match user_installed_path {
             Some(path) => path,
             None => binary()?,
@@ -69,7 +91,7 @@ impl DebugAdapter for AndroidKotlinAdapter {
             command: Some(executable.to_string_lossy().into_owned()),
             arguments: user_args.unwrap_or_default(),
             envs,
-            cwd: None,
+            cwd: Some(root),
             connection: None,
             request_args: StartDebuggingRequestArguments {
                 request: StartDebuggingRequestArgumentsRequest::Attach,
@@ -87,6 +109,8 @@ impl DebugAdapter for AndroidKotlinAdapter {
 }
 
 pub(super) struct Forward {
+    owner: AndroidOperationOwner,
+    model_token: android_tools::project_model::ModelToken,
     executor: BackgroundExecutor,
     adb: PathBuf,
     serial: String,
@@ -197,37 +221,46 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if let Err(error) = self.trusted_root(cx).and_then(|current| {
-            ensure!(
-                current == root,
-                "The Android project changed before debugger attachment"
-            );
-            Ok(())
-        }) {
-            self.fail(error, window, cx);
-            return;
-        }
+        let owner = match self.operation_owner(AndroidOperation::Run, cx) {
+            Ok(owner) if owner.root == root => owner,
+            Ok(_) => { self.fail(anyhow::anyhow!("The Android project changed before debugger attachment"), window, cx); return; }
+            Err(error) => { self.fail(error, window, cx); return; }
+        };
+        let model_token = self.project.read(cx).android_model().token();
+        self.backend_owner = Some(owner.context.clone());
         self.running = true;
         self.status = "Attaching Android debugger…".into();
         let executor = cx.background_executor().clone();
         self.debug_task = Some(cx.spawn_in(window, async move |panel, cx| {
-            let result = cx.background_spawn({
+            let result = async {
+            panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Run, cx))??;
+            cx.background_spawn({
                 let root = root.clone();
+                let owner = owner.clone();
+                let model_token = model_token.clone();
                 async move {
+                    owner.ensure_active()?;
                     let adb = adb_path()?;
                     let process = wait_for_application_process(
-                        || tool_output(adb.clone(), vec!["-s".into(), serial.clone(), "shell".into(), "pidof".into(), "-s".into(), application_id.clone()], &root, &executor, Duration::from_secs(1)),
+                        || async {
+                            owner.ensure_active()?;
+                            tool_output(adb.clone(), vec!["-s".into(), serial.clone(), "shell".into(), "pidof".into(), "-s".into(), application_id.clone()], &root, &executor, Duration::from_secs(1)).await
+                        },
                         &executor,
                     ).await?;
+                    owner.ensure_active()?;
                     let output = tool_output(adb.clone(), vec!["-s".into(), serial.clone(), "forward".into(), "tcp:0".into(), format!("jdwp:{process}")], &root, &executor, Duration::from_secs(10)).await?;
                     let port: u16 = positive_number(&output, "debugger port")?;
-                    Ok::<_, anyhow::Error>(Forward { executor, adb, serial, port,
+                    Ok::<_, anyhow::Error>(Forward { owner, model_token, executor, adb, serial, port,
                         label: format!("Android · {application_id} · {process}:{port}").into(), session: None })
                 }
-            }).await;
+            }).await
+            }.await;
             panel.update_in(cx, |panel, window, cx| {
                 panel.running = false;
                 let result = result.and_then(|forward| {
+                    panel.verify_operation_owner(&owner, AndroidOperation::Run, cx)?;
+                    ensure!(panel.project.read(cx).android_model().is_current(&model_token), "The Android model changed during debugger attachment");
                     ensure!(panel.trusted_root(cx)? == root, "The Android project changed during debugger attachment");
                     let worktree = panel.project.read(cx).visible_worktrees(cx)
                         .find(|worktree| worktree.read(cx).abs_path().as_ref() == root)
@@ -237,6 +270,14 @@ impl AndroidPanel {
                     let scenario = DebugScenario { adapter: ADAPTER.into(), label: forward.label.clone(), build: None,
                         config: json!({"request":"attach", "hostName":"127.0.0.1", "port":forward.port, "projectRoot":root, "timeout":5000}), tcp_connection: None };
                     panel.debug_forward = Some(forward);
+                    if !cx.has_global::<DebuggerAttachments>() { cx.set_global(DebuggerAttachments::default()); }
+                    let panel_id = cx.entity_id();
+                    let panel_handle = cx.weak_entity();
+                    if cx.global_mut::<DebuggerAttachments>().0.insert(panel_id, panel_handle).is_none() {
+                        cx.on_release(move |_, cx| {
+                            if cx.has_global::<DebuggerAttachments>() { cx.global_mut::<DebuggerAttachments>().0.remove(&panel_id); }
+                        }).detach();
+                    }
                     provider.start_session(scenario, TaskContext { cwd: Some(root), ..Default::default() }.into(), None, Some(worktree), window, cx);
                     panel.status = "Android debugger started. Use the debugger controls to inspect, step, resume, or disconnect.".into();
                     Ok(())

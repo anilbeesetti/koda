@@ -16,6 +16,19 @@ const MINIMUM_CARD_WIDTH: f32 = 80.;
 const MINIMUM_ZOOM: f32 = 0.05;
 const MAXIMUM_ZOOM: f32 = 2.;
 
+pub(super) fn suspend_previews(workspace: &WeakEntity<Workspace>, cx: &mut App) {
+    let Some(workspace) = workspace.upgrade() else {
+        return;
+    };
+    let editors = workspace.read(cx).items_of_type::<Editor>(cx).collect::<Vec<_>>();
+    for editor in editors {
+        if let Some(view) = editor.read(cx).addon::<ComposePreviewAddon>().map(|addon| addon.view.clone()) {
+            view.update(cx, |view, cx| view.stop(cx));
+            editor.update(cx, |_, cx| cx.notify());
+        }
+    }
+}
+
 pub(super) fn toggle_preview(
     workspace: &mut Workspace,
     window: &mut Window,
@@ -86,9 +99,7 @@ impl AndroidPanel {
                     if let Some(editor) = panel.active_preview_editor(cx)
                         && editor.read(cx).addon::<ComposePreviewAddon>().is_none()
                         && let Some((buffer, _)) = panel.active_preview_source(cx)
-                        && panel.trusted_root(cx).is_ok_and(|root| {
-                            buffer_path(&buffer, cx).is_some_and(|path| path.starts_with(&root))
-                        })
+                        && panel.accepts_compose_preview(&buffer, cx)
                     {
                         panel.attach_compose_preview(false, window, cx).log_err();
                     }
@@ -111,13 +122,34 @@ impl AndroidPanel {
         let editor = self.active_preview_editor(cx)?;
         let buffer = editor.read(cx).buffer().read(cx).as_singleton()?;
         let file = buffer.read(cx).file()?;
-        if file.path().extension() != Some("kt") {
+        if file.path().extension() != Some("kt") || !self.accepts_compose_preview(&buffer, cx) {
             return None;
         }
         Some((buffer, workspace.pane_for(&editor)?.downgrade()))
     }
 
+    pub(super) fn accepts_compose_preview(&self, buffer: &Entity<Buffer>, cx: &App) -> bool {
+        buffer_path(buffer, cx).is_some_and(|path| path.extension().is_some_and(|extension| extension == "kt")
+            && self.preview_path_owned(&path, cx))
+    }
+
+    fn preview_path_owned(&self, path: &Path, cx: &App) -> bool {
+        let Ok(root) = self.trusted_root(cx) else { return false; };
+        let project = self.project.read(cx);
+        let model = project.android_model();
+        let Some(snapshot) = evaluated_snapshot(&project, &root) else { return false; };
+        snapshot.capabilities(Some(path), android_tools::project_context::OperationalReadiness {
+            application_module: self.selected_target.as_ref().map(|target| target.module.as_str()),
+            model_current: model.model.is_some(), model_root: model.root(),
+            android_renderer_supported: cfg!(feature = "bundled-preview"),
+        }).android_compose_preview
+    }
+
     pub(super) fn show_compose_preview(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Err(error) = self.operation_owner(AndroidOperation::Preview, cx) {
+            self.fail(error, window, cx);
+            return;
+        }
         self.compose_preview_enabled = true;
         if let Err(error) = self.attach_compose_preview(true, window, cx) {
             self.fail(error, window, cx);
@@ -130,7 +162,9 @@ impl AndroidPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Result<()> {
-        let root = self.trusted_root(cx)?;
+        let owner = self.operation_owner(AndroidOperation::Preview, cx)?;
+        self.backend_owner = Some(owner.context.clone());
+        let root = owner.root.clone();
         let target = self
             .selected_target
             .clone()
@@ -139,8 +173,8 @@ impl AndroidPanel {
             .active_preview_source(cx)
             .context("Open a Kotlin source file to preview its composables.")?;
         ensure!(
-            buffer_path(&buffer, cx).is_some_and(|path| path.starts_with(&root)),
-            "The preview file belongs to a different Android project"
+            self.accepts_compose_preview(&buffer, cx),
+            "The active file is not eligible for Android Compose previews"
         );
         let editor = self
             .active_preview_editor(cx)
@@ -206,6 +240,12 @@ impl Addon for ComposePreviewAddon {
         cx: &mut App,
     ) -> gpui::AnyElement {
         let view = self.view.read(cx);
+        if !view.panel.read_with(cx, |panel, cx| {
+            panel.operation_permitted(AndroidOperation::Preview, cx)
+                && panel.trusted_root(cx).is_ok_and(|root| root == view.root)
+        }).unwrap_or(false) {
+            return content;
+        }
         let editor_bounds = view.editor_bounds.clone();
         let preview_fraction = view.preview_fraction;
         let view = self.view.downgrade();
@@ -766,7 +806,7 @@ impl ComposePreviewView {
             self.buffer_subscriptions.remove(&id);
             return;
         };
-        if !path.starts_with(&self.root)
+        if evaluated_module(&self.project.read(cx), &self.root, &path).is_none()
             || !path
                 .extension()
                 .is_some_and(|extension| matches!(extension.to_str(), Some("kt" | "java" | "xml")))
@@ -774,14 +814,7 @@ impl ComposePreviewView {
             self.buffer_subscriptions.remove(&id);
             return;
         }
-        let Some(relative) = path
-            .strip_prefix(&self.root)
-            .ok()
-            .and_then(|path| RelPath::new(path, util::paths::PathStyle::local()).ok())
-        else {
-            return;
-        };
-        if !self.preview_input(&relative, cx) {
+        if !self.preview_absolute_input(&path, cx) {
             self.buffer_subscriptions.remove(&id);
             return;
         }
@@ -792,7 +825,7 @@ impl ComposePreviewView {
             if matches!(event, language::BufferEvent::FileHandleChanged) && *buffer == view.source {
                 cx.defer_in(window, |view, window, cx| {
                     if let Some(path) = buffer_path(&view.source, cx) {
-                        if path.starts_with(&view.root) {
+                        if evaluated_module(&view.project.read(cx), &view.root, &path).is_some() {
                             view.source_path = path;
                             view.invalidate(window, cx);
                         } else {
@@ -823,9 +856,9 @@ impl ComposePreviewView {
             .read_with(cx, |panel, cx| {
                 Ok::<_, anyhow::Error>((
                     {
-                        let root = panel.trusted_root(cx)?;
+                        let root = panel.operation_owner(AndroidOperation::Preview, cx)?.root;
                         ensure!(
-                            self.source_path.starts_with(&root),
+                            panel.preview_path_owned(&self.source_path, cx),
                             "The preview file belongs to a different Android project"
                         );
                         root
@@ -998,13 +1031,17 @@ impl ComposePreviewView {
     }
 
     fn preview_input(&self, path: &RelPath, cx: &App) -> bool {
+        self.preview_absolute_input(&self.root.join(path.as_std_path()), cx)
+    }
+
+    fn preview_absolute_input(&self, path: &Path, cx: &App) -> bool {
         self.project
             .read(cx)
             .android_model()
             .selected
             .as_ref()
             .and_then(|selected| {
-                let absolute = selected.model.root.join(path.as_std_path());
+                let absolute = model_source_path(&self.project.read(cx), &self.root, path, &selected.model).ok()?;
                 let visible = selected.visible_modules(
                     &selected.selected.module,
                     android_tools::project_model::SourceScope::Main,
@@ -1031,7 +1068,9 @@ impl ComposePreviewView {
                             && component.scope == android_tools::project_model::SourceScope::Main
                     })
             })
-            .unwrap_or_else(|| preview_input(path))
+            .unwrap_or_else(|| path.strip_prefix(&self.root).ok()
+                .and_then(|path| RelPath::new(path, util::paths::PathStyle::local()).ok())
+                .is_some_and(|path| preview_input(&path)))
     }
 
     fn configuration_current(&self, cx: &App) -> bool {
@@ -1042,7 +1081,8 @@ impl ComposePreviewView {
             && self
                 .panel
                 .read_with(cx, |panel, cx| {
-                    panel.trusted_root(cx).is_ok_and(|root| root == self.root)
+                    panel.operation_permitted(AndroidOperation::Preview, cx)
+                        && panel.trusted_root(cx).is_ok_and(|root| root == self.root)
                         && panel.selected_target.as_ref() == Some(&self.target)
                 })
                 .unwrap_or(false)
@@ -1074,21 +1114,18 @@ impl ComposePreviewView {
 
     fn refresh(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let result = (|| {
-            let (root, target) = self.panel.read_with(cx, |panel, cx| {
+            let (owner, target) = self.panel.read_with(cx, |panel, cx| {
                 Ok::<_, anyhow::Error>((
-                    panel.trusted_root(cx)?,
+                    panel.operation_owner(AndroidOperation::Preview, cx)?,
                     panel
                         .selected_target
                         .clone()
                         .context("Select an Android build variant")?,
                 ))
             })??;
+            let root = owner.root.clone();
             let selected = self.selected_model(&root, &target, cx)?;
-            let model_source_path = selected.model.root.join(
-                self.source_path
-                    .strip_prefix(&root)
-                    .context("The preview file belongs to a different Android project")?,
-            );
+            let model_source_path = model_source_path(&self.project.read(cx), &root, &self.source_path, &selected.model)?;
             let visible = selected.visible_modules(
                 &selected.selected.module,
                 android_tools::project_model::SourceScope::Main,
@@ -1112,7 +1149,7 @@ impl ComposePreviewView {
             let model_token = self.project.read(cx).android_model().token();
             self.configure(root.clone(), target.clone(), window, cx);
             ensure!(
-                self.source_path.starts_with(&root),
+                self.panel.read_with(cx, |panel, cx| panel.preview_path_owned(&self.source_path, cx))?,
                 "The preview file belongs to a different Android project"
             );
             let source_text = self.source.read(cx).snapshot().text();
@@ -1125,7 +1162,7 @@ impl ComposePreviewView {
                 .into_iter()
                 .filter_map(|buffer| {
                     let path = buffer_path(&buffer, cx)?;
-                    (path.starts_with(&root)
+                    (evaluated_module(&self.project.read(cx), &root, &path).is_some()
                         && path.extension().is_some_and(|extension| extension == "kt")
                         && buffer.read(cx).is_dirty())
                     .then(|| (path, buffer.read(cx).snapshot().text()))
@@ -1162,6 +1199,9 @@ impl ComposePreviewView {
                 let mut environment = environment.await.unwrap_or_default();
                 environment.extend(terminal_environment);
                 let result = async {
+                    view.read_with(cx, |view, cx| view.panel.read_with(cx, |panel, cx| {
+                        panel.verify_operation_owner(&owner, AndroidOperation::Preview, cx)
+                    }))???;
                     // Await blocking extraction separately so cancelling setup cannot start a project build.
                     let (installation, java) = cx.background_spawn(async {
                         let installation = preview::installation()?;
@@ -1172,8 +1212,11 @@ impl ComposePreviewView {
                         view.project.read(cx).android_model().is_current(&model_token)
                             && view.configuration_current(cx)
                             && view.revision == revision
+                            && view.panel.read_with(cx, |panel, cx| panel.verify_operation_owner(&owner, AndroidOperation::Preview, cx).is_ok()).unwrap_or(false)
                     })?, "Discarded an outdated Compose preview request");
+                    let worker_owner = owner.clone();
                     cx.background_spawn(async move {
+                        worker_owner.ensure_active()?;
                         let temporary = preview::prepare()?;
                         let directory = temporary.path();
                         let overlay = preview::write_source_overlay(directory, &sources)?;
@@ -1216,6 +1259,7 @@ impl ComposePreviewView {
                             Duration::from_secs(300),
                         )
                         .await?;
+                        worker_owner.ensure_active()?;
                         let model = preview::parse_model(&output, &root, &target)?;
                         preview::validate_selection(&model, &selected)?;
                         ensure!(model.source_files.iter().any(|path| path == &model_source_path
@@ -1238,6 +1282,7 @@ impl ComposePreviewView {
                             Duration::from_secs(60),
                         )
                         .await?;
+                        worker_owner.ensure_active()?;
                         let previews = preview::read_previews(&previews_path)?
                             .into_iter()
                             .filter(|preview| preview.belongs_to(&source_path, &package))
@@ -1272,6 +1317,7 @@ impl ComposePreviewView {
                                 Duration::from_secs(180),
                             )
                             .await?;
+                            worker_owner.ensure_active()?;
                             let results = preview::rendered_previews(directory, &previews)?;
                             let names = results
                                 .iter()
@@ -1309,7 +1355,8 @@ impl ComposePreviewView {
                         && view
                         .panel
                         .read_with(cx, |panel, cx| {
-                            panel
+                            panel.verify_operation_owner(&owner, AndroidOperation::Preview, cx).is_ok()
+                                && panel
                                 .trusted_root(cx)
                                 .is_ok_and(|root| root == request_root)
                                 && panel.selected_target.as_ref() == Some(&request_target)
@@ -2019,6 +2066,27 @@ fn buffer_path(buffer: &Entity<Buffer>, cx: &App) -> Option<PathBuf> {
     Some(buffer.read(cx).file()?.as_local()?.abs_path(cx))
 }
 
+fn evaluated_snapshot<'a>(project: &'a Project, root: &Path) -> Option<&'a android_tools::project_context::ContextSnapshot> {
+    let store = project.android_context();
+    store.handles().find_map(|handle| (store.root_path(handle) == Some(root)).then(|| store.snapshot(handle)).flatten())
+}
+
+fn evaluated_module<'a>(project: &'a Project, root: &Path, path: &Path) -> Option<&'a android_tools::project_context::ModuleContext> {
+    let snapshot = evaluated_snapshot(project, root)?;
+    let android_tools::project_context::ModuleOwner::Module(owner) = snapshot.module_owner(path) else { return None; };
+    snapshot.modules().find(|module| module.path() == owner)
+}
+
+fn model_source_path(project: &Project, root: &Path, path: &Path, model: &android_tools::project_model::ProjectModel) -> Result<PathBuf> {
+    let module = evaluated_module(project, root, path).context("The preview file has no current evaluated Android project owner")?;
+    if let Ok(relative) = path.strip_prefix(root) {
+        return Ok(model.root.join(relative));
+    }
+    let model_module = model.modules.iter().find(|candidate| candidate.path == module.path())
+        .context("The evaluated sibling module is absent from the current Android model")?;
+    Ok(model_module.directory.join(path.strip_prefix(module.directory())?))
+}
+
 fn preview_input(path: &RelPath) -> bool {
     if path
         .components()
@@ -2709,6 +2777,203 @@ mod tests {
         assert!(zoom > MINIMUM_ZOOM);
     }
 
+    /// Adapted from AOSP NonComposeProjectTest.`compose preview not available`
+    /// at tools/adt/idea a84efec3ba9542d9bfa1255103f0dc94833a3796. The complete
+    /// original and Apache notice are in test_data/project_context/NonComposeProjectTest.kt.
+    #[gpui::test]
+    async fn compose_preview_not_available_in_non_compose_project(cx: &mut TestAppContext) -> Result<()> {
+        use android_tools::project_context::PluginId;
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            project::trusted_worktrees::init(Default::default(), cx);
+            crate::init(cx);
+        });
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem.insert_tree("/non-compose", serde_json::json!({"Main.kt":"fun testMethod() {\n}"})).await;
+        let project = Project::test_with_worktree_trust(filesystem, [Path::new("/non-compose")], cx).await;
+        cx.update(|cx| {
+            project_surfaces::tests::trust(&project, cx)?;
+            project_surfaces::tests::publish_catalogue(&project, Path::new("/non-compose"), &[PluginId::AndroidApplication], &[("android", "androidJvm")], true, cx)
+        })?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/non-compose/Main.kt"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        let (panel, buffer) = workspace.read_with(visual, |workspace, cx| {
+            let panel = workspace.panel::<AndroidPanel>(cx).context("Android project panel")?;
+            let editor = workspace.active_item(cx).and_then(|item| item.downcast::<Editor>()).context("Main.kt editor")?;
+            let buffer = editor.read(cx).buffer().read(cx).as_singleton().context("Main.kt buffer")?;
+            Ok::<_, anyhow::Error>((panel, buffer))
+        })?;
+        panel.update(visual, |panel, cx| {
+            let target = AndroidTarget { module: ":".into(), variant: "debug".into(), output_listing: PathBuf::from("/non-compose/output.json") };
+            panel.targets = vec![target.clone()];
+            panel.selected_target = Some(target.clone());
+            super::super::tests::publish_test_android_model(panel, &target, cx);
+            assert!(panel.operation_permitted(AndroidOperation::Run, cx), "The non-Compose Android model is operational");
+            assert_eq!(buffer.read(cx).snapshot().text(), "fun testMethod() {\n}");
+            assert!(!panel.accepts_compose_preview(&buffer, cx));
+        });
+        panel.update_in(visual, |panel, window, cx| {
+            panel.show_compose_preview(window, cx);
+            assert!(panel.preview_view.is_none());
+            assert!(!panel.compose_preview_enabled);
+        });
+        visual.run_until_parked();
+        workspace.read_with(visual, |workspace, cx| {
+            let editor = workspace.active_item(cx).and_then(|item| item.downcast::<Editor>()).expect("Main.kt editor");
+            assert!(editor.read(cx).addon::<ComposePreviewAddon>().is_none());
+        });
+        Ok(())
+    }
+
+    #[gpui::test]
+    async fn compose_preview_available_in_compose_project_uses_production_provider(cx: &mut TestAppContext) -> Result<()> {
+        use android_tools::project_context::PluginId;
+        assert!(cfg!(feature = "bundled-preview"), "This production provider test requires the normal zed bundled-preview dependency graph");
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            project::trusted_worktrees::init(Default::default(), cx);
+            crate::init(cx);
+        });
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem.insert_tree("/compose-project", serde_json::json!({"Main.kt":"@Composable\nfun Content() {}"})).await;
+        let project = Project::test_with_worktree_trust(filesystem, [Path::new("/compose-project")], cx).await;
+        cx.update(|cx| {
+            project_surfaces::tests::trust(&project, cx)?;
+            project_surfaces::tests::publish_catalogue(&project, Path::new("/compose-project"), &[PluginId::AndroidApplication, PluginId::ComposeCompiler], &[("android", "androidJvm")], true, cx)
+        })?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        workspace.update_in(visual, |workspace, window, cx| workspace.open_abs_path(Path::new("/compose-project/Main.kt"), Default::default(), window, cx)).await?;
+        visual.run_until_parked();
+        let (panel, buffer) = workspace.read_with(visual, |workspace, cx| {
+            let panel = workspace.panel::<AndroidPanel>(cx).context("Android panel")?;
+            let editor = workspace.active_item(cx).and_then(|item| item.downcast::<Editor>()).context("Compose source editor")?;
+            let buffer = editor.read(cx).buffer().read(cx).as_singleton().context("Compose buffer")?;
+            Ok::<_, anyhow::Error>((panel, buffer))
+        })?;
+        panel.update(visual, |panel, cx| {
+            let target = AndroidTarget { module: ":".into(), variant: "debug".into(), output_listing: PathBuf::from("/compose-project/output.json") };
+            panel.targets = vec![target.clone()];
+            panel.selected_target = Some(target.clone());
+            publish_preview_test_model(panel, &target, cx);
+            assert!(panel.operation_permitted(AndroidOperation::Run, cx));
+            assert!(panel.accepts_compose_preview(&buffer, cx), "The real provider must accept an operational Compose source");
+        });
+        // Provider acceptance precedes rendering; this test never schedules an
+        // SDK installation, Gradle build, or renderer process.
+        Ok(())
+    }
+
+    #[gpui::test]
+    async fn evaluated_sibling_editor_and_preview_keep_parent_ownership_and_independent_root_priority(cx: &mut TestAppContext) -> Result<()> {
+        use android_tools::project_context::{ActiveContext, PluginId, decode_context_record};
+        assert!(cfg!(feature = "bundled-preview"), "Use the normal zed bundled-preview graph");
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            project::trusted_worktrees::init(Default::default(), cx);
+            crate::init(cx);
+        });
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem.insert_tree("/sibling-parent", serde_json::json!({"settings.gradle.kts":"include(\":app\"); project(\":app\").projectDir = file(\"../sibling-app\")", "gradlew":""})).await;
+        filesystem.insert_tree("/sibling-app", serde_json::json!({"build.gradle.kts":"", "src":{"Main.kt":"@Composable\nfun Content() {}"}})).await;
+        filesystem.insert_tree("/independent-jvm", serde_json::json!({"settings.gradle.kts":"", "gradlew":"", "Main.kt":"fun main() {}"})).await;
+        let project = Project::test_with_worktree_trust(filesystem, [Path::new("/sibling-parent"), Path::new("/sibling-app"), Path::new("/independent-jvm")], cx).await;
+        let publish = |cx: &mut App| -> Result<()> {
+            let record = serde_json::json!({"schema":1,"root":"/sibling-parent","gradleVersion":"9.6.1","phase":"complete", "modules":[
+                (":", "/sibling-parent", false), (":app", "/sibling-app", true), (":independent", "/independent-jvm", true)
+            ].map(|(module,directory,android)|serde_json::json!({"path":module,"directory":directory,
+                "plugins":PluginId::ALL.map(|plugin|serde_json::json!({"plugin":plugin,"applied":android && matches!(plugin, PluginId::AndroidApplication | PluginId::ComposeCompiler)})),
+                "targets":{"status":"available","value":if android {vec![serde_json::json!({"name":"android","platform":"androidJvm"})]} else {vec![]}}}))});
+            let snapshot = decode_context_record(&serde_json::to_vec(&record)?, Path::new("/sibling-parent"))?;
+            project.update(cx, |project, cx| {
+                let worktree = project.visible_worktrees(cx).find(|worktree|worktree.read(cx).abs_path().as_ref() == Path::new("/sibling-parent")).context("Parent worktree")?.read(cx).id();
+                let handle = project.ensure_android_context(worktree, true, cx)?;
+                let import = project.begin_android_context_import(handle, cx)?;
+                let mut active = ActiveContext::default();
+                active.select(Some(handle), None)?;
+                let owner = active.discovery_token(project.android_context()).context("Fixture import owner")?;
+                project.publish_android_context(&active, &owner, &import, snapshot, cx)
+            })
+        };
+        cx.update(|cx| {
+            project_surfaces::tests::trust(&project, cx)?;
+            publish(cx)?;
+            project_surfaces::tests::publish_catalogue(&project, Path::new("/independent-jvm"), &[], &[("jvm","jvm")], true, cx)
+        })?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        workspace.update_in(visual, |workspace, window, cx|workspace.open_abs_path(Path::new("/sibling-app/src/Main.kt"), Default::default(), window, cx)).await?;
+        visual.run_until_parked();
+        let (panel, buffer, controller) = workspace.read_with(visual, |workspace, cx| {
+            let editor = workspace.active_item(cx).and_then(|item|item.downcast::<Editor>()).context("Sibling editor")?;
+            Ok::<_, anyhow::Error>((workspace.panel::<AndroidPanel>(cx).context("Android panel")?,
+                editor.read(cx).buffer().read(cx).as_singleton().context("Sibling buffer")?,
+                project_context::for_workspace(&workspace.weak_handle(), cx).context("Controller")?))
+        })?;
+        let select_model = |panel: &mut AndroidPanel, cx: &mut Context<AndroidPanel>| -> Result<()> {
+            let target = AndroidTarget {module:":app".into(),variant:"debug".into(),output_listing:PathBuf::from("/sibling-app/output.json")};
+            let model = serde_json::from_value(serde_json::json!({"version":1,"root":"/sibling-parent","diagnostics":[],"modules":[{
+                "path":":app","directory":"/sibling-app","kind":"application","namespace":"sample", "variants":[{
+                    "name":"debug","outputListing":target.output_listing,"components":[{"name":"debug","scope":"main","dependencies":[],"sources":[{"path":"/sibling-app/src","kind":"kotlin","generated":false}]}]}]}]}))?;
+            panel.targets = vec![target.clone()]; panel.selected_target = Some(target.clone());
+            panel.project.update(cx, |project, cx| {
+                let token = project.invalidate_android_model(Some(PathBuf::from("/sibling-parent")), cx);
+                project.publish_android_model(&token, model, cx)?;
+                project.select_android_variant(Some((&target).into()), cx)
+            })
+        };
+        panel.update(visual, select_model)?;
+        let operation_owners = panel.read_with(visual, |panel, cx| {
+            [AndroidOperation::Devices, AndroidOperation::Run, AndroidOperation::Preview].map(|operation| panel.operation_owner(operation, cx)).into_iter().collect::<Result<Vec<_>>>()
+        })?;
+        let first = controller.read_with(visual, |controller, cx| {
+            assert_eq!(controller.root(cx), Some(PathBuf::from("/sibling-parent")));
+            controller.action_token(cx).context("Sibling action token")
+        })?;
+        panel.read_with(visual, |panel, cx| assert!(panel.accepts_compose_preview(&buffer, cx)));
+        workspace.update_in(visual, |workspace, window, cx|workspace.open_abs_path(Path::new("/independent-jvm/Main.kt"), Default::default(), window, cx)).await?;
+        visual.run_until_parked();
+        controller.read_with(visual, |controller, cx| {
+            assert_eq!(controller.root(cx), Some(PathBuf::from("/independent-jvm")));
+            assert!(!controller.capabilities(Default::default(), cx).ecosystems.qualifies());
+            assert!(!controller.action_is_current(&first, cx));
+        });
+        assert!(operation_owners.iter().all(|owner| owner.ensure_active().is_err()), "Pending backend owners are cancelled on the actual editor switch");
+        panel.read_with(visual, |panel, cx| assert!(!panel.accepts_compose_preview(&buffer, cx)));
+        workspace.update_in(visual, |workspace, window, cx|workspace.open_abs_path(Path::new("/sibling-app/src/Main.kt"), Default::default(), window, cx)).await?;
+        visual.run_until_parked();
+        panel.update(visual, select_model)?;
+        controller.read_with(visual, |controller, cx| assert!(!controller.action_is_current(&first, cx)));
+        panel.read_with(visual, |panel, cx| assert!(panel.accepts_compose_preview(&buffer, cx)));
+        project.update(visual, |project, cx|project.invalidate_android_context_for_repository(Path::new("/sibling-app"), cx));
+        visual.run_until_parked();
+        controller.read_with(visual, |controller, cx| {
+            assert_eq!(controller.root(cx), Some(PathBuf::from("/sibling-parent")));
+            assert!(controller.discovery_token(cx).is_some());
+            assert!(controller.action_token(cx).is_none());
+            assert_eq!(controller.capabilities(Default::default(), cx), Default::default());
+        });
+        panel.read_with(visual, |panel, cx| assert!(!panel.accepts_compose_preview(&buffer, cx)));
+        visual.update(|_, cx| publish(cx))?;
+        visual.run_until_parked();
+        panel.update(visual, select_model)?;
+        panel.read_with(visual, |panel, cx| assert!(panel.accepts_compose_preview(&buffer, cx)));
+        let trusted_owner = panel.read_with(visual, |panel, cx| panel.operation_owner(AndroidOperation::Preview, cx))?;
+        let source_worktree = project.read_with(visual, |project, cx|project.visible_worktrees(cx).find(|worktree|worktree.read(cx).abs_path().as_ref() == Path::new("/sibling-app")).expect("Source worktree").read(cx).id());
+        let store = project.read_with(visual, |project, _|project.worktree_store());
+        visual.update(|_, cx| TrustedWorktrees::try_get_global(cx).expect("Trust store").update(cx, |trust, cx|trust.restrict(store.downgrade(), [project::trusted_worktrees::PathTrust::Worktree(source_worktree)].into_iter().collect(), cx)));
+        assert!(trusted_owner.ensure_active().is_err(), "Trust restriction cancels owned workers before a deferred reconciliation");
+        panel.read_with(visual, |panel, cx| assert!(!panel.accepts_compose_preview(&buffer, cx), "Source trust invalidation denies previews immediately"));
+        Ok(())
+    }
+
     async fn test_project(cx: &mut TestAppContext) -> (Entity<Project>, Entity<Buffer>) {
         cx.update(|cx| {
             AppState::test(cx);
@@ -2756,6 +3021,9 @@ mod tests {
                         cx,
                     );
                 });
+            for root in [Path::new("/android"), Path::new("/other-android")] {
+                super::super::tests::publish_test_android_catalogue(&project, root, cx).expect("Explicit inherited preview context");
+            }
         });
         let buffer = project
             .update(cx, |project, cx| {
@@ -2832,6 +3100,8 @@ mod tests {
             output_listing: PathBuf::from("/android/metadata.json"),
         };
         let panel = cx.new(|cx| AndroidPanel::new(workspace.weak_handle(), project.clone(), cx));
+        let build_panel = cx.new(|cx| BuildPanel::new(workspace.weak_handle(), cx));
+        project_context::register(workspace, build_panel, window, cx);
         panel.update(cx, |panel, cx| {
             panel.root = Some(PathBuf::from("/android"));
             panel.targets = vec![target.clone()];
