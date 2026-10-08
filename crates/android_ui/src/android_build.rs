@@ -1342,6 +1342,20 @@ async fn read_output_with_policy(
                     .context("Build output window closed")?;
             }
         }
+        if hide_model {
+            // Hidden transport can stay readable without ever awaiting the output
+            // sink. Yield so cancellation and deadlines can interrupt the capture.
+            let mut yielded = false;
+            futures::future::poll_fn(|task_context| {
+                if std::mem::replace(&mut yielded, true) {
+                    std::task::Poll::Ready(())
+                } else {
+                    task_context.waker().wake_by_ref();
+                    std::task::Poll::Pending
+                }
+            })
+            .await;
+        }
     }
     if let Some(text) = presentation.finish() {
         sender
@@ -1485,6 +1499,7 @@ mod tests {
         offset: usize,
         chunks: VecDeque<usize>,
         maximum: usize,
+        read_bytes: Option<std::sync::Arc<std::sync::atomic::AtomicUsize>>,
     }
 
     impl AsyncRead for ChunkedReader {
@@ -1502,6 +1517,9 @@ mod tests {
                 .min(self.bytes.len() - self.offset);
             buffer[..count].copy_from_slice(&self.bytes[self.offset..self.offset + count]);
             self.offset += count;
+            if let Some(read_bytes) = &self.read_bytes {
+                read_bytes.fetch_add(count, std::sync::atomic::Ordering::SeqCst);
+            }
             std::task::Poll::Ready(Ok(count))
         }
     }
@@ -1520,6 +1538,7 @@ mod tests {
                     offset: 0,
                     chunks,
                     maximum,
+                    read_bytes: None,
                 },
                 stderr,
                 sender,
@@ -1685,6 +1704,45 @@ mod tests {
             assert!(presentation.push(byte).is_none());
         }
         assert_eq!(presentation.finish().as_deref(), Some("warning"));
+    }
+
+    #[test]
+    fn model_console_ready_hidden_capture_yields_before_eof() -> Result<()> {
+        block_on(async {
+            use std::sync::{
+                Arc,
+                atomic::{AtomicUsize, Ordering},
+            };
+            let prefix = android_tools::project_model::MODEL_OUTPUT_PREFIX;
+            let input = format!("{prefix}{}", "x".repeat(MAX_MODEL_BYTES - prefix.len()));
+            let read_bytes = Arc::new(AtomicUsize::new(0));
+            let (sender, mut receiver) = mpsc::channel(0);
+            let read = read_output_with_policy(
+                ChunkedReader {
+                    bytes: input.as_bytes().to_vec(),
+                    offset: 0,
+                    chunks: VecDeque::new(),
+                    maximum: 8192,
+                    read_bytes: Some(read_bytes.clone()),
+                },
+                false,
+                sender,
+                true,
+                OutputPolicy::AndroidProjectModel,
+            );
+            futures::pin_mut!(read);
+            assert!(read.as_mut().now_or_never().is_none());
+            let consumed_before_yield = read_bytes.load(Ordering::SeqCst);
+            assert!(consumed_before_yield > 0);
+            assert!(consumed_before_yield <= MAX_LINE_BYTES);
+            assert!(consumed_before_yield < input.len());
+            assert!(receiver.next().now_or_never().is_none());
+            let (captured, lines) = futures::join!(read, receiver.collect::<Vec<_>>());
+            assert_eq!(captured?, input);
+            assert_eq!(read_bytes.load(Ordering::SeqCst), input.len());
+            assert!(lines.is_empty());
+            Ok(())
+        })
     }
 
     #[test]
