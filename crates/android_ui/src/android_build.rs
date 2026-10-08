@@ -500,7 +500,9 @@ impl BuildPanel {
     }
 
     pub(crate) fn session_id(&self, tab: BuildTab) -> Option<u64> {
-        self.sessions[tab.index()].as_ref().map(|session| session.id)
+        self.sessions[tab.index()]
+            .as_ref()
+            .map(|session| session.id)
     }
 
     pub(crate) fn begin(
@@ -1279,11 +1281,17 @@ impl OutputPresentation {
                 android_tools::project_model::MODEL_OUTPUT_PREFIX.as_bytes(),
                 android_tools::project_context::CONTEXT_OUTPUT_PREFIX.as_bytes(),
             ];
-            if prefixes.iter().any(|prefix| *prefix == self.pending.as_slice()) {
+            if prefixes
+                .iter()
+                .any(|prefix| *prefix == self.pending.as_slice())
+            {
                 self.pending.clear();
                 self.line = LinePresentation::Hidden;
                 return None;
-            } else if !prefixes.iter().any(|prefix| prefix.starts_with(&self.pending)) {
+            } else if !prefixes
+                .iter()
+                .any(|prefix| prefix.starts_with(&self.pending))
+            {
                 self.line = LinePresentation::Visible;
             }
         }
@@ -1449,8 +1457,20 @@ async fn command_output_inner_with_policy(
     policy: OutputPolicy,
 ) -> Result<ProcessOutput> {
     let program = command.get_program().to_string_lossy().into_owned();
-    if cancel.try_recv()?.is_some() { return Ok(ProcessOutput::Cancelled); }
-    match captured_command_output(command, timeout, sender, cancel.map(|_| ()), capture, deadline, policy).await? {
+    if cancel.try_recv()?.is_some() {
+        return Ok(ProcessOutput::Cancelled);
+    }
+    match captured_command_output(
+        command,
+        timeout,
+        sender,
+        cancel.map(|_| ()),
+        capture,
+        deadline,
+        policy,
+    )
+    .await?
+    {
         CapturedProcessOutput::Completed { stdout, status } => {
             ensure!(status.success(), "{program} failed ({status}).");
             Ok(ProcessOutput::Success(stdout))
@@ -1460,7 +1480,10 @@ async fn command_output_inner_with_policy(
 }
 
 pub(crate) enum CapturedProcessOutput {
-    Completed { stdout: String, status: std::process::ExitStatus },
+    Completed {
+        stdout: String,
+        status: std::process::ExitStatus,
+    },
     Cancelled,
 }
 
@@ -1471,7 +1494,16 @@ pub(crate) async fn project_context_output(
     sender: mpsc::Sender<OutputLine>,
     cancel: impl std::future::Future<Output = ()> + Send,
 ) -> Result<CapturedProcessOutput> {
-    captured_command_output(command, timeout, sender, cancel, true, executor.timer(timeout), OutputPolicy::AndroidProjectModel).await
+    captured_command_output(
+        command,
+        timeout,
+        sender,
+        cancel,
+        true,
+        executor.timer(timeout),
+        OutputPolicy::AndroidProjectModel,
+    )
+    .await
 }
 
 async fn captured_command_output(
@@ -1596,15 +1628,31 @@ mod tests {
     }
 
     #[test]
-    fn context_console_preserves_raw_records_and_filters_exact_stdout_at_every_split() -> Result<()> {
+    fn context_console_preserves_raw_records_and_filters_exact_stdout_at_every_split() -> Result<()>
+    {
         block_on(async {
             let prefix = android_tools::project_context::CONTEXT_OUTPUT_PREFIX;
-            let input = format!("{prefix}{{\"phase\":\"partial\"}}\r\n {prefix}visible\nwarning {prefix}visible\n{prefix}{{\"phase\":\"complete\"}}");
+            let input = format!(
+                "{prefix}{{\"phase\":\"partial\"}}\r\n {prefix}visible\nwarning {prefix}visible\n{prefix}{{\"phase\":\"complete\"}}"
+            );
             for split in 1..=prefix.len() + 1 {
-                let (captured, lines) = present_model_chunks(input.as_bytes(), VecDeque::from([split]), 1, false).await?;
+                let (captured, lines) =
+                    present_model_chunks(input.as_bytes(), VecDeque::from([split]), 1, false)
+                        .await?;
                 assert_eq!(captured, input);
-                assert_eq!(lines.iter().map(|line| line.text.as_str()).collect::<Vec<_>>(), vec![format!(" {prefix}visible"), format!("warning {prefix}visible")]);
-                let (captured, lines) = present_model_chunks(input.as_bytes(), VecDeque::from([split]), 1, true).await?;
+                assert_eq!(
+                    lines
+                        .iter()
+                        .map(|line| line.text.as_str())
+                        .collect::<Vec<_>>(),
+                    vec![
+                        format!(" {prefix}visible"),
+                        format!("warning {prefix}visible")
+                    ]
+                );
+                let (captured, lines) =
+                    present_model_chunks(input.as_bytes(), VecDeque::from([split]), 1, true)
+                        .await?;
                 assert_eq!(captured, input);
                 assert_eq!(lines.len(), 4);
                 assert!(lines.iter().all(|line| line.stderr));
@@ -1614,18 +1662,23 @@ mod tests {
     }
 
     #[test]
-    fn context_console_hidden_records_remain_bounded_and_partial_prefixes_stay_visible() -> Result<()> {
+    fn context_console_hidden_records_remain_bounded_and_partial_prefixes_stay_visible()
+    -> Result<()> {
         block_on(async {
             let prefix = android_tools::project_context::CONTEXT_OUTPUT_PREFIX;
             let mut presentation = OutputPresentation::new(true);
-            for byte in prefix.bytes().chain(std::iter::repeat_n(b'x', MAX_CONTEXT_TRANSPORT_TEST_BYTES)) {
+            for byte in prefix
+                .bytes()
+                .chain(std::iter::repeat_n(b'x', MAX_CONTEXT_TRANSPORT_TEST_BYTES))
+            {
                 assert!(presentation.push(byte).is_none());
                 assert!(presentation.pending.len() <= prefix.len());
             }
             assert!(presentation.finish().is_none());
             for length in 1..prefix.len() {
                 let partial = &prefix[..length];
-                let (captured, lines) = present_model_chunks(partial.as_bytes(), VecDeque::new(), 1, false).await?;
+                let (captured, lines) =
+                    present_model_chunks(partial.as_bytes(), VecDeque::new(), 1, false).await?;
                 assert_eq!(captured, partial);
                 assert_eq!(lines.len(), 1);
                 assert_eq!(lines[0].text, partial);
@@ -1634,7 +1687,8 @@ mod tests {
         })
     }
 
-    const MAX_CONTEXT_TRANSPORT_TEST_BYTES: usize = android_tools::project_context::MAX_CONTEXT_RECORD_BYTES;
+    const MAX_CONTEXT_TRANSPORT_TEST_BYTES: usize =
+        android_tools::project_context::MAX_CONTEXT_RECORD_BYTES;
 
     #[cfg(unix)]
     #[test]
@@ -1644,10 +1698,20 @@ mod tests {
             command.args(["-c", "printf 'KODA_PROJECT_CONTEXT={\"phase\":\"partial\"}\\n'; printf 'SDK configuration failed\\n' >&2; exit 7"]);
             let (sender, receiver) = mpsc::channel(1);
             let (completion, lines) = futures::join!(
-                captured_command_output(command, Duration::from_secs(5), sender, future::pending(), true, future::pending(), OutputPolicy::AndroidProjectModel),
+                captured_command_output(
+                    command,
+                    Duration::from_secs(5),
+                    sender,
+                    future::pending(),
+                    true,
+                    future::pending(),
+                    OutputPolicy::AndroidProjectModel
+                ),
                 receiver.collect::<Vec<_>>()
             );
-            let CapturedProcessOutput::Completed { stdout, status } = completion? else { anyhow::bail!("Command was unexpectedly cancelled") };
+            let CapturedProcessOutput::Completed { stdout, status } = completion? else {
+                anyhow::bail!("Command was unexpectedly cancelled")
+            };
             assert_eq!(status.code(), Some(7));
             assert_eq!(stdout, "KODA_PROJECT_CONTEXT={\"phase\":\"partial\"}\n");
             assert_eq!(lines.len(), 1);

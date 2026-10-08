@@ -219,7 +219,10 @@ pub enum OpenedBufferEvent {
 pub struct Project {
     android_model: android_tools::project_model::ModelState,
     android_context: android_tools::project_context::ContextStore,
-    android_context_observers: HashMap<android_tools::project_context::RootHandle, HashMap<PathBuf, Task<()>>>,
+    android_context_observers: HashMap<
+        android_tools::project_context::RootHandle,
+        HashMap<PathBuf, android_context::InputObserver>,
+    >,
     active_entry: Option<ProjectEntryId>,
     buffer_ordered_messages_tx: mpsc::UnboundedSender<BufferOrderedMessage>,
     languages: Arc<LanguageRegistry>,

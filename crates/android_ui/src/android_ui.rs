@@ -10,8 +10,6 @@ pub mod tabbed_toolbar;
 
 use android_build::{BuildEvent, BuildStatus, BuildTab, ProcessOutput};
 pub use android_build::{BuildPanel, ToggleBuild};
-pub use project_context::ImportGradleProject;
-pub use project_surfaces::{ApplicationMenuTemplates, action_available, application_menus, install_application_menus};
 use android_logcat_panel::LogcatPanel;
 use android_tools::{
     AndroidTarget, Device, adb_path, android_cli_path, emulator_path, is_gradle_project,
@@ -29,6 +27,8 @@ use gpui::{
     Subscription, Task, WeakEntity, actions,
 };
 use project::{Project, TaskSourceKind, WorktreeId, trusted_worktrees::TrustedWorktrees};
+pub use project_context::ImportGradleProject;
+pub use project_surfaces::{ApplicationMenuTemplates, action_available, application_menus, install_application_menus};
 use settings::{IntoGpui, RegisterSetting, Settings};
 use std::{
     collections::HashMap,
@@ -377,7 +377,9 @@ impl AndroidPanel {
                 if let BuildEvent::Rerun(tab) = event {
                     match tab {
                         BuildTab::Sync => {
-                            if !project_context::for_workspace(&panel.workspace, cx).is_some_and(|controller| controller.read(cx).owns_sync_session(cx)) {
+                            if !project_context::for_workspace(&panel.workspace, cx)
+                                .is_some_and(|controller| controller.read(cx).owns_sync_session(cx))
+                            {
                                 panel.sync_project(window, cx);
                             }
                         }
@@ -528,13 +530,21 @@ impl AndroidPanel {
     fn auto_sync_candidate(&self, cx: &App) -> Option<PathBuf> {
         let controller = project_context::for_workspace(&self.workspace, cx)?;
         let controller = controller.read(cx);
-        controller.capabilities(Default::default(), cx).automatic_android_sync.then(|| controller.root(cx)).flatten()
+        controller
+            .capabilities(Default::default(), cx)
+            .automatic_android_sync
+            .then(|| controller.root(cx))
+            .flatten()
     }
 
-    fn android_context_capabilities(&self, cx: &App) -> android_tools::project_context::ContextCapabilities {
-        project_context::for_workspace(&self.workspace, cx).map_or_else(Default::default, |controller| {
-            controller.read(cx).capabilities(Default::default(), cx)
-        })
+    fn android_context_capabilities(
+        &self,
+        cx: &App,
+    ) -> android_tools::project_context::ContextCapabilities {
+        project_context::for_workspace(&self.workspace, cx)
+            .map_or_else(Default::default, |controller| {
+                controller.read(cx).capabilities(Default::default(), cx)
+            })
     }
 
     fn cancel_build(&mut self, tab: BuildTab, cx: &mut Context<Self>) {
@@ -725,7 +735,13 @@ impl AndroidPanel {
             }
         };
         if !self.android_context_capabilities(cx).android_sync {
-            self.fail(anyhow::anyhow!("Import the trusted Gradle project to discover Android plugins before syncing."), window, cx);
+            self.fail(
+                anyhow::anyhow!(
+                    "Import the trusted Gradle project to discover Android plugins before syncing."
+                ),
+                window,
+                cx,
+            );
             return;
         }
         self.coordinate_kotlin_setup(root.clone(), false, window, cx);
@@ -3044,7 +3060,10 @@ impl Panel for AndroidPanel {
         10
     }
     fn set_active(&mut self, active: bool, _: &mut Window, cx: &mut Context<Self>) {
-        if active && self.devices.is_empty() && self.android_context_capabilities(cx).android_devices {
+        if active
+            && self.devices.is_empty()
+            && self.android_context_capabilities(cx).android_devices
+        {
             self.refresh_devices(cx);
         }
     }
