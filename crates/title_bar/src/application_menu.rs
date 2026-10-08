@@ -57,11 +57,18 @@ impl ApplicationMenu {
         Self::new_with_workspace(None, cx)
     }
 
-    pub fn new_for_workspace(workspace: WeakEntity<workspace::Workspace>, _: &mut Window, cx: &mut Context<Self>) -> Self {
+    pub fn new_for_workspace(
+        workspace: WeakEntity<workspace::Workspace>,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Self {
         Self::new_with_workspace(Some(workspace), cx)
     }
 
-    fn new_with_workspace(workspace: Option<WeakEntity<workspace::Workspace>>, cx: &mut Context<Self>) -> Self {
+    fn new_with_workspace(
+        workspace: Option<WeakEntity<workspace::Workspace>>,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let menus = cx.get_menus().unwrap_or_default();
 
         let entries = Self::build_entries(menus);
@@ -76,7 +83,9 @@ impl ApplicationMenu {
                 cx.notify();
             });
 
-        let mut context_subscriptions = vec![cx.observe_global::<android_ui::ApplicationMenuTemplates>(|menu, cx| menu.refresh(cx))];
+        let mut context_subscriptions = vec![
+            cx.observe_global::<android_ui::ApplicationMenuTemplates>(|menu, cx| menu.refresh(cx)),
+        ];
         if let Some(workspace) = workspace.as_ref().and_then(WeakEntity::upgrade) {
             context_subscriptions.push(cx.observe(&workspace, |menu, _, cx| menu.refresh(cx)));
         }
@@ -92,12 +101,18 @@ impl ApplicationMenu {
     fn refresh(&mut self, cx: &mut Context<Self>) {
         let menus = android_ui::application_menus(self.workspace.as_ref(), cx);
         if self.entries.len() == menus.len()
-            && self.entries.iter().zip(&menus).all(|(entry, menu)| same_menu(&entry.menu, menu))
+            && self
+                .entries
+                .iter()
+                .zip(&menus)
+                .all(|(entry, menu)| same_menu(&entry.menu, menu))
         {
             return;
         }
         for entry in &self.entries {
-            if entry.handle.is_deployed() { entry.handle.hide(cx); }
+            if entry.handle.is_deployed() {
+                entry.handle.hide(cx);
+            }
         }
         self.entries = Self::build_entries(menus);
         cx.notify();
@@ -399,19 +414,45 @@ impl Render for ApplicationMenu {
 }
 
 fn same_menu(left: &OwnedMenu, right: &OwnedMenu) -> bool {
-    left.name == right.name && left.disabled == right.disabled
+    left.name == right.name
+        && left.disabled == right.disabled
         && left.items.len() == right.items.len()
-        && left.items.iter().zip(&right.items).all(|(left, right)| match (left, right) {
-            (OwnedMenuItem::Separator, OwnedMenuItem::Separator) => true,
-            (OwnedMenuItem::Submenu(left), OwnedMenuItem::Submenu(right)) => same_menu(left, right),
-            (OwnedMenuItem::SystemMenu(left), OwnedMenuItem::SystemMenu(right)) => left.name == right.name && left.menu_type == right.menu_type,
-            (OwnedMenuItem::Action { name: left_name, action: left_action, os_action: left_os_action, checked: left_checked, disabled: left_disabled },
-             OwnedMenuItem::Action { name: right_name, action: right_action, os_action: right_os_action, checked: right_checked, disabled: right_disabled }) => {
-                left_name == right_name && left_action.partial_eq(right_action.as_ref())
-                    && left_os_action == right_os_action && left_checked == right_checked && left_disabled == right_disabled
-            }
-            _ => false,
-        })
+        && left
+            .items
+            .iter()
+            .zip(&right.items)
+            .all(|(left, right)| match (left, right) {
+                (OwnedMenuItem::Separator, OwnedMenuItem::Separator) => true,
+                (OwnedMenuItem::Submenu(left), OwnedMenuItem::Submenu(right)) => {
+                    same_menu(left, right)
+                }
+                (OwnedMenuItem::SystemMenu(left), OwnedMenuItem::SystemMenu(right)) => {
+                    left.name == right.name && left.menu_type == right.menu_type
+                }
+                (
+                    OwnedMenuItem::Action {
+                        name: left_name,
+                        action: left_action,
+                        os_action: left_os_action,
+                        checked: left_checked,
+                        disabled: left_disabled,
+                    },
+                    OwnedMenuItem::Action {
+                        name: right_name,
+                        action: right_action,
+                        os_action: right_os_action,
+                        checked: right_checked,
+                        disabled: right_disabled,
+                    },
+                ) => {
+                    left_name == right_name
+                        && left_action.partial_eq(right_action.as_ref())
+                        && left_os_action == right_os_action
+                        && left_checked == right_checked
+                        && left_disabled == right_disabled
+                }
+                _ => false,
+            })
 }
 
 #[cfg(test)]

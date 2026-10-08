@@ -276,8 +276,14 @@ impl TrustedWorktreesStore {
 
     /// Query the exact worktree restriction, including single-file worktrees
     /// omitted from the display list when directory roots are also restricted.
-    pub fn is_worktree_restricted(&self, worktree_store: &Entity<WorktreeStore>, worktree_id: WorktreeId) -> bool {
-        self.restricted.get(&worktree_store.downgrade()).is_some_and(|worktrees| worktrees.contains(&worktree_id))
+    pub fn is_worktree_restricted(
+        &self,
+        worktree_store: &Entity<WorktreeStore>,
+        worktree_id: WorktreeId,
+    ) -> bool {
+        self.restricted
+            .get(&worktree_store.downgrade())
+            .is_some_and(|worktrees| worktrees.contains(&worktree_id))
     }
 
     /// Adds certain entities on this host to the trusted list.

@@ -55,25 +55,74 @@ mod tests {
     use workspace::AppState;
 
     #[gpui::test]
-    async fn exact_source_restriction_is_visible_with_other_restricted_directory_roots(cx: &mut TestAppContext) -> Result<()> {
-        cx.update(|cx| { AppState::test(cx); trusted_worktrees::init(Default::default(), cx); });
+    async fn exact_source_restriction_is_visible_with_other_restricted_directory_roots(
+        cx: &mut TestAppContext,
+    ) -> Result<()> {
+        cx.update(|cx| {
+            AppState::test(cx);
+            trusted_worktrees::init(Default::default(), cx);
+        });
         let filesystem = project::FakeFs::new(cx.executor());
-        filesystem.insert_tree("/restricted-directory", json!({"main.py":"print(1)"})).await;
-        filesystem.insert_tree("/single-source", json!({"Main.kt":"fun main() {}"})).await;
-        let project = Project::test_with_worktree_trust(filesystem, [std::path::Path::new("/restricted-directory"), std::path::Path::new("/single-source/Main.kt")], cx).await;
+        filesystem
+            .insert_tree("/restricted-directory", json!({"main.py":"print(1)"}))
+            .await;
+        filesystem
+            .insert_tree("/single-source", json!({"Main.kt":"fun main() {}"}))
+            .await;
+        let project = Project::test_with_worktree_trust(
+            filesystem,
+            [
+                std::path::Path::new("/restricted-directory"),
+                std::path::Path::new("/single-source/Main.kt"),
+            ],
+            cx,
+        )
+        .await;
         let (directory, source, store) = project.read_with(cx, |project, cx| {
-            let directory = project.visible_worktrees(cx).find(|worktree|worktree.read(cx).abs_path().as_ref() == std::path::Path::new("/restricted-directory")).context("Directory root")?.read(cx).id();
-            let source = project.visible_worktrees(cx).find(|worktree|worktree.read(cx).abs_path().as_ref() == std::path::Path::new("/single-source/Main.kt")).context("Single source root")?;
+            let directory = project
+                .visible_worktrees(cx)
+                .find(|worktree| {
+                    worktree.read(cx).abs_path().as_ref()
+                        == std::path::Path::new("/restricted-directory")
+                })
+                .context("Directory root")?
+                .read(cx)
+                .id();
+            let source = project
+                .visible_worktrees(cx)
+                .find(|worktree| {
+                    worktree.read(cx).abs_path().as_ref()
+                        == std::path::Path::new("/single-source/Main.kt")
+                })
+                .context("Single source root")?;
             assert!(source.read(cx).is_single_file());
             Ok::<_, anyhow::Error>((directory, source.read(cx).id(), project.worktree_store()))
         })?;
-        let trust = cx.read(TrustedWorktrees::try_get_global).context("Trust store")?;
+        let trust = cx
+            .read(TrustedWorktrees::try_get_global)
+            .context("Trust store")?;
         trust.update(cx, |trust, cx| {
-            trust.restrict(store.downgrade(), [PathTrust::Worktree(directory), PathTrust::Worktree(source)].into_iter().collect(), cx);
+            trust.restrict(
+                store.downgrade(),
+                [PathTrust::Worktree(directory), PathTrust::Worktree(source)]
+                    .into_iter()
+                    .collect(),
+                cx,
+            );
             assert!(trust.is_worktree_restricted(&store, source));
             assert!(trust.is_worktree_restricted(&store, directory));
-            assert!(trust.restricted_worktrees(&store, cx).iter().all(|(id,_)| *id != source), "Display lists may omit a restricted single file");
-            trust.trust(&store, [PathTrust::Worktree(source)].into_iter().collect(), cx);
+            assert!(
+                trust
+                    .restricted_worktrees(&store, cx)
+                    .iter()
+                    .all(|(id, _)| *id != source),
+                "Display lists may omit a restricted single file"
+            );
+            trust.trust(
+                &store,
+                [PathTrust::Worktree(source)].into_iter().collect(),
+                cx,
+            );
             assert!(!trust.is_worktree_restricted(&store, source));
             assert!(trust.is_worktree_restricted(&store, directory));
         });
@@ -81,7 +130,9 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn untitled_editor_retains_selected_project_without_borrowing_ambiguous_root(cx: &mut TestAppContext) -> Result<()> {
+    async fn untitled_editor_retains_selected_project_without_borrowing_ambiguous_root(
+        cx: &mut TestAppContext,
+    ) -> Result<()> {
         cx.update(|cx| {
             let state = AppState::test(cx);
             editor::init(cx);
@@ -90,49 +141,125 @@ mod tests {
             crate::init(cx);
         });
         let filesystem = project::FakeFs::new(cx.executor());
-        filesystem.insert_tree("/scratch-android", json!({"Main.kt":"fun main() {}"})).await;
-        filesystem.insert_tree("/scratch-python", json!({"main.py":"print(1)"})).await;
-        let project = Project::test_with_worktree_trust(filesystem.clone(), [std::path::Path::new("/scratch-android"), std::path::Path::new("/scratch-python")], cx).await;
+        filesystem
+            .insert_tree("/scratch-android", json!({"Main.kt":"fun main() {}"}))
+            .await;
+        filesystem
+            .insert_tree("/scratch-python", json!({"main.py":"print(1)"}))
+            .await;
+        let project = Project::test_with_worktree_trust(
+            filesystem.clone(),
+            [
+                std::path::Path::new("/scratch-android"),
+                std::path::Path::new("/scratch-python"),
+            ],
+            cx,
+        )
+        .await;
         cx.update(|cx| {
             crate::project_surfaces::tests::trust(&project, cx)?;
-            crate::project_surfaces::tests::publish_catalogue(&project, std::path::Path::new("/scratch-android"), &[android_tools::project_context::PluginId::AndroidApplication, android_tools::project_context::PluginId::ComposeCompiler], &[("android","androidJvm")], true, cx)
+            crate::project_surfaces::tests::publish_catalogue(
+                &project,
+                std::path::Path::new("/scratch-android"),
+                &[
+                    android_tools::project_context::PluginId::AndroidApplication,
+                    android_tools::project_context::PluginId::ComposeCompiler,
+                ],
+                &[("android", "androidJvm")],
+                true,
+                cx,
+            )
         })?;
-        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        let add_untitled = |workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>| {
+        let (workspace, visual) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let add_untitled = |workspace: &mut Workspace,
+                            window: &mut Window,
+                            cx: &mut Context<Workspace>| {
             let buffer = cx.new(|cx| language::Buffer::local("", cx));
-            let editor = cx.new(|cx| editor::Editor::for_buffer(buffer, Some(workspace.project().clone()), window, cx));
-            workspace.active_pane().update(cx, |pane, cx|pane.add_item(Box::new(editor), true, true, None, window, cx));
+            let editor = cx.new(|cx| {
+                editor::Editor::for_buffer(buffer, Some(workspace.project().clone()), window, cx)
+            });
+            workspace.active_pane().update(cx, |pane, cx| {
+                pane.add_item(Box::new(editor), true, true, None, window, cx)
+            });
         };
         workspace.update_in(visual, add_untitled);
         visual.run_until_parked();
-        let controller = visual.update(|_, cx| for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+        let controller = visual
+            .update(|_, cx| for_workspace(&workspace.downgrade(), cx))
+            .context("Controller")?;
         controller.read_with(visual, |controller, cx| {
-            assert!(controller.root(cx).is_none(), "Two unselected roots must not be guessed for an untitled file");
-            assert_eq!(controller.capabilities(Default::default(), cx), Default::default());
+            assert!(
+                controller.root(cx).is_none(),
+                "Two unselected roots must not be guessed for an untitled file"
+            );
+            assert_eq!(
+                controller.capabilities(Default::default(), cx),
+                Default::default()
+            );
         });
-        workspace.update_in(visual, |workspace, window, cx| workspace.open_abs_path(std::path::Path::new("/scratch-android/Main.kt"), Default::default(), window, cx)).await?;
+        workspace
+            .update_in(visual, |workspace, window, cx| {
+                workspace.open_abs_path(
+                    std::path::Path::new("/scratch-android/Main.kt"),
+                    Default::default(),
+                    window,
+                    cx,
+                )
+            })
+            .await?;
         visual.run_until_parked();
-        let source_token = controller.read_with(visual, |controller, cx| controller.action_token(cx).context("Android source owner"))?;
+        let source_token = controller.read_with(visual, |controller, cx| {
+            controller.action_token(cx).context("Android source owner")
+        })?;
         workspace.update_in(visual, add_untitled);
         visual.run_until_parked();
         controller.read_with(visual, |controller, cx| {
             let root = PathBuf::from("/scratch-android");
             assert_eq!(controller.root(cx), Some(root.clone()));
             assert!(!controller.action_is_current(&source_token, cx));
-            let capabilities = controller.capabilities(OperationalReadiness {application_module:Some(":"),model_current:true,model_root:Some(&root),android_renderer_supported:true}, cx);
+            let capabilities = controller.capabilities(
+                OperationalReadiness {
+                    application_module: Some(":"),
+                    model_current: true,
+                    model_root: Some(&root),
+                    android_renderer_supported: true,
+                },
+                cx,
+            );
             assert!(capabilities.android_devices && capabilities.android_run);
-            assert!(!capabilities.android_compose_preview, "An untitled buffer cannot borrow a Compose source-file owner");
+            assert!(
+                !capabilities.android_compose_preview,
+                "An untitled buffer cannot borrow a Compose source-file owner"
+            );
         });
-        let single = Project::test_with_worktree_trust(filesystem, [std::path::Path::new("/scratch-android")], &mut visual.cx).await;
+        let single = Project::test_with_worktree_trust(
+            filesystem,
+            [std::path::Path::new("/scratch-android")],
+            &mut visual.cx,
+        )
+        .await;
         visual.update(|_, cx| {
             crate::project_surfaces::tests::trust(&single, cx)?;
-            crate::project_surfaces::tests::publish_catalogue(&single, std::path::Path::new("/scratch-android"), &[android_tools::project_context::PluginId::AndroidApplication], &[("android","androidJvm")], true, cx)
+            crate::project_surfaces::tests::publish_catalogue(
+                &single,
+                std::path::Path::new("/scratch-android"),
+                &[android_tools::project_context::PluginId::AndroidApplication],
+                &[("android", "androidJvm")],
+                true,
+                cx,
+            )
         })?;
-        let (single_workspace, single_visual) = visual.add_window_view(|window, cx| Workspace::test_new(single, window, cx));
+        let (single_workspace, single_visual) =
+            visual.add_window_view(|window, cx| Workspace::test_new(single, window, cx));
         single_workspace.update_in(single_visual, add_untitled);
         single_visual.run_until_parked();
-        let single_controller = single_visual.update(|_, cx| for_workspace(&single_workspace.downgrade(), cx)).context("Single-root controller")?;
-        single_controller.read_with(single_visual, |controller, cx| assert_eq!(controller.root(cx), Some(PathBuf::from("/scratch-android"))));
+        let single_controller = single_visual
+            .update(|_, cx| for_workspace(&single_workspace.downgrade(), cx))
+            .context("Single-root controller")?;
+        single_controller.read_with(single_visual, |controller, cx| {
+            assert_eq!(controller.root(cx), Some(PathBuf::from("/scratch-android")))
+        });
         Ok(())
     }
 
@@ -267,7 +394,9 @@ pub(crate) fn register(
                         .update(cx, |controller, cx| {
                             let result = controller.reconcile(cx).and_then(|()| {
                                 ensure!(
-                                    owner.as_ref().is_some_and(|owner| controller.action_is_current(owner, cx)),
+                                    owner.as_ref().is_some_and(
+                                        |owner| controller.action_is_current(owner, cx)
+                                    ),
                                     "Project context changed before Gradle import dispatch"
                                 );
                                 controller.import(window, cx);
@@ -348,7 +477,11 @@ pub(crate) struct ProjectContextController {
 
 impl ProjectContextController {
     #[cfg(test)]
-    pub(crate) fn select_fixture_root(&mut self, root: WorktreeId, cx: &mut Context<Self>) -> Result<()> {
+    pub(crate) fn select_fixture_root(
+        &mut self,
+        root: WorktreeId,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
         self.selected_root = Some(root);
         self.reconcile(cx)
     }
@@ -401,19 +534,29 @@ impl ProjectContextController {
             window,
             |this, store, event, window, cx| match event {
                 GitStoreEvent::ActiveRepositoryChanged(_) if window.is_window_active() => {
-                    let directory = store.read(cx).active_repository()
+                    let directory = store
+                        .read(cx)
+                        .active_repository()
                         .map(|repository| repository.read(cx).work_directory_abs_path.clone());
                     // The Git store is shared by Project windows. Resolve the
                     // current Workspace after chooser/editor leases have closed.
                     cx.defer_in(window, move |this, window, cx| {
                         let current = Workspace::for_window(window, cx)
                             .or_else(|| window.root::<Workspace>().flatten());
-                        if !window.is_window_active() || current.is_none_or(|workspace| workspace.entity_id() != this.workspace.entity_id()) {
+                        if !window.is_window_active()
+                            || current.is_none_or(|workspace| {
+                                workspace.entity_id() != this.workspace.entity_id()
+                            })
+                        {
                             return;
                         }
                         this.clear_active(cx);
-                        this.selected_root = directory.and_then(|path| this.project.read(cx)
-                            .find_worktree(&path, cx).map(|(worktree, _)| worktree.read(cx).id()));
+                        this.selected_root = directory.and_then(|path| {
+                            this.project
+                                .read(cx)
+                                .find_worktree(&path, cx)
+                                .map(|(worktree, _)| worktree.read(cx).id())
+                        });
                         this.request_reconcile(window, cx);
                     });
                 }
@@ -557,27 +700,54 @@ impl ProjectContextController {
                 .worktree_for_id(path.worktree_id, cx)
                 .context("Active editor root was removed")?;
             if let Some(trust) = TrustedWorktrees::try_get_global(cx) {
-                trust.update(cx, |trust, cx| { trust.can_trust(&project.read(cx).worktree_store(), path.worktree_id, cx); });
+                trust.update(cx, |trust, cx| {
+                    trust.can_trust(&project.read(cx).worktree_store(), path.worktree_id, cx);
+                });
             }
             let owner = worktree.read(cx).abs_path().join(path.path.as_std_path());
-            let own_handle = project.read(cx).android_context().handle(path.worktree_id.to_proto());
+            let own_handle = project
+                .read(cx)
+                .android_context()
+                .handle(path.worktree_id.to_proto());
             // An independently opened/evaluated Gradle root keeps its context.
             // Settings/wrapper entries establish only a neutral import boundary,
             // never Android capabilities or an automatic evaluation.
-            let independent = own_handle.is_some_and(|handle| project.read(cx).android_context().snapshot(handle).is_some())
-                || ["settings.gradle", "settings.gradle.kts", "gradlew", "gradlew.bat"].iter().any(|name| {
-                    RelPath::from_unix_str(name).is_ok_and(|path| worktree.read(cx).entry_for_path(path).is_some())
-                });
+            let independent = own_handle.is_some_and(|handle| {
+                project
+                    .read(cx)
+                    .android_context()
+                    .snapshot(handle)
+                    .is_some()
+            }) || [
+                "settings.gradle",
+                "settings.gradle.kts",
+                "gradlew",
+                "gradlew.bat",
+            ]
+            .iter()
+            .any(|name| {
+                RelPath::from_unix_str(name)
+                    .is_ok_and(|path| worktree.read(cx).entry_for_path(path).is_some())
+            });
             let owning_root = if independent {
                 Some(path.worktree_id)
             } else {
                 let store = project.read(cx).android_context();
-                let owners = roots.iter().filter_map(|(id, _)| {
-                    let handle = store.handle(id.to_proto())?;
-                    (store.snapshot(handle).is_some_and(|snapshot| matches!(snapshot.module_owner(&owner), ModuleOwner::Module(_)))
-                        || self.active.retained_external_owner(handle, &owner, store)).then_some(*id)
-                }).collect::<Vec<_>>();
-                match owners.as_slice() { [owner] => Some(*owner), [] => Some(path.worktree_id), _ => None }
+                let owners = roots
+                    .iter()
+                    .filter_map(|(id, _)| {
+                        let handle = store.handle(id.to_proto())?;
+                        (store.snapshot(handle).is_some_and(|snapshot| {
+                            matches!(snapshot.module_owner(&owner), ModuleOwner::Module(_))
+                        }) || self.active.retained_external_owner(handle, &owner, store))
+                        .then_some(*id)
+                    })
+                    .collect::<Vec<_>>();
+                match owners.as_slice() {
+                    [owner] => Some(*owner),
+                    [] => Some(path.worktree_id),
+                    _ => None,
+                }
             };
             (owning_root, owning_root.map(|_| owner))
         } else {
@@ -593,14 +763,17 @@ impl ProjectContextController {
         };
         let handle =
             worktree.and_then(|id| project.read(cx).android_context().handle(id.to_proto()));
-        self.active.select_evaluated_owner(handle, owner, project.read(cx).android_context())?;
+        self.active
+            .select_evaluated_owner(handle, owner, project.read(cx).android_context())?;
         self.source_worktree = source_worktree;
         if worktree.is_some() {
             self.selected_root = worktree;
         }
-        if self.import_owner.as_ref().is_some_and(|owner| {
-            !self.action_is_current(&owner.active, cx)
-        }) {
+        if self
+            .import_owner
+            .as_ref()
+            .is_some_and(|owner| !self.action_is_current(&owner.active, cx))
+        {
             self.cancel_import(cx);
         }
         workspace.update(cx, |_, cx| cx.notify());
@@ -609,7 +782,9 @@ impl ProjectContextController {
     }
 
     pub(crate) fn root(&self, cx: &App) -> Option<PathBuf> {
-        if self.source_is_restricted(cx) { return None; }
+        if self.source_is_restricted(cx) {
+            return None;
+        }
         let store = self.project.read(cx).android_context();
         let handle = self.active.root()?;
         self.active.discovery_token(store)?;
@@ -621,24 +796,33 @@ impl ProjectContextController {
         readiness: OperationalReadiness<'_>,
         cx: &App,
     ) -> ContextCapabilities {
-        if self.source_is_restricted(cx) { return ContextCapabilities::default(); }
+        if self.source_is_restricted(cx) {
+            return ContextCapabilities::default();
+        }
         self.active
             .capabilities(self.project.read(cx).android_context(), readiness)
     }
 
     pub(crate) fn action_token(&self, cx: &App) -> Option<ActiveContextToken> {
-        if self.source_is_restricted(cx) { return None; }
+        if self.source_is_restricted(cx) {
+            return None;
+        }
         self.active.token(self.project.read(cx).android_context())
     }
 
     pub(crate) fn discovery_token(&self, cx: &App) -> Option<ActiveContextToken> {
-        if self.source_is_restricted(cx) { return None; }
-        self.active.discovery_token(self.project.read(cx).android_context())
+        if self.source_is_restricted(cx) {
+            return None;
+        }
+        self.active
+            .discovery_token(self.project.read(cx).android_context())
     }
 
     pub(crate) fn action_is_current(&self, token: &ActiveContextToken, cx: &App) -> bool {
-        !self.source_is_restricted(cx) && self.active
-            .is_current(token, self.project.read(cx).android_context())
+        !self.source_is_restricted(cx)
+            && self
+                .active
+                .is_current(token, self.project.read(cx).android_context())
     }
 
     fn source_is_restricted(&self, cx: &App) -> bool {
@@ -653,31 +837,40 @@ impl ProjectContextController {
         })
     }
 
-    pub(crate) fn owns_restricted_worktree(&self, paths: &collections::HashSet<project::trusted_worktrees::PathTrust>) -> bool {
+    pub(crate) fn owns_restricted_worktree(
+        &self,
+        paths: &collections::HashSet<project::trusted_worktrees::PathTrust>,
+    ) -> bool {
         paths.iter().any(|path| match path {
-            project::trusted_worktrees::PathTrust::Worktree(id) => self.source_worktree == Some(*id)
-                || self.active.root().is_some_and(|root| root.worktree() == id.to_proto()),
+            project::trusted_worktrees::PathTrust::Worktree(id) => {
+                self.source_worktree == Some(*id)
+                    || self
+                        .active
+                        .root()
+                        .is_some_and(|root| root.worktree() == id.to_proto())
+            }
             project::trusted_worktrees::PathTrust::AbsPath(_) => false,
         })
     }
 
     pub(crate) fn owns_sync_session(&self, cx: &App) -> bool {
-        !self.source_is_restricted(cx) && self.last_import_session.is_some_and(|(root, session)| {
-            self.active.root() == Some(root)
-                && self
-                    .project
-                    .read(cx)
-                    .android_context()
-                    .token(root)
-                    .is_some()
-                && self.build_panel.read(cx).session_id(BuildTab::Sync) == Some(session)
-        })
+        !self.source_is_restricted(cx)
+            && self.last_import_session.is_some_and(|(root, session)| {
+                self.active.root() == Some(root)
+                    && self
+                        .project
+                        .read(cx)
+                        .android_context()
+                        .token(root)
+                        .is_some()
+                    && self.build_panel.read(cx).session_id(BuildTab::Sync) == Some(session)
+            })
     }
 
     pub(crate) fn import_in_progress(&self, cx: &App) -> bool {
-        self.import_owner.as_ref().is_some_and(|owner| {
-            self.action_is_current(&owner.active, cx)
-        })
+        self.import_owner
+            .as_ref()
+            .is_some_and(|owner| self.action_is_current(&owner.active, cx))
     }
 
     pub(crate) fn import_candidate(&self, cx: &App) -> Option<PathBuf> {

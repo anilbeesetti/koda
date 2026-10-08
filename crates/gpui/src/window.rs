@@ -6569,7 +6569,11 @@ impl Window {
 
     /// Returns available actions for a particular element without moving focus.
     /// A released or detached element resolves to this window's root dispatch path.
-    pub fn available_actions_in(&self, focus_handle: &FocusHandle, cx: &App) -> Vec<Box<dyn Action>> {
+    pub fn available_actions_in(
+        &self,
+        focus_handle: &FocusHandle,
+        cx: &App,
+    ) -> Vec<Box<dyn Action>> {
         let node_id = self.focus_node_id_in_rendered_frame(Some(focus_handle.id));
         self.available_actions_at(node_id, cx)
     }

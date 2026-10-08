@@ -36,7 +36,9 @@ impl AndroidActivity {
     fn activity(panel: &AndroidPanel, cx: &App) -> Option<(ActivityToken, SharedString)> {
         if !crate::project_surfaces::SurfaceState::for_panel(panel, cx).qualified()
             || crate::project_context::for_workspace(&panel.workspace, cx)
-                .and_then(|controller| controller.read(cx).root(cx)).as_ref() != panel.root.as_ref()
+                .and_then(|controller| controller.read(cx).root(cx))
+                .as_ref()
+                != panel.root.as_ref()
         {
             return None;
         }
@@ -114,8 +116,14 @@ impl Render for AndroidActivity {
                                 move |_, window, cx| {
                                     let Some((build_panel, workspace)) = panel
                                         .read_with(cx, |panel, cx| {
-                                            Self::activity(panel, cx).filter(|(current, _)| current == &token)
-                                                .map(|_| (panel.build_panel.clone(), panel.workspace.clone()))
+                                            Self::activity(panel, cx)
+                                                .filter(|(current, _)| current == &token)
+                                                .map(|_| {
+                                                    (
+                                                        panel.build_panel.clone(),
+                                                        panel.workspace.clone(),
+                                                    )
+                                                })
                                         })
                                         .log_err()
                                         .flatten()
@@ -257,10 +265,21 @@ mod tests {
         });
         workspace.update_in(cx, |workspace, window, cx| {
             crate::project_surfaces::tests::trust(&project, cx).expect("Fixture owning-root trust");
-            crate::project_context::register(workspace, panel.read(cx).build_panel.clone(), window, cx);
-            crate::project_surfaces::tests::publish_catalogue(&project, Path::new("/android"),
-                &[android_tools::project_context::PluginId::AndroidApplication], &[("android", "androidJvm")], true, cx)
-                .expect("Affirmative Android fixture facts");
+            crate::project_context::register(
+                workspace,
+                panel.read(cx).build_panel.clone(),
+                window,
+                cx,
+            );
+            crate::project_surfaces::tests::publish_catalogue(
+                &project,
+                Path::new("/android"),
+                &[android_tools::project_context::PluginId::AndroidApplication],
+                &[("android", "androidJvm")],
+                true,
+                cx,
+            )
+            .expect("Affirmative Android fixture facts");
             workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
             workspace.add_panel(panel.clone(), window, cx);
             workspace.reveal_panel::<AndroidPanel>(window, cx);

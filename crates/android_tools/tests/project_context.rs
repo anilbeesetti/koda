@@ -1070,7 +1070,8 @@ fn inconsistent_active_root_and_file_owner_cannot_grant_tools_or_action_tokens()
 }
 
 #[test]
-fn evaluated_sibling_modules_own_files_and_gradle_inputs_without_owning_unrelated_roots() -> Result<()> {
+fn evaluated_sibling_modules_own_files_and_gradle_inputs_without_owning_unrelated_roots()
+-> Result<()> {
     let root = project_root("sibling-parent");
     let sibling = project_root("sibling-app");
     let mut value = android_catalogue(&root);
@@ -1082,19 +1083,27 @@ fn evaluated_sibling_modules_own_files_and_gradle_inputs_without_owning_unrelate
     let snapshot = decode(&root, &value)?;
     let file = sibling.join("src/Main.kt");
     assert_eq!(snapshot.module_owner(&file), ModuleOwner::Module(":app"));
-    assert!(snapshot.capabilities(Some(&file), readiness(&root)).android_compose_preview);
+    assert!(
+        snapshot
+            .capabilities(Some(&file), readiness(&root))
+            .android_compose_preview
+    );
     assert!(snapshot.is_input(&sibling.join("build.gradle.kts")));
     assert!(!snapshot.is_input(&file));
     assert!(!snapshot.is_input(&sibling.join("out/build.gradle.kts")));
     assert!(snapshot.observer_directories()?.contains(&sibling));
     let unrelated = project_root("sibling-unrelated").join("Main.kt");
     assert_eq!(snapshot.module_owner(&unrelated), ModuleOwner::OutsideRoot);
-    assert_eq!(snapshot.capabilities(Some(&unrelated), readiness(&root)), ContextCapabilities::default());
+    assert_eq!(
+        snapshot.capabilities(Some(&unrelated), readiness(&root)),
+        ContextCapabilities::default()
+    );
     Ok(())
 }
 
 #[test]
-fn sibling_invalidation_retains_only_explicit_reimport_and_never_operational_tokens() -> Result<()> {
+fn sibling_invalidation_retains_only_explicit_reimport_and_never_operational_tokens() -> Result<()>
+{
     let root = project_root("sibling-reimport-parent");
     let sibling = project_root("sibling-reimport-app");
     let file = sibling.join("Main.kt");
@@ -1107,15 +1116,24 @@ fn sibling_invalidation_retains_only_explicit_reimport_and_never_operational_tok
     let mut active = ActiveContext::default();
     active.select_evaluated_owner(Some(handle), Some(file.clone()), &store)?;
     let previous = active.token(&store).context("Sibling action token")?;
-    assert!(active.capabilities(&store, readiness(&root)).android_compose_preview);
+    assert!(
+        active
+            .capabilities(&store, readiness(&root))
+            .android_compose_preview
+    );
     assert!(store.observe_root_input_change(handle, &sibling.join("build.gradle.kts"))?);
     active.select_evaluated_owner(Some(handle), Some(file.clone()), &store)?;
     assert!(!active.is_current(&previous, &store));
     assert!(active.token(&store).is_none());
-    assert_eq!(active.capabilities(&store, readiness(&root)), ContextCapabilities::default());
+    assert_eq!(
+        active.capabilities(&store, readiness(&root)),
+        ContextCapabilities::default()
+    );
     assert!(active.discovery_token(&store).is_some());
     let import = store.begin_import(handle)?;
-    let owner = active.discovery_token(&store).context("Explicit sibling reimport owner")?;
+    let owner = active
+        .discovery_token(&store)
+        .context("Explicit sibling reimport owner")?;
     active.publish(&mut store, &owner, &import, decode(&root, &value)?)?;
     assert!(active.token(&store).is_some());
     store.set_trusted(handle, false)?;

@@ -278,14 +278,28 @@ impl LogcatView {
         }
         if let Some(trust) = TrustedWorktrees::try_get_global(cx) {
             subscriptions.push(cx.subscribe(&trust, |view, _, event, cx| {
-                if let project::trusted_worktrees::TrustedWorktreesEvent::Restricted(store, paths) = event {
+                if let project::trusted_worktrees::TrustedWorktreesEvent::Restricted(store, paths) =
+                    event
+                {
                     if *store == view.project.read(cx).worktree_store().downgrade()
-                        && (view.controller.as_ref().and_then(WeakEntity::upgrade).is_some_and(|controller| controller.read(cx).owns_restricted_worktree(paths))
+                        && (view
+                            .controller
+                            .as_ref()
+                            .and_then(WeakEntity::upgrade)
+                            .is_some_and(|controller| {
+                                controller.read(cx).owns_restricted_worktree(paths)
+                            })
                             || paths.iter().any(|path| match path {
-                                project::trusted_worktrees::PathTrust::Worktree(id) => view.project.read(cx).worktree_for_id(*id, cx)
-                                    .is_some_and(|worktree| worktree.read(cx).abs_path().as_ref() == view.root.as_path()),
+                                project::trusted_worktrees::PathTrust::Worktree(id) => view
+                                    .project
+                                    .read(cx)
+                                    .worktree_for_id(*id, cx)
+                                    .is_some_and(|worktree| {
+                                        worktree.read(cx).abs_path().as_ref() == view.root.as_path()
+                                    }),
                                 project::trusted_worktrees::PathTrust::AbsPath(_) => false,
-                            })) {
+                            }))
+                    {
                         view.device_cancellation = None;
                         view.device_owner = None;
                         view.stream_task = None;
@@ -653,9 +667,14 @@ impl LogcatView {
         let project = self.project.read(cx);
         ensure!(project.is_local(), "Logcat supports local projects only");
         if let Some(trust) = TrustedWorktrees::try_get_global(cx) {
-            ensure!(!trust.read(cx).restricted_worktrees(&project.worktree_store(), cx).iter()
-                .any(|(_, path)| path.as_ref() == self.root.as_path()),
-                "Trust the owning project before capturing device logs");
+            ensure!(
+                !trust
+                    .read(cx)
+                    .restricted_worktrees(&project.worktree_store(), cx)
+                    .iter()
+                    .any(|(_, path)| path.as_ref() == self.root.as_path()),
+                "Trust the owning project before capturing device logs"
+            );
         } else {
             bail!("Trust the owning project before capturing device logs");
         }
@@ -668,19 +687,41 @@ impl LogcatView {
         Ok(())
     }
 
-    fn device_context_token(&self, cx: &App) -> Result<android_tools::project_context::ActiveContextToken> {
+    fn device_context_token(
+        &self,
+        cx: &App,
+    ) -> Result<android_tools::project_context::ActiveContextToken> {
         self.ensure_trusted(cx)?;
-        let controller = self.controller.as_ref().and_then(WeakEntity::upgrade)
+        let controller = self
+            .controller
+            .as_ref()
+            .and_then(WeakEntity::upgrade)
             .context("Select the owning Android project before using device tools")?;
         let controller = controller.read(cx);
-        ensure!(controller.root(cx).as_ref() == Some(&self.root)
-            && controller.capabilities(android_tools::project_context::OperationalReadiness::default(), cx).android_devices,
-            "Select the owning Android project before using device tools");
-        controller.action_token(cx).context("The owning Android project changed")
+        ensure!(
+            controller.root(cx).as_ref() == Some(&self.root)
+                && controller
+                    .capabilities(
+                        android_tools::project_context::OperationalReadiness::default(),
+                        cx
+                    )
+                    .android_devices,
+            "Select the owning Android project before using device tools"
+        );
+        controller
+            .action_token(cx)
+            .context("The owning Android project changed")
     }
 
-    fn verify_device_context(&self, owner: &android_tools::project_context::ActiveContextToken, cx: &App) -> Result<()> {
-        ensure!(&self.device_context_token(cx)? == owner, "The active Android project or editor changed during device work");
+    fn verify_device_context(
+        &self,
+        owner: &android_tools::project_context::ActiveContextToken,
+        cx: &App,
+    ) -> Result<()> {
+        ensure!(
+            &self.device_context_token(cx)? == owner,
+            "The active Android project or editor changed during device work"
+        );
         Ok(())
     }
 
@@ -688,7 +729,11 @@ impl LogcatView {
         self.watching_requested = true;
         let owner = match self.device_context_token(cx) {
             Ok(owner) => owner,
-            Err(error) => { self.error = Some(error.to_string()); cx.notify(); return; }
+            Err(error) => {
+                self.error = Some(error.to_string());
+                cx.notify();
+                return;
+            }
         };
         self.device_owner = Some(owner.clone());
         let cancellation = WorkCancellation::default();
@@ -717,8 +762,10 @@ impl LogcatView {
                         let root = root.clone();
                         let cancelled = cancelled.clone();
                         async move {
-                            discover_devices(previous, serial, targets, file, &root, &executor, &cancelled)
-                                .await
+                            discover_devices(
+                                previous, serial, targets, file, &root, &executor, &cancelled,
+                            )
+                            .await
                         }
                     })
                     .await;
@@ -900,7 +947,11 @@ impl LogcatView {
         self.capturing = false;
         let owner = match self.device_context_token(cx) {
             Ok(owner) => owner,
-            Err(error) => { self.error = Some(error.to_string()); cx.notify(); return; }
+            Err(error) => {
+                self.error = Some(error.to_string());
+                cx.notify();
+                return;
+            }
         };
         self.device_owner = Some(owner.clone());
         let Some(serial) = self.preferences.serial.clone() else {
@@ -927,18 +978,27 @@ impl LogcatView {
         let cursor = self.cursor.clone();
         let executor = cx.background_executor().clone();
         self.stream_task = Some(cx.spawn(async move |view, cx| {
-            if view.read_with(cx, |view, cx| view.verify_device_context(&owner, cx))
-                .and_then(|result| result).is_err() { return; }
+            if view
+                .read_with(cx, |view, cx| view.verify_device_context(&owner, cx))
+                .and_then(|result| result)
+                .is_err()
+            {
+                return;
+            }
             let (sender, mut receiver) = mpsc::channel(4);
             let worker = cx.background_spawn(async move {
                 capture(serial, buffers, cursor, root, executor, sender).await
             });
             while let Some(batch) = receiver.next().await {
-                if view.update(cx, |view, cx| {
-                    view.verify_device_context(&owner, cx)?;
-                    view.receive(batch, cx);
-                    Ok::<_, anyhow::Error>(())
-                }).and_then(|result| result).is_err() {
+                if view
+                    .update(cx, |view, cx| {
+                        view.verify_device_context(&owner, cx)?;
+                        view.receive(batch, cx);
+                        Ok::<_, anyhow::Error>(())
+                    })
+                    .and_then(|result| result)
+                    .is_err()
+                {
                     return;
                 }
                 // Backlogs must leave time for input and painting between bounded batches.
@@ -948,7 +1008,9 @@ impl LogcatView {
             }
             let result = worker.await;
             view.update(cx, |view, cx| {
-                if view.verify_device_context(&owner, cx).is_err() { return; }
+                if view.verify_device_context(&owner, cx).is_err() {
+                    return;
+                }
                 view.capturing = false;
                 // Retry after disconnects, but leave persistent protocol/command errors visible until Restart.
                 view.stopped = view.connected
@@ -1660,7 +1722,10 @@ impl LogcatView {
                 self.file.is_none() && self.connected,
                 "Select a connected device"
             );
-            Ok((self.preferences.serial.clone().context("Select a device")?, owner))
+            Ok((
+                self.preferences.serial.clone().context("Select a device")?,
+                owner,
+            ))
         });
         let (serial, owner) = match result {
             Ok(result) => result,
@@ -1673,13 +1738,20 @@ impl LogcatView {
         let root = self.root.clone();
         let executor = cx.background_executor().clone();
         self.control_task = Some(cx.spawn(async move |view, cx| {
-            if view.read_with(cx, |view, cx| view.verify_device_context(&owner, cx))
-                .and_then(|result| result).is_err() { return; }
+            if view
+                .read_with(cx, |view, cx| view.verify_device_context(&owner, cx))
+                .and_then(|result| result)
+                .is_err()
+            {
+                return;
+            }
             let result = cx
                 .background_spawn(async move { adb_output(&serial, args, &root, &executor).await })
                 .await;
             view.update(cx, |view, cx| {
-                if view.verify_device_context(&owner, cx).is_err() { return; }
+                if view.verify_device_context(&owner, cx).is_err() {
+                    return;
+                }
                 if let Err(error) = result {
                     view.error = Some(format!("{error:#}"));
                 }
@@ -2321,9 +2393,14 @@ impl EventEmitter<ItemEvent> for LogcatView {}
 impl Item for LogcatView {
     type Event = ItemEvent;
     fn active_project_path(&self, cx: &App) -> Option<project::ProjectPath> {
-        self.project.read(cx).visible_worktrees(cx)
+        self.project
+            .read(cx)
+            .visible_worktrees(cx)
             .find(|worktree| worktree.read(cx).abs_path().as_ref() == self.root.as_path())
-            .map(|worktree| project::ProjectPath { worktree_id: worktree.read(cx).id(), path: RelPath::empty().into_arc() })
+            .map(|worktree| project::ProjectPath {
+                worktree_id: worktree.read(cx).id(),
+                path: RelPath::empty().into_arc(),
+            })
     }
     fn tab_content_text(&self, _: usize, _: &App) -> SharedString {
         "Logcat".into()
@@ -3166,7 +3243,10 @@ async fn discover_devices(
     executor: &BackgroundExecutor,
     cancelled: &AtomicBool,
 ) -> Result<Discovery> {
-    ensure!(!cancelled.load(Ordering::Acquire), "Logcat device discovery was cancelled");
+    ensure!(
+        !cancelled.load(Ordering::Acquire),
+        "Logcat device discovery was cancelled"
+    );
     let output = tool_output(
         adb_path()?,
         vec!["devices".into(), "-l".into()],
@@ -3175,7 +3255,10 @@ async fn discover_devices(
         Duration::from_secs(10),
     )
     .await?;
-    ensure!(!cancelled.load(Ordering::Acquire), "Logcat device discovery was cancelled");
+    ensure!(
+        !cancelled.load(Ordering::Acquire),
+        "Logcat device discovery was cancelled"
+    );
     let mut devices = Vec::new();
     let mut metadata_error = None;
     for device in parse_devices(&output)? {
@@ -3199,7 +3282,10 @@ async fn discover_devices(
             event_tags: HashMap::new(),
         };
         if details.device.is_available() {
-            ensure!(!cancelled.load(Ordering::Acquire), "Logcat device discovery was cancelled");
+            ensure!(
+                !cancelled.load(Ordering::Acquire),
+                "Logcat device discovery was cancelled"
+            );
             match adb_output(
                 &details.device.serial,
                 vec!["shell".into(), "getprop".into()],
@@ -3240,7 +3326,10 @@ async fn discover_devices(
             }
         }
         if details.device.is_available() {
-            ensure!(!cancelled.load(Ordering::Acquire), "Logcat device discovery was cancelled");
+            ensure!(
+                !cancelled.load(Ordering::Acquire),
+                "Logcat device discovery was cancelled"
+            );
             match adb_output(
                 &details.device.serial,
                 vec![
@@ -3263,7 +3352,10 @@ async fn discover_devices(
             }
         }
         if details.device.is_available() {
-            ensure!(!cancelled.load(Ordering::Acquire), "Logcat device discovery was cancelled");
+            ensure!(
+                !cancelled.load(Ordering::Acquire),
+                "Logcat device discovery was cancelled"
+            );
             match adb_output(
                 &details.device.serial,
                 vec![
@@ -3297,7 +3389,10 @@ async fn discover_devices(
                 .iter()
                 .any(|device| &device.device.serial == serial && device.device.is_available())
     }) {
-        ensure!(!cancelled.load(Ordering::Acquire), "Logcat device discovery was cancelled");
+        ensure!(
+            !cancelled.load(Ordering::Acquire),
+            "Logcat device discovery was cancelled"
+        );
         adb_output(
             &serial,
             vec![
@@ -4358,55 +4453,134 @@ mod runtime_tests;
 #[cfg(test)]
 #[path = "android_logcat_paint_tests.rs"]
 mod paint_tests;
-    #[gpui::test]
-    async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(cx: &mut TestAppContext) -> Result<()> {
-        cx.update(|cx| {
-            let state = AppState::test(cx);
-            editor::init(cx);
-            workspace::init(state, cx);
-            project::trusted_worktrees::init(Default::default(), cx);
-            crate::init(cx);
-        });
-        let filesystem = FakeFs::new(cx.executor());
-        filesystem.insert_tree("/logcat-owner", serde_json::json!({"Main.kt":"fun main() {}"})).await;
-        filesystem.insert_tree("/python-untrusted", serde_json::json!({"main.py":"print(1)"})).await;
-        let project = Project::test_with_worktree_trust(filesystem, [Path::new("/logcat-owner"), Path::new("/python-untrusted")], cx).await;
-        cx.update(|cx| {
-            let store = project.read(cx).worktree_store();
-            let root = project.read(cx).visible_worktrees(cx).find(|worktree|worktree.read(cx).abs_path().as_ref() == Path::new("/logcat-owner")).context("Logcat root")?.read(cx).id();
-            TrustedWorktrees::try_get_global(cx).context("Trust store")?.update(cx, |trust, cx|trust.trust(&store, [project::trusted_worktrees::PathTrust::Worktree(root)].into_iter().collect(), cx));
-            project_surfaces::tests::publish_catalogue(&project, Path::new("/logcat-owner"), &[android_tools::project_context::PluginId::AndroidApplication], &[("android","androidJvm")], true, cx)
-        })?;
-        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        workspace.update_in(visual, |workspace, window, cx|workspace.open_abs_path(Path::new("/logcat-owner/Main.kt"), Default::default(), window, cx)).await?;
-        visual.run_until_parked();
-        let view = workspace.update_in(visual, |workspace, window, cx|cx.new(|cx| LogcatView::new(workspace.weak_handle(), project.clone(), PathBuf::from("/logcat-owner"), None, Vec::new(), window, cx)));
-        let owner = view.read_with(visual, |view, cx| {
-            assert!(view.ensure_trusted(cx).is_ok(), "An unrelated restricted root must not block the owning Android root");
-            view.device_context_token(cx)
-        })?;
-        let cancellation = WorkCancellation::default();
-        let cancelled = cancellation.0.clone();
-        view.update(visual, |view, _| {
-            view.device_owner = Some(owner.clone());
-            view.device_cancellation = Some(cancellation);
-            view.capturing = true;
-            // Ready owned tasks prove observer cleanup without executing ADB.
-            view.stream_task = Some(Task::ready(()));
-            view.device_task = Some(Task::ready(()));
-            view.control_task = Some(Task::ready(()));
-        });
-        workspace.update_in(visual, |workspace, window, cx|workspace.open_abs_path(Path::new("/python-untrusted/main.py"), Default::default(), window, cx)).await?;
-        visual.run_until_parked();
-        assert!(cancelled.load(Ordering::Acquire));
-        view.update(visual, |view, cx| {
-            assert!(view.verify_device_context(&owner, cx).is_err());
-            assert!(view.device_task.is_none() && view.stream_task.is_none() && view.control_task.is_none());
-            assert!(!view.capturing);
-            view.watch_devices(cx);
-            view.start_capture(false, cx);
-            view.device_command(vec!["shell".into(), "true".into()], cx);
-            assert!(view.device_task.is_none() && view.stream_task.is_none() && view.control_task.is_none(), "Stale direct entry points must reject before ADB starts");
-        });
-        Ok(())
-    }
+#[gpui::test]
+async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
+    cx: &mut TestAppContext,
+) -> Result<()> {
+    cx.update(|cx| {
+        let state = AppState::test(cx);
+        editor::init(cx);
+        workspace::init(state, cx);
+        project::trusted_worktrees::init(Default::default(), cx);
+        crate::init(cx);
+    });
+    let filesystem = FakeFs::new(cx.executor());
+    filesystem
+        .insert_tree(
+            "/logcat-owner",
+            serde_json::json!({"Main.kt":"fun main() {}"}),
+        )
+        .await;
+    filesystem
+        .insert_tree(
+            "/python-untrusted",
+            serde_json::json!({"main.py":"print(1)"}),
+        )
+        .await;
+    let project = Project::test_with_worktree_trust(
+        filesystem,
+        [Path::new("/logcat-owner"), Path::new("/python-untrusted")],
+        cx,
+    )
+    .await;
+    cx.update(|cx| {
+        let store = project.read(cx).worktree_store();
+        let root = project
+            .read(cx)
+            .visible_worktrees(cx)
+            .find(|worktree| worktree.read(cx).abs_path().as_ref() == Path::new("/logcat-owner"))
+            .context("Logcat root")?
+            .read(cx)
+            .id();
+        TrustedWorktrees::try_get_global(cx)
+            .context("Trust store")?
+            .update(cx, |trust, cx| {
+                trust.trust(
+                    &store,
+                    [project::trusted_worktrees::PathTrust::Worktree(root)]
+                        .into_iter()
+                        .collect(),
+                    cx,
+                )
+            });
+        project_surfaces::tests::publish_catalogue(
+            &project,
+            Path::new("/logcat-owner"),
+            &[android_tools::project_context::PluginId::AndroidApplication],
+            &[("android", "androidJvm")],
+            true,
+            cx,
+        )
+    })?;
+    let (workspace, visual) =
+        cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+    workspace
+        .update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(
+                Path::new("/logcat-owner/Main.kt"),
+                Default::default(),
+                window,
+                cx,
+            )
+        })
+        .await?;
+    visual.run_until_parked();
+    let view = workspace.update_in(visual, |workspace, window, cx| {
+        cx.new(|cx| {
+            LogcatView::new(
+                workspace.weak_handle(),
+                project.clone(),
+                PathBuf::from("/logcat-owner"),
+                None,
+                Vec::new(),
+                window,
+                cx,
+            )
+        })
+    });
+    let owner = view.read_with(visual, |view, cx| {
+        assert!(
+            view.ensure_trusted(cx).is_ok(),
+            "An unrelated restricted root must not block the owning Android root"
+        );
+        view.device_context_token(cx)
+    })?;
+    let cancellation = WorkCancellation::default();
+    let cancelled = cancellation.0.clone();
+    view.update(visual, |view, _| {
+        view.device_owner = Some(owner.clone());
+        view.device_cancellation = Some(cancellation);
+        view.capturing = true;
+        // Ready owned tasks prove observer cleanup without executing ADB.
+        view.stream_task = Some(Task::ready(()));
+        view.device_task = Some(Task::ready(()));
+        view.control_task = Some(Task::ready(()));
+    });
+    workspace
+        .update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(
+                Path::new("/python-untrusted/main.py"),
+                Default::default(),
+                window,
+                cx,
+            )
+        })
+        .await?;
+    visual.run_until_parked();
+    assert!(cancelled.load(Ordering::Acquire));
+    view.update(visual, |view, cx| {
+        assert!(view.verify_device_context(&owner, cx).is_err());
+        assert!(
+            view.device_task.is_none() && view.stream_task.is_none() && view.control_task.is_none()
+        );
+        assert!(!view.capturing);
+        view.watch_devices(cx);
+        view.start_capture(false, cx);
+        view.device_command(vec!["shell".into(), "true".into()], cx);
+        assert!(
+            view.device_task.is_none() && view.stream_task.is_none() && view.control_task.is_none(),
+            "Stale direct entry points must reject before ADB starts"
+        );
+    });
+    Ok(())
+}

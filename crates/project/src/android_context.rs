@@ -747,11 +747,10 @@ impl Project {
                         .is_some_and(|snapshot| {
                             snapshot.build_logic_directories().iter().any(|root| {
                                 root.starts_with(directory) || directory.starts_with(root)
+                            }) || snapshot.modules().any(|module| {
+                                module.directory().starts_with(directory)
+                                    || directory.starts_with(module.directory())
                             })
-                                || snapshot.modules().any(|module| {
-                                    module.directory().starts_with(directory)
-                                        || directory.starts_with(module.directory())
-                                })
                         })
                 })
                 .collect::<Vec<_>>();

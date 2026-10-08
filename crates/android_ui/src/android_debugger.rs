@@ -51,24 +51,50 @@ impl DebugAdapter for AndroidKotlinAdapter {
         user_env: Option<HashMap<String, String>>,
         cx: &mut AsyncApp,
     ) -> Result<DebugAdapterBinary> {
-        let root = config.config.get("projectRoot").and_then(Value::as_str)
-            .map(PathBuf::from).context("Android debugging requires its owning project root")?;
-        ensure!(root == delegate.worktree_root_path(), "The Android debugger belongs to a different project");
-        ensure!(cx.update(|cx| {
-            cx.try_global::<DebuggerAttachments>().is_some_and(|attachments| {
-                attachments.0.values().filter_map(WeakEntity::upgrade).any(|panel| {
-                    let panel = panel.read(cx);
-                    panel.debug_forward.as_ref().is_some_and(|forward| {
-                        forward.owner.root == root
-                            && config.label == forward.label
-                            && config.config["hostName"] == "127.0.0.1"
-                            && config.config["port"].as_u64() == Some(u64::from(forward.port))
-                            && panel.project.read(cx).android_model().is_current(&forward.model_token)
-                            && panel.verify_operation_owner(&forward.owner, AndroidOperation::Run, cx).is_ok()
+        let root = config
+            .config
+            .get("projectRoot")
+            .and_then(Value::as_str)
+            .map(PathBuf::from)
+            .context("Android debugging requires its owning project root")?;
+        ensure!(
+            root == delegate.worktree_root_path(),
+            "The Android debugger belongs to a different project"
+        );
+        ensure!(
+            cx.update(|cx| {
+                cx.try_global::<DebuggerAttachments>()
+                    .is_some_and(|attachments| {
+                        attachments
+                            .0
+                            .values()
+                            .filter_map(WeakEntity::upgrade)
+                            .any(|panel| {
+                                let panel = panel.read(cx);
+                                panel.debug_forward.as_ref().is_some_and(|forward| {
+                                    forward.owner.root == root
+                                        && config.label == forward.label
+                                        && config.config["hostName"] == "127.0.0.1"
+                                        && config.config["port"].as_u64()
+                                            == Some(u64::from(forward.port))
+                                        && panel
+                                            .project
+                                            .read(cx)
+                                            .android_model()
+                                            .is_current(&forward.model_token)
+                                        && panel
+                                            .verify_operation_owner(
+                                                &forward.owner,
+                                                AndroidOperation::Run,
+                                                cx,
+                                            )
+                                            .is_ok()
+                                })
+                            })
                     })
-                })
-            })
-        })?, "Use Android: Debug in the active Android application to establish a current device attachment");
+            })?,
+            "Use Android: Debug in the active Android application to establish a current device attachment"
+        );
         let executable = match user_installed_path {
             Some(path) => path,
             None => binary()?,
@@ -223,8 +249,18 @@ impl AndroidPanel {
     ) {
         let owner = match self.operation_owner(AndroidOperation::Run, cx) {
             Ok(owner) if owner.root == root => owner,
-            Ok(_) => { self.fail(anyhow::anyhow!("The Android project changed before debugger attachment"), window, cx); return; }
-            Err(error) => { self.fail(error, window, cx); return; }
+            Ok(_) => {
+                self.fail(
+                    anyhow::anyhow!("The Android project changed before debugger attachment"),
+                    window,
+                    cx,
+                );
+                return;
+            }
+            Err(error) => {
+                self.fail(error, window, cx);
+                return;
+            }
         };
         let model_token = self.project.read(cx).android_model().token();
         self.backend_owner = Some(owner.context.clone());
