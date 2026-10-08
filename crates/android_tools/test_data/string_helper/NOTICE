@@ -1,0 +1,16 @@
+StringHelper separated-list membership behavior and six original test assertions
+are adapted from Android Open Source Project platform/tools/base, revision
+4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:
+
+  common/src/main/java/com/android/utils/StringHelper.kt
+  Copyright (C) 2013 The Android Open Source Project
+
+  common/src/test/java/com/android/utils/StringHelperTest.kt
+  Copyright (C) 2017 The Android Open Source Project
+
+These complete original files are retained without changes under reference/.
+They and the adapted Rust behavior/assertions are licensed under Apache 2.0;
+the complete license is retained in LICENSE-APACHE. Rust implementation and
+assertion-harness changes preserve UTF-16 indexing and separator semantics.
+The remaining original helper methods are retained for future ports; this
+fixture does not establish that those behaviors have been implemented or run.
