@@ -658,25 +658,24 @@ impl ComposePreviewView {
             vec![
                 cx.subscribe_in(&project, window, |view, _, event, window, cx| {
                     let relevant = match event {
-                        project::Event::WorktreeUpdatedEntries(worktree, changes) => {
-                            view.project
-                                .read(cx)
-                                .worktree_for_id(*worktree, cx)
-                                .is_some_and(|worktree| {
-                                    let root = worktree.read(cx).abs_path();
-                                    changes.iter().any(|(path, _, change)| {
-                                        *change != project::PathChange::Loaded
-                                            && if root.as_ref() == view.root {
-                                                view.preview_input(path, cx)
-                                            } else {
-                                                view.preview_absolute_input(
-                                                    &root.join(path.as_std_path()),
-                                                    cx,
-                                                )
-                                            }
-                                    })
+                        project::Event::WorktreeUpdatedEntries(worktree, changes) => view
+                            .project
+                            .read(cx)
+                            .worktree_for_id(*worktree, cx)
+                            .is_some_and(|worktree| {
+                                let root = worktree.read(cx).abs_path();
+                                changes.iter().any(|(path, _, change)| {
+                                    *change != project::PathChange::Loaded
+                                        && if root.as_ref() == view.root {
+                                            view.preview_input(path, cx)
+                                        } else {
+                                            view.preview_absolute_input(
+                                                &root.join(path.as_std_path()),
+                                                cx,
+                                            )
+                                        }
                                 })
-                        }
+                            }),
                         _ => false,
                     };
                     if relevant {
@@ -3296,24 +3295,39 @@ mod tests {
             "settings.gradle.kts": "include(\":app\"); project(\":app\").projectDir = file(\"../watch-sibling\")",
             "gradlew": ""
         })).await;
-        filesystem.insert_tree("/watch-sibling", serde_json::json!({
-            "build.gradle.kts": "",
-            "src": {
-                "Main.kt": "@Composable\nfun Content() {}",
-                "Unopened.kt": "fun label() = \"initial\"",
-                "res": {"strings.xml": "<resources/>"},
-                "generated": {"Generated.kt": "initial"},
-                "tests": {"ContentTest.kt": "initial"}
-            }
-        })).await;
-        filesystem.insert_tree("/watch-unrelated", serde_json::json!({
-            "Unrelated.kt": "initial", "index.html": "<html/>"
-        })).await;
+        filesystem
+            .insert_tree(
+                "/watch-sibling",
+                serde_json::json!({
+                    "build.gradle.kts": "",
+                    "src": {
+                        "Main.kt": "@Composable\nfun Content() {}",
+                        "Unopened.kt": "fun label() = \"initial\"",
+                        "res": {"strings.xml": "<resources/>"},
+                        "generated": {"Generated.kt": "initial"},
+                        "tests": {"ContentTest.kt": "initial"}
+                    }
+                }),
+            )
+            .await;
+        filesystem
+            .insert_tree(
+                "/watch-unrelated",
+                serde_json::json!({
+                    "Unrelated.kt": "initial", "index.html": "<html/>"
+                }),
+            )
+            .await;
         let project = Project::test_with_worktree_trust(
             filesystem,
-            [Path::new("/watch-parent"), Path::new("/watch-sibling"), Path::new("/watch-unrelated")],
+            [
+                Path::new("/watch-parent"),
+                Path::new("/watch-sibling"),
+                Path::new("/watch-unrelated"),
+            ],
             cx,
-        ).await;
+        )
+        .await;
         cx.update(|cx| {
             project_surfaces::tests::trust(&project, cx)?;
             let record = serde_json::json!({"schema":1,"root":"/watch-parent","gradleVersion":"9.6.1","phase":"complete", "modules":[
@@ -3334,20 +3348,34 @@ mod tests {
                 project.publish_android_context(&active, &owner, &import, snapshot, cx)
             })
         })?;
-        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        workspace.update_in(visual, |workspace, window, cx| {
-            workspace.open_abs_path(Path::new("/watch-sibling/src/Main.kt"), Default::default(), window, cx)
-        }).await?;
+        let (workspace, visual) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        workspace
+            .update_in(visual, |workspace, window, cx| {
+                workspace.open_abs_path(
+                    Path::new("/watch-sibling/src/Main.kt"),
+                    Default::default(),
+                    window,
+                    cx,
+                )
+            })
+            .await?;
         visual.run_until_parked();
         let (panel, editor, pane) = workspace.read_with(visual, |workspace, cx| {
             Ok::<_, anyhow::Error>((
-                workspace.panel::<AndroidPanel>(cx).context("Android panel")?,
-                workspace.active_item(cx).and_then(|item| item.downcast::<Editor>()).context("Source editor")?,
+                workspace
+                    .panel::<AndroidPanel>(cx)
+                    .context("Android panel")?,
+                workspace
+                    .active_item(cx)
+                    .and_then(|item| item.downcast::<Editor>())
+                    .context("Source editor")?,
                 workspace.active_pane().clone(),
             ))
         })?;
         let target = AndroidTarget {
-            module: ":app".into(), variant: "debug".into(),
+            module: ":app".into(),
+            variant: "debug".into(),
             output_listing: PathBuf::from("/watch-sibling/output.json"),
         };
         panel.update(visual, |panel, cx| {
@@ -3375,12 +3403,26 @@ mod tests {
             })
         })?;
         let view = workspace.update_in(visual, |workspace, window, cx| {
-            let buffer = editor.read(cx).buffer().read(cx).as_singleton().context("Source buffer")?;
-            Ok::<_, anyhow::Error>(cx.new(|cx| ComposePreviewView::new(
-                panel.downgrade(), workspace.weak_handle(), project.clone(), buffer,
-                editor.downgrade(), pane.downgrade(), PathBuf::from("/watch-parent"), target,
-                window, cx,
-            )))
+            let buffer = editor
+                .read(cx)
+                .buffer()
+                .read(cx)
+                .as_singleton()
+                .context("Source buffer")?;
+            Ok::<_, anyhow::Error>(cx.new(|cx| {
+                ComposePreviewView::new(
+                    panel.downgrade(),
+                    workspace.weak_handle(),
+                    project.clone(),
+                    buffer,
+                    editor.downgrade(),
+                    pane.downgrade(),
+                    PathBuf::from("/watch-parent"),
+                    target,
+                    window,
+                    cx,
+                )
+            }))
         })?;
         // Keep the source tab hidden so real file events queue a refresh without
         // starting a renderer or Gradle process in this observer regression.
@@ -3394,10 +3436,13 @@ mod tests {
             assert!(!view.pending && !view.building && view.render_task.is_none());
         });
         let roots = project.read_with(visual, |project, cx| {
-            project.visible_worktrees(cx).map(|worktree| {
-                let worktree = worktree.read(cx);
-                (worktree.id(), worktree.abs_path())
-            }).collect::<HashMap<_, _>>()
+            project
+                .visible_worktrees(cx)
+                .map(|worktree| {
+                    let worktree = worktree.read(cx);
+                    (worktree.id(), worktree.abs_path())
+                })
+                .collect::<HashMap<_, _>>()
         });
         let events = Rc::new(RefCell::new(Vec::new()));
         let _events_subscription = visual.update(|_, cx| {
@@ -3406,9 +3451,11 @@ mod tests {
                 if let project::Event::WorktreeUpdatedEntries(worktree, changes) = event
                     && let Some(root) = roots.get(worktree)
                 {
-                    events.borrow_mut().extend(changes.iter().map(|(path, _, change)|
-                        (root.join(path.as_std_path()), *change)
-                    ));
+                    events.borrow_mut().extend(
+                        changes
+                            .iter()
+                            .map(|(path, _, change)| (root.join(path.as_std_path()), *change)),
+                    );
                 }
             })
         });
@@ -3421,22 +3468,38 @@ mod tests {
             ("/watch-unrelated/Unrelated.kt", false),
         ] {
             let revision = view.read_with(visual, |view, _| view.revision);
-            assert!(!project.read_with(visual, |project, cx| project.opened_buffers(cx)
-                .any(|buffer| buffer_path(&buffer, cx).as_deref() == Some(Path::new(path)))));
+            assert!(!project.read_with(visual, |project, cx| {
+                project
+                    .opened_buffers(cx)
+                    .any(|buffer| buffer_path(&buffer, cx).as_deref() == Some(Path::new(path)))
+            }));
             events.borrow_mut().clear();
             filesystem.write(Path::new(path), b"changed input").await?;
             visual.run_until_parked();
-            assert!(events.borrow().iter().any(|(changed, change)|
-                changed == Path::new(path) && *change != project::PathChange::Loaded
-            ), "The actual worktree must emit the changed unopened path: {path}");
+            assert!(
+                events
+                    .borrow()
+                    .iter()
+                    .any(|(changed, change)| changed == Path::new(path)
+                        && *change != project::PathChange::Loaded),
+                "The actual worktree must emit the changed unopened path: {path}"
+            );
             view.read_with(visual, |view, _| {
                 if refresh {
-                    assert!(view.revision > revision, "Sibling input must queue a refresh: {path}");
+                    assert!(
+                        view.revision > revision,
+                        "Sibling input must queue a refresh: {path}"
+                    );
                     assert!(view.pending && view.stale);
                 } else {
-                    assert_eq!(view.revision, revision, "Excluded input must not queue a refresh: {path}");
+                    assert_eq!(
+                        view.revision, revision,
+                        "Excluded input must not queue a refresh: {path}"
+                    );
                 }
-                assert!(!view.building && view.render_task.is_none() && view.debounce_task.is_none());
+                assert!(
+                    !view.building && view.render_task.is_none() && view.debounce_task.is_none()
+                );
             });
         }
         view.update(visual, |view, cx| view.stop(cx));

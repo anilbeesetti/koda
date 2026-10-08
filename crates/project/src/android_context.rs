@@ -1,6 +1,7 @@
 use crate::{Project, WorktreeId};
 use android_tools::project_context::{
-    ActiveContext, ActiveContextToken, ActiveProjectToken, ContextSnapshot, ContextStore, DiscoveryToken, RootHandle,
+    ActiveContext, ActiveContextToken, ActiveProjectToken, ContextSnapshot, ContextStore,
+    DiscoveryToken, RootHandle,
 };
 use anyhow::{Context as _, Result};
 use futures::StreamExt as _;

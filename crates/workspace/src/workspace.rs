@@ -6234,7 +6234,9 @@ impl Workspace {
                 serialize_workspace = false;
             }
             pane::Event::RemovedItem { item } => {
-                cx.emit(Event::ActiveProjectPathChanged(self.active_project_path(cx)));
+                cx.emit(Event::ActiveProjectPathChanged(
+                    self.active_project_path(cx),
+                ));
                 cx.emit(Event::ActiveItemChanged);
                 self.update_window_edited(window, cx);
                 if let hash_map::Entry::Occupied(entry) = self.panes_by_item.entry(item.item_id())

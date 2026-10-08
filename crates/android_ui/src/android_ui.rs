@@ -572,7 +572,11 @@ impl AndroidPanel {
                 let Some(cancellation) = cancellation.upgrade() else {
                     return false;
                 };
-                if Some(context) != current || source.as_ref().is_some_and(|source| Some(source) != current_source) {
+                if Some(context) != current
+                    || source
+                        .as_ref()
+                        .is_some_and(|source| Some(source) != current_source)
+                {
                     cancellation.store(true, Ordering::Release);
                     return false;
                 }
@@ -585,7 +589,9 @@ impl AndroidPanel {
         let owner = controller
             .as_ref()
             .and_then(|controller| controller.read(cx).project_token(cx));
-        let source = controller.as_ref().and_then(|controller| controller.read(cx).action_token(cx));
+        let source = controller
+            .as_ref()
+            .and_then(|controller| controller.read(cx).action_token(cx));
         self.cancel_obsolete_operation_owners(owner.as_ref(), source.as_ref());
         if owner == self.backend_owner {
             return;
@@ -604,8 +610,7 @@ impl AndroidPanel {
                     tab,
                     session,
                     BuildStatus::Cancelled,
-                    "Android operation cancelled because the active project changed."
-                        .into(),
+                    "Android operation cancelled because the active project changed.".into(),
                     cx,
                 )
             });
@@ -982,7 +987,11 @@ impl AndroidPanel {
             .project_token(cx)
             .context("The active Android project changed. Select the project and try again.")?;
         let source = if matches!(operation, AndroidOperation::Preview) {
-            Some(controller.action_token(cx).context("The preview source changed. Try again in its source editor.")?)
+            Some(
+                controller
+                    .action_token(cx)
+                    .context("The preview source changed. Try again in its source editor.")?,
+            )
         } else {
             None
         };
@@ -1019,7 +1028,10 @@ impl AndroidPanel {
             .context("The Android project's window is no longer available.")?;
         ensure!(
             controller.read(cx).project_is_current(&owner.context, cx)
-                && owner.source.as_ref().is_none_or(|source| controller.read(cx).action_is_current(source, cx))
+                && owner
+                    .source
+                    .as_ref()
+                    .is_none_or(|source| controller.read(cx).action_is_current(source, cx))
                 && self.trusted_root(cx)? == owner.root,
             "The active Android project or preview source changed. Select the project and try again."
         );
@@ -1495,11 +1507,9 @@ impl AndroidPanel {
     }
 
     fn model_input_changed(&self, path: &RelPath, cx: &App) -> bool {
-        self.root
-            .as_ref()
-            .is_some_and(|root| {
-                self.model_absolute_input_changed(&root.join(path.as_std_path()), cx)
-            })
+        self.root.as_ref().is_some_and(|root| {
+            self.model_absolute_input_changed(&root.join(path.as_std_path()), cx)
+        })
     }
 
     fn model_absolute_input_changed(&self, path: &Path, cx: &App) -> bool {
@@ -1513,7 +1523,12 @@ impl AndroidPanel {
                 .then(|| store.snapshot(handle))
                 .flatten()
         });
-        if snapshot.is_some_and(|snapshot| !matches!(snapshot.module_owner(path), android_tools::project_context::ModuleOwner::Module(_))) {
+        if snapshot.is_some_and(|snapshot| {
+            !matches!(
+                snapshot.module_owner(path),
+                android_tools::project_context::ModuleOwner::Module(_)
+            )
+        }) {
             return false;
         }
         // Invalidation retains only this project's previously evaluated inputs.
@@ -1524,7 +1539,8 @@ impl AndroidPanel {
             .max_by_key(|(source, _)| source.components().count())
             .map(|(_, excluded)| !excluded)
             .unwrap_or_else(|| {
-                path.strip_prefix(root).ok()
+                path.strip_prefix(root)
+                    .ok()
                     .and_then(|path| RelPath::new(path, util::paths::PathStyle::local()).ok())
                     .is_some_and(|path| android_model_input(&path))
             })
@@ -2902,9 +2918,12 @@ impl AndroidPanel {
         });
         let visible = selected.visible_modules(&selected.selected.module, SourceScope::Main);
         let inputs = selected.model.modules.iter().flat_map(|module| {
-            let directory = snapshot.and_then(|snapshot| snapshot.modules()
-                .find(|candidate| candidate.path() == module.path)
-                .map(|module| module.directory()));
+            let directory = snapshot.and_then(|snapshot| {
+                snapshot
+                    .modules()
+                    .find(|candidate| candidate.path() == module.path)
+                    .map(|module| module.directory())
+            });
             let module_visible = visible.contains(&module.path);
             module.variants.iter().flat_map(move |variant| {
                 let variant_visible = selected.variants.get(&module.path) == Some(&variant.name);
@@ -2913,14 +2932,28 @@ impl AndroidPanel {
                         if !matches!(source.kind, SourceKind::Resources | SourceKind::Manifest) {
                             return None;
                         }
-                        let path = if let Ok(relative) = source.path.strip_prefix(&selected.model.root) {
-                            root.join(relative)
-                        } else {
-                            directory?.join(source.path.strip_prefix(&module.directory).ok()?)
-                        };
-                        let owned = snapshot.map_or_else(|| path.starts_with(root), |snapshot|
-                            matches!(snapshot.module_owner(&path), android_tools::project_context::ModuleOwner::Module(_)));
-                        owned.then_some((path, source.generated || !module_visible || !variant_visible || component.scope != SourceScope::Main))
+                        let path =
+                            if let Ok(relative) = source.path.strip_prefix(&selected.model.root) {
+                                root.join(relative)
+                            } else {
+                                directory?.join(source.path.strip_prefix(&module.directory).ok()?)
+                            };
+                        let owned = snapshot.map_or_else(
+                            || path.starts_with(root),
+                            |snapshot| {
+                                matches!(
+                                    snapshot.module_owner(&path),
+                                    android_tools::project_context::ModuleOwner::Module(_)
+                                )
+                            },
+                        );
+                        owned.then_some((
+                            path,
+                            source.generated
+                                || !module_visible
+                                || !variant_visible
+                                || component.scope != SourceScope::Main,
+                        ))
                     })
                 })
             })
@@ -2929,7 +2962,10 @@ impl AndroidPanel {
         for (path, excluded) in inputs {
             // A shared resource directory is active when the selected variant
             // uses it, even if other variants expose the same directory.
-            roots.entry(path).and_modify(|previous: &mut bool| *previous &= excluded).or_insert(excluded);
+            roots
+                .entry(path)
+                .and_modify(|previous: &mut bool| *previous &= excluded)
+                .or_insert(excluded);
         }
         roots.into_iter().collect()
     }
@@ -4555,7 +4591,10 @@ mod tests {
         cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_context::PluginId;
-        assert!(cfg!(feature = "bundled-preview"), "Use the normal zed bundled-preview graph");
+        assert!(
+            cfg!(feature = "bundled-preview"),
+            "Use the normal zed bundled-preview graph"
+        );
         cx.update(|cx| {
             let state = AppState::test(cx);
             editor::init(cx);
@@ -4564,67 +4603,152 @@ mod tests {
             crate::init(cx);
         });
         let filesystem = FakeFs::new(cx.executor());
-        filesystem.insert_tree("/work-owner", json!({"Main.kt":"fun main() {}", "Other.kt":"fun other() {}"})).await;
-        filesystem.insert_tree("/work-python", json!({"main.py":"print(1)"})).await;
-        let project = Project::test_with_worktree_trust(filesystem,
-            [Path::new("/work-owner"), Path::new("/work-python")], cx).await;
+        filesystem
+            .insert_tree(
+                "/work-owner",
+                json!({"Main.kt":"fun main() {}", "Other.kt":"fun other() {}"}),
+            )
+            .await;
+        filesystem
+            .insert_tree("/work-python", json!({"main.py":"print(1)"}))
+            .await;
+        let project = Project::test_with_worktree_trust(
+            filesystem,
+            [Path::new("/work-owner"), Path::new("/work-python")],
+            cx,
+        )
+        .await;
         cx.update(|cx| {
             project_surfaces::tests::trust(&project, cx)?;
-            project_surfaces::tests::publish_catalogue(&project, Path::new("/work-owner"),
-                &[PluginId::AndroidApplication, PluginId::ComposeCompiler], &[("android", "androidJvm")], true, cx)
+            project_surfaces::tests::publish_catalogue(
+                &project,
+                Path::new("/work-owner"),
+                &[PluginId::AndroidApplication, PluginId::ComposeCompiler],
+                &[("android", "androidJvm")],
+                true,
+                cx,
+            )
         })?;
-        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        workspace.update_in(visual, |workspace, window, cx| {
-            workspace.open_abs_path(Path::new("/work-python/main.py"), Default::default(), window, cx)
-        }).await?;
+        let (workspace, visual) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        workspace
+            .update_in(visual, |workspace, window, cx| {
+                workspace.open_abs_path(
+                    Path::new("/work-python/main.py"),
+                    Default::default(),
+                    window,
+                    cx,
+                )
+            })
+            .await?;
         visual.run_until_parked();
-        let python = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Python item"))?;
-        workspace.update_in(visual, |workspace, window, cx| {
-            workspace.open_abs_path(Path::new("/work-owner/Main.kt"), Default::default(), window, cx)
-        }).await?;
+        let python = workspace.read_with(visual, |workspace, cx| {
+            workspace.active_item(cx).context("Python item")
+        })?;
+        workspace
+            .update_in(visual, |workspace, window, cx| {
+                workspace.open_abs_path(
+                    Path::new("/work-owner/Main.kt"),
+                    Default::default(),
+                    window,
+                    cx,
+                )
+            })
+            .await?;
         visual.run_until_parked();
-        let panel = workspace.read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx).context("Android panel"))?;
+        let panel = workspace.read_with(visual, |workspace, cx| {
+            workspace.panel::<AndroidPanel>(cx).context("Android panel")
+        })?;
         panel.update(visual, |panel, cx| {
-            let target = AndroidTarget {module:":".into(), variant:"debug".into(), output_listing:PathBuf::from("/work-owner/output.json")};
+            let target = AndroidTarget {
+                module: ":".into(),
+                variant: "debug".into(),
+                output_listing: PathBuf::from("/work-owner/output.json"),
+            };
             panel.targets = vec![target.clone()];
             panel.selected_target = Some(target.clone());
             publish_test_android_model(panel, &target, cx);
         });
         let owners = panel.read_with(visual, |panel, cx| {
-            [AndroidOperation::Sync, AndroidOperation::Build, AndroidOperation::Devices, AndroidOperation::Run]
-                .map(|operation| panel.operation_owner(operation, cx))
-                .into_iter().collect::<Result<Vec<_>>>()
+            [
+                AndroidOperation::Sync,
+                AndroidOperation::Build,
+                AndroidOperation::Devices,
+                AndroidOperation::Run,
+            ]
+            .map(|operation| panel.operation_owner(operation, cx))
+            .into_iter()
+            .collect::<Result<Vec<_>>>()
         })?;
-        let preview = panel.read_with(visual, |panel, cx| panel.operation_owner(AndroidOperation::Preview, cx))?;
+        let preview = panel.read_with(visual, |panel, cx| {
+            panel.operation_owner(AndroidOperation::Preview, cx)
+        })?;
         panel.update(visual, |panel, _| {
             panel.backend_owner = Some(owners[1].context.clone());
-            panel.pending_gradle_operation = Some((PathBuf::from("/work-owner"), GradleOperation::Build, owners[1].clone()));
+            panel.pending_gradle_operation = Some((
+                PathBuf::from("/work-owner"),
+                GradleOperation::Build,
+                owners[1].clone(),
+            ));
             panel.build_task = Some(Task::ready(()));
             panel.device_task = Some(Task::ready(()));
             panel.running = true;
         });
-        workspace.update_in(visual, |workspace, window, cx| {
-            workspace.open_abs_path(Path::new("/work-owner/Other.kt"), Default::default(), window, cx)
-        }).await?;
+        workspace
+            .update_in(visual, |workspace, window, cx| {
+                workspace.open_abs_path(
+                    Path::new("/work-owner/Other.kt"),
+                    Default::default(),
+                    window,
+                    cx,
+                )
+            })
+            .await?;
         visual.run_until_parked();
-        assert!(owners.iter().all(|owner| owner.ensure_active().is_ok()), "Project work keeps its owner across a same-root source switch");
-        assert!(preview.ensure_active().is_err(), "Preview work remains bound to its source selection");
+        assert!(
+            owners.iter().all(|owner| owner.ensure_active().is_ok()),
+            "Project work keeps its owner across a same-root source switch"
+        );
+        assert!(
+            preview.ensure_active().is_err(),
+            "Preview work remains bound to its source selection"
+        );
         panel.read_with(visual, |panel, cx| {
-            for (owner, operation) in owners.iter().zip([AndroidOperation::Sync, AndroidOperation::Build, AndroidOperation::Devices, AndroidOperation::Run]) {
+            for (owner, operation) in owners.iter().zip([
+                AndroidOperation::Sync,
+                AndroidOperation::Build,
+                AndroidOperation::Devices,
+                AndroidOperation::Run,
+            ]) {
                 assert!(panel.verify_operation_owner(owner, operation, cx).is_ok());
             }
             assert!(panel.running && panel.build_task.is_some() && panel.device_task.is_some());
-            assert!(panel.pending_gradle_operation.as_ref().is_some_and(|pending| pending.0 == Path::new("/work-owner")));
+            assert!(
+                panel
+                    .pending_gradle_operation
+                    .as_ref()
+                    .is_some_and(|pending| pending.0 == Path::new("/work-owner"))
+            );
         });
-        let android = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Android item"))?;
+        let android = workspace.read_with(visual, |workspace, cx| {
+            workspace.active_item(cx).context("Android item")
+        })?;
         workspace.update_in(visual, |workspace, window, cx| {
             assert!(workspace.activate_item(python.as_ref(), false, false, window, cx));
             assert!(workspace.activate_item(android.as_ref(), false, false, window, cx));
         });
         visual.run_until_parked();
-        assert!(owners.iter().all(|owner| owner.ensure_active().is_err()), "A/B/A without pumping never revives queued project work");
+        assert!(
+            owners.iter().all(|owner| owner.ensure_active().is_err()),
+            "A/B/A without pumping never revives queued project work"
+        );
         panel.read_with(visual, |panel, cx| {
-            assert!(!panel.running && panel.build_task.is_none() && panel.device_task.is_none() && panel.pending_gradle_operation.is_none());
+            assert!(
+                !panel.running
+                    && panel.build_task.is_none()
+                    && panel.device_task.is_none()
+                    && panel.pending_gradle_operation.is_none()
+            );
             for owner in &owners {
                 assert!(panel.verify_context_owner(owner, cx).is_err());
             }
@@ -5199,23 +5323,41 @@ mod tests {
         filesystem.insert_tree("/input-parent", json!({
             "settings.gradle.kts":"include(\":app\"); project(\":app\").projectDir = file(\"../input-sibling\")", "gradlew":""
         })).await;
-        filesystem.insert_tree("/input-sibling", json!({
-            "build.gradle.kts":"", "Main.kt":"fun main() {}",
-            "inputs":{
-                "values":{"strings.xml":"<resources/>"},
-                "generated":{"values":{"strings.xml":"<resources/>"}},
-                "tests":{"values":{"strings.xml":"<resources/>"}}
-            },
-            "manifest":{"custom.xml":"<manifest/>"},
-            "release-res":{"values":{"strings.xml":"<resources/>"}},
-            "src":{"release":{"res":{"values":{"strings.xml":"<resources/>"}}}}
-        })).await;
-        filesystem.insert_tree("/input-unrelated", json!({
-            "src":{"main":{"res":{"values":{"strings.xml":"<resources/>"}}}},
-            "main.py":"print(1)"
-        })).await;
-        let project = Project::test_with_worktree_trust(filesystem,
-            [Path::new("/input-parent"), Path::new("/input-sibling"), Path::new("/input-unrelated")], cx).await;
+        filesystem
+            .insert_tree(
+                "/input-sibling",
+                json!({
+                    "build.gradle.kts":"", "Main.kt":"fun main() {}",
+                    "inputs":{
+                        "values":{"strings.xml":"<resources/>"},
+                        "generated":{"values":{"strings.xml":"<resources/>"}},
+                        "tests":{"values":{"strings.xml":"<resources/>"}}
+                    },
+                    "manifest":{"custom.xml":"<manifest/>"},
+                    "release-res":{"values":{"strings.xml":"<resources/>"}},
+                    "src":{"release":{"res":{"values":{"strings.xml":"<resources/>"}}}}
+                }),
+            )
+            .await;
+        filesystem
+            .insert_tree(
+                "/input-unrelated",
+                json!({
+                    "src":{"main":{"res":{"values":{"strings.xml":"<resources/>"}}}},
+                    "main.py":"print(1)"
+                }),
+            )
+            .await;
+        let project = Project::test_with_worktree_trust(
+            filesystem,
+            [
+                Path::new("/input-parent"),
+                Path::new("/input-sibling"),
+                Path::new("/input-unrelated"),
+            ],
+            cx,
+        )
+        .await;
         cx.update(|cx| {
             project_surfaces::tests::trust(&project, cx)?;
             let record = json!({"schema":1,"root":"/input-parent","gradleVersion":"9.6.1","phase":"complete", "modules":[
@@ -5236,14 +5378,25 @@ mod tests {
                 project.publish_android_context(&active, &owner, &discovery, snapshot, cx)
             })
         })?;
-        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-        workspace.update_in(visual, |workspace, window, cx| {
-            workspace.open_abs_path(Path::new("/input-sibling/Main.kt"), Default::default(), window, cx)
-        }).await?;
+        let (workspace, visual) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        workspace
+            .update_in(visual, |workspace, window, cx| {
+                workspace.open_abs_path(
+                    Path::new("/input-sibling/Main.kt"),
+                    Default::default(),
+                    window,
+                    cx,
+                )
+            })
+            .await?;
         visual.run_until_parked();
-        let panel = workspace.read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx).context("Android panel"))?;
+        let panel = workspace.read_with(visual, |workspace, cx| {
+            workspace.panel::<AndroidPanel>(cx).context("Android panel")
+        })?;
         let target = AndroidTarget {
-            module: ":app".into(), variant: "debug".into(),
+            module: ":app".into(),
+            variant: "debug".into(),
             output_listing: PathBuf::from("/input-sibling/output.json"),
         };
         let model = serde_json::from_value::<android_tools::project_model::ProjectModel>(json!({
@@ -5268,31 +5421,65 @@ mod tests {
                 ]
             }]
         }))?;
-        let publish_model = |panel: &mut AndroidPanel, cx: &mut Context<AndroidPanel>| -> Result<()> {
-            panel.targets = vec![target.clone()];
-            panel.selected_target = Some(target.clone());
-            panel.project.update(cx, |project, cx| {
-                let token = project.invalidate_android_model(Some(PathBuf::from("/input-parent")), cx);
-                project.publish_android_model(&token, model.clone(), cx)
-            })?;
-            panel.publish_selection(cx)?;
-            // A busy operation preserves queued model reconciliation while this
-            // test observes saves without executing SDK or Gradle processes.
-            panel.running = true;
-            Ok(())
-        };
+        let publish_model =
+            |panel: &mut AndroidPanel, cx: &mut Context<AndroidPanel>| -> Result<()> {
+                panel.targets = vec![target.clone()];
+                panel.selected_target = Some(target.clone());
+                panel.project.update(cx, |project, cx| {
+                    let token =
+                        project.invalidate_android_model(Some(PathBuf::from("/input-parent")), cx);
+                    project.publish_android_model(&token, model.clone(), cx)
+                })?;
+                panel.publish_selection(cx)?;
+                // A busy operation preserves queued model reconciliation while this
+                // test observes saves without executing SDK or Gradle processes.
+                panel.running = true;
+                Ok(())
+            };
         panel.update(visual, publish_model)?;
         panel.read_with(visual, |panel, _| {
-            assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/inputs"), false)));
-            assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/manifest/custom.xml"), false)));
-            assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/inputs/generated"), true)));
-            assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/inputs/tests"), true)));
-            assert!(panel.model_input_roots.contains(&(PathBuf::from("/input-sibling/src/release/res"), true)));
-            assert!(!panel.model_input_roots.iter().any(|(path, _)| path.starts_with("/canonical-sibling") || path.starts_with("/input-unrelated")));
+            assert!(
+                panel
+                    .model_input_roots
+                    .contains(&(PathBuf::from("/input-sibling/inputs"), false))
+            );
+            assert!(
+                panel
+                    .model_input_roots
+                    .contains(&(PathBuf::from("/input-sibling/manifest/custom.xml"), false))
+            );
+            assert!(
+                panel
+                    .model_input_roots
+                    .contains(&(PathBuf::from("/input-sibling/inputs/generated"), true))
+            );
+            assert!(
+                panel
+                    .model_input_roots
+                    .contains(&(PathBuf::from("/input-sibling/inputs/tests"), true))
+            );
+            assert!(
+                panel
+                    .model_input_roots
+                    .contains(&(PathBuf::from("/input-sibling/src/release/res"), true))
+            );
+            assert!(
+                !panel
+                    .model_input_roots
+                    .iter()
+                    .any(|(path, _)| path.starts_with("/canonical-sibling")
+                        || path.starts_with("/input-unrelated"))
+            );
         });
-        let roots = project.read_with(visual, |project, cx| project.visible_worktrees(cx)
-            .map(|worktree| {let worktree = worktree.read(cx); (worktree.id(), worktree.abs_path())})
-            .collect::<HashMap<_, _>>());
+        let roots = project.read_with(visual, |project, cx| {
+            project
+                .visible_worktrees(cx)
+                .map(|worktree| {
+                    let worktree = worktree.read(cx);
+                    (worktree.id(), worktree.abs_path())
+                })
+                .collect::<HashMap<_, _>>()
+        });
         let events = std::rc::Rc::new(RefCell::new(Vec::new()));
         let _events_subscription = visual.update(|_, cx| {
             let events = events.clone();
@@ -5300,7 +5487,11 @@ mod tests {
                 if let project::Event::WorktreeUpdatedEntries(worktree, changes) = event
                     && let Some(root) = roots.get(worktree)
                 {
-                    events.borrow_mut().extend(changes.iter().map(|(path, _, change)| (root.join(path.as_std_path()), *change)));
+                    events.borrow_mut().extend(
+                        changes
+                            .iter()
+                            .map(|(path, _, change)| (root.join(path.as_std_path()), *change)),
+                    );
                 }
             })
         });
@@ -5314,38 +5505,84 @@ mod tests {
             ("/input-sibling/manifest/custom.xml", true),
         ] {
             panel.update(visual, publish_model)?;
-            let buffer = project.update(visual, |project, cx| project.open_local_buffer(path, cx)).await?;
+            let buffer = project
+                .update(visual, |project, cx| project.open_local_buffer(path, cx))
+                .await?;
             visual.run_until_parked();
-            assert!(panel.read_with(visual, |panel, _| panel.kotlin_refresh_task.is_none() && panel.kotlin_refresh_pending.is_none()));
+            assert!(
+                panel.read_with(visual, |panel, _| panel.kotlin_refresh_task.is_none()
+                    && panel.kotlin_refresh_pending.is_none())
+            );
             buffer.update(visual, |buffer, cx| buffer.edit([(0..0, " ")], None, cx));
-            assert_eq!(panel.read_with(visual, |panel, cx| panel.model_inputs_dirty(cx)), refresh, "Dirty resource ownership: {path}");
+            assert_eq!(
+                panel.read_with(visual, |panel, cx| panel.model_inputs_dirty(cx)),
+                refresh,
+                "Dirty resource ownership: {path}"
+            );
             events.borrow_mut().clear();
-            project.update(visual, |project, cx| project.save_buffer(buffer.clone(), cx)).await?;
+            project
+                .update(visual, |project, cx| {
+                    project.save_buffer(buffer.clone(), cx)
+                })
+                .await?;
             visual.run_until_parked();
             assert!(!buffer.read_with(visual, |buffer, _| buffer.is_dirty()));
-            assert!(events.borrow().iter().any(|(changed, change)| changed == Path::new(path) && *change != project::PathChange::Loaded), "Actual saved worktree event: {path}");
+            assert!(
+                events
+                    .borrow()
+                    .iter()
+                    .any(|(changed, change)| changed == Path::new(path)
+                        && *change != project::PathChange::Loaded),
+                "Actual saved worktree event: {path}"
+            );
             panel.update(visual, |panel, cx| {
                 assert!(!panel.model_inputs_dirty(cx));
-                assert_eq!(panel.kotlin_refresh_task.is_some() || panel.kotlin_refresh_pending.as_deref() == Some(Path::new("/input-parent")), refresh, "Saved resource ownership: {path}");
-                assert!(panel.build_task.is_none() && panel.sync_task.is_none() && panel.kotlin_task.is_none());
+                assert_eq!(
+                    panel.kotlin_refresh_task.is_some()
+                        || panel.kotlin_refresh_pending.as_deref()
+                            == Some(Path::new("/input-parent")),
+                    refresh,
+                    "Saved resource ownership: {path}"
+                );
+                assert!(
+                    panel.build_task.is_none()
+                        && panel.sync_task.is_none()
+                        && panel.kotlin_task.is_none()
+                );
                 panel.kotlin_refresh_task = None;
                 panel.kotlin_refresh_pending = None;
             });
         }
-        let retained = project.update(visual, |project, cx| {
-            project.open_local_buffer("/input-sibling/inputs/values/strings.xml", cx)
-        }).await?;
+        let retained = project
+            .update(visual, |project, cx| {
+                project.open_local_buffer("/input-sibling/inputs/values/strings.xml", cx)
+            })
+            .await?;
         retained.update(visual, |buffer, cx| buffer.edit([(0..0, " ")], None, cx));
         project.update(visual, |project, cx| {
             project.invalidate_android_context_for_repository(Path::new("/input-sibling"), cx)
         });
         visual.run_until_parked();
         panel.read_with(visual, |panel, cx| {
-            assert!(panel.model_inputs_dirty(cx), "Previously owned sibling inputs remain dirty during invalidation");
-            for operation in [AndroidOperation::Build, AndroidOperation::Devices, AndroidOperation::Run, AndroidOperation::Preview] {
-                assert!(panel.operation_owner(operation, cx).is_err(), "Retained dirty inputs never grant an operational context");
+            assert!(
+                panel.model_inputs_dirty(cx),
+                "Previously owned sibling inputs remain dirty during invalidation"
+            );
+            for operation in [
+                AndroidOperation::Build,
+                AndroidOperation::Devices,
+                AndroidOperation::Run,
+                AndroidOperation::Preview,
+            ] {
+                assert!(
+                    panel.operation_owner(operation, cx).is_err(),
+                    "Retained dirty inputs never grant an operational context"
+                );
             }
-            assert!(!panel.model_absolute_input_changed(Path::new("/input-unrelated/src/main/res/values/strings.xml"), cx));
+            assert!(!panel.model_absolute_input_changed(
+                Path::new("/input-unrelated/src/main/res/values/strings.xml"),
+                cx
+            ));
         });
         panel.update(visual, |panel, _| panel.running = false);
         Ok(())

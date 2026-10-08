@@ -372,8 +372,11 @@ impl fmt::Debug for Event {
                 .debug_struct("ActivateItem")
                 .field("local", local)
                 .finish(),
-            Event::ActivateProjectPath { path, local } => f.debug_struct("ActivateProjectPath")
-                .field("path", path).field("local", local).finish(),
+            Event::ActivateProjectPath { path, local } => f
+                .debug_struct("ActivateProjectPath")
+                .field("path", path)
+                .field("local", local)
+                .finish(),
             Event::Remove { .. } => f.write_str("Remove"),
             Event::RemovedItem { item } => f
                 .debug_struct("RemovedItem")

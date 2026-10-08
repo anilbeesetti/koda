@@ -14,7 +14,8 @@ fn project_root(name: &str) -> PathBuf {
 }
 
 #[test]
-fn project_work_survives_source_changes_and_never_revives_after_root_or_input_changes() -> Result<()> {
+fn project_work_survives_source_changes_and_never_revives_after_root_or_input_changes() -> Result<()>
+{
     let root = project_root("project-work");
     let other = project_root("project-work-other");
     let mut store = ContextStore::default();
@@ -33,24 +34,49 @@ fn project_work_survives_source_changes_and_never_revives_after_root_or_input_ch
     assert_eq!(active.project_token(&store).as_ref(), Some(&owner));
     active.select(Some(other_handle), Some(other.join("Main.kt")))?;
     active.select(Some(handle), Some(root.join("app/Main.kt")))?;
-    assert!(!active.project_is_current(&owner, &store), "A later activation of the same root must never revive earlier work");
+    assert!(
+        !active.project_is_current(&owner, &store),
+        "A later activation of the same root must never revive earlier work"
+    );
     let import = store.begin_import(handle)?;
-    let importing = active.project_discovery_token(&store).context("Import owner")?;
-    let source_import = active.discovery_token(&store).context("Source import owner")?;
+    let importing = active
+        .project_discovery_token(&store)
+        .context("Import owner")?;
+    let source_import = active
+        .discovery_token(&store)
+        .context("Source import owner")?;
     active.select(Some(handle), Some(root.join("app/Other.kt")))?;
     assert!(!active.is_current(&source_import, &store));
-    active.publish_project(&mut store, &importing, &import, decode(&root, &android_catalogue(&root))?)?;
-    let current = active.project_token(&store).context("Current project work")?;
+    active.publish_project(
+        &mut store,
+        &importing,
+        &import,
+        decode(&root, &android_catalogue(&root))?,
+    )?;
+    let current = active
+        .project_token(&store)
+        .context("Current project work")?;
     assert!(store.observe_root_input_change(handle, &root.join("build.gradle.kts"))?);
     assert!(!active.project_is_current(&current, &store));
     assert!(active.project_token(&store).is_none());
     let import = store.begin_import(handle)?;
-    let trusted = active.project_discovery_token(&store).context("Trusted import")?;
+    let trusted = active
+        .project_discovery_token(&store)
+        .context("Trusted import")?;
     store.set_trusted(handle, false)?;
     assert!(active.project_discovery_token(&store).is_none());
     store.set_trusted(handle, true)?;
     assert!(!active.project_is_current(&trusted, &store));
-    assert!(active.publish_project(&mut store, &trusted, &import, decode(&root, &android_catalogue(&root))?).is_err());
+    assert!(
+        active
+            .publish_project(
+                &mut store,
+                &trusted,
+                &import,
+                decode(&root, &android_catalogue(&root))?
+            )
+            .is_err()
+    );
     Ok(())
 }
 

@@ -2,8 +2,9 @@ use crate::android_build::{
     self, BuildEvent, BuildPanel, BuildStatus, BuildTab, CapturedProcessOutput,
 };
 use android_tools::project_context::{
-    ActiveContext, ActiveContextToken, ActiveProjectToken, ContextCapabilities, ContextSnapshot, DiscoveryToken,
-    ModuleOwner, ObservationPhase, OperationalReadiness, RootHandle, decode_context_output,
+    ActiveContext, ActiveContextToken, ActiveProjectToken, ContextCapabilities, ContextSnapshot,
+    DiscoveryToken, ModuleOwner, ObservationPhase, OperationalReadiness, RootHandle,
+    decode_context_output,
 };
 use anyhow::{Context as _, Result, ensure};
 use futures::{
@@ -66,56 +67,124 @@ mod tests {
             trusted_worktrees::init(Default::default(), cx);
         });
         let filesystem = project::FakeFs::new(cx.executor());
-        filesystem.insert_tree("/import-owner", json!({"Main.kt":"fun main() {}", "Other.kt":"fun other() {}"})).await;
-        filesystem.insert_tree("/import-python", json!({"main.py":"print(1)"})).await;
-        let project = Project::test_with_worktree_trust(filesystem,
-            [Path::new("/import-owner"), Path::new("/import-python")], cx).await;
+        filesystem
+            .insert_tree(
+                "/import-owner",
+                json!({"Main.kt":"fun main() {}", "Other.kt":"fun other() {}"}),
+            )
+            .await;
+        filesystem
+            .insert_tree("/import-python", json!({"main.py":"print(1)"}))
+            .await;
+        let project = Project::test_with_worktree_trust(
+            filesystem,
+            [Path::new("/import-owner"), Path::new("/import-python")],
+            cx,
+        )
+        .await;
         cx.update(|cx| {
             crate::project_surfaces::tests::trust(&project, cx)?;
-            crate::project_surfaces::tests::publish_catalogue(&project, Path::new("/import-owner"),
-                &[android_tools::project_context::PluginId::AndroidApplication], &[("android", "androidJvm")], true, cx)
+            crate::project_surfaces::tests::publish_catalogue(
+                &project,
+                Path::new("/import-owner"),
+                &[android_tools::project_context::PluginId::AndroidApplication],
+                &[("android", "androidJvm")],
+                true,
+                cx,
+            )
         })?;
-        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (workspace, visual) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let build_panel = visual.new(|cx| BuildPanel::new(workspace.downgrade(), cx));
-        workspace.update_in(visual, |workspace, window, cx| register(workspace, build_panel, window, cx));
         workspace.update_in(visual, |workspace, window, cx| {
-            workspace.open_abs_path(Path::new("/import-python/main.py"), Default::default(), window, cx)
-        }).await?;
+            register(workspace, build_panel, window, cx)
+        });
+        workspace
+            .update_in(visual, |workspace, window, cx| {
+                workspace.open_abs_path(
+                    Path::new("/import-python/main.py"),
+                    Default::default(),
+                    window,
+                    cx,
+                )
+            })
+            .await?;
         visual.run_until_parked();
-        let python = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Python item"))?;
-        workspace.update_in(visual, |workspace, window, cx| {
-            workspace.open_abs_path(Path::new("/import-owner/Main.kt"), Default::default(), window, cx)
-        }).await?;
+        let python = workspace.read_with(visual, |workspace, cx| {
+            workspace.active_item(cx).context("Python item")
+        })?;
+        workspace
+            .update_in(visual, |workspace, window, cx| {
+                workspace.open_abs_path(
+                    Path::new("/import-owner/Main.kt"),
+                    Default::default(),
+                    window,
+                    cx,
+                )
+            })
+            .await?;
         visual.run_until_parked();
-        let controller = visual.update(|_, cx| for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+        let controller = visual
+            .update(|_, cx| for_workspace(&workspace.downgrade(), cx))
+            .context("Controller")?;
         let mut cancelled = controller.update(visual, |controller, cx| {
             let root = controller.active.root().context("Import root")?;
-            let discovery = controller.project.update(cx, |project, cx| project.begin_android_context_import(root, cx))?;
-            let active = controller.active.project_discovery_token(controller.project.read(cx).android_context()).context("Project discovery owner")?;
+            let discovery = controller.project.update(cx, |project, cx| {
+                project.begin_android_context_import(root, cx)
+            })?;
+            let active = controller
+                .active
+                .project_discovery_token(controller.project.read(cx).android_context())
+                .context("Project discovery owner")?;
             let (cancel, cancelled) = oneshot::channel();
-            controller.import_owner = Some(ImportOwner {root, active, discovery, session:1});
+            controller.import_owner = Some(ImportOwner {
+                root,
+                active,
+                discovery,
+                session: 1,
+            });
             controller.cancel = Some(cancel);
             controller.task = Some(Task::ready(()));
             Ok::<_, anyhow::Error>(cancelled)
         })?;
-        workspace.update_in(visual, |workspace, window, cx| {
-            workspace.open_abs_path(Path::new("/import-owner/Other.kt"), Default::default(), window, cx)
-        }).await?;
+        workspace
+            .update_in(visual, |workspace, window, cx| {
+                workspace.open_abs_path(
+                    Path::new("/import-owner/Other.kt"),
+                    Default::default(),
+                    window,
+                    cx,
+                )
+            })
+            .await?;
         visual.run_until_parked();
-        assert!(cancelled.try_recv()?.is_none(), "Same-root source changes retain a queued Gradle import");
+        assert!(
+            cancelled.try_recv()?.is_none(),
+            "Same-root source changes retain a queued Gradle import"
+        );
         controller.read_with(visual, |controller, cx| {
             assert!(controller.import_in_progress(cx));
             assert!(controller.task.is_some());
         });
-        let android = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Android item"))?;
+        let android = workspace.read_with(visual, |workspace, cx| {
+            workspace.active_item(cx).context("Android item")
+        })?;
         workspace.update_in(visual, |workspace, window, cx| {
             assert!(workspace.activate_item(python.as_ref(), false, false, window, cx));
             assert!(workspace.activate_item(android.as_ref(), false, false, window, cx));
         });
         visual.run_until_parked();
-        assert_eq!(cancelled.try_recv()?, Some(()), "Rapid A/B/A cancels the original import");
+        assert_eq!(
+            cancelled.try_recv()?,
+            Some(()),
+            "Rapid A/B/A cancels the original import"
+        );
         controller.read_with(visual, |controller, cx| {
-            assert!(!controller.import_in_progress(cx) && controller.import_owner.is_none() && controller.task.is_none());
+            assert!(
+                !controller.import_in_progress(cx)
+                    && controller.import_owner.is_none()
+                    && controller.task.is_none()
+            );
         });
         Ok(())
     }
@@ -766,9 +835,15 @@ impl ProjectContextController {
         Ok(())
     }
 
-    fn select_path(&mut self, path: Option<project::ProjectPath>, cx: &mut Context<Self>) -> Result<()> {
+    fn select_path(
+        &mut self,
+        path: Option<project::ProjectPath>,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
         let project = self.project.clone();
-        let roots = project.read(cx).visible_worktrees(cx)
+        let roots = project
+            .read(cx)
+            .visible_worktrees(cx)
             .filter(|worktree| !worktree.read(cx).is_single_file())
             .map(|worktree| (worktree.read(cx).id(), worktree.read(cx).abs_path()))
             .collect::<Vec<_>>();
@@ -887,12 +962,15 @@ impl ProjectContextController {
         if self.source_is_restricted(cx) {
             return None;
         }
-        self.active.project_token(self.project.read(cx).android_context())
+        self.active
+            .project_token(self.project.read(cx).android_context())
     }
 
     pub(crate) fn project_is_current(&self, token: &ActiveProjectToken, cx: &App) -> bool {
         !self.source_is_restricted(cx)
-            && self.active.project_is_current(token, self.project.read(cx).android_context())
+            && self
+                .active
+                .project_is_current(token, self.project.read(cx).android_context())
     }
 
     pub(crate) fn discovery_token(&self, cx: &App) -> Option<ActiveContextToken> {

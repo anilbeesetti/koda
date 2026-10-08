@@ -4556,14 +4556,29 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
         view.device_task = Some(Task::ready(()));
         view.control_task = Some(Task::ready(()));
     });
-    workspace.update_in(visual, |workspace, window, cx| {
-        workspace.open_abs_path(Path::new("/logcat-owner/Other.kt"), Default::default(), window, cx)
-    }).await?;
+    workspace
+        .update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(
+                Path::new("/logcat-owner/Other.kt"),
+                Default::default(),
+                window,
+                cx,
+            )
+        })
+        .await?;
     visual.run_until_parked();
-    assert!(!cancelled.load(Ordering::Acquire), "Same-project editor changes must keep Logcat running");
+    assert!(
+        !cancelled.load(Ordering::Acquire),
+        "Same-project editor changes must keep Logcat running"
+    );
     view.read_with(visual, |view, cx| {
         assert!(view.verify_device_context(&owner, cx).is_ok());
-        assert!(view.capturing && view.device_task.is_some() && view.stream_task.is_some() && view.control_task.is_some());
+        assert!(
+            view.capturing
+                && view.device_task.is_some()
+                && view.stream_task.is_some()
+                && view.control_task.is_some()
+        );
     });
     workspace
         .update_in(visual, |workspace, window, cx| {
@@ -4591,12 +4606,23 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
             "Stale direct entry points must reject before ADB starts"
         );
     });
-    let python = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Python item"))?;
-    workspace.update_in(visual, |workspace, window, cx| {
-        workspace.open_abs_path(Path::new("/logcat-owner/Main.kt"), Default::default(), window, cx)
-    }).await?;
+    let python = workspace.read_with(visual, |workspace, cx| {
+        workspace.active_item(cx).context("Python item")
+    })?;
+    workspace
+        .update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(
+                Path::new("/logcat-owner/Main.kt"),
+                Default::default(),
+                window,
+                cx,
+            )
+        })
+        .await?;
     visual.run_until_parked();
-    let android = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Android item"))?;
+    let android = workspace.read_with(visual, |workspace, cx| {
+        workspace.active_item(cx).context("Android item")
+    })?;
     let current = view.read_with(visual, |view, cx| view.device_context_token(cx))?;
     let rapid_cancellation = WorkCancellation::default();
     let rapid_cancelled = rapid_cancellation.0.clone();
@@ -4613,10 +4639,18 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
         assert!(workspace.activate_item(android.as_ref(), false, false, window, cx));
     });
     visual.run_until_parked();
-    assert!(rapid_cancelled.load(Ordering::Acquire), "A/B/A without pumping must not revive a Logcat stream");
+    assert!(
+        rapid_cancelled.load(Ordering::Acquire),
+        "A/B/A without pumping must not revive a Logcat stream"
+    );
     view.read_with(visual, |view, cx| {
         assert!(view.verify_device_context(&current, cx).is_err());
-        assert!(!view.capturing && view.stream_task.is_none() && view.device_task.is_none() && view.control_task.is_none());
+        assert!(
+            !view.capturing
+                && view.stream_task.is_none()
+                && view.device_task.is_none()
+                && view.control_task.is_none()
+        );
     });
     Ok(())
 }

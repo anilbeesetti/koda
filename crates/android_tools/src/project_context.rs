@@ -1191,7 +1191,9 @@ impl ActiveContext {
                 .checked_add(1)
                 .context("Active context generation space exhausted")?;
             if self.root != root {
-                self.project_generation = self.project_generation.checked_add(1)
+                self.project_generation = self
+                    .project_generation
+                    .checked_add(1)
                     .context("Active project generation space exhausted")?;
             }
             self.generation = generation;
@@ -1203,7 +1205,9 @@ impl ActiveContext {
     }
 
     pub fn invalidate_source_selection(&mut self) -> Result<()> {
-        self.generation = self.generation.checked_add(1)
+        self.generation = self
+            .generation
+            .checked_add(1)
             .context("Active context generation space exhausted")?;
         self.owner_path = None;
         Ok(())
@@ -1276,8 +1280,10 @@ impl ActiveContext {
         discovery: &DiscoveryToken,
         snapshot: ContextSnapshot,
     ) -> Result<()> {
-        ensure!(self.project_is_current(active, store) && active.root == discovery.0,
-            "Discarded a project context result for a different active project");
+        ensure!(
+            self.project_is_current(active, store) && active.root == discovery.0,
+            "Discarded a project context result for a different active project"
+        );
         store.publish(discovery, snapshot)
     }
 
