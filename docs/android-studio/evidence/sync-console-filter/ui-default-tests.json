@@ -1,0 +1,118 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "exit_code": 0,
+  "passed": 142,
+  "failed": 0,
+  "filtered": 0,
+  "pre_existing_ignored": 1,
+  "discovered_tests": 143,
+  "ignored_test": "android_preview::tests::capture_compose_preview_surface",
+  "supplemental_once_ok_count": 17,
+  "all_seventeen_once_ok": true,
+  "normal_current_worktree_compiler_artifacts": [
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "android_tools",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/android_tools/src/android_tools.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "features": [],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-914f1192aceedbc3.rlib",
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-914f1192aceedbc3.rmeta"
+      ],
+      "executable": null,
+      "fresh": false,
+      "actual_files": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-914f1192aceedbc3.rlib",
+          "bytes": 25564398,
+          "sha256": "035b8f51cfe45c7ebacdb37160486432c371ad9034aafed826d4cc9c446b6033"
+        }
+      ]
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/android_ui#0.1.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/android_ui/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "android_ui",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/android_ui/src/android_ui.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+      "fresh": false,
+      "actual_files": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+          "bytes": 453675992,
+          "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1"
+        }
+      ]
+    }
+  ],
+  "source_file_count": 4748,
+  "actual_UI_test_binding": {
+    "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+    "target_source": "/workspace/android-studio-sync-console-filter/crates/android_ui/src/android_ui.rs",
+    "fresh": false,
+    "cargo_executable": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+    "asset_resolving_executable": "/workspace/android-studio-sync-console-filter/target/cloud-tests/android_ui-0a1e421ffc75c4cf",
+    "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1",
+    "bytes": 453675992
+  },
+  "compile_seconds": 263.35541473599733,
+  "actual_test_seconds": 5.603475374999107,
+  "outer_seconds": 270.97168186400086,
+  "unit_raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-default/ui-tests.log",
+  "unit_raw_sha256": "972c2b2075ed25d09533d9389a17d64bcb2c23bcc7ab7115ac7a9283ce7075c6",
+  "outer_raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-default-gate/raw.log",
+  "outer_raw_sha256": "fdfa61d1c91fbcaf582b7faf5e817b98e0e6ade759035e6f606528f8d8a508f8",
+  "Source_app_aliases_CLIs_index_main_protected_guards": "PASS",
+  "normal_generated_cache_provenance": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-default-gate/generated-cache-provenance.json",
+  "free_bytes_after": {
+    "/workspace": 939372544,
+    "/tmp": 1451757568
+  },
+  "new_original_credit": 0,
+  "fullapp_native_fullCI_five_final_reviews_pending": true
+}

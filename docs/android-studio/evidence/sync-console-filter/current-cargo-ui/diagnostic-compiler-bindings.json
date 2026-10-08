@@ -1,0 +1,174 @@
+{
+  "actual_artifacts": [
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/util#0.1.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/util/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "util",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/util/src/util.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "features": [
+        "rand",
+        "test-support",
+        "util_macros"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/libutil-b7c9aac524cd21eb.rlib",
+        "/workspace/.cache/zed/target/debug/deps/libutil-b7c9aac524cd21eb.rmeta"
+      ],
+      "executable": null,
+      "fresh": true
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/util#0.1.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/util/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "util",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/util/src/util.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "features": [],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/libutil-248e0c2caf5cee0f.rlib",
+        "/workspace/.cache/zed/target/debug/deps/libutil-248e0c2caf5cee0f.rmeta"
+      ],
+      "executable": null,
+      "fresh": true
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "android_tools",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/android_tools/src/android_tools.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": false
+      },
+      "features": [],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-914f1192aceedbc3.rlib",
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-914f1192aceedbc3.rmeta"
+      ],
+      "executable": null,
+      "fresh": true
+    },
+    {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/android_ui#0.1.0",
+      "manifest_path": "/workspace/android-studio-sync-console-filter/crates/android_ui/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "android_ui",
+        "src_path": "/workspace/android-studio-sync-console-filter/crates/android_ui/src/android_ui.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+      "fresh": true
+    }
+  ],
+  "current_UI_artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///workspace/android-studio-sync-console-filter/crates/android_ui#0.1.0",
+    "manifest_path": "/workspace/android-studio-sync-console-filter/crates/android_ui/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "android_ui",
+      "src_path": "/workspace/android-studio-sync-console-filter/crates/android_ui/src/android_ui.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": false,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 0,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf"
+    ],
+    "executable": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+    "fresh": true
+  },
+  "fresh_status_honestly_reported": true,
+  "not_actual_test_execution": true,
+  "all_actual_runs_required_separately": true
+}

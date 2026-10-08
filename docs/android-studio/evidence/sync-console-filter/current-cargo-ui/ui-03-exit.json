@@ -1,0 +1,30 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_ui/Cargo.toml",
+    "-p",
+    "android_ui",
+    "--lib",
+    "tabbed_toolbar::tests::closed_is_called_when_clicked",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "cwd": "/workspace/android-studio-sync-console-filter",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "actual_pid": 416764,
+  "pgid": 416764,
+  "exit_code": 0,
+  "elapsed_seconds": 1.2589174180029659,
+  "administrative_stop": null,
+  "raw_log_sha256": "038019a7b67fac20c7ca25026fbcc18a7b972b6aefec3373b57ab6f4bdf96315",
+  "free_after": {
+    "/workspace": 333340672,
+    "/tmp": 90435584
+  },
+  "owned_live_group_after": [],
+  "diagnostic_only": false
+}

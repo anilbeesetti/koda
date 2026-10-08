@@ -1,0 +1,35 @@
+{
+  "state": "ALL_REMAINING_SIX_ACTUAL_CARGO_PASS_AND_DIAGNOSTIC_ONLY_PASS; compiler lease released",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "closed_utc": "2026-10-08T11:57:58.305208+00:00",
+  "first_actual_Cargo_receipt": "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-first-attempt1/exit.json",
+  "completed": [
+    "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-remaining-attempt1/ui-02",
+    "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-remaining-attempt1/ui-03",
+    "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-remaining-attempt1/ui-04",
+    "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-remaining-attempt1/ui-05",
+    "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-remaining-attempt1/ui-06",
+    "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-remaining-attempt1/ui-07",
+    "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-remaining-attempt1/diagnostic-current-compiler"
+  ],
+  "current_unit": {
+    "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+    "exists": true,
+    "dev": 27,
+    "inode": 1102215,
+    "bytes": 453675992,
+    "mode": 33216,
+    "nlink": 1,
+    "mtime_ns": 1791460372408379886,
+    "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1"
+  },
+  "fresh_unit_first_actual_compile_seconds": 150.03729618999932,
+  "metadata_Source_index_refs_app_native_changes": false,
+  "free": {
+    "/workspace": 332206080,
+    "/tmp": 90435584
+  },
+  "Source_all_metadata_rawa4_logical_refs_keepers_ADB_guards": "PASS",
+  "original_first_runner_sha256": "d65258d964d6033fa4500043d1ab87ac26f3c07b472243dd6f87222fae4da09d",
+  "current_runner_sha256": "b46be2421c447fa0c3244aeffb63275157e54b7562bf02859d2646c5cd7d1331"
+}

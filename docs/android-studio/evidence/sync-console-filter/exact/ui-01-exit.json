@@ -1,0 +1,62 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "actual_process_pid": 382763,
+  "command": [
+    "/workspace/android-studio-sync-console-filter/target/cloud-tests/android_ui-0a1e421ffc75c4cf",
+    "tabbed_toolbar::tests::component_is_added_element",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+  "elapsed_seconds": 0.9369908639928326,
+  "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-exact7/ui-01.log",
+  "raw_log_bytes": 254,
+  "raw_log_sha256": "966c63f592c4492a6e1b3dec7230d546adb5a76d027717f550eb5024a58cc616",
+  "fresh_current_compiler_receipt": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-default/verified-results.json",
+  "asset_bound_normal_harness_binding": {
+    "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+    "target_source": "/workspace/android-studio-sync-console-filter/crates/android_ui/src/android_ui.rs",
+    "fresh": false,
+    "cargo_executable": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+    "asset_resolving_executable": "/workspace/android-studio-sync-console-filter/target/cloud-tests/android_ui-0a1e421ffc75c4cf",
+    "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1",
+    "bytes": 453675992
+  },
+  "current_target_sources_and_manifest": {
+    "package": "android_ui",
+    "integration_target": null,
+    "test_name": "tabbed_toolbar::tests::component_is_added_element",
+    "manifest": {
+      "path": "crates/android_ui/Cargo.toml",
+      "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+    },
+    "source": {
+      "path": "crates/android_ui/src/tabbed_toolbar.rs",
+      "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+    },
+    "run": {
+      "tested_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_ui/Cargo.toml",
+        "-p",
+        "android_ui",
+        "--lib",
+        "tabbed_toolbar::tests::component_is_added_element",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "exit_code": 0,
+      "log": {
+        "path": "docs/android-studio/evidence/import-identity-integration-ui-01.log",
+        "sha256": "3e19aba6716804fc42ce407b7c1131c40dc11b60b478ad680631b8549fe642b9"
+      }
+    }
+  },
+  "full_Source_and_artifact_hashes_unchanged": true
+}

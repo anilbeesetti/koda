@@ -1,0 +1,19 @@
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy -Dhttps.proxyPort=8080 -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts -Duser.home=/workspace/android-studio-artifacts/source-providers-smoke/app-runtime/java-user -Djava.util.prefs.userRoot=/workspace/android-studio-artifacts/source-providers-smoke/app-runtime/java-prefs
+KODA_ANDROID_PROJECT_MODEL=QA_STDERR_VISIBLE
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/generation-project/build.gradle' line: 10
+
+* What went wrong:
+A problem occurred evaluating root project 'SourceProvidersSmoke'.
+> QA_SYNC_EXPECTED_CONFIGURATION_FAILURE_F763
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1s

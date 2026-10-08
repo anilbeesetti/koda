@@ -1,0 +1,26 @@
+   Compiling icons v0.1.0 (/workspace/android-studio-sync-console-filter/crates/icons)
+   Compiling ui v0.1.0 (/workspace/android-studio-sync-console-filter/crates/ui)
+   Compiling markdown v0.1.0 (/workspace/android-studio-sync-console-filter/crates/markdown)
+   Compiling android_tools v0.1.0 (/workspace/android-studio-sync-console-filter/crates/android_tools)
+   Compiling project v0.1.0 (/workspace/android-studio-sync-console-filter/crates/project)
+   Compiling language_model v0.1.0 (/workspace/android-studio-sync-console-filter/crates/language_model)
+   Compiling agent_settings v0.1.0 (/workspace/android-studio-sync-console-filter/crates/agent_settings)
+   Compiling ui_input v0.1.0 (/workspace/android-studio-sync-console-filter/crates/ui_input)
+   Compiling workspace v0.1.0 (/workspace/android-studio-sync-console-filter/crates/workspace)
+   Compiling breadcrumbs v0.1.0 (/workspace/android-studio-sync-console-filter/crates/breadcrumbs)
+   Compiling edit_prediction_types v0.1.0 (/workspace/android-studio-sync-console-filter/crates/edit_prediction_types)
+   Compiling editor v0.1.0 (/workspace/android-studio-sync-console-filter/crates/editor)
+   Compiling android_ui v0.1.0 (/workspace/android-studio-sync-console-filter/crates/android_ui)
+    Finished `test` profile [unoptimized] target(s) in 2m 29s
+     Running unittests src/android_ui.rs (/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf)
+
+running 1 test
+test tabbed_toolbar::tests::component_is_added_element ... ok
+
+successes:
+
+successes:
+    tabbed_toolbar::tests::component_is_added_element
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 142 filtered out; finished in 0.06s
+

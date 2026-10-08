@@ -1,0 +1,115 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "app_sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c",
+  "native_status": "PASS for bounded Sync-console acceptance with inherited limitations",
+  "actual_success_exits": [
+    0,
+    0
+  ],
+  "actual_failure_exit": 1,
+  "current_production_model_import": {
+    "app_module": ":app",
+    "selected_variant": "demoDebug",
+    "discovered_variants": 2,
+    "generated_resources_tree_visible": true,
+    "actual_fullapp_captures": [
+      "success/captures/after-trust-observed.png",
+      "success/captures/resync-actual-loading.png"
+    ]
+  },
+  "raw_models": {
+    "count_per_success": 1,
+    "model_bytes": 96215,
+    "both_sha256": "65342272ca9c5a36b5b271736fdc311b1f7a8c6858d8c9df78c1b254876ef686",
+    "basic_generatedArtifacts_importFacts_complete": true,
+    "historical_full_ordered_equality_only_root_prefix_normalization": "PASS",
+    "standalone_current_Rust_decoder_native_probe": false
+  },
+  "copy_output": {
+    "first_wide_bytes": 1450,
+    "resync_wide_bytes": 1425,
+    "narrow360_bytes": 1425,
+    "resync_wide_narrow_byte_identical": true,
+    "failure_bytes": 1185,
+    "all_complete_model_JSON_hidden": true,
+    "raw_ordinary_midline_stderr_lines_exactly_retained": true,
+    "named_failure_error_exactly_retained": true
+  },
+  "keyboard": {
+    "Tab_ShiftTab": "Focus moves; selection unchanged",
+    "Space": "Selects focused Sync/Output; actual restored captures",
+    "Return": "Observed no-op, no activation credit; current toolbar only implements Space activation",
+    "re_sync_shortcut": "Ctrl+Alt+R actual second Gradle invocation"
+  },
+  "interactions": {
+    "wide_Output_empty_and_Sync_restored": "PASS",
+    "failure_Output_empty_and_failedSync_restored": "PASS",
+    "narrow360_selectedSync_and_copy": "PASS with clipping limitation",
+    "console_vertical_and_horizontal_scroll": "PASS actual top and horizontal-right captures",
+    "dock_divider": "PASS actual paced654->500 drag and restoration",
+    "task_and_failure_diagnostic_selection": "PASS selected rows and matching output location",
+    "editor_Gradle_XML_tabs": "PASS actual opened and restored captures"
+  },
+  "inherited_or_environment_limits": [
+    "360px project pane clips editor and console; complete Android Studio narrow fidelity remains incomplete",
+    "Return does not activate generic toolbar tab",
+    "SDK lacks emulator/emulator binary; no device/emulator credit",
+    "Normal isolated profile emits inherited Gradle TreeSitter indent warning",
+    "Software Vulkan/small fixture; no GPU, startup benchmark, large-project or profiler credit"
+  ],
+  "retained_noncredited_captures": {
+    "success/captures/sync1-loading.png": "Trust dialog still visible; not Sync loading evidence",
+    "success/captures/wide-sync-restored-return.png": "Output remains selected; Return no activation",
+    "success/captures/wide-reverse-sync-focus.png": "Sync focus while Output selected; no activation",
+    "success/captures/narrow-sync.png": "Narrow Output selected/empty, not Sync proof"
+  },
+  "runtime_closure": "Owned launcher/app/Xvfb/clients/daemon stopped, display123 free, source/index/refs/keepers/history/frozen7 unchanged, oom0/oom_kill0",
+  "original_test_credit": 0,
+  "reference_bounded_inventory": {
+    "suites": 17,
+    "static_methods": 112,
+    "applicable_unported": 60,
+    "user_deferred_NDK_unported": 52,
+    "canonical_ledger_unchanged": true
+  },
+  "evidence": [
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/native-closure.json",
+      "sha256": "6d3efda5580b5f5590c9426691e1ebf87df4e25748aa2e30dd5395f289516d7e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/actual-gradle-client-closure-addendum.json",
+      "sha256": "8f3df1b25c72ffca0801996fea80521735895833c90b825f004cfff74f6e2ad8"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/full-model-comparison-first.json",
+      "sha256": "3c79bf592f03e01260cf14d1dee9f28c456ab84f1741c72737bbd505e9eb860d"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/all-success-copy-exact-raw-lines.json",
+      "sha256": "4e0e74ace4e39182e33132096a110b040f6bacda617f6fd4e68f39c233e5725a"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/narrow-copy-content-verification.json",
+      "sha256": "1f1528172336463cfe6c3f795319384d05f9ef935deb734b2c9bd84046791350"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/actor-closure.json",
+      "sha256": "e68b41416f57ec2a993c38f8999a57eff5263379a20d2ca8ce1c7ca14015263f"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/failed-copy-content-verification.json",
+      "sha256": "9d97050f20a8934116827b3baff3fa124d313a20519ee0811d504d7206bab62f"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/actor-closure.json",
+      "sha256": "4b629f3161d917b49299df815ae61b4e8746af3338dc715487d930562cab2ad8"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/owned-gradle-daemon-close-signal.json",
+      "sha256": "3e67a81211a88256f44a339c5b0be22012228a022816ef2f1ca13874f1d9b24c"
+    }
+  ],
+  "five_current_final_reviews": "pending",
+  "lead_review_protected_merge": "pending"
+}
