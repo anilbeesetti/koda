@@ -4,7 +4,7 @@ use android_tools::project_context::{
 };
 use anyhow::{Context as _, Result};
 use futures::StreamExt as _;
-use gpui::{Context, Task};
+use gpui::{AppContext as _, Context, Task};
 use parking_lot::Mutex;
 use std::{
     collections::{BTreeMap, BTreeSet, VecDeque},

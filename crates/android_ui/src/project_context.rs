@@ -80,6 +80,62 @@ mod tests {
         Ok(())
     }
 
+    #[gpui::test]
+    async fn untitled_editor_retains_selected_project_without_borrowing_ambiguous_root(cx: &mut TestAppContext) -> Result<()> {
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            trusted_worktrees::init(Default::default(), cx);
+            crate::init(cx);
+        });
+        let filesystem = project::FakeFs::new(cx.executor());
+        filesystem.insert_tree("/scratch-android", json!({"Main.kt":"fun main() {}"})).await;
+        filesystem.insert_tree("/scratch-python", json!({"main.py":"print(1)"})).await;
+        let project = Project::test_with_worktree_trust(filesystem.clone(), [std::path::Path::new("/scratch-android"), std::path::Path::new("/scratch-python")], cx).await;
+        cx.update(|cx| {
+            crate::project_surfaces::tests::trust(&project, cx)?;
+            crate::project_surfaces::tests::publish_catalogue(&project, std::path::Path::new("/scratch-android"), &[android_tools::project_context::PluginId::AndroidApplication, android_tools::project_context::PluginId::ComposeCompiler], &[("android","androidJvm")], true, cx)
+        })?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let add_untitled = |workspace: &mut Workspace, window: &mut Window, cx: &mut Context<Workspace>| {
+            let buffer = cx.new(|cx| language::Buffer::local("", cx));
+            let editor = cx.new(|cx| editor::Editor::for_buffer(buffer, Some(workspace.project().clone()), window, cx));
+            workspace.active_pane().update(cx, |pane, cx|pane.add_item(Box::new(editor), true, true, None, window, cx));
+        };
+        workspace.update_in(visual, add_untitled);
+        visual.run_until_parked();
+        let controller = visual.update(|_, cx| for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+        controller.read_with(visual, |controller, cx| {
+            assert!(controller.root(cx).is_none(), "Two unselected roots must not be guessed for an untitled file");
+            assert_eq!(controller.capabilities(Default::default(), cx), Default::default());
+        });
+        workspace.update_in(visual, |workspace, window, cx| workspace.open_abs_path(std::path::Path::new("/scratch-android/Main.kt"), Default::default(), window, cx)).await?;
+        visual.run_until_parked();
+        let source_token = controller.read_with(visual, |controller, cx| controller.action_token(cx).context("Android source owner"))?;
+        workspace.update_in(visual, add_untitled);
+        visual.run_until_parked();
+        controller.read_with(visual, |controller, cx| {
+            let root = PathBuf::from("/scratch-android");
+            assert_eq!(controller.root(cx), Some(root.clone()));
+            assert!(!controller.action_is_current(&source_token, cx));
+            let capabilities = controller.capabilities(OperationalReadiness {application_module:Some(":"),model_current:true,model_root:Some(&root),android_renderer_supported:true}, cx);
+            assert!(capabilities.android_devices && capabilities.android_run);
+            assert!(!capabilities.android_compose_preview, "An untitled buffer cannot borrow a Compose source-file owner");
+        });
+        let single = Project::test_with_worktree_trust(filesystem, [std::path::Path::new("/scratch-android")], &mut visual.cx).await;
+        visual.update(|_, cx| {
+            crate::project_surfaces::tests::trust(&single, cx)?;
+            crate::project_surfaces::tests::publish_catalogue(&single, std::path::Path::new("/scratch-android"), &[android_tools::project_context::PluginId::AndroidApplication], &[("android","androidJvm")], true, cx)
+        })?;
+        let (single_workspace, single_visual) = visual.add_window_view(|window, cx| Workspace::test_new(single, window, cx));
+        single_workspace.update_in(single_visual, add_untitled);
+        single_visual.run_until_parked();
+        let single_controller = single_visual.update(|_, cx| for_workspace(&single_workspace.downgrade(), cx)).context("Single-root controller")?;
+        single_controller.read_with(single_visual, |controller, cx| assert_eq!(controller.root(cx), Some(PathBuf::from("/scratch-android"))));
+        Ok(())
+    }
+
     #[cfg(unix)]
     #[gpui::test]
     async fn deferred_import_action_enters_current_workspace_without_reentry(
@@ -524,8 +580,6 @@ impl ProjectContextController {
                 match owners.as_slice() { [owner] => Some(*owner), [] => Some(path.worktree_id), _ => None }
             };
             (owning_root, owning_root.map(|_| owner))
-        } else if item.is_some() {
-            (None, None)
         } else {
             let selected = self
                 .selected_root
