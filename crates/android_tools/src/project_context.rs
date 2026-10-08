@@ -49,8 +49,14 @@ impl PluginId {
     ];
 
     fn is_android(self) -> bool {
-        matches!(self, Self::AndroidApplication | Self::AndroidLibrary
-            | Self::AndroidDynamicFeature | Self::AndroidTest | Self::AndroidMultiplatformLibrary)
+        matches!(
+            self,
+            Self::AndroidApplication
+                | Self::AndroidLibrary
+                | Self::AndroidDynamicFeature
+                | Self::AndroidTest
+                | Self::AndroidMultiplatformLibrary
+        )
     }
 }
 
@@ -86,7 +92,12 @@ pub struct GetterUnavailable {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
-#[serde(tag = "status", content = "value", rename_all = "camelCase", deny_unknown_fields)]
+#[serde(
+    tag = "status",
+    content = "value",
+    rename_all = "camelCase",
+    deny_unknown_fields
+)]
 pub enum TargetCatalogue {
     Available(Vec<TargetFact>),
     Unavailable(GetterUnavailable),
@@ -123,7 +134,10 @@ struct ObjectOnly<D>(D);
 impl<'de, D: serde::Deserializer<'de>> serde::Deserializer<'de> for ObjectOnly<D> {
     type Error = D::Error;
 
-    fn deserialize_any<V: serde::de::Visitor<'de>>(self, visitor: V) -> Result<V::Value, Self::Error> {
+    fn deserialize_any<V: serde::de::Visitor<'de>>(
+        self,
+        visitor: V,
+    ) -> Result<V::Value, Self::Error> {
         self.0.deserialize_map(visitor)
     }
 
@@ -149,7 +163,13 @@ macro_rules! object_serde {
     )+};
 }
 
-object_serde!(TargetFact, GetterUnavailable, AppliedPlugin, RawModule, RawContext);
+object_serde!(
+    TargetFact,
+    GetterUnavailable,
+    AppliedPlugin,
+    RawModule,
+    RawContext
+);
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Ecosystems {
@@ -173,10 +193,18 @@ pub struct ModuleContext {
 }
 
 impl ModuleContext {
-    pub fn path(&self) -> &str { &self.path }
-    pub fn directory(&self) -> &Path { &self.directory }
-    pub fn applied(&self, plugin: PluginId) -> bool { self.applied_plugins.contains(&plugin) }
-    pub fn targets(&self) -> &TargetCatalogue { &self.targets }
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+    pub fn directory(&self) -> &Path {
+        &self.directory
+    }
+    pub fn applied(&self, plugin: PluginId) -> bool {
+        self.applied_plugins.contains(&plugin)
+    }
+    pub fn targets(&self) -> &TargetCatalogue {
+        &self.targets
+    }
 
     fn android_target(&self) -> bool {
         matches!(&self.targets, TargetCatalogue::Available(targets)
@@ -220,15 +248,26 @@ pub struct ContextCapabilities {
 }
 
 impl ContextSnapshot {
-    pub fn root(&self) -> &Path { &self.root }
-    pub fn gradle_version(&self) -> &str { &self.gradle_version }
-    pub fn phase(&self) -> ObservationPhase { self.phase }
-    pub fn modules(&self) -> impl Iterator<Item = &ModuleContext> { self.modules.values() }
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+    pub fn gradle_version(&self) -> &str {
+        &self.gradle_version
+    }
+    pub fn phase(&self) -> ObservationPhase {
+        self.phase
+    }
+    pub fn modules(&self) -> impl Iterator<Item = &ModuleContext> {
+        self.modules.values()
+    }
 
     pub fn ecosystems(&self) -> Ecosystems {
         let mut ecosystems = Ecosystems::default();
         for module in self.modules.values() {
-            ecosystems.android |= module.applied_plugins.iter().any(|plugin| plugin.is_android());
+            ecosystems.android |= module
+                .applied_plugins
+                .iter()
+                .any(|plugin| plugin.is_android());
             ecosystems.kotlin_multiplatform |= module.applied(PluginId::KotlinMultiplatform)
                 || module.applied(PluginId::AndroidMultiplatformLibrary);
             ecosystems.compose_multiplatform |= module.applied(PluginId::ComposeMultiplatform);
@@ -237,128 +276,264 @@ impl ContextSnapshot {
     }
 
     pub fn module_owner(&self, path: &Path) -> ModuleOwner<'_> {
-        if validate_path(path).is_err() { return ModuleOwner::Unresolved; }
-        if !path.starts_with(&self.root) { return ModuleOwner::OutsideRoot; }
+        if validate_path(path).is_err() {
+            return ModuleOwner::Unresolved;
+        }
+        if !path.starts_with(&self.root) {
+            return ModuleOwner::OutsideRoot;
+        }
         let mut owner = None;
         let mut depth = 0;
         let mut ambiguous = false;
-        for module in self.modules.values().filter(|module| path.starts_with(&module.directory)) {
+        for module in self
+            .modules
+            .values()
+            .filter(|module| path.starts_with(&module.directory))
+        {
             let module_depth = module.directory.components().count();
             if module_depth > depth {
                 owner = Some(module.path.as_str());
                 depth = module_depth;
                 ambiguous = false;
-            } else if module_depth == depth { ambiguous = true; }
+            } else if module_depth == depth {
+                ambiguous = true;
+            }
         }
-        if ambiguous { ModuleOwner::Ambiguous }
-        else { owner.map_or(ModuleOwner::Unresolved, ModuleOwner::Module) }
+        if ambiguous {
+            ModuleOwner::Ambiguous
+        } else {
+            owner.map_or(ModuleOwner::Unresolved, ModuleOwner::Module)
+        }
     }
 
-    pub fn capabilities(&self, owner_path: Option<&Path>, readiness: OperationalReadiness<'_>) -> ContextCapabilities {
-        if owner_path.is_some_and(|path| validate_path(path).is_err() || !path.starts_with(&self.root)) {
+    pub fn capabilities(
+        &self,
+        owner_path: Option<&Path>,
+        readiness: OperationalReadiness<'_>,
+    ) -> ContextCapabilities {
+        if owner_path
+            .is_some_and(|path| validate_path(path).is_err() || !path.starts_with(&self.root))
+        {
             return ContextCapabilities::default();
         }
         let ecosystems = self.ecosystems();
         let complete = self.phase == ObservationPhase::Complete;
         let android_devices = complete && self.modules.values().any(ModuleContext::android_target);
-        let model_current = readiness.model_current && readiness.model_root == Some(self.root.as_path());
-        let application = readiness.application_module.and_then(|path| self.modules.get(path));
-        let android_run = android_devices && model_current
-            && application.is_some_and(|module| module.applied(PluginId::AndroidApplication) && module.android_target());
+        let model_current =
+            readiness.model_current && readiness.model_root == Some(self.root.as_path());
+        let application = readiness
+            .application_module
+            .and_then(|path| self.modules.get(path));
+        let android_run = android_devices
+            && model_current
+            && application.is_some_and(|module| {
+                module.applied(PluginId::AndroidApplication) && module.android_target()
+            });
         let owner = owner_path.and_then(|path| match self.module_owner(path) {
             ModuleOwner::Module(module) => self.modules.get(module),
             _ => None,
         });
         // The current bundled renderer consumes a selected application model. This does not rule out future library preview support.
-        let android_compose_preview = android_run && readiness.android_renderer_supported
-            && owner.is_some_and(|module| module.android_target()
-                && (module.applied(PluginId::ComposeMultiplatform) || module.applied(PluginId::ComposeCompiler)));
-        ContextCapabilities { ecosystems, android_sync: ecosystems.android || android_devices,
-            automatic_android_sync: android_devices, android_devices, android_run, android_compose_preview }
+        let android_compose_preview = android_run
+            && readiness.android_renderer_supported
+            && owner.is_some_and(|module| {
+                module.android_target()
+                    && (module.applied(PluginId::ComposeMultiplatform)
+                        || module.applied(PluginId::ComposeCompiler))
+            });
+        ContextCapabilities {
+            ecosystems,
+            android_sync: ecosystems.android || android_devices,
+            automatic_android_sync: android_devices,
+            android_devices,
+            android_run,
+            android_compose_preview,
+        }
     }
 
-    pub fn project_view_capabilities(&self, supports_android_view: bool) -> ProjectViewCapabilities {
-        ProjectViewCapabilities { is_android_project: self.ecosystems().android
-            || (self.phase == ObservationPhase::Complete && self.modules.values().any(ModuleContext::android_target)),
-            supports_android_view }
+    pub fn project_view_capabilities(
+        &self,
+        supports_android_view: bool,
+    ) -> ProjectViewCapabilities {
+        ProjectViewCapabilities {
+            is_android_project: self.ecosystems().android
+                || (self.phase == ObservationPhase::Complete
+                    && self.modules.values().any(ModuleContext::android_target)),
+            supports_android_view,
+        }
     }
 
     fn preserves(&self, previous: &Self) -> bool {
         previous.modules.values().all(|previous_module| {
-            self.modules.get(&previous_module.path).is_some_and(|module| {
-                module.directory == previous_module.directory
-                    && previous_module.applied_plugins.is_subset(&module.applied_plugins)
-                    && match (&previous_module.targets, &module.targets) {
-                        (TargetCatalogue::Available(previous), TargetCatalogue::Available(current)) => previous.iter().all(|target| current.contains(target)),
-                        (TargetCatalogue::Available(previous), TargetCatalogue::Unavailable(_)) => previous.is_empty(),
-                        (TargetCatalogue::Unavailable(_), _) => true,
-                    }
-            })
+            self.modules
+                .get(&previous_module.path)
+                .is_some_and(|module| {
+                    module.directory == previous_module.directory
+                        && previous_module
+                            .applied_plugins
+                            .is_subset(&module.applied_plugins)
+                        && match (&previous_module.targets, &module.targets) {
+                            (
+                                TargetCatalogue::Available(previous),
+                                TargetCatalogue::Available(current),
+                            ) => previous.iter().all(|target| current.contains(target)),
+                            (
+                                TargetCatalogue::Available(previous),
+                                TargetCatalogue::Unavailable(_),
+                            ) => previous.is_empty(),
+                            (TargetCatalogue::Unavailable(_), _) => true,
+                        }
+                })
         })
     }
 }
 
 pub fn decode_context_record(record: &[u8], expected_root: &Path) -> Result<ContextSnapshot> {
-    ensure!(record.len() <= MAX_CONTEXT_RECORD_BYTES, "Project context record exceeds the byte limit");
-    let raw: RawContext = serde_json::from_slice(record).context("Decode evaluated project context")?;
-    ensure!(raw.schema == CONTEXT_SCHEMA, "Unsupported project context schema {}", raw.schema);
+    ensure!(
+        record.len() <= MAX_CONTEXT_RECORD_BYTES,
+        "Project context record exceeds the byte limit"
+    );
+    let raw: RawContext =
+        serde_json::from_slice(record).context("Decode evaluated project context")?;
+    ensure!(
+        raw.schema == CONTEXT_SCHEMA,
+        "Unsupported project context schema {}",
+        raw.schema
+    );
     validate_path(&raw.root)?;
-    ensure!(raw.root == expected_root, "Project context belongs to a different root");
+    ensure!(
+        raw.root == expected_root,
+        "Project context belongs to a different root"
+    );
     validate_text(&raw.gradle_version)?;
-    ensure!(raw.modules.len() <= MAX_MODULES, "Project context has too many modules");
+    ensure!(
+        raw.modules.len() <= MAX_MODULES,
+        "Project context has too many modules"
+    );
     let mut modules = BTreeMap::new();
     for module in raw.modules {
-        ensure!(valid_module_path(&module.path), "Invalid evaluated module identity {}", module.path);
+        ensure!(
+            valid_module_path(&module.path),
+            "Invalid evaluated module identity {}",
+            module.path
+        );
         validate_path(&module.directory)?;
-        ensure!(module.path != ":" || module.directory == raw.root, "Root module directory differs from the evaluated root");
-        ensure!(module.plugins.len() <= PluginId::ALL.len(), "Too many applied-plugin observations");
+        ensure!(
+            module.path != ":" || module.directory == raw.root,
+            "Root module directory differs from the evaluated root"
+        );
+        ensure!(
+            module.plugins.len() <= PluginId::ALL.len(),
+            "Too many applied-plugin observations"
+        );
         let mut seen = BTreeSet::new();
         let mut applied_plugins = BTreeSet::new();
         for plugin in module.plugins {
-            ensure!(seen.insert(plugin.plugin), "Duplicate applied-plugin observation");
-            ensure!(raw.phase == ObservationPhase::Complete || plugin.applied, "Partial context cannot prove plugin absence");
-            if plugin.applied { applied_plugins.insert(plugin.plugin); }
+            ensure!(
+                seen.insert(plugin.plugin),
+                "Duplicate applied-plugin observation"
+            );
+            ensure!(
+                raw.phase == ObservationPhase::Complete || plugin.applied,
+                "Partial context cannot prove plugin absence"
+            );
+            if plugin.applied {
+                applied_plugins.insert(plugin.plugin);
+            }
         }
-        ensure!(raw.phase != ObservationPhase::Complete || seen.len() == PluginId::ALL.len(), "Complete context lacks applied-plugin observations");
-        ensure!(applied_plugins.iter().filter(|plugin| plugin.is_android()).count() <= 1, "Conflicting Android plugin kinds");
+        ensure!(
+            raw.phase != ObservationPhase::Complete || seen.len() == PluginId::ALL.len(),
+            "Complete context lacks applied-plugin observations"
+        );
+        ensure!(
+            applied_plugins
+                .iter()
+                .filter(|plugin| plugin.is_android())
+                .count()
+                <= 1,
+            "Conflicting Android plugin kinds"
+        );
         match &module.targets {
             TargetCatalogue::Available(targets) => {
                 ensure!(targets.len() <= MAX_TARGETS, "Too many evaluated targets");
                 let mut names = BTreeSet::new();
                 for target in targets {
                     validate_text(&target.name)?;
-                    ensure!(names.insert(&target.name), "Duplicate evaluated target identity");
-                    ensure!(target.platform != TargetPlatform::AndroidJvm
-                        || applied_plugins.iter().any(|plugin| plugin.is_android() || *plugin == PluginId::KotlinMultiplatform),
-                        "Android target has no evaluated Android or multiplatform plugin");
+                    ensure!(
+                        names.insert(&target.name),
+                        "Duplicate evaluated target identity"
+                    );
+                    ensure!(
+                        target.platform != TargetPlatform::AndroidJvm
+                            || applied_plugins.iter().any(|plugin| plugin.is_android()
+                                || *plugin == PluginId::KotlinMultiplatform),
+                        "Android target has no evaluated Android or multiplatform plugin"
+                    );
                 }
             }
             TargetCatalogue::Unavailable(unavailable) => validate_text(&unavailable.detail)?,
         }
         let path = module.path.clone();
-        ensure!(modules.insert(path, ModuleContext { path: module.path, directory: module.directory, applied_plugins, targets: module.targets }).is_none(), "Duplicate evaluated module identity");
+        ensure!(
+            modules
+                .insert(
+                    path,
+                    ModuleContext {
+                        path: module.path,
+                        directory: module.directory,
+                        applied_plugins,
+                        targets: module.targets
+                    }
+                )
+                .is_none(),
+            "Duplicate evaluated module identity"
+        );
     }
-    ensure!(raw.phase != ObservationPhase::Complete || modules.contains_key(":"), "Complete context lacks the root module");
-    Ok(ContextSnapshot { root: raw.root, gradle_version: raw.gradle_version, phase: raw.phase, modules })
+    ensure!(
+        raw.phase != ObservationPhase::Complete || modules.contains_key(":"),
+        "Complete context lacks the root module"
+    );
+    Ok(ContextSnapshot {
+        root: raw.root,
+        gradle_version: raw.gradle_version,
+        phase: raw.phase,
+        modules,
+    })
 }
 
 fn validate_text(text: &str) -> Result<()> {
-    ensure!(!text.is_empty() && text.len() <= MAX_TEXT_BYTES && !text.contains('\0'), "Invalid or oversized evaluated text");
+    ensure!(
+        !text.is_empty() && text.len() <= MAX_TEXT_BYTES && !text.contains('\0'),
+        "Invalid or oversized evaluated text"
+    );
     Ok(())
 }
 
 fn validate_path(path: &Path) -> Result<()> {
-    ensure!(path.is_absolute() && path.as_os_str().len() <= 32768
-        && !path.as_os_str().as_encoded_bytes().contains(&0)
-        && !path.components().any(|component| matches!(component, Component::ParentDir)),
-        "Evaluated path must be an absolute path without parent traversal");
+    ensure!(
+        path.is_absolute()
+            && path.as_os_str().len() <= 32768
+            && !path.as_os_str().as_encoded_bytes().contains(&0)
+            && !path
+                .components()
+                .any(|component| matches!(component, Component::ParentDir)),
+        "Evaluated path must be an absolute path without parent traversal"
+    );
     Ok(())
 }
 
 fn valid_module_path(path: &str) -> bool {
-    path.len() <= MAX_TEXT_BYTES && (path == ":" || (path.starts_with(':') && path.get(1..).is_some_and(|path| {
-        path.split(':').all(|part| !part.is_empty() && !part.chars().any(|character| character.is_control() || matches!(character, '/' | '\\')))
-    })))
+    path.len() <= MAX_TEXT_BYTES
+        && (path == ":"
+            || (path.starts_with(':')
+                && path.get(1..).is_some_and(|path| {
+                    path.split(':').all(|part| {
+                        !part.is_empty()
+                            && !part.chars().any(|character| {
+                                character.is_control() || matches!(character, '/' | '\\')
+                            })
+                    })
+                })))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -394,30 +569,59 @@ pub struct ContextStore {
 impl ContextStore {
     pub fn add_root(&mut self, worktree: u64, path: PathBuf, trusted: bool) -> Result<RootHandle> {
         validate_path(&path)?;
-        ensure!(!self.roots.contains_key(&worktree), "Worktree context is already registered");
-        let incarnation = self.next_incarnation.checked_add(1).context("Root incarnation space exhausted")?;
+        ensure!(
+            !self.roots.contains_key(&worktree),
+            "Worktree context is already registered"
+        );
+        let incarnation = self
+            .next_incarnation
+            .checked_add(1)
+            .context("Root incarnation space exhausted")?;
         self.next_incarnation = incarnation;
-        let handle = RootHandle { worktree, incarnation };
-        self.roots.insert(worktree, RootContext { handle, path, trusted, generation: 0, snapshot: None, pending: None });
+        let handle = RootHandle {
+            worktree,
+            incarnation,
+        };
+        self.roots.insert(
+            worktree,
+            RootContext {
+                handle,
+                path,
+                trusted,
+                generation: 0,
+                snapshot: None,
+                pending: None,
+            },
+        );
         Ok(handle)
     }
 
     fn entry(&self, handle: RootHandle) -> Option<&RootContext> {
-        self.roots.get(&handle.worktree).filter(|entry| entry.handle == handle)
+        self.roots
+            .get(&handle.worktree)
+            .filter(|entry| entry.handle == handle)
     }
 
     fn entry_mut(&mut self, handle: RootHandle) -> Result<&mut RootContext> {
-        self.roots.get_mut(&handle.worktree).filter(|entry| entry.handle == handle).context("Project root context was removed")
+        self.roots
+            .get_mut(&handle.worktree)
+            .filter(|entry| entry.handle == handle)
+            .context("Project root context was removed")
     }
 
     pub fn remove_root(&mut self, handle: RootHandle) -> bool {
-        if self.entry(handle).is_none() { return false; }
+        if self.entry(handle).is_none() {
+            return false;
+        }
         self.roots.remove(&handle.worktree).is_some()
     }
 
     pub fn invalidate(&mut self, handle: RootHandle) -> Result<()> {
         let entry = self.entry_mut(handle)?;
-        entry.generation = entry.generation.checked_add(1).context("Context generation space exhausted")?;
+        entry.generation = entry
+            .generation
+            .checked_add(1)
+            .context("Context generation space exhausted")?;
         entry.snapshot = None;
         entry.pending = None;
         Ok(())
@@ -433,13 +637,21 @@ impl ContextStore {
 
     pub fn token(&self, handle: RootHandle) -> Option<RootToken> {
         let entry = self.entry(handle).filter(|entry| entry.trusted)?;
-        Some(RootToken { root: handle, generation: entry.generation })
+        Some(RootToken {
+            root: handle,
+            generation: entry.generation,
+        })
     }
 
-    pub fn is_current(&self, token: &RootToken) -> bool { self.token(token.root).as_ref() == Some(token) }
+    pub fn is_current(&self, token: &RootToken) -> bool {
+        self.token(token.root).as_ref() == Some(token)
+    }
 
     pub fn snapshot(&self, handle: RootHandle) -> Option<&ContextSnapshot> {
-        self.entry(handle).filter(|entry| entry.trusted)?.snapshot.as_ref()
+        self.entry(handle)
+            .filter(|entry| entry.trusted)?
+            .snapshot
+            .as_ref()
     }
 
     pub fn root_path(&self, handle: RootHandle) -> Option<&Path> {
@@ -447,30 +659,56 @@ impl ContextStore {
     }
 
     pub fn begin_import(&mut self, handle: RootHandle) -> Result<DiscoveryToken> {
-        ensure!(self.entry(handle).is_some_and(|entry| entry.trusted), "Trust the project before evaluating Gradle context");
+        ensure!(
+            self.entry(handle).is_some_and(|entry| entry.trusted),
+            "Trust the project before evaluating Gradle context"
+        );
         self.invalidate(handle)?;
-        let token = DiscoveryToken(self.token(handle).context("Project context has no trusted root")?);
+        let token = DiscoveryToken(
+            self.token(handle)
+                .context("Project context has no trusted root")?,
+        );
         self.entry_mut(handle)?.pending = Some(token.clone());
         Ok(token)
     }
 
     pub fn publish(&mut self, token: &DiscoveryToken, snapshot: ContextSnapshot) -> Result<()> {
-        ensure!(self.is_current(&token.0), "Discarded an outdated project context result");
+        ensure!(
+            self.is_current(&token.0),
+            "Discarded an outdated project context result"
+        );
         let entry = self.entry_mut(token.0.root)?;
-        ensure!(entry.pending.as_ref() == Some(token), "Project context import already finished");
-        ensure!(entry.path == snapshot.root, "Project context belongs to a different root");
+        ensure!(
+            entry.pending.as_ref() == Some(token),
+            "Project context import already finished"
+        );
+        ensure!(
+            entry.path == snapshot.root,
+            "Project context belongs to a different root"
+        );
         if let Some(previous) = &entry.snapshot {
-            ensure!(previous.gradle_version == snapshot.gradle_version && snapshot.preserves(previous), "Project context contradicts earlier evaluated observations");
+            ensure!(
+                previous.gradle_version == snapshot.gradle_version && snapshot.preserves(previous),
+                "Project context contradicts earlier evaluated observations"
+            );
         }
-        if snapshot.phase == ObservationPhase::Complete { entry.pending = None; }
+        if snapshot.phase == ObservationPhase::Complete {
+            entry.pending = None;
+        }
         entry.snapshot = Some(snapshot);
         Ok(())
     }
 
     pub fn finish_failed_import(&mut self, token: &DiscoveryToken) -> Result<()> {
-        ensure!(self.is_current(&token.0), "Discarded an outdated project context failure");
+        ensure!(
+            self.is_current(&token.0),
+            "Discarded an outdated project context failure"
+        );
         let entry = self.entry_mut(token.0.root)?;
-        ensure!(entry.pending.as_ref() == Some(token), "Project context import already finished");
+        ensure!(
+            entry.pending.as_ref() == Some(token),
+            "Project context import already finished"
+        );
         // Affirmative plugin facts retain an explicit repair Sync after SDK failure; the partial phase denies automatic work and device/run/preview tools.
         entry.pending = None;
         Ok(())
@@ -493,10 +731,18 @@ pub struct ActiveContext {
 
 impl ActiveContext {
     pub fn select(&mut self, root: Option<RootHandle>, owner_path: Option<PathBuf>) -> Result<()> {
-        ensure!(root.is_some() || owner_path.is_none(), "A pane owner requires a project root");
-        if let Some(path) = &owner_path { validate_path(path)?; }
+        ensure!(
+            root.is_some() || owner_path.is_none(),
+            "A pane owner requires a project root"
+        );
+        if let Some(path) = &owner_path {
+            validate_path(path)?;
+        }
         if self.root != root || self.owner_path != owner_path {
-            self.generation = self.generation.checked_add(1).context("Active context generation space exhausted")?;
+            self.generation = self
+                .generation
+                .checked_add(1)
+                .context("Active context generation space exhausted")?;
             self.root = root;
             self.owner_path = owner_path;
         }
@@ -510,24 +756,47 @@ impl ActiveContext {
 
     pub fn discovery_token(&self, store: &ContextStore) -> Option<ActiveContextToken> {
         let root = self.root?;
-        if self.owner_path.as_ref().is_some_and(|path| store.root_path(root).is_none_or(|root| !path.starts_with(root))) {
+        if self.owner_path.as_ref().is_some_and(|path| {
+            store
+                .root_path(root)
+                .is_none_or(|root| !path.starts_with(root))
+        }) {
             return None;
         }
-        Some(ActiveContextToken { generation: self.generation, root: store.token(root)?, owner_path: self.owner_path.clone() })
+        Some(ActiveContextToken {
+            generation: self.generation,
+            root: store.token(root)?,
+            owner_path: self.owner_path.clone(),
+        })
     }
 
     pub fn is_current(&self, token: &ActiveContextToken, store: &ContextStore) -> bool {
         self.discovery_token(store).as_ref() == Some(token)
     }
 
-    pub fn publish(&self, store: &mut ContextStore, active: &ActiveContextToken, discovery: &DiscoveryToken, snapshot: ContextSnapshot) -> Result<()> {
-        ensure!(self.is_current(active, store) && active.root == discovery.0,
-            "Discarded a project context result for a different active pane or root");
+    pub fn publish(
+        &self,
+        store: &mut ContextStore,
+        active: &ActiveContextToken,
+        discovery: &DiscoveryToken,
+        snapshot: ContextSnapshot,
+    ) -> Result<()> {
+        ensure!(
+            self.is_current(active, store) && active.root == discovery.0,
+            "Discarded a project context result for a different active pane or root"
+        );
         store.publish(discovery, snapshot)
     }
 
-    pub fn capabilities(&self, store: &ContextStore, readiness: OperationalReadiness<'_>) -> ContextCapabilities {
-        self.root.and_then(|root| store.snapshot(root)).map_or_else(ContextCapabilities::default,
-            |snapshot| snapshot.capabilities(self.owner_path.as_deref(), readiness))
+    pub fn capabilities(
+        &self,
+        store: &ContextStore,
+        readiness: OperationalReadiness<'_>,
+    ) -> ContextCapabilities {
+        self.root
+            .and_then(|root| store.snapshot(root))
+            .map_or_else(ContextCapabilities::default, |snapshot| {
+                snapshot.capabilities(self.owner_path.as_deref(), readiness)
+            })
     }
 }
