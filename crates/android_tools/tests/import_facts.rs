@@ -742,7 +742,7 @@ fn malformed_directories_and_project_paths_are_typed_errors() -> Result<()> {
 #[test]
 fn absent_observation_round_trip_does_not_become_bare_null() -> Result<()> {
     let fixture = fixture()?;
-    let mut value = fixture.value.clone();
+    let mut value = fixture.value;
     let project = catalogue(&mut value)?.get_mut(3).context("Project")?;
     project
         .as_object_mut()
