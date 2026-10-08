@@ -247,6 +247,21 @@ mod tests {
     }
 
     #[test]
+    fn windows_unicode_prefix_lengths_follow_utf16() {
+        for (child, expected) in [
+            ("😀:\\", "module\\😀:"),
+            ("C:\\", "module\\C:\\"),
+            ("é:\\", "module\\é:\\"),
+            ("\0:\\", "module\\\0:\\"),
+        ] {
+            assert_eq!(
+                append_child_with_separator(Path::new("module"), child, '\\').as_os_str(),
+                Path::new(expected).as_os_str()
+            );
+        }
+    }
+
+    #[test]
     fn unix_backslashes_are_not_separators() {
         assert_eq!(
             append_child_with_separator(Path::new("module"), "my\\package", '/').as_os_str(),
