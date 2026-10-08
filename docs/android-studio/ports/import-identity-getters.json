@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "task": "P2a raw import identity getter transport",
+  "status": "source_draft_runtime_pending",
+  "base": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
+  "branch": "android-studio-task/1-import-identity-getters",
+  "tests": [],
+  "new_original_test_credit": 0,
+  "supplemental_tests": {
+    "suite": "crates/android_tools/tests/import_facts.rs",
+    "declared": 27,
+    "executed": 0,
+    "status": "not_run"
+  },
+  "behavior": "Official Gradle project/root/build identity inputs and nullable Idea plugin names, independently captured without imported-name/facet fallback; Rust validates objects, identity and model/selection freshness.",
+  "reference_files": "crates/android_tools/test_data/import_facts/reference-manifest.json",
+  "reference_status": {
+    "supplementary_helpers": "retained_full_sources_with_hashes_and_Apache_attribution",
+    "original_naming_facet_Kotlin_tree_tests": "applicable_unported",
+    "canonical_census": "incomplete_no_changes"
+  },
+  "runtime": {
+    "status": "pending_exclusive_lease",
+    "library_build": "not_run",
+    "tooling_tests": "not_run",
+    "clippy": "not_run",
+    "formatting": "not_run",
+    "official_Gradle_SDK_captures": "not_run",
+    "five_area_reviews": "pending",
+    "lead_full_app_full_CI_native": "Root_pending"
+  },
+  "limitations": [
+    "Included builds remain unsupported",
+    "Standalone Java-only Basic model remains unsupported",
+    "No TAPI IdeaModule name transport",
+    "No authoritative imported naming, Kotlin/facet decision or tree publisher",
+    "Shipping UI remains physical"
+  ],
+  "non_rust_exceptions": [
+    {
+      "component": "Official Gradle JVM and minimal official getter serialization bridge",
+      "reason": "Evaluate authoritative external Gradle/AGP getters; Rust owns identity validation and import policy. No IntelliJ importer/facet host."
+    }
+  ],
+  "failure_history": [],
+  "product_fix_rounds": 0,
+  "owner_plan": "/workspace/android-studio-artifacts/import-identity-getters/task-plan.json"
+}

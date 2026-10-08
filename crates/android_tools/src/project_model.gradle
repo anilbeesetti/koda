@@ -26,6 +26,48 @@ gradle.projectsEvaluated {
     def root = gradle.rootProject
     if (!gradle.includedBuilds.isEmpty()) throw new GradleException('Koda Android model does not yet support included builds: ' + gradle.includedBuilds*.name.join(', '))
     if (androidKinds.values().contains('test')) throw new GradleException('Koda Android model does not yet support standalone com.android.test modules; nested unit and device tests remain supported')
+    // Nullable Idea getter boundary follows JetBrains GradleIdeaPluginUtil (Apache-2.0);
+    // complete sources and notices are retained in test_data/import_facts.
+    // Raw getter results only: imported names, fallbacks and facets belong in Rust.
+    def importGetterFailure = { getter, failure ->
+        [getter: getter, result: [status: 'unavailable', value: [capability: getter,
+            detail: failure.class.name + ': ' + (failure.message ?: 'Gradle identity getter failed')]]]
+    }
+    def importGetter = { getter, action ->
+        try {
+            [getter: getter, result: [status: 'available', value: action()]]
+        } catch (Exception failure) {
+            importGetterFailure(getter, failure)
+        } catch (LinkageError failure) {
+            importGetterFailure(getter, failure)
+        }
+    }
+    def importProject = { project ->
+        [projectName: importGetter('org.gradle.api.Project.getName()') { project.getName() },
+         projectPath: importGetter('org.gradle.api.Project.getPath()') { project.getPath() },
+         projectDirectory: importGetter('org.gradle.api.Project.getProjectDir().getCanonicalPath()') { project.getProjectDir().getCanonicalPath() },
+         rootName: importGetter('org.gradle.api.Project.getRootProject().getName()') { project.getRootProject().getName() },
+         rootDirectory: importGetter('org.gradle.api.Project.getRootDir().getCanonicalPath()') { project.getRootDir().getCanonicalPath() },
+         parentProjectPath: importGetter('org.gradle.api.Project.getParent()?.getPath()') { project.getParent()?.getPath() },
+         buildTreePath: importGetter('org.gradle.api.Project.getBuildTreePath()') { project.getBuildTreePath() },
+         referenceIdentityPath: importGetter('org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()') {
+             ((org.gradle.api.internal.project.ProjectInternal) project).getIdentityPath().getPath()
+         },
+         ideaPluginPresent: importGetter('org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)') {
+             project.getPlugins().findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class) != null
+         },
+         ideaModuleName: importGetter('org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()') {
+             project.getPlugins().findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)?.getModel()?.getModule()?.getName()
+         }]
+    }
+    // Configuration is complete here; no extra task or foreign project lock is needed.
+    def importRoot = importProject(root)
+    def importCatalogue = importGetter('org.gradle.api.Project.getAllprojects()') {
+        root.getAllprojects().collect { importProject(it) }
+    }
+    def importBuildIdentity = [rootName: importRoot.rootName, rootDirectory: importRoot.rootDirectory,
+        projectPath: importRoot.projectPath, buildTreePath: importRoot.buildTreePath,
+        referenceIdentityPath: importRoot.referenceIdentityPath]
     def attributes = { configuration ->
         configuration.attributes.keySet().findAll { it.name == 'com.android.build.api.attributes.BuildTypeAttr' || it.name.startsWith('com.android.build.api.attributes.ProductFlavor:') }.collectEntries {
             [(it.name): configuration.attributes.getAttribute(it).toString()]
@@ -465,7 +507,10 @@ gradle.projectsEvaluated {
                 diagnostics.add('Native provider membership is unavailable for ' + module.path + '; Studio ordering remains a separate captured capability.')
             }
             println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics,
-                generatedArtifacts: [schema: 1, root: root.projectDir.canonicalPath, modules: modules.findAll { it.kind != 'jvm' }.collect { artifactModels[it.path] }]]))
+                generatedArtifacts: [schema: 1, root: root.projectDir.canonicalPath, modules: modules.findAll { it.kind != 'jvm' }.collect { artifactModels[it.path] }],
+                importFacts: [schema: 1, root: root.projectDir.canonicalPath, gradleVersion: gradle.getGradleVersion(),
+                    modules: modules.collect { [module: it.path, directory: it.directory, kind: it.kind, variants: it.variants*.name] },
+                    buildIdentity: importBuildIdentity, projectCatalogue: importCatalogue]]))
         }
     }
 }
