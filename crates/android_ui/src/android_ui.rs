@@ -2964,9 +2964,10 @@ impl Render for AndroidPanel {
             .child(Label::new("Project").color(Color::Muted))
             .child(Label::new(root_label))
             .when(state.capabilities.android_sync, |panel| panel.child(
+                div().debug_selector(|| "android-manual-sync-controls".into()).child(
                 Button::new("sync-project", if self.syncing { "Syncing…" } else { "Sync project" })
                     .disabled(self.syncing || self.running).tab_index(0isize)
-                    .on_click(cx.listener(|panel, _, window, cx| panel.sync_project(window, cx)))))
+                    .on_click(cx.listener(|panel, _, window, cx| panel.sync_project(window, cx))))))
             .when(state.build, |panel| panel
                 .child(Label::new("Build variant").color(Color::Muted))
                 .child(self.target_picker("panel-target", cx)))
@@ -2979,6 +2980,7 @@ impl Render for AndroidPanel {
                 .when(self.devices.is_empty(), |panel| panel.child(div().text_sm().text_color(cx.theme().colors().text_muted)
                     .child("Start an Android emulator or connect a device with USB debugging, then refresh.")))
                 .child(h_flex().flex_wrap().gap_1()
+                    .debug_selector(|| "android-device-controls".into())
                     .child(self.emulator_picker(cx))
                     .child(Button::new("stop-emulator", "Stop emulator")
                         .disabled(self.running || self.syncing || self.selected_emulator().is_err())
@@ -2989,8 +2991,12 @@ impl Render for AndroidPanel {
                     div().text_sm().text_color(cx.theme().status().error).child(error)))
                 .child(Button::new("logcat", "Open Logcat").start_icon(Icon::new(IconName::Logcat))
                     .tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.logcat(window, cx)))))
-            .child(h_flex().flex_wrap().gap_1().children(commands))
+            .when(!commands.is_empty(), |panel| panel.child(
+                h_flex().flex_wrap().gap_1()
+                    .debug_selector(|| "android-build-controls".into()).children(commands)))
             .when(state.build, |panel| panel
+                .child(v_flex().gap_3()
+                    .debug_selector(|| "android-configuration-controls".into())
                 .child(Button::new("configure-official-kotlin", "Configure official Kotlin")
                     .disabled(self.syncing || self.running || self.selected_target.is_none()).tab_index(0isize)
                     .tooltip(Tooltip::text("Use the official Kotlin server with Gradle import. Experimental until editing compatibility checks pass."))
@@ -2998,12 +3004,13 @@ impl Render for AndroidPanel {
                 .child(Button::new("configure-java", "Configure Java")
                     .disabled(self.syncing || self.running || self.selected_target.is_none()).tab_index(0isize)
                     .tooltip(Tooltip::text("Build the selected variant and configure Java with Android sources, generated symbols, and dependencies."))
-                    .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Java, window, cx)))))
+                    .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Java, window, cx))))))
             .when(state.capabilities.android_compose_preview, |panel| panel.child(
+                div().debug_selector(|| "android-compose-controls".into()).child(
                 Button::new("android-compose-preview", "Compose preview")
                     .disabled(self.running || self.syncing || self.selected_target.is_none()).tab_index(0isize)
                     .tooltip(Tooltip::text("Build the selected variant and render a Compose @Preview beside the code."))
-                    .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx)))))
+                    .on_click(cx.listener(|panel, _, window, cx| panel.gradle(GradleOperation::Preview, window, cx))))))
             .when(state.capabilities.android_sync, |panel| panel
                 .child(div().text_sm().text_color(cx.theme().colors().text_muted).child(self.status.clone()))
                 .when_some(self.error.clone().or_else(|| self.device_error.clone()), |panel, error| panel.child(

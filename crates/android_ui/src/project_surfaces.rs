@@ -407,6 +407,9 @@ pub(crate) mod tests {
             assert!(visual.debug_bounds("android-panel").is_none());
             assert!(visual.debug_bounds("tool-window-button-Android").is_none());
             assert!(visual.debug_bounds("tool-window-button-LogcatPanel").is_none());
+            for group in ["android-manual-sync-controls", "android-device-controls", "android-build-controls", "android-configuration-controls", "android-compose-controls"] {
+                assert!(visual.debug_bounds(group).is_none(), "Generic project exposed {group}");
+            }
         }
         Ok(())
     }
@@ -426,6 +429,9 @@ pub(crate) mod tests {
         assert!(visual.debug_bounds("android-panel").is_some());
         for control in ["refresh-devices","start-emulator","stop-emulator","logcat","sync-project","configure-java","configure-official-kotlin","android-compose-preview"] {
             assert!(visual.debug_bounds(control).is_none(), "Unsupported {control}");
+        }
+        for group in ["android-manual-sync-controls", "android-device-controls", "android-build-controls", "android-configuration-controls", "android-compose-controls"] {
+            assert!(visual.debug_bounds(group).is_none(), "Desktop project exposed {group}");
         }
         workspace.read_with(visual, |workspace, cx| {
             assert!(crate::toolbar(&workspace.weak_handle(), cx).is_some());
@@ -450,6 +456,10 @@ pub(crate) mod tests {
         visual.dispatch_action(ToggleFocus);
         visual.run_until_parked();
         assert!(visual.debug_bounds("android-panel").is_some());
+        assert!(visual.debug_bounds("android-manual-sync-controls").is_some());
+        for group in ["android-device-controls", "android-build-controls", "android-configuration-controls", "android-compose-controls"] {
+            assert!(visual.debug_bounds(group).is_none(), "Partial model exposed {group}");
+        }
         workspace.read_with(visual, |workspace, cx| {
             assert!(action_available(workspace, &SyncProject, cx));
             assert!(!action_available(workspace, &Run, cx));
@@ -503,6 +513,12 @@ pub(crate) mod tests {
         // Library dispatch still requires its own backend variant representation;
         // eligibility must not pretend that an application target exists.
         assert!(panel.read_with(visual, |panel, _| panel.selected_target.is_none()));
+        visual.dispatch_action(ToggleFocus);
+        visual.run_until_parked();
+        for group in ["android-manual-sync-controls", "android-device-controls", "android-build-controls", "android-configuration-controls"] {
+            assert!(visual.debug_bounds(group).is_some(), "Current library omitted {group}");
+        }
+        assert!(visual.debug_bounds("android-compose-controls").is_none());
         visual.update(|_, cx| publish_catalogue(&project, root, &[PluginId::AndroidApplication], &[("android","androidJvm")], true, cx))?;
         panel.update(visual, |panel, cx| {
             let target = android_tools::AndroidTarget { module:":".into(), variant:"debug".into(), output_listing:root.join("output.json") };
@@ -511,6 +527,9 @@ pub(crate) mod tests {
             crate::tests::publish_test_android_model(panel, &target, cx);
         });
         visual.run_until_parked();
+        for group in ["android-manual-sync-controls", "android-device-controls", "android-build-controls", "android-configuration-controls"] {
+            assert!(visual.debug_bounds(group).is_some(), "Current application omitted {group}");
+        }
         workspace.read_with(visual, |workspace, cx| {
             assert!(action_available(workspace, &Run, cx));
             assert!(action_available(workspace, &Debug, cx));
