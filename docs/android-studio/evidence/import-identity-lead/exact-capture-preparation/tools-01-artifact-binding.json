@@ -1,0 +1,39 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "compiler_artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///workspace/android-studio-import-identity-getters/crates/android_tools#0.1.0",
+    "manifest_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/Cargo.toml",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "android_tools",
+      "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/src/android_tools.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": false,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 0,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "/workspace/.cache/zed/target/debug/deps/android_tools-fb2c5fb7656d5f8d"
+    ],
+    "executable": "/workspace/.cache/zed/target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+    "fresh": false,
+    "executable_bytes": 13428912,
+    "executable_sha256": "b247da2f409c05bc3de6b68545c55be9756acfe18f4952b8eabb0e6a64d81851"
+  },
+  "normal_exact_Cargo_execution": true,
+  "source_files": 4743
+}

@@ -1,0 +1,130 @@
+{
+  "verdict": "PASS",
+  "scope": "Independent static re-review of corrected unexecuted native recipes only",
+  "reviewed_at_utc": "2026-10-08T03:09:50.521754+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "blocking_findings": [],
+  "initial_findings": [
+    {
+      "id": "N1",
+      "status": "RESOLVED",
+      "evidence": "Corrected guard explicitly compares full untracked-inclusive porcelain status, exact4743 unique actual fixed7 tracked names, every digest, full staged-entry bytes and HEAD against the pinned owner snapshot."
+    },
+    {
+      "id": "N2",
+      "status": "RESOLVED",
+      "evidence": "Current, old4fb and each legacy model root must match independently declared generation-project directories before known-prefix whole-string/slash-boundary normalization."
+    },
+    {
+      "id": "N3",
+      "status": "RESOLVED",
+      "evidence": "Intermediate40 manifest had stale35/190767 aggregates. Intermediate manifest is preserved; final41 payload manifest reconciles exact228772 bytes and every payload hash."
+    }
+  ],
+  "recipe_manifest": {
+    "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/recipe-hashes.json",
+    "bytes": 7805,
+    "sha256": "928bb84a5b12ef85d5090e17c6afa44fa5510cd94966704a7a0c43736970c99a"
+  },
+  "all41_sizes_hashes_and_Python_ASTs_verified": true,
+  "all9_prior_recipe_copies_original_bytes_retained": true,
+  "initial_FAIL_reports_and_initial_recipes_and_intermediate_manifests_preserved": true,
+  "recorded_Rust_probe_insertions_and_replacements_reverse_to_exact4fb_base": true,
+  "V2_and_import_fact_model_revision_share_actual_supplied_revision": true,
+  "stale_model_and_selection_checks_and_prior_artifact_assertions_retained": true,
+  "model_comparison_requirements": {
+    "current_complete_models": 2,
+    "previous_full4fb_models": 2,
+    "legacy_Basic_records": 7,
+    "full4fb_removed_only": [
+      "importFacts"
+    ],
+    "Basic_removed_only": [
+      "generatedArtifacts",
+      "importFacts"
+    ],
+    "all_other_nested_values_property_order_and_list_order_compared": true,
+    "known_roots_asserted_before_boundary_only_prefix_normalization": true,
+    "raw_complete_models_and_getter_observations_retained": true
+  },
+  "planned_native_requirements": {
+    "commands": 53,
+    "images": 17,
+    "supported_narrow_width": 360,
+    "actual_coordinate_visual_confirmation_before_input": true,
+    "session_app_executable_SHA_PID_start_ticks_parentage_window_display_bindings": true,
+    "actual_every_image_nonempty_visual_notes_and_hashes_required": true,
+    "actual_second_loading_observation_and_keyboard_routes_required": true,
+    "raw_attached_PTY_source_bound_review_required": true,
+    "source_bound2SDK_exit0_and_both_current_Rust_decoder_results_required": true,
+    "owned_launcher_only_TERM_cleanup_and_all3PIDs_display_absence_required": true,
+    "unowned_daemon167092_not_signaled": true
+  },
+  "fixture_and_execution_scope": {
+    "authored_fixture_files": 12,
+    "BT37_already_explicit_no_new_override_or_fixture_change": true,
+    "official_wrapper_unchanged_capture_forwarder_private_only": true,
+    "fresh_profile_no_copied_database_or_trust": true,
+    "installed_extension_asset_copy_only_after_Root_authorization": true,
+    "external_probe_only_current_normal_library_real_receipt_and_dependency_before_after_hashes_required": true,
+    "no_Cargo_or_cache_rebuild_fallback": true,
+    "Root_actual_new_app_source_buildreceipt_finallink_review_and_exclusive_lease_inputs_required": true
+  },
+  "limits": [
+    "Prepared recipes remain unexecuted. Current app completion is reviewed separately; no current native result, image fidelity, error-state, performance, reference-test, LSP, parallel scheduling or phase completion follows from this static PASS.",
+    "Bind this final manifest and scripts at action time; preserve any failed receipt and review recipe changes before retries. All prior model projections/assertions stay strict.",
+    "Root owns the source/runtime lease and main/protected/reference before/after guards."
+  ],
+  "runtime_executed_by_reviewer": false,
+  "shared_library_or_mutable_cache_read_by_reviewer": false,
+  "product_source_Git_cache_SDK_native_or_existing_evidence_mutations_by_reviewer": false,
+  "only_new_external_review_files_written": true,
+  "read_holds_released": true,
+  "input_bindings": [
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/known-root-and-source-name-guard-fixes.json",
+      "bytes": 1035,
+      "sha256": "a09b12272e28781d45f9ea55853f7573accb4131376b5bf0213306d5a4838baa"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/guard.py",
+      "bytes": 3750,
+      "sha256": "a1ac2febcc8fcc9315fda6c8eac02af8f09d0618a16abb3a0bbba89ceaf24a2e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/verify-models.py",
+      "bytes": 8872,
+      "sha256": "8207d926495efeb9686842dac582c1046ebc3d956fe845868881be917352b24b"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/runtime-probe.rs",
+      "bytes": 11789,
+      "sha256": "a967c834d0f786f3779bd7a4b0536e60fca064b9c5f06b52b3baa7d46a50f360"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/quality-static-initial.json",
+      "bytes": 9495,
+      "sha256": "0da0099686b82776ccbbdf6952bb7372272fb5963ac2c47a39677d0096e01df1"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/quality-static-initial.md",
+      "bytes": 1696,
+      "sha256": "426c1ca2ad3db63dcbda3d495189729d5d11be3c2d07bde75fb82d95c0ab37ca"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/recipe-hashes.json.before-aggregate-reconciliation",
+      "bytes": 7510,
+      "sha256": "4e78645b50b037a7b260d4d06fae6dabe089bd0d69036e019a0c15cb638b5950"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/report.md",
+      "bytes": 10288,
+      "sha256": "212a2e25a5e4bcfd80a538855f9c365c9dc2a69901986e5d0fc5b6302837fa88"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/scope.json",
+      "bytes": 764,
+      "sha256": "43ab06faa81287eb9d0b5be021057743646ae4eab02fb670d95608abdffc1090"
+    }
+  ]
+}

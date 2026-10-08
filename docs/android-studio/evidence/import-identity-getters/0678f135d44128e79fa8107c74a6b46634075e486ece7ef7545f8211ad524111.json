@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "verdict": "PASS",
+  "review_area": "code",
+  "scope": "merged_source_static_equivalence_full_runtime_pending",
+  "timestamp_utc": "2026-10-08T01:39:25.466702+00:00",
+  "worktree": "/workspace/android-studio-import-identity-getters",
+  "source": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "parents": [
+    "6fb7f94173320326bd523a8af67db77916ac7da3",
+    "c1ce5ca16a26fd59984b50500ead45fbafafa5c8"
+  ],
+  "source_file_hashes_independently_verified": 4743,
+  "previous_source_files_unchanged": 4737,
+  "existing_changed_source": [
+    "crates/android_tools/src/android_tools.rs"
+  ],
+  "export_delta": "Exactly one pub mod parallel_sync; added after module_presentation; import_facts preserved.",
+  "new_source_files_byte_equal_protected": [
+    "crates/android_tools/src/parallel_sync.rs",
+    "crates/android_tools/test_data/parallel_sync/AgpVersion.kt",
+    "crates/android_tools/test_data/parallel_sync/LICENSE-APACHE",
+    "crates/android_tools/test_data/parallel_sync/NOTICE",
+    "crates/android_tools/tests/parallel_sync.rs"
+  ],
+  "p2_implementation_tests_fixtures_references_byte_equal": true,
+  "clean_worktree": true,
+  "unmerged_index_entries": 0,
+  "source_manifest": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/dependency-merge/current-source.json",
+    "sha256": "4770fd8f24a9081c0800156caf6aacba107019aa13c73fed91712b3b3a7217a9",
+    "recorded_source_digest": "39194d542ee78357f75a8fec0b28bb4cdfa1dc73c7ca88f0c6b12500e52efe9d"
+  },
+  "prior_code_report": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/code-current-round3.md",
+    "sha256": "85c225af53f317669a123a370464210846fe82e9a75726d52299b492c2c74787"
+  },
+  "prior_default_validation": {
+    "source": "6fb7f94173320326bd523a8af67db77916ac7da3",
+    "tests_passed": 30,
+    "library": "PASS",
+    "format": "PASS",
+    "state": "Retained prior component evidence; combined source runtime gates pending."
+  },
+  "new_blocking_findings": [],
+  "reviewer_runtime_executions": 0,
+  "reviewer_git_mutations": 0,
+  "reviewer_source_mutations": 0,
+  "reviewer_cache_mutations": 0,
+  "new_original_test_credit": 0,
+  "report": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/code-merged-static.md",
+    "sha256": "478ad4a477790bf6721765ab770d4c85da90db1a1b6833626090a2f6c41fc0c8"
+  },
+  "all_owner_gates_complete": false,
+  "pending_gates": [
+    "Combined all-features tooling tests",
+    "Strict repository clippy",
+    "Actual Gradle/JVM/SDK capture and late-callback oracle",
+    "Full app/native validation",
+    "Other reviewers final checks",
+    "Root final merge gates"
+  ]
+}

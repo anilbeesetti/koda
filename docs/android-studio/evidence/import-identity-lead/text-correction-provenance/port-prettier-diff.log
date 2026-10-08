@@ -1,0 +1,44 @@
+--- port-corrected
++++ port-prettier3.5.0
+@@ -65,12 +65,7 @@
+     },
+     "strict-clippy": {
+       "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+-      "command": [
+-        "./script/clippy",
+-        "--locked",
+-        "-p",
+-        "android_tools"
+-      ],
++      "command": ["./script/clippy", "--locked", "-p", "android_tools"],
+       "exit_code": 0,
+       "elapsed_seconds": 10.110794968997652,
+       "log_sha256": "5a0f3d8cc9062215ede77cfc2ec59a483d0ed57a5ef0d8b39fccd280202ccee7",
+@@ -82,13 +77,7 @@
+     },
+     "format-check": {
+       "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+-      "command": [
+-        "cargo",
+-        "fmt",
+-        "--all",
+-        "--",
+-        "--check"
+-      ],
++      "command": ["cargo", "fmt", "--all", "--", "--check"],
+       "exit_code": 0,
+       "elapsed_seconds": 28.925373188998492,
+       "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+@@ -122,11 +111,7 @@
+       "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+       "source_files": 4743,
+       "actual_capture_count": 8,
+-      "actual_supported_scenario_pairs": [
+-        "baseline",
+-        "nested",
+-        "late"
+-      ],
++      "actual_supported_scenario_pairs": ["baseline", "nested", "late"],
+       "actual_included_build_guard_rejections": 2,
+       "whole_source_index_unchanged": true,
+       "complete_basic_v2_projections_preserved": true,

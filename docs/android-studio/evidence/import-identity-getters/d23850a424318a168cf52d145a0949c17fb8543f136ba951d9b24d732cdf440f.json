@@ -1,0 +1,34 @@
+{
+  "Root_recovery_release_received": true,
+  "all_reports_exact": [
+    {
+      "staged": "/tmp/import-identity-getters-review-staging/ui-ownership-cleanup-static.md",
+      "canonical": "/workspace/android-studio-artifacts/import-identity-getters/reviews/ui-ownership-cleanup-static.md",
+      "sha256": "4be8a40572f2ee906c30c02da0e544c6af9270038071f8fbe115cfa1f3f5127b",
+      "bytes": 2684,
+      "byte_exact": true
+    },
+    {
+      "staged": "/tmp/import-identity-getters-review-staging/ui-ownership-cleanup-static.json",
+      "canonical": "/workspace/android-studio-artifacts/import-identity-getters/reviews/ui-ownership-cleanup-static.json",
+      "sha256": "f3aa1ca80c9661b563fadcdd2bd59714f709c702ce1d5086d0ccdf383095aef8",
+      "bytes": 6606,
+      "byte_exact": true
+    },
+    {
+      "staged": "/tmp/import-identity-getters-review-staging/ux-ownership-cleanup-static.md",
+      "canonical": "/workspace/android-studio-artifacts/import-identity-getters/reviews/ux-ownership-cleanup-static.md",
+      "sha256": "476c51e58ed7f74aa3f962646b7f64626181febfff01ef1e3abae9065dcd4748",
+      "bytes": 1536,
+      "byte_exact": true
+    },
+    {
+      "staged": "/tmp/import-identity-getters-review-staging/ux-ownership-cleanup-static.json",
+      "canonical": "/workspace/android-studio-artifacts/import-identity-getters/reviews/ux-ownership-cleanup-static.json",
+      "sha256": "b6d1e667998d7ecd97eddf4e0f3aeabb8f25ed11ec65ed8674e20f83adf35e92",
+      "bytes": 4047,
+      "byte_exact": true
+    }
+  ],
+  "staged_originals_retained": true
+}

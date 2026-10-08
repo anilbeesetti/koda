@@ -1,0 +1,428 @@
+{
+  "schema": 1,
+  "review_area": "code_quality",
+  "verdict": "PASS",
+  "scope": "Final owner code quality review on immutable current source; full-app, native and CI remain Root gates. Packaging remains subject to a later source-equivalence/evidence review.",
+  "reviewed_at_utc": "2026-10-08T02:37:33.864997+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "whole_source_count": 4743,
+  "whole_source_guard_sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0",
+  "blocking_findings": [],
+  "resolved_findings": [
+    {
+      "id": "Q1",
+      "status": "PASS",
+      "description": "Qualified trait dispatch preserves object-only nested decoding; current 30-test suite passes."
+    },
+    {
+      "id": "Q2",
+      "status": "PASS",
+      "description": "The exact move-only redundant-clone correction preserves every assertion and now passes actual strict repository Clippy."
+    }
+  ],
+  "all_30_test_mutations_and_assertions_preserved": true,
+  "ownership_cleanup_only_source_change_from_parent": true,
+  "current_tests_sha256": "13744dfb88d81b17fcba3bed9a1d07000d0d8f3cffa4e62232a6f733ca72f319",
+  "runtime_receipts": {
+    "library-build": {
+      "receipt": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/library-build-verified.json",
+      "receipt_sha256": "683faaa7da63a865ae0bb519d3f83369d61937d76b59e909143b746d6fe65573",
+      "source_guard_sha256": "f388fd9e88b598bac3ea5302842cd0e7aea21c77f9d848f61fca6f28036cdb02",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 7.509161330999632,
+      "raw_log_sha256": "0808ad3e6f89e045b5eceae2dadc625d8a07462a1b2a02922ae61454ec5ecdd5",
+      "compiler_targets": [
+        {
+          "name": "build-script-build",
+          "kind": [
+            "custom-build"
+          ],
+          "fresh": true,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/build.rs"
+        },
+        {
+          "name": "android_tools",
+          "kind": [
+            "lib"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/src/android_tools.rs"
+        }
+      ]
+    },
+    "all-features-tests": {
+      "receipt": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/all-features-tests-verified.json",
+      "receipt_sha256": "bf02d2554b8f00952f84607d7ebcac640611a57d6aaa562b93ea2c487079dfd2",
+      "source_guard_sha256": "f388fd9e88b598bac3ea5302842cd0e7aea21c77f9d848f61fca6f28036cdb02",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 17.778245876004803,
+      "raw_log_sha256": "d0abe153b7a7092580e819a6616cf413f7b785f606e5db13712947d16899b662",
+      "passed": 291,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "compiler_targets": [
+        {
+          "name": "build-script-build",
+          "kind": [
+            "custom-build"
+          ],
+          "fresh": true,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/build.rs"
+        },
+        {
+          "name": "android_tools",
+          "kind": [
+            "lib"
+          ],
+          "fresh": true,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/src/android_tools.rs"
+        },
+        {
+          "name": "import_facts",
+          "kind": [
+            "test"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/import_facts.rs"
+        },
+        {
+          "name": "project_view_preferences_reference",
+          "kind": [
+            "test"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/project_view_preferences_reference.rs"
+        },
+        {
+          "name": "project_tree_facts",
+          "kind": [
+            "test"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/project_tree_facts.rs"
+        },
+        {
+          "name": "project_model_probe",
+          "kind": [
+            "example"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/examples/project_model_probe.rs"
+        },
+        {
+          "name": "project_tree_adapter",
+          "kind": [
+            "test"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/project_tree_adapter.rs"
+        },
+        {
+          "name": "project_tree_facts_probe",
+          "kind": [
+            "example"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/examples/project_tree_facts_probe.rs"
+        },
+        {
+          "name": "parallel_sync",
+          "kind": [
+            "test"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/parallel_sync.rs"
+        },
+        {
+          "name": "project_tree_component",
+          "kind": [
+            "test"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/project_tree_component.rs"
+        },
+        {
+          "name": "module_presentation",
+          "kind": [
+            "test"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/module_presentation.rs"
+        },
+        {
+          "name": "gradle_import_reference",
+          "kind": [
+            "test"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/gradle_import_reference.rs"
+        },
+        {
+          "name": "generated_artifacts",
+          "kind": [
+            "test"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/generated_artifacts.rs"
+        },
+        {
+          "name": "android_tools",
+          "kind": [
+            "lib"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_tools/src/android_tools.rs"
+        }
+      ]
+    },
+    "strict-clippy": {
+      "receipt": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/strict-clippy-verified.json",
+      "receipt_sha256": "b9846abe20db700bd553bfe3e818595586de3f9707cc910907b4b9608af90e81",
+      "source_guard_sha256": "f388fd9e88b598bac3ea5302842cd0e7aea21c77f9d848f61fca6f28036cdb02",
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 10.110794968997652,
+      "raw_log_sha256": "5a0f3d8cc9062215ede77cfc2ec59a483d0ed57a5ef0d8b39fccd280202ccee7"
+    },
+    "format-check": {
+      "receipt": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/format-check-verified.json",
+      "receipt_sha256": "cec5db2c6e3d775530710d8c13b728beee9df6c56321656d11df11344cae34da",
+      "source_guard_sha256": "f388fd9e88b598bac3ea5302842cd0e7aea21c77f9d848f61fca6f28036cdb02",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 28.925373188998492,
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ui-full-default-suite": {
+      "receipt": "/workspace/android-studio-artifacts/import-identity-getters/capacity-retry/runtime/ui-full-default-suite-verified.json",
+      "receipt_sha256": "5574a103630b19e9c22a8972f481eeeba3cf692689b0edfa951a43d592c6b33c",
+      "source_guard_sha256": "f388fd9e88b598bac3ea5302842cd0e7aea21c77f9d848f61fca6f28036cdb02",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_ui",
+        "--lib",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 132.50914960400405,
+      "raw_log_sha256": "2488cdaa0fff210d42064ca571adcfdd236fa9afce17ee7a69edb831591491c5",
+      "passed": 125,
+      "failed": 0,
+      "pre_existing_ignored": 1,
+      "filtered": 0,
+      "compiler_targets": [
+        {
+          "name": "android_ui",
+          "kind": [
+            "lib"
+          ],
+          "fresh": false,
+          "src_path": "/workspace/android-studio-import-identity-getters/crates/android_ui/src/android_ui.rs"
+        }
+      ]
+    }
+  },
+  "actual_test_groups": [
+    [
+      85,
+      0,
+      0
+    ],
+    [
+      30,
+      0,
+      0
+    ],
+    [
+      20,
+      0,
+      0
+    ],
+    [
+      30,
+      0,
+      0
+    ],
+    [
+      20,
+      0,
+      0
+    ],
+    [
+      10,
+      0,
+      0
+    ],
+    [
+      27,
+      0,
+      0
+    ],
+    [
+      21,
+      0,
+      0
+    ],
+    [
+      29,
+      0,
+      0
+    ],
+    [
+      19,
+      0,
+      0
+    ]
+  ],
+  "sdk_captures": [
+    {
+      "capture": "baseline-old",
+      "receipt_sha256": "a18f6afa6eeb708e2855ff44474e6a4c607613aee6874c4132ecbcae03d6413d",
+      "exit_code": 0,
+      "stdout_sha256": "2743bfaa09aecf6cc54d7aa52b70bb3766d611c909558fdbb3d7b622c0cf3c43",
+      "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756"
+    },
+    {
+      "capture": "baseline-current",
+      "receipt_sha256": "89fbb6f49261cc7bb493ef82f5707402ecb341744b332dc85108b07f08901c91",
+      "exit_code": 0,
+      "stdout_sha256": "5a7c25e5ccb38997c33a5b86844de904d6ee36c82cbd37758e09958e0a6ed056",
+      "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756"
+    },
+    {
+      "capture": "nested-old",
+      "receipt_sha256": "1800927893f0ee004d15e24fa3d75a22611cb6f53ef5354e70d978f0859a4437",
+      "exit_code": 0,
+      "stdout_sha256": "69e9555b5d34d17c121681eb8b7b5674eaf09767fb2b5ab27e5138b30810470c",
+      "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756"
+    },
+    {
+      "capture": "nested-current",
+      "receipt_sha256": "6ae48d8dab9ab744fc745302ac6a48649f60b9818f578bd915241a5aec3f7b2b",
+      "exit_code": 0,
+      "stdout_sha256": "d6b93cefdc7b726295ac7539514722f84cb220b60fb0e8bf4c39ee703ebbc634",
+      "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756"
+    },
+    {
+      "capture": "late-old",
+      "receipt_sha256": "f91409fa55a8a0959edab4adbee51625b72fdc1d7109c6fc471c92ac94729395",
+      "exit_code": 0,
+      "stdout_sha256": "539e9564f6fb7d9d0cdc9633542d9a848869397ab2111ae89a91cd1230f7c23d",
+      "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756"
+    },
+    {
+      "capture": "late-current",
+      "receipt_sha256": "e98044df3777ffda1bab1652feabbbc832e8943e9e89ad175f4b30e684c5a36e",
+      "exit_code": 0,
+      "stdout_sha256": "3c61ac79e4bfdc636fefe58c482ee4af9bbd94ee42579e6663a9d73f1b4b222a",
+      "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756"
+    },
+    {
+      "capture": "included-old",
+      "receipt_sha256": "6df9ebbd48a38d954f879495e0304dc425c72c0294d0cb57be87dcb2a59b8480",
+      "exit_code": 1,
+      "stdout_sha256": "883f9d57a981a692cdc0b5ae4a89cd37ff65f7b2f0e21fcc3aa943c20d9875f3",
+      "stderr_sha256": "c1f1710b277d848d8da715e543a06bfe89759fa0122e384c1d61954aaa03a8ed"
+    },
+    {
+      "capture": "included-current",
+      "receipt_sha256": "a337c552c457b232d6b587e7d50a20c9e2a419f2d1bdcc228e9c530d238c7ac0",
+      "exit_code": 1,
+      "stdout_sha256": "883f9d57a981a692cdc0b5ae4a89cd37ff65f7b2f0e21fcc3aa943c20d9875f3",
+      "stderr_sha256": "86cd70aea0829024f6c6a034c127daf7b6bc0a111f62118d31dfc272d04681bc"
+    }
+  ],
+  "independent_read_only_projection_verification": [
+    {
+      "scenario": "baseline",
+      "receipt_sha256": "3e44df3ac66a3847b8de9f9e1998f5af4657e1c4033541e53b9053670a54dc0c",
+      "old_and_current_projection_equal_without_normalization": true,
+      "rust_probe_exit": 0,
+      "raw_probe_stdout_sha256": "97a64c14922ddaafdf1eef46a16aca319554a15c94440157986890a80d390030"
+    },
+    {
+      "scenario": "nested",
+      "receipt_sha256": "3f0d7babf4106652c28a1a67ee9cacd01de9305a9e7ac09c0dd5630f70f9d48c",
+      "old_and_current_projection_equal_without_normalization": true,
+      "rust_probe_exit": 0,
+      "raw_probe_stdout_sha256": "4d8f31fe21500fc268dc64f71b8b325f6bdfb704caffe8b9a63a906c6fa2b208"
+    },
+    {
+      "scenario": "late",
+      "receipt_sha256": "502b7251d1364a6c987fb5d7a08341292beefcfa2a9bcdcd5d884931fca67ad7",
+      "old_and_current_projection_equal_without_normalization": true,
+      "rust_probe_exit": 0,
+      "raw_probe_stdout_sha256": "4c3252a7bc53b1ef724a02fb6989a6e4b5836788b2046089fffb6fad74c59936"
+    }
+  ],
+  "private_sdk_environment_override": {
+    "source_changed": false,
+    "only_two_private_build_gradle_files_changed": [
+      "mobile/build.gradle.kts",
+      "greeting/build.gradle.kts"
+    ],
+    "actual_build_tools_version": "37.0.0",
+    "root_authorization_recorded": true,
+    "sdk_install_or_license_mutation": false,
+    "capture_script_identical_except_owned_BASE_path": true,
+    "correction_receipt_sha256": "1f7997042634e58e0d1d78d5fc93016a74009d555aaabd852abffc53a5edf792",
+    "earlier_default_36_failures_retained": true,
+    "both_receipt_preparation_diagnostics_retained_as_recorded": true
+  },
+  "provenance": {
+    "full_supplementary_reference_files_verified": 6,
+    "original_reference_test_credit": 0,
+    "naming_facet_tree_test_credit": 0,
+    "canonical_census_complete": false,
+    "non_rust_exception": "Official Gradle/AGP/SDK getters and serialization-only JVM bridge; Rust validates identity and import policy."
+  },
+  "historical_failures_preserved": {
+    "reviews/quality-static-pre-round3.md": "01342a22c4ef28a364bb5d75ad98044818ee12918bfe2b34e558eabc4595394c",
+    "reviews/quality-static-pre-round3.json": "fff6d789a3d0291da8a32bdc9201de6d7194156ef1694e3d54d85b0e4a197245",
+    "reviews/quality-runtime-clippy-failure.md": "a33c0c9ce8f06bf14b1f9da8f13f086f0be01a8d76e1f5c67fb97dd9417280eb",
+    "reviews/quality-runtime-clippy-failure.json": "37c9bf54146e48ea0d7518b66220b3898aea75da77bf86c6711fe2ec96d46e99",
+    "runtime/strict-clippy.log": "f732c9e998be247590591a3293d3980c373382c17543bf59c9bab2d0d36f5b3f"
+  },
+  "fix_round_accounting": "Three semantic rounds retained; an additional nonsemantic ownership cleanup was authorized by Root after escalation. No new user reply is claimed by this review.",
+  "optional_quality_checks": "cargo-shear unavailable; optional cargo-shear/typos/buf checks are not claimed.",
+  "remaining_gates": [
+    "Update draft report/port metadata with exact final-source current results and preserved failures",
+    "Review packaged metadata/evidence against fixed source exclusions",
+    "Root full app build, full CI, native SDK/UI workflow and original-reference captures; no such completion claimed here"
+  ],
+  "reviewer_runtime_commands_executed": false,
+  "reviewer_source_index_git_cache_mutations": false
+}

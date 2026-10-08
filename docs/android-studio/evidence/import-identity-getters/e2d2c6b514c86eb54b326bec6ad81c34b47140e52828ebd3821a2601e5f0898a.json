@@ -1,0 +1,17 @@
+{
+  "source_commit": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "stage": "strict-clippy",
+  "lease_granted": "Root exclusive full owner runtime grant after PR63 finalreview; archival hold released 2026-10-08",
+  "command": [
+    "./script/clippy",
+    "--locked",
+    "-p",
+    "android_tools"
+  ],
+  "exit_code": 101,
+  "elapsed_seconds": 64.2861275039977,
+  "log": "/workspace/android-studio-artifacts/import-identity-getters/runtime/strict-clippy.log",
+  "log_sha256": "f732c9e998be247590591a3293d3980c373382c17543bf59c9bab2d0d36f5b3f",
+  "whole_source_bindings": 4743,
+  "source_index_status_unchanged": true
+}

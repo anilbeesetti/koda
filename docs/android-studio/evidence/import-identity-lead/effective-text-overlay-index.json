@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "historical_base411_index": {
+    "path": "docs/android-studio/evidence/import-identity-lead/portable-evidence-index.json",
+    "sha256": "f350035ec0cc7332c4f0ad66002a857de8090f25e30d4223dbac3f59f4440c05"
+  },
+  "historical_base_proposed_top_level_hashes_are_overridden": true,
+  "override_precedence": "Base411, owner-transaction38 supplement, corrected-text-overlay last",
+  "effective_top_level_files": [
+    {
+      "path": "docs/android-studio/import-identity-getters-task-report.md",
+      "bytes": 7515,
+      "sha256": "56fafda04ee2d7a8e78de252ecd30dd47c47abf5478354ce14859466d2e59f2b"
+    },
+    {
+      "path": "docs/android-studio/ports/import-identity-getters.json",
+      "bytes": 12012,
+      "sha256": "a90d03e69294e9526afabe27c93295c32f9935a464075846ad802c0d1789f832"
+    }
+  ],
+  "correction_receipt": "docs/android-studio/evidence/import-identity-lead/text-correction-provenance/text-correction-and-formatting-receipt.json",
+  "final_metadata_source_equivalence": "PENDING",
+  "final_metadata_HEAD_CI": "NOT_RUN"
+}

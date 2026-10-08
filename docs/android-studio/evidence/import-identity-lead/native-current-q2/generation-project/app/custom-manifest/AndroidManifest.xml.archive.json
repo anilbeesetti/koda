@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "archive_kind": "reversible_single_file",
+  "original_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project/app/custom-manifest/AndroidManifest.xml",
+  "recovery_relative_path": "native-current-q2/generation-project/app/custom-manifest/AndroidManifest.xml",
+  "original_bytes": 134,
+  "original_sha256": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e",
+  "content_preserved_byte_exact": true,
+  "encoding": "base64",
+  "base64_content": "PG1hbmlmZXN0IHhtbG5zOmFuZHJvaWQ9Imh0dHA6Ly9zY2hlbWFzLmFuZHJvaWQuY29tL2Fway9yZXMvYW5kcm9pZCI+PGFwcGxpY2F0aW9uIGFuZHJvaWQ6bGFiZWw9IlNvdXJjZSBwcm92aWRlciBzbW9rZSIgLz48L21hbmlmZXN0Pgo="
+}

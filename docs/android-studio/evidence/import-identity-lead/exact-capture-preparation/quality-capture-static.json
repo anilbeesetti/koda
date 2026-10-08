@@ -1,0 +1,482 @@
+{
+  "verdict": "PASS",
+  "scope": "Independent static re-review of prepared external current36 capture recipe only; no preflight or capture execution",
+  "reviewed_at_utc": "2026-10-08T02:27:02.276773+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "blocking_findings": [],
+  "initial_unexecuted_findings": [
+    {
+      "id": "C1",
+      "finding": "Null integration_target fields defeated dict.get(default) and produced None artifact target names for library jobs.",
+      "status": "RESOLVED",
+      "evidence": "Both preflight target-name sets and per-capture artifact selection use integration_target or package; all 36 job mappings were checked."
+    },
+    {
+      "id": "C2",
+      "finding": "UI capture trusted copied artifact metadata without itself enforcing a fresh current-worktree compiler artifact.",
+      "status": "RESOLVED",
+      "evidence": "Both capture stages require fresh == false, exact current-worktree manifest_path and exact compiler target root. The intermediate use of mapped declaration-source path was corrected because Cargo reports the crate target root."
+    }
+  ],
+  "correction_history": {
+    "initial_script_preserved_byte_exact": true,
+    "initial_sha256": "7ba1ae50f6be6afe998348c1d034ede7edd15923087c2a7a3f48a0c5bdc7ed8f",
+    "intermediate_null_fallback_sha256": "61f044529ac69ea573a09e2368ff84c8e75b4d4f804efe61a237c9a6722978b3",
+    "final_reviewed_sha256": "8d607212f342d81204473fe37dce9994f7915c844b42a6bb1008fb75a05d2afc",
+    "initial_recipe_scope_retains_original_preparation_hash": true,
+    "final_hash_authority": "This final independent review binding; correction JSON describes its earlier null-fallback step.",
+    "external_validation_work_only_not_product_fix_round": true
+  },
+  "jobs": {
+    "total": 36,
+    "unique_reference_ids": 36,
+    "unique_targets": 36,
+    "ported": 20,
+    "adapted": 16,
+    "tools": 29,
+    "ui": 7,
+    "selected_reference_rows": 95,
+    "new_original_reference_credit": 0
+  },
+  "normal_default_tools_preflight_command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--tests",
+    "--no-run",
+    "--message-format=json"
+  ],
+  "normal_exact_command_shape": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "<existing package manifest>",
+    "-p",
+    "<package>",
+    "<--lib or --test existing integration target>",
+    "<existing exact test name>",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "no_features_profile_linker_or_rustflags_changes": true,
+  "mtime_freshness": {
+    "scope": [
+      "crates/android_tools/src/*.rs",
+      "crates/android_tools/tests/*.rs"
+    ],
+    "source_bytes_checked_before_after": true,
+    "runtime_lease_required": true,
+    "compilation_only_no_executed_test_credit": true
+  },
+  "source_guards": {
+    "exact_fixed_source_pathspec": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ],
+    "files": 4743,
+    "actual_tracked_source_names_match_all_frozen_names": true,
+    "full_raw_index_status_HEAD_and_all_digests_before_after_every_normal_Cargo_action": true,
+    "nested_ports_source_exclusions_not_widened": true
+  },
+  "artifact_and_execution_guards": {
+    "preflight_actual_current_worktree_fresh_false_compiler_artifacts_required": true,
+    "both_capture_stages_exact_current_manifest_and_compiler_target_root_fresh_false_required": true,
+    "test_declaration_source_hash_bound_separately": true,
+    "executable_size_and_SHA256_before_after": true,
+    "selected_test_name_occurs_exactly_once": true,
+    "summary_requires_one_pass_zero_failed_zero_ignored": true,
+    "zero_test_success_refused": true,
+    "UI_prior_receipt_requires_same_source_exit0_125passed_0failed_0filtered_1preexisting_ignored": true,
+    "UI_receipt_not_yet_present_as_expected": false
+  },
+  "evidence_preservation": {
+    "external_raw_logs_first": true,
+    "raw_logs_use_exclusive_xb": true,
+    "JSON_receipts_use_exclusive_x": true,
+    "repository_metadata_log_destinations_are_only_declared_strings": true,
+    "repository_writes_deferred_until_Root_metadata_finalization": true
+  },
+  "limits": [
+    "Static recipe PASS only; all 36 actual current7e captures and default preflight remain pending. Existing passing run fields in prepared jobs describe prior4fb evidence, not new current7e results.",
+    "Current UI receipt is intentionally absent; supply the actual owner current125+1 gate receipt after that gate passes and verify its byte provenance before UI capture.",
+    "Root owns the runtime lease and outer main/protected reference guards before and after execution. Bind final script/snapshot/jobs hashes at action time.",
+    "Exclusive outputs preserve earlier evidence; any failed stage must retain its raw log and receipt and use a separately prepared attempt rather than overwrite them."
+  ],
+  "reviewer_product_source_index_Git_cache_SDK_runtime_or_metadata_mutations": false,
+  "read_holds_released": true,
+  "compiler_target_roots": [
+    "crates/android_tools/src/android_tools.rs",
+    "crates/android_tools/tests/generated_artifacts.rs",
+    "crates/android_tools/tests/gradle_import_reference.rs",
+    "crates/android_tools/tests/parallel_sync.rs",
+    "crates/android_tools/tests/project_view_preferences_reference.rs",
+    "crates/android_ui/src/android_ui.rs"
+  ],
+  "mappings": [
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_one_variant",
+      "compiler_target_root": "crates/android_tools/src/android_tools.rs",
+      "test_declaration_source": "crates/android_tools/src/project_model.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_debug_preferred",
+      "compiler_target_root": "crates/android_tools/src/android_tools.rs",
+      "test_declaration_source": "crates/android_tools/src/project_model.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_build_type",
+      "compiler_target_root": "crates/android_tools/src/android_tools.rs",
+      "test_declaration_source": "crates/android_tools/src/project_model.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+      "compiler_target_root": "crates/android_tools/src/android_tools.rs",
+      "test_declaration_source": "crates/android_tools/src/project_model.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+      "compiler_target_root": "crates/android_tools/src/android_tools.rs",
+      "test_declaration_source": "crates/android_tools/src/project_model.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+      "compiler_target_root": "crates/android_tools/src/android_tools.rs",
+      "test_declaration_source": "crates/android_tools/src/project_model.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+      "compiler_target_root": "crates/android_tools/src/android_tools.rs",
+      "test_declaration_source": "crates/android_tools/src/project_model.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_on_empty",
+      "compiler_target_root": "crates/android_tools/src/android_tools.rs",
+      "test_declaration_source": "crates/android_tools/src/project_model.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_simple_gradle_project",
+      "compiler_target_root": "crates/android_tools/tests/gradle_import_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/gradle_import_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subprojects",
+      "compiler_target_root": "crates/android_tools/tests/gradle_import_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/gradle_import_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subprojects_with_missing_submodule",
+      "compiler_target_root": "crates/android_tools/tests/gradle_import_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/gradle_import_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subproject_with_custom_location",
+      "compiler_target_root": "crates/android_tools/tests/gradle_import_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/gradle_import_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "required_projects",
+      "compiler_target_root": "crates/android_tools/tests/gradle_import_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/gradle_import_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "missing_required_projects",
+      "compiler_target_root": "crates/android_tools/tests/gradle_import_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/gradle_import_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "missing_enclosing_project",
+      "compiler_target_root": "crates/android_tools/tests/gradle_import_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/gradle_import_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "transitive_dependencies",
+      "compiler_target_root": "crates/android_tools/tests/gradle_import_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/gradle_import_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "circular_dependencies",
+      "compiler_target_root": "crates/android_tools/tests/gradle_import_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/gradle_import_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+      "port_status": "adapted",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_show_visibility_icons_when_option_is_selected",
+      "compiler_target_root": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/project_view_preferences_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+      "port_status": "adapted",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_show_visibility_icons_when_option_is_unselected",
+      "compiler_target_root": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/project_view_preferences_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+      "port_status": "adapted",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default",
+      "compiler_target_root": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/project_view_preferences_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "port_status": "adapted",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_not_visible_in_unsupported_project_system",
+      "compiler_target_root": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/project_view_preferences_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+      "port_status": "adapted",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_not_visible_in_non_android_project",
+      "compiler_target_root": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/project_view_preferences_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+      "port_status": "adapted",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_custom_property_handling",
+      "compiler_target_root": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/project_view_preferences_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "port_status": "adapted",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+      "compiler_target_root": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/project_view_preferences_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "port_status": "adapted",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+      "compiler_target_root": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/project_view_preferences_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+      "port_status": "adapted",
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "test_name": "test_android_view_is_default_metrics",
+      "compiler_target_root": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "test_declaration_source": "crates/android_tools/tests/project_view_preferences_reference.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+      "port_status": "adapted",
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::component_is_added_element",
+      "compiler_target_root": "crates/android_ui/src/android_ui.rs",
+      "test_declaration_source": "crates/android_ui/src/tabbed_toolbar.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+      "port_status": "adapted",
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::tab_is_added",
+      "compiler_target_root": "crates/android_ui/src/android_ui.rs",
+      "test_declaration_source": "crates/android_ui/src/tabbed_toolbar.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+      "port_status": "adapted",
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+      "compiler_target_root": "crates/android_ui/src/android_ui.rs",
+      "test_declaration_source": "crates/android_ui/src/tabbed_toolbar.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+      "port_status": "adapted",
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+      "compiler_target_root": "crates/android_ui/src/android_ui.rs",
+      "test_declaration_source": "crates/android_ui/src/tabbed_toolbar.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+      "port_status": "adapted",
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+      "compiler_target_root": "crates/android_ui/src/android_ui.rs",
+      "test_declaration_source": "crates/android_ui/src/tabbed_toolbar.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+      "port_status": "adapted",
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::can_select_tab_by_index",
+      "compiler_target_root": "crates/android_ui/src/android_ui.rs",
+      "test_declaration_source": "crates/android_ui/src/tabbed_toolbar.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+      "port_status": "adapted",
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+      "compiler_target_root": "crates/android_ui/src/android_ui.rs",
+      "test_declaration_source": "crates/android_ui/src/tabbed_toolbar.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "generated_artifacts",
+      "test_name": "check_model_consumer_version_ordering",
+      "compiler_target_root": "crates/android_tools/tests/generated_artifacts.rs",
+      "test_declaration_source": "crates/android_tools/tests/generated_artifacts.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "generated_artifacts",
+      "test_name": "check_model_version_ordering",
+      "compiler_target_root": "crates/android_tools/tests/generated_artifacts.rs",
+      "test_declaration_source": "crates/android_tools/tests/generated_artifacts.rs"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+      "port_status": "ported",
+      "package": "android_tools",
+      "integration_target": "parallel_sync",
+      "test_name": "check_supports_parallel_sync",
+      "compiler_target_root": "crates/android_tools/tests/parallel_sync.rs",
+      "test_declaration_source": "crates/android_tools/tests/parallel_sync.rs"
+    }
+  ],
+  "input_bindings": [
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/exact-capture/capture-current36.py",
+      "bytes": 7366,
+      "sha256": "8d607212f342d81204473fe37dce9994f7915c844b42a6bb1008fb75a05d2afc"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/exact-capture/capture-current36.py.initial-unexecuted",
+      "bytes": 6814,
+      "sha256": "7ba1ae50f6be6afe998348c1d034ede7edd15923087c2a7a3f48a0c5bdc7ed8f"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/exact-capture/jobs36-preparation.json",
+      "bytes": 71310,
+      "sha256": "63d5dd53958a7e7fd522a8405c666a516699b739d2e1559b03a52bead6d9904d"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/exact-capture/recipe-scope.json",
+      "bytes": 659,
+      "sha256": "f9c7d7837a02b42916302513abdf4e3c4e9ed0a811cc50227990c9b10697eeea"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/exact-capture/capture-recipe-correction.json",
+      "bytes": 326,
+      "sha256": "713becd89341ccbe7de654390b3ed3acda9cb0fc14e61977157b97641cfcd0f9"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/combined-whole-source-snapshot.json",
+      "bytes": 1850434,
+      "sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0"
+    }
+  ]
+}

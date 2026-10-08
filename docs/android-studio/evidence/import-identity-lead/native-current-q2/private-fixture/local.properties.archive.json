@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "archive_kind": "reversible_single_file",
+  "original_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project/local.properties",
+  "recovery_relative_path": "native-current-q2/private-fixture/local.properties",
+  "original_bytes": 48,
+  "original_sha256": "00c76c7994130b465695145ca6d2e144002d7b1afb594b3d2f715c7643eb87da",
+  "content_preserved_byte_exact": true,
+  "encoding": "base64",
+  "base64_content": "c2RrLmRpcj0vd29ya3NwYWNlL2FuZHJvaWQtc3R1ZGlvLWFydGlmYWN0cy9zZGsK"
+}

@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "scope": "Independent read-only external preparation review; authorizes Root exact metadata copy after its fresh guards, without product or final-HEAD completion credit",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_tree": "f18fa92ba5a951f71bb66bbf28e218b9aa179ed9",
+  "source_files": 4743,
+  "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+  "checks": {
+    "canonical39": {
+      "verdict": "PASS",
+      "cases": 95,
+      "ported": 20,
+      "adapted": 16,
+      "unported": 59,
+      "passing": 36,
+      "nonrun_fields_all95_unchanged": true,
+      "unported59_byte_semantics_unchanged": true,
+      "all36_actual_current_source_test_artifact_raw_command_bindings": true,
+      "reference_manifest_sha256": "2f1e6d709e4a684aca9ca20fc43aae6826b60480f0d70cb8a9aa1b93ce9607c1",
+      "census_complete": false
+    },
+    "lead_base411": {
+      "verdict": "PASS_raw_archive_scope",
+      "bytes": 13714189,
+      "raw_original_copies": 267,
+      "reversible_original_archives": 140,
+      "original_wrappers_decode_exactly_to_actual_original_bytes": true,
+      "original_BOM_ANSI_line_order_retained": true,
+      "historical_base_text_is_superseded": true
+    },
+    "owner169": {
+      "verdict": "PASS",
+      "all169_input_original_hashes_and_bytes_preserved": true,
+      "changed_port_fields_only": [
+        "canonical_parity_ledger_modified",
+        "canonical_parity_ledger_owner_package_modified",
+        "reference_status.canonical_census",
+        "runtime.lead_full_app_full_CI_native_exact_reference_captures",
+        "status"
+      ],
+      "all_other_owner_JSON_fields_including_reviews_tests_supplements_failures_and_exceptions_unchanged": true
+    },
+    "actual_owner_transaction38": {
+      "verdict": "PASS",
+      "raw_original_copies": 28,
+      "reversible_original_archives": 8,
+      "actual_APPLIED_state_and_exit0_verification": true,
+      "before_after_source_digest_fullindex_main_protected_canonical_unchanged": true,
+      "only169_metadata_status_records": true,
+      "absent_local_main_ref_and_actual_main_checkout30fca_truthfully_observed": true
+    },
+    "corrected_text_overlay27": {
+      "verdict": "PASS",
+      "overrides": 2,
+      "adds": 25,
+      "three_original_draft_archives_preserved": true,
+      "introduced_plus_prefixes_removed": true,
+      "port_JSON_semantics_unchanged": true,
+      "three_scoped_actual_Prettierv3_5_checks_exit0": true,
+      "raw_input_correction_and_format_diffs_bound": true
+    },
+    "effective474": {
+      "verdict": "PASS",
+      "files": 474,
+      "bytes": 14076734,
+      "explicit_sorted_NUL_manifest_precedence": true,
+      "all_final_paths_within_fixed7_metadata_exclusions": true,
+      "all_package_raw_source_and_fixture_inputs_preserved": true
+    },
+    "all_final_metadata_union680": {
+      "verdict": "PASS",
+      "files": 680,
+      "precedence": "owner169 then canonical39 then effective lead474; only owner report/port overlap",
+      "canonical_and_lead_disjoint": true,
+      "reference_manifest_excluded_from_delivery": true
+    },
+    "final_recipe_static": {
+      "verdict": "PASS",
+      "default_external_verification_only": true,
+      "copy_requires_owner_report_port_and_canonical39_actual_hashes": true,
+      "copy_scope_exact474_metadata_paths": true,
+      "new_evidence_destination_exclusive": true,
+      "fixed7_all4743_source_names_hashes_worktree_staged_untracked_guards_before_after": true,
+      "full_raw_index_hash_unchanged_before_after": true,
+      "staging_refs_Cargo_compiler_SDK_signals_not_performed_by_recipe": true,
+      "Root_must_bind_actual_main_protected_and_final_staged_Source_equivalence_separately": true
+    }
+  },
+  "findings": [
+    {
+      "id": "METADATA-TEXT-1",
+      "initial_verdict": "FAIL_for_final_text",
+      "finding": "Immutable base PR body and appended task-report paragraphs retained literal plus patch-prefixes.",
+      "current_verdict": "RESOLVED",
+      "resolution": "Preserved all original411 raw/text inputs and added explicit corrected-text overlay with exact original archives, recorded prefix-only corrections and scoped formatting. Port JSON meanings unchanged.",
+      "product_fix_round_increment": 0
+    }
+  ],
+  "evidence": [
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/canonical-preparation-calculations.json",
+      "bytes": 41237,
+      "sha256": "842592819c0760c7b48364895d689413f4a6caba3320c6d6f978a39b526b79d0"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-portable-preparation-calculations.json",
+      "bytes": 1031499,
+      "sha256": "b07b4a7c538c29dc3615c6d0cc2f10ab6252c63a86a8a742fca16ddc941a082a"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-portable-preparation-audit.py",
+      "bytes": 13389,
+      "sha256": "5b30ceae5d4e7af911f777ad04d908a2f94a8e79b8c19e53ea40b130ac011631"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/effective-delivery-manifest.json",
+      "bytes": 175604,
+      "sha256": "fa2eac4d290a44c5cf96da5f8cfce51c001337037fae119a49cc0a620403aac3"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/all-reviewed-metadata-manifest.json",
+      "bytes": 250023,
+      "sha256": "397c341ca8fbde9baefbeaa6b78c88c4250c858e23aa539052aa7a33c959a371"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/effective-delivery-paths.nul",
+      "bytes": 49558,
+      "sha256": "554f43e533fc387736f3cba7c6682ba9059d86c1e7f6e47774d3405074747749"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/all-reviewed-metadata-paths.nul",
+      "bytes": 72713,
+      "sha256": "a8ddfcacd47e01e012aa88b5f543844fb06f36017191f882ed9a208aece908a3"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/root-copy-and-verify-recipe.py",
+      "bytes": 7242,
+      "sha256": "f1126a5251dd3810026be2418a9159247a09e14f52549200f9821cea83bc651a"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/pull-request-body.md",
+      "bytes": 1846,
+      "sha256": "5611c4c349366f45f5877644c74cd20c6cdc7e24936582e0681f140991453b94"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/native-lead-review-quality.json",
+      "bytes": 8848,
+      "sha256": "adf1156c960f08f0a862b68d1197260e9eeb09a776afc4bd85d87f10552ab180"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/import-identity-integration/current-ci/lead-ci-source-review.json",
+      "bytes": 4499,
+      "sha256": "23aca16f119b4bca925ff7458519e617908ef178354c9836d55e973a87b2e991"
+    }
+  ],
+  "truthful_limits": {
+    "new_original_test_credit": 0,
+    "owner_tests": [],
+    "owner_supplements": 30,
+    "current_source_CI": "PASS_all3;10540pass0fail23reported_inherited_skips;synthetic_full_tree_equal_Source",
+    "normal_full_app": "PASS_actual726.314s;sole_linker_output_path_change",
+    "native": "PASS_strict53commands17images_plus_separate_priorplanned3commands1image;original_wrong_XML_coordinate_retained_uncredited",
+    "initial_native_q0": "FAIL_preserved",
+    "interrupted_q1": "NOT_COMPLETE_original_PTY_lost_remaining_proof_preserved_former343964_zombie_not_absent_claim",
+    "final_metadata_source_equivalence": "PENDING_actual_Root_apply_stage_guards",
+    "final_metadata_HEAD_CI": "NOT_RUN",
+    "protected_merge": "PENDING",
+    "complete_IDE": false,
+    "full_Android_Studio_fidelity_performance_LSP_exhaustive_census_completion_credit": false
+  },
+  "reviewer_actions": {
+    "only_new_external_review_files_written": true,
+    "current_WT_Source_index_refs_sharedcache_runtime_reads_or_mutations": false,
+    "Cargo_compiler_SDK_native_or_signals": false,
+    "all_read_holds_released": true
+  },
+  "blockers": []
+}
