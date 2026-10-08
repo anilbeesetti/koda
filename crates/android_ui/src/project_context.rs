@@ -2,7 +2,7 @@ use crate::android_build::{
     self, BuildEvent, BuildPanel, BuildStatus, BuildTab, CapturedProcessOutput,
 };
 use android_tools::project_context::{
-    ActiveContext, ActiveContextToken, ContextCapabilities, ContextSnapshot, DiscoveryToken,
+    ActiveContext, ActiveContextToken, ActiveProjectToken, ContextCapabilities, ContextSnapshot, DiscoveryToken,
     ModuleOwner, ObservationPhase, OperationalReadiness, RootHandle, decode_context_output,
 };
 use anyhow::{Context as _, Result, ensure};
@@ -53,6 +53,72 @@ mod tests {
     use project::trusted_worktrees::{self, PathTrust};
     use serde_json::json;
     use workspace::AppState;
+
+    #[gpui::test]
+    async fn queued_import_keeps_its_project_across_files_and_cancels_rapid_root_switches(
+        cx: &mut TestAppContext,
+    ) -> Result<()> {
+        use std::path::Path;
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            trusted_worktrees::init(Default::default(), cx);
+        });
+        let filesystem = project::FakeFs::new(cx.executor());
+        filesystem.insert_tree("/import-owner", json!({"Main.kt":"fun main() {}", "Other.kt":"fun other() {}"})).await;
+        filesystem.insert_tree("/import-python", json!({"main.py":"print(1)"})).await;
+        let project = Project::test_with_worktree_trust(filesystem,
+            [Path::new("/import-owner"), Path::new("/import-python")], cx).await;
+        cx.update(|cx| {
+            crate::project_surfaces::tests::trust(&project, cx)?;
+            crate::project_surfaces::tests::publish_catalogue(&project, Path::new("/import-owner"),
+                &[android_tools::project_context::PluginId::AndroidApplication], &[("android", "androidJvm")], true, cx)
+        })?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let build_panel = visual.new(|cx| BuildPanel::new(workspace.downgrade(), cx));
+        workspace.update_in(visual, |workspace, window, cx| register(workspace, build_panel, window, cx));
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/import-python/main.py"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        let python = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Python item"))?;
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/import-owner/Main.kt"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        let controller = visual.update(|_, cx| for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+        let mut cancelled = controller.update(visual, |controller, cx| {
+            let root = controller.active.root().context("Import root")?;
+            let discovery = controller.project.update(cx, |project, cx| project.begin_android_context_import(root, cx))?;
+            let active = controller.active.project_discovery_token(controller.project.read(cx).android_context()).context("Project discovery owner")?;
+            let (cancel, cancelled) = oneshot::channel();
+            controller.import_owner = Some(ImportOwner {root, active, discovery, session:1});
+            controller.cancel = Some(cancel);
+            controller.task = Some(Task::ready(()));
+            Ok::<_, anyhow::Error>(cancelled)
+        })?;
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/import-owner/Other.kt"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        assert!(cancelled.try_recv()?.is_none(), "Same-root source changes retain a queued Gradle import");
+        controller.read_with(visual, |controller, cx| {
+            assert!(controller.import_in_progress(cx));
+            assert!(controller.task.is_some());
+        });
+        let android = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Android item"))?;
+        workspace.update_in(visual, |workspace, window, cx| {
+            assert!(workspace.activate_item(python.as_ref(), false, false, window, cx));
+            assert!(workspace.activate_item(android.as_ref(), false, false, window, cx));
+        });
+        visual.run_until_parked();
+        assert_eq!(cancelled.try_recv()?, Some(()), "Rapid A/B/A cancels the original import");
+        controller.read_with(visual, |controller, cx| {
+            assert!(!controller.import_in_progress(cx) && controller.import_owner.is_none() && controller.task.is_none());
+        });
+        Ok(())
+    }
 
     #[gpui::test]
     async fn exact_source_restriction_is_visible_with_other_restricted_directory_roots(
@@ -417,7 +483,7 @@ pub(crate) fn register(
 
 struct ImportOwner {
     root: RootHandle,
-    active: ActiveContextToken,
+    active: ActiveProjectToken,
     discovery: DiscoveryToken,
     session: u64,
 }
@@ -505,8 +571,9 @@ impl ProjectContextController {
                 &workspace,
                 window,
                 |this, _, event, window, cx| {
-                    if matches!(event, workspace::Event::ActiveItemChanged) {
-                        this.clear_active(cx);
+                    if let workspace::Event::ActiveProjectPathChanged(path) = event {
+                        this.active.invalidate_source_selection().log_err();
+                        this.select_path(path.clone(), cx).log_err();
                         this.request_reconcile(window, cx);
                     } else if matches!(event, workspace::Event::Activate) {
                         this.request_reconcile(window, cx);
@@ -693,17 +760,24 @@ impl ProjectContextController {
         let workspace = self.workspace.upgrade().context("Project window closed")?;
         let item = workspace.read(cx).active_item(cx);
         let path = item.as_ref().and_then(|item| item.project_path(cx));
+        self.select_path(path, cx)?;
+        workspace.update(cx, |_, cx| cx.notify());
+        cx.notify();
+        Ok(())
+    }
+
+    fn select_path(&mut self, path: Option<project::ProjectPath>, cx: &mut Context<Self>) -> Result<()> {
+        let project = self.project.clone();
+        let roots = project.read(cx).visible_worktrees(cx)
+            .filter(|worktree| !worktree.read(cx).is_single_file())
+            .map(|worktree| (worktree.read(cx).id(), worktree.read(cx).abs_path()))
+            .collect::<Vec<_>>();
         let source_worktree = path.as_ref().map(|path| path.worktree_id);
         let (worktree, owner) = if let Some(path) = path {
             let worktree = project
                 .read(cx)
                 .worktree_for_id(path.worktree_id, cx)
                 .context("Active editor root was removed")?;
-            if let Some(trust) = TrustedWorktrees::try_get_global(cx) {
-                trust.update(cx, |trust, cx| {
-                    trust.can_trust(&project.read(cx).worktree_store(), path.worktree_id, cx);
-                });
-            }
             let owner = worktree.read(cx).abs_path().join(path.path.as_std_path());
             let own_handle = project
                 .read(cx)
@@ -772,11 +846,10 @@ impl ProjectContextController {
         if self
             .import_owner
             .as_ref()
-            .is_some_and(|owner| !self.action_is_current(&owner.active, cx))
+            .is_some_and(|owner| !self.project_is_current(&owner.active, cx))
         {
             self.cancel_import(cx);
         }
-        workspace.update(cx, |_, cx| cx.notify());
         cx.notify();
         Ok(())
     }
@@ -808,6 +881,18 @@ impl ProjectContextController {
             return None;
         }
         self.active.token(self.project.read(cx).android_context())
+    }
+
+    pub(crate) fn project_token(&self, cx: &App) -> Option<ActiveProjectToken> {
+        if self.source_is_restricted(cx) {
+            return None;
+        }
+        self.active.project_token(self.project.read(cx).android_context())
+    }
+
+    pub(crate) fn project_is_current(&self, token: &ActiveProjectToken, cx: &App) -> bool {
+        !self.source_is_restricted(cx)
+            && self.active.project_is_current(token, self.project.read(cx).android_context())
     }
 
     pub(crate) fn discovery_token(&self, cx: &App) -> Option<ActiveContextToken> {
@@ -870,7 +955,7 @@ impl ProjectContextController {
     pub(crate) fn import_in_progress(&self, cx: &App) -> bool {
         self.import_owner
             .as_ref()
-            .is_some_and(|owner| self.action_is_current(&owner.active, cx))
+            .is_some_and(|owner| self.project_is_current(&owner.active, cx))
     }
 
     pub(crate) fn import_candidate(&self, cx: &App) -> Option<PathBuf> {
@@ -916,7 +1001,7 @@ impl ProjectContextController {
         })?;
         let active = self
             .active
-            .discovery_token(self.project.read(cx).android_context())
+            .project_discovery_token(self.project.read(cx).android_context())
             .context("Gradle import has no current trusted owner")?;
         let (session, output, logs) = self.build_panel.update(cx, |panel, cx| {
             panel.begin(
@@ -947,7 +1032,7 @@ impl ProjectContextController {
                 // second evaluation or relying on ignored Worktree entries.
                 project.update(cx, |project, cx| project.observe_android_context_inputs(handle, discovery.clone(), vec![root.clone()], None, cx)).await?;
                 this.update(cx, |this, cx| {
-                    ensure!(this.action_is_current(&active, cx), "Project context changed before evaluation");
+                    ensure!(this.project_is_current(&active, cx), "Project context changed before evaluation");
                     Ok::<_, anyhow::Error>(())
                 })??;
                 let first = cx.background_spawn(evaluate(root.clone(), executor.clone(), output.clone(), cancelled.clone())).await?;
@@ -958,7 +1043,7 @@ impl ProjectContextController {
                         let snapshot = snapshots.last().context("Gradle context has no final observation")?;
                         ensure!(snapshot.phase() == ObservationPhase::Complete, "Gradle context evaluation did not complete");
                         let project = this.update(cx, |this, cx| {
-                            ensure!(this.action_is_current(&active, cx), "Project context changed before observer installation");
+                            ensure!(this.project_is_current(&active, cx), "Project context changed before observer installation");
                             this.project.update(cx, |project, _| project.verify_android_context_inputs(&discovery, snapshot))?;
                             Ok::<_, anyhow::Error>(this.project.clone())
                         })??;
@@ -974,7 +1059,7 @@ impl ProjectContextController {
                         let observer_task = project.update(cx, |project, cx| project.observe_android_context_inputs(handle, discovery.clone(), directories, Some(snapshot.clone()), cx));
                         let observers_added = observer_task.await?;
                         this.update(cx, |this, cx| {
-                            ensure!(this.action_is_current(&active, cx), "Project context changed while establishing observers");
+                            ensure!(this.project_is_current(&active, cx), "Project context changed while establishing observers");
                             Ok::<_, anyhow::Error>(())
                         })??;
                         // First observations only establish provenance. Newly owned
@@ -1004,7 +1089,7 @@ impl ProjectContextController {
                 let Some(owner) = &this.import_owner else { return; };
                 if owner.session != session || owner.root != handle { return; }
                 let result = result.and_then(|result| {
-                    ensure!(this.action_is_current(&active, cx), "Discarded stale Gradle import result");
+                    ensure!(this.project_is_current(&active, cx), "Discarded stale Gradle import result");
                     match result {
                         CapturedProcessOutput::Cancelled => Ok(None),
                         CapturedProcessOutput::Completed { stdout, status } => {
@@ -1014,7 +1099,7 @@ impl ProjectContextController {
                             // even if a plugin printed a complete record before failing.
                             ensure!(!complete || status.success(), "Gradle failed after context evaluation ({status})");
                             for snapshot in snapshots {
-                                this.project.update(cx, |project, cx| project.publish_android_context(&this.active, &active, &discovery, snapshot, cx))?;
+                                this.project.update(cx, |project, cx| project.publish_android_project_context(&this.active, &active, &discovery, snapshot, cx))?;
                             }
                             if !status.success() {
                                 anyhow::bail!("Gradle import failed ({status}); evaluated plugin observations were retained for an explicit retry.");

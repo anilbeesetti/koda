@@ -171,7 +171,8 @@ enum AndroidOperation {
 
 #[derive(Clone)]
 struct AndroidOperationOwner {
-    context: android_tools::project_context::ActiveContextToken,
+    context: android_tools::project_context::ActiveProjectToken,
+    source: Option<android_tools::project_context::ActiveContextToken>,
     root: PathBuf,
     cancelled: Arc<AtomicBool>,
 }
@@ -264,10 +265,11 @@ fn java_pause_state(parsed: &serde_json::Value) -> Result<Option<JavaPause>> {
 }
 
 pub struct AndroidPanel {
-    backend_owner: Option<android_tools::project_context::ActiveContextToken>,
+    backend_owner: Option<android_tools::project_context::ActiveProjectToken>,
     operation_owners: RefCell<
         Vec<(
-            android_tools::project_context::ActiveContextToken,
+            android_tools::project_context::ActiveProjectToken,
+            Option<android_tools::project_context::ActiveContextToken>,
             Weak<AtomicBool>,
         )>,
     >,
@@ -531,7 +533,7 @@ impl AndroidPanel {
                                 |controller| controller.read(cx).owns_restricted_worktree(paths),
                             )
                         {
-                            panel.cancel_obsolete_operation_owners(None);
+                            panel.cancel_obsolete_operation_owners(None, None);
                         }
                     }
                     cx.defer_in(window, |panel, window, cx| {
@@ -551,6 +553,7 @@ impl AndroidPanel {
             window,
             |panel, controller, window, cx| {
                 panel.cancel_obsolete_operation_owners(
+                    controller.read(cx).project_token(cx).as_ref(),
                     controller.read(cx).action_token(cx).as_ref(),
                 );
                 cx.defer_in(window, |panel, _, cx| panel.context_operations_changed(cx));
@@ -560,15 +563,16 @@ impl AndroidPanel {
 
     fn cancel_obsolete_operation_owners(
         &self,
-        current: Option<&android_tools::project_context::ActiveContextToken>,
+        current: Option<&android_tools::project_context::ActiveProjectToken>,
+        current_source: Option<&android_tools::project_context::ActiveContextToken>,
     ) {
         self.operation_owners
             .borrow_mut()
-            .retain(|(context, cancellation)| {
+            .retain(|(context, source, cancellation)| {
                 let Some(cancellation) = cancellation.upgrade() else {
                     return false;
                 };
-                if Some(context) != current {
+                if Some(context) != current || source.as_ref().is_some_and(|source| Some(source) != current_source) {
                     cancellation.store(true, Ordering::Release);
                     return false;
                 }
@@ -580,8 +584,9 @@ impl AndroidPanel {
         let controller = project_context::for_workspace(&self.workspace, cx);
         let owner = controller
             .as_ref()
-            .and_then(|controller| controller.read(cx).action_token(cx));
-        self.cancel_obsolete_operation_owners(owner.as_ref());
+            .and_then(|controller| controller.read(cx).project_token(cx));
+        let source = controller.as_ref().and_then(|controller| controller.read(cx).action_token(cx));
+        self.cancel_obsolete_operation_owners(owner.as_ref(), source.as_ref());
         if owner == self.backend_owner {
             return;
         }
@@ -599,7 +604,7 @@ impl AndroidPanel {
                     tab,
                     session,
                     BuildStatus::Cancelled,
-                    "Android operation cancelled because the active project or editor changed."
+                    "Android operation cancelled because the active project changed."
                         .into(),
                     cx,
                 )
@@ -974,15 +979,21 @@ impl AndroidPanel {
             .context("The Android project's window is no longer available.")?;
         let controller = controller.read(cx);
         let context = controller
-            .action_token(cx)
+            .project_token(cx)
             .context("The active Android project changed. Select the project and try again.")?;
+        let source = if matches!(operation, AndroidOperation::Preview) {
+            Some(controller.action_token(cx).context("The preview source changed. Try again in its source editor.")?)
+        } else {
+            None
+        };
         let root = self.trusted_root(cx)?;
         let cancelled = Arc::new(AtomicBool::new(false));
         let mut owners = self.operation_owners.borrow_mut();
-        owners.retain(|(_, cancellation)| cancellation.strong_count() > 0);
-        owners.push((context.clone(), Arc::downgrade(&cancelled)));
+        owners.retain(|(_, _, cancellation)| cancellation.strong_count() > 0);
+        owners.push((context.clone(), source.clone(), Arc::downgrade(&cancelled)));
         Ok(AndroidOperationOwner {
             context,
+            source,
             root,
             cancelled,
         })
@@ -1007,9 +1018,10 @@ impl AndroidPanel {
         let controller = project_context::for_workspace(&self.workspace, cx)
             .context("The Android project's window is no longer available.")?;
         ensure!(
-            controller.read(cx).action_is_current(&owner.context, cx)
+            controller.read(cx).project_is_current(&owner.context, cx)
+                && owner.source.as_ref().is_none_or(|source| controller.read(cx).action_is_current(source, cx))
                 && self.trusted_root(cx)? == owner.root,
-            "The active Android project or editor changed. Select the project and try again."
+            "The active Android project or preview source changed. Select the project and try again."
         );
         Ok(())
     }
@@ -4537,6 +4549,88 @@ mod tests {
         trusted_worktrees::{self, PathTrust},
     };
     use serde_json::json;
+
+    #[gpui::test]
+    async fn queued_project_work_survives_editor_switches_and_rejects_rapid_root_switches(
+        cx: &mut TestAppContext,
+    ) -> Result<()> {
+        use android_tools::project_context::PluginId;
+        assert!(cfg!(feature = "bundled-preview"), "Use the normal zed bundled-preview graph");
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            project::trusted_worktrees::init(Default::default(), cx);
+            crate::init(cx);
+        });
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem.insert_tree("/work-owner", json!({"Main.kt":"fun main() {}", "Other.kt":"fun other() {}"})).await;
+        filesystem.insert_tree("/work-python", json!({"main.py":"print(1)"})).await;
+        let project = Project::test_with_worktree_trust(filesystem,
+            [Path::new("/work-owner"), Path::new("/work-python")], cx).await;
+        cx.update(|cx| {
+            project_surfaces::tests::trust(&project, cx)?;
+            project_surfaces::tests::publish_catalogue(&project, Path::new("/work-owner"),
+                &[PluginId::AndroidApplication, PluginId::ComposeCompiler], &[("android", "androidJvm")], true, cx)
+        })?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/work-python/main.py"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        let python = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Python item"))?;
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/work-owner/Main.kt"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        let panel = workspace.read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx).context("Android panel"))?;
+        panel.update(visual, |panel, cx| {
+            let target = AndroidTarget {module:":".into(), variant:"debug".into(), output_listing:PathBuf::from("/work-owner/output.json")};
+            panel.targets = vec![target.clone()];
+            panel.selected_target = Some(target.clone());
+            publish_test_android_model(panel, &target, cx);
+        });
+        let owners = panel.read_with(visual, |panel, cx| {
+            [AndroidOperation::Sync, AndroidOperation::Build, AndroidOperation::Devices, AndroidOperation::Run]
+                .map(|operation| panel.operation_owner(operation, cx))
+                .into_iter().collect::<Result<Vec<_>>>()
+        })?;
+        let preview = panel.read_with(visual, |panel, cx| panel.operation_owner(AndroidOperation::Preview, cx))?;
+        panel.update(visual, |panel, _| {
+            panel.backend_owner = Some(owners[1].context.clone());
+            panel.pending_gradle_operation = Some((PathBuf::from("/work-owner"), GradleOperation::Build, owners[1].clone()));
+            panel.build_task = Some(Task::ready(()));
+            panel.device_task = Some(Task::ready(()));
+            panel.running = true;
+        });
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/work-owner/Other.kt"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        assert!(owners.iter().all(|owner| owner.ensure_active().is_ok()), "Project work keeps its owner across a same-root source switch");
+        assert!(preview.ensure_active().is_err(), "Preview work remains bound to its source selection");
+        panel.read_with(visual, |panel, cx| {
+            for (owner, operation) in owners.iter().zip([AndroidOperation::Sync, AndroidOperation::Build, AndroidOperation::Devices, AndroidOperation::Run]) {
+                assert!(panel.verify_operation_owner(owner, operation, cx).is_ok());
+            }
+            assert!(panel.running && panel.build_task.is_some() && panel.device_task.is_some());
+            assert!(panel.pending_gradle_operation.as_ref().is_some_and(|pending| pending.0 == Path::new("/work-owner")));
+        });
+        let android = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Android item"))?;
+        workspace.update_in(visual, |workspace, window, cx| {
+            assert!(workspace.activate_item(python.as_ref(), false, false, window, cx));
+            assert!(workspace.activate_item(android.as_ref(), false, false, window, cx));
+        });
+        visual.run_until_parked();
+        assert!(owners.iter().all(|owner| owner.ensure_active().is_err()), "A/B/A without pumping never revives queued project work");
+        panel.read_with(visual, |panel, cx| {
+            assert!(!panel.running && panel.build_task.is_none() && panel.device_task.is_none() && panel.pending_gradle_operation.is_none());
+            for owner in &owners {
+                assert!(panel.verify_context_owner(owner, cx).is_err());
+            }
+        });
+        Ok(())
+    }
 
     #[gpui::test]
     async fn managed_kotlin_settings_readiness_rejects_changed_active_project(

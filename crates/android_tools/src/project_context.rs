@@ -1095,9 +1095,16 @@ pub struct ActiveContextToken {
     owner_path: Option<PathBuf>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ActiveProjectToken {
+    generation: u64,
+    root: RootToken,
+}
+
 #[derive(Default)]
 pub struct ActiveContext {
     generation: u64,
+    project_generation: u64,
     root: Option<RootHandle>,
     owner_path: Option<PathBuf>,
     // Retained only to offer an explicit neutral reimport after invalidation.
@@ -1179,15 +1186,44 @@ impl ActiveContext {
             || self.owner_path != owner_path
             || self.external_owner_directory != external_owner_directory
         {
-            self.generation = self
+            let generation = self
                 .generation
                 .checked_add(1)
                 .context("Active context generation space exhausted")?;
+            if self.root != root {
+                self.project_generation = self.project_generation.checked_add(1)
+                    .context("Active project generation space exhausted")?;
+            }
+            self.generation = generation;
             self.root = root;
             self.owner_path = owner_path;
             self.external_owner_directory = external_owner_directory;
         }
         Ok(())
+    }
+
+    pub fn invalidate_source_selection(&mut self) -> Result<()> {
+        self.generation = self.generation.checked_add(1)
+            .context("Active context generation space exhausted")?;
+        self.owner_path = None;
+        Ok(())
+    }
+
+    pub fn project_token(&self, store: &ContextStore) -> Option<ActiveProjectToken> {
+        store.snapshot(self.root?)?;
+        self.project_discovery_token(store)
+    }
+
+    pub fn project_discovery_token(&self, store: &ContextStore) -> Option<ActiveProjectToken> {
+        self.discovery_token(store)?;
+        Some(ActiveProjectToken {
+            generation: self.project_generation,
+            root: store.token(self.root?)?,
+        })
+    }
+
+    pub fn project_is_current(&self, token: &ActiveProjectToken, store: &ContextStore) -> bool {
+        self.project_discovery_token(store).as_ref() == Some(token)
     }
 
     pub fn token(&self, store: &ContextStore) -> Option<ActiveContextToken> {
@@ -1230,6 +1266,18 @@ impl ActiveContext {
             self.is_current(active, store) && active.root == discovery.0,
             "Discarded a project context result for a different active pane or root"
         );
+        store.publish(discovery, snapshot)
+    }
+
+    pub fn publish_project(
+        &self,
+        store: &mut ContextStore,
+        active: &ActiveProjectToken,
+        discovery: &DiscoveryToken,
+        snapshot: ContextSnapshot,
+    ) -> Result<()> {
+        ensure!(self.project_is_current(active, store) && active.root == discovery.0,
+            "Discarded a project context result for a different active project");
         store.publish(discovery, snapshot)
     }
 

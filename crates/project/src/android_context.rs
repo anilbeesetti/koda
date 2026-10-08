@@ -1,6 +1,6 @@
 use crate::{Project, WorktreeId};
 use android_tools::project_context::{
-    ActiveContext, ActiveContextToken, ContextSnapshot, ContextStore, DiscoveryToken, RootHandle,
+    ActiveContext, ActiveContextToken, ActiveProjectToken, ContextSnapshot, ContextStore, DiscoveryToken, RootHandle,
 };
 use anyhow::{Context as _, Result};
 use futures::StreamExt as _;
@@ -422,6 +422,20 @@ impl Project {
         snapshot: &ContextSnapshot,
     ) -> Result<()> {
         self.android_context.verify_import_inputs(token, snapshot)
+    }
+
+    pub fn publish_android_project_context(
+        &mut self,
+        active: &ActiveContext,
+        owner: &ActiveProjectToken,
+        discovery: &DiscoveryToken,
+        snapshot: ContextSnapshot,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
+        active.publish_project(&mut self.android_context, owner, discovery, snapshot)?;
+        cx.emit(crate::Event::AndroidProjectContextChanged);
+        cx.notify();
+        Ok(())
     }
 
     pub fn android_context_observes(&self, root: RootHandle, directory: &Path) -> bool {

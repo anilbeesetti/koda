@@ -333,6 +333,10 @@ pub enum Event {
         local: bool,
         focus_changed: bool,
     },
+    ActivateProjectPath {
+        path: Option<ProjectPath>,
+        local: bool,
+    },
     Remove {
         focus_on_pane: Option<Entity<Pane>>,
     },
@@ -368,6 +372,8 @@ impl fmt::Debug for Event {
                 .debug_struct("ActivateItem")
                 .field("local", local)
                 .finish(),
+            Event::ActivateProjectPath { path, local } => f.debug_struct("ActivateProjectPath")
+                .field("path", path).field("local", local).finish(),
             Event::Remove { .. } => f.write_str("Remove"),
             Event::RemovedItem { item } => f
                 .debug_struct("RemovedItem")
@@ -1500,6 +1506,10 @@ impl Pane {
                 self.focus_active_item(window, cx);
             }
 
+            cx.emit(Event::ActivateProjectPath {
+                path: self.items.get(index).and_then(|item| item.project_path(cx)),
+                local: activate_pane,
+            });
             cx.emit(Event::ActivateItem {
                 local: activate_pane,
                 focus_changed: focus_item,

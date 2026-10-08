@@ -1504,6 +1504,7 @@ pub enum Event {
         item: Box<dyn ItemHandle>,
     },
     ActiveItemChanged,
+    ActiveProjectPathChanged(Option<ProjectPath>),
     ItemRemoved {
         item_id: EntityId,
     },
@@ -6162,6 +6163,12 @@ impl Workspace {
     ) {
         let mut serialize_workspace = true;
         match event {
+            pane::Event::ActivateProjectPath { path, local } => {
+                if pane == self.active_pane() || *local {
+                    cx.emit(Event::ActiveProjectPathChanged(path.clone()));
+                }
+                serialize_workspace = false;
+            }
             pane::Event::AddItem { item } => {
                 item.added_to_pane(self, pane.clone(), window, cx);
                 cx.emit(Event::ItemAdded {
@@ -6227,6 +6234,7 @@ impl Workspace {
                 serialize_workspace = false;
             }
             pane::Event::RemovedItem { item } => {
+                cx.emit(Event::ActiveProjectPathChanged(self.active_project_path(cx)));
                 cx.emit(Event::ActiveItemChanged);
                 self.update_window_edited(window, cx);
                 if let hash_map::Entry::Occupied(entry) = self.panes_by_item.entry(item.item_id())
@@ -6694,8 +6702,9 @@ impl Workspace {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        cx.emit(Event::ActiveItemChanged);
         let active_entry = self.active_project_path(cx);
+        cx.emit(Event::ActiveProjectPathChanged(active_entry.clone()));
+        cx.emit(Event::ActiveItemChanged);
         let active_project_path_changed =
             self.last_active_project_path.as_ref() != active_entry.as_ref();
         self.project.update(cx, |project, cx| {

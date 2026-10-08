@@ -211,7 +211,7 @@ pub(super) struct LogcatView {
     stream_task: Option<Task<()>>,
     device_task: Option<Task<()>>,
     device_cancellation: Option<WorkCancellation>,
-    device_owner: Option<android_tools::project_context::ActiveContextToken>,
+    device_owner: Option<android_tools::project_context::ActiveProjectToken>,
     watching_requested: bool,
     control_task: Option<Task<()>>,
     persist_task: Option<Task<()>>,
@@ -260,7 +260,7 @@ impl LogcatView {
         let controller = project_context::for_workspace(&workspace, cx);
         if let Some(controller) = &controller {
             subscriptions.push(cx.observe(controller, |view, controller, cx| {
-                let current = controller.read(cx).action_token(cx);
+                let current = controller.read(cx).project_token(cx);
                 if current != view.device_owner {
                     view.device_cancellation = None;
                     view.stream_task = None;
@@ -690,7 +690,7 @@ impl LogcatView {
     fn device_context_token(
         &self,
         cx: &App,
-    ) -> Result<android_tools::project_context::ActiveContextToken> {
+    ) -> Result<android_tools::project_context::ActiveProjectToken> {
         self.ensure_trusted(cx)?;
         let controller = self
             .controller
@@ -709,18 +709,18 @@ impl LogcatView {
             "Select the owning Android project before using device tools"
         );
         controller
-            .action_token(cx)
+            .project_token(cx)
             .context("The owning Android project changed")
     }
 
     fn verify_device_context(
         &self,
-        owner: &android_tools::project_context::ActiveContextToken,
+        owner: &android_tools::project_context::ActiveProjectToken,
         cx: &App,
     ) -> Result<()> {
         ensure!(
             &self.device_context_token(cx)? == owner,
-            "The active Android project or editor changed during device work"
+            "The active Android project changed during device work"
         );
         Ok(())
     }
@@ -4468,7 +4468,7 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
     filesystem
         .insert_tree(
             "/logcat-owner",
-            serde_json::json!({"Main.kt":"fun main() {}"}),
+            serde_json::json!({"Main.kt":"fun main() {}", "Other.kt":"fun other() {}"}),
         )
         .await;
     filesystem
@@ -4556,6 +4556,15 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
         view.device_task = Some(Task::ready(()));
         view.control_task = Some(Task::ready(()));
     });
+    workspace.update_in(visual, |workspace, window, cx| {
+        workspace.open_abs_path(Path::new("/logcat-owner/Other.kt"), Default::default(), window, cx)
+    }).await?;
+    visual.run_until_parked();
+    assert!(!cancelled.load(Ordering::Acquire), "Same-project editor changes must keep Logcat running");
+    view.read_with(visual, |view, cx| {
+        assert!(view.verify_device_context(&owner, cx).is_ok());
+        assert!(view.capturing && view.device_task.is_some() && view.stream_task.is_some() && view.control_task.is_some());
+    });
     workspace
         .update_in(visual, |workspace, window, cx| {
             workspace.open_abs_path(
@@ -4581,6 +4590,33 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
             view.device_task.is_none() && view.stream_task.is_none() && view.control_task.is_none(),
             "Stale direct entry points must reject before ADB starts"
         );
+    });
+    let python = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Python item"))?;
+    workspace.update_in(visual, |workspace, window, cx| {
+        workspace.open_abs_path(Path::new("/logcat-owner/Main.kt"), Default::default(), window, cx)
+    }).await?;
+    visual.run_until_parked();
+    let android = workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).context("Android item"))?;
+    let current = view.read_with(visual, |view, cx| view.device_context_token(cx))?;
+    let rapid_cancellation = WorkCancellation::default();
+    let rapid_cancelled = rapid_cancellation.0.clone();
+    view.update(visual, |view, _| {
+        view.device_owner = Some(current.clone());
+        view.device_cancellation = Some(rapid_cancellation);
+        view.capturing = true;
+        view.stream_task = Some(Task::ready(()));
+        view.device_task = Some(Task::ready(()));
+        view.control_task = Some(Task::ready(()));
+    });
+    workspace.update_in(visual, |workspace, window, cx| {
+        assert!(workspace.activate_item(python.as_ref(), false, false, window, cx));
+        assert!(workspace.activate_item(android.as_ref(), false, false, window, cx));
+    });
+    visual.run_until_parked();
+    assert!(rapid_cancelled.load(Ordering::Acquire), "A/B/A without pumping must not revive a Logcat stream");
+    view.read_with(visual, |view, cx| {
+        assert!(view.verify_device_context(&current, cx).is_err());
+        assert!(!view.capturing && view.stream_task.is_none() && view.device_task.is_none() && view.control_task.is_none());
     });
     Ok(())
 }
