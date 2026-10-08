@@ -81,6 +81,11 @@ pub fn is_archive_path(path: &Path) -> bool {
 pub trait Watcher: Send + Sync {
     fn add(&self, path: &Path) -> Result<()>;
     fn remove(&self, path: &Path) -> Result<()>;
+    /// `add` may arrange a delayed retry. Callers requiring current coverage
+    /// must distinguish that pending work from an owned active registration.
+    fn is_watching(&self, _path: &Path) -> bool {
+        false
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug)]

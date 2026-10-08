@@ -149,6 +149,24 @@ fn unrelated_project_events_do_not_exhaust_another_pending_import() -> Result<()
     Ok(())
 }
 
+#[test]
+fn evaluated_build_logic_inside_parent_output_keeps_its_own_inputs() -> Result<()> {
+    let root = project_root("logic-inside-parent-output");
+    let logic = root.join("out/logic");
+    let mut value = convention_catalogue(&root);
+    value["buildLogicDirectories"] = json!([&logic]);
+    value["buildLayouts"].as_array_mut().context("Layouts")?.push(json!({
+        "directory":&logic,"buildDirectory":logic.join("generated"),"sourceDirectories":[logic.join("src")]
+    }));
+    let snapshot = decode(&root, &value)?;
+    assert!(snapshot.is_input(&logic.join("src/Convention.kt")));
+    assert!(!snapshot.is_generated_output(&logic.join("src/Convention.kt")));
+    assert!(snapshot.is_generated_output(&logic.join("generated/classes/Convention.class")));
+    assert!(!snapshot.is_input(&logic.join("generated/classes/Convention.class")));
+    assert!(snapshot.is_generated_output(&root.join("out/unrelated-output")));
+    Ok(())
+}
+
 fn module(
     root: &Path,
     path: &str,

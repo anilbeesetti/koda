@@ -306,7 +306,7 @@ impl ContextSnapshot {
     }
 
     pub fn is_input(&self, path: &Path) -> bool {
-        if self.build_layouts.iter().any(|layout| path.starts_with(&layout.build_directory))
+        if self.is_generated_output(path)
             || path.components().any(|part| matches!(part, Component::Normal(name) if name == ".gradle" || name == ".kotlin" || name == ".git")) {
             return false;
         }
@@ -320,6 +320,15 @@ impl ContextSnapshot {
 
     pub fn build_layouts(&self) -> &[BuildLayout] {
         &self.build_layouts
+    }
+
+    pub fn is_generated_output(&self, path: &Path) -> bool {
+        self.build_layouts.iter().filter(|layout| path.starts_with(&layout.build_directory)).any(|output| {
+            // A separately evaluated project can live under another project's
+            // output directory; its own layout defines its input/output boundary.
+            !self.build_layouts.iter().any(|owner| owner.directory != output.directory
+                && owner.directory.starts_with(&output.build_directory) && path.starts_with(&owner.directory))
+        })
     }
 
     pub fn ecosystems(&self) -> Ecosystems {
@@ -679,7 +688,7 @@ fn valid_module_path(path: &str) -> bool {
                 })))
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RootHandle {
     worktree: u64,
     incarnation: u64,

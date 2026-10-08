@@ -209,6 +209,14 @@ impl Drop for FsWatcher {
 }
 
 impl Watcher for FsWatcher {
+    fn is_watching(&self, path: &Path) -> bool {
+        let registrations = self.registrations.lock();
+        let path = SanitizedPath::new(path);
+        registrations.contains_key(&WatchKey::exact(path))
+            || registrations.contains_key(&WatchKey::folded(path))
+            || path_covered_by_recursive_registration(&registrations, path)
+    }
+
     fn add(&self, path: &std::path::Path) -> anyhow::Result<()> {
         log::trace!("watcher add: {path:?}");
 
@@ -1336,6 +1344,35 @@ pub fn poll_interval() -> Duration {
 mod tests {
     use super::*;
     use std::{collections::HashSet, path::PathBuf};
+
+    #[gpui::test]
+    async fn readiness_requires_owned_registration_and_excludes_pending_or_failed_adds(cx: &mut gpui::TestAppContext) -> anyhow::Result<()> {
+        let filesystem = crate::FakeFs::new(cx.executor());
+        let root = PathBuf::from(util::path!("/ready-context-root"));
+        let unavailable = PathBuf::from(util::path!("/unavailable-context-root"));
+        filesystem.insert_tree(&root, serde_json::json!({})).await;
+        filesystem.insert_tree(&unavailable, serde_json::json!({})).await;
+        let native_backend = Arc::new(Mutex::new(FakeWatchBackend::default()));
+        let poll_backend = Arc::new(Mutex::new(FakeWatchBackend::default()));
+        let (sender, _receiver) = async_channel::unbounded();
+        let watcher = FsWatcher::new(Arc::new(test_os_watcher(OsWatcherKind::Native, Some(native_backend.clone()))),
+            Arc::new(test_os_watcher(OsWatcherKind::Poll, Some(poll_backend.clone()))), filesystem, cx.executor(), sender, Arc::new(Mutex::new(Vec::new())));
+        assert!(!watcher.is_watching(&root));
+        watcher.add(&root)?;
+        assert!(watcher.is_watching(&root));
+        let pending = root.join("not-created-yet");
+        watcher.add(&pending)?;
+        if cfg!(target_os = "linux") { assert!(!watcher.is_watching(&pending)); }
+        let pending_root = PathBuf::from(util::path!("/pending-context-root"));
+        watcher.add(&pending_root)?;
+        assert!(!watcher.is_watching(&pending_root));
+        native_backend.lock().fail_with_watch_limit = true;
+        poll_backend.lock().fail_with_watch_limit = true;
+        if let Err(error) = watcher.add(&unavailable) { log::debug!("Expected simulated watch-limit error: {error:#}"); }
+        assert!(!watcher.is_watching(&unavailable));
+        assert!(watcher.is_watching(&root));
+        Ok(())
+    }
 
     fn rescan(path: &str) -> PathEvent {
         PathEvent {

@@ -5,12 +5,13 @@ use android_tools::project_context::{
 use anyhow::{Context as _, Result};
 use futures::StreamExt as _;
 use gpui::{Context, Task};
-use std::{path::{Component, Path, PathBuf}, sync::Arc, time::Duration};
+use std::{collections::{BTreeMap, BTreeSet, VecDeque}, path::{Component, Path, PathBuf}, sync::Arc, time::Duration};
 use util::ResultExt as _;
 use worktree::{PathChange, UpdatedEntriesSet};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct GitHead {
+    work_directory: PathBuf,
     directory: PathBuf,
     common_directory: PathBuf,
     head: String,
@@ -30,8 +31,12 @@ fn valid_git_object(value: &str) -> bool {
 }
 
 async fn git_head(filesystem: &Arc<dyn fs::Fs>, root: &Path) -> Result<Option<GitHead>> {
+    let mut root = root.to_path_buf();
+    let metadata = loop {
+        if let Some(metadata) = filesystem.metadata(&root.join(".git")).await? { break metadata; }
+        if !root.pop() { return Ok(None); }
+    };
     let dot_git = root.join(".git");
-    let Some(metadata) = filesystem.metadata(&dot_git).await? else { return Ok(None); };
     let directory = if metadata.is_dir { dot_git } else {
         let file = bounded_git_file(filesystem, &dot_git, 32768).await?.context("Git directory reference disappeared")?;
         let reference = file.trim().strip_prefix("gitdir: ").context("Invalid Gradle input Git directory reference")?;
@@ -64,7 +69,59 @@ async fn git_head(filesystem: &Arc<dyn fs::Fs>, root: &Path) -> Result<Option<Gi
         Some(head.clone())
     };
     anyhow::ensure!(resolved.as_ref().is_none_or(|value| valid_git_object(value)), "Invalid Gradle input Git object");
-    Ok(Some(GitHead { directory, common_directory, head, resolved }))
+    Ok(Some(GitHead { work_directory: root, directory, common_directory, head, resolved }))
+}
+
+fn register_ready(watcher: &Arc<dyn fs::Watcher>, directory: &Path) -> Result<()> {
+    watcher.add(directory).context("Establish Gradle input observer")?;
+    anyhow::ensure!(watcher.is_watching(directory), "Gradle input observer is pending or unavailable: {}", directory.display());
+    Ok(())
+}
+
+struct InputScan {
+    discovered: Vec<PathBuf>,
+    git_roots: BTreeSet<PathBuf>,
+}
+
+async fn scan_inputs(filesystem: &Arc<dyn fs::Fs>, watcher: &Arc<dyn fs::Watcher>, roots: Vec<PathBuf>,
+    watched: &mut BTreeSet<PathBuf>, provenance: Option<&ContextSnapshot>) -> Result<InputScan> {
+    let mut queue = VecDeque::from(roots);
+    let mut discovered = Vec::new();
+    let mut git_roots = BTreeSet::new();
+    let mut entries = 0;
+    while let Some(directory) = queue.pop_front() {
+        if watched.contains(&directory) || provenance.is_some_and(|snapshot| snapshot.is_generated_output(&directory)) { continue; }
+        let Some(metadata) = filesystem.metadata(&directory).await? else { continue; };
+        if !metadata.is_dir || metadata.is_symlink { continue; }
+        anyhow::ensure!(watched.len() < 32768, "Gradle input tree exceeds its directory observation limit");
+        register_ready(watcher, &directory)?;
+        watched.insert(directory.clone());
+        discovered.push(directory.clone());
+        let mut children = filesystem.read_dir(&directory).await?;
+        while let Some(child) = children.next().await {
+            let child = child?;
+            entries += 1;
+            anyhow::ensure!(entries <= 262144, "Gradle input scan exceeds its entry limit");
+            if child.file_name().is_some_and(|name| name == ".git") {
+                git_roots.insert(directory.clone());
+                continue;
+            }
+            if child.file_name().is_some_and(|name| name == ".gradle" || name == ".kotlin")
+                || provenance.is_some_and(|snapshot| snapshot.is_generated_output(&child)) { continue; }
+            discovered.push(child.clone());
+            if filesystem.metadata(&child).await?.is_some_and(|metadata| metadata.is_dir && !metadata.is_symlink) { queue.push_back(child); }
+        }
+    }
+    Ok(InputScan { discovered, git_roots })
+}
+
+async fn register_current_ref(filesystem: &Arc<dyn fs::Fs>, watcher: &Arc<dyn fs::Watcher>, directory: &Path, head: &GitHead) -> Result<()> {
+    let Some(reference) = head.head.strip_prefix("ref: ") else { return Ok(()); };
+    let mut parent = directory.join(reference).parent().context("Git reference has no parent")?.to_path_buf();
+    while !filesystem.metadata(&parent).await?.is_some_and(|metadata| metadata.is_dir) {
+        anyhow::ensure!(parent.pop() && parent.starts_with(directory), "Git reference parent is unavailable");
+    }
+    register_ready(watcher, &parent)
 }
 
 fn may_change_git_head(path: &Path, root: &Path, head: Option<&GitHead>) -> bool {
@@ -144,7 +201,7 @@ impl Project {
         self.android_context_observers.get(&root).is_some_and(|observers| observers.keys().any(|observed| directory.starts_with(observed)))
     }
 
-    pub fn observe_android_context_inputs(&mut self, root: RootHandle, token: DiscoveryToken, directories: Vec<PathBuf>, cx: &mut Context<Self>) -> Task<Result<bool>> {
+    pub fn observe_android_context_inputs(&mut self, root: RootHandle, token: DiscoveryToken, directories: Vec<PathBuf>, provenance: Option<ContextSnapshot>, cx: &mut Context<Self>) -> Task<Result<bool>> {
         if directories.len() > 4096 { return Task::ready(Err(anyhow::anyhow!("Too many evaluated Gradle observer roots"))); }
         let needed = directories.into_iter().filter(|directory| !self.android_context_observes(root, directory)).collect::<Vec<_>>();
         let filesystem = self.fs().clone();
@@ -153,70 +210,131 @@ impl Project {
             for directory in needed {
                 let directory_for_watch = directory.clone();
                 let filesystem_for_watch = filesystem.clone();
-                let (mut events, watchers, mut head) = cx.background_spawn(async move {
-                    let mut paths = vec![(directory_for_watch.clone(), false)];
-                    let head = git_head(&filesystem_for_watch, &directory_for_watch).await?;
-                    if let Some(head) = &head {
-                        paths.push((head.directory.clone(), true));
-                        if head.common_directory != head.directory { paths.push((head.common_directory.clone(), true)); }
+                let scan_provenance = provenance.clone();
+                let (mut events, input_watcher, git_watchers, mut watched, mut heads, mut known_inputs) = cx.background_spawn(async move {
+                    let (input_events, input_watcher) = filesystem_for_watch.watch(&directory_for_watch, Duration::from_millis(100)).await;
+                    let mut watched = BTreeSet::new();
+                    let scan = scan_inputs(&filesystem_for_watch, &input_watcher, vec![directory_for_watch.clone()], &mut watched, scan_provenance.as_ref()).await?;
+                    let known_inputs = scan.discovered.iter().filter(|path| android_tools::project_context::is_context_input(path)).cloned().collect::<BTreeSet<_>>();
+                    anyhow::ensure!(watched.contains(&directory_for_watch), "Gradle input root is not currently observable");
+                    let mut git_roots = scan.git_roots;
+                    git_roots.insert(directory_for_watch.clone());
+                    let mut heads = BTreeMap::new();
+                    for candidate in git_roots {
+                        if let Some(head) = git_head(&filesystem_for_watch, &candidate).await? {
+                            anyhow::ensure!(heads.len() < 256 || heads.contains_key(&head.work_directory), "Too many owning Git repositories in Gradle inputs");
+                            heads.insert(head.work_directory.clone(), head);
+                        }
                     }
-                    let mut streams = Vec::new();
-                    let mut watchers = Vec::new();
-                    for (path, git) in paths {
-                        let (events, watcher) = filesystem_for_watch.watch(&path, Duration::from_millis(100)).await;
-                        watcher.add(&path).context("Establish Gradle input observer")?;
-                        streams.push(events.map(move |events| (events, git)).boxed());
-                        watchers.push(watcher);
+                    let mut streams = vec![input_events.map(|events| (events, false)).boxed()];
+                    let mut git_watchers = BTreeMap::new();
+                    for head in heads.values() {
+                        for path in [&head.directory, &head.common_directory] {
+                            if git_watchers.contains_key(path) { continue; }
+                            let (events, watcher) = filesystem_for_watch.watch(path, Duration::from_millis(100)).await;
+                            register_ready(&watcher, path)?;
+                            streams.push(events.map(|events| (events, true)).boxed());
+                            git_watchers.insert(path.clone(), watcher);
+                        }
+                        for path in [&head.directory, &head.common_directory] {
+                            let watcher = git_watchers.get(path).context("Owning Git observer disappeared")?;
+                            register_current_ref(&filesystem_for_watch, watcher, path, head).await?;
+                        }
                     }
-                    anyhow::ensure!(git_head(&filesystem_for_watch, &directory_for_watch).await? == head, "Gradle input Git HEAD changed while establishing its observer");
-                    Ok::<_, anyhow::Error>((futures::stream::select_all(streams), watchers, head))
+                    for head in heads.values() {
+                        anyhow::ensure!(git_head(&filesystem_for_watch, &head.work_directory).await?.as_ref() == Some(head), "Gradle input Git HEAD changed while establishing observers");
+                    }
+                    Ok::<_, anyhow::Error>((futures::stream::select_all(streams), input_watcher, git_watchers, watched, heads, known_inputs))
                 }).await?;
                 let filesystem = filesystem.clone();
+                let observer_provenance = provenance.clone();
                 project.update(cx, |project, cx| {
                     anyhow::ensure!(project.android_context.import_is_current(&token), "Gradle observer owner changed during installation");
                     let observer_directory = directory.clone();
                     let task = cx.spawn(async move |project, cx| {
-                        let _watchers = watchers;
                         while let Some((batch, git)) = events.next().await {
+                            let relevant = heads.values().filter(|head| batch.iter().any(|event| event.kind == Some(fs::PathEventKind::Rescan)
+                                || may_change_git_head(&event.path, &head.work_directory, Some(head))))
+                                .cloned().collect::<Vec<_>>();
+                            let mut failed = false;
                             let mut changed_head = false;
-                            let mut changed_git_directory = false;
-                            if batch.iter().any(|event| event.kind == Some(fs::PathEventKind::Rescan)
-                                || may_change_git_head(&event.path, &observer_directory, head.as_ref())) {
+                            for previous in relevant {
                                 let filesystem = filesystem.clone();
-                                let directory = observer_directory.clone();
-                                match cx.background_spawn(async move { git_head(&filesystem, &directory).await }).await {
-                                    Ok(current) => {
-                                        changed_head = current != head;
-                                        changed_git_directory = current.as_ref().map(|head| (&head.directory, &head.common_directory))
-                                            != head.as_ref().map(|head| (&head.directory, &head.common_directory));
-                                        head = current;
+                                let previous_for_read = previous.clone();
+                                let watchers = git_watchers.clone();
+                                let result = cx.background_spawn(async move {
+                                    let current = git_head(&filesystem, &previous_for_read.work_directory).await?;
+                                    if let Some(current) = &current {
+                                        if current.directory == previous_for_read.directory && current.common_directory == previous_for_read.common_directory {
+                                            for directory in [&current.directory, &current.common_directory] {
+                                                register_current_ref(&filesystem, watchers.get(directory).context("Git observer is unavailable")?, directory, current).await?;
+                                            }
+                                        }
                                     }
-                                    Err(error) => {
-                                        log::error!("Cannot verify Gradle input Git HEAD: {error:#}");
+                                    Ok::<_, anyhow::Error>(current)
+                                }).await;
+                                match result {
+                                    Ok(current) if current.as_ref() == Some(&previous) => {}
+                                    Ok(Some(current)) if current.directory == previous.directory && current.common_directory == previous.common_directory => {
+                                        heads.insert(current.work_directory.clone(), current);
                                         changed_head = true;
-                                        changed_git_directory = true;
+                                    }
+                                    Ok(_) => { failed = true; break; }
+                                    Err(error) => { log::error!("Cannot verify Gradle input Git HEAD: {error:#}"); failed = true; break; }
+                                }
+                            }
+                            let mut discovered = Vec::new();
+                            if !git && !failed {
+                                let paths = batch.iter().map(|event| event.path.clone()).collect::<Vec<_>>();
+                                let scan_provenance = match project.read_with(cx, |project, _| project.android_context.snapshot(root).cloned()) {
+                                    Ok(snapshot) => snapshot.or_else(|| observer_provenance.clone()),
+                                    Err(_) => break,
+                                };
+                                for event in batch.iter().filter(|event| event.kind == Some(fs::PathEventKind::Removed)) {
+                                    let removed = watched.iter().filter(|directory| directory.starts_with(&event.path)).cloned().collect::<Vec<_>>();
+                                    for directory in removed {
+                                        if let Err(error) = input_watcher.remove(&directory) { log::error!("Cannot retire removed Gradle input directory: {error:#}"); failed = true; }
+                                        watched.remove(&directory);
+                                    }
+                                    let removed_inputs = known_inputs.iter().filter(|path| path.starts_with(&event.path)).cloned().collect::<Vec<_>>();
+                                    for path in removed_inputs { known_inputs.remove(&path); discovered.push(path); }
+                                }
+                                let new_git_marker = batch.iter().any(|event| event.path.file_name().is_some_and(|name| name == ".git"));
+                                failed |= new_git_marker || batch.iter().any(|event| event.kind == Some(fs::PathEventKind::Rescan));
+                                if !failed {
+                                    let filesystem = filesystem.clone();
+                                    let watcher = input_watcher.clone();
+                                    let mut scanned = std::mem::take(&mut watched);
+                                    match cx.background_spawn(async move {
+                                        let result = scan_inputs(&filesystem, &watcher, paths, &mut scanned, scan_provenance.as_ref()).await;
+                                        (scanned, result)
+                                    }).await {
+                                        (scanned, Ok(scan)) => {
+                                            watched = scanned;
+                                            known_inputs.extend(scan.discovered.iter().filter(|path| android_tools::project_context::is_context_input(path)).cloned());
+                                            discovered.extend(scan.discovered);
+                                            if scan.git_roots.iter().any(|root| !heads.contains_key(root)) { failed = true; }
+                                        }
+                                        (scanned, Err(error)) => {
+                                            watched = scanned;
+                                            log::error!("Cannot extend Gradle input observation: {error:#}");
+                                            failed = true;
+                                        }
                                     }
                                 }
                             }
+                            if failed { break; }
                             if project.update(cx, |project, cx| {
                                 if changed_head { project.invalidate_android_context_handle(root, cx).log_err(); }
-                                for event in batch {
-                                    if !git && event.kind == Some(fs::PathEventKind::Rescan) {
-                                        project.invalidate_android_context_handle(root, cx).log_err();
-                                    } else if !git {
-                                        project.on_owned_android_context_input_change(root, &event.path, cx);
-                                    }
+                                if !git {
+                                    for path in discovered { project.on_owned_android_context_input_change(root, &path, cx); }
+                                    for event in batch { project.on_owned_android_context_input_change(root, &event.path, cx); }
                                 }
                             }).is_err() { break; }
-                            if changed_git_directory { break; }
                         }
                         project.update(cx, |project, cx| {
-                            if let Some(observers) = project.android_context_observers.get_mut(&root) {
-                                observers.remove(&observer_directory);
-                            }
-                            if project.android_context.token(root).is_some() {
-                                project.invalidate_android_context_handle(root, cx).log_err();
-                            }
+                            if let Some(observers) = project.android_context_observers.get_mut(&root) { observers.remove(&observer_directory); }
+                            if project.android_context.token(root).is_some() { project.invalidate_android_context_handle(root, cx).log_err(); }
                         }).log_err();
                     });
                     project.android_context_observers.entry(root).or_default().insert(directory, task);
