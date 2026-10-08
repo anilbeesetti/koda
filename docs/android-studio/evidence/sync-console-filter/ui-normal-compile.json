@@ -1,0 +1,16 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "compile_command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_ui",
+    "--lib",
+    "--no-run",
+    "--message-format=json-render-diagnostics"
+  ],
+  "compile_exit": 0,
+  "compile_elapsed_seconds": 263.35541473599733,
+  "source_files_unchanged_after_compile": 4748
+}

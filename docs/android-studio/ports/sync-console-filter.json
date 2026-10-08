@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "task": "P1 bounded Sync console stdout presentation",
+  "status": "owner_current_execution_five_reviews_and_metadata_validation_pass_pending_final_HEAD_CI_and_lead_merge",
+  "base": "7687eb64c51f241623a2160a7f3d2bfa99a2b2fb",
+  "branch": "android-studio-task/1-sync-console-filter",
+  "protected_dependency": "f2aa51b883b2c926cb54cfe1618bc2cb8f738420",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "source_file_count": 4748,
+  "source_digest": "5cbb58dcbbb2b687a83f119235f65f714c792b7c08a3207b06351304c44a391a",
+  "pull_request": "https://github.com/anilbeesetti/koda/pull/65",
+  "behavior": "Rust hides only exact leading KODA_ANDROID_PROJECT_MODEL= stdout records in Android Sync console and Copy output; raw captured stdout remains byte-identical for model decoders. Stderr, marker substrings and other command output retain existing behavior.",
+  "supplemental_tests": [
+    "android_build::tests::model_console_capture_limit_applies_to_hidden_records",
+    "android_build::tests::model_console_chunks_unicode_without_restarting_prefix_detection",
+    "android_build::tests::model_console_filters_only_exact_leading_stdout_records",
+    "android_build::tests::model_console_hidden_record_does_not_buffer_its_payload",
+    "android_build::tests::model_console_invalid_utf8_does_not_become_a_successful_raw_model",
+    "android_build::tests::model_console_matches_prefix_across_every_read_split",
+    "android_build::tests::model_console_preserves_line_endings_blanks_and_unterminated_lines",
+    "android_build::tests::model_console_preserves_upstream_diagnostic_fixture_contents",
+    "android_build::tests::model_console_propagates_closed_output_even_for_hidden_only_input",
+    "android_build::tests::model_console_ready_hidden_capture_yields_before_eof",
+    "android_build::tests::model_console_real_command_can_cancel_after_hidden_transport",
+    "android_build::tests::model_console_real_command_preserves_stderr_failure_and_normal_command_output",
+    "android_build::tests::model_console_retains_basic_and_v2_decoding_and_validation",
+    "android_build::tests::model_console_retains_partial_prefix_at_eof_and_after_mismatch",
+    "android_build::tests::model_console_sync_and_build_sessions_keep_distinct_visible_output",
+    "android_build::tests::model_console_timeout_and_preexisting_cancel_prevent_success",
+    "android_build::tests::model_console_visible_output_obeys_backpressure"
+  ],
+  "new_original_test_credit": 0,
+  "canonical_parity_ledger_modified": "29 existing tooling and seven UI run records refreshed to their actual current canonical Cargo executions; previous receipts retained as historical evidence",
+  "canonical_IDs_statuses_reasons_target_names_fixture_mapping_unchanged": true,
+  "canonical_ledger": {
+    "cataloged_partial_rows": 95,
+    "ported": 20,
+    "adapted": 16,
+    "unported": 59,
+    "existing_current_behavior_mappings_passed": 36,
+    "full_census_complete": false
+  },
+  "bounded_reference_inventory": {
+    "path": "docs/android-studio/ports/sync-console-reference-preflight.json",
+    "sha256": "fe9f24b0504af98eaa3cc0830425c3c90e0b2abef300e861fdb110f095df489b",
+    "source_suites": 17,
+    "source_methods": 112,
+    "applicable_unported": 60,
+    "deferred_NDK_unported": 52,
+    "original_credit": 0,
+    "fixture_reuse_is_not_an_original_behavior_port": true
+  },
+  "runtime": {
+    "tooling_all_features": {
+      "passed": 291,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0
+    },
+    "UI_default": {
+      "discovered": 143,
+      "passed": 142,
+      "failed": 0,
+      "inherited_ignored": 1,
+      "filtered": 0,
+      "all17_once_ok": true,
+      "actual_normal_compile_and_asset_harness_execution": true
+    },
+    "canonical_tools_current_Cargo_exact": 29,
+    "current_UI_asset_bound_ELF_exact": 7,
+    "UI_canonical_historical_Cargo_unchanged": 0,
+    "strict_focused_script_Clippy": "PASS, release/all-targets/all-features/deny-warnings retained",
+    "fmt": "PASS",
+    "current_code_full_CI": {
+      "run": 37738240656,
+      "all3_jobs": "SUCCESS",
+      "passed": 10557,
+      "failed": 0,
+      "existing_skips": 23,
+      "unfiltered": true,
+      "individual17_and36_not_in_aggregateCIlog": true
+    },
+    "current_full_app": {
+      "normal_locked_default_build": "PASS",
+      "embedded_commit": "f763baebb6d0970b283f759967d7980084317e67",
+      "sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c",
+      "dynamic_ordinary_build_script_SHA": true,
+      "no_commit_env_injection": true
+    },
+    "native": {
+      "actual_sdk_Gradle_success_exits": [
+        0,
+        0
+      ],
+      "actual_failure_exit": 1,
+      "copy_output": "leading machine JSON hidden; normal/midline/stderr/diagnostic exact original lines preserved",
+      "complete_success_record_bytes": 96215,
+      "JSON_payload_only_bytes": 96187,
+      "source_root_normalized_complete_ordered_model_comparison": "PASS, no dropped sidecars",
+      "production_import": ":app/demoDebug/two variants/tree",
+      "owned_processes": "nonrunning, exactclientsabsent; daemonZ/nonrunning; display123free",
+      "no_extra_current_standalone_V2_probe_compiled": true
+    },
+    "canonical_UI_current_Cargo_exact": 7,
+    "previous_UI_canonical_historical_Cargo_receipts_retained": 7,
+    "current_UI_Cargo_evidence_summary": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/seven-current-Cargo-summary.json",
+    "UI_diagnostic_current_compiler_fresh": true,
+    "UI_diagnostic_no_run_is_not_test_execution": true
+  },
+  "five_area_review_verdicts": {
+    "code": "PASS",
+    "ui": "PASS",
+    "ux": "PASS",
+    "performance": "PASS",
+    "quality": "PASS"
+  },
+  "process_preservation": {
+    "historical_review_physical_index_drift": "FAIL retained, uncertain stat-cache attribution",
+    "historical_raw_sha256": "41ab8963b247461218ef316b6d5999d74fee3c60dcb761b5699c11a18ba5a2fc",
+    "current_raw_sha256": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+    "logical_stage_sha256": "0169a434622b3427f580458029286ff2a14ffed8ef0e3132db7b3bb06b2d7883",
+    "all_tracked_bytes_modes_HEAD_index_verified": 6960,
+    "affected_current_rechecks": "PASS",
+    "no_index_restoration": true
+  },
+  "limitations": [
+    "360px project pane clips editor and console; complete Android Studio narrow fidelity remains incomplete",
+    "Return does not activate generic toolbar tab",
+    "SDK lacks emulator/emulator binary; no device/emulator credit",
+    "Normal isolated profile emits inherited Gradle TreeSitter indent warning",
+    "Software Vulkan/small fixture; no GPU, startup benchmark, large-project or profiler credit"
+  ],
+  "non_rust_exceptions": [
+    {
+      "component": "Official Gradle/AGP model runtime and wrapper/JDK",
+      "reason": "Existing official Android build/model behavior has no practical replacement; presentation and validation logic remains Rust"
+    },
+    {
+      "component": "Official Android SDK",
+      "reason": "Required Android platform/build artifacts and licensing/toolchain interfaces; emulator binary absent in current SDK"
+    }
+  ],
+  "product_fix_rounds": 3,
+  "failure_history_retained": "round1/round2 assertion adjustments and round3 E0282 type annotation; initial compiler failure/rawCI retained; administrative helper/probe/app recipe/post-index failures retained separately; first metadata catalog stale historical7e run failure/raw receipt retained; all seven unchanged canonical UI Cargo commands actually rerun on currentf763; administrative CLI summary capitalization assertion failure after actual catalog exit0 retained; exact capitalized continuation and reference/expected-incomplete checks passed",
+  "global_census_complete": false,
+  "full_IDE_complete": false,
+  "lead_protected_merge_pending": true,
+  "metadata_validation": {
+    "status": "PASS",
+    "catalog_exit": 0,
+    "reference_archives_and_citations_exit": 0,
+    "completion_negative_exit": 1,
+    "expected_completion_error": "Error: completion blocked: reference test census is incomplete",
+    "current_frozen_CLI_source": "5810906 Member normal build; executable not relabeled Consolef763 compiler output",
+    "executable_sha256": "2e85cbaec3314218506512f52ac4c897b2bdd3abe27402adb7e2d183045de8ae",
+    "closure": "docs/android-studio/evidence/sync-console-filter/metadata-validation/closed-validation-handoff.json",
+    "administrative_wrapper_case_assertion_failure": "retained; actual catalog exited0; Root-reviewed continuation validates exact capitalized summary; no product or schema change",
+    "completion_credit": false,
+    "final_metadata_HEAD_CI_and_lead_protected_merge_pending": true
+  }
+}

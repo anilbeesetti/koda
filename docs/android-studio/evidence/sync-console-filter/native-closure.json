@@ -1,0 +1,395 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "normal_app_sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c",
+  "utc": "2026-10-08T10:42:17.538291+00:00",
+  "source_file_count": 4748,
+  "source_index_status_refs_keepers_historical_inputs_guard": "PASS",
+  "seven_frozen_recipe_inputs_guard": "PASS",
+  "snapshot_path": "/workspace/android-studio-artifacts/sync-console-filter/integration-preparation/combined-whole-source.json",
+  "snapshot_sha256": "072fa390a1446b8c259de4e343f65ef9a8a4d1404a27edd6cb2ad285f36e98df",
+  "owned_processes_nonrunning": [
+    {
+      "pid": 405872,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 405896,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 405886,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 409121,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 409167,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 409157,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 406191,
+      "state": "Z",
+      "start_ticks": 9144813,
+      "running": false
+    },
+    {
+      "pid": 406106,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 407356,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 409281,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 406122,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 407383,
+      "exists": false,
+      "running": false
+    },
+    {
+      "pid": 409307,
+      "exists": false,
+      "running": false
+    }
+  ],
+  "remaining_compiler_native_java_zombies_only": [
+    {
+      "pid": 34966,
+      "comm": "Xvfb",
+      "state": "Z",
+      "start_ticks": 88426
+    },
+    {
+      "pid": 37283,
+      "comm": "Xvfb",
+      "state": "Z",
+      "start_ticks": 121410
+    },
+    {
+      "pid": 37461,
+      "comm": "java",
+      "state": "Z",
+      "start_ticks": 122765
+    },
+    {
+      "pid": 129167,
+      "comm": "rustc",
+      "state": "Z",
+      "start_ticks": 1012865
+    },
+    {
+      "pid": 133452,
+      "comm": "rustc",
+      "state": "Z",
+      "start_ticks": 1048792
+    },
+    {
+      "pid": 134519,
+      "comm": "java",
+      "state": "Z",
+      "start_ticks": 1078669
+    },
+    {
+      "pid": 167092,
+      "comm": "java",
+      "state": "Z",
+      "start_ticks": 1738439
+    },
+    {
+      "pid": 232854,
+      "comm": "koda",
+      "state": "Z",
+      "start_ticks": 3127904
+    },
+    {
+      "pid": 406191,
+      "comm": "java",
+      "state": "Z",
+      "start_ticks": 9144813
+    }
+  ],
+  "display123_socket_and_lock_absent": true,
+  "launch_alias_hardlink_count_expected": [
+    {
+      "path": "/tmp/android-studio-sync-console-link-output/koda-sync-console-400429",
+      "dev": 33,
+      "inode": 108429,
+      "bytes": 1359525048,
+      "nlink": 1,
+      "symlink_target": null
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/koda",
+      "dev": 27,
+      "inode": 1099813,
+      "bytes": 69,
+      "nlink": 3,
+      "symlink_target": "/tmp/android-studio-sync-console-link-output/koda-sync-console-400429"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+      "dev": 27,
+      "inode": 1099813,
+      "bytes": 69,
+      "nlink": 3,
+      "symlink_target": "/tmp/android-studio-sync-console-link-output/koda-sync-console-400429"
+    },
+    {
+      "path": "/workspace/android-studio-sync-console-filter/target/cloud-app/koda",
+      "dev": 27,
+      "inode": 1099813,
+      "bytes": 69,
+      "nlink": 3,
+      "symlink_target": "/tmp/android-studio-sync-console-link-output/koda-sync-console-400429"
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/target/cloud-app/koda",
+      "dev": 27,
+      "inode": 1049313,
+      "bytes": 59,
+      "nlink": 1,
+      "symlink_target": "/tmp/android-studio-link-output/koda-import-identity-339403"
+    }
+  ],
+  "actual_normal_environment_public_paths": {
+    "ANDROID_HOME": "/workspace/android-studio-artifacts/sdk",
+    "ANDROID_SDK_ROOT": "/workspace/android-studio-artifacts/sdk",
+    "JAVA_HOME": "/workspace/android-studio-artifacts/jdk21/jdk-21.0.12.1+1",
+    "GRADLE_USER_HOME": "/workspace/android-studio-artifacts/gradle-home"
+  },
+  "jdk_release_sha256": "ebbd70bf00bab6d39addf51969c5ff244030b86b29de400b9fb10612ebd3ceec",
+  "jdk_release_bytes_hex": "494d504c454d454e544f523d2245636c697073652041646f707469756d220a494d504c454d454e544f525f56455253494f4e3d2254656d7572696e2d32312e302e31322e312b31220a4a4156415f52554e54494d455f56455253494f4e3d2232312e302e31322e312b312d4c5453220a4a4156415f56455253494f4e3d2232312e302e31322e31220a4a4156415f56455253494f4e5f444154453d22323032362d30382d3138220a4c4942433d22676e75220a4d4f44554c45533d226a6176612e62617365206a6176612e636f6d70696c6572206a6176612e646174617472616e73666572206a6176612e786d6c206a6176612e7072656673206a6176612e6465736b746f70206a6176612e696e737472756d656e74206a6176612e6c6f6767696e67206a6176612e6d616e6167656d656e74206a6176612e73656375726974792e7361736c206a6176612e6e616d696e67206a6176612e726d69206a6176612e6d616e6167656d656e742e726d69206a6176612e6e65742e68747470206a6176612e736372697074696e67206a6176612e73656375726974792e6a677373206a6176612e7472616e73616374696f6e2e7861206a6176612e73716c206a6176612e73716c2e726f77736574206a6176612e786d6c2e63727970746f206a6176612e7365206a6176612e736d61727463617264696f206a646b2e6163636573736962696c697479206a646b2e696e7465726e616c2e6a766d73746174206a646b2e617474616368206a646b2e6368617273657473206a646b2e696e7465726e616c2e6f7074206a646b2e7a69706673206a646b2e636f6d70696c6572206a646b2e63727970746f2e6563206a646b2e63727970746f2e63727970746f6b69206a646b2e64796e616c696e6b206a646b2e696e7465726e616c2e6564206a646b2e65646974706164206a646b2e686f7473706f742e6167656e74206a646b2e68747470736572766572206a646b2e696e63756261746f722e766563746f72206a646b2e696e7465726e616c2e6c65206a646b2e696e7465726e616c2e766d2e6369206a646b2e696e7465726e616c2e766d2e636f6d70696c6572206a646b2e696e7465726e616c2e766d2e636f6d70696c65722e6d616e6167656d656e74206a646b2e6a6172746f6f6c206a646b2e6a617661646f63206a646b2e6a636d64206a646b2e6d616e6167656d656e74206a646b2e6d616e6167656d656e742e6167656e74206a646b2e6a636f6e736f6c65206a646b2e6a64657073206a646b2e6a6477702e6167656e74206a646b2e6a6469206a646b2e6a6672206a646b2e6a6c696e6b206a646b2e6a7061636b616765206a646b2e6a7368656c6c206a646b2e6a736f626a656374206a646b2e6a7374617464206a646b2e6c6f63616c6564617461206a646b2e6d616e6167656d656e742e6a6672206a646b2e6e616d696e672e646e73206a646b2e6e616d696e672e726d69206a646b2e6e6574206a646b2e6e696f2e6d61706d6f6465206a646b2e72616e646f6d206a646b2e73637470206a646b2e73656375726974792e61757468206a646b2e73656375726974792e6a677373206a646b2e756e737570706f72746564206a646b2e756e737570706f727465642e6465736b746f70206a646b2e786d6c2e646f6d220a4f535f415243483d227838365f3634220a4f535f4e414d453d224c696e7578220a534f555243453d222e3a6769743a316334313766626663326637220a4255494c445f534f555243453d226769743a65366261376465633364303736353430373435353933313033373661336165383964613566346163220a4255494c445f534f555243455f5245504f3d2268747470733a2f2f6769746875622e636f6d2f61646f707469756d2f74656d7572696e2d6275696c642e676974220a534f555243455f5245504f3d2268747470733a2f2f6769746875622e636f6d2f61646f707469756d2f6a646b3231752e676974220a46554c4c5f56455253494f4e3d2232312e302e31322e312b312d4c5453220a53454d414e5449435f56455253494f4e3d2232312e302e31322e312b31220a4255494c445f494e464f3d224f533a204c696e75782056657273696f6e3a20362e382e302d313036342d617a757265220a4a564d5f56415249414e543d22486f7473706f74220a4a564d5f56455253494f4e3d2232312e302e31322e312b312d4c5453220a494d4147455f545950453d224a444b220a",
+  "case_sdk_local_properties": {
+    "success": {
+      "bytes_hex": "73646b2e6469723d2f776f726b73706163652f616e64726f69642d73747564696f2d6172746966616374732f73646b0a",
+      "sha256": "00c76c7994130b465695145ca6d2e144002d7b1afb594b3d2f715c7643eb87da"
+    },
+    "failure": {
+      "bytes_hex": "73646b2e6469723d2f776f726b73706163652f616e64726f69642d73747564696f2d6172746966616374732f73646b0a",
+      "sha256": "00c76c7994130b465695145ca6d2e144002d7b1afb594b3d2f715c7643eb87da"
+    }
+  },
+  "capacity_available_bytes": {
+    "/workspace": 433790976,
+    "/tmp": 90435584
+  },
+  "cgroup_memory": {
+    "memory.current": "16267698176",
+    "memory.max": "17179869184",
+    "memory.peak": "17180594176",
+    "memory.events": "low 0\nhigh 0\nmax 1772705\noom 0\noom_kill 0\noom_group_kill 0",
+    "observed_breakdown_bytes": {
+      "anon": 52170752,
+      "file": 15231000576,
+      "shmem": 9351188480,
+      "slab": 981684784
+    }
+  },
+  "screenshots": [
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/after-trust-observed.png",
+      "bytes": 111306,
+      "sha256": "9a20d1ddec7f3f0df9fca1329d2b8e4348c38df5032587d120b269683ee1ff58"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/build-divider-drag-top-edge.png",
+      "bytes": 107996,
+      "sha256": "be84c4c39401e40b65991182cc6585b56b4456280b2700a4c6f09b93f928f07b"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/build-divider-expanded.png",
+      "bytes": 107996,
+      "sha256": "be84c4c39401e40b65991182cc6585b56b4456280b2700a4c6f09b93f928f07b"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/build-divider-native-drag-observed.png",
+      "bytes": 142953,
+      "sha256": "cae9f73671b391e5f5b32020330ae53aae799dfc47b2a43abc1c8e2068489349"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/console-horizontal-scroll-right.png",
+      "bytes": 84330,
+      "sha256": "aca304c346985768e84060a8d7ab8b0958bc35b3fdad8d6a39cdf9e4ba081a87"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/copy-control-hover.png",
+      "bytes": 111341,
+      "sha256": "46a3d4baae13412b8650442936bb1b2701d98f747f083933cf0682021ee0cdee"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/editor-gradle-tab-open.png",
+      "bytes": 142653,
+      "sha256": "f0f9c0b1cca9bbc573dcdc836ba139f0676e97a2e0b5e57fdc794ade699a0e69"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/editor-xml-tab-restored.png",
+      "bytes": 121102,
+      "sha256": "87104c8ca373d123e8b9cfb32436412ca267eafe0150908b9705c084d14d17c5"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/final-restored-wide.png",
+      "bytes": 122139,
+      "sha256": "c754f1da44edd7b8ed6b584b92ea02418d96165ac2f8b04a1a8a3e08a994c93c"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/narrow-selected-sync-copy-control.png",
+      "bytes": 54048,
+      "sha256": "7945a609ae34bc1d2f980b03f74b7f726108bcd444e7c895291497745ad91f70"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/narrow-space-after-return.png",
+      "bytes": 46196,
+      "sha256": "7bab0fed79c2b9c4e039ce74c1ac464a57e15b2622aacaef2f2fa53189c39839"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/narrow-sync.png",
+      "bytes": 40351,
+      "sha256": "5207dab8a6df2ab7388822508c9a7cf6bde31adb32173e3f66254abb185a20e5"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/restored-wide-output-focus.png",
+      "bytes": 111831,
+      "sha256": "9223a47df206d220104f1bb9ab3bbb03da7f0711ad9ef03e22d6754a6c8f02f9"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/restored-wide-output-selected.png",
+      "bytes": 73772,
+      "sha256": "d23692d73049d59e60d44204823b115e75e2bcad228e2798c0bca9a3a131d1b4"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/restored-wide-scrolled-top.png",
+      "bytes": 107996,
+      "sha256": "be84c4c39401e40b65991182cc6585b56b4456280b2700a4c6f09b93f928f07b"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/restored-wide-sync-focus.png",
+      "bytes": 73774,
+      "sha256": "7afe9c2ee0ca531cbebe103fdd07aa997d6a226b9222315ea468f3150202d11c"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/restored-wide-sync-space-selected.png",
+      "bytes": 111836,
+      "sha256": "a08266b1bb975fd846303cc6ccaf94bcea0bf03dfb43929017543ba52276b3ac"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/restored-wide-sync.png",
+      "bytes": 111836,
+      "sha256": "a08266b1bb975fd846303cc6ccaf94bcea0bf03dfb43929017543ba52276b3ac"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/resync-actual-loading.png",
+      "bytes": 85262,
+      "sha256": "78e3fb8584584889d21fcf4c7dffbf4e265e723791d203a9454435ca63ee735b"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/show-successful-task-tree.png",
+      "bytes": 119812,
+      "sha256": "c177c0421c3e7a6bb00559c458c92a6b9e8b5bf4e4d5e7ed6f110f6ddf32878e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/sync1-loading.png",
+      "bytes": 86950,
+      "sha256": "75f33b341d2f249a987a1af8d1593ff7d0c30ad158be0ce1ff30fb49f5fb5d45"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/task-selection-output-location.png",
+      "bytes": 119700,
+      "sha256": "3e5f640d5ff29b2febcfdef63ded31b1f57671306e645a3b61c3326cae52702b"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/trust-prompt.png",
+      "bytes": 86950,
+      "sha256": "75f33b341d2f249a987a1af8d1593ff7d0c30ad158be0ce1ff30fb49f5fb5d45"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/wide-output-focus.png",
+      "bytes": 111740,
+      "sha256": "072faa81d6b61a607278ade6bdf791769d78d603902c67c3f13082db602e700c"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/wide-output-selected.png",
+      "bytes": 73685,
+      "sha256": "06c6f35401ff8370c9693a576ebebf931767d5a3606920d1c4fa59902a89857e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/wide-reverse-sync-focus.png",
+      "bytes": 73681,
+      "sha256": "b83792972542310cc39bbc9bcccb0abb148d2885964c5adf5345791858c1c5e4"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/wide-sync-restored-return.png",
+      "bytes": 73681,
+      "sha256": "b83792972542310cc39bbc9bcccb0abb148d2885964c5adf5345791858c1c5e4"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/after-private-trust-click.png",
+      "bytes": 80144,
+      "sha256": "bf3977fa3f98cd0ca076e21cfc47ff3ece6fa01fdb6f5d6cb88ebcc6463b3a0d"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-console-preserved-progress-stderr.png",
+      "bytes": 138746,
+      "sha256": "988ac32e94468795bc88199186d565a5493d1cdbc27f3f2e166c26914e092a09"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-diagnostic-selected.png",
+      "bytes": 139020,
+      "sha256": "7b7911872863ae50119df0df3aad399ae574b8a8d8489b3a82d58e276f3ad866"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-output-empty-selected.png",
+      "bytes": 97846,
+      "sha256": "348470091472309a6a2b9465338ef04873b1a4b95b04ad2f437eeab57c172f0e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-sync-focus-no-selection.png",
+      "bytes": 97849,
+      "sha256": "28a4cf8b29b84ab1b037231d5c5c4ba0883b75027a48beeaa1958d89363b67c4"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-sync-space-restored.png",
+      "bytes": 138770,
+      "sha256": "56d1226ba1a5a287983e68d332a9c7e802d152eee989401680a966345d692cb2"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-tab-output-focus.png",
+      "bytes": 138778,
+      "sha256": "15063d3bbbff039dc6e116224ce23b3e71e54e627d62e86215303608b1d21b58"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/settled-observed-first.png",
+      "bytes": 135091,
+      "sha256": "dcc52603d76a56dfc97f11221c0d6f3351bf7cf67e78f74b083a0e8ff16e8ca0"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/trust-prompt.png",
+      "bytes": 86950,
+      "sha256": "75f33b341d2f249a987a1af8d1593ff7d0c30ad158be0ce1ff30fb49f5fb5d45"
+    }
+  ],
+  "no_Cargo_native_extra_compile_Source_mutations": true,
+  "no_hardware_large_project_or_original_test_credit": true
+}

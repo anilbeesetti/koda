@@ -1,0 +1,50 @@
+{
+  "area": "UX affected process/Source preservation only",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "current_affected_verdict": "PASS",
+  "historical_administrative_guard_verdict": "FAIL RETAINED",
+  "historical_physical_byte_continuity_claimed": false,
+  "uncertain_attribution": "Uncertain; earlier optional-lock-enabled status reads may refresh stat cache",
+  "all_Git_reads_GIT_OPTIONAL_LOCKS": "0",
+  "raw_index_before_after_sha256": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+  "logical_staged_before_after_sha256": "0169a434622b3427f580458029286ff2a14ffed8ef0e3132db7b3bb06b2d7883",
+  "tracked_bytes_modes_HEAD_index_verified": 6960,
+  "fixed_Source_files_verified": 4748,
+  "excluded_tracked_metadata_files_verified": 2212,
+  "selected_immutable_evidence_files_verified": 279,
+  "prior_final_UX_reports_unmodified": true,
+  "image_test_UX_rereview": false,
+  "Source_staged_ref_cache_mutation": false,
+  "index_restoration": false,
+  "compiler_native_SDK_commands": 0,
+  "fourth_product_fix": false,
+  "original_reference_credit": 0,
+  "full_IDE_completion": false,
+  "input": {
+    "path": "/workspace/android-studio-artifacts/sync-console-filter/current-index-observer-rebaseline.json",
+    "sha256": "0b4e575fc27644c6b25ad65789f1a06b78f11186c87570614c37a3fd4b27f272"
+  },
+  "before": {
+    "path": "final-ux-current-f763-process-preservation-before.json",
+    "sha256": "f628b77f1b4426dc55465e305ee69e92ce04389a10146ed2baecadd96a84e58a"
+  },
+  "after": {
+    "path": "final-ux-current-f763-process-preservation-after.json",
+    "sha256": "23bec0ec386c814a420ece4b6ef6230340c4b9aa8dbd559f7dd659db90c84367"
+  },
+  "preserved_final_UX_reports": [
+    {
+      "path": "final-ux-current-f763.md",
+      "sha256": "f57c35f084e0c545e2cfe2568ebfaa7902f515b20804f6fe638aadb4cf28d0e0"
+    },
+    {
+      "path": "final-ux-current-f763.json",
+      "sha256": "112d44bbfeb7190a8d665c7b1f540e6db0588d3521353e19fb85a26ee485660c"
+    }
+  ],
+  "report": {
+    "path": "final-ux-current-f763-process-preservation-addendum.md",
+    "sha256": "a52cb0067f15aee810987d665ed4a7f8e9757046c719281e1a83d68b06846117"
+  },
+  "review_holds_released": true
+}

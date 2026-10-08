@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "utc": "2026-10-08T10:59:15.335976+00:00",
+  "area": "UI affected process/Source preservation guard recheck only",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "UI_functional_verdict": "PASS unchanged; existing final UI reports preserved",
+  "current_affected_guard_verdict": "PASS",
+  "historical_administrative_review_process_raw_index_guard": {
+    "verdict": "FAIL retained",
+    "original_sha256": "41ab8963b247461218ef316b6d5999d74fee3c60dcb761b5699c11a18ba5a2fc",
+    "later_observed_sha256": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+    "attribution": "Uncertain owner/reviewer optional-lock Git status stat-cache refresh; logical entries and tracked source did not change. The original physical byte-preservation guard is not relabeled PASS."
+  },
+  "current_approved_rebaseline": {
+    "path": "/workspace/android-studio-artifacts/sync-console-filter/current-index-observer-rebaseline.json",
+    "sha256": "0b4e575fc27644c6b25ad65789f1a06b78f11186c87570614c37a3fd4b27f272",
+    "raw_index_path": "/workspace/koda/.git/worktrees/android-studio-sync-console-filter/index",
+    "raw_sha256_before": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+    "raw_sha256_after": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+    "bytes": 912722,
+    "dev": 27,
+    "inode": 1101875,
+    "physical_bytes_dev_inode_unchanged": true
+  },
+  "logical_staged_entries": {
+    "sha256_before": "0169a434622b3427f580458029286ff2a14ffed8ef0e3132db7b3bb06b2d7883",
+    "sha256_after": "0169a434622b3427f580458029286ff2a14ffed8ef0e3132db7b3bb06b2d7883",
+    "unchanged": true,
+    "all_stage_zero": true,
+    "matches_HEAD_tree": true
+  },
+  "tracked_content": {
+    "all_tracked_paths_modes_Gitblob_bytes_verified": 6960,
+    "fixed_Source_paths_followed_SHA256_verified": 4748,
+    "excluded_tracked_metadata_paths_bytes_modes_verified": 2212,
+    "observation_digest": "7c35e2bdf29573285e1041d906a4cbeff7251cfd3817ab2251db987fdaf04091"
+  },
+  "HEAD": "f763baebb6d0970b283f759967d7980084317e67",
+  "refs_unchanged": {
+    "refs/heads/android-studio": "f2aa51b883b2c926cb54cfe1618bc2cb8f738420",
+    "refs/remotes/origin/main": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+    "refs/heads/work": "30fca99a7a015168dfe4f394f576fbe2955fb4ea"
+  },
+  "clean_status": true,
+  "all_Git_reads_GIT_OPTIONAL_LOCKS": "0",
+  "selected_original_evidence_unchanged": {
+    "files": 61,
+    "before_after_record": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ui-current-f763-input-before.json"
+  },
+  "current_immutable_app_checked": {
+    "path": "/tmp/android-studio-sync-console-link-output/koda-sync-console-400429",
+    "sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c",
+    "bytes": 1359525048
+  },
+  "prior_final_UI_reports_unchanged": {
+    "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ui-current-f763.md": "712485981c0b91e0f2cb713670777f44dab1b743df60402c5d352e6582085de0",
+    "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ui-current-f763.json": "13ee7c83b927f4245a4075dd747bc8bb34a3e01cef0ef75ea222b70c1ef51e2a",
+    "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ui-current-f763-source-and-input-guard.json": "ce7e9f221416250ad77bb4dfc7f078dd12472262fda0de1c3f1bcf6aa8e11767",
+    "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ui-current-f763-index-stat-cache-addendum.json": "ed5ecd4bb26d4160d15cae1e86444795777cd6f36fb50d918f8a92152a6d2047"
+  },
+  "new_tests_native_images_or_compiler_actions": 0,
+  "new_product_fix_rounds": 0,
+  "new_original_reference_test_credit": 0,
+  "index_restoration_or_Source_ref_cache_mutation": false,
+  "inherited_UI_limits": "The existing narrow 360px clipping and Return no-op limitations remain explicit in the unchanged final UI reports. No wider fidelity claim.",
+  "read_only_holds_released": true,
+  "runtime_lease_acquired": false
+}

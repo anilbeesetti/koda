@@ -1,0 +1,37 @@
+{
+  "models": [
+    {
+      "finish": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/gradle-finish-1791454806393050914-406106.json",
+      "raw_stdout_sha256": "c318c4a0f7780fec552ba5ae00e0ce1ed129332d7de72534c73cbd9f0b6126f1",
+      "raw_model_bytes": 96215,
+      "raw_model_sha256": "65342272ca9c5a36b5b271736fdc311b1f7a8c6858d8c9df78c1b254876ef686",
+      "ordered_complete_model_equal": "PASS",
+      "root_prefix_before": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/generation-project",
+      "root_prefix_after": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/generation-project",
+      "sidecars": [
+        "generatedArtifacts",
+        "importFacts"
+      ],
+      "only_whole_string_or_slash_boundary_normalization": true
+    },
+    {
+      "finish": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/gradle-finish-1791455070641901569-407356.json",
+      "raw_stdout_sha256": "a02011bb8f8e32bc187687f8d40260fc578d3408bb36b3a1d38ed67fc07c1430",
+      "raw_model_bytes": 96215,
+      "raw_model_sha256": "65342272ca9c5a36b5b271736fdc311b1f7a8c6858d8c9df78c1b254876ef686",
+      "ordered_complete_model_equal": "PASS",
+      "root_prefix_before": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/generation-project",
+      "root_prefix_after": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/generation-project",
+      "sidecars": [
+        "generatedArtifacts",
+        "importFacts"
+      ],
+      "only_whole_string_or_slash_boundary_normalization": true
+    }
+  ],
+  "historical_source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "actual_currentSource": "f763baebb6d0970b283f759967d7980084317e67",
+  "raw_files_immutable": true,
+  "ordered_complete_equality": "PASS",
+  "standalone_current_Rust_probe_compiled": false
+}

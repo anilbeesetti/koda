@@ -1,0 +1,39 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "normal_app_sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c",
+  "actual_gradle_exit": 1,
+  "stdout_bytes": 91,
+  "stderr_bytes": 1038,
+  "raw_stdout_sha256": "5f5ea739471f64097402e7e1c25d69f97b3a8edc607b2899b0e276c96cafe0e7",
+  "raw_stderr_sha256": "86a64562a7da87048cd78ccd9e0fa4d38aa5b091e9366337d609b0a51b36c01c",
+  "stdout_model_record_count": 0,
+  "copied_model_json_absent": true,
+  "copied_bytes": 1185,
+  "copied_sha256": "9417c45ed9aa8ef9f6ac49f18e01cecd845cd7375fd9c89c632b07fe2833b731",
+  "preserved_exact_lines": [
+    {
+      "stream": "stdout",
+      "line_hex": "51415f53594e435f50524f47524553535f46373633",
+      "exact_in_copy": true
+    },
+    {
+      "stream": "stdout",
+      "line_hex": "51415f4d49444c494e45204b4f44415f414e44524f49445f50524f4a4543545f4d4f44454c3d76697369626c65",
+      "exact_in_copy": true
+    },
+    {
+      "stream": "stderr",
+      "line_hex": "4b4f44415f414e44524f49445f50524f4a4543545f4d4f44454c3d51415f5354444552525f56495349424c45",
+      "exact_in_copy": true
+    },
+    {
+      "stream": "stderr",
+      "line_hex": "3e2051415f53594e435f45585045435445445f434f4e46494755524154494f4e5f4641494c5552455f46373633",
+      "exact_in_copy": true
+    }
+  ],
+  "failure_named_diagnostic_preserved": true,
+  "fresh_profile_no_stale_target_screenshot": "captures/settled-observed-first.png",
+  "actual_diagnostic_selection": "captures/failed-diagnostic-selected.png",
+  "inherited_sdk_emulator_binary_absent_no_emulator_credit": true
+}

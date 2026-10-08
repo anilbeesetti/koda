@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/workspace/android-studio-artifacts/reference-runner-membership/dependency-integration-f2aa51b/runtime-current581/frozen-normal-xtask-5810906",
+    "android-parity"
+  ],
+  "cwd": "/workspace/android-studio-sync-console-filter",
+  "actual_pid": 417678,
+  "pgid": 417678,
+  "executable_sha256": "2e85cbaec3314218506512f52ac4c897b2bdd3abe27402adb7e2d183045de8ae",
+  "exit_code": 0,
+  "expected_exit": 0,
+  "elapsed_seconds": 0.5713645040086703,
+  "stdout_sha256": "a5f014cbc9ec75a28ae2e484cde0d0494bacc76eab4653d25e2b1480888bda2f",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "actual_stdout": "Baseline: Android Studio Rabbit1 stable, studio-2026.2.1; matching IntelliJ build family 262.9437.185. Source repositories are independently pinned, and mirror coverage remains unverified.\nCensus: PARTIAL (95 individually identified reference tests; exhaustive total unknown unless complete)\nPorts: {Unported: 59, Ported: 20, Adapted: 16}\nRuns: {NotRun: 59, Passing: 36}\nMirror omissions: UNVERIFIED\nExternal reference bytes not checked; use --reference-root to verify archives and citations.\n",
+  "actual_stderr": "",
+  "owned_live_group_after": [],
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67"
+}

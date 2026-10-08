@@ -1,0 +1,11 @@
+{
+  "result": "ADMINISTRATIVE_WRAPPER_ASSERTION_FAIL_AFTER_REQUIRED_CATALOG_EXIT0",
+  "actual_wrapper_exit": 1,
+  "actual_CLI_exit": 0,
+  "failure": "Wrapper wrongly expected lowercase passing summary; actual existing validator Source prints Runs: {NotRun: 59, Passing: 36}",
+  "catalog_RAW_and_CLI_exit_preserved": true,
+  "initial_runner_sha256": "aba302ce4c724eccd984b27484b43ab3d686c3425e928d926fb1fcfb91b08368",
+  "reference_and_completion_not_run": true,
+  "no_product_failure_or_fourth_fix_inferred": true,
+  "recorded_utc": "2026-10-08T12:10:50.627135+00:00"
+}

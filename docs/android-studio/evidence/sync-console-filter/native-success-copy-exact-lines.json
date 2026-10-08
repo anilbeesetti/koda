@@ -1,0 +1,71 @@
+[
+  {
+    "copy": "console-copy-first-wide.log",
+    "raw_invocation": "1791454806393050914-406106",
+    "copy_sha256": "65f45868068513fb643336826dcc79c39122f83f1ebffee46a1cab41e801a00a",
+    "full_model_json_hidden": true,
+    "preserved_lines": [
+      {
+        "stream": "stdout",
+        "raw_line_hex": "51415f53594e435f50524f47524553535f46373633",
+        "exact_in_copy": true
+      },
+      {
+        "stream": "stdout",
+        "raw_line_hex": "51415f4d49444c494e45204b4f44415f414e44524f49445f50524f4a4543545f4d4f44454c3d76697369626c65",
+        "exact_in_copy": true
+      },
+      {
+        "stream": "stderr",
+        "raw_line_hex": "4b4f44415f414e44524f49445f50524f4a4543545f4d4f44454c3d51415f5354444552525f56495349424c45",
+        "exact_in_copy": true
+      }
+    ]
+  },
+  {
+    "copy": "console-copy-restored-wide.log",
+    "raw_invocation": "1791455070641901569-407356",
+    "copy_sha256": "434b57720840ac6b76358ce7bba0fa1b6267e2552af010646b5e51cf1c8ebdb7",
+    "full_model_json_hidden": true,
+    "preserved_lines": [
+      {
+        "stream": "stdout",
+        "raw_line_hex": "51415f53594e435f50524f47524553535f46373633",
+        "exact_in_copy": true
+      },
+      {
+        "stream": "stdout",
+        "raw_line_hex": "51415f4d49444c494e45204b4f44415f414e44524f49445f50524f4a4543545f4d4f44454c3d76697369626c65",
+        "exact_in_copy": true
+      },
+      {
+        "stream": "stderr",
+        "raw_line_hex": "4b4f44415f414e44524f49445f50524f4a4543545f4d4f44454c3d51415f5354444552525f56495349424c45",
+        "exact_in_copy": true
+      }
+    ]
+  },
+  {
+    "copy": "console-copy-narrow.log",
+    "raw_invocation": "1791455070641901569-407356",
+    "copy_sha256": "434b57720840ac6b76358ce7bba0fa1b6267e2552af010646b5e51cf1c8ebdb7",
+    "full_model_json_hidden": true,
+    "preserved_lines": [
+      {
+        "stream": "stdout",
+        "raw_line_hex": "51415f53594e435f50524f47524553535f46373633",
+        "exact_in_copy": true
+      },
+      {
+        "stream": "stdout",
+        "raw_line_hex": "51415f4d49444c494e45204b4f44415f414e44524f49445f50524f4a4543545f4d4f44454c3d76697369626c65",
+        "exact_in_copy": true
+      },
+      {
+        "stream": "stderr",
+        "raw_line_hex": "4b4f44415f414e44524f49445f50524f4a4543545f4d4f44454c3d51415f5354444552525f56495349424c45",
+        "exact_in_copy": true
+      }
+    ]
+  }
+]
