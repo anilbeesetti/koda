@@ -15,7 +15,10 @@ fn default_source_set_at_current_dir() {
     let template = DefaultModuleTemplate::at(".");
 
     assert_eq!(template.name(), "main");
-    assert_eq!(template.module_root().as_os_str(), Path::new(".").as_os_str());
+    assert_eq!(
+        template.module_root().as_os_str(),
+        Path::new(".").as_os_str()
+    );
     assert_eq!(
         template.source_directory(Some("my.package")).as_os_str(),
         native_path("./src/main/java/my/package").as_os_str()
@@ -96,7 +99,10 @@ fn unit_tests_and_ml_models_use_pinned_default_directories() {
 #[test]
 fn empty_root_uses_the_reference_default_parent_for_children() {
     let template = DefaultModuleTemplate::at("");
-    assert_eq!(template.module_root().as_os_str(), Path::new("").as_os_str());
+    assert_eq!(
+        template.module_root().as_os_str(),
+        Path::new("").as_os_str()
+    );
     assert_eq!(
         template.manifest_directory().as_os_str(),
         native_path("/src/main").as_os_str()
