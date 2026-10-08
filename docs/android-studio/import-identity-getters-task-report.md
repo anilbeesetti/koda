@@ -20,12 +20,19 @@ an index for lookups. Captures bind exact Basic module/directory/kind/variant
 identity and caller model/selection revisions. Missing required observations
 return typed errors; they do not replace or erase the caller's Basic model.
 
-Twenty-eight authored supplemental tests cover transport, identity, nullable
-observations and stale bindings. They are not yet executed. The current lease
-authorizes source-only work; formatting, library/test/Clippy checks and real
-Gradle/SDK captures await an exclusive runtime slot. All five independent owner
-review areas and Root's full-app/full-CI/native checks remain pending. No scoped
-completion or original-test credit is claimed.
+Thirty authored supplemental tests cover transport, identity, nullable
+observations and stale bindings. All 30 pass under normal default-feature Cargo execution, with zero failed,
+ignored or filtered tests. The default library build and full workspace Rust
+formatting pass. Compiler JSON binds freshly compiled library/tests to this
+checkout; all 4,738 source hashes, index and untracked set stayed unchanged
+through the gates. The initial 27-pass/one-failure output and its exact positional
+wrapper boundary remain preserved. The third fix qualifies object-only trait
+decoding; all earlier expectations remain, with two added regressions.
+
+All-feature tooling tests/build, strict repository Clippy and actual Gradle/SDK
+probes remain pending. Owner static reviews and Root full-app/full-CI/native
+gates do not become runtime passes from these default component checks. No
+scoped completion or original-test credit is claimed.
 
 Included builds and standalone Java-only Basic imports remain unsupported. TAPI
 IdeaModule names, imported-name collision resolution, Kotlin/facet capability

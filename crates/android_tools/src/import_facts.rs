@@ -105,7 +105,7 @@ where
             "Getter result must be an object with an explicit value",
         ));
     }
-    CapturedField::deserialize(value).map_err(serde::de::Error::custom)
+    <CapturedField<T> as Deserialize<'de>>::deserialize(value).map_err(serde::de::Error::custom)
 }
 
 fn present_observation<'de, D, T>(deserializer: D) -> Result<Option<GetterObservation<T>>, D::Error>
@@ -113,7 +113,7 @@ where
     D: serde::Deserializer<'de>,
     T: Deserialize<'de>,
 {
-    GetterObservation::deserialize(deserializer).map(Some)
+    <GetterObservation<T> as Deserialize<'de>>::deserialize(deserializer).map(Some)
 }
 
 /// Missing fields are absent observations, rather than successful nullable values.

@@ -606,7 +606,14 @@ fn positional_arrays_are_rejected_at_every_object_boundary() -> Result<()> {
             .cloned()
             .collect::<Vec<_>>();
         *value.pointer_mut(pointer).context("Boundary")? = Value::Array(fields);
-        assert_failure(&fixture, &value, FactsUnavailableReason::Malformed)?;
+        let error = parse_import_facts(&wire(&value)?, &fixture.model, binding()).expect_err(
+            &format!("Positional object boundary {pointer} must be rejected"),
+        );
+        assert_eq!(
+            error.reason,
+            FactsUnavailableReason::Malformed,
+            "{pointer}: {error}"
+        );
     }
     let encoded = wire(&fixture.value)?;
     let array_record = format!(
@@ -866,5 +873,45 @@ fn successful_all_projects_catalogue_requires_observed_parent_holders() -> Resul
     let mut value = fixture.value.clone();
     catalogue(&mut value)?.remove(1);
     assert_failure(&fixture, &value, FactsUnavailableReason::MissingMetadata)?;
+    Ok(())
+}
+
+#[test]
+fn nullable_observation_wrappers_reject_positional_arrays() -> Result<()> {
+    let fixture = fixture()?;
+    for field in [
+        "parentProjectPath",
+        "referenceIdentityPath",
+        "ideaModuleName",
+        "ideaPluginPresent",
+    ] {
+        let mut value = fixture.value.clone();
+        let observation =
+            &mut value["importFacts"]["projectCatalogue"]["result"]["value"][0][field];
+        let fields = observation
+            .as_object()
+            .context("Observation object")?
+            .values()
+            .cloned()
+            .collect();
+        *observation = Value::Array(fields);
+        let error = parse_import_facts(&wire(&value)?, &fixture.model, binding()).expect_err(
+            &format!("Nullable observation {field} must remain an object"),
+        );
+        assert_eq!(error.reason, FactsUnavailableReason::Malformed);
+    }
+    Ok(())
+}
+
+#[test]
+fn unavailable_failure_payload_requires_an_object() -> Result<()> {
+    let fixture = fixture()?;
+    let mut value = fixture.value.clone();
+    let getter =
+        value["importFacts"]["projectCatalogue"]["result"]["value"][3]["buildTreePath"]["getter"]
+            .clone();
+    value["importFacts"]["projectCatalogue"]["result"]["value"][3]["buildTreePath"]["result"] =
+        json!({"status":"unavailable","value":[getter,"Original getter failure"]});
+    assert_failure(&fixture, &value, FactsUnavailableReason::Malformed)?;
     Ok(())
 }

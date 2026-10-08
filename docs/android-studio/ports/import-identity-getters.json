@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
   "task": "P2a raw import identity getter transport",
-  "status": "source_draft_runtime_pending",
+  "status": "default_runtime_pass_full_owner_gates_pending",
   "base": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
   "branch": "android-studio-task/1-import-identity-getters",
   "tests": [],
   "new_original_test_credit": 0,
   "supplemental_tests": {
     "suite": "crates/android_tools/tests/import_facts.rs",
-    "declared": 28,
-    "executed": 0,
-    "status": "not_run"
+    "declared": 30,
+    "executed": 30,
+    "status": "default_features_pass"
   },
   "behavior": "Official Gradle project/root/build identity inputs and nullable Idea plugin names, independently captured without imported-name/facet fallback; Rust validates objects, identity and model/selection freshness.",
   "reference_files": "crates/android_tools/test_data/import_facts/reference-manifest.json",
@@ -23,12 +23,21 @@
     "status": "pending_exclusive_lease",
     "library_build": "not_run",
     "tooling_tests": "not_run",
-    "clippy": "not_run",
-    "formatting": "not_run",
-    "official_Gradle_SDK_captures": "not_run",
+    "clippy": "pending",
+    "formatting": "workspace_passed",
+    "official_Gradle_SDK_captures": "pending",
     "five_area_reviews": "pending",
     "lead_full_app_full_CI_native": "Root_pending",
-    "late_configuration_probe": "not_run"
+    "late_configuration_probe": "not_run",
+    "default_library_build": "passed",
+    "default_import_facts_tests": {
+      "passed": 30,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0
+    },
+    "allfeatures_library_build": "pending",
+    "allfeatures_tooling_tests": "pending"
   },
   "limitations": [
     "Included builds remain unsupported",
@@ -62,8 +71,16 @@
       "before_source": "8362e8ca7187164dc7d15173994528790f100368",
       "finding": "Init projectsEvaluated listener captures before later build/plugin projectsEvaluated listeners can finalize Idea module names",
       "tests_removed_skipped_weakened": 0
+    },
+    {
+      "kind": "actual_default_test_failure",
+      "round": 3,
+      "before_source": "e0cfad266fce1a29e065ef016815f695ced9810b",
+      "failure_boundary": "/importFacts/projectCatalogue/result/value/0/projectName",
+      "status": "qualified_trait_fix_30_tests_pass",
+      "tests_removed_skipped_weakened": 0
     }
   ],
-  "product_fix_rounds": 2,
+  "product_fix_rounds": 3,
   "owner_plan": "/workspace/android-studio-artifacts/import-identity-getters/task-plan.json"
 }
