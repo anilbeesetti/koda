@@ -60,6 +60,7 @@ fn application_devices_run_and_preview_require_their_own_facts() -> Result<()> {
     let capabilities = snapshot.capabilities(Some(&file), readiness(&root));
     assert!(capabilities.ecosystems.android);
     assert!(capabilities.android_sync);
+    assert!(capabilities.automatic_android_sync);
     assert!(capabilities.android_devices);
     assert!(capabilities.android_run);
     assert!(capabilities.android_compose_preview);
@@ -276,7 +277,7 @@ fn partial(root: &Path) -> Value {
 }
 
 #[test]
-fn partial_applied_plugin_facts_survive_sdk_failure_without_operational_credit() -> Result<()> {
+fn partial_applied_plugin_facts_allow_repair_sync_after_sdk_failure_without_device_or_run_credit() -> Result<()> {
     let root = project_root("sdk-failure");
     let mut store = ContextStore::default();
     let handle = store.add_root(1, root.clone(), true)?;
@@ -287,7 +288,8 @@ fn partial_applied_plugin_facts_survive_sdk_failure_without_operational_credit()
     assert_eq!(snapshot.phase(), ObservationPhase::Partial);
     assert!(snapshot.ecosystems().android);
     let capabilities = snapshot.capabilities(Some(&root.join("app/Main.kt")), readiness(&root));
-    assert!(!capabilities.android_sync);
+    assert!(capabilities.android_sync);
+    assert!(!capabilities.automatic_android_sync);
     assert!(!capabilities.android_devices);
     assert!(!capabilities.android_run);
     assert!(!capabilities.android_compose_preview);

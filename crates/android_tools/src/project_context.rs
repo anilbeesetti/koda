@@ -213,6 +213,7 @@ pub struct OperationalReadiness<'a> {
 pub struct ContextCapabilities {
     pub ecosystems: Ecosystems,
     pub android_sync: bool,
+    pub automatic_android_sync: bool,
     pub android_devices: bool,
     pub android_run: bool,
     pub android_compose_preview: bool,
@@ -268,11 +269,12 @@ impl ContextSnapshot {
             ModuleOwner::Module(module) => self.modules.get(module),
             _ => None,
         });
+        // The current bundled renderer consumes a selected application model. This does not rule out future library preview support.
         let android_compose_preview = android_run && readiness.android_renderer_supported
             && owner.is_some_and(|module| module.android_target()
                 && (module.applied(PluginId::ComposeMultiplatform) || module.applied(PluginId::ComposeCompiler)));
-        ContextCapabilities { ecosystems, android_sync: complete && (ecosystems.android || android_devices),
-            android_devices, android_run, android_compose_preview }
+        ContextCapabilities { ecosystems, android_sync: ecosystems.android || android_devices,
+            automatic_android_sync: android_devices, android_devices, android_run, android_compose_preview }
     }
 
     pub fn project_view_capabilities(&self, supports_android_view: bool) -> ProjectViewCapabilities {
@@ -469,7 +471,7 @@ impl ContextStore {
         ensure!(self.is_current(&token.0), "Discarded an outdated project context failure");
         let entry = self.entry_mut(token.0.root)?;
         ensure!(entry.pending.as_ref() == Some(token), "Project context import already finished");
-        // Affirmative applied-plugin facts survive a later SDK failure, but the partial phase grants no operational capabilities.
+        // Affirmative plugin facts retain an explicit repair Sync after SDK failure; the partial phase denies automatic work and device/run/preview tools.
         entry.pending = None;
         Ok(())
     }
