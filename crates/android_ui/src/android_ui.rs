@@ -3318,6 +3318,7 @@ impl AndroidPanel {
     fn target_menu(panel: Entity<Self>, window: &mut Window, cx: &mut App) -> Entity<ContextMenu> {
         let targets = panel.read(cx).targets.clone();
         let library_variants = panel.read(cx).library_variants(cx);
+        let selected_variant = panel.read(cx).build_variant(cx);
         let root = panel.read(cx).root.clone();
         let owner = panel
             .read(cx)
@@ -3326,10 +3327,12 @@ impl AndroidPanel {
         let panel = panel.downgrade();
         ContextMenu::build(window, cx, |mut menu, _, _| {
             for variant in library_variants {
+                let label = variant.label();
+                let selected = selected_variant.as_ref() == Some(&variant);
                 let panel = panel.clone();
                 let root = root.clone();
                 let owner = owner.clone();
-                menu = menu.entry(variant.label(), None, move |window, cx| {
+                let handler = move |window: &mut Window, cx: &mut App| {
                     panel
                         .update(cx, |panel, cx| {
                             if owner
@@ -3357,14 +3360,19 @@ impl AndroidPanel {
                             cx.notify();
                         })
                         .log_err();
-                });
+                };
+                menu = menu.toggleable_entry(label, selected, IconPosition::Start, None, handler);
             }
             for target in &targets {
+                let label = target.label();
+                let selected = selected_variant.as_ref().is_some_and(|variant| {
+                    variant.module == target.module && variant.variant == target.variant
+                });
                 let panel = panel.clone();
                 let target = target.clone();
                 let root = root.clone();
                 let owner = owner.clone();
-                menu = menu.entry(target.label(), None, move |window, cx| {
+                let handler = move |window: &mut Window, cx: &mut App| {
                     panel
                         .update(cx, |panel, cx| {
                             if owner
@@ -3404,7 +3412,8 @@ impl AndroidPanel {
                             cx.notify();
                         })
                         .log_err();
-                });
+                };
+                menu = menu.toggleable_entry(label, selected, IconPosition::Start, None, handler);
             }
             menu
         })
@@ -8736,6 +8745,84 @@ fi
         }
         .await;
         result.expect("Picker catalogue fixture must complete");
+    }
+
+    #[gpui::test]
+    async fn mixed_variant_picker_focuses_and_confirms_the_current_variant(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            cx.update(AppState::test);
+            let root = PathBuf::from("/picker-initial-focus");
+            let filesystem = FakeFs::new(cx.executor());
+            filesystem
+                .insert_tree(&root, json!({"gradlew":"", "settings.gradle.kts":""}))
+                .await;
+            let project = Project::test(filesystem, [root.as_path()], cx).await;
+            let (workspace, visual) = cx
+                .add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let panel = new_test_android_panel(&workspace, project.clone(), visual);
+            visual.update(|_, cx| publish_picker_catalogue(&project, &root, cx))?;
+            visual.run_until_parked();
+            panel.update(visual, |panel, cx| {
+                panel.context_operations_changed(cx);
+                panel.root = Some(root.clone());
+                panel.auto_sync_root = Some(root.clone());
+                panel.refreshing_devices = true;
+                publish_picker_model(
+                    panel,
+                    &["debug", "release"],
+                    &["debug", "release"],
+                    "first",
+                    cx,
+                )
+            })?;
+            visual.run_until_parked();
+            visual.update(|window, _| {
+                assert!(window.is_a11y_enabled());
+                window.activate_window();
+            });
+            visual.run_until_parked();
+            for (index, module, variant) in [
+                (2, ":app", "debug"),
+                (1, ":library", "release"),
+                (3, ":app", "release"),
+                (0, ":library", "debug"),
+            ] {
+                select_picker_entry(&panel, index, visual);
+                visual.run_until_parked();
+                let menu = visual
+                    .update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+                assert_eq!(menu.read_with(visual, |menu, _| menu.selected_index()), None);
+                visual.update(|window, cx| window.blur(cx));
+                visual.run_until_parked();
+                visual.update(|window, cx| window.focus(&menu.focus_handle(cx), cx));
+                visual.run_until_parked();
+                assert_eq!(
+                    menu.read_with(visual, |menu, _| menu.selected_index()),
+                    Some(index)
+                );
+                menu.update_in(visual, |menu, window, cx| {
+                    menu.confirm(&Default::default(), window, cx);
+                });
+                visual.run_until_parked();
+                panel.read_with(visual, |panel, cx| {
+                    let selected = panel.build_variant(cx).expect("Focused current variant");
+                    assert_eq!(
+                        (selected.module.as_str(), selected.variant.as_str()),
+                        (module, variant)
+                    );
+                    assert_eq!(panel.selected_target.is_some(), module == ":app");
+                    assert_eq!(
+                        panel.operation_permitted(AndroidOperation::Run, cx),
+                        module == ":app"
+                    );
+                });
+            }
+            Ok(())
+        }
+        .await;
+        result.expect("Initial focus fixture must complete");
     }
 
     #[gpui::test]

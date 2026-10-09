@@ -1281,10 +1281,7 @@ impl OutputPresentation {
                 android_tools::project_model::MODEL_OUTPUT_PREFIX.as_bytes(),
                 android_tools::project_context::CONTEXT_OUTPUT_PREFIX.as_bytes(),
             ];
-            if prefixes
-                .iter()
-                .any(|prefix| *prefix == self.pending.as_slice())
-            {
+            if prefixes.contains(&self.pending.as_slice()) {
                 self.pending.clear();
                 self.line = LinePresentation::Hidden;
                 return None;
