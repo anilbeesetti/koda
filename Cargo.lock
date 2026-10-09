@@ -741,6 +741,7 @@ dependencies = [
  "smol",
  "tar",
  "tempfile",
+ "tokio",
  "uuid",
  "which",
  "zed-reqwest",

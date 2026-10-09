@@ -1082,7 +1082,7 @@ wasmtime-environ = { opt-level = 3 }
 wasmtime-internal-cranelift = { opt-level = 3 }
 minidumper = { opt-level = 3 }
 serde_json = { opt-level = 3 }
-# First-use extraction of the bundled preview runtime also needs to be fast in development builds.
+# First-use extraction of downloaded preview libraries also needs to be fast in development builds.
 miniz_oxide = { opt-level = 3 }
 # Build single-source-file crates with cg=1 as it helps make `cargo build` of a whole workspace a bit faster
 activity_indicator = { codegen-units = 1 }
