@@ -9,6 +9,158 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import org.gradle.util.GradleVersion
 
+class KodaKotlinBoundedJson {
+    long bytes = 0
+    long nodes = 0
+    long maximumBytes
+    long maximumNodes
+    long maximumScalarBytes
+    def monitor
+    boolean retain
+    def chunks = []
+    byte[] current
+    int used = 0
+    def active = Collections.newSetFromMap(new IdentityHashMap())
+
+    KodaKotlinBoundedJson(long maximumBytes, long maximumNodes, long maximumScalarBytes, monitor, boolean retain) {
+        this.maximumBytes = maximumBytes
+        this.maximumNodes = maximumNodes
+        this.maximumScalarBytes = maximumScalarBytes
+        this.monitor = monitor
+        this.retain = retain
+    }
+
+    void emit(int value) {
+        if (bytes >= maximumBytes) throw new IOException('Producer serialized-byte budget exceeded')
+        if (retain) {
+            if (current == null || used == current.length) {
+                current = new byte[(int) Math.min(65536L, maximumBytes - bytes)]
+                chunks.add(current)
+                used = 0
+            }
+            current[used++] = (byte) value
+        }
+        bytes++
+        if ((bytes & 4095L) == 0L) monitor.call()
+    }
+
+    void ascii(String value) {
+        for (int index = 0; index < value.length(); index++) emit((int) value.charAt(index))
+    }
+
+    void string(String value) {
+        if (value.length() > maximumScalarBytes || value.length() > maximumBytes)
+            throw new IOException('Producer scalar budget exceeded')
+        long decodedBytes = 0
+        emit(34)
+        for (int index = 0; index < value.length(); index++) {
+            int character = (int) value.charAt(index)
+            if (Character.isHighSurrogate((char) character) && index + 1 < value.length() &&
+                Character.isLowSurrogate(value.charAt(index + 1))) decodedBytes += 2
+            else if (Character.isLowSurrogate((char) character) && index > 0 &&
+                Character.isHighSurrogate(value.charAt(index - 1))) decodedBytes += 2
+            else decodedBytes += character < 128 ? 1 : character < 2048 ? 2 : 3
+            if (decodedBytes > maximumScalarBytes) throw new IOException('Producer scalar budget exceeded')
+            switch (character) {
+                case 34: ascii('\\"'); break
+                case 92: ascii('\\\\'); break
+                case 8: ascii('\\b'); break
+                case 9: ascii('\\t'); break
+                case 10: ascii('\\n'); break
+                case 12: ascii('\\f'); break
+                case 13: ascii('\\r'); break
+                default:
+                    if (character < 32 || character > 127) {
+                        ascii('\\u')
+                        String hex = Integer.toHexString(character)
+                        for (int padding = hex.length(); padding < 4; padding++) emit(48)
+                        ascii(hex)
+                    } else emit(character)
+            }
+        }
+        emit(34)
+    }
+
+    void value(Object value, int depth = 0) {
+        monitor.call()
+        if (++nodes > maximumNodes) throw new IOException('Producer value-node budget exceeded')
+        if (depth >= 128) throw new IOException('Producer JSON depth budget exceeded')
+        if (value == null) { ascii('null'); return }
+        if (value instanceof String) { string(value); return }
+        if (value instanceof Boolean) { ascii(value ? 'true' : 'false'); return }
+        if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
+            ascii(value.toString()); return
+        }
+        if (!(value instanceof Map) && !(value instanceof Iterable))
+            throw new IOException('Unsupported raw observation JSON value')
+        if (!active.add(value)) throw new IOException('Cyclic raw observation JSON value')
+        try {
+            boolean first = true
+            if (value instanceof Map) {
+                emit(123)
+                def iterator = value.entrySet().iterator()
+                while (iterator.hasNext()) {
+                    monitor.call()
+                    if (nodes >= maximumNodes) throw new IOException('Producer value-node budget exceeded')
+                    def entry = iterator.next()
+                    if (!(entry.key instanceof String)) throw new IOException('Raw observation key is not a String')
+                    if (!first) emit(44)
+                    first = false
+                    string(entry.key)
+                    emit(58)
+                    this.value(entry.value, depth + 1)
+                }
+                emit(125)
+            } else {
+                emit(91)
+                def iterator = value.iterator()
+                while (iterator.hasNext()) {
+                    monitor.call()
+                    if (nodes >= maximumNodes) throw new IOException('Producer value-node budget exceeded')
+                    if (!first) emit(44)
+                    first = false
+                    this.value(iterator.next(), depth + 1)
+                }
+                emit(93)
+            }
+        } finally { active.remove(value) }
+    }
+
+    void writeTo(OutputStream output) {
+        monitor.call()
+        for (int index = 0; index < chunks.size(); index++) {
+            monitor.call()
+            byte[] chunk = chunks[index]
+            output.write(chunk, 0, index == chunks.size() - 1 ? used : chunk.length)
+        }
+    }
+}
+
+class KodaKotlinBoundedValues {
+    def bridge
+    def values = []
+    long bytes = 2
+    long nodes = 1
+
+    KodaKotlinBoundedValues(bridge) { this.bridge = bridge }
+
+    void beforeNext() {
+        bridge.health()
+        if (nodes >= bridge.maximumValueNodes) throw new IOException('Producer iterable value-node budget exceeded')
+    }
+
+    void add(value) {
+        beforeNext()
+        def usage = bridge.measure(value)
+        long nextBytes = bytes + usage.bytes + (values.isEmpty() ? 0 : 1)
+        long nextNodes = nodes + usage.nodes
+        bridge.checkUsage(nextBytes, nextNodes)
+        values.add(value)
+        bytes = nextBytes
+        nodes = nextNodes
+    }
+}
+
 class KodaKotlinGetterBridge {
     def gradle
     def socket
@@ -38,24 +190,89 @@ class KodaKotlinGetterBridge {
     def session
     long sequence = 0
     def loaderChanges = [:]
-    int maximumFrameBytes = 16 * 1024 * 1024
+    long maximumFrameBytes
+    long maximumValueNodes
+    long maximumScalarBytes
+    long retainedBytes = 0
+    long retainedNodes = 0
+    long deadline
 
     KodaKotlinGetterBridge(gradle, socket) {
         this.gradle = gradle
         this.socket = socket
+        maximumFrameBytes = Long.parseLong(System.getProperty('koda.kotlin.capture.maximumFrameBytes'))
+        maximumValueNodes = Long.parseLong(System.getProperty('koda.kotlin.capture.maximumValueNodes'))
+        maximumScalarBytes = Long.parseLong(System.getProperty('koda.kotlin.capture.maximumScalarBytes'))
+        long timeout = Long.parseLong(System.getProperty('koda.kotlin.capture.timeoutMillis'))
+        if (maximumFrameBytes <= 0 || maximumFrameBytes > 16 * 1024 * 1024 ||
+            maximumValueNodes <= 0 || maximumValueNodes > 131072 ||
+            maximumScalarBytes <= 0 || maximumScalarBytes > 16 * 1024 * 1024 ||
+            timeout <= 0 || timeout > Integer.MAX_VALUE) throw new IOException('Invalid Rust-issued producer limits')
+        deadline = System.nanoTime() + timeout * 1000000L
         reader = new BufferedReader(new InputStreamReader(socket.inputStream, StandardCharsets.UTF_8))
         writer = new BufferedWriter(new OutputStreamWriter(socket.outputStream, StandardCharsets.UTF_8))
         def javaArtifact = new File(System.getProperty('java.home'), 'lib/modules')
         if (!javaArtifact.isFile()) javaArtifact = new File(System.getProperty('java.home'), 'lib/rt.jar')
         runtime = [gradleVersion: GradleVersion.current().version,
             java: [vendor: System.getProperty('java.vendor'), version: System.getProperty('java.version'),
-                build: System.getProperty('java.runtime.version'), artifact: artifact(javaArtifact)],
+                build: System.getProperty('java.runtime.version'), artifact: null],
             locale: [identifier: Locale.getDefault().toLanguageTag(), implementation: Locale.class.name,
                 version: System.getProperty('java.runtime.version')]]
+        def initial = measure(inventory())
+        retainedBytes = initial.bytes
+        retainedNodes = initial.nodes
+        replaceField(runtime.java, 'artifact', artifact(javaArtifact))
         [Object, String, Boolean, Iterable, List, Map].each { runtimeClass(it) }
     }
 
+    void health() {
+        if (Thread.currentThread().isInterrupted()) throw new IOException('Producer capture interrupted')
+        if (System.nanoTime() - deadline >= 0) throw new IOException('Producer capture deadline elapsed')
+        if (socket instanceof Socket && socket.closed) throw new IOException('Producer capture socket closed')
+    }
+
+    def measure(value) {
+        def encoded = new KodaKotlinBoundedJson(maximumFrameBytes, maximumValueNodes, maximumScalarBytes, { health() }, false)
+        encoded.value(value)
+        return [bytes: encoded.bytes, nodes: encoded.nodes]
+    }
+
+    void checkUsage(long bytes, long nodes) {
+        health()
+        if (bytes > maximumFrameBytes || nodes > maximumValueNodes)
+            throw new IOException('Producer cumulative observation budget exceeded')
+    }
+
+    void changeUsage(long bytes, long nodes) {
+        long nextBytes = retainedBytes + bytes
+        long nextNodes = retainedNodes + nodes
+        checkUsage(nextBytes, nextNodes)
+        retainedBytes = nextBytes
+        retainedNodes = nextNodes
+    }
+
+    void appendObservation(List rows, row) {
+        def usage = measure(row)
+        changeUsage(usage.bytes + (rows.isEmpty() ? 0 : 1), usage.nodes)
+        rows.add(row)
+    }
+
+    void replaceField(Map row, String key, value) {
+        def before = measure(row[key])
+        def after = measure(value)
+        changeUsage(after.bytes - before.bytes, after.nodes - before.nodes)
+        row[key] = value
+    }
+
+    void addProject(String path, String objectId) {
+        def key = measure(path)
+        def value = measure(objectId)
+        changeUsage(key.bytes + 1 + value.bytes + (projectObjects.isEmpty() ? 0 : 1), value.nodes)
+        projectObjects[path] = objectId
+    }
+
     String artifact(File file) {
+        health()
         file = file.canonicalFile
         if (!file.isFile()) throw new IOException('Runtime code source is not a regular artifact: ' + file)
         if (artifacts.containsKey(file.path)) return artifacts[file.path]
@@ -64,30 +281,39 @@ class KodaKotlinGetterBridge {
         file.withInputStream { input ->
             byte[] buffer = new byte[65536]
             int count
-            while ((count = input.read(buffer)) != -1) hash.update(buffer, 0, count)
+            long bytes = 0
+            while ((count = input.read(buffer)) != -1) {
+                health()
+                bytes += count
+                if (bytes > before.size()) throw new IOException('Runtime artifact grew during discovery')
+                hash.update(buffer, 0, count)
+            }
+            if (bytes != before.size()) throw new IOException('Runtime artifact changed during discovery')
         }
         def after = java.nio.file.Files.readAttributes(file.toPath(), java.nio.file.attribute.BasicFileAttributes)
         if (before.size() != after.size() || before.lastModifiedTime() != after.lastModifiedTime() || before.fileKey() != after.fileKey())
             throw new IOException('Runtime artifact changed during discovery')
         def id = 'artifact:' + artifactRows.size()
+        appendObservation(artifactRows, [id: id, path: file.path, bytes: after.size(), sha256: hash.digest().encodeHex().toString(), coordinate: null, version: null])
         artifacts[file.path] = id
-        artifactRows.add([id: id, path: file.path, bytes: after.size(), sha256: hash.digest().encodeHex().toString(), coordinate: null, version: null])
         return id
     }
 
     String loader(ClassLoader loader) {
+        health()
         if (loaders.containsKey(loader)) return loaders[loader]
         def id = 'loader:' + loaderRows.size()
         loaders[loader] = id
         def row = [id: id, parent: null, artifacts: []]
         loaderPositions[id] = loaderRows.size()
-        loaderRows.add(row)
+        appendObservation(loaderRows, row)
         loaderRowsById[id] = row
-        if (loader != null) row.parent = this.loader(loader.parent)
+        if (loader != null) replaceField(row, 'parent', this.loader(loader.parent))
         return id
     }
 
     String runtimeClass(Class type) {
+        health()
         if (classes.containsKey(type)) return classes[type]
         def id = 'class:' + classRows.size()
         classes[type] = id
@@ -111,13 +337,13 @@ class KodaKotlinGetterBridge {
                         loaderChanges[loaderId] = [loader: loaderId, previous: row.artifacts.size(), artifacts: []]
                     loaderChanges[loaderId].artifacts.add(artifactId)
                 }
-                row.artifacts.add(artifactId)
+                appendObservation(row.artifacts, artifactId)
             }
         }
         def row = [id: id, name: type.name, loader: loaderId, origin: origin, superclass: null, interfaces: []]
-        classRows.add(row)
-        if (type.superclass != null) row.superclass = runtimeClass(type.superclass)
-        row.interfaces = type.interfaces.collect { runtimeClass(it) }
+        appendObservation(classRows, row)
+        if (type.superclass != null) replaceField(row, 'superclass', runtimeClass(type.superclass))
+        type.interfaces.each { health(); appendObservation(row.interfaces, runtimeClass(it)) }
         return id
     }
 
@@ -129,17 +355,19 @@ class KodaKotlinGetterBridge {
     }
 
     String catalogue(Class type) {
+        health()
         if (catalogues.containsKey(type)) return catalogues[type]
         def id = 'catalogue:' + catalogueRows.size()
         catalogues[type] = id
         def row = [id: id, classId: runtimeClass(type), methods: []]
-        catalogueRows.add(row)
+        appendObservation(catalogueRows, row)
         // Preserve Class.getMethods() order: source-set selection in the
         // reference selects the first matching zero-argument getter.
         type.methods.each { method ->
+            health()
             def methodId = id + ':method:' + row.methods.size()
             def parameters = method.parameterTypes
-            row.methods.add([id: methodId, name: method.name,
+            appendObservation(row.methods, [id: methodId, name: method.name,
                 descriptor: '(' + parameters.collect { descriptor(it) }.join('') + ')' + descriptor(method.returnType),
                 declaringClass: runtimeClass(method.declaringClass), isStatic: Modifier.isStatic(method.modifiers),
                 parameterClasses: parameters.collect { it.primitive ? null : runtimeClass(it) },
@@ -151,20 +379,21 @@ class KodaKotlinGetterBridge {
     }
 
     String object(Object value, String kind, String project) {
+        health()
         def identity = objects[value]
         if (identity != null) {
             if (identity.kind != kind) throw new IOException('One runtime object crossed type ownership')
             if (identity.scopes.containsKey(project)) return identity.scopes[project]
         } else {
             identity = [kind: kind, scopes: [:]]
-            objects[value] = identity
         }
         def id = 'object:' + objectRows.size()
-        identity.scopes[project] = id
-        objectValues[id] = value
         def task = kind == 'task' ? [name: value.name, path: value.path] : null
         def row = [id: id, kind: kind, project: project, classId: runtimeClass(value.getClass()), task: task]
-        objectRows.add(row)
+        appendObservation(objectRows, row)
+        objects[value] = identity
+        identity.scopes[project] = id
+        objectValues[id] = value
         objectRowsById[id] = row
         catalogue(value.getClass())
         return id
@@ -180,7 +409,7 @@ class KodaKotlinGetterBridge {
             objects: objectRows.size(), catalogues: catalogueRows.size()]
     }
 
-    void sendDelta(String request) {
+    void sendDelta(String request, event = null) {
         if (sequence == Long.MAX_VALUE) throw new IOException('Discovery sequence overflow')
         def delta = [session: session, request: request, sequence: ++sequence, predecessor: cursor,
             artifacts: artifactRows.subList(cursor.artifacts, artifactRows.size()),
@@ -188,48 +417,58 @@ class KodaKotlinGetterBridge {
             classes: classRows.subList(cursor.classes, classRows.size()),
             objects: objectRows.subList(cursor.objects, objectRows.size()),
             catalogues: catalogueRows.subList(cursor.catalogues, catalogueRows.size()),
-            loaderArtifacts: loaderChanges.values().toList()]
-        send('discoveryDelta', delta)
+            loaderArtifacts: loaderChanges.values()]
+        def deltaFrame = prepare('discoveryDelta', delta)
+        def eventFrame = event == null ? null : prepare('event', event)
+        publish(deltaFrame)
+        if (eventFrame != null) publish(eventFrame)
         cursor = position()
         loaderChanges.clear()
     }
 
     def causes(Throwable failure) {
-        def rows = []
+        def rows = new KodaKotlinBoundedValues(this)
         def seen = Collections.newSetFromMap(new IdentityHashMap())
-        while (failure != null && rows.size() < 64 && seen.add(failure)) {
+        while (failure != null && rows.values.size() < 64 && seen.add(failure)) {
             rows.add([class: failure.class.name, message: failure.message])
             failure = failure.cause
         }
         if (failure != null) throw new IOException('Exception cause chain exceeds capture budget or cycles')
-        return rows
+        return rows.values
     }
 
     void discover(List projects, List classNames) {
         projects.each { path ->
             def project = gradle.rootProject.findProject(path)
             if (project == null) throw new IOException('Imported project no longer exists: ' + path)
-            projectObjects[path] = object(project, 'project', path)
+            addProject(path, object(project, 'project', path))
             def candidates = Collections.newSetFromMap(new IdentityHashMap())
             candidates.add(project.buildscript.classLoader)
-            project.plugins.each { candidates.add(it.class.classLoader) }
+            project.plugins.each {
+                health()
+                if (candidates.size() >= maximumValueNodes) throw new IOException('Producer loader candidate budget exceeded')
+                candidates.add(it.class.classLoader)
+            }
             classNames.each { name ->
                 def found = new LinkedHashSet()
-                def failures = []
-                def attempts = []
+                def failures = new KodaKotlinBoundedValues(this)
+                def attempts = new KodaKotlinBoundedValues(this)
                 candidates.each { candidate ->
+                    health()
+                    attempts.beforeNext()
                     try {
                         def type = Class.forName(name, false, candidate)
+                        if (found.size() >= maximumValueNodes) throw new IOException('Producer class candidate budget exceeded')
                         found.add(runtimeClass(type))
                         catalogue(type)
                         attempts.add([loader: loader(candidate), class: runtimeClass(type), failures: []])
                     } catch (ClassNotFoundException error) {
                         def captured = causes(error)
-                        failures.addAll(captured)
+                        captured.each { failures.add(it) }
                         attempts.add([loader: loader(candidate), class: null, failures: captured])
                     }
                 }
-                classLookups.add([project: path, name: name, classes: found.toList(), attempts: attempts, failures: failures])
+                appendObservation(classLookups, [project: path, name: name, classes: found, attempts: attempts.values, failures: failures.values])
             }
         }
     }
@@ -240,6 +479,7 @@ class KodaKotlinGetterBridge {
     }
 
     def decode(request, value) {
+        health()
         if (value == null) return [outcome: [status: 'available', value: null], container: null]
         def shape = request.returnShape
         def result
@@ -250,18 +490,34 @@ class KodaKotlinGetterBridge {
             case 'file': if (value instanceof File) result = [kind: 'file', value: value.path]; break
             case 'object': result = [kind: 'object', value: object(value, shape.objectKind, request.project)]; break
             case 'strings':
-                if (value instanceof List && value.every { it instanceof String }) {
-                    container = object(value, 'container', request.project)
-                    result = [kind: 'strings', value: value.toList()]
+                if (value instanceof List) {
+                    def bounded = new KodaKotlinBoundedValues(this)
+                    def iterator = value.iterator()
+                    boolean supported = true
+                    while (iterator.hasNext()) {
+                        bounded.beforeNext()
+                        def element = iterator.next()
+                        if (!(element instanceof String)) { supported = false; break }
+                        bounded.add(element)
+                    }
+                    if (supported) {
+                        container = object(value, 'container', request.project)
+                        result = [kind: 'strings', value: bounded.values]
+                    }
                 }
                 break
             case 'objects':
                 if (value instanceof Iterable) {
                     container = object(value, 'container', request.project)
-                    result = [kind: 'objects', value: value.collect { element ->
+                    def bounded = new KodaKotlinBoundedValues(this)
+                    def iterator = value.iterator()
+                    while (iterator.hasNext()) {
+                        bounded.beforeNext()
+                        def element = iterator.next()
                         if (element == null) throw new IOException('Null element in typed object iterable')
-                        object(element, shape.objectKind, request.project)
-                    }]
+                        bounded.add(object(element, shape.objectKind, request.project))
+                    }
+                    result = [kind: 'objects', value: bounded.values]
                 }
                 break
         }
@@ -307,22 +563,29 @@ class KodaKotlinGetterBridge {
                 event.outcome = unavailable(request, 'linkage', 'invoke', 'Official getter linkage failed', error)
             }
         }
-        sendDelta(request.id)
-        send('event', event)
+        sendDelta(request.id, event)
     }
 
-    void send(String kind, value) {
-        def line = JsonOutput.toJson([kind: kind, value: value])
-        if (line.getBytes(StandardCharsets.UTF_8).length > maximumFrameBytes) throw new IOException('Discovery exceeds frame budget')
-        writer.write(line)
-        writer.newLine()
-        writer.flush()
+    def prepare(String kind, value) {
+        def encoded = new KodaKotlinBoundedJson(maximumFrameBytes, maximumValueNodes, maximumScalarBytes, { health() }, true)
+        encoded.value([kind: kind, value: value])
+        return encoded
     }
+
+    void publish(encoded) {
+        health()
+        encoded.writeTo(socket.outputStream)
+        socket.outputStream.write(10)
+        socket.outputStream.flush()
+    }
+
+    void send(String kind, value) { publish(prepare(kind, value)) }
 
     String readFrame() {
         def line = new StringBuilder()
         int character
         while ((character = reader.read()) != -1) {
+            if ((line.length() & 4095) == 0) health()
             if (character == 10) return line.toString()
             if (line.length() >= maximumFrameBytes) throw new IOException('Request exceeds frame budget')
             line.append((char) character)
@@ -369,7 +632,13 @@ gradle.projectsEvaluated {
         def bridge = new KodaKotlinGetterBridge(gradle, socket)
         try { bridge.run(System.getProperty('koda.kotlin.capture.token')) }
         catch (Exception error) {
-            bridge.send('failure', error.class.name + ': ' + error.message)
+            String type = error.class.name
+            String message = error.message == null ? 'null' : error.message
+            def typeUsage = bridge.measure(type)
+            def messageUsage = bridge.measure(message)
+            if (typeUsage.bytes + messageUsage.bytes > bridge.maximumFrameBytes - 64)
+                throw new IOException('Producer failure diagnostic exceeds frame budget', error)
+            bridge.send('failure', type + ': ' + message)
             throw error
         }
     } finally { socket.close() }

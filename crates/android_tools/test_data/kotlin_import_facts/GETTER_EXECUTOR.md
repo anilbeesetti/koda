@@ -112,6 +112,20 @@ and between every 64 KiB fixture/artifact read. A growing file rejects hashing
 without following an expanding EOF. These source changes still require actual
 tests, official JVM probes and large-project measurements.
 
+Rust supplies the unchanged producer byte, scalar and value-node limits before
+bridge construction. The JVM boundary admits new observations and mutable row
+fields against exact cumulative encoded usage before retaining them. Getter
+Lists and Iterables are visited once under checked per-item limits, without
+`every`, `collect`, or an unbounded `toList` copy. Raw JSON is encoded into
+bounded chunks of at most 64 KiB; value nodes, scalar UTF-8 bytes, escaped output,
+depth, cycles, deadline and interruption are checked during encoding. A complete
+JSON String and complete UTF-8 copy are never created. Both delta and event are
+prepared successfully before either frame is published. Exceeding a limit
+rejects the capture; values and diagnostics are never truncated. These limits
+bound additional bridge observations and encoding, while official getter code
+and JVM reflection remain the external runtime and require actual runtime
+resource measurements.
+
 Physical JVM object identities retain stable observed handles within each
 project scope. A legal shared immutable List can therefore return to two projects
 without copying its physical object or inventing a new class/loader origin.
@@ -124,6 +138,17 @@ and checks scoped handles, exact physical identity, class/loader provenance,
 ordered values and both negative ownership cases. This controlled JVM fixture is
 not Kotlin/KAPT reference parity. Root must execute it with the actual built
 Rust launcher/native library and an independently prepared two-project fixture.
+The same probe also assembles `bridge_producer_limits.gradle` with the production
+bridge unchanged. Eleven actual JVM cases cover lazy oversized String Lists and
+object Iterables, a giant scalar, escape-heavy allocation, cycles, exact byte and
+node boundaries, Unicode and order, cumulative discovery admission, zero-byte
+publication on a rejected event, and deadline/interruption during expansion.
+The probe independently checks these observations in Rust and launches a second
+owned JVM invocation with an uncaught producer rejection; it requires a failed
+wrapper status, the original diagnostic cause, and verified owned closure.
+The existing shared-list assertions remain intact; their project setup now uses
+the same admission path as production. All of these checks await Root execution
+and add no original reference-test credit.
 
 The full framed Rust regression transports one bootstrap plus delta/event frames
 through task planning at 100 and 1,000 applicable tasks and 10,000 non-Kotlin

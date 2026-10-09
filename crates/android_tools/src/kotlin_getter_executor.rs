@@ -1041,6 +1041,7 @@ impl GradleTransport {
         let output = File::create(options.logs_directory.join("stdout.log"))?;
         let errors = File::create(options.logs_directory.join("stderr.log"))?;
         let mut command = Command::new(&options.wrapper);
+        let producer_limits = CaptureLimits::default();
         command
             .current_dir(&options.project_root)
             .env("JAVA_HOME", &options.java_home)
@@ -1051,6 +1052,18 @@ impl GradleTransport {
             .arg(format!(
                 "-Dkoda.kotlin.capture.timeoutMillis={}",
                 options.timeout.as_millis()
+            ))
+            .arg(format!(
+                "-Dkoda.kotlin.capture.maximumFrameBytes={}",
+                producer_limits.record_bytes
+            ))
+            .arg(format!(
+                "-Dkoda.kotlin.capture.maximumValueNodes={}",
+                producer_limits.entries
+            ))
+            .arg(format!(
+                "-Dkoda.kotlin.capture.maximumScalarBytes={}",
+                producer_limits.string_bytes
             ))
             .arg("help");
         let mut child = OwnedGradleRuntime::spawn(

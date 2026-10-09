@@ -8,7 +8,7 @@ gradle.projectsEvaluated {
     [':first', ':second'].each { path ->
         def project = gradle.rootProject.findProject(path)
         assert project != null
-        bridge.projectObjects[path] = bridge.object(project, 'project', path)
+        bridge.addProject(path, bridge.object(project, 'project', path))
     }
     def empty = Collections.emptyList()
     def ordered = Collections.unmodifiableList(['-Xfirst', '-Xsecond'])
