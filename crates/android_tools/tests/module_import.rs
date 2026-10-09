@@ -641,6 +641,7 @@ fn sidecar_rejects_wrong_getter_duplicate_project_schema_missing_and_sequence_sh
         assert_eq!(
             recapture(&fixture, &value)
                 .expect_err("Reject invalid capability")
+                .downcast::<android_tools::project_tree_facts::FactsUnavailable>()?
                 .reason,
             reason
         );
