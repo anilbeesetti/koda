@@ -8767,8 +8767,8 @@ fi
                 .insert_tree(&root, json!({"gradlew":"", "settings.gradle.kts":""}))
                 .await;
             let project = Project::test(filesystem, [root.as_path()], cx).await;
-            let (workspace, visual) = cx
-                .add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let (workspace, visual) =
+                cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
             let panel = new_test_android_panel(&workspace, project.clone(), visual);
             visual.update(|_, cx| publish_picker_catalogue(&project, &root, cx))?;
             visual.run_until_parked();
@@ -8801,7 +8801,10 @@ fi
                 visual.run_until_parked();
                 let menu = visual
                     .update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
-                assert_eq!(menu.read_with(visual, |menu, _| menu.selected_index()), None);
+                assert_eq!(
+                    menu.read_with(visual, |menu, _| menu.selected_index()),
+                    None
+                );
                 visual.update(|window, cx| {
                     window.replace_root(cx, |_, _| PickerMenuRoot(menu.clone()));
                 });
