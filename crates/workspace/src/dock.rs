@@ -1959,8 +1959,9 @@ pub mod test {
         cx.update(crate::AppState::test);
         let filesystem = project::FakeFs::new(cx.executor());
         let project = project::Project::test(filesystem, [], cx).await;
-        let (workspace, visual) =
-            cx.add_window_view(|window, cx| crate::Workspace::test_new(project, window, cx));
+        let (multi_workspace, visual) =
+            cx.add_window_view(|window, cx| crate::MultiWorkspace::test_new(project, window, cx));
+        let workspace = multi_workspace.read_with(visual, |multi, _| multi.workspace().clone());
         let conditional = visual.new(|cx| TestPanel::new(DockPosition::Bottom, 100, cx));
         let generic =
             visual.new(|cx| TestPanel::new_with_activation_child(DockPosition::Bottom, 200, cx));

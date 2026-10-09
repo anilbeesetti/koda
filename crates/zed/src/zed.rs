@@ -5971,6 +5971,7 @@ mod tests {
                 "outline_panel",
                 "pane",
                 "picker",
+                "project",
                 "project_panel",
                 "project_search",
                 "project_symbols",

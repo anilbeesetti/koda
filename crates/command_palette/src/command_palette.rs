@@ -47,7 +47,7 @@ impl ModalView for CommandPalette {}
 
 pub struct CommandPalette {
     picker: Entity<Picker<CommandPaletteDelegate>>,
-    availability_refresh_scheduled: bool,
+    availability_refresh_pending: bool,
     _workspace_subscription: Option<Subscription>,
 }
 
@@ -157,27 +157,17 @@ impl CommandPalette {
             picker
         });
         let workspace_subscription = workspace.map(|workspace| {
-            cx.observe_in(&workspace, window, |palette, _, window, cx| {
-                if palette.availability_refresh_scheduled {
+            cx.observe_in(&workspace, window, |palette, _, _, cx| {
+                if palette.availability_refresh_pending {
                     return;
                 }
-                palette.availability_refresh_scheduled = true;
-                let palette = cx.weak_entity();
-                // Available actions belong to the dispatch tree of the rendered
-                // frame, so inspect it after the owning Workspace redraws.
-                window.on_next_frame(move |window, cx| {
-                    palette
-                        .update(cx, |palette, cx| {
-                            palette.availability_refresh_scheduled = false;
-                            palette.refresh_available_actions(window, cx);
-                        })
-                        .log_err();
-                });
+                palette.availability_refresh_pending = true;
+                cx.notify();
             })
         });
         Self {
             picker,
-            availability_refresh_scheduled: false,
+            availability_refresh_pending: false,
             _workspace_subscription: workspace_subscription,
         }
     }
@@ -262,7 +252,19 @@ impl Focusable for CommandPalette {
 }
 
 impl Render for CommandPalette {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if std::mem::take(&mut self.availability_refresh_pending) {
+            let palette = cx.weak_entity();
+            // Frame callbacks run before drawing dirty windows. Scheduling from
+            // this draw lets the next callback inspect its completed dispatch tree.
+            window.on_next_frame(move |window, cx| {
+                palette
+                    .update(cx, |palette, cx| {
+                        palette.refresh_available_actions(window, cx);
+                    })
+                    .log_err();
+            });
+        }
         v_flex()
             .key_context("CommandPalette")
             .on_action(cx.listener(Self::remove_selected))
@@ -1082,6 +1084,9 @@ mod tests {
         });
         visual.run_until_parked();
         visual.dispatch_action(Toggle);
+        visual.update(|window, cx| {
+            window.simulate_next_frame(cx);
+        });
         visual.run_until_parked();
         let palette = workspace.read_with(visual, |workspace, cx| {
             workspace
@@ -1119,6 +1124,9 @@ mod tests {
         });
         enabled.set(false);
         workspace.update(visual, |_, cx| cx.notify());
+        visual.update(|window, cx| {
+            window.simulate_next_frame(cx);
+        });
         visual.run_until_parked();
         picker.read_with(visual, |picker, cx| {
             assert_eq!(picker.query(cx), "bcksp");
@@ -1152,6 +1160,9 @@ mod tests {
         });
         enabled.set(true);
         workspace.update(visual, |_, cx| cx.notify());
+        visual.update(|window, cx| {
+            window.simulate_next_frame(cx);
+        });
         visual.run_until_parked();
         picker.read_with(visual, |picker, cx| {
             assert_eq!(picker.query(cx), "bcksp");
