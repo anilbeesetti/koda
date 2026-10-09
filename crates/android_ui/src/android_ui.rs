@@ -8818,6 +8818,23 @@ fi
                     "Invalidation must release stale table state"
                 );
                 publish_picker_model(panel, &["release"], &[], "returned", cx)?;
+                assert!(panel.selected_target.is_none());
+                assert!(panel.build_variant(cx).is_none());
+                assert_eq!(panel.status.as_ref(), UNAVAILABLE_BUILD_VARIANT_STATUS);
+                assert_eq!(
+                    panel
+                        .targets
+                        .iter()
+                        .map(|target| (target.module.as_str(), target.variant.as_str()))
+                        .collect::<Vec<_>>(),
+                    vec![(":app", "release")]
+                );
+                // The removed debug identity stays unavailable until the user
+                // explicitly selects a variant from the fresh model.
+                Ok(())
+            })?;
+            select_picker_entry(&panel, 0, visual);
+            panel.update(visual, |panel, cx| -> Result<()> {
                 assert!(panel.render_build_variant_table(cx).is_some());
                 let returned = panel
                     .variant_table

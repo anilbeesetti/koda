@@ -54,6 +54,21 @@
     }
   ],
   "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED; zero passing parity credit",
+  "supplemental_regressions": [
+    {
+      "rust_test": "android_ui::tests::build_variant_table_reuses_rows_and_rejects_incomplete_module_selection",
+      "status": "CI210_FAILED; corrected fixture awaits execution",
+      "original_reference_case": null,
+      "fixture_correction": "CI210 failed because the supplemental fixture expected release to replace the removed remembered app/debug identity automatically. Existing apply_targets/publish_selection behavior keeps the missing identity unavailable. The fixture now asserts that unavailable state and confirms the single evaluated app/release menu entry before exercising the production picker confirmation. Every earlier table assertion is preserved.",
+      "reference_scope": "BuildVariantTableModel.kt derives row.variant from getVariantAndAbi, labels defaults separately, and variantItem fails when the selected identity is absent; it does not select a replacement. This supports separating selection setup from table projection, but does not establish Android Studio sync fallback parity.",
+      "reference_lines": [
+        "BuildVariantTableModel.kt:63 variantItem",
+        "BuildVariantTableModel.kt:115-116 independently selected variant and available variant items"
+      ],
+      "existing_rust_contract": "android_ui::tests::build_variant_menu_recovers_from_removed_selection and removed_library_variant_never_falls_back_to_the_previous_application; apply_targets only restores a matching remembered identity",
+      "parity_credit": "Supplemental fixture correction only; the bounded 27 original reference cases remain UNPORTED pending applicable execution and integration gates."
+    }
+  ],
   "deferred": [
     {
       "original_method": "withAbi",
