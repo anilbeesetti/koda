@@ -13,8 +13,13 @@ host must reject conversion to a complete import plan when any required request
 ID is absent; missing classes/capabilities preserve Unknown, never prove absence.
 
 Rust issues each exact immutable reflected request before execution. The owned
-Gradle/JVM bridge first returns a separate append-only discovery frame, then the
-corresponding event. Rust verifies actual runtime artifact bytes and digests,
+Gradle/JVM bridge first returns one discovery bootstrap, then a separate
+append-only delta before each corresponding event. Rust independently issues a
+fresh session nonce; every delta must match that nonce, the retained request ID,
+next sequence and exact predecessor row counts. Only new observations and
+explicit append-only loader artifact entries are transmitted. The bridge cannot
+replace, remove or reorder an accepted row through this protocol. Rust verifies
+actual runtime artifact bytes and digests,
 retains class/loader/method identity, event order, null/unavailable states and
 iterable order, and validates the final observations with the unchanged strict
 schema. Runtime classes with unavailable/non-file origins or ambiguous plugin
@@ -91,28 +96,59 @@ retention or cloning. Final serialization uses a bounded writer over
 borrowed context and events, without constructing a complete intermediate JSON
 Value. Budget exhaustion rejects the capture and aborts its runtime; no values,
 events, or raw diagnostics are truncated. The final diagnostic budget is checked
-after verified owned process/writer closure. Incoming immutable discovery rows
-are indexed once per update; duplicate, rewritten, removed, or reordered prior
-identities reject the capture. Object, class and catalogue lookups use retained
-keyed indexes rather than scanning task vectors. A failure latches the capture
+after verified owned process/writer closure. Bootstrap observations are indexed
+once; delta validation, artifact hashing, indexing and retention accounting then
+visit only new rows and loader additions. The transport does not retransmit or
+reparse the complete discovery prefix per getter. Duplicate or reused identities,
+foreign/replayed sessions, invalid predecessor counts, and changed class/loader
+provenance reject the capture. Exact class-ID/target predicates retain positive
+and negative results, with one checked cumulative vertex/edge work budget and
+health checks during traversal. Separate class loaders retain distinct identities.
+Object, class and catalogue lookups use retained keyed indexes rather than
+scanning task vectors. A failure latches the capture
 and closes its transport once, including errors during project-plan preparation.
 Capture health is checked between bounded partial socket writes, while receiving,
 and between every 64 KiB fixture/artifact read. A growing file rejects hashing
 without following an expanding EOF. These source changes still require actual
 tests, official JVM probes and large-project measurements.
 
+Physical JVM object identities retain stable observed handles within each
+project scope. A legal shared immutable List can therefore return to two projects
+without copying its physical object or inventing a new class/loader origin.
+Same-project repeats reuse the same handle; wrong-kind and foreign-receiver
+requests still fail. The supplemental Root-run
+`kotlin_bridge_fixture_probe` assembles the production bridge class with
+`bridge_shared_collections.gradle`, invokes actual reflected ThreadLocal getters
+for shared empty and ordered lists in real `:first` and `:second` Gradle projects,
+and checks scoped handles, exact physical identity, class/loader provenance,
+ordered values and both negative ownership cases. This controlled JVM fixture is
+not Kotlin/KAPT reference parity. Root must execute it with the actual built
+Rust launcher/native library and an independently prepared two-project fixture.
+
+The full framed Rust regression transports one bootstrap plus delta/event frames
+through task planning at 100 and 1,000 applicable tasks and 10,000 non-Kotlin
+tasks. It counts actual serialized bytes, parsed discovery rows and validation
+work, checks the largest legal default-budget planning boundary, and passes the
+unchanged final strict decoder. These are test declarations awaiting execution;
+they do not establish official Gradle CPU/RSS or startup performance.
+
 Root validation commands, with the normal repository toolchain and environment:
 
 ```text
 cargo build --locked -p kotlin_jvm_guardian --lib --bin kotlin_jvm_guardian
+cargo test --locked -p kotlin_jvm_guardian --lib
 cargo test --locked -p kotlin_jvm_guardian --test process_lifetime
 cargo test --locked -p android_tools --lib kotlin_getter_executor
 cargo test --locked -p android_tools --lib kotlin_capture_budget
+cargo test --locked -p android_tools --lib kotlin_getter_lifetime
+cargo test --locked -p android_tools --test kotlin_import_facts
 ./script/clippy --locked -p android_tools -p kotlin_jvm_guardian
 ```
 
 The binary and native library paths must come from the actual build output and
-be pinned for each probe. Process-fixture tests exercise the real Rust supervisor
+be pinned for each probe. The shared-list probe command is
+`cargo run --locked -p android_tools --example kotlin_bridge_fixture_probe -- WRAPPER FIXTURE_ROOT JAVA_HOME GUARDIAN_LAUNCHER GUARDIAN_LIBRARY`.
+`FIXTURE_ROOT` must contain evaluated `:first` and `:second` projects. Process-fixture tests exercise the real Rust supervisor
 with controlled Rust children. They do not establish official JVM Agent_OnLoad,
 Kotlin getter membership, KAPT preparation, or reference-version parity.
 

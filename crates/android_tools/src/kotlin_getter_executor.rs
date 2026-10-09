@@ -10,8 +10,8 @@ use crate::{
         CaptureBinding, CaptureContext, CaptureLimits, CaptureMode, CaptureObject, CaptureValue,
         Consumer, ContainerOrder, GetterArgument, GetterEvent, GetterOutcome, GetterPurpose,
         GetterRequest, ImportIdentity, KotlinFactsSnapshot, MethodCatalogue, MethodSelection,
-        MissingMethod, ObjectKind, RequestParameter, ReturnShape, RuntimeIdentity, ValueKind,
-        parse_kotlin_facts,
+        MissingMethod, ObjectKind, RequestParameter, ReturnShape, RuntimeArtifact, RuntimeClass,
+        RuntimeIdentity, RuntimeLoader, ValueKind, parse_kotlin_facts,
     },
     project_model::{Module, ModuleKind, ProjectModel, Variant},
 };
@@ -258,6 +258,61 @@ pub struct DiscoveryInventory {
     pub class_lookups: Vec<ClassLookup>,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DiscoveryPosition {
+    pub artifacts: usize,
+    pub loaders: usize,
+    pub classes: usize,
+    pub objects: usize,
+    pub catalogues: usize,
+}
+
+impl DiscoveryPosition {
+    fn at(inventory: &DiscoveryInventory) -> Self {
+        Self {
+            artifacts: inventory.runtime.artifacts.len(),
+            loaders: inventory.runtime.loaders.len(),
+            classes: inventory.runtime.classes.len(),
+            objects: inventory.objects.len(),
+            catalogues: inventory.catalogues.len(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LoaderArtifactsAddition {
+    pub loader: String,
+    pub previous: usize,
+    pub artifacts: Vec<String>,
+}
+
+/// A frame can append observations, but cannot provide a replacement for an
+/// accepted row. Session/request/sequence and predecessor positions are issued
+/// independently by Rust, rather than inferred from the returned frame.
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DiscoveryDelta {
+    pub session: String,
+    pub request: String,
+    pub sequence: u64,
+    pub predecessor: DiscoveryPosition,
+    pub artifacts: Vec<RuntimeArtifact>,
+    pub loaders: Vec<RuntimeLoader>,
+    pub classes: Vec<RuntimeClass>,
+    pub objects: Vec<CaptureObject>,
+    pub catalogues: Vec<MethodCatalogue>,
+    pub loader_artifacts: Vec<LoaderArtifactsAddition>,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct DiscoveryBootstrap {
+    session: String,
+    inventory: DiscoveryInventory,
+}
+
 impl DiscoveryInventory {
     #[cfg(test)]
     fn verify_artifacts(&self) -> Result<()> {
@@ -289,6 +344,7 @@ impl DiscoveryInventory {
         Ok(())
     }
 
+    #[cfg(test)]
     fn validate_extension(&self, next: &Self) -> Result<()> {
         ensure!(
             self.runtime.gradle_version == next.runtime.gradle_version
@@ -338,6 +394,7 @@ impl DiscoveryInventory {
         self.accept_validated_extension(next, monitor)
     }
 
+    #[cfg(test)]
     fn accept_validated_extension(
         &mut self,
         next: Self,
@@ -368,14 +425,53 @@ struct DiscoveryIndex {
     catalogues: BTreeMap<String, usize>,
     class_catalogues: BTreeMap<String, usize>,
     classes: BTreeMap<String, usize>,
+    artifacts: BTreeMap<String, usize>,
+    loaders: BTreeMap<String, usize>,
+    loader_artifacts: BTreeMap<String, BTreeSet<String>>,
+    methods: BTreeSet<String>,
     named_classes: BTreeMap<String, BTreeMap<String, usize>>,
 }
 
 impl DiscoveryIndex {
+    #[cfg(test)]
     fn new(inventory: &DiscoveryInventory) -> Result<Self> {
+        Self::new_monitored(inventory, &mut || Ok(()))
+    }
+
+    fn new_monitored(
+        inventory: &DiscoveryInventory,
+        monitor: &mut impl FnMut() -> Result<()>,
+    ) -> Result<Self> {
         let mut index = Self::default();
-        index.append(inventory, 0, 0, 0)?;
+        index.append_monitored(inventory, 0, 0, 0, monitor)?;
+        for (position, row) in inventory.runtime.artifacts.iter().enumerate() {
+            if position % 64 == 0 {
+                monitor()?;
+            }
+            ensure!(
+                index.artifacts.insert(row.id.clone(), position).is_none(),
+                "Duplicate runtime artifact identity"
+            );
+        }
+        for (position, row) in inventory.runtime.loaders.iter().enumerate() {
+            if position % 64 == 0 {
+                monitor()?;
+            }
+            ensure!(
+                index.loaders.insert(row.id.clone(), position).is_none(),
+                "Duplicate runtime loader identity"
+            );
+            let artifacts = row.artifacts.iter().cloned().collect::<BTreeSet<_>>();
+            ensure!(
+                artifacts.len() == row.artifacts.len(),
+                "Duplicate runtime loader artifact"
+            );
+            index.loader_artifacts.insert(row.id.clone(), artifacts);
+        }
         for (position, lookup) in inventory.class_lookups.iter().enumerate() {
+            if position % 64 == 0 {
+                monitor()?;
+            }
             ensure!(
                 index
                     .named_classes
@@ -389,6 +485,7 @@ impl DiscoveryIndex {
         Ok(index)
     }
 
+    #[cfg(test)]
     fn append(
         &mut self,
         inventory: &DiscoveryInventory,
@@ -396,13 +493,39 @@ impl DiscoveryIndex {
         catalogues: usize,
         classes: usize,
     ) -> Result<()> {
+        self.append_monitored(inventory, objects, catalogues, classes, &mut || Ok(()))
+    }
+
+    fn append_monitored(
+        &mut self,
+        inventory: &DiscoveryInventory,
+        objects: usize,
+        catalogues: usize,
+        classes: usize,
+        monitor: &mut impl FnMut() -> Result<()>,
+    ) -> Result<()> {
         for (position, row) in inventory.objects.iter().enumerate().skip(objects) {
+            if (position - objects) % 64 == 0 {
+                monitor()?;
+            }
             ensure!(
                 self.objects.insert(row.id.clone(), position).is_none(),
                 "Duplicate discovered object identity"
             );
         }
         for (position, row) in inventory.catalogues.iter().enumerate().skip(catalogues) {
+            if (position - catalogues) % 64 == 0 {
+                monitor()?;
+            }
+            for (position, method) in row.methods.iter().enumerate() {
+                if position % 64 == 0 {
+                    monitor()?;
+                }
+                ensure!(
+                    self.methods.insert(method.id.clone()),
+                    "Duplicate reflected method identity"
+                );
+            }
             ensure!(
                 self.catalogues.insert(row.id.clone(), position).is_none(),
                 "Duplicate discovered catalogue identity"
@@ -415,12 +538,266 @@ impl DiscoveryIndex {
             );
         }
         for (position, row) in inventory.runtime.classes.iter().enumerate().skip(classes) {
+            if (position - classes) % 64 == 0 {
+                monitor()?;
+            }
             ensure!(
                 self.classes.insert(row.id.clone(), position).is_none(),
                 "Duplicate discovered class identity"
             );
         }
         Ok(())
+    }
+
+    fn validate_delta(
+        &self,
+        inventory: &DiscoveryInventory,
+        delta: &DiscoveryDelta,
+        session: &str,
+        sequence: u64,
+        request: &str,
+        monitor: &mut impl FnMut() -> Result<()>,
+    ) -> Result<usize> {
+        monitor()?;
+        ensure!(
+            delta.session == session && delta.request == request,
+            "Discovery delta belongs to a different session/request"
+        );
+        ensure!(
+            sequence.checked_add(1) == Some(delta.sequence),
+            "Discovery delta sequence was replayed or reordered"
+        );
+        ensure!(
+            delta.predecessor == DiscoveryPosition::at(inventory),
+            "Discovery predecessor was rewritten or truncated"
+        );
+        let mut examined = 0;
+        let mut step = || -> Result<()> {
+            examined += 1;
+            if examined % 64 == 0 {
+                monitor()?;
+            }
+            Ok(())
+        };
+        let artifacts =
+            additional_ids(&delta.artifacts, &self.artifacts, |row| &row.id, &mut step)?;
+        let loaders = additional_ids(&delta.loaders, &self.loaders, |row| &row.id, &mut step)?;
+        let classes = additional_ids(&delta.classes, &self.classes, |row| &row.id, &mut step)?;
+        additional_ids(&delta.objects, &self.objects, |row| &row.id, &mut step)?;
+        additional_ids(
+            &delta.catalogues,
+            &self.catalogues,
+            |row| &row.id,
+            &mut step,
+        )?;
+        let has_artifact = |id: &str| self.artifacts.contains_key(id) || artifacts.contains(id);
+        let has_loader = |id: &str| self.loaders.contains_key(id) || loaders.contains(id);
+        let has_class = |id: &str| self.classes.contains_key(id) || classes.contains(id);
+        let mut new_loader_artifacts = BTreeMap::new();
+        for row in &delta.loaders {
+            step()?;
+            ensure!(
+                row.parent.as_deref().is_none_or(&has_loader),
+                "New loader has undiscovered parent provenance"
+            );
+            let mut seen = BTreeSet::new();
+            for artifact in &row.artifacts {
+                step()?;
+                ensure!(
+                    has_artifact(artifact) && seen.insert(artifact.as_str()),
+                    "New loader has unknown/duplicate artifact provenance"
+                );
+            }
+            new_loader_artifacts.insert(row.id.as_str(), seen);
+        }
+        let mut changed_loader_artifacts = BTreeMap::new();
+        let mut changed_loaders = BTreeSet::new();
+        for addition in &delta.loader_artifacts {
+            step()?;
+            ensure!(
+                changed_loaders.insert(&addition.loader),
+                "Several deltas rewrite one loader"
+            );
+            let position = self
+                .loaders
+                .get(&addition.loader)
+                .context("Loader addition does not refer to a retained loader")?;
+            let loader = inventory
+                .runtime
+                .loaders
+                .get(*position)
+                .context("Retained loader missing")?;
+            ensure!(
+                addition.previous == loader.artifacts.len() && !addition.artifacts.is_empty(),
+                "Loader artifact predecessor was rewritten/truncated"
+            );
+            let old = self
+                .loader_artifacts
+                .get(&addition.loader)
+                .context("Retained loader artifact index missing")?;
+            let mut new = BTreeSet::new();
+            for artifact in &addition.artifacts {
+                step()?;
+                ensure!(
+                    has_artifact(artifact)
+                        && !old.contains(artifact)
+                        && new.insert(artifact.as_str()),
+                    "Loader artifact was unknown, duplicated or rewritten"
+                );
+            }
+            changed_loader_artifacts.insert(addition.loader.as_str(), new);
+        }
+        for row in &delta.classes {
+            step()?;
+            ensure!(
+                has_loader(&row.loader),
+                "New runtime class has unknown loader provenance"
+            );
+            if let crate::kotlin_import_facts::ClassOrigin::Artifact(artifact) = &row.origin {
+                ensure!(
+                    has_artifact(artifact),
+                    "New runtime class has unknown artifact provenance"
+                );
+                ensure!(
+                    self.loader_artifacts
+                        .get(&row.loader)
+                        .is_some_and(|artifacts| artifacts.contains(artifact))
+                        || new_loader_artifacts
+                            .get(row.loader.as_str())
+                            .is_some_and(|artifacts| artifacts.contains(artifact.as_str()))
+                        || changed_loader_artifacts
+                            .get(row.loader.as_str())
+                            .is_some_and(|artifacts| artifacts.contains(artifact.as_str())),
+                    "New runtime class artifact does not belong to its observed loader"
+                );
+            }
+            for parent in row.superclass.iter().chain(&row.interfaces) {
+                step()?;
+                ensure!(
+                    has_class(parent),
+                    "New runtime class ancestry is undiscovered"
+                );
+            }
+        }
+        for row in &delta.objects {
+            step()?;
+            ensure!(
+                inventory.project_objects.contains_key(&row.project) && has_class(&row.class_id),
+                "New object changed project/class provenance"
+            );
+        }
+        let mut catalogue_classes = BTreeSet::new();
+        let mut method_ids = BTreeSet::new();
+        for row in &delta.catalogues {
+            step()?;
+            ensure!(
+                has_class(&row.class_id)
+                    && !self.class_catalogues.contains_key(&row.class_id)
+                    && catalogue_classes.insert(&row.class_id),
+                "Runtime class catalogue was rewritten or duplicated"
+            );
+            for method in &row.methods {
+                step()?;
+                ensure!(
+                    !self.methods.contains(&method.id) && method_ids.insert(&method.id),
+                    "Reflected method identity was reused"
+                );
+                ensure!(
+                    has_class(&method.declaring_class),
+                    "Reflected declaring class is undiscovered"
+                );
+                for class in method
+                    .parameter_classes
+                    .iter()
+                    .filter_map(Option::as_deref)
+                    .chain(method.return_class.as_deref())
+                {
+                    step()?;
+                    ensure!(
+                        has_class(class),
+                        "Reflected parameter/return class is undiscovered"
+                    );
+                }
+            }
+        }
+        for artifact in &delta.artifacts {
+            ensure!(
+                artifact.path.is_absolute() && artifact.path.canonicalize()? == artifact.path,
+                "New runtime artifact is not canonical"
+            );
+            let (bytes, digest) = hash_regular_file_monitored(&artifact.path, monitor)?;
+            ensure!(
+                bytes == artifact.bytes && digest == artifact.sha256,
+                "New runtime artifact differs from discovery"
+            );
+        }
+        monitor()?;
+        Ok(examined)
+    }
+
+    #[cfg(test)]
+    fn apply_delta(
+        &mut self,
+        inventory: &mut DiscoveryInventory,
+        delta: DiscoveryDelta,
+    ) -> Result<()> {
+        self.apply_delta_monitored(inventory, delta, &mut || Ok(()))
+    }
+
+    fn apply_delta_monitored(
+        &mut self,
+        inventory: &mut DiscoveryInventory,
+        delta: DiscoveryDelta,
+        monitor: &mut impl FnMut() -> Result<()>,
+    ) -> Result<()> {
+        let before = DiscoveryPosition::at(inventory);
+        for (offset, artifact) in delta.artifacts.iter().enumerate() {
+            if offset % 64 == 0 {
+                monitor()?;
+            }
+            self.artifacts
+                .insert(artifact.id.clone(), before.artifacts + offset);
+        }
+        for (offset, loader) in delta.loaders.iter().enumerate() {
+            if offset % 64 == 0 {
+                monitor()?;
+            }
+            self.loaders
+                .insert(loader.id.clone(), before.loaders + offset);
+            self.loader_artifacts.insert(
+                loader.id.clone(),
+                loader.artifacts.iter().cloned().collect(),
+            );
+        }
+        for addition in delta.loader_artifacts {
+            monitor()?;
+            let position = self
+                .loaders
+                .get(&addition.loader)
+                .context("Validated loader index missing")?;
+            let loader = inventory
+                .runtime
+                .loaders
+                .get_mut(*position)
+                .context("Validated loader missing")?;
+            self.loader_artifacts
+                .get_mut(&addition.loader)
+                .context("Validated artifact index missing")?
+                .extend(addition.artifacts.iter().cloned());
+            loader.artifacts.extend(addition.artifacts);
+        }
+        inventory.runtime.artifacts.extend(delta.artifacts);
+        inventory.runtime.loaders.extend(delta.loaders);
+        inventory.runtime.classes.extend(delta.classes);
+        inventory.objects.extend(delta.objects);
+        inventory.catalogues.extend(delta.catalogues);
+        self.append_monitored(
+            inventory,
+            before.objects,
+            before.catalogues,
+            before.classes,
+            monitor,
+        )
     }
 
     fn object<'a>(&self, inventory: &'a DiscoveryInventory, id: &str) -> Result<&'a CaptureObject> {
@@ -480,6 +857,48 @@ impl DiscoveryIndex {
     }
 }
 
+fn additional_ids<'a, T>(
+    rows: &'a [T],
+    retained: &BTreeMap<String, usize>,
+    id: impl Fn(&'a T) -> &'a str,
+    monitor: &mut impl FnMut() -> Result<()>,
+) -> Result<BTreeSet<&'a str>> {
+    let mut result = BTreeSet::new();
+    for row in rows {
+        monitor()?;
+        let id = id(row);
+        ensure!(
+            !id.is_empty() && !retained.contains_key(id) && result.insert(id),
+            "Discovery identity was reused or rewritten"
+        );
+    }
+    Ok(result)
+}
+
+impl DiscoveryDelta {
+    #[cfg(test)]
+    fn empty(
+        inventory: &DiscoveryInventory,
+        session: &str,
+        request: &GetterRequest,
+        sequence: u64,
+    ) -> Self {
+        Self {
+            session: session.into(),
+            request: request.id.clone(),
+            sequence,
+            predecessor: DiscoveryPosition::at(inventory),
+            artifacts: vec![],
+            loaders: vec![],
+            classes: vec![],
+            objects: vec![],
+            catalogues: vec![],
+            loader_artifacts: vec![],
+        }
+    }
+}
+
+#[cfg(test)]
 fn preserve_rows<T: PartialEq>(before: &[T], after: &[T], id: impl Fn(&T) -> &str) -> Result<()> {
     let rows = index_rows(after, &id)?;
     for (position, row) in before.iter().enumerate() {
@@ -492,6 +911,7 @@ fn preserve_rows<T: PartialEq>(before: &[T], after: &[T], id: impl Fn(&T) -> &st
     Ok(())
 }
 
+#[cfg(test)]
 fn index_rows<T>(rows: &[T], id: impl Fn(&T) -> &str) -> Result<BTreeMap<&str, &T>> {
     let mut indexed = BTreeMap::new();
     for row in rows {
@@ -503,7 +923,7 @@ fn index_rows<T>(rows: &[T], id: impl Fn(&T) -> &str) -> Result<BTreeMap<&str, &
     Ok(indexed)
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(
     tag = "kind",
     content = "value",
@@ -512,7 +932,8 @@ fn index_rows<T>(rows: &[T], id: impl Fn(&T) -> &str) -> Result<BTreeMap<&str, &
 )]
 enum Response {
     Hello(String),
-    Discovery(DiscoveryInventory),
+    Discovery(DiscoveryBootstrap),
+    DiscoveryDelta(DiscoveryDelta),
     Event(GetterEvent),
     Finished(()),
     Failure(String),
@@ -522,6 +943,7 @@ enum Response {
 #[serde(rename_all = "camelCase")]
 struct DiscoveryRequest<'a> {
     projects: &'a [String],
+    session: &'a str,
     class_names: &'a [&'a str],
 }
 
@@ -536,8 +958,8 @@ enum Request<'a> {
 /// A transport must deliver discovery independently of event responses. Tests
 /// can supply a controlled transport without pretending to execute Gradle.
 pub trait GetterTransport {
-    fn discover(&mut self, projects: &[String]) -> Result<DiscoveryInventory>;
-    fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryInventory, GetterEvent)>;
+    fn discover(&mut self, projects: &[String], session: &str) -> Result<DiscoveryInventory>;
+    fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryDelta, GetterEvent)>;
     fn finish(&mut self) -> Result<()>;
     fn abort(&mut self) -> Result<()>;
     fn check_progress(&mut self) -> Result<()>;
@@ -745,17 +1167,59 @@ impl GradleTransport {
                 check_diagnostics(logs_directory, diagnostic_bytes)
             },
         )?;
-        let mut bound = BoundedJsonWriter::new(std::io::sink(), CaptureLimits::default(), 0);
-        bound
-            .write_all(&bytes)
-            .context("Bounded Kotlin getter response frame")?;
-        let response: Response =
-            serde_json::from_slice(&bytes).context("Decode owned getter response frame")?;
+        let response = decode_response_monitored(&bytes, &mut || self.check_progress())?;
         if let Response::Failure(detail) = response {
             bail!("Gradle getter discovery unavailable: {detail}");
         }
         Ok(response)
     }
+}
+
+fn decode_response_monitored(
+    bytes: &[u8],
+    monitor: &mut impl FnMut() -> Result<()>,
+) -> Result<Response> {
+    let mut writer = BoundedJsonWriter::new(std::io::sink(), CaptureLimits::default(), 0);
+    for chunk in bytes.chunks(64 * 1024) {
+        monitor()?;
+        writer
+            .write_all(chunk)
+            .context("Bounded Kotlin getter response frame")?;
+    }
+    struct MonitoredBytes<'a, F> {
+        bytes: &'a [u8],
+        offset: usize,
+        checked_at: usize,
+        monitor: F,
+    }
+    impl<F: FnMut() -> Result<()>> Read for MonitoredBytes<'_, F> {
+        fn read(&mut self, output: &mut [u8]) -> std::io::Result<usize> {
+            if self.offset == 0 || self.offset - self.checked_at >= 64 * 1024 {
+                (self.monitor)().map_err(std::io::Error::other)?;
+                self.checked_at = self.offset;
+            }
+            let remaining = self
+                .bytes
+                .get(self.offset..)
+                .ok_or_else(|| std::io::Error::other("Response decoder position overflow"))?;
+            let length = output.len().min(remaining.len());
+            output
+                .get_mut(..length)
+                .ok_or_else(|| std::io::Error::other("Response decoder buffer overflow"))?
+                .copy_from_slice(&remaining[..length]);
+            self.offset += length;
+            Ok(length)
+        }
+    }
+    let response = serde_json::from_reader(MonitoredBytes {
+        bytes,
+        offset: 0,
+        checked_at: 0,
+        monitor: &mut *monitor,
+    })
+    .context("Decode owned getter response frame")?;
+    monitor()?;
+    Ok(response)
 }
 
 impl GetterTransport for GradleTransport {
@@ -764,24 +1228,31 @@ impl GetterTransport for GradleTransport {
         self.child.health_check()?;
         check_diagnostics(&self.logs_directory, self.diagnostic_bytes)
     }
-    fn discover(&mut self, projects: &[String]) -> Result<DiscoveryInventory> {
+    fn discover(&mut self, projects: &[String], session: &str) -> Result<DiscoveryInventory> {
         self.checked(|this| {
             this.send(&Request::Discover(DiscoveryRequest {
                 projects,
+                session,
                 class_names: &[WRAPPER, RESOLVER],
             }))?;
             match this.receive()? {
-                Response::Discovery(inventory) => Ok(inventory),
+                Response::Discovery(bootstrap) => {
+                    ensure!(
+                        bootstrap.session == session,
+                        "Discovery bootstrap belongs to a different session"
+                    );
+                    Ok(bootstrap.inventory)
+                }
                 _ => bail!("Expected separate discovery frame"),
             }
         })
     }
 
-    fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryInventory, GetterEvent)> {
+    fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryDelta, GetterEvent)> {
         self.checked(|this| {
             this.send(&Request::Invoke(request))?;
             let inventory = match this.receive()? {
-                Response::Discovery(inventory) => inventory,
+                Response::DiscoveryDelta(delta) => delta,
                 _ => bail!("Getter event arrived without discovery metadata"),
             };
             let event = match this.receive()? {
@@ -978,7 +1449,7 @@ fn write_frame_monitored_with_clock(
         monitor()?;
         let end = offset.saturating_add(64 * 1024).min(bytes.len());
         match writer.write(&bytes[offset..end]) {
-            Ok(0) => return Err(std::io::ErrorKind::WriteZero.into()),
+            Ok(0) => return Err(std::io::Error::from(std::io::ErrorKind::WriteZero).into()),
             Ok(count) => offset += count,
             Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
             Err(error)
@@ -1153,9 +1624,44 @@ impl CaptureRetention {
         })
     }
 
-    fn measure(&self, value: &impl Serialize) -> Result<JsonUsage> {
+    fn measure_monitored(
+        &self,
+        value: &impl Serialize,
+        monitor: &mut impl FnMut() -> Result<()>,
+    ) -> Result<JsonUsage> {
+        struct MonitoredWriter<'a, W, F> {
+            inner: &'a mut W,
+            monitor: F,
+            unchecked_bytes: usize,
+        }
+        impl<W: Write, F: FnMut() -> Result<()>> Write for MonitoredWriter<'_, W, F> {
+            fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+                let mut remaining = bytes;
+                while !remaining.is_empty() {
+                    if self.unchecked_bytes == 64 * 1024 {
+                        (self.monitor)().map_err(std::io::Error::other)?;
+                        self.unchecked_bytes = 0;
+                    }
+                    let length = remaining.len().min(64 * 1024 - self.unchecked_bytes);
+                    self.inner.write_all(&remaining[..length])?;
+                    self.unchecked_bytes += length;
+                    remaining = &remaining[length..];
+                }
+                Ok(bytes.len())
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                self.inner.flush()
+            }
+        }
         let mut writer = BoundedJsonWriter::new(std::io::sink(), self.limits, 0);
-        serde_json::to_writer(&mut writer, value)?;
+        serde_json::to_writer(
+            MonitoredWriter {
+                inner: &mut writer,
+                monitor,
+                unchecked_bytes: 0,
+            },
+            value,
+        )?;
         let usage = writer.usage();
         #[cfg(test)]
         self.measured_bytes
@@ -1163,14 +1669,27 @@ impl CaptureRetention {
         Ok(usage)
     }
 
+    #[cfg(test)]
     fn array_addition<T: Serialize>(
         &self,
         old_length: usize,
         additional: &[T],
     ) -> Result<JsonUsage> {
+        self.array_addition_monitored(old_length, additional, &mut || Ok(()))
+    }
+
+    fn array_addition_monitored<T: Serialize>(
+        &self,
+        old_length: usize,
+        additional: &[T],
+        monitor: &mut impl FnMut() -> Result<()>,
+    ) -> Result<JsonUsage> {
         let mut usage = JsonUsage::default();
         for (offset, row) in additional.iter().enumerate() {
-            let mut row = self.measure(row)?;
+            if offset % 64 == 0 {
+                monitor()?;
+            }
+            let mut row = self.measure_monitored(row, monitor)?;
             row.bytes += usize::from(old_length != 0 || offset != 0);
             usage = usage.checked_add(row, self.limits)?;
         }
@@ -1190,6 +1709,12 @@ pub struct KotlinGetterCapture<T: GetterTransport, H: Clone + PartialEq> {
     event_ids: BTreeSet<String>,
     retention: CaptureRetention,
     index: DiscoveryIndex,
+    session: String,
+    sequence: u64,
+    ancestry_results: BTreeMap<(String, String), bool>,
+    ancestry_work: usize,
+    #[cfg(test)]
+    discovery_rows_examined: usize,
     failed: bool,
 }
 
@@ -1215,6 +1740,12 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         model: &ProjectModel,
         imports: &ImportFactsSnapshot,
     ) -> Result<Self> {
+        let session = format!(
+            "{}:{:016x}{:016x}",
+            binding.capture_id,
+            rand::random::<u64>(),
+            rand::random::<u64>()
+        );
         let discovery = (|| -> Result<_> {
             ensure!(
                 current_host()? == issued_host,
@@ -1264,7 +1795,7 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                         .map_err(|error| anyhow::anyhow!("{error:?}"))
                 })
                 .collect::<Result<Vec<_>>>()?;
-            let inventory = transport.discover(&projects)?;
+            let inventory = transport.discover(&projects, &session)?;
             ensure!(
                 inventory.runtime.gradle_version == imports.gradle_version(),
                 "Runtime Gradle version differs from imported identity"
@@ -1316,10 +1847,11 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             Ok(discovery) => discovery,
             Err(error) => return abort_capture(&mut transport, error),
         };
-        let index = match DiscoveryIndex::new(&inventory) {
-            Ok(index) => index,
-            Err(error) => return abort_capture(&mut transport, error),
-        };
+        let index =
+            match DiscoveryIndex::new_monitored(&inventory, &mut || transport.check_progress()) {
+                Ok(index) => index,
+                Err(error) => return abort_capture(&mut transport, error),
+            };
         Ok(Self {
             issued_host,
             transport,
@@ -1332,6 +1864,12 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             event_ids: BTreeSet::new(),
             retention,
             index,
+            session,
+            sequence: 0,
+            ancestry_results: BTreeMap::new(),
+            ancestry_work: 0,
+            #[cfg(test)]
+            discovery_rows_examined: 0,
             failed: false,
         })
     }
@@ -1377,6 +1915,7 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         }
     }
 
+    #[cfg(test)]
     fn check_retention(
         &self,
         inventory: &DiscoveryInventory,
@@ -1475,6 +2014,78 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         Ok(usage.checked_add(JsonUsage::default(), limits)?)
     }
 
+    fn check_delta_retention(
+        &mut self,
+        delta: &DiscoveryDelta,
+        event: &GetterEvent,
+    ) -> Result<JsonUsage> {
+        self.transport.check_progress()?;
+        let transport = &mut self.transport;
+        let monitor = &mut || transport.check_progress();
+        let limits = self.retention.limits;
+        let mut usage = self.retention.usage;
+        usage = usage.checked_add(
+            self.retention.array_addition_monitored(
+                self.events.len(),
+                std::slice::from_ref(event),
+                monitor,
+            )?,
+            limits,
+        )?;
+        usage = usage.checked_add(
+            self.retention.array_addition_monitored(
+                self.inventory.runtime.artifacts.len(),
+                &delta.artifacts,
+                monitor,
+            )?,
+            limits,
+        )?;
+        usage = usage.checked_add(
+            self.retention.array_addition_monitored(
+                self.inventory.runtime.loaders.len(),
+                &delta.loaders,
+                monitor,
+            )?,
+            limits,
+        )?;
+        usage = usage.checked_add(
+            self.retention.array_addition_monitored(
+                self.inventory.runtime.classes.len(),
+                &delta.classes,
+                monitor,
+            )?,
+            limits,
+        )?;
+        usage = usage.checked_add(
+            self.retention.array_addition_monitored(
+                self.inventory.objects.len(),
+                &delta.objects,
+                monitor,
+            )?,
+            limits,
+        )?;
+        usage = usage.checked_add(
+            self.retention.array_addition_monitored(
+                self.inventory.catalogues.len(),
+                &delta.catalogues,
+                monitor,
+            )?,
+            limits,
+        )?;
+        for addition in &delta.loader_artifacts {
+            usage = usage.checked_add(
+                self.retention.array_addition_monitored(
+                    addition.previous,
+                    &addition.artifacts,
+                    monitor,
+                )?,
+                limits,
+            )?;
+        }
+        self.transport.check_progress()?;
+        Ok(usage)
+    }
+
     fn issue(&mut self, invocation: GetterInvocation<'_>) -> Result<GetterEvent> {
         ensure!(!self.failed, "Kotlin getter capture already failed");
         match self.issue_owned(invocation) {
@@ -1526,20 +2137,42 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         };
         // Retain the request before handing it to any transport. Neither a result
         // nor a catalogue update can replace this issued request or its order.
-        let usage = self.check_retention(&self.inventory, Some(&request), None)?;
+        let usage = self.retention.usage.checked_add(
+            self.retention.array_addition_monitored(
+                self.requests.len(),
+                std::slice::from_ref(&request),
+                &mut || self.transport.check_progress(),
+            )?,
+            self.retention.limits,
+        )?;
         self.requests.push(request.clone());
         self.retention.usage = usage;
-        let (discovery, event) = self.transport.invoke(&request)?;
-        self.inventory.validate_extension(&discovery)?;
-        let usage = self.check_retention(&discovery, None, Some(&event))?;
-        self.index.append(
-            &discovery,
-            self.inventory.objects.len(),
-            self.inventory.catalogues.len(),
-            self.inventory.runtime.classes.len(),
+        let (delta, event) = self.transport.invoke(&request)?;
+        let examined = self.index.validate_delta(
+            &self.inventory,
+            &delta,
+            &self.session,
+            self.sequence,
+            &request.id,
+            &mut || self.transport.check_progress(),
         )?;
-        self.inventory
-            .accept_validated_extension(discovery, &mut || self.transport.check_progress())?;
+        #[cfg(test)]
+        {
+            self.discovery_rows_examined += examined;
+        }
+        #[cfg(not(test))]
+        {
+            let _examined = examined;
+        }
+        let usage = self.check_delta_retention(&delta, &event)?;
+        self.index
+            .apply_delta_monitored(&mut self.inventory, delta, &mut || {
+                self.transport.check_progress()
+            })?;
+        self.sequence = self
+            .sequence
+            .checked_add(1)
+            .context("Discovery sequence overflow")?;
         ensure!(
             event.request == request.id && self.event_ids.insert(event.id.clone()),
             "Getter event identity/order differs from issued request"
@@ -1775,10 +2408,10 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                 })
                 .cloned();
             if let Some(method) = source_method {
-                let property = method
-                    .return_class
-                    .as_deref()
-                    .is_some_and(|class| self.is_class(class, "org.gradle.api.provider.Property"));
+                let property = match method.return_class.as_deref() {
+                    Some(class) => self.is_class(class, "org.gradle.api.provider.Property")?,
+                    None => false,
+                };
                 let shape = if property {
                     object_shape(ObjectKind::Property, true)
                 } else {
@@ -1836,27 +2469,75 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         Ok(plan)
     }
 
-    fn is_class(&self, class: &str, name: &str) -> bool {
-        let mut pending = vec![class];
+    fn is_class(&mut self, class: &str, name: &str) -> Result<bool> {
+        self.transport.check_progress()?;
+        let key = (class.to_owned(), name.to_owned());
+        if let Some(result) = self.ancestry_results.get(&key) {
+            return Ok(*result);
+        }
+        let mut pending = vec![class.to_owned()];
         let mut seen = BTreeSet::new();
+        let mut result = false;
         while let Some(id) = pending.pop() {
-            if !seen.insert(id) {
+            self.charge_ancestry_work()?;
+            if !seen.insert(id.clone()) {
                 continue;
             }
-            if let Some(class) = self
+            let position = *self
                 .index
                 .classes
-                .get(id)
-                .and_then(|position| self.inventory.runtime.classes.get(*position))
-            {
-                if class.name == name {
-                    return true;
-                }
-                pending.extend(class.superclass.iter().map(String::as_str));
-                pending.extend(class.interfaces.iter().map(String::as_str));
+                .get(&id)
+                .context("Ancestry runtime class was not discovered")?;
+            let row = self
+                .inventory
+                .runtime
+                .classes
+                .get(position)
+                .context("Ancestry runtime class row missing")?;
+            if row.name == name {
+                result = true;
+                break;
+            }
+            let superclass = row.superclass.is_some();
+            let interfaces = row.interfaces.len();
+            if superclass {
+                self.charge_ancestry_work()?;
+                pending.push(
+                    self.inventory
+                        .runtime
+                        .classes
+                        .get(position)
+                        .and_then(|row| row.superclass.clone())
+                        .context("Accepted superclass disappeared")?,
+                );
+            }
+            for edge in 0..interfaces {
+                self.charge_ancestry_work()?;
+                pending.push(
+                    self.inventory
+                        .runtime
+                        .classes
+                        .get(position)
+                        .and_then(|row| row.interfaces.get(edge))
+                        .context("Accepted interface disappeared")?
+                        .clone(),
+                );
             }
         }
-        false
+        self.ancestry_results.insert(key, result);
+        Ok(result)
+    }
+
+    fn charge_ancestry_work(&mut self) -> Result<()> {
+        self.ancestry_work = self
+            .ancestry_work
+            .checked_add(1)
+            .filter(|work| *work <= self.retention.limits.ancestry_steps)
+            .context("Kotlin getter cumulative ancestry work budget exceeded")?;
+        if self.ancestry_work % 64 == 0 {
+            self.transport.check_progress()?;
+        }
+        Ok(())
     }
 
     /// Compare the host's exact current ImportRevision with the originally
@@ -2251,22 +2932,29 @@ mod tests {
         wrong_request: bool,
         catalogue_changed: bool,
         observed: Vec<GetterRequest>,
+        session: String,
     }
     impl GetterTransport for ScriptedTransport {
         fn check_progress(&mut self) -> Result<()> {
             Ok(())
         }
-        fn discover(&mut self, _: &[String]) -> Result<DiscoveryInventory> {
+        fn discover(&mut self, _: &[String], session: &str) -> Result<DiscoveryInventory> {
+            self.session = session.to_owned();
             Ok(self.inventory.clone())
         }
-        fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryInventory, GetterEvent)> {
+        fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryDelta, GetterEvent)> {
             self.observed.push(request.clone());
-            let mut inventory = self.inventory.clone();
+            let mut delta = DiscoveryDelta::empty(
+                &self.inventory,
+                &self.session,
+                request,
+                self.observed.len() as u64,
+            );
             if self.catalogue_changed {
-                inventory.catalogues.clear();
+                delta.predecessor.catalogues = 0;
             }
             Ok((
-                inventory,
+                delta,
                 GetterEvent {
                     id: format!("event:{}", self.observed.len()),
                     request: if self.wrong_request {
@@ -2309,6 +2997,7 @@ mod tests {
                 wrong_request,
                 catalogue_changed,
                 observed: vec![],
+                session: "synthetic-session".into(),
             },
             binding: binding(&fixture.sha256),
             fixture,
@@ -2325,6 +3014,11 @@ mod tests {
                 measured_bytes: std::cell::Cell::new(0),
             },
             index,
+            session: "synthetic-session".into(),
+            sequence: 0,
+            ancestry_results: BTreeMap::new(),
+            ancestry_work: 0,
+            discovery_rows_examined: 0,
             failed: false,
         };
         refresh_synthetic_retention(&mut capture)?;
@@ -2656,10 +3350,10 @@ mod tests {
             );
             self.scripted.check_progress()
         }
-        fn discover(&mut self, projects: &[String]) -> Result<DiscoveryInventory> {
-            self.scripted.discover(projects)
+        fn discover(&mut self, projects: &[String], session: &str) -> Result<DiscoveryInventory> {
+            self.scripted.discover(projects, session)
         }
-        fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryInventory, GetterEvent)> {
+        fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryDelta, GetterEvent)> {
             self.scripted.invoke(request)
         }
         fn finish(&mut self) -> Result<()> {
@@ -2699,6 +3393,11 @@ mod tests {
                 event_ids: capture.event_ids,
                 retention: capture.retention,
                 index: capture.index,
+                session: capture.session,
+                sequence: capture.sequence,
+                ancestry_results: capture.ancestry_results,
+                ancestry_work: capture.ancestry_work,
+                discovery_rows_examined: capture.discovery_rows_examined,
                 failed: capture.failed,
             },
         ))
@@ -3252,6 +3951,775 @@ mod tests {
                 Some(&(old_objects - count))
             );
         }
+        Ok(())
+    }
+    fn wire_roundtrip(response: Response, bytes: &mut usize, rows: &mut usize) -> Result<Response> {
+        let mut frame = serde_json::to_vec(&response)?;
+        *bytes += frame.len();
+        frame.push(b'\n');
+        let mut reader = BufReader::new(std::io::Cursor::new(frame));
+        let frame = read_frame_monitored(
+            &mut reader,
+            Instant::now() + Duration::from_secs(30),
+            &AtomicBool::new(false),
+            MAX_FRAME_BYTES,
+            || Ok(()),
+        )?;
+        let response = decode_response_monitored(&frame, &mut || Ok(()))?;
+        *rows += match &response {
+            Response::Discovery(bootstrap) => {
+                let inventory = &bootstrap.inventory;
+                inventory.runtime.artifacts.len()
+                    + inventory.runtime.loaders.len()
+                    + inventory.runtime.classes.len()
+                    + inventory.objects.len()
+                    + inventory.catalogues.len()
+                    + inventory.class_lookups.len()
+            }
+            Response::DiscoveryDelta(delta) => {
+                delta.artifacts.len()
+                    + delta.loaders.len()
+                    + delta.classes.len()
+                    + delta.objects.len()
+                    + delta.catalogues.len()
+                    + delta.loader_artifacts.len()
+            }
+            _ => 0,
+        };
+        Ok(response)
+    }
+
+    struct FramedPlanningTransport {
+        inventory: DiscoveryInventory,
+        session: String,
+        sequence: u64,
+        task_ids: Vec<String>,
+        bootstrap_bytes: usize,
+        delta_bytes: usize,
+        parsed_rows: usize,
+        observed: Vec<GetterRequest>,
+        aborts: usize,
+    }
+
+    impl GetterTransport for FramedPlanningTransport {
+        fn discover(&mut self, projects: &[String], session: &str) -> Result<DiscoveryInventory> {
+            self.session = session.to_owned();
+            let project = self
+                .inventory
+                .objects
+                .iter()
+                .find(|row| row.kind == ObjectKind::Project)
+                .context("Project template")?
+                .clone();
+            for path in projects {
+                if !self.inventory.project_objects.contains_key(path) {
+                    let mut row = project.clone();
+                    row.id = format!("project-for:{path}");
+                    row.project = path.clone();
+                    self.inventory
+                        .project_objects
+                        .insert(path.clone(), row.id.clone());
+                    self.inventory.objects.push(row);
+                }
+            }
+            match wire_roundtrip(
+                Response::Discovery(DiscoveryBootstrap {
+                    session: session.into(),
+                    inventory: self.inventory.clone(),
+                }),
+                &mut self.bootstrap_bytes,
+                &mut self.parsed_rows,
+            )? {
+                Response::Discovery(bootstrap) => Ok(bootstrap.inventory),
+                _ => bail!("Controlled bootstrap changed frame kind"),
+            }
+        }
+        fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryDelta, GetterEvent)> {
+            self.sequence += 1;
+            self.observed.push(request.clone());
+            let delta =
+                DiscoveryDelta::empty(&self.inventory, &self.session, request, self.sequence);
+            let mut event = GetterEvent {
+                id: format!("framed-event:{}", self.sequence),
+                request: request.id.clone(),
+                outcome: GetterOutcome::Unavailable(GetterFailure {
+                    kind: GetterFailureKind::MissingMethod,
+                    stage: GetterFailureStage::MethodDiscovery,
+                    capability: request.id.clone(),
+                    detail: "Controlled missing official capability".into(),
+                    actual_class: None,
+                    exceptions: vec![],
+                }),
+                container: None,
+            };
+            match request.purpose {
+                GetterPurpose::ContainerIterate => {
+                    event.outcome = GetterOutcome::Available(Some(CaptureValue::Objects(
+                        self.task_ids.clone(),
+                    )));
+                    event.container = Some("framed-task-set".into());
+                }
+                GetterPurpose::SourceSet => {
+                    event.outcome =
+                        GetterOutcome::Available(Some(CaptureValue::String("main".into())));
+                }
+                _ => {
+                    if matches!(&request.method, MethodSelection::Selected(method) if method == "framed-get-all-tasks")
+                    {
+                        event.outcome = GetterOutcome::Available(Some(CaptureValue::Object(
+                            "framed-task-map".into(),
+                        )));
+                    }
+                }
+            }
+            let delta = match wire_roundtrip(
+                Response::DiscoveryDelta(delta),
+                &mut self.delta_bytes,
+                &mut self.parsed_rows,
+            )? {
+                Response::DiscoveryDelta(delta) => delta,
+                _ => bail!("Controlled delta changed frame kind"),
+            };
+            let event = match wire_roundtrip(
+                Response::Event(event),
+                &mut self.delta_bytes,
+                &mut self.parsed_rows,
+            )? {
+                Response::Event(event) => event,
+                _ => bail!("Controlled event changed frame kind"),
+            };
+            Ok((delta, event))
+        }
+        fn check_progress(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn finish(&mut self) -> Result<()> {
+            Ok(())
+        }
+        fn abort(&mut self) -> Result<()> {
+            self.aborts += 1;
+            Ok(())
+        }
+    }
+
+    fn framed_planning_capture(
+        count: usize,
+        applicable: bool,
+    ) -> Result<(
+        TempDir,
+        ProjectModel,
+        ImportFactsSnapshot,
+        KotlinGetterCapture<FramedPlanningTransport, String>,
+    )> {
+        use crate::kotlin_import_facts::{ClassOrigin, GetterMethod, TaskIdentity};
+        let (directory, mut inventory, _) = inventory()?;
+        let root = directory.path().canonicalize()?;
+        for name in ["android", "strange-parent", "shared-directory"] {
+            fs::create_dir(root.join(name))?;
+        }
+        fs::write(
+            root.join("build.gradle"),
+            "controlled Rust transport fixture",
+        )?;
+        let wire = include_str!("../test_data/import_facts/wire-template.json")
+            .replace("$ROOT", root.to_str().context("Fixture root")?);
+        let wire: serde_json::Value = serde_json::from_str(&wire)?;
+        let output = format!(
+            "KODA_ANDROID_PROJECT_MODEL={}",
+            serde_json::to_string(&wire)?
+        );
+        let model = crate::project_model::parse_model(&output, &root)?;
+        let imports = crate::import_facts::parse_import_facts(
+            &output,
+            &model,
+            crate::import_facts::ImportFactsBinding {
+                model_revision: 7,
+                selection_revision: 3,
+                selected_variants: binding("unused")
+                    .selected_variants
+                    .into_iter()
+                    .map(|variant| crate::project_model::VariantId {
+                        module: variant.module,
+                        variant: variant.variant,
+                    })
+                    .collect(),
+            },
+        )?;
+        inventory
+            .objects
+            .retain(|row| row.kind == ObjectKind::Project);
+        inventory
+            .runtime
+            .classes
+            .iter_mut()
+            .find(|row| row.id == "task")
+            .context("Task class")?
+            .name = if applicable {
+            KOTLIN_TASK_CLASSES[0].into()
+        } else {
+            "controlled.NonKotlinTask".into()
+        };
+        for (id, name, interfaces) in [
+            ("framed-map", "java.util.Map", vec![]),
+            ("framed-set", "java.util.Set", vec!["iterable".into()]),
+        ] {
+            inventory.runtime.classes.push(RuntimeClass {
+                id: id.into(),
+                name: name.into(),
+                loader: "bootstrap".into(),
+                origin: ClassOrigin::Jdk("java.base".into()),
+                superclass: None,
+                interfaces,
+            });
+        }
+        for (id, class_id) in [
+            ("framed-task-map", "framed-map"),
+            ("framed-task-set", "framed-set"),
+        ] {
+            inventory.objects.push(CaptureObject {
+                id: id.into(),
+                kind: ObjectKind::Container,
+                project: ":android".into(),
+                class_id: class_id.into(),
+                task: None,
+            });
+        }
+        inventory
+            .catalogues
+            .iter_mut()
+            .find(|row| row.class_id == "project")
+            .context("Project catalogue")?
+            .methods
+            .push(GetterMethod {
+                id: "framed-get-all-tasks".into(),
+                name: "getAllTasks".into(),
+                descriptor: "(Z)Ljava/util/Map;".into(),
+                declaring_class: "project".into(),
+                is_static: false,
+                parameter_classes: vec![None],
+                return_class: Some("framed-map".into()),
+            });
+        inventory.catalogues.push(MethodCatalogue {
+            id: "framed-maps".into(),
+            class_id: "framed-map".into(),
+            methods: vec![GetterMethod {
+                id: "framed-map-get".into(),
+                name: "get".into(),
+                descriptor: "(Ljava/lang/Object;)Ljava/lang/Object;".into(),
+                declaring_class: "framed-map".into(),
+                is_static: false,
+                parameter_classes: vec![Some("object".into())],
+                return_class: Some("object".into()),
+            }],
+        });
+        inventory.class_lookups = [WRAPPER, RESOLVER]
+            .into_iter()
+            .map(|name| ClassLookup {
+                project: ":android".into(),
+                name: name.into(),
+                classes: vec![],
+                attempts: vec![],
+                failures: vec![],
+            })
+            .collect();
+        let task_ids = (0..count)
+            .map(|position| format!("framed-task:{position}"))
+            .collect::<Vec<_>>();
+        for (position, id) in task_ids.iter().enumerate() {
+            inventory.objects.push(CaptureObject {
+                id: id.clone(),
+                kind: ObjectKind::Task,
+                project: ":android".into(),
+                class_id: "task".into(),
+                task: Some(TaskIdentity {
+                    name: format!("compile{position}"),
+                    path: format!(":android:compile{position}"),
+                }),
+            });
+        }
+        let fixture = FixtureBoundary::capture(&root, &["build.gradle".into()])?;
+        let capture = KotlinGetterCapture::discover(
+            FramedPlanningTransport {
+                inventory,
+                session: String::new(),
+                sequence: 0,
+                task_ids,
+                bootstrap_bytes: 0,
+                delta_bytes: 0,
+                parsed_rows: 0,
+                observed: vec![],
+                aborts: 0,
+            },
+            "controlled-host-revision".to_owned(),
+            || Ok("controlled-host-revision".into()),
+            binding(&fixture.sha256),
+            fixture,
+            &model,
+            &imports,
+        )?;
+        Ok((directory, model, imports, capture))
+    }
+
+    #[test]
+    fn full_framed_task_planning_parses_each_discovery_row_once_and_passes_original_strict_decoder()
+    -> Result<()> {
+        let mut sizes = Vec::new();
+        for (count, applicable) in [(100, true), (1000, true), (10000, false)] {
+            let (_directory, model, imports, mut capture) =
+                framed_planning_capture(count, applicable)?;
+            let plan = capture.capture_official_project(":android")?;
+            assert_eq!(
+                plan.source_set_names.len(),
+                if applicable { count } else { 0 }
+            );
+            assert!(plan.compiler_arguments.is_empty());
+            assert_eq!(
+                capture.transport.observed.len(),
+                if applicable { count + 5 } else { 5 }
+            );
+            assert_eq!(
+                capture.transport.parsed_rows,
+                capture.inventory.runtime.artifacts.len()
+                    + capture.inventory.runtime.loaders.len()
+                    + capture.inventory.runtime.classes.len()
+                    + capture.inventory.objects.len()
+                    + capture.inventory.catalogues.len()
+                    + capture.inventory.class_lookups.len()
+            );
+            assert_eq!(capture.discovery_rows_examined, 0);
+            assert!(capture.retention.usage.entries <= CaptureLimits::default().entries);
+            assert!(capture.retention.usage.bytes <= CaptureLimits::default().record_bytes);
+            assert_eq!(capture.ancestry_work, if applicable { 3 } else { 0 });
+            if applicable {
+                sizes.push((
+                    capture.transport.bootstrap_bytes,
+                    capture.transport.delta_bytes,
+                ));
+            }
+            let expected_requests = capture.requests.len();
+            let completed = capture.finish(&model, &imports, vec![plan], || {
+                Ok("controlled-host-revision".into())
+            })?;
+            assert_eq!(completed.expected.requests.len(), expected_requests);
+            assert_eq!(completed.projects.len(), 1);
+        }
+        let first = sizes.first().context("100-task size")?;
+        let second = sizes.get(1).context("1000-task size")?;
+        assert!(second.0 < first.0 * 12);
+        assert!(second.1 < first.1 * 12);
+        Ok(())
+    }
+
+    #[test]
+    fn deltas_reject_replay_foreign_session_rewrites_reorder_truncation_and_bad_loader_provenance()
+    -> Result<()> {
+        let (_directory, capture) = scripted_capture(false, false)?;
+        let request = GetterRequest {
+            id: "owned-delta-request".into(),
+            project: ":android".into(),
+            consumer: Consumer::Kotlin,
+            model_call: "owned".into(),
+            parameter: RequestParameter::Absent(()),
+            variant: None,
+            owner: None,
+            catalogue: "tasks".into(),
+            method: MethodSelection::Missing(MissingMethod {
+                name: "absent".into(),
+                descriptor: "()Ljava/lang/String;".into(),
+                is_static: true,
+            }),
+            arguments: vec![],
+            return_shape: scalar_shape(ValueKind::String, true),
+            purpose: GetterPurpose::Raw,
+            after: None,
+        };
+        let valid = DiscoveryDelta::empty(&capture.inventory, &capture.session, &request, 1);
+        let verify = |delta: &DiscoveryDelta| {
+            capture.index.validate_delta(
+                &capture.inventory,
+                delta,
+                &capture.session,
+                0,
+                &request.id,
+                &mut || Ok(()),
+            )
+        };
+        assert_eq!(verify(&valid)?, 0);
+        for change in 0..8 {
+            let mut delta = valid.clone();
+            match change {
+                0 => delta.session = "foreign".into(),
+                1 => delta.request = "foreign-request".into(),
+                2 => delta.sequence = 0,
+                3 => delta.predecessor.objects -= 1,
+                4 => delta.classes.push(
+                    capture
+                        .inventory
+                        .runtime
+                        .classes
+                        .first()
+                        .context("Class")?
+                        .clone(),
+                ),
+                5 => {
+                    delta.objects = capture.inventory.objects.iter().rev().cloned().collect();
+                }
+                6 => delta.loader_artifacts.push(LoaderArtifactsAddition {
+                    loader: "kgp".into(),
+                    previous: 0,
+                    artifacts: vec!["kgp-jar".into()],
+                }),
+                _ => {
+                    let mut class = capture
+                        .inventory
+                        .runtime
+                        .classes
+                        .last()
+                        .context("Class")?
+                        .clone();
+                    class.id = "new-class".into();
+                    class.loader = "foreign-loader".into();
+                    delta.classes.push(class);
+                }
+            }
+            assert!(verify(&delta).is_err(), "Mutation {change} must fail");
+        }
+        assert_eq!(capture.sequence, 0);
+        assert!(capture.requests.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn append_only_loader_artifacts_and_objects_match_exact_retention_without_rechecking_the_prefix()
+    -> Result<()> {
+        let (_directory, mut capture) = scripted_capture(false, false)?;
+        let catalogue = capture
+            .inventory
+            .catalogues
+            .first()
+            .context("Catalogue")?
+            .id
+            .clone();
+        capture.issue(missing_invocation(&catalogue))?;
+        let request = capture.requests.last().context("Issued request")?.clone();
+        let mut delta = DiscoveryDelta::empty(&capture.inventory, &capture.session, &request, 2);
+        let mut artifact = capture
+            .inventory
+            .runtime
+            .artifacts
+            .last()
+            .context("Artifact")?
+            .clone();
+        artifact.id = "additional-runtime-artifact".into();
+        delta.artifacts.push(artifact.clone());
+        delta.loader_artifacts.push(LoaderArtifactsAddition {
+            loader: "kgp".into(),
+            previous: 1,
+            artifacts: vec![artifact.id],
+        });
+        let mut object = capture.inventory.objects.last().context("Object")?.clone();
+        object.id = "additional-object".into();
+        delta.objects.push(object);
+        let before = capture.inventory.clone();
+        let examined = capture.index.validate_delta(
+            &capture.inventory,
+            &delta,
+            &capture.session,
+            1,
+            &request.id,
+            &mut || Ok(()),
+        )?;
+        assert!(examined <= 8);
+        let event = GetterEvent {
+            id: "additional-event".into(),
+            request: request.id,
+            outcome: GetterOutcome::Available(None),
+            container: None,
+        };
+        let usage = capture.check_delta_retention(&delta, &event)?;
+        capture.index.apply_delta(&mut capture.inventory, delta)?;
+        capture.events.push(event);
+        let bytes = retained_record_bytes(&capture)?;
+        assert_eq!(usage.bytes, bytes.len() + FACTS_ENVELOPE.len() + 1);
+        assert_eq!(usage.entries, value_nodes(&serde_json::from_slice(&bytes)?));
+        assert_eq!(
+            &capture.inventory.objects[..before.objects.len()],
+            &before.objects
+        );
+        assert_eq!(capture.inventory.runtime.classes, before.runtime.classes);
+        assert_eq!(capture.inventory.catalogues, before.catalogues);
+        Ok(())
+    }
+
+    #[test]
+    fn class_predicates_cache_both_results_by_exact_identity_and_share_checked_work_budget()
+    -> Result<()> {
+        let (_directory, mut capture) = scripted_capture(false, false)?;
+        assert!(capture.is_class("property", "org.gradle.api.provider.Property")?);
+        assert!(!capture.is_class("string", "org.gradle.api.provider.Property")?);
+        let once = capture.ancestry_work;
+        for _ in 0..1000 {
+            assert!(capture.is_class("property", "org.gradle.api.provider.Property")?);
+            assert!(!capture.is_class("string", "org.gradle.api.provider.Property")?);
+        }
+        assert_eq!(capture.ancestry_work, once);
+        let mut other = capture
+            .inventory
+            .runtime
+            .classes
+            .iter()
+            .find(|row| row.id == "property")
+            .context("Property")?
+            .clone();
+        other.id = "same-name-different-loader".into();
+        other.loader = "kgp".into();
+        other.name = "controlled.NonProperty".into();
+        capture.inventory.runtime.classes.push(other);
+        refresh_synthetic_retention(&mut capture)?;
+        assert!(!capture.is_class(
+            "same-name-different-loader",
+            "org.gradle.api.provider.Property"
+        )?);
+        assert_eq!(capture.ancestry_work, once + 1);
+        capture.retention.limits.ancestry_steps = capture.ancestry_work;
+        assert!(capture.is_class("task", "not-present").is_err());
+        assert!(
+            !capture
+                .ancestry_results
+                .contains_key(&("task".into(), "not-present".into()))
+        );
+        assert!(capture.events.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn bounded_response_decoding_and_delta_validation_observe_cancellation_inside_large_frames()
+    -> Result<()> {
+        let (_directory, mut capture) = scripted_capture(false, false)?;
+        let catalogue = capture
+            .inventory
+            .catalogues
+            .first()
+            .context("Catalogue")?
+            .id
+            .clone();
+        capture.issue(missing_invocation(&catalogue))?;
+        let request = capture.requests.last().context("Request")?;
+        let mut delta = DiscoveryDelta::empty(&capture.inventory, &capture.session, request, 2);
+        let template = capture.inventory.objects.last().context("Object")?;
+        for position in 0..1000 {
+            let mut row = template.clone();
+            row.id = format!("cancel-object:{position}");
+            delta.objects.push(row);
+        }
+        let bytes = serde_json::to_vec(&Response::DiscoveryDelta(delta.clone()))?;
+        assert!(bytes.len() > 64 * 1024);
+        let scanning_checks = bytes.len().div_ceil(64 * 1024);
+        let mut checks = 0;
+        let error = decode_response_monitored(&bytes, &mut || {
+            checks += 1;
+            ensure!(
+                checks < scanning_checks + 2,
+                "Injected parsing cancellation"
+            );
+            Ok(())
+        })
+        .err()
+        .context("Decoding must cancel")?;
+        assert!(format!("{error:#}").contains("Injected parsing cancellation"));
+        assert!(format!("{error:#}").contains("Decode owned getter response frame"));
+        assert_eq!(checks, scanning_checks + 2);
+        let before = capture.inventory.clone();
+        let mut checks = 0;
+        let error = capture
+            .index
+            .validate_delta(
+                &capture.inventory,
+                &delta,
+                &capture.session,
+                1,
+                &request.id,
+                &mut || {
+                    checks += 1;
+                    ensure!(checks < 3, "Injected validation cancellation");
+                    Ok(())
+                },
+            )
+            .err()
+            .context("Validation must cancel")?;
+        assert!(format!("{error:#}").contains("Injected validation cancellation"));
+        assert_eq!(capture.inventory, before);
+        Ok(())
+    }
+    #[test]
+    fn largest_legal_default_budget_planning_capture_passes_and_the_next_size_aborts_without_a_plan()
+    -> Result<()> {
+        let mut lower = 1000;
+        let mut upper = 4000;
+        while lower + 1 < upper {
+            let count = lower + (upper - lower) / 2;
+            let (_directory, model, imports, mut capture) = framed_planning_capture(count, true)?;
+            match capture.capture_official_project(":android") {
+                Ok(plan) => {
+                    assert_eq!(plan.source_set_names.len(), count);
+                    capture.finish(&model, &imports, vec![plan], || {
+                        Ok("controlled-host-revision".into())
+                    })?;
+                    lower = count;
+                }
+                Err(error) => {
+                    assert!(format!("{error:#}").contains("aggregate entry budget"));
+                    assert!(capture.failed);
+                    assert_eq!(capture.transport.aborts, 1);
+                    assert!(capture.retention.usage.entries <= CaptureLimits::default().entries);
+                    upper = count;
+                }
+            }
+        }
+        let (_directory, model, imports, mut capture) = framed_planning_capture(lower, true)?;
+        let plan = capture.capture_official_project(":android")?;
+        assert_eq!(plan.source_set_names.len(), lower);
+        capture.finish(&model, &imports, vec![plan], || {
+            Ok("controlled-host-revision".into())
+        })?;
+        let (_directory, _model, _imports, mut capture) = framed_planning_capture(upper, true)?;
+        assert!(capture.capture_official_project(":android").is_err());
+        assert!(capture.failed);
+        assert_eq!(capture.transport.aborts, 1);
+        let retained = capture.events.len();
+        assert!(capture.capture_official_project(":android").is_err());
+        assert_eq!(capture.events.len(), retained);
+        assert_eq!(capture.transport.aborts, 1);
+        Ok(())
+    }
+
+    #[test]
+    fn cumulative_ancestry_exhaustion_aborts_the_full_project_plan_once_without_source_getters()
+    -> Result<()> {
+        let (_directory, _model, _imports, mut capture) = framed_planning_capture(100, true)?;
+        capture.retention.limits.ancestry_steps = 1;
+        let error = capture
+            .capture_official_project(":android")
+            .err()
+            .context("Work budget must fail the plan")?;
+        assert!(format!("{error:#}").contains("cumulative ancestry work budget"));
+        assert!(capture.failed);
+        assert_eq!(capture.transport.aborts, 1);
+        assert!(
+            capture
+                .requests
+                .iter()
+                .all(|request| request.purpose != GetterPurpose::SourceSet)
+        );
+        assert!(capture.capture_official_project(":android").is_err());
+        assert_eq!(capture.transport.aborts, 1);
+        Ok(())
+    }
+    #[test]
+    fn zero_frame_write_preserves_the_typed_io_failure_and_does_not_flush_or_accept_progress()
+    -> Result<()> {
+        #[derive(Default)]
+        struct ZeroWriter {
+            writes: usize,
+            flushed: bool,
+        }
+        impl Write for ZeroWriter {
+            fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+                self.writes += 1;
+                Ok(0)
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                self.flushed = true;
+                Ok(())
+            }
+        }
+        let mut writer = ZeroWriter::default();
+        let error = write_frame_monitored(
+            &mut writer,
+            b"owned-frame\n",
+            Instant::now() + Duration::from_secs(1),
+            &AtomicBool::new(false),
+            || Ok(()),
+        )
+        .err()
+        .context("A zero write must fail")?;
+        assert_eq!(
+            error
+                .downcast_ref::<std::io::Error>()
+                .context("Typed IO error")?
+                .kind(),
+            std::io::ErrorKind::WriteZero
+        );
+        assert_eq!(writer.writes, 1);
+        assert!(!writer.flushed);
+        Ok(())
+    }
+
+    #[test]
+    fn ancestry_cache_separates_same_named_loader_classes_and_cancels_inside_shared_late_positive_graphs()
+    -> Result<()> {
+        let (_directory, mut capture) = tracking_capture(false)?;
+        let template = capture
+            .inventory
+            .runtime
+            .classes
+            .iter()
+            .find(|row| row.id == "property")
+            .context("Class")?
+            .clone();
+        for position in 0..100 {
+            let mut row = template.clone();
+            row.id = format!("dag:{position}");
+            row.name = format!("controlled.Dag{position}");
+            row.interfaces = if position + 1 < 100 {
+                vec![
+                    format!("dag:{}", position + 1),
+                    format!("dag:{}", position + 1),
+                ]
+            } else {
+                vec![]
+            };
+            capture.inventory.runtime.classes.push(row);
+        }
+        for (id, loader, interfaces) in [
+            (
+                "positive-return",
+                "gradle",
+                vec!["property".into(), "dag:0".into()],
+            ),
+            ("negative-return", "kgp", vec![]),
+        ] {
+            let mut row = template.clone();
+            row.id = id.into();
+            row.name = "controlled.SameNamedReturn".into();
+            row.loader = loader.into();
+            row.interfaces = interfaces;
+            capture.inventory.runtime.classes.push(row);
+        }
+        refresh_synthetic_retention(&mut capture)?;
+        assert!(capture.is_class("positive-return", "org.gradle.api.provider.Property")?);
+        assert!(!capture.is_class("negative-return", "org.gradle.api.provider.Property")?);
+        let once = capture.ancestry_work;
+        assert!(once > 100);
+        for _ in 0..1000 {
+            assert!(capture.is_class("positive-return", "org.gradle.api.provider.Property")?);
+            assert!(!capture.is_class("negative-return", "org.gradle.api.provider.Property")?);
+        }
+        assert_eq!(capture.ancestry_work, once);
+        let before = capture.transport.progress.load(Ordering::Acquire);
+        capture.transport.fail_progress_at = Some(before + 2);
+        let error = capture
+            .is_class("positive-return", "controlled.AbsentTarget")
+            .err()
+            .context("Traversal must check health")?;
+        assert!(format!("{error:#}").contains("Injected capture health failure"));
+        assert!(capture.ancestry_work - once <= 64);
+        assert!(
+            !capture
+                .ancestry_results
+                .contains_key(&("positive-return".into(), "controlled.AbsentTarget".into()))
+        );
+        assert!(capture.events.is_empty());
         Ok(())
     }
 }

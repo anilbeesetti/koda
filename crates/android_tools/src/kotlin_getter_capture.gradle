@@ -17,19 +17,27 @@ class KodaKotlinGetterBridge {
     def objects = new IdentityHashMap()
     def objectValues = [:]
     def objectRows = []
+    def objectRowsById = [:]
     def classes = new IdentityHashMap()
     def classRows = []
     def loaders = new IdentityHashMap()
     def loaderRows = []
+    def loaderRowsById = [:]
+    def loaderPositions = [:]
     def artifacts = [:]
     def artifactRows = []
     def catalogues = [:]
     def catalogueRows = []
     def methodValues = [:]
+    def methodCatalogues = [:]
     def projectObjects = [:]
     def classLookups = []
     def events = 0
     def runtime
+    def cursor
+    def session
+    long sequence = 0
+    def loaderChanges = [:]
     int maximumFrameBytes = 16 * 1024 * 1024
 
     KodaKotlinGetterBridge(gradle, socket) {
@@ -72,7 +80,9 @@ class KodaKotlinGetterBridge {
         def id = 'loader:' + loaderRows.size()
         loaders[loader] = id
         def row = [id: id, parent: null, artifacts: []]
+        loaderPositions[id] = loaderRows.size()
         loaderRows.add(row)
+        loaderRowsById[id] = row
         if (loader != null) row.parent = this.loader(loader.parent)
         return id
     }
@@ -94,8 +104,15 @@ class KodaKotlinGetterBridge {
             if (location == null || location.protocol != 'file') throw new IOException('Runtime class has unavailable code source: ' + type.name)
             def artifactId = artifact(new File(location.toURI()))
             origin = [kind: 'artifact', value: artifactId]
-            def row = loaderRows.find { it.id == loaderId }
-            if (!row.artifacts.contains(artifactId)) row.artifacts.add(artifactId)
+            def row = loaderRowsById[loaderId]
+            if (!row.artifacts.contains(artifactId)) {
+                if (cursor != null && loaderPositions[loaderId] < cursor.loaders) {
+                    if (!loaderChanges.containsKey(loaderId))
+                        loaderChanges[loaderId] = [loader: loaderId, previous: row.artifacts.size(), artifacts: []]
+                    loaderChanges[loaderId].artifacts.add(artifactId)
+                }
+                row.artifacts.add(artifactId)
+            }
         }
         def row = [id: id, name: type.name, loader: loaderId, origin: origin, superclass: null, interfaces: []]
         classRows.add(row)
@@ -128,22 +145,27 @@ class KodaKotlinGetterBridge {
                 parameterClasses: parameters.collect { it.primitive ? null : runtimeClass(it) },
                 returnClass: method.returnType.primitive ? null : runtimeClass(method.returnType)])
             methodValues[methodId] = method
+            methodCatalogues[methodId] = id
         }
         return id
     }
 
     String object(Object value, String kind, String project) {
-        if (objects.containsKey(value)) {
-            def id = objects[value]
-            def row = objectRows.find { it.id == id }
-            if (row.kind != kind || row.project != project) throw new IOException('One runtime object crossed project/type ownership')
-            return id
+        def identity = objects[value]
+        if (identity != null) {
+            if (identity.kind != kind) throw new IOException('One runtime object crossed type ownership')
+            if (identity.scopes.containsKey(project)) return identity.scopes[project]
+        } else {
+            identity = [kind: kind, scopes: [:]]
+            objects[value] = identity
         }
         def id = 'object:' + objectRows.size()
-        objects[value] = id
+        identity.scopes[project] = id
         objectValues[id] = value
         def task = kind == 'task' ? [name: value.name, path: value.path] : null
-        objectRows.add([id: id, kind: kind, project: project, classId: runtimeClass(value.getClass()), task: task])
+        def row = [id: id, kind: kind, project: project, classId: runtimeClass(value.getClass()), task: task]
+        objectRows.add(row)
+        objectRowsById[id] = row
         catalogue(value.getClass())
         return id
     }
@@ -151,6 +173,25 @@ class KodaKotlinGetterBridge {
     def inventory() {
         return [runtime: runtime + [artifacts: artifactRows, loaders: loaderRows, classes: classRows],
             objects: objectRows, catalogues: catalogueRows, projectObjects: projectObjects, classLookups: classLookups]
+    }
+
+    def position() {
+        return [artifacts: artifactRows.size(), loaders: loaderRows.size(), classes: classRows.size(),
+            objects: objectRows.size(), catalogues: catalogueRows.size()]
+    }
+
+    void sendDelta(String request) {
+        if (sequence == Long.MAX_VALUE) throw new IOException('Discovery sequence overflow')
+        def delta = [session: session, request: request, sequence: ++sequence, predecessor: cursor,
+            artifacts: artifactRows.subList(cursor.artifacts, artifactRows.size()),
+            loaders: loaderRows.subList(cursor.loaders, loaderRows.size()),
+            classes: classRows.subList(cursor.classes, classRows.size()),
+            objects: objectRows.subList(cursor.objects, objectRows.size()),
+            catalogues: catalogueRows.subList(cursor.catalogues, catalogueRows.size()),
+            loaderArtifacts: loaderChanges.values().toList()]
+        send('discoveryDelta', delta)
+        cursor = position()
+        loaderChanges.clear()
     }
 
     def causes(Throwable failure) {
@@ -236,17 +277,19 @@ class KodaKotlinGetterBridge {
         } else {
             def method = methodValues[request.method.value]
             if (method == null) throw new IOException('Request selected an undiscovered method')
-            def expected = catalogueRows.find { it.id == request.catalogue }?.methods?.find { it.id == request.method.value }
-            if (expected == null) throw new IOException('Request method belongs to a different catalogue')
+            if (methodCatalogues[request.method.value] != request.catalogue)
+                throw new IOException('Request method belongs to a different catalogue')
             def owner = request.owner == null ? null : objectValues[request.owner]
-            if (request.owner != null && owner == null) throw new IOException('Request receiver is unavailable')
+            if (request.owner != null && (owner == null || objectRowsById[request.owner].project != request.project))
+                throw new IOException('Request receiver is unavailable or belongs to a different project')
             def arguments = request.arguments.collect { argument ->
                 switch (argument.kind) {
                     case 'string': return argument.value
                     case 'boolean': return argument.value
                     case 'null': return null
                     case 'object':
-                        if (!objectValues.containsKey(argument.value)) throw new IOException('Request argument is unavailable')
+                        if (!objectValues.containsKey(argument.value) || objectRowsById[argument.value].project != request.project)
+                            throw new IOException('Request argument is unavailable or belongs to a different project')
                         return objectValues[argument.value]
                     default: throw new IOException('Unsupported typed request argument')
                 }
@@ -264,7 +307,7 @@ class KodaKotlinGetterBridge {
                 event.outcome = unavailable(request, 'linkage', 'invoke', 'Official getter linkage failed', error)
             }
         }
-        send('discovery', inventory())
+        sendDelta(request.id)
         send('event', event)
     }
 
@@ -297,9 +340,14 @@ class KodaKotlinGetterBridge {
             switch (request.kind) {
                 case 'discover':
                     if (discovered) throw new IOException('Discovery bootstrap already issued')
+                    if (!(request.value.session instanceof String) || request.value.session.isEmpty())
+                        throw new IOException('Missing independently issued discovery session')
+                    session = request.value.session
                     discover(request.value.projects, request.value.classNames)
                     discovered = true
-                    send('discovery', inventory())
+                    send('discovery', [session: session, inventory: inventory()])
+                    cursor = position()
+                    loaderChanges.clear()
                     break
                 case 'invoke':
                     if (!discovered) throw new IOException('Invocation before owned discovery')

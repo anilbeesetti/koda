@@ -473,6 +473,7 @@ pub fn launcher_entrypoint() -> io::Result<i32> {
 #[cfg(target_os = "linux")]
 #[derive(Debug)]
 struct LauncherFailures {
+    wrapper_code: Option<i32>,
     operation: Option<io::Error>,
     closure: Option<io::Error>,
     acknowledgement: Option<io::Error>,
@@ -482,6 +483,10 @@ struct LauncherFailures {
 impl std::fmt::Display for LauncherFailures {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut separator = "";
+        if let Some(code) = self.wrapper_code {
+            write!(formatter, "wrapper exited with code {code}")?;
+            separator = "; ";
+        }
         for (phase, failure) in [
             ("wrapper operation", &self.operation),
             ("descendant closure", &self.closure),
@@ -525,6 +530,7 @@ fn finish_launcher_with(
         return outcome;
     }
     let failures = LauncherFailures {
+        wrapper_code: outcome.as_ref().ok().copied(),
         operation: outcome.err(),
         closure: closure.err(),
         acknowledgement: acknowledgement.err(),
@@ -768,6 +774,49 @@ mod tests {
             error
                 .to_string()
                 .contains("Injected CLOSED delivery failure")
+        );
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn launcher_keeps_observed_wrapper_codes_alongside_failed_cleanup_or_acknowledgement() {
+        for code in [23, 128 + libc::SIGTERM] {
+            let acknowledged = std::cell::Cell::new(false);
+            let error = finish_launcher_with(
+                Ok(code),
+                || Err(io::Error::new(io::ErrorKind::TimedOut, "Closure failed")),
+                || {
+                    acknowledged.set(true);
+                    Ok(())
+                },
+            )
+            .expect_err("A known wrapper code cannot authorize failed closure");
+            assert!(
+                error
+                    .to_string()
+                    .contains(&format!("wrapper exited with code {code}"))
+            );
+            assert!(error.to_string().contains("Closure failed"));
+            assert!(!acknowledged.get());
+            assert_eq!(error.kind(), io::ErrorKind::TimedOut);
+
+            let error = finish_launcher_with(
+                Ok(code),
+                || Ok(()),
+                || Err(io::Error::new(io::ErrorKind::BrokenPipe, "CLOSED failed")),
+            )
+            .expect_err("The code and acknowledgement failure must survive");
+            assert!(
+                error
+                    .to_string()
+                    .contains(&format!("wrapper exited with code {code}"))
+            );
+            assert!(error.to_string().contains("CLOSED failed"));
+            assert_eq!(error.kind(), io::ErrorKind::BrokenPipe);
+        }
+        assert_eq!(
+            finish_launcher_with(Ok(23), || Ok(()), || Ok(())).expect("Closed"),
+            23
         );
     }
 }
