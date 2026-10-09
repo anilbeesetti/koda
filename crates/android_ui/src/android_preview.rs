@@ -4780,8 +4780,9 @@ mod tests {
                 .create_dir(Path::new(path).parent().context("Input parent")?)
                 .await?;
             filesystem.write(Path::new(path), b"initial").await?;
-            // The test preset defers non-Git directories at depth five. Load
-            // these inputs before requiring real non-Loaded change events.
+            // Refreshing a not-yet-indexed parent only inserts its metadata.
+            // Let real creation events establish depth-deferred directories first.
+            cx.run_until_parked();
             let mut loaded = project.read_with(cx, |project, cx| {
                 let (worktree, parent) = project
                     .find_worktree(Path::new(path).parent().context("Input parent")?, cx)
@@ -4795,6 +4796,27 @@ mod tests {
                 )
             })?;
             loaded.next().await;
+            project.read_with(cx, |project, cx| {
+                let (worktree, input) = project
+                    .find_worktree(Path::new(path), cx)
+                    .context("Input worktree")?;
+                let worktree = worktree.read(cx);
+                let local = worktree.as_local().context("Local input worktree")?;
+                let parent = input.parent().context("Input parent")?;
+                ensure!(
+                    local
+                        .entry_for_path(parent)
+                        .is_some_and(|entry| entry.kind == project::EntryKind::Dir),
+                    "Input parent was not loaded before observing changes: {path}"
+                );
+                ensure!(
+                    local
+                        .entry_for_path(&input)
+                        .is_some_and(|entry| entry.is_file()),
+                    "Input file was not indexed before observing changes: {path}"
+                );
+                Ok::<_, anyhow::Error>(())
+            })?;
         }
         let (workspace, visual) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
