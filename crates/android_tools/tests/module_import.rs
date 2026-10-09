@@ -1291,3 +1291,250 @@ fn strict_android_base_predicate_rejects_wrong_plugin_argument() -> Result<()> {
     );
     Ok(())
 }
+
+#[test]
+fn phased_names_preserve_absent_empty_and_nonempty_groups_and_collisions() -> Result<()> {
+    let input = ImportedNameInput {
+        build_directory: Path::new("/build/real-folder"),
+        build_name: "Declared Project",
+        identity_path: ":nested:app.dot",
+        qualified_path: None,
+        idea_module_name: None,
+        source_set_name: None,
+    };
+    let source = ImportedNameInput {
+        source_set_name: Some("debug"),
+        ..input.clone()
+    };
+    for (group, holder, member, collision) in [
+        (
+            None,
+            "Declared_Project.nested.app_dot",
+            "Declared_Project.nested.app_dot.debug",
+            "Declared_Project.nested.app_dot.debug~1",
+        ),
+        (
+            Some(""),
+            ".Declared_Project.nested.app_dot",
+            ".Declared_Project.nested.app_dot.debug",
+            ".Declared_Project.nested.app_dot.debug~1",
+        ),
+        (
+            Some("host"),
+            "host.Declared_Project.nested.app_dot",
+            "host.Declared_Project.nested.app_dot.debug",
+            "host.Declared_Project.nested.app_dot.debug~1",
+        ),
+    ] {
+        let mut naming = ImportNaming {
+            mode: ImportNameMode::Phased,
+            root_build_directory: "/build/real-folder".into(),
+            root_build_name: "Declared Project".into(),
+            build_src_group: group.map(str::to_owned),
+            existing_names: BTreeSet::new(),
+        };
+        assert_eq!(imported_internal_name(&input, &naming)?, holder);
+        assert_eq!(imported_internal_name(&source, &naming)?, member);
+        naming.existing_names.insert(member.into());
+        assert_eq!(imported_internal_name(&source, &naming)?, collision);
+        naming.existing_names.insert(collision.into());
+        assert_eq!(
+            imported_internal_name(&source, &naming)
+                .expect_err("Grouped identities retain the single collision suffix")
+                .reason,
+            FactsUnavailableReason::Capability
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn legacy_names_ignore_only_empty_groups_and_preserve_nonempty_groups() -> Result<()> {
+    let input = ImportedNameInput {
+        build_directory: Path::new("/build/real-folder"),
+        build_name: "declared-root",
+        identity_path: ":nested:android",
+        qualified_path: Some(":nested:android"),
+        idea_module_name: Some("Configured Name"),
+        source_set_name: None,
+    };
+    let source = ImportedNameInput {
+        source_set_name: Some("main"),
+        ..input.clone()
+    };
+    for (mode, group, holder, member) in [
+        (
+            ImportNameMode::Qualified,
+            None,
+            "declared-root.nested.android",
+            "declared-root.nested.android.main",
+        ),
+        (
+            ImportNameMode::Qualified,
+            Some(""),
+            "declared-root.nested.android",
+            "declared-root.nested.android.main",
+        ),
+        (
+            ImportNameMode::Qualified,
+            Some("host"),
+            "host.declared-root.nested.android",
+            "host.declared-root.nested.android.main",
+        ),
+        (
+            ImportNameMode::Unqualified,
+            None,
+            "Configured_Name",
+            "Configured_Name_main",
+        ),
+        (
+            ImportNameMode::Unqualified,
+            Some(""),
+            "Configured_Name",
+            "Configured_Name_main",
+        ),
+        (
+            ImportNameMode::Unqualified,
+            Some("host"),
+            "host_Configured_Name",
+            "host_Configured_Name_main",
+        ),
+    ] {
+        let naming = ImportNaming {
+            mode,
+            root_build_directory: "/build/real-folder".into(),
+            root_build_name: "declared-root".into(),
+            build_src_group: group.map(str::to_owned),
+            existing_names: BTreeSet::new(),
+        };
+        assert_eq!(imported_internal_name(&input, &naming)?, holder);
+        assert_eq!(imported_internal_name(&source, &naming)?, member);
+    }
+    Ok(())
+}
+
+#[test]
+fn staged_empty_group_keeps_phased_names_and_ungrouped_external_ids() -> Result<()> {
+    for (group, holder, member, external_holder, external_member) in [
+        (
+            None,
+            "declared-root.android",
+            "declared-root.android.debug",
+            ":android",
+            ":android:debug",
+        ),
+        (
+            Some(""),
+            ".declared-root.android",
+            ".declared-root.android.debug",
+            ":android",
+            ":android:debug",
+        ),
+        (
+            Some("host"),
+            "host.declared-root.android",
+            "host.declared-root.android.debug",
+            "host::android",
+            "host::android:debug",
+        ),
+    ] {
+        let mut fixture = fixture()?;
+        fixture.naming.build_src_group = group.map(str::to_owned);
+        let publisher = ModuleImportPublisher::default();
+        let transaction = stage(&fixture, &publisher, 1)?;
+        let module = transaction
+            .module(":android")
+            .context("Staged grouped identities")?;
+        assert_eq!(module.holder_internal_name, holder);
+        assert_eq!(module.sort_name, holder);
+        assert_eq!(module.members[0].internal_name, holder);
+        assert_eq!(module.members[1].internal_name, member);
+        assert_eq!(module.members[0].external_id, external_holder);
+        assert_eq!(module.members[1].external_id, external_member);
+        assert_eq!(module.display_name, "android");
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_projection_reuses_shared_containers_with_a_two_vertex_budget() -> Result<()> {
+    let mut fixture = fixture()?;
+    let (value, _, plan) = strict_fixture(&fixture)?;
+    let expected: CaptureContext = serde_json::from_value(value["kotlinFacts"]["context"].clone())?;
+    let snapshot = parse_kotlin_facts(
+        &wire(&value)?,
+        &fixture.model,
+        &fixture.identity,
+        &expected,
+        CaptureLimits::default(),
+    )?;
+    fixture.kotlin = android_tools::module_import::import_kotlin_from_strict_capture_with_limits(
+        &fixture.model,
+        &fixture.identity,
+        &snapshot,
+        &expected,
+        &revision(&fixture, 1),
+        &[plan],
+        CaptureLimits {
+            ancestry_steps: 2,
+            ..CaptureLimits::default()
+        },
+    )?;
+    let mut publisher = ModuleImportPublisher::default();
+    publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+    assert_eq!(
+        publisher
+            .committed()
+            .context("Budgeted strict import")?
+            .modules[":android"]
+            .kotlin_capability(),
+        KotlinCapability::Enabled
+    );
+    Ok(())
+}
+
+#[test]
+fn strict_projection_budget_failure_preserves_basic_and_import_identity() -> Result<()> {
+    let fixture = fixture()?;
+    let (value, _, plan) = strict_fixture(&fixture)?;
+    let expected: CaptureContext = serde_json::from_value(value["kotlinFacts"]["context"].clone())?;
+    let snapshot = parse_kotlin_facts(
+        &wire(&value)?,
+        &fixture.model,
+        &fixture.identity,
+        &expected,
+        CaptureLimits::default(),
+    )?;
+    let publisher = ModuleImportPublisher::default();
+    let before_root = fixture.model.root.clone();
+    let before_binding = fixture.identity.binding().clone();
+    assert_eq!(
+        android_tools::module_import::import_kotlin_from_strict_capture_with_limits(
+            &fixture.model,
+            &fixture.identity,
+            &snapshot,
+            &expected,
+            &revision(&fixture, 1),
+            &[plan],
+            CaptureLimits {
+                ancestry_steps: 1,
+                ..CaptureLimits::default()
+            },
+        )
+        .expect_err("Projection cannot publish membership beyond its cumulative budget")
+        .reason,
+        FactsUnavailableReason::UnsupportedShape
+    );
+    assert_eq!(fixture.model.root, before_root);
+    assert_eq!(fixture.identity.binding(), &before_binding);
+    assert!(
+        fixture
+            .model
+            .modules
+            .iter()
+            .any(|module| module.path == ":android")
+    );
+    assert!(fixture.identity.project(":android").is_ok());
+    assert!(publisher.committed().is_none());
+    Ok(())
+}

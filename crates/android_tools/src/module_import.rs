@@ -13,9 +13,9 @@ use crate::{
         validate_observation,
     },
     kotlin_import_facts::{
-        CaptureContext, CaptureMode, CaptureObject, CaptureValue, ContainerOrder, GetterArgument,
-        GetterMethod, GetterOutcome, GetterPurpose, GetterRequest, KotlinFactsSnapshot,
-        MethodSelection, ObjectKind, RuntimeClass, ValueKind,
+        CaptureContext, CaptureLimits, CaptureMode, CaptureObject, CaptureValue, ContainerOrder,
+        GetterArgument, GetterMethod, GetterOutcome, GetterPurpose, GetterRequest,
+        KotlinFactsSnapshot, MethodSelection, ObjectKind, RuntimeClass, ValueKind,
     },
     module_presentation::{
         CapturedExternalSystemIdentity, CapturedGradleIdentity, CapturedModuleIdentity,
@@ -159,6 +159,91 @@ struct StrictProjection<'a> {
     objects: BTreeMap<&'a str, &'a CaptureObject>,
     classes: BTreeMap<&'a str, &'a RuntimeClass>,
     methods: BTreeMap<(&'a str, &'a str), &'a GetterMethod>,
+    container_relations: ContainerRelations<'a>,
+}
+
+struct ContainerRelations<'a> {
+    answers: BTreeMap<(&'a str, &'static str), bool>,
+    steps: usize,
+    limit: usize,
+    exhausted: bool,
+}
+
+impl<'a> ContainerRelations<'a> {
+    fn new(limit: usize) -> Self {
+        Self {
+            answers: BTreeMap::new(),
+            steps: 0,
+            limit,
+            exhausted: false,
+        }
+    }
+
+    fn ensure_available(&self) -> ImportResult<()> {
+        if self.exhausted {
+            Err(unavailable(
+                FactsUnavailableReason::UnsupportedShape,
+                "Kotlin projection class ancestry traversal limit exceeded",
+            ))
+        } else {
+            Ok(())
+        }
+    }
+
+    fn charge(&mut self) -> ImportResult<()> {
+        self.ensure_available()?;
+        match self.steps.checked_add(1) {
+            Some(steps) if steps <= self.limit => {
+                self.steps = steps;
+                Ok(())
+            }
+            _ => {
+                self.exhausted = true;
+                self.ensure_available()
+            }
+        }
+    }
+
+    fn contains(
+        &mut self,
+        classes: &BTreeMap<&'a str, &'a RuntimeClass>,
+        class: &'a str,
+        interface: &'static str,
+    ) -> ImportResult<bool> {
+        self.ensure_available()?;
+        if let Some(answer) = self.answers.get(&(class, interface)) {
+            return Ok(*answer);
+        }
+        let mut pending = vec![class];
+        let mut visited = BTreeSet::new();
+        while let Some(id) = pending.pop() {
+            self.charge()?;
+            if !visited.insert(id) {
+                continue;
+            }
+            let runtime_class = classes.get(id).copied().ok_or_else(|| {
+                unavailable(
+                    FactsUnavailableReason::MissingMetadata,
+                    "Unknown captured runtime class",
+                )
+            })?;
+            if runtime_class.name == interface {
+                self.answers.insert((class, interface), true);
+                return Ok(true);
+            }
+            for ancestor in runtime_class
+                .superclass
+                .as_deref()
+                .into_iter()
+                .chain(runtime_class.interfaces.iter().map(String::as_str))
+            {
+                self.charge()?;
+                pending.push(ancestor);
+            }
+        }
+        self.answers.insert((class, interface), false);
+        Ok(false)
+    }
 }
 
 impl<'a> StrictProjection<'a> {
@@ -211,31 +296,15 @@ impl<'a> StrictProjection<'a> {
         }
     }
 
-    fn class_names(&self, object: &str) -> ImportResult<BTreeSet<&'a str>> {
+    fn class_has_interface(&mut self, object: &str, interface: &'static str) -> ImportResult<bool> {
         let object = self.objects.get(object).copied().ok_or_else(|| {
             unavailable(
                 FactsUnavailableReason::MissingMetadata,
                 "Unknown captured runtime object",
             )
         })?;
-        let mut pending = vec![object.class_id.as_str()];
-        let mut visited = BTreeSet::new();
-        let mut names = BTreeSet::new();
-        while let Some(id) = pending.pop() {
-            if !visited.insert(id) {
-                continue;
-            }
-            let class = self.classes.get(id).copied().ok_or_else(|| {
-                unavailable(
-                    FactsUnavailableReason::MissingMetadata,
-                    "Unknown captured runtime class",
-                )
-            })?;
-            names.insert(class.name.as_str());
-            pending.extend(class.superclass.as_deref());
-            pending.extend(class.interfaces.iter().map(String::as_str));
-        }
-        Ok(names)
+        self.container_relations
+            .contains(&self.classes, object.class_id.as_str(), interface)
     }
 
     fn nullable_object(&self, request: &GetterRequest) -> ImportResult<Option<&'a str>> {
@@ -287,7 +356,7 @@ impl<'a> StrictProjection<'a> {
             .collect()
     }
 
-    fn android_base_plugin(&self, plan: &StrictKotlinProjectPlan) -> ImportResult<bool> {
+    fn android_base_plugin(&mut self, plan: &StrictKotlinProjectPlan) -> ImportResult<bool> {
         let request = self.request(
             plan.android_base_plugin.as_deref().ok_or_else(|| {
                 unavailable(
@@ -342,14 +411,18 @@ impl<'a> StrictProjection<'a> {
         }
     }
 
-    fn check_container(&self, request: &GetterRequest, interface: &str) -> ImportResult<()> {
+    fn check_container(
+        &mut self,
+        request: &GetterRequest,
+        interface: &'static str,
+    ) -> ImportResult<()> {
         let owner = request.owner.as_deref().ok_or_else(|| {
             unavailable(
                 FactsUnavailableReason::MissingMetadata,
                 "Official getter lacks owning container",
             )
         })?;
-        if !self.class_names(owner)?.contains(interface) {
+        if !self.class_has_interface(owner, interface)? {
             return Err(unavailable(
                 FactsUnavailableReason::Malformed,
                 "Getter owner is not the official Gradle container",
@@ -386,7 +459,7 @@ impl<'a> StrictProjection<'a> {
         Ok(())
     }
 
-    fn project(&self, plan: &StrictKotlinProjectPlan) -> ImportResult<RawKotlinProject> {
+    fn project(&mut self, plan: &StrictKotlinProjectPlan) -> ImportResult<RawKotlinProject> {
         if plan
             .plugin_lookups
             .keys()
@@ -683,6 +756,31 @@ pub fn import_kotlin_from_strict_capture(
     issued: &ImportRevision,
     plans: &[StrictKotlinProjectPlan],
 ) -> ImportResult<KotlinImportFacts> {
+    import_kotlin_from_strict_capture_with_limits(
+        model,
+        identities,
+        snapshot,
+        expected,
+        issued,
+        plans,
+        CaptureLimits::default(),
+    )
+}
+
+/// The decoder's traversal budget does not cover this subsequent projection.
+/// `limits.ancestry_steps` bounds cumulative examined vertices and edges across
+/// every project plan; callers can raise it for larger independently captured
+/// graphs. Exhaustion leaves Basic/import facts intact and supplies no Kotlin
+/// publication. Other capture limits apply when parsing the snapshot.
+pub fn import_kotlin_from_strict_capture_with_limits(
+    model: &ProjectModel,
+    identities: &ImportFactsSnapshot,
+    snapshot: &KotlinFactsSnapshot,
+    expected: &CaptureContext,
+    issued: &ImportRevision,
+    plans: &[StrictKotlinProjectPlan],
+    limits: CaptureLimits,
+) -> ImportResult<KotlinImportFacts> {
     snapshot.ensure_current(model, identities, expected)?;
     if expected.mode != CaptureMode::Invocation {
         return Err(unavailable(
@@ -699,7 +797,7 @@ pub fn import_kotlin_from_strict_capture(
             "Capture was issued for another model, selection or workspace",
         ));
     }
-    let projection = StrictProjection {
+    let mut projection = StrictProjection {
         events: snapshot
             .raw_events()
             .iter()
@@ -731,21 +829,22 @@ pub fn import_kotlin_from_strict_capture(
                     .map(move |method| ((catalogue.id.as_str(), method.id.as_str()), method))
             })
             .collect(),
+        container_relations: ContainerRelations::new(limits.ancestry_steps),
     };
     let mut projects = BTreeMap::new();
     let mut android_base_plugins = BTreeMap::new();
     for plan in plans {
         identities.project(&plan.project)?;
-        if projects
-            .insert(plan.project.clone(), projection.project(plan)?)
-            .is_some()
-        {
+        let project = projection.project(plan)?;
+        projection.container_relations.ensure_available()?;
+        if projects.insert(plan.project.clone(), project).is_some() {
             return Err(unavailable(
                 FactsUnavailableReason::Malformed,
                 "Duplicate strict Kotlin project plan",
             ));
         }
         let base = projection.android_base_plugin(plan);
+        projection.container_relations.ensure_available()?;
         if let Err(error) = &base {
             if matches!(
                 error.reason,
@@ -958,10 +1057,7 @@ pub fn imported_internal_name(
     input: &ImportedNameInput<'_>,
     settings: &ImportNaming,
 ) -> ImportResult<String> {
-    let group = settings
-        .build_src_group
-        .as_deref()
-        .filter(|group| !group.is_empty());
+    let group = settings.build_src_group.as_deref();
     let name = match settings.mode {
         ImportNameMode::Phased => {
             let mut name = input.identity_path.trim_start_matches(':').to_owned();
@@ -1008,7 +1104,7 @@ pub fn imported_internal_name(
             } else {
                 path_name
             };
-            if let Some(group) = group {
+            if let Some(group) = group.filter(|group| !group.is_empty()) {
                 name = format!("{group}.{name}");
             }
             if let Some(source_set) = input.source_set_name {
@@ -1027,7 +1123,7 @@ pub fn imported_internal_name(
                     )
                 })?
                 .to_owned();
-            if let Some(group) = group {
+            if let Some(group) = group.filter(|group| !group.is_empty()) {
                 name = format!("{group}_{name}");
             }
             if let Some(source_set) = input.source_set_name {
@@ -1915,4 +2011,204 @@ fn propose_kotlin_member(
         return KotlinMemberState::Present(Box::new(settings));
     }
     KotlinMemberState::Unknown(KotlinUnknownReason::MissingSourceSet)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::kotlin_import_facts::ClassOrigin;
+
+    fn runtime_class(id: &str, name: &str, interfaces: Vec<String>) -> RuntimeClass {
+        RuntimeClass {
+            id: id.into(),
+            name: name.into(),
+            loader: "gradle".into(),
+            origin: ClassOrigin::Artifact("gradle-jar".into()),
+            superclass: None,
+            interfaces,
+        }
+    }
+
+    #[test]
+    fn shared_dense_container_graph_reuses_positive_and_negative_queries() -> ImportResult<()> {
+        let mut captured = vec![
+            runtime_class(
+                "plugins",
+                "org.gradle.api.plugins.PluginContainer",
+                Vec::new(),
+            ),
+            runtime_class(
+                "extensions",
+                "org.gradle.api.plugins.ExtensionContainer",
+                Vec::new(),
+            ),
+        ];
+        for index in 0..128 {
+            let interfaces = if index == 0 {
+                vec!["plugins".into(), "extensions".into()]
+            } else {
+                (0..index)
+                    .rev()
+                    .take(4)
+                    .map(|ancestor| format!("layer-{ancestor}"))
+                    .collect()
+            };
+            captured.push(runtime_class(
+                &format!("layer-{index}"),
+                &format!("org.example.Layer{index}"),
+                interfaces,
+            ));
+        }
+        let classes = captured
+            .iter()
+            .map(|class| (class.id.as_str(), class))
+            .collect();
+        let mut relations = ContainerRelations::new(8192);
+        assert!(relations.contains(
+            &classes,
+            "layer-127",
+            "org.gradle.api.plugins.PluginContainer"
+        )?);
+        assert!(relations.contains(
+            &classes,
+            "layer-127",
+            "org.gradle.api.plugins.ExtensionContainer"
+        )?);
+        assert!(!relations.contains(&classes, "layer-127", "org.example.AbsentContainer")?);
+        let initial_steps = relations.steps;
+        relations.limit = initial_steps;
+        for _ in 0..1000 {
+            assert!(relations.contains(
+                &classes,
+                "layer-127",
+                "org.gradle.api.plugins.PluginContainer"
+            )?);
+            assert!(relations.contains(
+                &classes,
+                "layer-127",
+                "org.gradle.api.plugins.ExtensionContainer"
+            )?);
+            assert!(!relations.contains(&classes, "layer-127", "org.example.AbsentContainer")?);
+        }
+        assert_eq!(relations.steps, initial_steps);
+        assert!(!relations.exhausted);
+        Ok(())
+    }
+
+    #[test]
+    fn container_answers_distinguish_runtime_class_ids_and_interface_names() -> ImportResult<()> {
+        let captured = [
+            runtime_class(
+                "plugins",
+                "org.gradle.api.plugins.PluginContainer",
+                Vec::new(),
+            ),
+            runtime_class(
+                "extensions",
+                "org.gradle.api.plugins.ExtensionContainer",
+                Vec::new(),
+            ),
+            runtime_class("first", "org.example.SharedName", vec!["plugins".into()]),
+            runtime_class(
+                "second",
+                "org.example.SharedName",
+                vec!["extensions".into()],
+            ),
+        ];
+        let classes = captured
+            .iter()
+            .map(|class| (class.id.as_str(), class))
+            .collect();
+        let mut relations = ContainerRelations::new(32);
+        for _ in 0..2 {
+            assert!(relations.contains(
+                &classes,
+                "first",
+                "org.gradle.api.plugins.PluginContainer"
+            )?);
+            assert!(!relations.contains(
+                &classes,
+                "first",
+                "org.gradle.api.plugins.ExtensionContainer"
+            )?);
+            assert!(!relations.contains(
+                &classes,
+                "second",
+                "org.gradle.api.plugins.PluginContainer"
+            )?);
+            assert!(relations.contains(
+                &classes,
+                "second",
+                "org.gradle.api.plugins.ExtensionContainer"
+            )?);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn container_budget_counts_edges_and_is_cumulative_between_queries() -> ImportResult<()> {
+        let captured = [
+            runtime_class(
+                "plugins",
+                "org.gradle.api.plugins.PluginContainer",
+                Vec::new(),
+            ),
+            runtime_class(
+                "extensions",
+                "org.gradle.api.plugins.ExtensionContainer",
+                Vec::new(),
+            ),
+            runtime_class("derived", "org.example.Derived", vec!["plugins".into()]),
+        ];
+        let classes = captured
+            .iter()
+            .map(|class| (class.id.as_str(), class))
+            .collect();
+        let mut relations = ContainerRelations::new(3);
+        assert!(relations.contains(
+            &classes,
+            "derived",
+            "org.gradle.api.plugins.PluginContainer"
+        )?);
+        assert_eq!(relations.steps, 3);
+        assert_eq!(
+            relations
+                .contains(
+                    &classes,
+                    "extensions",
+                    "org.gradle.api.plugins.ExtensionContainer"
+                )
+                .expect_err("All queries share the vertex and edge budget")
+                .reason,
+            FactsUnavailableReason::UnsupportedShape
+        );
+        assert_eq!(
+            relations
+                .contains(
+                    &classes,
+                    "derived",
+                    "org.gradle.api.plugins.PluginContainer"
+                )
+                .expect_err("An exhausted projection cannot return cached evidence")
+                .reason,
+            FactsUnavailableReason::UnsupportedShape
+        );
+        assert!(relations.exhausted);
+        Ok(())
+    }
+
+    #[test]
+    fn container_work_counter_overflow_remains_unavailable() {
+        let mut relations = ContainerRelations::new(usize::MAX);
+        relations.steps = usize::MAX;
+        assert_eq!(
+            relations
+                .charge()
+                .expect_err("Never wrap the work counter")
+                .reason,
+            FactsUnavailableReason::UnsupportedShape
+        );
+        assert_eq!(relations.steps, usize::MAX);
+        assert!(relations.exhausted);
+    }
 }
