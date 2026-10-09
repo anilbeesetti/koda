@@ -1,3 +1,4 @@
+pub mod build_variant_table;
 pub mod generated_artifacts;
 pub mod gradle_import;
 pub mod import_facts;

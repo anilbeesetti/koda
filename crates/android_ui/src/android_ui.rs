@@ -24,7 +24,7 @@ use futures::{
 };
 use gpui::{
     Action, App, BackgroundExecutor, Context, Entity, EventEmitter, FocusHandle, Focusable,
-    Subscription, Task, WeakEntity, actions,
+    Subscription, Task, WeakEntity, actions, uniform_list,
 };
 use project::{Project, TaskSourceKind, WorktreeId, trusted_worktrees::TrustedWorktrees};
 pub use project_context::ImportGradleProject;
@@ -55,6 +55,12 @@ pub use zed_actions::android::Logcat;
 
 const UNAVAILABLE_BUILD_VARIANT_STATUS: &str =
     "The previous build variant is unavailable. Select a build variant to continue.";
+
+struct BuildVariantTablePresentation {
+    token: android_tools::project_model::ModelToken,
+    selected: Arc<android_tools::project_model::SelectedProject>,
+    table: Result<Arc<android_tools::build_variant_table::BuildVariantTableModel>, SharedString>,
+}
 
 actions!(
     android,
@@ -312,6 +318,8 @@ pub struct AndroidPanel {
     root: Option<PathBuf>,
     targets: Vec<AndroidTarget>,
     selected_target: Option<AndroidTarget>,
+    variant_table_locale: String,
+    variant_table: Option<BuildVariantTablePresentation>,
     devices: Vec<Device>,
     emulators: Vec<String>,
     emulator_error: Option<String>,
@@ -377,6 +385,16 @@ impl AndroidPanel {
             }
         });
         let project_model_subscription = cx.observe(&project, |panel, _, cx| {
+            if panel.variant_table.as_ref().is_some_and(|cached| {
+                !panel
+                    .project
+                    .read(cx)
+                    .android_model()
+                    .is_current(&cached.token)
+            }) {
+                panel.variant_table = None;
+                cx.notify();
+            }
             if panel
                 .followup_model_token
                 .as_ref()
@@ -414,6 +432,8 @@ impl AndroidPanel {
             root: None,
             targets: Vec::new(),
             selected_target: None,
+            variant_table_locale: android_tools::build_variant_table::system_collation_locale(),
+            variant_table: None,
             devices: Vec::new(),
             emulators: Vec::new(),
             emulator_error: None,
@@ -662,6 +682,7 @@ impl AndroidPanel {
             self.targets.clear();
             self.selected_target = None;
         }
+        self.variant_table = None;
         self.root = root;
         self.auto_sync_root = None;
         self.preview_view = None;
@@ -1889,6 +1910,90 @@ impl AndroidPanel {
             GradleOperation::Lint => Ok(("Lint", variant.gradle_task("lint", ""))),
             _ => anyhow::bail!("This operation requires an application deployment target"),
         }
+    }
+
+    fn render_build_variant_table(&mut self, cx: &App) -> Option<AnyElement> {
+        use android_tools::build_variant_table::BuildVariantTableModel;
+        let state = self.project.read(cx).android_model();
+        let Some(selected) = state.selected.clone() else {
+            self.variant_table = None;
+            return None;
+        };
+        let token = state.token();
+        if self
+            .variant_table
+            .as_ref()
+            .is_none_or(|cached| cached.token != token || !Arc::ptr_eq(&cached.selected, &selected))
+        {
+            let table = BuildVariantTableModel::from_selected_project(
+                &selected,
+                &self.variant_table_locale,
+            )
+            .map(Arc::new)
+            .map_err(|error| SharedString::from(error.to_string()));
+            self.variant_table = Some(BuildVariantTablePresentation {
+                token,
+                selected,
+                table,
+            });
+        }
+        let table = &self.variant_table.as_ref()?.table;
+        Some(match table {
+            Ok(table) => v_flex()
+                .debug_selector(|| "android-build-variant-table".into())
+                .gap_1()
+                .child(
+                    h_flex()
+                        .gap_2()
+                        .child(div().flex_1().min_w_0().child(
+                            Label::new(BuildVariantTableModel::COLUMN_NAMES[0]).color(Color::Muted),
+                        ))
+                        .child(div().flex_1().min_w_0().child(
+                            Label::new(BuildVariantTableModel::COLUMN_NAMES[1]).color(Color::Muted),
+                        )),
+                )
+                .child(
+                    uniform_list("android-build-variant-rows", table.rows.len(), {
+                        let table = table.clone();
+                        move |range, _, _| {
+                            table
+                                .rows
+                                .iter()
+                                .skip(range.start)
+                                .take(range.len())
+                                .map(|row| {
+                                    h_flex()
+                                        .gap_2()
+                                        .h(px(24.0))
+                                        .child(
+                                            div()
+                                                .flex_1()
+                                                .min_w_0()
+                                                .truncate()
+                                                .child(row.module.name.clone()),
+                                        )
+                                        .child(
+                                            div().flex_1().min_w_0().truncate().child(
+                                                row.variant_item()
+                                                    .map(|item| item.display_name())
+                                                    .unwrap_or_else(|error| error.to_string()),
+                                            ),
+                                        )
+                                })
+                                .collect::<Vec<_>>()
+                        }
+                    })
+                    .w_full()
+                    .h(px(24.0 * table.rows.len().clamp(1, 8) as f32)),
+                )
+                .into_any_element(),
+            Err(error) => div()
+                .debug_selector(|| "android-build-variant-table-unavailable".into())
+                .text_sm()
+                .text_color(cx.theme().colors().text_muted)
+                .child(error.clone())
+                .into_any_element(),
+        })
     }
 
     fn library_variants(&self, cx: &App) -> Vec<android_tools::project_model::VariantId> {
@@ -4071,8 +4176,15 @@ impl Render for AndroidPanel {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let state = project_surfaces::SurfaceState::for_panel(self, cx);
         if !state.qualified() {
+            self.variant_table = None;
             return gpui::Empty.into_any_element();
         }
+        let variant_table = if state.capabilities.android_sync {
+            self.render_build_variant_table(cx)
+        } else {
+            self.variant_table = None;
+            None
+        };
         let root = project_context::for_workspace(&self.workspace, cx)
             .and_then(|controller| controller.read(cx).root(cx));
         let root_label = root
@@ -4134,6 +4246,7 @@ impl Render for AndroidPanel {
             .when(state.build, |panel| panel
                 .child(Label::new("Build variant").color(Color::Muted))
                 .child(self.target_picker("panel-target", cx)))
+            .when_some(variant_table, |panel, table| panel.child(table))
             .when(state.capabilities.android_devices, |panel| panel
                 .child(Label::new("Device").color(Color::Muted))
                 .child(self.device_picker("panel-device", cx))
@@ -8617,6 +8730,110 @@ fi
             assert_eq!(menu.selected_index(), Some(index));
             menu.confirm(&Default::default(), window, cx);
         });
+    }
+
+    #[gpui::test]
+    async fn build_variant_table_reuses_rows_and_rejects_incomplete_module_selection(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            cx.update(AppState::test);
+            let root = PathBuf::from("/variant-table-model");
+            let filesystem = FakeFs::new(cx.executor());
+            filesystem
+                .insert_tree(&root, json!({"settings.gradle.kts":""}))
+                .await;
+            let project = Project::test(filesystem, [root.as_path()], cx).await;
+            let (workspace, visual) =
+                cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let panel = new_test_android_panel(&workspace, project.clone(), visual);
+            visual.update(|_, cx| publish_picker_catalogue(&project, &root, cx))?;
+            visual.run_until_parked();
+            let first = panel.update(visual, |panel, cx| -> Result<_> {
+                panel.context_operations_changed(cx);
+                panel.root = Some(root.clone());
+                panel.auto_sync_root = Some(root.clone());
+                panel.refreshing_devices = true;
+                panel.variant_table_locale = "en".into();
+                publish_picker_model(panel, &["debug", "release"], &[], "first", cx)?;
+                assert!(panel.render_build_variant_table(cx).is_some());
+                let cached = panel.variant_table.as_ref().context("Table cache")?;
+                let table = cached
+                    .table
+                    .as_ref()
+                    .map_err(|error| anyhow::anyhow!("{error}"))?
+                    .clone();
+                assert_eq!(table.rows.len(), 1);
+                assert_eq!(
+                    table.rows.first().map(|row| row.variant.as_str()),
+                    Some("debug")
+                );
+                assert_eq!(
+                    table
+                        .rows
+                        .first()
+                        .context("App row")?
+                        .variant_display_name()?,
+                    "debug (default)"
+                );
+                assert!(panel.render_build_variant_table(cx).is_some());
+                let repeated = panel
+                    .variant_table
+                    .as_ref()
+                    .context("Repeated table cache")?
+                    .table
+                    .as_ref()
+                    .map_err(|error| anyhow::anyhow!("{error}"))?;
+                assert!(
+                    Arc::ptr_eq(&table, repeated),
+                    "Unchanged renders must reuse projection"
+                );
+                Ok(table)
+            })?;
+            panel.update(visual, |panel, cx| -> Result<()> {
+                publish_picker_model(panel, &["debug", "release"], &["debug"], "mixed", cx)?;
+                assert!(panel.render_build_variant_table(cx).is_some());
+                assert!(
+                    panel
+                        .variant_table
+                        .as_ref()
+                        .context("Mixed table cache")?
+                        .table
+                        .is_err(),
+                    "An unselected library must not be omitted or assigned a guessed variant"
+                );
+                project.update(cx, |project, cx| {
+                    project.invalidate_android_model(None, cx);
+                });
+                assert!(panel.render_build_variant_table(cx).is_none());
+                assert!(
+                    panel.variant_table.is_none(),
+                    "Invalidation must release stale table state"
+                );
+                publish_picker_model(panel, &["release"], &[], "returned", cx)?;
+                assert!(panel.render_build_variant_table(cx).is_some());
+                let returned = panel
+                    .variant_table
+                    .as_ref()
+                    .context("Returned table cache")?
+                    .table
+                    .as_ref()
+                    .map_err(|error| anyhow::anyhow!("{error}"))?;
+                assert!(!Arc::ptr_eq(&first, returned));
+                assert_eq!(
+                    returned.rows.first().map(|row| row.variant.as_str()),
+                    Some("release")
+                );
+                assert_eq!(
+                    first.rows.first().map(|row| row.variant.as_str()),
+                    Some("debug")
+                );
+                Ok(())
+            })?;
+            Ok(())
+        }
+        .await;
+        result.expect("Build variant table projection fixture must complete");
     }
 
     #[gpui::test]

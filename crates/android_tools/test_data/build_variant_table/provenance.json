@@ -1,0 +1,70 @@
+{
+  "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+  "license": "Apache-2.0; full original headers retained",
+  "sources": [
+    {
+      "path": "project-system-gradle/src/com/android/tools/idea/gradle/variant/view/BuildVariantTableModel.kt",
+      "retained": "BuildVariantTableModel.kt",
+      "bytes": 6913,
+      "sha256": "f9a0da240e5f2ae43f7a0aeece2a7fc825a63b8d4ce0b5aa71e67966bf899b03"
+    },
+    {
+      "path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt",
+      "retained": "BuildVariantTableModelTest.kt",
+      "bytes": 8413,
+      "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0"
+    },
+    {
+      "path": "project-system-gradle/src/com/android/tools/idea/gradle/util/ModuleTypeComparator.java",
+      "retained": "ModuleTypeComparator.java",
+      "bytes": 1973,
+      "sha256": "b4d93ad4075e6edba187de4899a5ee097f4ffd9cbe87c50e9494c6696c5939fe"
+    },
+    {
+      "path": "project-system-gradle-models/src/com/android/tools/idea/gradle/model/IdeAndroidProjectType.kt",
+      "retained": "IdeAndroidProjectType.kt",
+      "bytes": 938,
+      "sha256": "8c83a8430a1d05f2a85e8688a2425d5a11ee409f166429bb5805257ba3324950"
+    }
+  ],
+  "cases": [
+    {
+      "original_method": "withoutAbi",
+      "rust_test": "tests/build_variant_table.rs::without_abi",
+      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+    },
+    {
+      "original_method": "testDefaultVariantIndicator",
+      "rust_test": "tests/build_variant_table.rs::test_default_variant_indicator",
+      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+    },
+    {
+      "original_method": "Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+      "rust_test": "tests/build_variant_table.rs::same_type_rows_are_sorted",
+      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+    },
+    {
+      "original_method": "Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
+      "rust_test": "tests/build_variant_table.rs::different_type_rows_are_sorted_by_android_project_type",
+      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+    }
+  ],
+  "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED; zero passing parity credit",
+  "deferred": [
+    {
+      "original_method": "withAbi",
+      "status": "DEFERRED_UNPORTED",
+      "reason": "User deferred NDK/C++ support; not not-applicable."
+    }
+  ],
+  "remaining_dependencies": [
+    "Root actual Rust test execution/build/fullsuite/native UI/five FINAL reviews",
+    "Java Collator versus ICU differential locale edge-case evidence",
+    "General producer integration: independent module selections, qualified imported names, legacy-feature type and typed dynamic-feature ownership",
+    "Per-module variant editing and propagation"
+  ]
+}
