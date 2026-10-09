@@ -3545,6 +3545,7 @@ impl AndroidPanel {
                     );
                 }
                 let panel = panel.downgrade();
+                let owner = owner.clone();
                 menu.separator()
                     .entry("Refresh devices", None, move |_, cx| {
                         panel
