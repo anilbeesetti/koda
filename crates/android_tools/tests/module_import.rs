@@ -825,6 +825,7 @@ fn explicit_holder_settings_survive_same_owner_reimport_and_do_not_cross_context
     settings.name = "User holder facet".into();
     settings.compiler_settings = Some(KotlinCompilerSettings {
         additional_arguments: "-Xexplicit-holder".into(),
+        ..KotlinCompilerSettings::default()
     });
     let expected = settings.clone();
     publisher.commit(transaction, &revision(&fixture, 1))?;
