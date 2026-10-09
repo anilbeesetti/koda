@@ -4761,6 +4761,12 @@ impl Workspace {
         cx: &mut Context<Self>,
     ) -> bool {
         let mut did_focus_panel = false;
+        if self
+            .panel::<T>(cx)
+            .is_none_or(|panel| !panel.read(cx).enabled(cx))
+        {
+            return false;
+        }
         self.focus_or_unfocus_panel::<T>(window, cx, &mut |panel, window, cx| {
             did_focus_panel = !panel.panel_focus_handle(cx).contains_focused(window, cx);
             did_focus_panel
@@ -4796,6 +4802,9 @@ impl Workspace {
         let mut panel = None;
         for dock in self.all_docks() {
             if let Some(panel_index) = dock.read(cx).panel_index_for_proto_id(panel_id) {
+                if !dock.read(cx).is_panel_enabled(panel_index, cx) {
+                    return None;
+                }
                 panel = dock.update(cx, |dock, cx| {
                     dock.activate_panel(panel_index, window, cx);
                     dock.set_open(true, window, cx);
@@ -4820,6 +4829,12 @@ impl Workspace {
         cx: &mut Context<Self>,
         should_focus: &mut dyn FnMut(&dyn PanelHandle, &mut Window, &mut Context<Dock>) -> bool,
     ) -> Option<Arc<dyn PanelHandle>> {
+        if self
+            .panel::<T>(cx)
+            .is_none_or(|panel| !panel.read(cx).enabled(cx))
+        {
+            return None;
+        }
         let mut result_panel = None;
         let mut serialize = false;
         for dock in self.all_docks() {
@@ -4863,6 +4878,9 @@ impl Workspace {
     pub fn open_panel<T: Panel>(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         for dock in self.all_docks() {
             if let Some(panel_index) = dock.read(cx).panel_index_for_type::<T>() {
+                if !dock.read(cx).is_panel_enabled(panel_index, cx) {
+                    continue;
+                }
                 dock.update(cx, |dock, cx| {
                     dock.activate_panel(panel_index, window, cx);
                     dock.set_open(true, window, cx);
@@ -4876,16 +4894,24 @@ impl Workspace {
     pub fn reveal_panel<T: Panel>(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let dock_position = self.all_docks().iter().find_map(|dock| {
             let dock = dock.read(cx);
-            dock.panel_index_for_type::<T>().map(|_| dock.position())
+            dock.panel_index_for_type::<T>()
+                .filter(|index| dock.is_panel_enabled(*index, cx))
+                .map(|_| dock.position())
         });
-        self.dismiss_zoomed_items_to_reveal(dock_position, window, cx);
+        let Some(dock_position) = dock_position else {
+            return;
+        };
+        self.dismiss_zoomed_items_to_reveal(Some(dock_position), window, cx);
         self.open_panel::<T>(window, cx);
     }
 
     pub fn close_panel<T: Panel>(&self, window: &mut Window, cx: &mut Context<Self>) {
         for dock in self.all_docks().iter() {
             dock.update(cx, |dock, cx| {
-                if dock.panel::<T>().is_some() {
+                if dock
+                    .panel::<T>()
+                    .is_some_and(|panel| panel.read(cx).enabled(cx))
+                {
                     dock.set_open(false, window, cx)
                 }
             })
