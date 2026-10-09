@@ -4922,10 +4922,10 @@ mod tests {
                 });
                 visual.dispatch_action(SyncProject);
                 visual.run_until_parked();
-                cx.condition(&project, |project, _| {
+                visual.condition(&project, |project, _| {
                     project.android_context().snapshot(handle).is_some_and(|snapshot| snapshot.phase() == ObservationPhase::Complete)
                 }).await;
-                cx.condition(&controller, |controller, _| controller.import_owner_is_finished_for_test()).await;
+                visual.condition(&controller, |controller, _| controller.import_owner_is_finished_for_test()).await;
                 visual.run_until_parked();
                 // These v4 assertions are retained at the pre-output boundary.
                 let commands = std::fs::read_to_string(root.join("retry-commands"))?;
@@ -4949,10 +4949,10 @@ mod tests {
                     assert_eq!(capabilities.automatic_android_sync, android_api_available);
                 });
                 std::fs::write(root.join("model-release"), "continue")?;
-                cx.condition(&project, |project, _| project.android_model().model.is_some()).await;
-                cx.condition(&panel, |panel, _| !panel.syncing).await;
+                visual.condition(&project, |project, _| project.android_model().model.is_some()).await;
+                visual.condition(&panel, |panel, _| !panel.syncing).await;
                 if android_api_available {
-                    cx.condition(&panel, |panel, _| panel.startup_settings_ready).await;
+                    visual.condition(&panel, |panel, _| panel.startup_settings_ready).await;
                 }
                 visual.run_until_parked();
                 panel.update_in(visual, |panel, window, cx| {
@@ -5120,7 +5120,7 @@ mod tests {
             visual.dispatch_action(SyncProject);
             visual.run_until_parked();
             let build_panel = panel.read_with(visual, |panel, _| panel.build_panel.clone());
-            cx.condition(&build_panel, |_, _| a.join("context-entered").exists()).await;
+            visual.condition(&build_panel, |_, _| a.join("context-entered").exists()).await;
             let [a_id, b_id] = project.read_with(visual, |project, cx| {
                 [a.as_path(), b.as_path()].map(|root| {
                     project.find_worktree(root, cx).map(|(worktree, _)| worktree.read(cx).id()).context("Fixture root")

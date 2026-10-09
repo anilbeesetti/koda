@@ -257,7 +257,7 @@ mod tests {
                 .find_project_path("/repo-owner/nested/Other.kt", cx)
                 .context("Nested path")
         })?;
-        let git = project.read_with(visual, |project, cx| project.git_store().clone());
+        let git = project.read_with(visual, |project, _cx| project.git_store().clone());
         let previous_repository = git.read_with(visual, |git, cx| {
             git.active_repository()
                 .context("Root repo")
@@ -784,24 +784,24 @@ mod tests {
             assert!(build.read_with(visual, |build, _| build.session_id(BuildTab::Sync).is_none()));
             workspace.update_in(visual, |workspace, window, cx| {
                 assert!(workspace.activate_item(items[0].as_ref(), false, false, window, cx));
-                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_item(cx).and_then(|item| item.project_path(cx))));
                 defer_import(&controller, window, cx);
             });
             visual.run_until_parked();
             assert!(build.read_with(visual, |build, _| build.session_id(BuildTab::Sync).is_some()),
                 "Neutral import must begin for a same-root source transition before its deferred callback");
-            cx.condition(&project, |project, _| project.android_context().snapshot(handle).is_some()).await;
-            let session = build.read_with(cx, |build, _| build.session_id(BuildTab::Sync));
-            controller.read_with(cx, |controller, cx| {
+            visual.condition(&project, |project, _| project.android_context().snapshot(handle).is_some()).await;
+            let session = build.read_with(visual, |build, _| build.session_id(BuildTab::Sync));
+            controller.read_with(visual, |controller, cx| {
                 assert_eq!(controller.root(cx), Some(root.clone()));
                 assert_eq!(controller.capabilities(Default::default(), cx), ContextCapabilities::default());
                 assert!(controller.import_owner.is_none() && controller.task.is_none());
             });
             workspace.update_in(visual, |workspace, window, cx| {
                 assert!(workspace.activate_item(items[1].as_ref(), false, false, window, cx));
-                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_item(cx).and_then(|item| item.project_path(cx))));
                 assert!(workspace.activate_item(items[2].as_ref(), false, false, window, cx));
-                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_item(cx).and_then(|item| item.project_path(cx))));
                 defer_import(&controller, window, cx);
             });
             visual.run_until_parked();
@@ -1475,6 +1475,7 @@ impl ProjectContextController {
                 .project_is_current(token, self.project.read(cx).android_context())
     }
 
+    #[cfg(test)]
     pub(crate) fn discovery_token(&self, cx: &App) -> Option<ActiveContextToken> {
         if self.source_is_restricted(cx) {
             return None;
@@ -1532,6 +1533,7 @@ impl ProjectContextController {
             })
     }
 
+    #[cfg(test)]
     pub(crate) fn import_in_progress(&self, cx: &App) -> bool {
         self.import_owner
             .as_ref()

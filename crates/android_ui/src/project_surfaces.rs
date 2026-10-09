@@ -1260,7 +1260,7 @@ pub(crate) mod tests {
                 // callback must retain its complete path and ordering, not be folded
                 // into a later read of the final pane state.
                 cx.emit(workspace::Event::ActiveProjectPathChanged(
-                    workspace.active_project_path(cx),
+                    workspace.active_item(cx).and_then(|item| item.project_path(cx)),
                 ));
                 let entered = project_entered.clone();
                 with_panel(workspace, window, cx, move |_, _, _| {
@@ -1290,11 +1290,11 @@ pub(crate) mod tests {
             workspace.update_in(visual, |workspace, window, cx| {
                 assert!(workspace.activate_item(items[1].as_ref(), false, false, window, cx));
                 cx.emit(workspace::Event::ActiveProjectPathChanged(
-                    workspace.active_project_path(cx),
+                    workspace.active_item(cx).and_then(|item| item.project_path(cx)),
                 ));
                 assert!(workspace.activate_item(items[2].as_ref(), false, false, window, cx));
                 cx.emit(workspace::Event::ActiveProjectPathChanged(
-                    workspace.active_project_path(cx),
+                    workspace.active_item(cx).and_then(|item| item.project_path(cx)),
                 ));
                 let entered = project_entered.clone();
                 with_panel(workspace, window, cx, move |_, _, _| {
