@@ -881,14 +881,15 @@ pub(crate) mod tests {
         let panel = workspace
             .read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx))
             .context("Project tools")?;
-        panel.update(visual, |panel, _| {
+        visual.run_until_parked();
+        panel.update(visual, |panel, cx| {
+            publish_catalogue(&project, root, &[PluginId::AndroidLibrary], &[("android","androidJvm")], true, cx)?;
+            // Bind the simulated in-progress sync before its deferred owner observer.
+            panel.context_operations_changed(cx);
             panel.root = Some(root.to_path_buf());
             // Keep this UI acceptance fixture out of host Gradle and ADB.
             panel.syncing = true;
             panel.refreshing_devices = true;
-        });
-        visual.update(|_, cx| {
-            publish_catalogue(&project, root, &[PluginId::AndroidLibrary], &[("android","androidJvm")], true, cx)?;
             let model = serde_json::from_value(json!({"version":1,"root":root,"diagnostics":[],
                 "modules":[{"path":":","directory":root,"namespace":"example.library","kind":"library",
                     "variants":[{"name":"debug","outputListing":null,"components":[]}]}]}))?;
@@ -928,7 +929,7 @@ pub(crate) mod tests {
             );
         }
         assert!(visual.debug_bounds("android-compose-controls").is_none());
-        visual.update(|_, cx| {
+        panel.update(visual, |panel, cx| {
             publish_catalogue(
                 &project,
                 root,
@@ -936,9 +937,10 @@ pub(crate) mod tests {
                 &[("android", "androidJvm")],
                 true,
                 cx,
-            )
-        })?;
-        panel.update(visual, |panel, cx| {
+            )?;
+            panel.context_operations_changed(cx);
+            panel.syncing = true;
+            panel.refreshing_devices = true;
             let target = android_tools::AndroidTarget {
                 module: ":".into(),
                 variant: "debug".into(),
@@ -947,7 +949,8 @@ pub(crate) mod tests {
             panel.targets = vec![target.clone()];
             panel.selected_target = Some(target.clone());
             crate::tests::publish_test_android_model(panel, &target, cx);
-        });
+            Ok::<_, anyhow::Error>(())
+        })?;
         visual.run_until_parked();
         for group in [
             "android-manual-sync-controls",
