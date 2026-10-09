@@ -677,16 +677,34 @@ impl Project {
                                 let mut coverage_updates = BTreeMap::new();
                                 let paths = batch.iter().map(|event| event.path.clone()).collect::<Vec<_>>();
                                 let scan_provenance = task_coverage.provenance.lock().clone();
-                                for event in batch.iter().filter(|event| event.kind == Some(fs::PathEventKind::Removed)) {
-                                    let removed = watched.keys().filter(|directory| directory.starts_with(&event.path)).cloned().collect::<Vec<_>>();
-                                    for directory in removed {
-                                        if let Err(error) = input_watcher.remove(&directory) { log::error!("Cannot retire removed Gradle input directory: {error:#}"); failed = true; }
-                                        if watched.remove(&directory).is_some() {
-                                            coverage_updates.insert(directory, None);
+                                let removed_paths = batch.iter().filter(|event| event.kind == Some(fs::PathEventKind::Removed))
+                                    .map(|event| event.path.clone()).collect::<Vec<_>>();
+                                if !removed_paths.is_empty() {
+                                    let mut remaining_directories = std::mem::take(&mut watched);
+                                    let mut remaining_inputs = std::mem::take(&mut known_inputs);
+                                    let watcher = input_watcher.clone();
+                                    let (directories, inputs, updates, removed_inputs, removal_failed) = cx.background_spawn(async move {
+                                        let mut updates = BTreeMap::new();
+                                        let mut removed_inputs = Vec::new();
+                                        let mut removal_failed = false;
+                                        for path in removed_paths {
+                                            let removed = remaining_directories.keys().filter(|directory| directory.starts_with(&path)).cloned().collect::<Vec<_>>();
+                                            for directory in removed {
+                                                if let Err(error) = watcher.remove(&directory) { log::error!("Cannot retire removed Gradle input directory: {error:#}"); removal_failed = true; }
+                                                if remaining_directories.remove(&directory).is_some() {
+                                                    updates.insert(directory, None);
+                                                }
+                                            }
+                                            let removed = remaining_inputs.iter().filter(|input| input.starts_with(&path)).cloned().collect::<Vec<_>>();
+                                            for input in removed { remaining_inputs.remove(&input); removed_inputs.push(input); }
                                         }
-                                    }
-                                    let removed_inputs = known_inputs.iter().filter(|path| path.starts_with(&event.path)).cloned().collect::<Vec<_>>();
-                                    for path in removed_inputs { known_inputs.remove(&path); discovered.push(path); }
+                                        (remaining_directories, remaining_inputs, updates, removed_inputs, removal_failed)
+                                    }).await;
+                                    watched = directories;
+                                    known_inputs = inputs;
+                                    coverage_updates.extend(updates);
+                                    discovered.extend(removed_inputs);
+                                    failed |= removal_failed;
                                 }
                                 let new_git_marker = batch.iter().any(|event| event.path.file_name().is_some_and(|name| name == ".git"));
                                 failed |= new_git_marker || batch.iter().any(|event| event.kind == Some(fs::PathEventKind::Rescan));

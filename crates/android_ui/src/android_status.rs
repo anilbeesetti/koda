@@ -425,6 +425,9 @@ mod tests {
             panel.emulator_startup = Some(crate::EmulatorStartup {
                 root: root.clone(),
                 name: "Selected".into(),
+                owner: panel
+                    .operation_owner(crate::AndroidOperation::Devices, cx)
+                    .expect("Current Android emulator fixture"),
                 error_reported: false,
                 ready: cx
                     .spawn(async move |_, _| startup.await.map_err(|error| error.to_string()))

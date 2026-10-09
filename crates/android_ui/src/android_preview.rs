@@ -62,7 +62,7 @@ pub(super) fn toggle_preview(
             panel.preview_view = None;
         });
     } else {
-        with_panel(workspace, window, cx, AndroidPanel::show_compose_preview);
+        with_source_panel(workspace, window, cx, AndroidPanel::show_compose_preview);
     }
 }
 
@@ -2860,6 +2860,14 @@ mod tests {
     #[gpui::test]
     async fn compose_preview_not_available_in_non_compose_project(
         cx: &mut TestAppContext,
+    ) {
+        compose_preview_not_available_in_non_compose_project_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn compose_preview_not_available_in_non_compose_project_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_context::PluginId;
         cx.update(|cx| {
@@ -2894,7 +2902,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/non-compose/Main.kt"),
+                    Path::new("/non-compose/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -2953,6 +2961,14 @@ mod tests {
     #[gpui::test]
     async fn compose_preview_available_in_compose_project_uses_production_provider(
         cx: &mut TestAppContext,
+    ) {
+        compose_preview_available_in_compose_project_uses_production_provider_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn compose_preview_available_in_compose_project_uses_production_provider_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_context::PluginId;
         assert!(
@@ -2992,7 +3008,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/compose-project/Main.kt"),
+                    Path::new("/compose-project/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -3038,6 +3054,14 @@ mod tests {
 
     #[gpui::test]
     async fn evaluated_sibling_editor_and_preview_keep_parent_ownership_and_independent_root_priority(
+        cx: &mut TestAppContext,
+    ) {
+        evaluated_sibling_editor_and_preview_keep_parent_ownership_and_independent_root_priority_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn evaluated_sibling_editor_and_preview_keep_parent_ownership_and_independent_root_priority_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_context::{ActiveContext, PluginId, decode_context_record};
@@ -3110,7 +3134,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/sibling-app/src/Main.kt"),
+                    Path::new("/sibling-app/src/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -3180,7 +3204,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/independent-jvm/Main.kt"),
+                    Path::new("/independent-jvm/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -3210,7 +3234,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/sibling-app/src/Main.kt"),
+                    Path::new("/sibling-app/src/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -3290,6 +3314,14 @@ mod tests {
     #[gpui::test]
     async fn sibling_worktree_events_refresh_unopened_preview_inputs_and_exclude_other_scopes(
         cx: &mut TestAppContext,
+    ) {
+        sibling_worktree_events_refresh_unopened_preview_inputs_and_exclude_other_scopes_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn sibling_worktree_events_refresh_unopened_preview_inputs_and_exclude_other_scopes_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_context::{ActiveContext, PluginId, decode_context_record};
         cx.update(|cx| {
@@ -3362,7 +3394,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/watch-sibling/src/Main.kt"),
+                    Path::new("/watch-sibling/src/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -3480,6 +3512,7 @@ mod tests {
             assert!(!project.read_with(visual, |project, cx| {
                 project
                     .opened_buffers(cx)
+                    .into_iter()
                     .any(|buffer| buffer_path(&buffer, cx).as_deref() == Some(Path::new(path)))
             }));
             events.borrow_mut().clear();
@@ -3832,6 +3865,65 @@ mod tests {
             assert!(view.source_task.is_none());
             assert!(!view.navigation_pending);
             assert!(view.navigation_source.is_none());
+        });
+    }
+
+    #[gpui::test]
+    async fn closing_an_inactive_tab_preserves_the_current_preview_owner(
+        cx: &mut TestAppContext,
+    ) {
+        assert!(cfg!(feature = "bundled-preview"), "Use the normal zed preview graph");
+        let (project, buffer) = test_project(cx).await;
+        let (workspace, visual) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (view, panel, pane) = workspace.update_in(visual, |workspace, window, cx| {
+            add_preview(workspace, project, buffer, window, cx)
+        });
+        panel.update_in(visual, |panel, window, cx| {
+            panel.observe_context_operations(window, cx);
+        });
+        visual.run_until_parked();
+        let editor = view.read_with(visual, |view, _| view.editor.upgrade().expect("Source editor"));
+        let inactive = visual.new(TestItem::new);
+        pane.update_in(visual, |pane, window, cx| {
+            pane.add_item_inner(Box::new(inactive.clone()), false, false, false, None, window, cx);
+        });
+        visual.run_until_parked();
+        assert_eq!(pane.read_with(visual, |pane, _| pane.active_item().expect("Source tab").item_id()), editor.entity_id());
+        let owner = panel.read_with(visual, |panel, cx| {
+            panel.operation_owner(AndroidOperation::Preview, cx).expect("Current preview owner")
+        });
+        let source_owner = owner.source.clone().expect("Source-bound preview");
+        let generation = view.read_with(visual, |view, _| view.gallery_generation);
+        view.update(visual, |view, cx| {
+            view.building = true;
+            view.pending = false;
+            view.render_task = Some(cx.spawn(async |_, _| futures::future::pending().await));
+        });
+        pane.update_in(visual, |pane, window, cx| {
+            pane.remove_item(inactive.entity_id(), false, false, window, cx);
+        });
+        visual.run_until_parked();
+        assert_eq!(pane.read_with(visual, |pane, _| pane.active_item().expect("Unchanged source tab").item_id()), editor.entity_id());
+        panel.read_with(visual, |panel, cx| {
+            assert!(owner.ensure_active().is_ok(), "An unrelated tab close must not cancel a valid render");
+            assert!(panel.verify_operation_owner(&owner, AndroidOperation::Preview, cx).is_ok());
+            let controller = project_context::for_workspace(&panel.workspace, cx).expect("Controller");
+            assert_eq!(controller.read(cx).action_token(cx).as_ref(), Some(&source_owner));
+        });
+        view.read_with(visual, |view, _| {
+            assert!(view.building && view.render_task.is_some());
+            assert!(!view.pending);
+            assert_eq!(view.gallery_generation, generation);
+        });
+        // The last active source must still emit its path loss and cancel work.
+        pane.update_in(visual, |pane, window, cx| {
+            pane.remove_item(editor.entity_id(), false, false, window, cx);
+        });
+        visual.run_until_parked();
+        assert!(owner.ensure_active().is_err());
+        view.read_with(visual, |view, _| {
+            assert!(!view.building && view.render_task.is_none());
         });
     }
 
@@ -4630,6 +4722,14 @@ mod tests {
     #[gpui::test]
     async fn inactive_variant_worktree_events_do_not_refresh_preview_and_shared_main_roots_do(
         cx: &mut TestAppContext,
+    ) {
+        inactive_variant_worktree_events_do_not_refresh_preview_and_shared_main_roots_do_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn inactive_variant_worktree_events_do_not_refresh_preview_and_shared_main_roots_do_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_model::{SourceKind, SourceRoot, SourceScope, VariantId};
         let (project, buffer) = test_project(cx).await;
@@ -4738,7 +4838,7 @@ mod tests {
             })
         });
         for (path, refresh) in paths {
-            let revision = view.read_with(visual, |view, cx| {
+            let revision = view.update(visual, |view, cx| {
                 assert!(!view.visible(cx));
                 assert_eq!(view.preview_absolute_input(Path::new(path), cx), refresh);
                 view.revision

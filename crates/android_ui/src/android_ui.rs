@@ -120,17 +120,36 @@ fn with_panel(
     let Some(controller) = project_context::for_workspace(&workspace.weak_handle(), cx) else {
         return;
     };
-    let Some(owner) = controller.read(cx).action_token(cx) else {
+    let Some(owner) = controller.read(cx).project_token(cx) else {
         return;
     };
     if let Some(panel) = workspace.panel::<AndroidPanel>(cx) {
         // Task scheduling updates the workspace, so wait until its action handler has returned.
         window.defer(cx, move |window, cx| {
-            if controller.read(cx).action_is_current(&owner, cx) {
+            if controller.read(cx).project_is_current(&owner, cx) {
                 panel.update(cx, |panel, cx| callback(panel, window, cx));
             }
         });
     }
+}
+
+fn with_source_panel(
+    workspace: &Workspace,
+    window: &mut Window,
+    cx: &mut Context<Workspace>,
+    callback: impl FnOnce(&mut AndroidPanel, &mut Window, &mut Context<AndroidPanel>) + 'static,
+) {
+    let Some(controller) = project_context::for_workspace(&workspace.weak_handle(), cx) else {
+        return;
+    };
+    let Some(source) = controller.read(cx).action_token(cx) else {
+        return;
+    };
+    with_panel(workspace, window, cx, move |panel, window, cx| {
+        if controller.read(cx).action_is_current(&source, cx) {
+            callback(panel, window, cx);
+        }
+    });
 }
 
 pub fn toolbar(workspace: &WeakEntity<Workspace>, cx: &App) -> Option<Entity<AndroidToolbar>> {
@@ -906,6 +925,13 @@ impl AndroidPanel {
         if self.syncing || self.running {
             return;
         }
+        // A manual repair carries its own fresh import owner through completion.
+        // Let that continuation schedule the model export exactly once.
+        if project_context::for_workspace(&self.workspace, cx).is_some_and(|controller| {
+            controller.read(cx).manual_model_sync_pending(cx)
+        }) {
+            return;
+        }
         let Some(root) = self.auto_sync_candidate(cx) else {
             return;
         };
@@ -1064,6 +1090,39 @@ impl AndroidPanel {
             }
         };
         let root = owner.root.clone();
+        let partial_context = self.project.read(cx).android_context().handles().any(|handle| {
+            let store = self.project.read(cx).android_context();
+            store.root_path(handle) == Some(root.as_path())
+                && store.snapshot(handle).is_some_and(|snapshot| {
+                    snapshot.phase() == android_tools::project_context::ObservationPhase::Partial
+                })
+        });
+        if partial_context {
+            let Some(controller) = project_context::for_workspace(&self.workspace, cx) else {
+                self.fail(anyhow::anyhow!("The Android project's window closed before retry"), window, cx);
+                return;
+            };
+            let panel = cx.weak_entity();
+            // Reevaluate partial facts through the guarded import path before
+            // obtaining complete evaluated module-directory authority.
+            window.defer(cx, move |window, cx| {
+                let result = panel
+                    .read_with(cx, |panel, cx| {
+                        panel.verify_operation_owner(&owner, AndroidOperation::Sync, cx)
+                    })
+                    .and_then(|result| result)
+                    .and_then(|()| {
+                        controller.update(cx, |controller, cx| {
+                            controller.retry_partial_android_import(&owner.context, &root, window, cx)
+                        })
+                    })
+                    .and_then(|result| result);
+                if let Err(error) = result {
+                    panel.update(cx, |panel, cx| panel.fail(error, window, cx)).log_err();
+                }
+            });
+            return;
+        }
         let path_policy = match (|| {
             let store = self.project.read(cx).android_context();
             let handle = store
@@ -4769,7 +4828,285 @@ mod tests {
 
     #[cfg(unix)]
     #[gpui::test]
+    async fn partial_manual_sync_reimports_before_authorizing_evaluated_model_paths(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            use android_tools::project_context::{ObservationPhase, PluginId};
+            use android_tools::project_model::EvaluatedModelPaths;
+            cx.executor().allow_parking();
+            let _state = cx.update(|cx| {
+                let state = AppState::test(cx);
+                trusted_worktrees::init(Default::default(), cx);
+                state
+            });
+            // Both automatic-eligible and manual-only complete getter catalogues
+            // must finish a model sync from the same explicit repair click.
+            for android_api_available in [false, true] {
+                let directory = tempfile::tempdir()?;
+                let root = directory.path().canonicalize()?;
+                let android = if android_api_available {
+                    json!({"status":"available","value":{"pluginVersion":"9.2.0"}})
+                } else {
+                    json!({"status":"unavailable","value":{"detail":"Android API unavailable"}})
+                };
+                let payload = json!({"schema":1,"root":root,"gradleVersion":"9.4","phase":"complete",
+                    "modules":[{"path":":","directory":root,
+                        "plugins":PluginId::ALL.map(|plugin| json!({"plugin":plugin,"applied":plugin == PluginId::AndroidLibrary})),
+                        "targets":{"status":"unavailable","value":{"detail":"Target getter unavailable"}},
+                        "android":android}]});
+                let record = format!("{}{}", android_tools::project_context::CONTEXT_OUTPUT_PREFIX, serde_json::to_string(&payload)?);
+                let exported = json!({"version":1,"root":root,"diagnostics":[],"modules":[{
+                    "path":":","directory":root,"namespace":"example.retry","kind":"library",
+                    "variants":[{"name":"debug","outputListing":null,"components":[{
+                        "name":"debug","scope":"main","dependencies":[],"sources":[]}]}]}]});
+                let model_record = format!("{}{}", android_tools::project_model::MODEL_OUTPUT_PREFIX, serde_json::to_string(&exported)?);
+                // Real process transport and the production model parser, using
+                // private records rather than original Gradle/SDK parity data.
+                // Hold model output so all prior intermediate assertions remain.
+                std::fs::write(root.join("gradlew"), format!(
+                    "case \"$*\" in\n  *:kodaProjectContext*) printf '%s\\n' \"$*\" >> retry-commands; printf '%s\\n' '{}' ;;\n  *{}*) while [ ! -f model-release ]; do sleep 0.01; done; printf '%s\\n' \"$*\" >> retry-commands; printf '%s\\n' '{}' ;;\nesac\n",
+                    record.replace('\'', "'\\''"), android_tools::project_model::MODEL_TASK,
+                    model_record.replace('\'', "'\\''")
+                ))?;
+                std::fs::write(root.join("settings.gradle.kts"), "")?;
+                let filesystem = FakeFs::new(cx.executor());
+                filesystem.insert_tree(&root, json!({"gradlew":"", "settings.gradle.kts":""})).await;
+                let project = Project::test_with_worktree_trust(filesystem, [root.as_path()], cx).await;
+                let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+                let panel = new_test_android_panel(&workspace, project.clone(), visual);
+                workspace.update_in(visual, |workspace, window, cx| {
+                    workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
+                    workspace.add_panel(panel.clone(), window, cx);
+                    project_surfaces::register_actions(workspace);
+                    project_surfaces::tests::publish_catalogue(&project, &root, &[PluginId::AndroidLibrary], &[], false, cx)
+                })?;
+                visual.run_until_parked();
+                panel.update_in(visual, |panel, window, cx| {
+                    panel.observe_project_open(window, cx);
+                    panel.auto_sync_root = Some(root.clone());
+                    assert!(!panel.startup_settings_ready);
+                    assert!(panel.auto_sync_candidate(cx).is_none());
+                });
+                let controller = visual.update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+                let handle = project.read_with(visual, |project, _| {
+                    project.android_context().handles().find(|handle| project.android_context().root_path(*handle) == Some(root.as_path()))
+                }).context("Root handle")?;
+                project.read_with(visual, |project, _| {
+                    let store = project.android_context();
+                    assert_eq!(store.snapshot(handle).context("Partial facts")?.phase(), ObservationPhase::Partial);
+                    assert!(EvaluatedModelPaths::capture(store, &store.token(handle).context("Trusted token")?, &root).is_err());
+                    Ok::<_, anyhow::Error>(())
+                })?;
+                workspace.read_with(visual, |workspace, cx| {
+                    assert!(project_surfaces::action_available(workspace, &SyncProject, cx));
+                    for action in [&Run as &dyn Action, &Debug, &RefreshDevices, &ComposePreview] {
+                        assert!(!project_surfaces::action_available(workspace, action, cx));
+                    }
+                });
+                visual.dispatch_action(SyncProject);
+                visual.run_until_parked();
+                cx.condition(&project, |project, _| {
+                    project.android_context().snapshot(handle).is_some_and(|snapshot| snapshot.phase() == ObservationPhase::Complete)
+                }).await;
+                cx.condition(&controller, |controller, _| controller.import_owner_is_finished_for_test()).await;
+                visual.run_until_parked();
+                // These v4 assertions are retained at the pre-output boundary.
+                let commands = std::fs::read_to_string(root.join("retry-commands"))?;
+                assert_eq!(commands.lines().count(), 1);
+                assert!(commands.contains(":kodaProjectContext"));
+                assert!(!commands.contains(android_tools::project_model::MODEL_TASK));
+                project.read_with(visual, |project, _| {
+                    let store = project.android_context();
+                    assert!(EvaluatedModelPaths::capture(store, &store.token(handle).context("Fresh token")?, &root).is_ok());
+                    assert!(project.android_model().model.is_none());
+                    Ok::<_, anyhow::Error>(())
+                })?;
+                panel.read_with(visual, |panel, cx| {
+                    assert!(panel.selected_target.is_none());
+                    assert!(!panel.operation_permitted(AndroidOperation::Run, cx));
+                    assert!(!panel.operation_permitted(AndroidOperation::Preview, cx));
+                    assert!(panel.error.is_none(), "{:?}", panel.error);
+                    assert!(panel.syncing, "The same click must schedule normal model sync");
+                    let capabilities = panel.android_context_capabilities(cx);
+                    assert!(capabilities.android_sync);
+                    assert_eq!(capabilities.automatic_android_sync, android_api_available);
+                });
+                std::fs::write(root.join("model-release"), "continue")?;
+                cx.condition(&project, |project, _| project.android_model().model.is_some()).await;
+                cx.condition(&panel, |panel, _| !panel.syncing).await;
+                if android_api_available {
+                    cx.condition(&panel, |panel, _| panel.startup_settings_ready).await;
+                }
+                visual.run_until_parked();
+                panel.update_in(visual, |panel, window, cx| {
+                    assert_eq!(panel.auto_sync_root, Some(root.clone()));
+                    assert!(panel.selected_target.is_none());
+                    assert_eq!(panel.library_variants(cx).len(), 1);
+                    assert!(panel.error.is_none(), "{:?}", panel.error);
+                    for _ in 0..3 { panel.auto_sync_project(window, cx); }
+                });
+                project.update(visual, |_, cx| {
+                    cx.emit(project::Event::AndroidProjectContextChanged);
+                    cx.notify();
+                });
+                visual.run_until_parked();
+                let commands = std::fs::read_to_string(root.join("retry-commands"))?;
+                assert_eq!(commands.lines().count(), 2, "No second click or duplicate model export");
+                assert_eq!(commands.lines().filter(|line| line.contains(":kodaProjectContext")).count(), 1);
+                assert_eq!(commands.lines().filter(|line| line.contains(android_tools::project_model::MODEL_TASK)).count(), 1);
+                assert!(!controller.read_with(visual, |controller, cx| controller.manual_model_sync_pending(cx)));
+            }
+            Ok(())
+        }
+        .await;
+        result.expect("partial_manual_sync_reimports_before_authorizing_evaluated_model_paths must not discard fixture errors");
+    }
+
+    #[gpui::test]
+    async fn partial_manual_sync_retry_rejects_a_captured_project_after_root_a_b_a(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            use android_tools::project_context::PluginId;
+            cx.update(|cx| {
+                AppState::test(cx);
+                trusted_worktrees::init(Default::default(), cx);
+            });
+            let filesystem = FakeFs::new(cx.executor());
+            for root in ["/partial-retry-a", "/partial-retry-b"] {
+                filesystem.insert_tree(root, json!({"gradlew":"", "settings.gradle.kts":""})).await;
+            }
+            let project = Project::test_with_worktree_trust(filesystem,
+                [Path::new("/partial-retry-a"), Path::new("/partial-retry-b")], cx).await;
+            let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let panel = new_test_android_panel(&workspace, project.clone(), visual);
+            visual.update(|_, cx| project_surfaces::tests::publish_catalogue(
+                &project, Path::new("/partial-retry-a"), &[PluginId::AndroidLibrary], &[], false, cx))?;
+            visual.run_until_parked();
+            let controller = visual.update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+            let roots = project.read_with(visual, |project, cx| {
+                ["/partial-retry-a", "/partial-retry-b"].map(|root| {
+                    project.find_worktree(Path::new(root), cx).map(|(worktree, _)| worktree.read(cx).id()).context("Fixture root")
+                })
+            });
+            let [a, b] = roots;
+            let a = a?;
+            let b = b?;
+            controller.update(visual, |controller, cx| controller.select_fixture_root(a, cx))?;
+            let owner = controller.read_with(visual, |controller, cx| controller.project_token(cx)).context("Partial project owner")?;
+            controller.update_in(visual, |controller, window, cx| {
+                controller.select_fixture_root(b, cx)?;
+                controller.select_fixture_root(a, cx)?;
+                assert!(!controller.project_is_current(&owner, cx));
+                assert!(controller.retry_partial_android_import(&owner, Path::new("/partial-retry-a"), window, cx).is_err());
+                assert!(controller.import_owner_is_finished_for_test());
+                Ok::<_, anyhow::Error>(())
+            })?;
+            assert!(panel.read_with(visual, |panel, cx| panel.build_panel.read(cx).session_id(BuildTab::Sync).is_none()));
+            Ok(())
+        }
+        .await;
+        result.expect("partial_manual_sync_retry_rejects_a_captured_project_after_root_a_b_a must not discard fixture errors");
+    }
+
+    #[cfg(unix)]
+    #[gpui::test]
+    async fn pending_partial_sync_never_exports_a_model_after_real_import_root_a_b_a(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            use android_tools::project_context::PluginId;
+            cx.executor().allow_parking();
+            let _state = cx.update(|cx| {
+                let state = AppState::test(cx);
+                trusted_worktrees::init(Default::default(), cx);
+                state
+            });
+            let directory = tempfile::tempdir()?;
+            let parent = directory.path().canonicalize()?;
+            let a = parent.join("a");
+            let b = parent.join("b");
+            std::fs::create_dir_all(&a)?;
+            std::fs::create_dir_all(&b)?;
+            let payload = json!({"schema":1,"root":a,"gradleVersion":"9.4","phase":"complete",
+                "modules":[{"path":":","directory":a,
+                    "plugins":PluginId::ALL.map(|plugin| json!({"plugin":plugin,"applied":plugin == PluginId::AndroidLibrary})),
+                    "targets":{"status":"available","value":[]},
+                    "android":{"status":"available","value":{"pluginVersion":"9.2.0"}}}]});
+            let record = format!("{}{}", android_tools::project_context::CONTEXT_OUTPUT_PREFIX, serde_json::to_string(&payload)?);
+            std::fs::write(a.join("gradlew"), format!(
+                "printf '%s\\n' \"$*\" >> retry-commands\ntouch context-entered\nprintf 'Waiting for fixture context release\\n'\nwhile [ ! -f context-release ]; do sleep 0.01; done\nprintf '%s\\n' '{}'\n",
+                record.replace('\'', "'\\''")
+            ))?;
+            std::fs::write(a.join("settings.gradle.kts"), "")?;
+            std::fs::write(b.join("gradlew"), "")?;
+            std::fs::write(b.join("settings.gradle.kts"), "")?;
+            let filesystem = FakeFs::new(cx.executor());
+            for root in [&a, &b] {
+                filesystem.insert_tree(root, json!({"gradlew":"", "settings.gradle.kts":""})).await;
+            }
+            let project = Project::test_with_worktree_trust(filesystem, [a.as_path(), b.as_path()], cx).await;
+            let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let panel = new_test_android_panel(&workspace, project.clone(), visual);
+            workspace.update_in(visual, |workspace, window, cx| {
+                workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
+                workspace.add_panel(panel.clone(), window, cx);
+                project_surfaces::register_actions(workspace);
+                project_surfaces::tests::publish_catalogue(&project, &a, &[PluginId::AndroidLibrary], &[], false, cx)
+            })?;
+            visual.run_until_parked();
+            panel.update_in(visual, |panel, window, cx| {
+                panel.observe_project_open(window, cx);
+                panel.startup_settings_ready = true;
+                panel.auto_sync_root = Some(a.clone());
+            });
+            let controller = visual.update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+            visual.dispatch_action(SyncProject);
+            visual.run_until_parked();
+            let build_panel = panel.read_with(visual, |panel, _| panel.build_panel.clone());
+            cx.condition(&build_panel, |_, _| a.join("context-entered").exists()).await;
+            let [a_id, b_id] = project.read_with(visual, |project, cx| {
+                [a.as_path(), b.as_path()].map(|root| {
+                    project.find_worktree(root, cx).map(|(worktree, _)| worktree.read(cx).id()).context("Fixture root")
+                })
+            });
+            let a_id = a_id?;
+            let b_id = b_id?;
+            controller.update(visual, |controller, cx| {
+                assert!(controller.manual_model_sync_pending(cx));
+                controller.select_fixture_root(b_id, cx)?;
+                controller.select_fixture_root(a_id, cx)?;
+                assert!(!controller.manual_model_sync_pending(cx));
+                assert!(controller.import_owner_is_finished_for_test());
+                Ok::<_, anyhow::Error>(())
+            })?;
+            std::fs::write(a.join("context-release"), "continue")?;
+            visual.run_until_parked();
+            assert!(project.read_with(visual, |project, _| project.android_model().model.is_none()));
+            assert!(!panel.read_with(visual, |panel, _| panel.syncing));
+            let commands = std::fs::read_to_string(a.join("retry-commands"))?;
+            assert_eq!(commands.lines().count(), 1);
+            assert!(commands.contains(":kodaProjectContext"));
+            assert!(!commands.contains(android_tools::project_model::MODEL_TASK));
+            Ok(())
+        }
+        .await;
+        result.expect("pending_partial_sync_never_exports_a_model_after_real_import_root_a_b_a must not discard fixture errors");
+    }
+
+    #[cfg(unix)]
+    #[gpui::test]
     async fn library_variant_dispatches_build_test_and_lint_without_application_target(
+        cx: &mut TestAppContext,
+    ) {
+        library_variant_dispatches_build_test_and_lint_without_application_target_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    #[cfg(unix)]
+    async fn library_variant_dispatches_build_test_and_lint_without_application_target_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_context::PluginId;
@@ -4891,6 +5228,14 @@ mod tests {
     #[gpui::test]
     async fn queued_project_work_survives_editor_switches_and_rejects_rapid_root_switches(
         cx: &mut TestAppContext,
+    ) {
+        queued_project_work_survives_editor_switches_and_rejects_rapid_root_switches_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn queued_project_work_survives_editor_switches_and_rejects_rapid_root_switches_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_context::PluginId;
         assert!(
@@ -4943,7 +5288,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/work-python/main.py"),
+                    Path::new("/work-python/main.py").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -4957,7 +5302,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/work-owner/Main.kt"),
+                    Path::new("/work-owner/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -5006,7 +5351,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/work-owner/Other.kt"),
+                    Path::new("/work-owner/Other.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -5042,7 +5387,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/work-owner/nested/Nested.kt"),
+                    Path::new("/work-owner/nested/Nested.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -5103,6 +5448,14 @@ mod tests {
     #[gpui::test]
     async fn managed_kotlin_settings_readiness_rejects_changed_active_project(
         cx: &mut TestAppContext,
+    ) {
+        managed_kotlin_settings_readiness_rejects_changed_active_project_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn managed_kotlin_settings_readiness_rejects_changed_active_project_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_context::PluginId;
         cx.update(|cx| {
@@ -5141,7 +5494,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/android/Main.kt"),
+                    Path::new("/android/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -5177,7 +5530,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/python/main.py"),
+                    Path::new("/python/main.py").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -5188,7 +5541,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/android/Main.kt"),
+                    Path::new("/android/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -5213,6 +5566,14 @@ mod tests {
 
     #[gpui::test]
     async fn direct_android_backend_calls_reject_desktop_and_generic_projects(
+        cx: &mut TestAppContext,
+    ) {
+        direct_android_backend_calls_reject_desktop_and_generic_projects_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn direct_android_backend_calls_reject_desktop_and_generic_projects_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_context::PluginId;
@@ -5267,7 +5628,7 @@ mod tests {
         ] {
             workspace
                 .update_in(visual, |workspace, window, cx| {
-                    workspace.open_abs_path(Path::new(path), Default::default(), window, cx)
+                    workspace.open_abs_path(Path::new(path).to_path_buf(), Default::default(), window, cx)
                 })
                 .await?;
             visual.run_until_parked();
@@ -5654,6 +6015,14 @@ mod tests {
     #[gpui::test]
     async fn sibling_model_inputs_reconcile_dirty_and_saved_resources_without_unrelated_refreshes(
         cx: &mut TestAppContext,
+    ) {
+        sibling_model_inputs_reconcile_dirty_and_saved_resources_without_unrelated_refreshes_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn sibling_model_inputs_reconcile_dirty_and_saved_resources_without_unrelated_refreshes_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         use android_tools::project_context::{ActiveContext, PluginId, decode_context_record};
         cx.update(|cx| {
@@ -5727,7 +6096,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/input-sibling/Main.kt"),
+                    Path::new("/input-sibling/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -6968,6 +7337,14 @@ fi
     #[gpui::test]
     async fn generic_kotlin_extension_restores_library_documents_without_android_bootstrap(
         cx: &mut TestAppContext,
+    ) {
+        generic_kotlin_extension_restores_library_documents_without_android_bootstrap_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn generic_kotlin_extension_restores_library_documents_without_android_bootstrap_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         use futures::StreamExt as _;
         use language::{FakeLspAdapter, Language, LanguageConfig, LanguageMatcher};
@@ -7060,7 +7437,7 @@ fi
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/generic-kotlin/Main.kt"),
+                    Path::new("/generic-kotlin/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,

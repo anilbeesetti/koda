@@ -54,14 +54,22 @@ pub(crate) fn for_workspace(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fs::Fs as _;
-    use gpui::{AppContext as _, TestAppContext};
+    use project::Fs as _;
+    use gpui::TestAppContext;
     use project::trusted_worktrees::{self, PathTrust};
     use serde_json::json;
     use workspace::AppState;
 
     #[gpui::test]
     async fn import_availability_tracks_cached_root_files_without_qualifying_generic_projects(
+        cx: &mut TestAppContext,
+    ) {
+        import_availability_tracks_cached_root_files_without_qualifying_generic_projects_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn import_availability_tracks_cached_root_files_without_qualifying_generic_projects_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(|cx| {
@@ -90,7 +98,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/cached-import-owner/main.py"),
+                    Path::new("/cached-import-owner/main.py").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -162,6 +170,14 @@ mod tests {
     #[gpui::test]
     async fn nested_repository_selection_preserves_source_and_import_owners_but_rapid_roots_do_not(
         cx: &mut TestAppContext,
+    ) {
+        nested_repository_selection_preserves_source_and_import_owners_but_rapid_roots_do_not_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn nested_repository_selection_preserves_source_and_import_owners_but_rapid_roots_do_not_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(|cx| {
             let state = AppState::test(cx);
@@ -217,7 +233,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/repo-owner/Main.kt"),
+                    Path::new("/repo-owner/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -270,7 +286,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/repo-owner/nested/Other.kt"),
+                    Path::new("/repo-owner/nested/Other.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -349,6 +365,14 @@ mod tests {
     #[gpui::test]
     async fn queued_import_keeps_its_project_across_files_and_cancels_rapid_root_switches(
         cx: &mut TestAppContext,
+    ) {
+        queued_import_keeps_its_project_across_files_and_cancels_rapid_root_switches_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn queued_import_keeps_its_project_across_files_and_cancels_rapid_root_switches_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         use std::path::Path;
         cx.update(|cx| {
@@ -393,7 +417,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/import-python/main.py"),
+                    Path::new("/import-python/main.py").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -407,7 +431,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/import-owner/Main.kt"),
+                    Path::new("/import-owner/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -441,7 +465,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    Path::new("/import-owner/Other.kt"),
+                    Path::new("/import-owner/Other.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -482,6 +506,14 @@ mod tests {
 
     #[gpui::test]
     async fn exact_source_restriction_is_visible_with_other_restricted_directory_roots(
+        cx: &mut TestAppContext,
+    ) {
+        exact_source_restriction_is_visible_with_other_restricted_directory_roots_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn exact_source_restriction_is_visible_with_other_restricted_directory_roots_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(|cx| {
@@ -558,6 +590,14 @@ mod tests {
     #[gpui::test]
     async fn untitled_editor_retains_selected_project_without_borrowing_ambiguous_root(
         cx: &mut TestAppContext,
+    ) {
+        untitled_editor_retains_selected_project_without_borrowing_ambiguous_root_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn untitled_editor_retains_selected_project_without_borrowing_ambiguous_root_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(|cx| {
             let state = AppState::test(cx);
@@ -627,7 +667,7 @@ mod tests {
         workspace
             .update_in(visual, |workspace, window, cx| {
                 workspace.open_abs_path(
-                    std::path::Path::new("/scratch-android/Main.kt"),
+                    std::path::Path::new("/scratch-android/Main.kt").to_path_buf(),
                     Default::default(),
                     window,
                     cx,
@@ -691,7 +731,100 @@ mod tests {
 
     #[cfg(unix)]
     #[gpui::test]
+    async fn deferred_neutral_import_survives_same_root_files_and_rejects_captured_rapid_roots(
+        cx: &mut TestAppContext,
+    ) {
+        async {
+            cx.executor().allow_parking();
+            cx.update(|cx| {
+                let state = AppState::test(cx);
+                editor::init(cx);
+                workspace::init(state, cx);
+                trusted_worktrees::init(Default::default(), cx);
+            });
+            let directory = tempfile::TempDir::new()?;
+            let root = directory.path().join("owner");
+            let other_root = directory.path().join("other");
+            std::fs::create_dir(&root)?;
+            std::fs::create_dir(&other_root)?;
+            let payload = json!({"schema":1,"root":&root,"gradleVersion":"9.6.1","phase":"complete",
+                "modules":[{"path":":","directory":&root,
+                    "plugins":android_tools::project_context::PluginId::ALL.map(|plugin| json!({"plugin":plugin,"applied":false})),
+                    "targets":{"status":"available","value":[]}}]});
+            let record = format!("{}{}", android_tools::project_context::CONTEXT_OUTPUT_PREFIX, serde_json::to_string(&payload)?);
+            // Exercise the real import command/observer transport without host Gradle.
+            std::fs::write(root.join("gradlew"), format!("printf '%s\\n' '{}'\n", record.replace('\'', "'\\''")))?;
+            std::fs::write(root.join("build.gradle"), "")?;
+            let filesystem = project::FakeFs::new(cx.executor());
+            filesystem.insert_tree(&root, json!({"gradlew":"", "build.gradle":"", "Main.kt":"class Main", "Other.kt":"class Other"})).await;
+            filesystem.insert_tree(&other_root, json!({"main.py":"print(1)"})).await;
+            let project = Project::test_with_worktree_trust(filesystem, [root.as_path(), other_root.as_path()], cx).await;
+            cx.update(|cx| crate::project_surfaces::tests::trust(&project, cx))?;
+            let (workspace, visual) =
+                cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let build = visual.new(|cx| BuildPanel::new(workspace.downgrade(), cx));
+            workspace.update_in(visual, |workspace, window, cx| {
+                workspace.add_panel(build.clone(), window, cx);
+                register(workspace, build.clone(), window, cx);
+            });
+            let mut items = Vec::new();
+            for path in [root.join("Other.kt"), other_root.join("main.py"), root.join("Main.kt")] {
+                workspace.update_in(visual, |workspace, window, cx| workspace.open_abs_path(path, Default::default(), window, cx)).await?;
+                visual.run_until_parked();
+                items.push(workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).expect("Fixture item")));
+            }
+            let controller = visual.update(|_, cx| for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+            let handle = project.read_with(visual, |project, cx| {
+                let id = project.find_worktree(&root, cx).context("Owner worktree")?.0.read(cx).id();
+                project.android_context().handle(id.to_proto()).context("Owner handle")
+            })?;
+            assert!(project.read_with(visual, |project, _| project.android_context().snapshot(handle).is_none()));
+            assert!(build.read_with(visual, |build, _| build.session_id(BuildTab::Sync).is_none()));
+            workspace.update_in(visual, |workspace, window, cx| {
+                assert!(workspace.activate_item(items[0].as_ref(), false, false, window, cx));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                defer_import(&controller, window, cx);
+            });
+            visual.run_until_parked();
+            assert!(build.read_with(visual, |build, _| build.session_id(BuildTab::Sync).is_some()),
+                "Neutral import must begin for a same-root source transition before its deferred callback");
+            cx.condition(&project, |project, _| project.android_context().snapshot(handle).is_some()).await;
+            let session = build.read_with(cx, |build, _| build.session_id(BuildTab::Sync));
+            controller.read_with(cx, |controller, cx| {
+                assert_eq!(controller.root(cx), Some(root.clone()));
+                assert_eq!(controller.capabilities(Default::default(), cx), ContextCapabilities::default());
+                assert!(controller.import_owner.is_none() && controller.task.is_none());
+            });
+            workspace.update_in(visual, |workspace, window, cx| {
+                assert!(workspace.activate_item(items[1].as_ref(), false, false, window, cx));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                assert!(workspace.activate_item(items[2].as_ref(), false, false, window, cx));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                defer_import(&controller, window, cx);
+            });
+            visual.run_until_parked();
+            assert_eq!(build.read_with(visual, |build, _| build.session_id(BuildTab::Sync)), session,
+                "A captured root A/B/A must not start a new import session");
+            controller.read_with(visual, |controller, cx| {
+                assert_eq!(controller.root(cx), Some(root));
+                assert!(controller.import_owner.is_none() && controller.task.is_none());
+            });
+            Ok::<_, anyhow::Error>(())
+        }.await.expect("Deferred UX regression must reach every assertion");
+    }
+
+    #[cfg(unix)]
+    #[gpui::test]
     async fn deferred_import_action_enters_current_workspace_without_reentry(
+        cx: &mut TestAppContext,
+    ) {
+        deferred_import_action_enters_current_workspace_without_reentry_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    #[cfg(unix)]
+    async fn deferred_import_action_enters_current_workspace_without_reentry_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.executor().allow_parking();
@@ -717,6 +850,7 @@ mod tests {
             root.join("gradlew"),
             format!("printf '%s\\n' '{}'\n", record.replace('\'', "'\\''")),
         )?;
+        std::fs::write(root.join("build.gradle"), "")?;
         let filesystem = project::FakeFs::new(cx.executor());
         filesystem
             .insert_tree(
@@ -808,36 +942,39 @@ pub(crate) fn register(
         if controller.read(cx).import_candidate(cx).is_some() {
             let controller = controller.clone();
             element.on_action(cx.listener(move |_, _: &ImportGradleProject, window, cx| {
-                let owner = controller
-                    .read(cx)
-                    .active
-                    .discovery_token(controller.read(cx).project.read(cx).android_context());
-                let controller = controller.downgrade();
-                // Import reconciliation reads the Workspace; release the action
-                // listener's Workspace lease before resolving its selected root.
-                window.defer(cx, move |window, cx| {
-                    controller
-                        .update(cx, |controller, cx| {
-                            let result = controller.reconcile(cx).and_then(|()| {
-                                ensure!(
-                                    owner.as_ref().is_some_and(
-                                        |owner| controller.action_is_current(owner, cx)
-                                    ),
-                                    "Project context changed before Gradle import dispatch"
-                                );
-                                controller.import(window, cx);
-                                Ok(())
-                            });
-                            if let Err(error) = result {
-                                controller.notify_import_error(error, cx);
-                            }
-                        })
-                        .log_err();
-                });
+                defer_import(&controller, window, cx);
             }))
         } else {
             element
         }
+    });
+}
+
+fn defer_import(
+    controller: &Entity<ProjectContextController>,
+    window: &mut Window,
+    cx: &mut App,
+) {
+    let owner = controller.read(cx).active.project_discovery_token(
+        controller.read(cx).project.read(cx).android_context(),
+    );
+    let controller = controller.downgrade();
+    // Import reconciliation reads the Workspace; release the action
+    // listener's Workspace lease before resolving its selected root.
+    window.defer(cx, move |window, cx| {
+        controller.update(cx, |controller, cx| {
+            let result = controller.reconcile(cx).and_then(|()| {
+                ensure!(
+                    owner.as_ref().is_some_and(|owner| controller.project_is_current(owner, cx)),
+                    "Project context changed before Gradle import dispatch"
+                );
+                controller.import(window, cx);
+                Ok(())
+            });
+            if let Err(error) = result {
+                controller.notify_import_error(error, cx);
+            }
+        }).log_err();
     });
 }
 
@@ -899,6 +1036,7 @@ pub(crate) struct ProjectContextController {
     source_worktree: Option<WorktreeId>,
     import_owner: Option<ImportOwner>,
     last_import_session: Option<(RootHandle, u64)>,
+    manual_model_sync: Option<ActiveProjectToken>,
     cancel: Option<oneshot::Sender<()>>,
     task: Option<Task<()>>,
     reconcile_scheduled: bool,
@@ -906,6 +1044,11 @@ pub(crate) struct ProjectContextController {
 }
 
 impl ProjectContextController {
+    #[cfg(test)]
+    pub(crate) fn import_owner_is_finished_for_test(&self) -> bool {
+        self.import_owner.is_none() && self.task.is_none()
+    }
+
     #[cfg(test)]
     pub(crate) fn select_fixture_root(
         &mut self,
@@ -1059,6 +1202,7 @@ impl ProjectContextController {
             source_worktree: None,
             import_owner: None,
             last_import_session: None,
+            manual_model_sync: None,
             cancel: None,
             task: None,
             reconcile_scheduled: false,
@@ -1093,6 +1237,9 @@ impl ProjectContextController {
             }
         }
         if let Some(owner) = self.import_owner.take() {
+            if self.manual_model_sync.as_ref() == Some(&owner.active) {
+                self.manual_model_sync = None;
+            }
             self.project
                 .update(cx, |project, cx| {
                     project.finish_failed_android_context_import(&owner.discovery, cx)
@@ -1418,6 +1565,70 @@ impl ProjectContextController {
         .then_some(root)
     }
 
+    pub(crate) fn retry_partial_android_import(
+        &mut self,
+        owner: &ActiveProjectToken,
+        root: &Path,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
+        self.reconcile(cx)?;
+        ensure!(
+            self.project_is_current(owner, cx) && self.root(cx).as_deref() == Some(root),
+            "The Android project changed before retrying its partial import"
+        );
+        ensure!(
+            self.active.root().and_then(|handle| self.project.read(cx).android_context().snapshot(handle))
+                .is_some_and(|snapshot| snapshot.phase() == ObservationPhase::Partial),
+            "The Android import no longer has partial facts to retry"
+        );
+        if self.import_owner.is_none() {
+            self.begin_import(window, cx)?;
+        }
+        // begin_import intentionally expires the pre-import RootToken. Transfer
+        // the verified explicit request to this import's fresh discovery owner.
+        self.manual_model_sync = Some(
+            self.import_owner.as_ref().context("Partial retry has no import owner")?.active.clone(),
+        );
+        cx.notify();
+        Ok(())
+    }
+
+    pub(crate) fn manual_model_sync_pending(&self, cx: &App) -> bool {
+        self.manual_model_sync.as_ref().is_some_and(|owner| self.project_is_current(owner, cx))
+    }
+
+    fn take_manual_model_sync(
+        &mut self,
+        owner: &ActiveProjectToken,
+        root: &Path,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Option<WeakEntity<Workspace>> {
+        // Never let a queued old callback consume a newer project's request.
+        if self.manual_model_sync.as_ref() != Some(owner) {
+            return None;
+        }
+        self.manual_model_sync = None;
+        let complete = self.active.root().and_then(|handle| self.project.read(cx).android_context().snapshot(handle))
+            .is_some_and(|snapshot| snapshot.phase() == ObservationPhase::Complete);
+        if !complete || !self.project_is_current(owner, cx)
+            || self.project_token(cx).as_ref() != Some(owner)
+            || self.root(cx).as_deref() != Some(root)
+        {
+            cx.notify();
+            return None;
+        }
+        let current = Workspace::for_window(window, cx)
+            .or_else(|| window.root::<Workspace>().flatten());
+        if current.as_ref().map(|workspace| workspace.entity_id()) != Some(self.workspace.entity_id()) {
+            cx.notify();
+            return None;
+        }
+        cx.notify();
+        Some(self.workspace.clone())
+    }
+
     fn import(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.import_owner.is_some() {
             return;
@@ -1539,7 +1750,7 @@ impl ProjectContextController {
             }.await;
             drop(output);
             logs.await;
-            this.update_in(cx, |this, _, cx| {
+            this.update_in(cx, |this, window, cx| {
                 let Some(owner) = &this.import_owner else { return; };
                 if owner.session != session || owner.root != handle { return; }
                 let result = result.and_then(|result| {
@@ -1566,6 +1777,11 @@ impl ProjectContextController {
                 if !matches!(result, Ok(Some(()))) {
                     this.project.update(cx, |project, cx| project.finish_failed_android_context_import(&discovery, cx)).log_err();
                 }
+                let succeeded = matches!(result, Ok(Some(())));
+                let requested_model_sync = this.manual_model_sync.as_ref() == Some(&active);
+                if !succeeded && requested_model_sync {
+                    this.manual_model_sync = None;
+                }
                 let (status, message) = match result {
                     Ok(Some(())) => (BuildStatus::Succeeded, "Gradle project imported.".to_owned()),
                     Ok(None) => (BuildStatus::Cancelled, "Gradle import cancelled.".to_owned()),
@@ -1575,6 +1791,28 @@ impl ProjectContextController {
                 this.import_owner = None;
                 this.cancel = None;
                 this.task = None;
+                if succeeded && requested_model_sync {
+                    // Context publication remains import-owned; only a complete
+                    // successful result may continue the explicit user's Sync.
+                    let controller = cx.weak_entity();
+                    window.defer(cx, move |window, cx| {
+                        let authorized = controller.update(cx, |this, cx| {
+                            this.take_manual_model_sync(&active, &expected_root, window, cx)
+                        });
+                        let Ok(Some(workspace)) = authorized else { return; };
+                        // The controller lease must be released before any panel
+                        // method reads that same controller to capture its owner.
+                        let Some(workspace) = workspace.upgrade() else { return; };
+                        let Some(panel) = workspace.read(cx).panel::<crate::AndroidPanel>(cx) else { return; };
+                        panel.update(cx, |panel, cx| {
+                            panel.context_operations_changed(cx);
+                            let Ok(current) = panel.operation_owner(crate::AndroidOperation::Sync, cx) else { return; };
+                            if current.context == active && current.root == expected_root {
+                                panel.sync_project(window, cx);
+                            }
+                        });
+                    });
+                }
                 cx.notify();
             }).log_err();
         }));

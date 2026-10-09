@@ -28,6 +28,14 @@ fn observed_fixture(root: &Path, logic: &Path) -> Result<ContextSnapshot> {
 #[gpui::test]
 async fn context_input_observers_preserve_outputs_and_invalidate_real_external_inputs(
     cx: &mut TestAppContext,
+) {
+    context_input_observers_preserve_outputs_and_invalidate_real_external_inputs_case(cx)
+        .await
+        .expect("Android project-context fixture must complete successfully");
+}
+
+async fn context_input_observers_preserve_outputs_and_invalidate_real_external_inputs_case(
+    cx: &mut TestAppContext,
 ) -> Result<()> {
     init_test(cx);
     let root = Path::new(path!("/context-project"));
@@ -123,6 +131,15 @@ async fn context_input_observers_preserve_outputs_and_invalidate_real_external_i
 #[cfg(target_os = "linux")]
 #[gpui::test]
 async fn real_linux_deleted_input_root_requires_ready_reinstallation_before_reimport(
+    cx: &mut TestAppContext,
+) {
+    real_linux_deleted_input_root_requires_ready_reinstallation_before_reimport_case(cx)
+        .await
+        .expect("Android project-context fixture must complete successfully");
+}
+
+#[cfg(target_os = "linux")]
+async fn real_linux_deleted_input_root_requires_ready_reinstallation_before_reimport_case(
     cx: &mut TestAppContext,
 ) -> Result<()> {
     init_test(cx);
@@ -241,6 +258,15 @@ async fn real_linux_deleted_input_root_requires_ready_reinstallation_before_reim
 #[cfg(target_os = "linux")]
 #[gpui::test]
 async fn real_linux_new_evaluated_build_logic_inside_old_output_installs_deep_coverage(
+    cx: &mut TestAppContext,
+) {
+    real_linux_new_evaluated_build_logic_inside_old_output_installs_deep_coverage_case(cx)
+        .await
+        .expect("Android project-context fixture must complete successfully");
+}
+
+#[cfg(target_os = "linux")]
+async fn real_linux_new_evaluated_build_logic_inside_old_output_installs_deep_coverage_case(
     cx: &mut TestAppContext,
 ) -> Result<()> {
     init_test(cx);
@@ -367,6 +393,14 @@ async fn real_linux_new_evaluated_build_logic_inside_old_output_installs_deep_co
 #[gpui::test]
 async fn input_observers_are_reused_and_pending_source_edits_reject_publication(
     cx: &mut TestAppContext,
+) {
+    input_observers_are_reused_and_pending_source_edits_reject_publication_case(cx)
+        .await
+        .expect("Android project-context fixture must complete successfully");
+}
+
+async fn input_observers_are_reused_and_pending_source_edits_reject_publication_case(
+    cx: &mut TestAppContext,
 ) -> Result<()> {
     init_test(cx);
     let root = Path::new(path!("/context-reimport"));
@@ -459,6 +493,14 @@ async fn input_observers_are_reused_and_pending_source_edits_reject_publication(
 #[gpui::test]
 async fn selected_root_observer_detects_later_buildsrc_creation_without_new_worktrees(
     cx: &mut TestAppContext,
+) {
+    selected_root_observer_detects_later_buildsrc_creation_without_new_worktrees_case(cx)
+        .await
+        .expect("Android project-context fixture must complete successfully");
+}
+
+async fn selected_root_observer_detects_later_buildsrc_creation_without_new_worktrees_case(
+    cx: &mut TestAppContext,
 ) -> Result<()> {
     init_test(cx);
     let root = Path::new(path!("/later-convention-project"));
@@ -534,6 +576,14 @@ async fn selected_root_observer_detects_later_buildsrc_creation_without_new_work
 
 #[gpui::test]
 async fn external_linked_git_observer_tracks_actual_head_without_cancelling_on_unrelated_refs(
+    cx: &mut TestAppContext,
+) {
+    external_linked_git_observer_tracks_actual_head_without_cancelling_on_unrelated_refs_case(cx)
+        .await
+        .expect("Android project-context fixture must complete successfully");
+}
+
+async fn external_linked_git_observer_tracks_actual_head_without_cancelling_on_unrelated_refs_case(
     cx: &mut TestAppContext,
 ) -> Result<()> {
     init_test(cx);
@@ -681,6 +731,14 @@ async fn external_linked_git_observer_tracks_actual_head_without_cancelling_on_u
 #[gpui::test]
 async fn recursive_inputs_track_nested_and_enclosing_git_owners_without_extra_worktrees(
     cx: &mut TestAppContext,
+) {
+    recursive_inputs_track_nested_and_enclosing_git_owners_without_extra_worktrees_case(cx)
+        .await
+        .expect("Android project-context fixture must complete successfully");
+}
+
+async fn recursive_inputs_track_nested_and_enclosing_git_owners_without_extra_worktrees_case(
+    cx: &mut TestAppContext,
 ) -> Result<()> {
     init_test(cx);
     for nested in [true, false] {
@@ -796,6 +854,14 @@ async fn recursive_inputs_track_nested_and_enclosing_git_owners_without_extra_wo
 #[gpui::test]
 async fn root_removal_releases_only_owned_inputs_and_keeps_other_worktrees(
     cx: &mut TestAppContext,
+) {
+    root_removal_releases_only_owned_inputs_and_keeps_other_worktrees_case(cx)
+        .await
+        .expect("Android project-context fixture must complete successfully");
+}
+
+async fn root_removal_releases_only_owned_inputs_and_keeps_other_worktrees_case(
+    cx: &mut TestAppContext,
 ) -> Result<()> {
     init_test(cx);
     let root_a = Path::new(path!("/owned-context-a"));
@@ -902,6 +968,15 @@ async fn root_removal_releases_only_owned_inputs_and_keeps_other_worktrees(
 #[cfg(target_os = "linux")]
 #[gpui::test]
 async fn real_linux_observer_registers_deep_inputs_and_later_directories(
+    cx: &mut TestAppContext,
+) {
+    real_linux_observer_registers_deep_inputs_and_later_directories_case(cx)
+        .await
+        .expect("Android project-context fixture must complete successfully");
+}
+
+#[cfg(target_os = "linux")]
+async fn real_linux_observer_registers_deep_inputs_and_later_directories_case(
     cx: &mut TestAppContext,
 ) -> Result<()> {
     init_test(cx);
@@ -1135,4 +1210,152 @@ async fn real_linux_observer_registers_deep_inputs_and_later_directories(
         );
     }
     Ok(())
+}
+
+
+#[gpui::test]
+async fn removed_input_batches_retire_watchers_on_background_and_do_not_revive_restricted_roots(
+    cx: &mut TestAppContext,
+) {
+    async {
+        use fs::{Fs as _, RemoveOptions};
+        use parking_lot::Mutex;
+        use std::sync::Arc;
+
+        init_test(cx);
+        let root_a = Path::new(path!("/background-removal-owner"));
+        let root_b = Path::new(path!("/retained-removal-owner"));
+        let filesystem = FakeFs::new(cx.executor());
+        for root in [root_a, root_b] {
+            filesystem
+                .insert_tree(root, json!({"build.gradle":"", "retained":{"main.py":"print(1)"}}))
+                .await;
+        }
+        for index in 0..512 {
+            filesystem
+                .insert_tree(
+                    root_a.join("ordinary").join(index.to_string()),
+                    json!({"main.py":"print(1)", "index.html":"<p>retained</p>"}),
+                )
+                .await;
+        }
+        let project = Project::test(filesystem.clone(), [root_a, root_b], cx).await;
+        cx.executor().run_until_parked();
+        let baseline_owner_a_watchers = filesystem
+            .watched_paths()
+            .into_iter()
+            .filter(|path| path == root_a)
+            .count();
+        let removals = Arc::new(Mutex::new(Vec::new()));
+        let executor = cx.executor();
+        filesystem.observe_new_watcher_removals(Arc::new({
+            let removals = removals.clone();
+            move |path| {
+                removals
+                    .lock()
+                    .push((path.to_path_buf(), executor.is_main_thread()));
+            }
+        }));
+        let mut contexts = Vec::new();
+        for root in [root_a, root_b] {
+            let worktree = project
+                .read_with(cx, |project, cx| {
+                    project
+                        .visible_worktrees(cx)
+                        .find(|worktree| worktree.read(cx).abs_path().as_ref() == root)
+                        .map(|worktree| worktree.read(cx).id())
+                })
+                .context("Owning worktree")?;
+            let handle = project.update(cx, |project, cx| {
+                project.ensure_android_context(worktree, true, cx)
+            })?;
+            let discovery = project.update(cx, |project, cx| {
+                project.begin_android_context_import(handle, cx)
+            })?;
+            let mut active = ActiveContext::default();
+            active.select(Some(handle), None)?;
+            let owner = project
+                .read_with(cx, |project, _| active.discovery_token(project.android_context()))
+                .context("Input observer import owner")?;
+            let snapshot = observed_fixture(root, &root.join("build-logic"))?;
+            assert!(project
+                .update(cx, |project, cx| project.observe_android_context_inputs(
+                    handle,
+                    discovery.clone(),
+                    vec![root.to_path_buf()],
+                    Some(snapshot.clone()),
+                    cx,
+                ))
+                .await?);
+            project.update(cx, |project, cx| {
+                project.publish_android_context(&active, &owner, &discovery, snapshot, cx)
+            })?;
+            let token = project
+                .read_with(cx, |project, _| project.android_context().token(handle))
+                .context("Published input observer owner")?;
+            contexts.push((worktree, handle, token));
+        }
+        cx.executor().run_until_parked();
+        assert!(removals.lock().is_empty());
+        let (worktree_a, handle_a, token_a) = contexts.first().cloned().context("First owner")?;
+        let (_, handle_b, token_b) = contexts.get(1).cloned().context("Second owner")?;
+        assert_eq!(
+            filesystem.watched_paths().into_iter().filter(|path| path == root_a).count(),
+            baseline_owner_a_watchers + 1,
+        );
+
+        filesystem.pause_events();
+        for index in 0..512 {
+            filesystem
+                .remove_file(
+                    &root_a.join("ordinary").join(index.to_string()).join("main.py"),
+                    RemoveOptions::default(),
+                )
+                .await?;
+        }
+        let removed_directory = root_a.join("ordinary/17");
+        filesystem
+            .remove_dir(&removed_directory, RemoveOptions { recursive: true, ..Default::default() })
+            .await?;
+        assert!(filesystem.buffered_event_count() >= 512);
+        filesystem.unpause_events_and_flush();
+
+        // Run one scheduler task at a time. Once retirement is recorded, its
+        // background task has returned but its owning foreground continuation has
+        // not run; revoke that owner's trust before resuming it.
+        while removals.lock().is_empty() {
+            assert!(cx.executor().tick(), "Actual input observer retirement must become runnable");
+        }
+        let recorded = removals.lock().clone();
+        assert!(recorded.iter().any(|(path, _)| path == &removed_directory));
+        assert!(recorded.iter().all(|(_, main_thread)| !main_thread));
+        assert!(recorded.iter().all(|(path, _)| path.starts_with(root_a)));
+        project.read_with(cx, |project, _| {
+            assert!(project.android_context().is_current(&token_a));
+            assert!(project.android_context().is_current(&token_b));
+        });
+        project.update(cx, |project, cx| project.ensure_android_context(worktree_a, false, cx))?;
+        cx.executor().run_until_parked();
+        project.read_with(cx, |project, _| {
+            assert!(!project.android_context().is_current(&token_a));
+            assert!(project.android_context().snapshot(handle_a).is_none());
+            assert!(project.android_context().is_current(&token_b));
+            assert!(project.android_context().snapshot(handle_b).is_some());
+        });
+        assert_eq!(
+            filesystem.watched_paths().into_iter().filter(|path| path == root_a).count(),
+            baseline_owner_a_watchers,
+            "Only the revoked root's input observer is released",
+        );
+        filesystem
+            .insert_file(root_b.join("build.gradle"), b"changed retained input".to_vec())
+            .await;
+        cx.executor().run_until_parked();
+        assert!(!project.read_with(cx, |project, _| {
+            project.android_context().is_current(&token_b)
+        }));
+        Ok::<(), anyhow::Error>(())
+    }
+    .await
+    .expect("Actual watcher retirement must run on background and preserve context ownership");
 }

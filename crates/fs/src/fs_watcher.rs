@@ -1348,6 +1348,14 @@ mod tests {
     #[gpui::test]
     async fn readiness_requires_owned_registration_and_excludes_pending_or_failed_adds(
         cx: &mut gpui::TestAppContext,
+    ) {
+        readiness_requires_owned_registration_and_excludes_pending_or_failed_adds_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn readiness_requires_owned_registration_and_excludes_pending_or_failed_adds_case(
+        cx: &mut gpui::TestAppContext,
     ) -> anyhow::Result<()> {
         let filesystem = crate::FakeFs::new(cx.executor());
         let root = PathBuf::from(util::path!("/ready-context-root"));

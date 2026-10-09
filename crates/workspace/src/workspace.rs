@@ -6234,9 +6234,12 @@ impl Workspace {
                 serialize_workspace = false;
             }
             pane::Event::RemovedItem { item } => {
-                cx.emit(Event::ActiveProjectPathChanged(
-                    self.active_project_path(cx),
-                ));
+                // Surviving items already emit their captured activation path.
+                // Re-emitting it on background removal would invalidate an
+                // unchanged source owner; the last active item still loses it.
+                if pane == self.active_pane() && pane.read(cx).active_item().is_none() {
+                    cx.emit(Event::ActiveProjectPathChanged(None));
+                }
                 cx.emit(Event::ActiveItemChanged);
                 self.update_window_edited(window, cx);
                 if let hash_map::Entry::Occupied(entry) = self.panes_by_item.entry(item.item_id())

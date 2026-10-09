@@ -4459,8 +4459,20 @@ mod runtime_tests;
 mod paint_tests;
 #[gpui::test]
 async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
-    cx: &mut TestAppContext,
+    cx: &mut gpui::TestAppContext,
+) {
+    logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch_case(cx)
+        .await
+        .expect("Android project-context fixture must complete successfully");
+}
+
+#[cfg(test)]
+async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch_case(
+    cx: &mut gpui::TestAppContext,
 ) -> Result<()> {
+    use project::FakeFs;
+    use workspace::AppState;
+
     cx.update(|cx| {
         let state = AppState::test(cx);
         editor::init(cx);
@@ -4493,7 +4505,7 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
     project
         .update(cx, |project, cx| project.git_scans_complete(cx))
         .await;
-    cx.update(|cx| {
+    cx.update(|cx: &mut App| {
         let store = project.read(cx).worktree_store();
         let root = project
             .read(cx)
@@ -4528,7 +4540,7 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
     workspace
         .update_in(visual, |workspace, window, cx| {
             workspace.open_abs_path(
-                Path::new("/logcat-owner/Main.kt"),
+                Path::new("/logcat-owner/Main.kt").to_path_buf(),
                 Default::default(),
                 window,
                 cx,
@@ -4570,7 +4582,7 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
     workspace
         .update_in(visual, |workspace, window, cx| {
             workspace.open_abs_path(
-                Path::new("/logcat-owner/Other.kt"),
+                Path::new("/logcat-owner/Other.kt").to_path_buf(),
                 Default::default(),
                 window,
                 cx,
@@ -4594,7 +4606,7 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
     workspace
         .update_in(visual, |workspace, window, cx| {
             workspace.open_abs_path(
-                Path::new("/logcat-owner/nested/Nested.kt"),
+                Path::new("/logcat-owner/nested/Nested.kt").to_path_buf(),
                 Default::default(),
                 window,
                 cx,
@@ -4630,7 +4642,7 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
     workspace
         .update_in(visual, |workspace, window, cx| {
             workspace.open_abs_path(
-                Path::new("/python-untrusted/main.py"),
+                Path::new("/python-untrusted/main.py").to_path_buf(),
                 Default::default(),
                 window,
                 cx,
@@ -4659,7 +4671,7 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
     workspace
         .update_in(visual, |workspace, window, cx| {
             workspace.open_abs_path(
-                Path::new("/logcat-owner/Main.kt"),
+                Path::new("/logcat-owner/Main.kt").to_path_buf(),
                 Default::default(),
                 window,
                 cx,

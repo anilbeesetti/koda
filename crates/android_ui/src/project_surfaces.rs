@@ -2,7 +2,7 @@ use crate::{
     AndroidPanel, Build, BuildPanel, ComposePreview, ConfigureJava, ConfigureKotlin,
     ConfigureOfficialKotlin, Debug, GradleOperation, Lint, Logcat, RefreshDevices, Run,
     StopEmulator, SyncProject, Test, ToggleBuild, ToggleComposePreview, ToggleFocus,
-    android_logcat, android_logcat_panel::LogcatPanel, project_context, with_panel,
+    android_logcat, android_logcat_panel::LogcatPanel, project_context, with_panel, with_source_panel,
 };
 use android_tools::project_context::{ContextCapabilities, OperationalReadiness};
 use gpui::{
@@ -224,7 +224,11 @@ pub(crate) fn register_actions(workspace: &mut Workspace) {
     operation!(ConfigureJava, Java);
     operation!(ConfigureKotlin, Kotlin);
     operation!(ConfigureOfficialKotlin, Kotlin);
-    operation!(ComposePreview, Preview);
+    register!(ComposePreview, |workspace: &mut Workspace, _: &ComposePreview, window, cx| {
+        with_source_panel(workspace, window, cx, |panel, window, cx| {
+            panel.gradle(GradleOperation::Preview, window, cx);
+        });
+    });
     register!(
         ToggleComposePreview,
         |workspace: &mut Workspace, _: &ToggleComposePreview, window, cx| {
@@ -513,7 +517,7 @@ pub(crate) mod tests {
     use super::*;
     use android_tools::project_context::{ActiveContext, PluginId, decode_context_record};
     use anyhow::{Context as _, Result};
-    use gpui::{AppContext as _, Entity, TestAppContext};
+    use gpui::{Entity, TestAppContext};
     use project::{
         FakeFs, Project,
         trusted_worktrees::{self, PathTrust, TrustedWorktrees},
@@ -561,7 +565,8 @@ pub(crate) mod tests {
         let record = json!({"schema":1,"root":root,"gradleVersion":"9.4",
             "phase":if complete { "complete" } else { "partial" },
             "modules":[{"path":":","directory":root,
-                "plugins":PluginId::ALL.map(|plugin| json!({"plugin":plugin,"applied":plugins.contains(&plugin)})),
+                "plugins":PluginId::ALL.into_iter().filter(|plugin| complete || plugins.contains(plugin))
+                    .map(|plugin| json!({"plugin":plugin,"applied":plugins.contains(&plugin)})).collect::<Vec<_>>(),
                 "targets":{"status":"available","value":platforms.iter().map(|(name,platform)|json!({"name":name,"platform":platform})).collect::<Vec<_>>()}}]});
         let snapshot = decode_context_record(&serde_json::to_vec(&record)?, root)?;
         project.update(cx, |project, cx| {
@@ -601,6 +606,14 @@ pub(crate) mod tests {
 
     #[gpui::test]
     async fn generic_editors_keep_workspace_actions_without_android_surfaces(
+        cx: &mut TestAppContext,
+    ) {
+        generic_editors_keep_workspace_actions_without_android_surfaces_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn generic_editors_keep_workspace_actions_without_android_surfaces_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(initialize);
@@ -678,6 +691,14 @@ pub(crate) mod tests {
 
     #[gpui::test]
     async fn desktop_multiplatform_tools_do_not_expose_android_operations(
+        cx: &mut TestAppContext,
+    ) {
+        desktop_multiplatform_tools_do_not_expose_android_operations_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn desktop_multiplatform_tools_do_not_expose_android_operations_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(initialize);
@@ -760,6 +781,14 @@ pub(crate) mod tests {
     #[gpui::test]
     async fn partial_android_keeps_manual_sync_without_device_or_run_controls(
         cx: &mut TestAppContext,
+    ) {
+        partial_android_keeps_manual_sync_without_device_or_run_controls_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn partial_android_keeps_manual_sync_without_device_or_run_controls_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(initialize);
         let filesystem = FakeFs::new(cx.executor());
@@ -816,6 +845,14 @@ pub(crate) mod tests {
 
     #[gpui::test]
     async fn current_library_model_exposes_build_without_synthesizing_run(
+        cx: &mut TestAppContext,
+    ) {
+        current_library_model_exposes_build_without_synthesizing_run_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn current_library_model_exposes_build_without_synthesizing_run_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(initialize);
@@ -944,6 +981,14 @@ pub(crate) mod tests {
     #[gpui::test]
     async fn windows_sharing_a_project_keep_distinct_active_root_surfaces(
         cx: &mut TestAppContext,
+    ) {
+        windows_sharing_a_project_keep_distinct_active_root_surfaces_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn windows_sharing_a_project_keep_distinct_active_root_surfaces_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(initialize);
         let filesystem = FakeFs::new(cx.executor());
@@ -1043,6 +1088,14 @@ pub(crate) mod tests {
     #[gpui::test]
     async fn native_menus_follow_retained_workspace_switches_in_the_same_window(
         cx: &mut TestAppContext,
+    ) {
+        native_menus_follow_retained_workspace_switches_in_the_same_window_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn native_menus_follow_retained_workspace_switches_in_the_same_window_case(
+        cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(initialize);
         let filesystem = FakeFs::new(cx.executor());
@@ -1129,7 +1182,82 @@ pub(crate) mod tests {
     }
 
     #[gpui::test]
+    async fn deferred_project_dispatch_survives_files_but_source_dispatch_and_rapid_roots_do_not(
+        cx: &mut TestAppContext,
+    ) {
+        async {
+            cx.update(initialize);
+            let filesystem = FakeFs::new(cx.executor());
+            filesystem.insert_tree("/dispatch-owner", json!({"Main.kt":"class Main", "Other.kt":"class Other"})).await;
+            filesystem.insert_tree("/dispatch-other", json!({"main.py":"print(1)"})).await;
+            let project = Project::test_with_worktree_trust(filesystem,
+                [Path::new("/dispatch-owner"), Path::new("/dispatch-other")], cx).await;
+            cx.update(|cx| trust(&project, cx))?;
+            let (workspace, visual) =
+                cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let panel = workspace.read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx)).context("Panel")?;
+            panel.update(visual, |panel, _| {
+                panel.root = Some(Path::new("/dispatch-owner").to_path_buf());
+                panel.syncing = true;
+                panel.refreshing_devices = true;
+            });
+            visual.update(|_, cx| publish_catalogue(&project, Path::new("/dispatch-owner"),
+                &[PluginId::AndroidApplication, PluginId::ComposeCompiler], &[("android", "androidJvm")], true, cx))?;
+            let mut items = Vec::new();
+            for path in ["/dispatch-owner/Other.kt", "/dispatch-other/main.py", "/dispatch-owner/Main.kt"] {
+                workspace.update_in(visual, |workspace, window, cx| workspace.open_abs_path(Path::new(path).to_path_buf(), Default::default(), window, cx)).await?;
+                visual.run_until_parked();
+                items.push(workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).expect("Fixture item")));
+            }
+            let controller = visual.update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+            let project_owner = controller.read_with(visual, |controller, cx| controller.project_token(cx)).context("Project owner")?;
+            let source_owner = controller.read_with(visual, |controller, cx| controller.action_token(cx)).context("Source owner")?;
+            let project_entered = Rc::new(Cell::new(0));
+            let source_entered = Rc::new(Cell::new(0));
+            workspace.update_in(visual, |workspace, window, cx| {
+                assert!(workspace.activate_item(items[0].as_ref(), false, false, window, cx));
+                // A captured Workspace transition already queued before a deferred
+                // callback must retain its complete path and ordering, not be folded
+                // into a later read of the final pane state.
+                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                let entered = project_entered.clone();
+                with_panel(workspace, window, cx, move |_, _, _| entered.set(entered.get() + 1));
+                let entered = source_entered.clone();
+                with_source_panel(workspace, window, cx, move |_, _, _| entered.set(entered.get() + 1));
+            });
+            visual.run_until_parked();
+            assert_eq!(project_entered.get(), 1, "Same-root project dispatch must enter exactly once");
+            assert_eq!(source_entered.get(), 0, "A queued preview must not redirect to the new source");
+            controller.read_with(visual, |controller, cx| {
+                assert!(controller.project_is_current(&project_owner, cx));
+                assert!(!controller.action_is_current(&source_owner, cx));
+            });
+            project_entered.set(0);
+            workspace.update_in(visual, |workspace, window, cx| {
+                assert!(workspace.activate_item(items[1].as_ref(), false, false, window, cx));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                assert!(workspace.activate_item(items[2].as_ref(), false, false, window, cx));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                let entered = project_entered.clone();
+                with_panel(workspace, window, cx, move |_, _, _| entered.set(entered.get() + 1));
+            });
+            visual.run_until_parked();
+            assert_eq!(project_entered.get(), 0, "Captured root A/B/A must not revive deferred dispatch");
+            assert!(!controller.read_with(visual, |controller, cx| controller.project_is_current(&project_owner, cx)));
+            Ok::<_, anyhow::Error>(())
+        }.await.expect("Deferred UX regression must reach every assertion");
+    }
+
+    #[gpui::test]
     async fn context_loss_rejects_deferred_actions_and_preserves_a_generic_dock(
+        cx: &mut TestAppContext,
+    ) {
+        context_loss_rejects_deferred_actions_and_preserves_a_generic_dock_case(cx)
+            .await
+            .expect("Android project-context fixture must complete successfully");
+    }
+
+    async fn context_loss_rejects_deferred_actions_and_preserves_a_generic_dock_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
         cx.update(initialize);
@@ -1176,17 +1304,14 @@ pub(crate) mod tests {
                 .next()
                 .expect("Owned root");
             project.update(cx, |project, cx| {
+                let worktree = project
+                    .visible_worktrees(cx)
+                    .next()
+                    .expect("Root")
+                    .read(cx)
+                    .id();
                 project
-                    .ensure_android_context(
-                        project
-                            .visible_worktrees(cx)
-                            .next()
-                            .expect("Root")
-                            .read(cx)
-                            .id(),
-                        false,
-                        cx,
-                    )
+                    .ensure_android_context(worktree, false, cx)
                     .expect("Revoke root");
             });
             assert!(project.read(cx).android_context().token(root).is_none());
