@@ -1719,7 +1719,7 @@ impl Render for PanelButtons {
 #[cfg(any(test, feature = "test-support"))]
 pub mod test {
     use super::*;
-    use gpui::{App, AppContext as _, Context, Window, actions, div};
+    use gpui::{App, Context, Window, actions, div};
 
     pub struct TestPanel {
         pub position: DockPosition,
