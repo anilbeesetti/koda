@@ -1902,24 +1902,29 @@ pub mod test {
         }
     }
 
+    #[cfg(test)]
     struct DisabledPanel {
         focus_handle: FocusHandle,
     }
 
+    #[cfg(test)]
     impl EventEmitter<PanelEvent> for DisabledPanel {}
 
+    #[cfg(test)]
     impl Focusable for DisabledPanel {
         fn focus_handle(&self, _: &App) -> FocusHandle {
             self.focus_handle.clone()
         }
     }
 
+    #[cfg(test)]
     impl Render for DisabledPanel {
         fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
             div().track_focus(&self.focus_handle)
         }
     }
 
+    #[cfg(test)]
     impl Panel for DisabledPanel {
         fn persistent_name() -> &'static str {
             "DisabledPanel"
