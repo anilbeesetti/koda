@@ -1,3 +1,5 @@
+mod kotlin_native_capture;
+
 use std::{
     ffi::{OsStr, OsString, c_char, c_void},
     io,

@@ -9587,6 +9587,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
 
 [[package]]
+name = "kotlin_jvm_guardian"
+version = "0.1.0"
+dependencies = [
+ "android_tools",
+ "jni 0.21.1",
+ "libc",
+ "tempfile",
+]
+
+[[package]]
 name = "kqueue"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9604,15 +9614,6 @@ checksum = "07293a4e297ac234359b510362495713f75ea345d5307140414f20c69ffeb087"
 dependencies = [
  "bitflags 2.13.1",
  "libc",
-]
-
-[[package]]
-name = "kotlin_jvm_guardian"
-version = "0.1.0"
-dependencies = [
- "android_tools",
- "libc",
- "tempfile",
 ]
 
 [[package]]

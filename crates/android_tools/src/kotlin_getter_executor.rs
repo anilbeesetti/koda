@@ -1050,6 +1050,10 @@ impl GradleTransport {
             .arg(format!("-Dkoda.kotlin.capture.port={port}"))
             .arg(format!("-Dkoda.kotlin.capture.token={token}"))
             .arg(format!(
+                "-Dkoda.kotlin.capture.nativeLibrary={}",
+                options.guardian_library.canonicalize()?.display()
+            ))
+            .arg(format!(
                 "-Dkoda.kotlin.capture.timeoutMillis={}",
                 options.timeout.as_millis()
             ))

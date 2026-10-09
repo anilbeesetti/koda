@@ -560,7 +560,7 @@ mod linux {
         let start = process_start(pid).expect("Owned protocol fixture was alive");
         let began = Instant::now();
         let error = transport
-            .discover(&[])
+            .discover(&[], "synthetic-session")
             .expect_err("Supervisor failure must interrupt the waiting getter");
         let description = format!("{error:#}");
         assert!(description.contains("invalid lifetime message"));

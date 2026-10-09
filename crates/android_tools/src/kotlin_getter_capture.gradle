@@ -10,6 +10,14 @@ import java.security.MessageDigest
 import org.gradle.util.GradleVersion
 
 class KodaKotlinBoundedJson {
+    static { loadNative() }
+
+    // Direct bytecode keeps native-library ownership on this defining loader,
+    // rather than a Groovy runtime reflection/call-site loader.
+    @groovy.transform.CompileStatic
+    private static void loadNative() {
+        System.load(System.getProperty('koda.kotlin.capture.nativeLibrary'))
+    }
     long bytes = 0
     long nodes = 0
     long maximumBytes
@@ -18,9 +26,6 @@ class KodaKotlinBoundedJson {
     def monitor
     boolean retain
     def chunks = []
-    byte[] current
-    int used = 0
-    def active = Collections.newSetFromMap(new IdentityHashMap())
 
     KodaKotlinBoundedJson(long maximumBytes, long maximumNodes, long maximumScalarBytes, monitor, boolean retain) {
         this.maximumBytes = maximumBytes
@@ -30,109 +35,18 @@ class KodaKotlinBoundedJson {
         this.retain = retain
     }
 
-    void emit(int value) {
-        if (bytes >= maximumBytes) throw new IOException('Producer serialized-byte budget exceeded')
-        if (retain) {
-            if (current == null || used == current.length) {
-                current = new byte[(int) Math.min(65536L, maximumBytes - bytes)]
-                chunks.add(current)
-                used = 0
-            }
-            current[used++] = (byte) value
-        }
-        bytes++
-        if ((bytes & 4095L) == 0L) monitor.call()
-    }
+    private native void encode(Object value, long maximumBytes, long maximumNodes,
+        long maximumScalarBytes, Object monitor, boolean retain)
+    static native long[] updateUsage(long bytes, long nodes, long removedBytes, long removedNodes,
+        long addedBytes, long addedNodes, boolean separator, long maximumBytes, long maximumNodes)
+    static native void checkNext(long nodes, long maximumNodes)
 
-    void ascii(String value) {
-        for (int index = 0; index < value.length(); index++) emit((int) value.charAt(index))
-    }
-
-    void string(String value) {
-        if (value.length() > maximumScalarBytes || value.length() > maximumBytes)
-            throw new IOException('Producer scalar budget exceeded')
-        long decodedBytes = 0
-        emit(34)
-        for (int index = 0; index < value.length(); index++) {
-            int character = (int) value.charAt(index)
-            if (Character.isHighSurrogate((char) character) && index + 1 < value.length() &&
-                Character.isLowSurrogate(value.charAt(index + 1))) decodedBytes += 2
-            else if (Character.isLowSurrogate((char) character) && index > 0 &&
-                Character.isHighSurrogate(value.charAt(index - 1))) decodedBytes += 2
-            else decodedBytes += character < 128 ? 1 : character < 2048 ? 2 : 3
-            if (decodedBytes > maximumScalarBytes) throw new IOException('Producer scalar budget exceeded')
-            switch (character) {
-                case 34: ascii('\\"'); break
-                case 92: ascii('\\\\'); break
-                case 8: ascii('\\b'); break
-                case 9: ascii('\\t'); break
-                case 10: ascii('\\n'); break
-                case 12: ascii('\\f'); break
-                case 13: ascii('\\r'); break
-                default:
-                    if (character < 32 || character > 127) {
-                        ascii('\\u')
-                        String hex = Integer.toHexString(character)
-                        for (int padding = hex.length(); padding < 4; padding++) emit(48)
-                        ascii(hex)
-                    } else emit(character)
-            }
-        }
-        emit(34)
-    }
-
-    void value(Object value, int depth = 0) {
-        monitor.call()
-        if (++nodes > maximumNodes) throw new IOException('Producer value-node budget exceeded')
-        if (depth >= 128) throw new IOException('Producer JSON depth budget exceeded')
-        if (value == null) { ascii('null'); return }
-        if (value instanceof String) { string(value); return }
-        if (value instanceof Boolean) { ascii(value ? 'true' : 'false'); return }
-        if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
-            ascii(value.toString()); return
-        }
-        if (!(value instanceof Map) && !(value instanceof Iterable))
-            throw new IOException('Unsupported raw observation JSON value')
-        if (!active.add(value)) throw new IOException('Cyclic raw observation JSON value')
-        try {
-            boolean first = true
-            if (value instanceof Map) {
-                emit(123)
-                def iterator = value.entrySet().iterator()
-                while (iterator.hasNext()) {
-                    monitor.call()
-                    if (nodes >= maximumNodes) throw new IOException('Producer value-node budget exceeded')
-                    def entry = iterator.next()
-                    if (!(entry.key instanceof String)) throw new IOException('Raw observation key is not a String')
-                    if (!first) emit(44)
-                    first = false
-                    string(entry.key)
-                    emit(58)
-                    this.value(entry.value, depth + 1)
-                }
-                emit(125)
-            } else {
-                emit(91)
-                def iterator = value.iterator()
-                while (iterator.hasNext()) {
-                    monitor.call()
-                    if (nodes >= maximumNodes) throw new IOException('Producer value-node budget exceeded')
-                    if (!first) emit(44)
-                    first = false
-                    this.value(iterator.next(), depth + 1)
-                }
-                emit(93)
-            }
-        } finally { active.remove(value) }
+    void value(Object value) {
+        encode(value, maximumBytes, maximumNodes, maximumScalarBytes, monitor, retain)
     }
 
     void writeTo(OutputStream output) {
-        monitor.call()
-        for (int index = 0; index < chunks.size(); index++) {
-            monitor.call()
-            byte[] chunk = chunks[index]
-            output.write(chunk, 0, index == chunks.size() - 1 ? used : chunk.length)
-        }
+        for (byte[] chunk : chunks) { monitor.call(); output.write(chunk) }
     }
 }
 
@@ -146,18 +60,17 @@ class KodaKotlinBoundedValues {
 
     void beforeNext() {
         bridge.health()
-        if (nodes >= bridge.maximumValueNodes) throw new IOException('Producer iterable value-node budget exceeded')
+        KodaKotlinBoundedJson.checkNext(nodes, bridge.maximumValueNodes)
     }
 
     void add(value) {
         beforeNext()
         def usage = bridge.measure(value)
-        long nextBytes = bytes + usage.bytes + (values.isEmpty() ? 0 : 1)
-        long nextNodes = nodes + usage.nodes
-        bridge.checkUsage(nextBytes, nextNodes)
+        def next = KodaKotlinBoundedJson.updateUsage(bytes, nodes, 0, 0, usage.bytes, usage.nodes,
+            !values.isEmpty(), bridge.maximumFrameBytes, bridge.maximumValueNodes)
         values.add(value)
-        bytes = nextBytes
-        nodes = nextNodes
+        bytes = next[0]
+        nodes = next[1]
     }
 }
 
@@ -239,36 +152,43 @@ class KodaKotlinGetterBridge {
 
     void checkUsage(long bytes, long nodes) {
         health()
-        if (bytes > maximumFrameBytes || nodes > maximumValueNodes)
-            throw new IOException('Producer cumulative observation budget exceeded')
-    }
-
-    void changeUsage(long bytes, long nodes) {
-        long nextBytes = retainedBytes + bytes
-        long nextNodes = retainedNodes + nodes
-        checkUsage(nextBytes, nextNodes)
-        retainedBytes = nextBytes
-        retainedNodes = nextNodes
+        KodaKotlinBoundedJson.updateUsage(0, 0, 0, 0, bytes, nodes, false,
+            maximumFrameBytes, maximumValueNodes)
     }
 
     void appendObservation(List rows, row) {
         def usage = measure(row)
-        changeUsage(usage.bytes + (rows.isEmpty() ? 0 : 1), usage.nodes)
+        health()
+        def next = KodaKotlinBoundedJson.updateUsage(retainedBytes, retainedNodes, 0, 0,
+            usage.bytes, usage.nodes, !rows.isEmpty(), maximumFrameBytes, maximumValueNodes)
         rows.add(row)
+        retainedBytes = next[0]
+        retainedNodes = next[1]
     }
 
     void replaceField(Map row, String key, value) {
         def before = measure(row[key])
         def after = measure(value)
-        changeUsage(after.bytes - before.bytes, after.nodes - before.nodes)
+        health()
+        def next = KodaKotlinBoundedJson.updateUsage(retainedBytes, retainedNodes, before.bytes,
+            before.nodes, after.bytes, after.nodes, false, maximumFrameBytes, maximumValueNodes)
         row[key] = value
+        retainedBytes = next[0]
+        retainedNodes = next[1]
     }
 
     void addProject(String path, String objectId) {
         def key = measure(path)
         def value = measure(objectId)
-        changeUsage(key.bytes + 1 + value.bytes + (projectObjects.isEmpty() ? 0 : 1), value.nodes)
+        // Keys are JSON strings but are excluded from the strict value-node count.
+        def entry = KodaKotlinBoundedJson.updateUsage(key.bytes, 0, 0, 0, value.bytes, value.nodes,
+            true, maximumFrameBytes, maximumValueNodes)
+        health()
+        def next = KodaKotlinBoundedJson.updateUsage(retainedBytes, retainedNodes, 0, 0,
+            entry[0], entry[1], !projectObjects.isEmpty(), maximumFrameBytes, maximumValueNodes)
         projectObjects[path] = objectId
+        retainedBytes = next[0]
+        retainedNodes = next[1]
     }
 
     String artifact(File file) {

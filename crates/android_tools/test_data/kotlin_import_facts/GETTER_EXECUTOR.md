@@ -24,9 +24,10 @@ retains class/loader/method identity, event order, null/unavailable states and
 iterable order, and validates the final observations with the unchanged strict
 schema. Runtime classes with unavailable/non-file origins or ambiguous plugin
 loaders fail the capture; they are not synthesized. Return kinds and official
-getter membership remain Rust policies. The JVM bridge only performs reflection
-and raw serialization because those APIs and live objects exist in Gradle's JVM.
-This is the approved official Gradle/JVM exception, not an IntelliJ importer.
+getter membership remain Rust policies. The JVM shim performs official Gradle reflection and invokes the existing Rust
+JVM guardian through JNI. Generic bounded encoding, traversal, cycle detection
+and cumulative accounting execute in Rust before retained allocations. JVM live
+object access remains the approved official Gradle/JVM exception.
 
 The official request plan separately records
 `PluginContainer.hasPlugin("com.android.base")` as a raw, non-null Boolean getter
@@ -55,7 +56,9 @@ boundary and original host revision to a fresh output directory. Gradle stdout
 and stderr survive failure in gradle-logs; exceeding the combined diagnostic
 budget rejects the entire capture. There is no output truncation or partial
 successful receipt. The required guardianLauncher is the Rust
-`kotlin_jvm_guardian` binary; guardianLibrary is its native cdylib. The public
+`kotlin_jvm_guardian` binary; guardianLibrary is its native cdylib and the Rust JNI producer encoder. The
+transport supplies its exact path through `koda.kotlin.capture.nativeLibrary`;
+the shim loads that same library into its defining JVM class loader. The public
 transport executes this launcher and injects the Rust native JVM agent through
 JAVA_TOOL_OPTIONS into the owned invocation. The original JAVA_TOOL_OPTIONS
 are retained. No existing shared Gradle daemon is reused or signalled.
@@ -113,8 +116,13 @@ without following an expanding EOF. These source changes still require actual
 tests, official JVM probes and large-project measurements.
 
 Rust supplies the unchanged producer byte, scalar and value-node limits before
-bridge construction. The JVM boundary admits new observations and mutable row
-fields against exact cumulative encoded usage before retaining them. Getter
+bridge construction. The existing `kotlin_jvm_guardian` cdylib also exports JNI
+encoding and accounting entry points. Rust traverses live JVM Maps and Iterables
+through bounded local references, holds at most 128 active container identities,
+and reads immutable Strings in fixed 1024-unit UTF-16 regions. No complete JVM
+String copy is required before scalar or escaped-output admission. The JVM shim
+only accesses official reflection objects, retains already admitted observations,
+and invokes Rust accounting before new rows or mutable fields are retained. Getter
 Lists and Iterables are visited once under checked per-item limits, without
 `every`, `collect`, or an unbounded `toList` copy. Raw JSON is encoded into
 bounded chunks of at most 64 KiB; value nodes, scalar UTF-8 bytes, escaped output,

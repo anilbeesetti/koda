@@ -47,6 +47,10 @@ fn main() -> Result<()> {
         .arg(&script)
         .arg("-Dkoda.kotlin.capture.timeoutMillis=180000")
         .arg(format!(
+            "-Dkoda.kotlin.capture.nativeLibrary={}",
+            arguments[4].canonicalize()?.display()
+        ))
+        .arg(format!(
             "-Dkoda.kotlin.capture.maximumFrameBytes={}",
             limits.record_bytes
         ))
@@ -331,6 +335,14 @@ fn validate_uncaught_producer_failure(
         .args(["--no-daemon", "--console=plain", "--init-script"])
         .arg(script)
         .arg("-Dkoda.kotlin.capture.timeoutMillis=180000")
+        .arg(format!(
+            "-Dkoda.kotlin.capture.nativeLibrary={}",
+            arguments
+                .get(4)
+                .context("Guardian library")?
+                .canonicalize()?
+                .display()
+        ))
         .arg(format!(
             "-Dkoda.kotlin.capture.maximumFrameBytes={}",
             limits.record_bytes
