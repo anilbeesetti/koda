@@ -8549,7 +8549,14 @@ fi
                 "path": module, "directory": root.join(module.trim_start_matches(':')),
                 "plugins": PluginId::ALL.map(|plugin| json!({"plugin": plugin, "applied": plugin == applied})),
                 "targets": {"status": "available", "value": [{"name": "android", "platform": "androidJvm"}]}
-            }));
+            }))
+            .into_iter()
+            .chain([json!({
+                "path": ":", "directory": root,
+                "plugins": PluginId::ALL.map(|plugin| json!({"plugin": plugin, "applied": false})),
+                "targets": {"status": "available", "value": []}
+            })])
+            .collect::<Vec<_>>();
         let snapshot = decode_context_record(
             &serde_json::to_vec(&json!({
                 "schema": 1, "root": root, "gradleVersion": "9.6.1", "phase": "complete", "modules": modules
