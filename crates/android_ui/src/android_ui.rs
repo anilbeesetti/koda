@@ -5073,6 +5073,7 @@ mod tests {
     ) {
         let result: Result<()> = async {
             use android_tools::project_context::PluginId;
+            use project::Fs as _;
             cx.executor().allow_parking();
             let _state = cx.update(|cx| {
                 let state = AppState::test(cx);
@@ -5098,6 +5099,14 @@ mod tests {
             std::fs::write(a.join("settings.gradle.kts"), "")?;
             std::fs::write(b.join("gradlew"), "")?;
             std::fs::write(b.join("settings.gradle.kts"), "")?;
+            // The child writes to disk, while the project below uses FakeFs. Its
+            // marker therefore needs a real watcher before the notification-based
+            // BuildPanel condition can observe it reliably.
+            let real_filesystem = project::RealFs::new(None, cx.executor());
+            real_filesystem.start_native_watcher()?;
+            let (mut fixture_events, fixture_watcher) =
+                real_filesystem.watch(&a, Duration::ZERO).await;
+            ensure!(fixture_watcher.is_watching(&a), "Fixture root is not watched");
             let filesystem = FakeFs::new(cx.executor());
             for root in [&a, &b] {
                 filesystem.insert_tree(root, json!({"gradlew":"", "settings.gradle.kts":""})).await;
@@ -5122,6 +5131,19 @@ mod tests {
             visual.dispatch_action(SyncProject);
             visual.run_until_parked();
             let build_panel = panel.read_with(visual, |panel, _| panel.build_panel.clone());
+            let shell_entry = async {
+                while !a.join("context-entered").exists() {
+                    fixture_events.next().await.context("Fixture watcher closed before shell entry")?;
+                }
+                Ok::<_, anyhow::Error>(())
+            };
+            match select(
+                shell_entry.boxed(),
+                visual.executor().timer(Duration::from_secs(3)),
+            ).await {
+                Either::Left((result, _)) => result?,
+                Either::Right(_) => bail!("Fixture shell did not enter before the condition deadline"),
+            }
             visual.condition(&build_panel, |_, _| a.join("context-entered").exists()).await;
             let [a_id, b_id] = project.read_with(visual, |project, cx| {
                 [a.as_path(), b.as_path()].map(|root| {
