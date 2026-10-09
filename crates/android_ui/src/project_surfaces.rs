@@ -1013,22 +1013,18 @@ pub(crate) mod tests {
         let (android_multi, android_visual) = cx.add_window_view(|window, cx| {
             workspace::MultiWorkspace::test_new(project.clone(), window, cx)
         });
-        let android =
-            android_multi.read_with(android_visual, |multi, _| multi.workspace().clone());
+        let android = android_multi.read_with(android_visual, |multi, _| multi.workspace().clone());
         let android_window = android_visual.update(|window, _| window.window_handle());
-        let app_state = android.read_with(android_visual, |workspace, _| {
-            workspace.app_state().clone()
-        });
+        let app_state =
+            android.read_with(android_visual, |workspace, _| workspace.app_state().clone());
         // Project windows share one store because it registers handlers on their client.
         let (generic_multi, generic_visual) = cx.add_window_view(|window, cx| {
             window.activate_window();
-            let workspace = cx.new(|cx| {
-                Workspace::new(None, project.clone(), app_state, window, cx)
-            });
+            let workspace =
+                cx.new(|cx| Workspace::new(None, project.clone(), app_state, window, cx));
             workspace::MultiWorkspace::new(workspace, window, cx)
         });
-        let generic =
-            generic_multi.read_with(generic_visual, |multi, _| multi.workspace().clone());
+        let generic = generic_multi.read_with(generic_visual, |multi, _| multi.workspace().clone());
         let generic_window = generic_visual.update(|window, _| window.window_handle());
         let mut android_visual = gpui::VisualTestContext::from_window(android_window, cx);
         let mut generic_visual = gpui::VisualTestContext::from_window(generic_window, cx);
