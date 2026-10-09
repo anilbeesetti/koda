@@ -1714,4 +1714,11 @@
       "shift-enter": "android_logcat::FindPrevious",
     },
   },
+  {
+    "context": "SearchEverywhere > Editor",
+    "bindings": {
+      "tab": "search_everywhere::NextCategory",
+      "shift-tab": "search_everywhere::PreviousCategory",
+    },
+  },
 ]
