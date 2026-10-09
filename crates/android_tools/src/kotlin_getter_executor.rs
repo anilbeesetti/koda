@@ -739,6 +739,22 @@ pub struct OfficialProjectRequests {
     pub unavailable: Vec<String>,
 }
 
+enum GetterReceiver<'a> {
+    Object(&'a str),
+    StaticCatalogue(&'a str),
+}
+
+struct GetterInvocation<'a> {
+    project: &'a str,
+    receiver: GetterReceiver<'a>,
+    name: &'a str,
+    descriptor: &'a str,
+    shape: ReturnShape,
+    arguments: Vec<GetterArgument>,
+    purpose: GetterPurpose,
+    after: Option<&'a str>,
+}
+
 pub struct KotlinGetterCapture<T: GetterTransport, H: Clone + PartialEq> {
     issued_host: H,
     transport: T,
@@ -856,24 +872,28 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         &self.inventory
     }
 
-    fn issue(
-        &mut self,
-        project: &str,
-        owner: Option<&str>,
-        catalogue: &str,
-        name: &str,
-        descriptor: &str,
-        shape: ReturnShape,
-        arguments: Vec<GetterArgument>,
-        purpose: GetterPurpose,
-        after: Option<&str>,
-    ) -> Result<GetterEvent> {
-        let catalogue = self
-            .inventory
-            .catalogues
-            .iter()
-            .find(|value| value.id == catalogue)
-            .context("Requested catalogue has not been discovered")?;
+    fn issue(&mut self, invocation: GetterInvocation<'_>) -> Result<GetterEvent> {
+        let GetterInvocation {
+            project,
+            receiver,
+            name,
+            descriptor,
+            shape,
+            arguments,
+            purpose,
+            after,
+        } = invocation;
+        let (owner, catalogue) = match receiver {
+            GetterReceiver::Object(owner) => (Some(owner), self.inventory.catalogue(owner)?),
+            GetterReceiver::StaticCatalogue(id) => (
+                None,
+                self.inventory
+                    .catalogues
+                    .iter()
+                    .find(|catalogue| catalogue.id == id)
+                    .context("Requested catalogue has not been discovered")?,
+            ),
+        };
         let method = select_exact_method(catalogue, name, descriptor, owner.is_none())?;
         let request = GetterRequest {
             id: format!(
@@ -890,7 +910,7 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             catalogue: catalogue.id.clone(),
             method,
             arguments,
-            return_shape: shape,
+            return_shape,
             purpose,
             after: after.map(str::to_owned),
         };
@@ -907,31 +927,6 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         Ok(event)
     }
 
-    fn instance(
-        &mut self,
-        project: &str,
-        owner: &str,
-        name: &str,
-        descriptor: &str,
-        shape: ReturnShape,
-        arguments: Vec<GetterArgument>,
-        purpose: GetterPurpose,
-        after: Option<&str>,
-    ) -> Result<GetterEvent> {
-        let catalogue = self.inventory.catalogue(owner)?.id.clone();
-        self.issue(
-            project,
-            Some(owner),
-            &catalogue,
-            name,
-            descriptor,
-            shape,
-            arguments,
-            purpose,
-            after,
-        )
-    }
-
     pub fn capture_official_project(&mut self, project: &str) -> Result<OfficialProjectRequests> {
         let project_object = self
             .inventory
@@ -943,66 +938,66 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             project: project.into(),
             ..Default::default()
         };
-        let plugins = self.instance(
+        let plugins = self.issue(GetterInvocation {
             project,
-            &project_object,
-            "getPlugins",
-            "()Lorg/gradle/api/plugins/PluginContainer;",
-            object_shape(ObjectKind::Container, false),
-            vec![],
-            GetterPurpose::Raw,
-            None,
-        )?;
-        let iteration = self.instance(
+            receiver: GetterReceiver::Object(&project_object),
+            name: "getPlugins",
+            descriptor: "()Lorg/gradle/api/plugins/PluginContainer;",
+            shape: object_shape(ObjectKind::Container, false),
+            arguments: vec![],
+            purpose: GetterPurpose::Raw,
+            after: None,
+        })?;
+        let iteration = self.issue(GetterInvocation {
             project,
-            &project_object,
-            "getPlugins",
-            "()Lorg/gradle/api/plugins/PluginContainer;",
-            objects_shape(ObjectKind::Plugin, ContainerOrder::Iterable, false),
-            vec![],
-            GetterPurpose::Raw,
-            None,
-        )?;
+            receiver: GetterReceiver::Object(&project_object),
+            name: "getPlugins",
+            descriptor: "()Lorg/gradle/api/plugins/PluginContainer;",
+            shape: objects_shape(ObjectKind::Plugin, ContainerOrder::Iterable, false),
+            arguments: vec![],
+            purpose: GetterPurpose::Raw,
+            after: None,
+        })?;
         plan.plugin_iteration = Some(iteration.request.clone());
         if let Some(container) = object_result(&plugins) {
             for plugin in KOTLIN_PLUGIN_IDS.iter().chain(ANDROID_PLUGIN_IDS) {
-                let event = self.instance(
+                let event = self.issue(GetterInvocation {
                     project,
-                    &container,
-                    "findPlugin",
-                    "(Ljava/lang/String;)Lorg/gradle/api/Plugin;",
-                    object_shape(ObjectKind::Plugin, true),
-                    vec![GetterArgument::String((*plugin).into())],
-                    GetterPurpose::Raw,
-                    Some(&plugins.request),
-                )?;
+                    receiver: GetterReceiver::Object(&container),
+                    name: "findPlugin",
+                    descriptor: "(Ljava/lang/String;)Lorg/gradle/api/Plugin;",
+                    shape: object_shape(ObjectKind::Plugin, true),
+                    arguments: vec![GetterArgument::String((*plugin).into())],
+                    purpose: GetterPurpose::Raw,
+                    after: Some(&plugins.request),
+                })?;
                 plan.plugin_lookups.insert((*plugin).into(), event.request);
             }
         } else {
             plan.unavailable
                 .push("Project.getPlugins() unavailable".into());
         }
-        let extensions = self.instance(
+        let extensions = self.issue(GetterInvocation {
             project,
-            &project_object,
-            "getExtensions",
-            "()Lorg/gradle/api/plugins/ExtensionContainer;",
-            object_shape(ObjectKind::Container, false),
-            vec![],
-            GetterPurpose::Raw,
-            None,
-        )?;
+            receiver: GetterReceiver::Object(&project_object),
+            name: "getExtensions",
+            descriptor: "()Lorg/gradle/api/plugins/ExtensionContainer;",
+            shape: object_shape(ObjectKind::Container, false),
+            arguments: vec![],
+            purpose: GetterPurpose::Raw,
+            after: None,
+        })?;
         if let Some(container) = object_result(&extensions) {
-            let event = self.instance(
+            let event = self.issue(GetterInvocation {
                 project,
-                &container,
-                "findByName",
-                "(Ljava/lang/String;)Ljava/lang/Object;",
-                object_shape(ObjectKind::Extension, true),
-                vec![GetterArgument::String("kotlin".into())],
-                GetterPurpose::Raw,
-                Some(&extensions.request),
-            )?;
+                receiver: GetterReceiver::Object(&container),
+                name: "findByName",
+                descriptor: "(Ljava/lang/String;)Ljava/lang/Object;",
+                shape: object_shape(ObjectKind::Extension, true),
+                arguments: vec![GetterArgument::String("kotlin".into())],
+                purpose: GetterPurpose::Raw,
+                after: Some(&extensions.request),
+            })?;
             plan.extension_lookup = Some(event.request);
         } else {
             plan.unavailable
@@ -1013,47 +1008,46 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             .named_class_catalogue(project, WRAPPER)?
             .map(|catalogue| catalogue.id.clone())
         {
-            let event = self.issue(
+            let event = self.issue(GetterInvocation {
                 project,
-                None,
-                &catalogue,
-                "getKotlinPluginVersion",
-                "(Lorg/gradle/api/Project;)Ljava/lang/String;",
-                scalar_shape(ValueKind::String, true),
-                vec![GetterArgument::Object(project_object.clone())],
-                GetterPurpose::Raw,
-                None,
-            )?;
+                receiver: GetterReceiver::StaticCatalogue(&catalogue),
+                name: "getKotlinPluginVersion",
+                descriptor: "(Lorg/gradle/api/Project;)Ljava/lang/String;",
+                shape: scalar_shape(ValueKind::String, true),
+                arguments: vec![GetterArgument::Object(project_object.clone())],
+                purpose: GetterPurpose::Raw,
+                after: None,
+            })?;
             plan.compiler_version = Some(event.request);
         } else {
             plan.unavailable
                 .push(format!("Class lookup unavailable: {WRAPPER}"));
         }
-        let task_map = self.instance(
+        let task_map = self.issue(GetterInvocation {
             project,
-            &project_object,
-            "getAllTasks",
-            "(Z)Ljava/util/Map;",
-            object_shape(ObjectKind::Container, false),
-            vec![GetterArgument::Boolean(false)],
-            GetterPurpose::Raw,
-            None,
-        )?;
+            receiver: GetterReceiver::Object(&project_object),
+            name: "getAllTasks",
+            descriptor: "(Z)Ljava/util/Map;",
+            shape: object_shape(ObjectKind::Container, false),
+            arguments: vec![GetterArgument::Boolean(false)],
+            purpose: GetterPurpose::Raw,
+            after: None,
+        })?;
         let Some(task_map_object) = object_result(&task_map) else {
             plan.unavailable
                 .push("Project.getAllTasks(false) unavailable".into());
             return Ok(plan);
         };
-        let tasks = self.instance(
+        let tasks = self.issue(GetterInvocation {
             project,
-            &task_map_object,
-            "get",
-            "(Ljava/lang/Object;)Ljava/lang/Object;",
-            objects_shape(ObjectKind::Task, ContainerOrder::ProjectTaskMapValues, true),
-            vec![GetterArgument::Object(project_object.clone())],
-            GetterPurpose::ContainerIterate,
-            Some(&task_map.request),
-        )?;
+            receiver: GetterReceiver::Object(&task_map_object),
+            name: "get",
+            descriptor: "(Ljava/lang/Object;)Ljava/lang/Object;",
+            shape: objects_shape(ObjectKind::Task, ContainerOrder::ProjectTaskMapValues, true),
+            arguments: vec![GetterArgument::Object(project_object.clone())],
+            purpose: GetterPurpose::ContainerIterate,
+            after: Some(&task_map.request),
+        })?;
         plan.task_iteration = Some(tasks.request.clone());
         let task_ids = match &tasks.outcome {
             GetterOutcome::Available(Some(CaptureValue::Objects(ids))) => ids.clone(),
@@ -1084,17 +1078,16 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                 })
                 .cloned();
             if let Some(method) = method {
-                Some(self.issue(
+                Some(self.issue(GetterInvocation {
                     project,
-                    None,
-                    &catalogue,
-                    &method.name,
-                    &method.descriptor,
-                    object_shape(ObjectKind::Resolver, true),
-                    vec![GetterArgument::Object(project_object.clone())],
-                    GetterPurpose::ResolverInstance,
-                    None,
-                )?)
+                    receiver: GetterReceiver::StaticCatalogue(&catalogue),
+                    name: &method.name,
+                    descriptor: &method.descriptor,
+                    shape: object_shape(ObjectKind::Resolver, true),
+                    arguments: vec![GetterArgument::Object(project_object.clone())],
+                    purpose: GetterPurpose::ResolverInstance,
+                    after: None,
+                })?)
             } else {
                 plan.unavailable
                     .push("Compiler resolver instance method unavailable".into());
@@ -1137,28 +1130,28 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                 } else {
                     scalar_shape(ValueKind::String, true)
                 };
-                let source = self.instance(
+                let source = self.issue(GetterInvocation {
                     project,
-                    &task,
-                    &method.name,
-                    &method.descriptor,
+                    receiver: GetterReceiver::Object(&task),
+                    name: &method.name,
+                    descriptor: &method.descriptor,
                     shape,
-                    vec![],
-                    GetterPurpose::SourceSet,
-                    None,
-                )?;
+                    arguments: vec![],
+                    purpose: GetterPurpose::SourceSet,
+                    after: None,
+                })?;
                 if property {
                     if let Some(owner) = object_result(&source) {
-                        let terminal = self.instance(
+                        let terminal = self.issue(GetterInvocation {
                             project,
-                            &owner,
-                            "get",
-                            "()Ljava/lang/Object;",
-                            scalar_shape(ValueKind::String, true),
-                            vec![],
-                            GetterPurpose::PropertyGet,
-                            Some(&source.request),
-                        )?;
+                            receiver: GetterReceiver::Object(&owner),
+                            name: "get",
+                            descriptor: "()Ljava/lang/Object;",
+                            shape: scalar_shape(ValueKind::String, true),
+                            arguments: vec![],
+                            purpose: GetterPurpose::PropertyGet,
+                            after: Some(&source.request),
+                        })?;
                         plan.source_set_names.insert(task.clone(), terminal.request);
                     } else {
                         plan.source_set_names.insert(task.clone(), source.request);
@@ -1173,16 +1166,16 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             if let Some(resolver_event) = &resolver
                 && let Some(owner) = object_result(resolver_event)
             {
-                let event = self.instance(
+                let event = self.issue(GetterInvocation {
                     project,
-                    &owner,
-                    "resolveCompilerArguments",
-                    "(Ljava/lang/Object;)Ljava/util/List;",
-                    strings_shape(true),
-                    vec![GetterArgument::Object(task.clone())],
-                    GetterPurpose::CompilerArguments,
-                    Some(&resolver_event.request),
-                )?;
+                    receiver: GetterReceiver::Object(&owner),
+                    name: "resolveCompilerArguments",
+                    descriptor: "(Ljava/lang/Object;)Ljava/util/List;",
+                    shape: strings_shape(true),
+                    arguments: vec![GetterArgument::Object(task.clone())],
+                    purpose: GetterPurpose::CompilerArguments,
+                    after: Some(&resolver_event.request),
+                })?;
                 plan.compiler_arguments.insert(task, event.request);
             }
         }
@@ -1665,17 +1658,16 @@ mod tests {
                 .clone();
             assert!(
                 capture
-                    .issue(
-                        ":android",
-                        None,
-                        &catalogue,
-                        "absentOfficialMethod",
-                        "()Ljava/lang/String;",
-                        scalar_shape(ValueKind::String, true),
-                        vec![],
-                        GetterPurpose::Raw,
-                        None
-                    )
+                    .issue(GetterInvocation {
+                        project: ":android",
+                        receiver: GetterReceiver::StaticCatalogue(&catalogue),
+                        name: "absentOfficialMethod",
+                        descriptor: "()Ljava/lang/String;",
+                        shape: scalar_shape(ValueKind::String, true),
+                        arguments: vec![],
+                        purpose: GetterPurpose::Raw,
+                        after: None,
+                    })
                     .is_err()
             );
             assert_eq!(capture.requests.len(), 1);
@@ -1699,17 +1691,16 @@ mod tests {
             .context("Catalogue")?
             .id
             .clone();
-        let event = capture.issue(
-            ":android",
-            None,
-            &catalogue,
-            "absentOfficialMethod",
-            "()Ljava/lang/String;",
-            scalar_shape(ValueKind::String, true),
-            vec![],
-            GetterPurpose::Raw,
-            None,
-        )?;
+        let event = capture.issue(GetterInvocation {
+            project: ":android",
+            receiver: GetterReceiver::StaticCatalogue(&catalogue),
+            name: "absentOfficialMethod",
+            descriptor: "()Ljava/lang/String;",
+            shape: scalar_shape(ValueKind::String, true),
+            arguments: vec![],
+            purpose: GetterPurpose::Raw,
+            after: None,
+        })?;
         assert!(matches!(event.outcome, GetterOutcome::Unavailable(_)));
         assert_eq!(capture.requests, capture.transport.observed);
         assert_eq!(capture.events.len(), 1);
