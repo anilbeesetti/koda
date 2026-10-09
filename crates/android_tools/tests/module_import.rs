@@ -2918,3 +2918,55 @@ fn strict_unknown_jdk_literal_wildcard_still_excludes_non_ascii_source() -> Resu
     );
     Ok(())
 }
+
+#[test]
+fn strict_leading_cased_mark_sigma_refreshes_first_and_prior_import_with_java_word_boundary()
+-> Result<()> {
+    let source_set = "\u{345}σ";
+    let mut fixture = unicode_source_set_fixture(source_set)?;
+    let (initial, initial_plan) =
+        unicode_source_capture(&fixture, "21", source_set, source_set, &["-Xprior-sigma"])?;
+    import_requested_capture(&mut fixture, &initial, initial_plan, 1)?;
+    let mut prior = ModuleImportPublisher::default();
+    prior.commit(stage(&fixture, &prior, 1)?, &revision(&fixture, 1))?;
+    assert_eq!(
+        committed_settings(&prior)?.compiler_arguments,
+        Some(vec!["-Xprior-sigma".into()])
+    );
+    let (value, plan) =
+        unicode_source_capture(&fixture, "21", "\u{345}Σ", source_set, &["-Xnew-sigma"])?;
+    let snapshot = import_requested_capture(&mut fixture, &value, plan, 2)?;
+    let mut fresh = ModuleImportPublisher::default();
+    fresh.commit(stage(&fixture, &fresh, 2)?, &revision(&fixture, 2))?;
+    prior.commit(stage(&fixture, &prior, 2)?, &revision(&fixture, 2))?;
+    assert_eq!(
+        committed_settings(&fresh)?.compiler_arguments,
+        Some(vec!["-Xnew-sigma".into()])
+    );
+    assert_eq!(
+        committed_settings(&prior)?.compiler_arguments,
+        Some(vec!["-Xnew-sigma".into()])
+    );
+    assert!(
+        snapshot
+            .raw_context()
+            .requests
+            .iter()
+            .all(|request| request.parameter
+                == android_tools::kotlin_import_facts::RequestParameter::Explicit(Some(
+                    "\u{345}Σ".into()
+                )))
+    );
+    assert_eq!(
+        snapshot
+            .raw_events()
+            .iter()
+            .find(|event| event.request == "source-first")
+            .context("Retained source-set sigma getter")?
+            .outcome,
+        android_tools::kotlin_import_facts::GetterOutcome::Available(Some(
+            android_tools::kotlin_import_facts::CaptureValue::String(source_set.into())
+        ))
+    );
+    Ok(())
+}

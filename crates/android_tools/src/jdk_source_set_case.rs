@@ -32,6 +32,15 @@ impl JdkCaseMap {
     }
 
     pub(super) fn lowercase(self, input: &str, language: &str) -> Result<String, &'static str> {
+        self.lowercase_with_context_probes(input, language, || {})
+    }
+
+    fn lowercase_with_context_probes(
+        self,
+        input: &str,
+        language: &str,
+        mut probe: impl FnMut(),
+    ) -> Result<String, &'static str> {
         // ASCII mappings, including locale-sensitive I, are invariant across
         // the supported JDKs and require no Unicode-version assumption.
         if input.is_ascii() {
@@ -50,7 +59,8 @@ impl JdkCaseMap {
             .column
             .ok_or("Captured JDK has no supported Unicode casing data")?;
         let chars: Vec<char> = input.chars().collect();
-        if chars.contains(&'\u{3a3}')
+        let has_sigma = chars.contains(&'\u{3a3}');
+        if has_sigma
             && !chars.iter().all(|value| {
                 value.is_ascii_alphabetic()
                     || ('\u{300}'..='\u{36f}').contains(value)
@@ -58,6 +68,24 @@ impl JdkCaseMap {
             })
         {
             return Err("Captured Java sigma word-boundary context is not supported");
+        }
+        // Leading enclosing marks form standalone words in Java's default
+        // word rules. Once a real letter starts this admitted Greek/ASCII word,
+        // embedded U+0345 is cased. Record its first/last cased positions once;
+        // rescanning a long mark prefix for every sigma would be quadratic.
+        let mut first_cased = None;
+        let mut last_cased = None;
+        if has_sigma {
+            for (index, &value) in chars.iter().enumerate() {
+                probe();
+                let letter = value.is_ascii_alphabetic() || Self::greek_cased(value, column);
+                if first_cased.is_none() && letter {
+                    first_cased = Some(index);
+                }
+                if first_cased.is_some() && (letter || value == '\u{345}') {
+                    last_cased = Some(index);
+                }
+            }
         }
         let mut output = String::with_capacity(input.len());
         for (index, &value) in chars.iter().enumerate() {
@@ -101,13 +129,10 @@ impl JdkCaseMap {
                 ("lt", '\u{cd}') => output.push_str("i\u{307}\u{301}"),
                 ("lt", '\u{128}') => output.push_str("i\u{307}\u{303}"),
                 (_, '\u{3a3}') => {
-                    let cased = |value: &char| {
-                        value.is_ascii_alphabetic()
-                            || Self::greek_cased(*value, column)
-                            || *value == '\u{345}'
-                    };
                     output.push(
-                        if preceding.iter().any(cased) && !following.iter().any(cased) {
+                        if first_cased.is_some_and(|first| first < index)
+                            && last_cased == Some(index)
+                        {
                             '\u{3c2}'
                         } else {
                             '\u{3c3}'
@@ -208,5 +233,41 @@ mod tests {
             JdkCaseMap::for_version("21").lowercase("Σ", "el"),
             Ok("σ".into())
         );
+    }
+}
+
+#[cfg(test)]
+mod sigma_word_boundary_tests {
+    use super::JdkCaseMap;
+
+    #[test]
+    fn leading_enclosing_cased_marks_do_not_supply_java_word_prefix() {
+        let mapper = JdkCaseMap::for_version("21");
+        for (input, expected) in [
+            ("\u{345}Σ", "\u{345}σ"),
+            ("\u{345}ΑΣ", "\u{345}ας"),
+            ("AΣ\u{345}", "aσ\u{345}"),
+            ("\u{300}ΣΣ", "\u{300}σς"),
+        ] {
+            assert_eq!(mapper.lowercase(input, "el"), Ok(expected.into()));
+        }
+    }
+
+    #[test]
+    fn long_enclosing_mark_and_sigma_sequences_have_linear_context_work() {
+        let prefix = "\u{300}".repeat(65_536);
+        let input = format!("{prefix}{}", "Σ".repeat(65_536));
+        let mut inspected = 0;
+        let actual = JdkCaseMap::for_version("21")
+            .lowercase_with_context_probes(&input, "el", || {
+                inspected += 1;
+            })
+            .expect("Supported standalone marks and Greek word");
+        assert_eq!(inspected, 131_072);
+        assert!(actual.starts_with(&prefix));
+        let word = &actual[prefix.len()..];
+        assert_eq!(word.chars().count(), 65_536);
+        assert!(word.chars().take(65_535).all(|value| value == 'σ'));
+        assert_eq!(word.chars().last(), Some('ς'));
     }
 }

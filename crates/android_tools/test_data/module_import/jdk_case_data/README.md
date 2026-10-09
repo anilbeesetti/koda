@@ -33,3 +33,10 @@ mutating one checked component only after a valid Basic Main model is parsed.
 The current Basic model accepts ASCII component names; its restriction remains
 unchanged. These tests do not establish end-to-end Unicode-named Android import,
 which remains tracked as incomplete applicability/production integration work.
+
+Supported sigma words also admit leading standalone U+0300–U+036F enclosing
+marks. They do not count as a preceding cased word letter. After the first real
+Greek/ASCII letter, embedded U+0345 counts as cased as required by Java's rule.
+First/last cased word positions are computed in one input pass; the large-mark
+regression counts the actual context probes and preserves the supported output.
+Complex punctuation/dictionary word contexts remain unavailable and unported.
