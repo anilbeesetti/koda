@@ -8,7 +8,7 @@ Licensed under the Apache License, Version 2.0. The full license is retained at
 The source manifest records exact original paths, revisions, sizes and SHA-256.
 IntelliJ Community is pinned to `b75ab523e6adbe1d26112219729eacbcfd24daa0`.
 AOSP tools/adt/idea is pinned to `a84efec3ba9542d9bfa1255103f0dc94833a3796`.
-Naming follows the retained `../import_facts/reference` Gradle resolver and
+Naming follows the retained `../import_facts/references` Gradle resolver and
 ExternalProject model builder. Legacy filename escaping follows the complete
 PathUtilRt source retained here, including Java whitespace distinctions.
 

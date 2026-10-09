@@ -115,6 +115,7 @@ pub struct KotlinImportFacts {
     identity: Vec<ModuleIdentity>,
     projects: BTreeMap<String, RawKotlinProject>,
     capture_context: Option<CaptureContext>,
+    capture_revision: Option<ImportRevision>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -596,12 +597,15 @@ impl<'a> StrictProjection<'a> {
 }
 
 /// `expected` is the host's independently retained discovery/request context,
-/// never copied from the untrusted invocation packet as its own proof.
+/// never copied from the untrusted invocation packet as its own proof. `issued`
+/// is retained by the host when starting that capture in the current workspace;
+/// it must not be manufactured later to rebind a retained invocation packet.
 pub fn import_kotlin_from_strict_capture(
     model: &ProjectModel,
     identities: &ImportFactsSnapshot,
     snapshot: &KotlinFactsSnapshot,
     expected: &CaptureContext,
+    issued: &ImportRevision,
     plans: &[StrictKotlinProjectPlan],
 ) -> ImportResult<KotlinImportFacts> {
     snapshot.ensure_current(model, identities, expected)?;
@@ -609,6 +613,15 @@ pub fn import_kotlin_from_strict_capture(
         return Err(unavailable(
             FactsUnavailableReason::Capability,
             "Discovery metadata does not prove getter invocation",
+        ));
+    }
+    if issued.root != model.root
+        || issued.model_revision != expected.binding.model_revision
+        || issued.selection_revision != expected.binding.selection_revision
+    {
+        return Err(unavailable(
+            FactsUnavailableReason::Stale,
+            "Capture was issued for another model, selection or workspace",
         ));
     }
     let projection = StrictProjection {
@@ -684,6 +697,7 @@ pub fn import_kotlin_from_strict_capture(
         identity: model_identity(model),
         projects,
         capture_context: Some(expected.clone()),
+        capture_revision: Some(issued.clone()),
     })
 }
 
@@ -808,6 +822,7 @@ pub fn parse_kotlin_import_facts(
         identity: export.modules,
         projects,
         capture_context: None,
+        capture_revision: None,
     })
 }
 
@@ -1319,6 +1334,10 @@ impl ModuleImportPublisher {
             || model_identity(model) != kotlin.identity
             || revision.model_revision != kotlin.binding.model_revision
             || revision.selection_revision != kotlin.binding.selection_revision
+            || kotlin
+                .capture_revision
+                .as_ref()
+                .is_some_and(|issued| issued != &revision)
         {
             return Err(unavailable(
                 FactsUnavailableReason::Stale,
@@ -1434,11 +1453,21 @@ impl ModuleImportPublisher {
             };
             let holder = imported_internal_name(&input, &naming)?;
             naming.existing_names.insert(holder.clone());
-            let external_id = if identity.is_empty() || identity == ":" {
+            let project_id = if identity.is_empty() || identity == ":" {
                 project_name.as_str()
             } else {
                 identity
             };
+            // getModuleId(context, externalProject) groups external IDs separately
+            // from escaped internal names and holder/sort identities.
+            let external_id = naming
+                .build_src_group
+                .as_deref()
+                .filter(|group| !group.is_empty())
+                .map_or_else(
+                    || project_id.to_owned(),
+                    |group| format!("{group}:{project_id}"),
+                );
             let project_path = module.directory.to_str().ok_or_else(|| {
                 unavailable(FactsUnavailableReason::Malformed, "Non-UTF8 module path")
             })?;
@@ -1450,7 +1479,7 @@ impl ModuleImportPublisher {
                 holder_internal_name: &holder,
                 external_system: CapturedExternalSystemIdentity::Gradle(CapturedGradleIdentity {
                     module_type: ImportedGradleModuleType::Project,
-                    external_project_id: Some(external_id),
+                    external_project_id: Some(&external_id),
                     external_project_path: Some(project_path),
                     external_root_project_path: Some(root_path),
                 }),
@@ -1467,11 +1496,26 @@ impl ModuleImportPublisher {
                 sort_name: holder.clone(),
                 members: vec![ImportedMember {
                     internal_name: holder.clone(),
-                    external_id: external_id.into(),
+                    external_id,
                     source_set_name: None,
+                    // A holder is a Rust-created grouping member, not automatic
+                    // Kotlin membership. Component facts control the linked group;
+                    // no components is explicitly Unknown below.
                     kotlin: KotlinMemberState::Absent,
                 }],
             };
+            // Explicit holder settings are an independent user operation. The
+            // source-set importer does not remove or recreate that holder facet.
+            if let Some(old) = previous_module(self.committed.as_ref(), &revision, &imported)
+                .and_then(|old| {
+                    old.members.iter().find(|member| {
+                        member.internal_name == holder && member.source_set_name.is_none()
+                    })
+                })
+                .filter(|member| matches!(member.kotlin, KotlinMemberState::Present(_)))
+            {
+                imported.members[0].kotlin = old.kotlin.clone();
+            }
             let source_sets = SourceSetImport {
                 module,
                 selection,
@@ -1506,6 +1550,21 @@ struct SourceSetImport<'a> {
     revision: &'a ImportRevision,
 }
 
+fn previous_module<'a>(
+    previous: Option<&'a CommittedImport>,
+    revision: &ImportRevision,
+    imported: &ImportedModule,
+) -> Option<&'a ImportedModule> {
+    previous
+        .filter(|previous| {
+            previous.revision.context_generation == revision.context_generation
+                && previous.revision.root == revision.root
+                && previous.revision.import_revision < revision.import_revision
+        })
+        .and_then(|previous| previous.modules.get(&imported.module))
+        .filter(|old| old.variant == imported.variant && old.directory == imported.directory)
+}
+
 fn add_source_set_members(
     imported: &mut ImportedModule,
     naming: &mut ImportNaming,
@@ -1530,6 +1589,12 @@ fn add_source_set_members(
                 "Missing selected variant",
             )
         })?;
+    if variant.components.is_empty()
+        && !matches!(imported.members[0].kotlin, KotlinMemberState::Present(_))
+    {
+        imported.members[0].kotlin =
+            KotlinMemberState::Unknown(KotlinUnknownReason::MissingSourceSet);
+    }
     let mut source_sets = BTreeSet::new();
     for component in &variant.components {
         if !source_sets.insert(&component.name) {
@@ -1551,34 +1616,26 @@ fn add_source_set_members(
         };
         // Unresolved getters, unmatched source sets and unknown versions are reference
         // no-op branches. MPP is a separate importer and must never reuse legacy state.
-        if let Some(previous) = previous.filter(|previous| {
-            previous.revision.context_generation == revision.context_generation
-                && previous.revision.root == revision.root
-                && previous.revision.import_revision < revision.import_revision
-        }) {
-            if let Some(previous_module) = previous.modules.get(&module.path).filter(|old| {
-                old.variant == imported.variant && old.directory == imported.directory
+        if let Some(previous_module) = previous_module(previous, revision, imported) {
+            if let Some(member) = previous_module.members.iter().find(|member| {
+                member.internal_name == internal_name
+                    && member.source_set_name.as_deref() == Some(&component.name)
             }) {
-                if let Some(member) = previous_module.members.iter().find(|member| {
-                    member.internal_name == internal_name
-                        && member.source_set_name.as_deref() == Some(&component.name)
-                }) {
-                    match (&mut state, &member.kotlin) {
-                        (KotlinMemberState::Present(settings), KotlinMemberState::Present(old)) => {
-                            let arguments = settings.compiler_arguments.take();
-                            let platform = settings.target_platform.take();
-                            *settings = old.clone();
-                            settings.compiler_arguments = arguments;
-                            settings.target_platform = platform;
-                        }
-                        (
-                            KotlinMemberState::Unknown(reason),
-                            old @ (KotlinMemberState::Present(_) | KotlinMemberState::Absent),
-                        ) if !matches!(reason, KotlinUnknownReason::MultiplatformImport) => {
-                            state = old.clone()
-                        }
-                        _ => {}
+                match (&mut state, &member.kotlin) {
+                    (KotlinMemberState::Present(settings), KotlinMemberState::Present(old)) => {
+                        let arguments = settings.compiler_arguments.take();
+                        let platform = settings.target_platform.take();
+                        *settings = old.clone();
+                        settings.compiler_arguments = arguments;
+                        settings.target_platform = platform;
                     }
+                    (
+                        KotlinMemberState::Unknown(reason),
+                        old @ (KotlinMemberState::Present(_) | KotlinMemberState::Absent),
+                    ) if !matches!(reason, KotlinUnknownReason::MultiplatformImport) => {
+                        state = old.clone()
+                    }
+                    _ => {}
                 }
             }
         }

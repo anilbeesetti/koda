@@ -446,6 +446,7 @@ fn strict_snapshot_projection_publishes_membership_and_rejects_incomplete_or_wro
         &fixture.identity,
         &snapshot,
         &expected,
+        &revision(&fixture, 1),
         std::slice::from_ref(&plan),
     )?;
     let mut publisher = ModuleImportPublisher::default();
@@ -474,6 +475,7 @@ fn strict_snapshot_projection_publishes_membership_and_rejects_incomplete_or_wro
             &fixture.identity,
             &snapshot,
             &expected,
+            &revision(&fixture, 1),
             &[incomplete]
         )
         .expect_err("Absence needs every official lookup")
@@ -488,6 +490,7 @@ fn strict_snapshot_projection_publishes_membership_and_rejects_incomplete_or_wro
             &fixture.identity,
             &snapshot,
             &expected,
+            &revision(&fixture, 1),
             &[wrong]
         )
         .expect_err("Source-set string is not a compiler version")
@@ -752,5 +755,237 @@ fn unqualified_requires_nullable_idea_name_qualified_requires_captured_qname() -
         imported_internal_name(&qualified, &settings)?,
         "declared-root.nested.android.main"
     );
+    Ok(())
+}
+
+#[test]
+fn holder_only_capture_stays_unknown_with_unverified_or_failed_getters() -> Result<()> {
+    let mut fixture = fixture()?;
+    fixture.value["modules"][0]["variants"][0]["components"] = json!([]);
+    fixture.model = parse_model(&wire(&fixture.value)?, &fixture.model.root)?;
+    fixture.identity = parse_import_facts(&wire(&fixture.value)?, &fixture.model, binding())?;
+    fixture.kotlin = recapture(&fixture, &fixture.value)?;
+    let publisher = ModuleImportPublisher::default();
+    let transaction = stage(&fixture, &publisher, 1)?;
+    let module = transaction
+        .module(":android")
+        .context("Holder-only module")?;
+    assert_eq!(module.members.len(), 1);
+    assert_eq!(module.kotlin_capability(), KotlinCapability::Unknown);
+    assert_eq!(
+        module.members[0].kotlin,
+        KotlinMemberState::Unknown(KotlinUnknownReason::MissingSourceSet)
+    );
+
+    let (mut value, expected, plan) = strict_fixture(&fixture)?;
+    let event = value["kotlinFacts"]["events"]
+        .as_array_mut()
+        .context("Events")?
+        .iter_mut()
+        .find(|event| event["request"] == "version")
+        .context("Version event")?;
+    event["outcome"] = json!({"status":"unavailable", "value": {
+        "kind":"invocation", "stage":"invoke", "capability":COMPILER_VERSION,
+        "detail":"Synthetic version getter failure", "actualClass":null,
+        "exceptions":[{"class":"java.lang.IllegalStateException","message":"synthetic failure"}]
+    }});
+    let snapshot = parse_kotlin_facts(
+        &wire(&value)?,
+        &fixture.model,
+        &fixture.identity,
+        &expected,
+        CaptureLimits::default(),
+    )?;
+    fixture.kotlin = import_kotlin_from_strict_capture(
+        &fixture.model,
+        &fixture.identity,
+        &snapshot,
+        &expected,
+        &revision(&fixture, 1),
+        &[plan],
+    )?;
+    assert_eq!(
+        stage(&fixture, &publisher, 1)?
+            .module(":android")
+            .context("Failed strict holder")?
+            .kotlin_capability(),
+        KotlinCapability::Unknown
+    );
+    Ok(())
+}
+
+#[test]
+fn explicit_holder_settings_survive_same_owner_reimport_and_do_not_cross_contexts() -> Result<()> {
+    let mut fixture = fixture()?;
+    let mut publisher = ModuleImportPublisher::default();
+    let mut transaction = stage(&fixture, &publisher, 1)?;
+    let settings = transaction
+        .create_settings(":android", "declared-root.android")
+        .context("Holder settings")?;
+    settings.name = "User holder facet".into();
+    settings.compiler_settings = Some(KotlinCompilerSettings {
+        additional_arguments: "-Xexplicit-holder".into(),
+    });
+    let expected = settings.clone();
+    publisher.commit(transaction, &revision(&fixture, 1))?;
+    fixture.value["modules"][0]["variants"][0]["components"] = json!([]);
+    fixture.model = parse_model(&wire(&fixture.value)?, &fixture.model.root)?;
+    fixture.identity = parse_import_facts(&wire(&fixture.value)?, &fixture.model, binding())?;
+    fixture.kotlin = recapture(&fixture, &fixture.value)?;
+    publisher.commit(stage(&fixture, &publisher, 2)?, &revision(&fixture, 2))?;
+    let module = &publisher.committed().context("Reimport")?.modules[":android"];
+    assert_eq!(module.members.len(), 1);
+    assert_eq!(
+        module.members[0].kotlin,
+        KotlinMemberState::Present(Box::new(expected))
+    );
+    assert_eq!(module.kotlin_capability(), KotlinCapability::Enabled);
+    let mut next_owner = revision(&fixture, 3);
+    next_owner.context_generation += 1;
+    let transaction = publisher.stage(
+        &fixture.model,
+        &fixture.identity,
+        &fixture.kotlin,
+        next_owner,
+        &fixture.naming,
+    )?;
+    assert_eq!(
+        transaction
+            .module(":android")
+            .context("New owner")?
+            .kotlin_capability(),
+        KotlinCapability::Unknown
+    );
+    Ok(())
+}
+
+#[test]
+fn strict_old_facts_cannot_be_rebound_to_a_returned_workspace_generation() -> Result<()> {
+    let mut fixture = fixture()?;
+    let (mut value, expected, plan) = strict_fixture(&fixture)?;
+    let snapshot = parse_kotlin_facts(
+        &wire(&value)?,
+        &fixture.model,
+        &fixture.identity,
+        &expected,
+        CaptureLimits::default(),
+    )?;
+    fixture.kotlin = import_kotlin_from_strict_capture(
+        &fixture.model,
+        &fixture.identity,
+        &snapshot,
+        &expected,
+        &revision(&fixture, 1),
+        std::slice::from_ref(&plan),
+    )?;
+    let mut publisher = ModuleImportPublisher::default();
+    publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+    let mut returned_owner = revision(&fixture, 2);
+    returned_owner.context_generation += 2;
+    assert_eq!(
+        publisher
+            .stage(
+                &fixture.model,
+                &fixture.identity,
+                &fixture.kotlin,
+                returned_owner.clone(),
+                &fixture.naming
+            )
+            .err()
+            .context("Old invocation must not receive new owner")?
+            .reason,
+        FactsUnavailableReason::Stale
+    );
+    assert_eq!(
+        publisher
+            .committed()
+            .context("Old state retained")?
+            .revision,
+        revision(&fixture, 1)
+    );
+    value["kotlinFacts"]["context"]["binding"]["captureId"] =
+        json!("fresh-returned-owner-invocation");
+    value["kotlinFacts"]["context"]["binding"]["sourceEpoch"] = json!("fresh-returned-owner-epoch");
+    let fresh_expected = serde_json::from_value(value["kotlinFacts"]["context"].clone())?;
+    let fresh_snapshot = parse_kotlin_facts(
+        &wire(&value)?,
+        &fixture.model,
+        &fixture.identity,
+        &fresh_expected,
+        CaptureLimits::default(),
+    )?;
+    let fresh = import_kotlin_from_strict_capture(
+        &fixture.model,
+        &fixture.identity,
+        &fresh_snapshot,
+        &fresh_expected,
+        &returned_owner,
+        &[plan],
+    )?;
+    let transaction = publisher.stage(
+        &fixture.model,
+        &fixture.identity,
+        &fresh,
+        returned_owner.clone(),
+        &fixture.naming,
+    )?;
+    publisher.commit(transaction, &returned_owner)?;
+    assert_eq!(
+        publisher.committed().context("Fresh invocation")?.modules[":android"].kotlin_capability(),
+        KotlinCapability::Enabled
+    );
+    Ok(())
+}
+
+#[test]
+fn grouped_import_preserves_root_nonroot_and_source_set_external_ids() -> Result<()> {
+    let mut fixture = fixture()?;
+    fixture.naming.build_src_group = Some("host".into());
+    let publisher = ModuleImportPublisher::default();
+    let transaction = stage(&fixture, &publisher, 1)?;
+    let nonroot = transaction.module(":android").context("Grouped nonroot")?;
+    assert_eq!(nonroot.holder_internal_name, "host.declared-root.android");
+    assert_eq!(nonroot.members[0].external_id, "host::android");
+    assert_eq!(nonroot.members[1].external_id, "host::android:debug");
+    assert_eq!(
+        nonroot.members[1].internal_name,
+        "host.declared-root.android.debug"
+    );
+    assert_eq!(nonroot.display_name, "android");
+    assert_eq!(nonroot.sort_name, nonroot.holder_internal_name);
+
+    fixture.value["modules"][0]["path"] = json!(":");
+    fixture.value["modules"][0]["directory"] = json!(fixture.model.root);
+    for field in ["importFacts", "moduleImportFacts"] {
+        fixture.value[field]["modules"][0]["module"] = json!(":");
+        fixture.value[field]["modules"][0]["directory"] = json!(fixture.model.root);
+    }
+    fixture.value["moduleImportFacts"]["projects"][0]["projectPath"] = json!(":");
+    fixture.value["moduleImportFacts"]["projects"][0]["compileTasks"]["result"]["value"][0]["path"] =
+        json!(":compileDebugKotlin");
+    let root_binding = ImportFactsBinding {
+        selected_variants: vec![VariantId {
+            module: ":".into(),
+            variant: "debug".into(),
+        }],
+        ..binding()
+    };
+    fixture.model = parse_model(&wire(&fixture.value)?, &fixture.model.root)?;
+    fixture.identity =
+        parse_import_facts(&wire(&fixture.value)?, &fixture.model, root_binding.clone())?;
+    fixture.kotlin = parse_kotlin_import_facts(
+        &wire(&fixture.value)?,
+        &fixture.model,
+        &fixture.identity,
+        root_binding,
+    )?;
+    let transaction = stage(&fixture, &publisher, 1)?;
+    let root = transaction.module(":").context("Grouped root")?;
+    assert_eq!(root.holder_internal_name, "host.declared-root");
+    assert_eq!(root.members[0].external_id, "host:declared-root");
+    assert_eq!(root.members[1].external_id, "host:declared-root:debug");
+    assert_eq!(root.members[1].internal_name, "host.declared-root.debug");
+    assert_eq!(root.display_name, "host:declared-root");
+    assert_eq!(root.sort_name, root.holder_internal_name);
     Ok(())
 }
