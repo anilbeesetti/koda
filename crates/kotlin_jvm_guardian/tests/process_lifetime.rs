@@ -425,4 +425,159 @@ mod linux {
             assert_gone(pid, Some(start));
         }
     }
+
+    #[test]
+    fn short_timeout_keeps_reaping_ownership_after_drop_for_unregistered_and_registered_launchers()
+    {
+        use std::os::fd::{AsRawFd as _, FromRawFd as _, OwnedFd};
+
+        struct PausedLauncher(OwnedFd);
+        impl PausedLauncher {
+            fn new(pid: u32, stopped_before_authentication: bool) -> Self {
+                let descriptor = unsafe { libc::syscall(libc::SYS_pidfd_open, pid, 0) };
+                assert!(descriptor >= 0, "Pin this test-owned launcher");
+                let pinned = Self(unsafe { OwnedFd::from_raw_fd(descriptor as i32) });
+                if stopped_before_authentication {
+                    let deadline = Instant::now() + SHUTDOWN;
+                    loop {
+                        let status = fs::read_to_string(format!("/proc/{pid}/stat"))
+                            .expect("Read this owned launcher's stop state");
+                        let (_, fields) = status
+                            .rsplit_once(") ")
+                            .expect("Linux launcher status fields");
+                        if fields.split_ascii_whitespace().next() == Some("T") {
+                            break;
+                        }
+                        assert!(
+                            Instant::now() < deadline,
+                            "Fixture did not stop before authentication"
+                        );
+                        thread::sleep(Duration::from_millis(5));
+                    }
+                }
+                pinned.signal(libc::SIGSTOP);
+                pinned
+            }
+
+            fn signal(&self, signal: i32) {
+                let result = unsafe {
+                    libc::syscall(
+                        libc::SYS_pidfd_send_signal,
+                        self.0.as_raw_fd(),
+                        signal,
+                        std::ptr::null::<libc::siginfo_t>(),
+                        0,
+                    )
+                };
+                assert_eq!(result, 0, "Signal only the pinned test-owned launcher");
+            }
+        }
+
+        impl Drop for PausedLauncher {
+            fn drop(&mut self) {
+                let result = unsafe {
+                    libc::syscall(
+                        libc::SYS_pidfd_send_signal,
+                        self.0.as_raw_fd(),
+                        libc::SIGCONT,
+                        std::ptr::null::<libc::siginfo_t>(),
+                        0,
+                    )
+                };
+                if result == -1 {
+                    let error = std::io::Error::last_os_error();
+                    if error.raw_os_error() != Some(libc::ESRCH) {
+                        eprintln!(
+                            "Unable to resume test-owned launcher for eventual reaping: {error}"
+                        );
+                    }
+                }
+            }
+        }
+
+        for registered in [false, true] {
+            let directory = tempfile::tempdir().expect("Short timeout fixture");
+            let ready = directory.path().join("wrapper");
+            let mut launch = command("blocking", &ready);
+            if !registered {
+                launch.env("KODA_GUARDIAN_FIXTURE_PREAUTH_STOP", "1");
+            }
+            let mut runtime = OwnedGradleRuntime::spawn(
+                launch,
+                if registered { launcher() } else { fixture() },
+                &library(),
+                Stdio::null(),
+                Stdio::null(),
+                Duration::from_millis(1),
+            )
+            .expect("Start short-budget owned launcher");
+            if registered {
+                ready_pid(&ready);
+            }
+            let pid = runtime.launcher_id();
+            let start = process_start(pid).expect("Owned launcher was alive");
+            let paused = PausedLauncher::new(pid, !registered);
+            let began = Instant::now();
+            let error = runtime
+                .close()
+                .expect_err("Paused launcher cannot meet the caller deadline");
+            assert!(error.to_string().contains("closure timed out"));
+            assert!(began.elapsed() < Duration::from_secs(1));
+            assert_eq!(
+                runtime
+                    .close()
+                    .expect_err("Failure cannot become cached success")
+                    .to_string(),
+                error.to_string()
+            );
+            drop(runtime);
+            paused.signal(libc::SIGCONT);
+            drop(paused);
+            assert_gone(pid, Some(start));
+            if let Ok(contents) = fs::read_to_string(ready)
+                && let Ok(child) = contents.parse::<u32>()
+            {
+                assert_gone(child, None);
+            }
+        }
+    }
+
+    #[test]
+    fn malformed_owned_peer_fails_a_waiting_capture_promptly_with_bounded_error_and_complete_closure()
+     {
+        let directory = tempfile::tempdir().expect("Malformed peer fixture");
+        let unrelated_ready = directory.path().join("unrelated");
+        let mut unrelated = Unrelated(
+            command("unrelated", &unrelated_ready)
+                .spawn()
+                .expect("Unrelated Rust fixture"),
+        );
+        ready_pid(&unrelated_ready);
+        fs::write(directory.path().join("final-output-stream"), "malformed")
+            .expect("Choose malformed peer");
+        let mut transport = capture(directory.path(), 16 * 1024);
+        let pid = ready_pid(&directory.path().join("fixture-pid"));
+        let start = process_start(pid).expect("Owned protocol fixture was alive");
+        let began = Instant::now();
+        let error = transport
+            .discover(&[])
+            .expect_err("Supervisor failure must interrupt the waiting getter");
+        let description = format!("{error:#}");
+        assert!(description.contains("invalid lifetime message"));
+        assert!(description.contains("channel was closed"));
+        assert!(description.len() < 4096);
+        assert!(began.elapsed() < Duration::from_secs(2));
+        let closure = transport
+            .abort()
+            .expect_err("The protocol failure remains explicit after physical closure");
+        assert!(format!("{closure:#}").contains("invalid lifetime message"));
+        assert_gone(pid, Some(start));
+        assert!(
+            unrelated
+                .0
+                .try_wait()
+                .expect("Unrelated fixture is preserved")
+                .is_none()
+        );
+    }
 }

@@ -1,6 +1,28 @@
 use crate::kotlin_import_facts::CaptureLimits;
 use std::io::{self, Write};
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct JsonUsage {
+    pub(crate) bytes: usize,
+    pub(crate) entries: usize,
+}
+
+impl JsonUsage {
+    pub(crate) fn checked_add(self, additional: Self, limits: CaptureLimits) -> io::Result<Self> {
+        let bytes = self
+            .bytes
+            .checked_add(additional.bytes)
+            .filter(|bytes| *bytes <= limits.record_bytes.min(16 * 1024 * 1024))
+            .ok_or_else(|| io::Error::other("Kotlin capture aggregate byte budget exceeded"))?;
+        let entries = self
+            .entries
+            .checked_add(additional.entries)
+            .filter(|entries| *entries <= limits.entries)
+            .ok_or_else(|| io::Error::other("Kotlin capture aggregate entry budget exceeded"))?;
+        Ok(Self { bytes, entries })
+    }
+}
+
 // Count JSON values as serde_json writes them, before copying into the retained
 // record. Object keys are excluded, matching the unchanged strict decoder.
 pub(crate) struct BoundedJsonWriter<W> {
@@ -30,6 +52,13 @@ impl<W: Write> BoundedJsonWriter<W> {
 
     pub(crate) fn into_inner(self) -> W {
         self.inner
+    }
+
+    pub(crate) fn usage(&self) -> JsonUsage {
+        JsonUsage {
+            bytes: self.bytes,
+            entries: self.entries,
+        }
     }
 
     fn value(&mut self) -> io::Result<()> {

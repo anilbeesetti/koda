@@ -63,9 +63,16 @@ requires the launcher's authenticated ECHILD acknowledgement, stable process
 handle exit, and direct launcher reaping. The agent exits its own JVM immediately
 when its lifeline closes; it does not wait for blocked project configuration or
 getter code. Startup failure, cancellation, deadline expiry, malformed responses,
-stale host revisions, retention overflow, and drop all close the owned lifetime.
-Cleanup is bounded by shutdownTimeoutMillis (at most 30 seconds), and cleanup
-failure is reported alongside the original capture error. Root must still run
+stale host revisions, retention overflow, and drop initiate owned lifetime closure.
+The caller's cleanup wait is bounded by shutdownTimeoutMillis (at most 30
+seconds), and cleanup failure is reported alongside the original capture error.
+After a timeout, the existing supervisor retains the direct child, private
+lifelines and reaping ownership; the launcher retains subreaper ownership until
+its descendants are reaped. The original timeout remains a failure, and later
+reaping does not turn it into a verified successful shutdown. Every intermediate
+ancestry hop is pinned and rechecked before peer admission. Malformed owned-peer
+messages close that connection at the first failure, and failure history remains
+bounded with an explicit additional-failure count. Root must still run
 the process regressions and a real official Gradle probe; source inspection is
 not runtime closure evidence.
 
@@ -75,16 +82,24 @@ capability-unavailable error before starting a process. They are unported, not
 inapplicable. Bundling the two guardian artifacts into the final IDE distribution
 and connecting the real getter producer to the project importer remain pending.
 
-The whole capture retains at most the unchanged strict 16 MiB record and 131,072
-JSON value nodes. Streaming accounting checks incoming frames before decoding,
-issued requests before handing them to a transport, and incoming discovery/events
-before retention or cloning. Final serialization uses a bounded writer over
+The complete encoded capture is bounded by the unchanged strict 16 MiB record
+and 131,072 JSON value nodes. Streaming accounting checks incoming frames before
+decoding. Initial context is measured once; immutable append-only row validation
+then permits exact cached totals plus only new requests, events, discovery rows,
+loader artifact entries and array separators. Every addition is checked before
+retention or cloning. Final serialization uses a bounded writer over
 borrowed context and events, without constructing a complete intermediate JSON
 Value. Budget exhaustion rejects the capture and aborts its runtime; no values,
 events, or raw diagnostics are truncated. The final diagnostic budget is checked
 after verified owned process/writer closure. Incoming immutable discovery rows
 are indexed once per update; duplicate, rewritten, removed, or reordered prior
-identities reject the capture.
+identities reject the capture. Object, class and catalogue lookups use retained
+keyed indexes rather than scanning task vectors. A failure latches the capture
+and closes its transport once, including errors during project-plan preparation.
+Capture health is checked between bounded partial socket writes, while receiving,
+and between every 64 KiB fixture/artifact read. A growing file rejects hashing
+without following an expanding EOF. These source changes still require actual
+tests, official JVM probes and large-project measurements.
 
 Root validation commands, with the normal repository toolchain and environment:
 

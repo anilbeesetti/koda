@@ -55,6 +55,13 @@ impl OwnedGradleRuntime {
     pub fn close(&mut self) -> Result<()> {
         Ok(())
     }
+
+    pub fn health_check(&self) -> Result<()> {
+        Err(CapabilityUnavailable {
+            platform: std::env::consts::OS,
+        }
+        .into())
+    }
 }
 
 #[cfg(target_os = "linux")]
@@ -90,11 +97,9 @@ mod linux {
     const MAX_MEMBERS: usize = 256;
 
     pub struct OwnedGradleRuntime {
-        launcher: Child,
         supervisor: Supervisor,
-        _directory: TempDir,
         shutdown_timeout: Duration,
-        launcher_status: Option<ExitStatus>,
+        launcher_id: u32,
         closure: Option<std::result::Result<(), String>>,
     }
 
@@ -199,10 +204,16 @@ mod linux {
                 .stdout(stdout)
                 .stderr(stderr);
 
-            let mut supervisor = Supervisor::start(&configuration)?;
-            let launcher = match supervised.spawn() {
-                Ok(launcher) => launcher,
+            let mut supervisor = Supervisor::start(&configuration, directory)?;
+            let launcher_id = match supervisor.launch(supervised) {
+                Ok(launcher_id) => launcher_id,
                 Err(error) => {
+                    if supervisor.reaping_needed() {
+                        supervisor.retain_reaping_owner();
+                        return Err(error).context(
+                            "Start Rust Gradle containment launcher; failed startup retains owned reaping",
+                        );
+                    }
                     return match supervisor.stop() {
                         Ok(()) => Err(error).context("Start Rust Gradle containment launcher"),
                         Err(closure) => Err(error).context(format!(
@@ -211,39 +222,31 @@ mod linux {
                     };
                 }
             };
-            let mut runtime = Self {
-                launcher,
+            let runtime = Self {
                 supervisor,
-                _directory: directory,
                 shutdown_timeout,
-                launcher_status: None,
+                launcher_id,
                 closure: None,
             };
-            if let Err(error) = runtime.supervisor.expect_launcher(runtime.launcher.id()) {
-                return match runtime.close() {
-                    Ok(()) => Err(error),
-                    Err(closure) => Err(error.context(format!(
-                        "Owned Gradle startup closure also failed: {closure:#}"
-                    ))),
-                };
-            }
             Ok(runtime)
         }
 
         pub fn try_wait(&mut self) -> Result<Option<ExitStatus>> {
-            self.supervisor.check_failures()?;
-            if self.launcher_status.is_none() {
-                self.launcher_status = self.launcher.try_wait()?;
-            }
-            if self.launcher_status.is_some() && self.supervisor.all_closed()? {
-                Ok(self.launcher_status)
+            self.health_check()?;
+            let status = lock(&self.supervisor.state)?.launcher_status;
+            if status.is_some() && self.supervisor.all_closed()? {
+                Ok(status)
             } else {
                 Ok(None)
             }
         }
 
         pub fn launcher_id(&self) -> u32 {
-            self.launcher.id()
+            self.launcher_id
+        }
+
+        pub fn health_check(&self) -> Result<()> {
+            self.supervisor.check_failures()
         }
 
         pub fn close(&mut self) -> Result<()> {
@@ -268,11 +271,9 @@ mod linux {
             let outcome = (|| -> Result<()> {
                 self.supervisor.begin_closure()?;
                 loop {
-                    if self.launcher_status.is_none() {
-                        self.launcher_status = self.launcher.try_wait()?;
-                    }
                     self.supervisor.kill_jvms()?;
-                    if self.launcher_status.is_some() && self.supervisor.all_closed()? {
+                    let launcher_finished = lock(&self.supervisor.state)?.launcher_status.is_some();
+                    if launcher_finished && self.supervisor.all_closed()? {
                         self.supervisor.check_failures()?;
                         return Ok(());
                     }
@@ -280,9 +281,15 @@ mod linux {
                         Instant::now() < deadline,
                         "Owned Gradle closure timed out; descendant absence was not established"
                     );
-                    thread::sleep(POLL_INTERVAL);
+                    thread::sleep(
+                        POLL_INTERVAL.min(deadline.saturating_duration_since(Instant::now())),
+                    );
                 }
             })();
+            if outcome.is_err() && self.supervisor.reaping_needed() {
+                self.supervisor.retain_reaping_owner();
+                return outcome;
+            }
             match (outcome, self.supervisor.stop()) {
                 (Ok(()), Ok(())) => Ok(()),
                 (Err(error), Ok(())) => Err(error),
@@ -365,11 +372,7 @@ mod linux {
             // SAFETY: the poll row references this live owned pidfd.
             let result = unsafe { libc::poll(&mut poll, 1, 0) };
             if result == -1 {
-                let error = io::Error::last_os_error();
-                if error.kind() == io::ErrorKind::Interrupted {
-                    return Ok(false);
-                }
-                return Err(error);
+                return Err(io::Error::last_os_error());
             }
             if poll.revents & libc::POLLNVAL != 0 {
                 return Err(io::Error::new(
@@ -377,7 +380,26 @@ mod linux {
                     "Owned pidfd became invalid",
                 ));
             }
-            Ok(poll.revents & libc::POLLIN != 0)
+            if poll.revents & libc::POLLIN != 0 {
+                Ok(true)
+            } else if result == 0 && poll.revents == 0 {
+                Ok(false)
+            } else {
+                Err(io::Error::other("Owned pidfd liveness was uncertain"))
+            }
+        }
+
+        fn pin(pid: libc::pid_t) -> io::Result<Self> {
+            // SAFETY: pidfd_open returns a new descriptor for the current PID
+            // occupant; the child PPID is rechecked before this is trusted.
+            let descriptor = unsafe { libc::syscall(libc::SYS_pidfd_open, pid, 0) };
+            if descriptor == -1 {
+                return Err(io::Error::last_os_error());
+            }
+            // SAFETY: ownership of the new descriptor was returned by the kernel.
+            Ok(Self {
+                descriptor: unsafe { OwnedFd::from_raw_fd(descriptor as libc::c_int) },
+            })
         }
 
         fn kill(&self) -> io::Result<()> {
@@ -413,18 +435,63 @@ mod linux {
 
     struct State {
         expected_launcher: Option<u32>,
+        launcher: Option<Child>,
+        launcher_identity: Option<ProcessIdentity>,
+        launcher_status: Option<ExitStatus>,
+        _directory: TempDir,
+        detached_cleanup: bool,
         launcher_registered: bool,
         launcher_closed: bool,
         closing: bool,
         stopping: bool,
         members: Vec<Member>,
-        failures: Vec<String>,
+        failures: FailureLog,
+    }
+
+    const MAX_FAILURES: usize = 16;
+
+    #[derive(Default)]
+    struct FailureLog {
+        details: Vec<String>,
+        additional: usize,
+    }
+
+    impl FailureLog {
+        fn record(&mut self, detail: String) {
+            if self.details.len() < MAX_FAILURES {
+                self.details.push(detail);
+            } else {
+                self.additional = self.additional.saturating_add(1);
+            }
+        }
+
+        fn is_empty(&self) -> bool {
+            self.details.is_empty() && self.additional == 0
+        }
+
+        fn description(&self) -> String {
+            let mut description = self.details.join("; ");
+            if self.additional > 0 {
+                description.push_str(&format!(
+                    "; {} further guardian failures beyond the retained {}-error limit",
+                    self.additional, MAX_FAILURES
+                ));
+            }
+            description
+        }
     }
 
     fn lock(state: &Mutex<State>) -> io::Result<MutexGuard<'_, State>> {
         state
             .lock()
             .map_err(|_| io::Error::other("Guardian registry lock was poisoned"))
+    }
+
+    fn cleanup_lock(state: &Mutex<State>) -> MutexGuard<'_, State> {
+        match state.lock() {
+            Ok(state) => state,
+            Err(poisoned) => poisoned.into_inner(),
+        }
     }
 
     struct Pending {
@@ -440,32 +507,43 @@ mod linux {
     }
 
     impl Supervisor {
-        fn start(configuration: &Configuration) -> Result<Self> {
+        fn start(configuration: &Configuration, directory: TempDir) -> Result<Self> {
             let listener = UnixListener::bind(&configuration.endpoint)?;
             fs::set_permissions(&configuration.endpoint, fs::Permissions::from_mode(0o600))?;
             listener.set_nonblocking(true)?;
             let state = Arc::new(Mutex::new(State {
                 expected_launcher: None,
+                launcher: None,
+                launcher_identity: None,
+                launcher_status: None,
+                _directory: directory,
+                detached_cleanup: false,
                 launcher_registered: false,
                 launcher_closed: false,
                 closing: false,
                 stopping: false,
                 members: Vec::new(),
-                failures: Vec::new(),
+                failures: FailureLog::default(),
             }));
             let worker_state = state.clone();
             let token = configuration.token;
             let worker = thread::Builder::new()
                 .name("koda-gradle-lifetime".into())
                 .spawn(move || {
-                    let outcome = supervise(listener, token, &worker_state);
+                    let outcome =
+                        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                            supervise(listener, token, &worker_state)
+                        })) {
+                            Ok(outcome) => outcome,
+                            Err(_) => Err(io::Error::other("Guardian registry worker panicked")),
+                        };
                     if let Err(error) = &outcome {
-                        match lock(&worker_state) {
-                            Ok(mut state) => state.failures.push(error.to_string()),
-                            Err(secondary) => log::error!(
-                                "Guardian registry failed while reporting failure: {secondary}"
-                            ),
-                        }
+                        cleanup_lock(&worker_state)
+                            .failures
+                            .record(error.to_string());
+                    }
+                    if outcome.is_err() {
+                        retain_failed_supervisor_ownership(&worker_state);
                     }
                     outcome
                 })?;
@@ -475,9 +553,30 @@ mod linux {
             })
         }
 
-        fn expect_launcher(&mut self, pid: u32) -> Result<()> {
-            lock(&self.state)?.expected_launcher = Some(pid);
-            Ok(())
+        fn launch(&self, mut command: Command) -> Result<u32> {
+            let mut state = lock(&self.state)?;
+            ensure!(
+                state.failures.is_empty() && !state.stopping,
+                "Guardian failed before launcher startup: {}",
+                state.failures.description()
+            );
+            let launcher = command.spawn()?;
+            let pid = launcher.id();
+            state.expected_launcher = Some(pid);
+            state.launcher = Some(launcher);
+            // This direct child has not been reaped, so its numeric PID cannot
+            // be reused while the stable handle is obtained under this lock.
+            match ProcessIdentity::pin(pid as libc::pid_t) {
+                Ok(identity) => state.launcher_identity = Some(identity),
+                Err(error) => {
+                    state.closing = true;
+                    state
+                        .failures
+                        .record(format!("Pin spawned guardian launcher: {error}"));
+                    return Err(error).context("Pin spawned guardian launcher");
+                }
+            }
+            Ok(pid)
         }
 
         fn check_failures(&self) -> Result<()> {
@@ -485,7 +584,7 @@ mod linux {
             ensure!(
                 state.failures.is_empty(),
                 "Guardian failure: {}",
-                state.failures.join("; ")
+                state.failures.description()
             );
             Ok(())
         }
@@ -493,6 +592,26 @@ mod linux {
         fn begin_closure(&self) -> Result<()> {
             lock(&self.state)?.closing = true;
             Ok(())
+        }
+
+        fn reaping_needed(&self) -> bool {
+            let state = cleanup_lock(&self.state);
+            state.launcher.is_some() && state.launcher_status.is_none()
+                || state
+                    .members
+                    .iter()
+                    .any(|member| !matches!(member.identity.exited(), Ok(true)))
+        }
+
+        fn retain_reaping_owner(&mut self) {
+            {
+                let mut state = cleanup_lock(&self.state);
+                state.closing = true;
+                state.detached_cleanup = true;
+            }
+            if let Some(worker) = self.worker.take() {
+                drop(worker);
+            }
         }
 
         fn kill_jvms(&self) -> Result<()> {
@@ -535,7 +654,9 @@ mod linux {
                 if failures.is_empty() {
                     Ok(())
                 } else {
-                    state.failures.extend(failures.iter().cloned());
+                    for failure in &failures {
+                        state.failures.record(failure.clone());
+                    }
                     Err(anyhow::anyhow!(
                         "Guardian socket closure failed: {}",
                         failures.join("; ")
@@ -562,6 +683,14 @@ mod linux {
 
     impl Drop for Supervisor {
         fn drop(&mut self) {
+            if cleanup_lock(&self.state).detached_cleanup {
+                return;
+            }
+            if self.reaping_needed() {
+                self.retain_reaping_owner();
+                log::error!("Retaining owned Gradle reaping after unexpected supervisor drop");
+                return;
+            }
             if let Err(error) = self.stop() {
                 log::error!("Unable to stop Gradle guardian registry: {error:#}");
             }
@@ -571,8 +700,24 @@ mod linux {
     fn supervise(listener: UnixListener, token: [u8; 32], shared: &Mutex<State>) -> io::Result<()> {
         let mut pending = Vec::<Pending>::new();
         loop {
-            if lock(shared)?.stopping {
-                return Ok(());
+            {
+                let mut state = lock(shared)?;
+                poll_launcher(&mut state)?;
+                if state.detached_cleanup {
+                    state.closing = true;
+                    for member in &state.members {
+                        if member.role == Role::Jvm {
+                            member.identity.kill()?;
+                        }
+                    }
+                    if state.launcher_status.is_some() && all_members_exited(&state)? {
+                        log::info!("Reaped owned Gradle launcher after a reported closure failure");
+                        return Ok(());
+                    }
+                }
+                if state.stopping {
+                    return Ok(());
+                }
             }
             for _ in 0..MAX_PENDING {
                 match listener.accept() {
@@ -630,7 +775,13 @@ mod linux {
                         }
                         if role == Role::Launcher
                             && (state.expected_launcher != Some(pid as u32)
-                                || state.launcher_registered)
+                                || state.launcher_registered
+                                || !state
+                                    .launcher_identity
+                                    .as_ref()
+                                    .map(|identity| identity.exited().map(|exited| !exited))
+                                    .transpose()?
+                                    .unwrap_or(false))
                         {
                             remove = true;
                         } else {
@@ -646,7 +797,7 @@ mod linux {
                                 item.connection.shutdown(Shutdown::Both)?;
                                 continue;
                             }
-                            if role == Role::Jvm && !owned_descendant(pid, &state)? {
+                            if role == Role::Jvm && !owned_descendant(pid, &identity, &state)? {
                                 drop(state);
                                 let item = pending.swap_remove(index);
                                 item.connection.shutdown(Shutdown::Both)?;
@@ -727,7 +878,13 @@ mod linux {
                             member.connection = None;
                         }
                         Ok(_) => {
-                            failures.push("Guardian peer sent an invalid lifetime message".into())
+                            failures.push("Guardian peer sent an invalid lifetime message; its channel was closed".into());
+                            match connection.shutdown(Shutdown::Both) {
+                                Ok(()) => {}
+                                Err(error) if error.kind() == io::ErrorKind::NotConnected => {}
+                                Err(error) => failures.push(error.to_string()),
+                            }
+                            member.connection = None;
                         }
                         Err(error) if error.kind() == io::ErrorKind::WouldBlock => {}
                         Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
@@ -743,7 +900,75 @@ mod linux {
                     }
                 }
                 state.launcher_closed |= closed;
-                state.failures.extend(failures);
+                for failure in failures {
+                    state.failures.record(failure);
+                }
+            }
+            thread::sleep(POLL_INTERVAL);
+        }
+    }
+
+    fn poll_launcher(state: &mut State) -> io::Result<()> {
+        if state.launcher_status.is_none()
+            && let Some(launcher) = state.launcher.as_mut()
+        {
+            state.launcher_status = launcher.try_wait()?;
+        }
+        Ok(())
+    }
+
+    fn all_members_exited(state: &State) -> io::Result<bool> {
+        for member in &state.members {
+            if !member.identity.exited()? {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
+
+    fn retain_failed_supervisor_ownership(shared: &Mutex<State>) {
+        {
+            let mut state = cleanup_lock(shared);
+            state.closing = true;
+            let mut failures = Vec::new();
+            for member in &mut state.members {
+                if let Some(connection) = member.connection.take() {
+                    match connection.shutdown(Shutdown::Both) {
+                        Ok(()) => {}
+                        Err(error) if error.kind() == io::ErrorKind::NotConnected => {}
+                        Err(error) => failures.push(error.to_string()),
+                    }
+                }
+            }
+            for failure in failures {
+                state.failures.record(failure);
+            }
+        }
+        let mut reported = false;
+        loop {
+            let outcome = (|| -> io::Result<bool> {
+                let mut state = cleanup_lock(shared);
+                poll_launcher(&mut state)?;
+                for member in &state.members {
+                    if member.role == Role::Jvm {
+                        member.identity.kill()?;
+                    }
+                }
+                Ok(
+                    (state.launcher.is_none() || state.launcher_status.is_some())
+                        && all_members_exited(&state)?,
+                )
+            })();
+            match outcome {
+                Ok(true) => return,
+                Ok(false) => {}
+                Err(error) if !reported => {
+                    log::error!(
+                        "Owned Gradle reaping remains pending after supervisor failure: {error}"
+                    );
+                    reported = true;
+                }
+                Err(_) => {}
             }
             thread::sleep(POLL_INTERVAL);
         }
@@ -780,7 +1005,124 @@ mod linux {
         Ok(credentials.pid)
     }
 
-    fn owned_descendant(mut pid: libc::pid_t, state: &State) -> io::Result<bool> {
+    trait AncestryInspection {
+        type Handle;
+        fn pin(&mut self, pid: libc::pid_t) -> io::Result<Self::Handle>;
+        fn live(&mut self, handle: &Self::Handle) -> io::Result<bool>;
+        fn parent(
+            &mut self,
+            pid: libc::pid_t,
+            handle: &Self::Handle,
+        ) -> io::Result<Option<libc::pid_t>>;
+    }
+
+    struct ProcAncestry;
+
+    impl AncestryInspection for ProcAncestry {
+        type Handle = ProcessIdentity;
+
+        fn pin(&mut self, pid: libc::pid_t) -> io::Result<Self::Handle> {
+            ProcessIdentity::pin(pid)
+        }
+
+        fn live(&mut self, handle: &Self::Handle) -> io::Result<bool> {
+            Ok(!handle.exited()?)
+        }
+
+        fn parent(
+            &mut self,
+            pid: libc::pid_t,
+            handle: &Self::Handle,
+        ) -> io::Result<Option<libc::pid_t>> {
+            if handle.exited()? {
+                return Ok(None);
+            }
+            let status = match fs::read_to_string(format!("/proc/{pid}/stat")) {
+                Ok(status) => status,
+                Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+                Err(error) => return Err(error),
+            };
+            if handle.exited()? {
+                return Ok(None);
+            }
+            let (_, fields) = status.rsplit_once(") ").ok_or(io::ErrorKind::InvalidData)?;
+            let parent = fields
+                .split_ascii_whitespace()
+                .nth(1)
+                .ok_or(io::ErrorKind::InvalidData)?
+                .parse::<libc::pid_t>()
+                .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+            Ok(Some(parent))
+        }
+    }
+
+    fn inspect_ancestry<I: AncestryInspection>(
+        inspector: &mut I,
+        peer_pid: libc::pid_t,
+        peer: &I::Handle,
+        launcher_pid: libc::pid_t,
+        launcher: &I::Handle,
+    ) -> io::Result<bool> {
+        if peer_pid == launcher_pid || !inspector.live(peer)? || !inspector.live(launcher)? {
+            return Ok(false);
+        }
+        let mut chain: Vec<(libc::pid_t, libc::pid_t, I::Handle)> = Vec::new();
+        let mut pid = peer_pid;
+        for _ in 0..1024 {
+            let child = chain.last().map_or(peer, |(_, _, handle)| handle);
+            if !inspector.live(child)? {
+                return Ok(false);
+            }
+            let Some(parent_pid) = inspector.parent(pid, child)? else {
+                return Ok(false);
+            };
+            if parent_pid <= 1
+                || parent_pid == pid
+                || parent_pid == std::process::id() as libc::pid_t
+            {
+                return Ok(false);
+            }
+            let parent = inspector.pin(parent_pid)?;
+            if !inspector.live(child)?
+                || !inspector.live(&parent)?
+                || inspector.parent(pid, child)? != Some(parent_pid)
+            {
+                return Ok(false);
+            }
+            chain.push((pid, parent_pid, parent));
+            if parent_pid == launcher_pid {
+                let mut child = peer;
+                for (child_pid, parent_pid, parent) in &chain {
+                    if !inspector.live(child)?
+                        || !inspector.live(parent)?
+                        || inspector.parent(*child_pid, child)? != Some(*parent_pid)
+                    {
+                        return Ok(false);
+                    }
+                    child = parent;
+                }
+                if !inspector.live(peer)? || !inspector.live(launcher)? {
+                    return Ok(false);
+                }
+                for (_, _, handle) in &chain {
+                    if !inspector.live(handle)? {
+                        return Ok(false);
+                    }
+                }
+                return Ok(true);
+            }
+            pid = parent_pid;
+        }
+        Err(io::Error::other(
+            "Guardian ownership ancestry exceeded its depth limit",
+        ))
+    }
+
+    fn owned_descendant(
+        pid: libc::pid_t,
+        peer: &ProcessIdentity,
+        state: &State,
+    ) -> io::Result<bool> {
         let Some(launcher) = state.expected_launcher else {
             return Ok(false);
         };
@@ -791,35 +1133,213 @@ mod linux {
         else {
             return Ok(false);
         };
-        if anchor.identity.exited()? {
-            return Ok(false);
+        inspect_ancestry(
+            &mut ProcAncestry,
+            pid,
+            peer,
+            launcher as libc::pid_t,
+            &anchor.identity,
+        )
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use std::collections::{BTreeMap, BTreeSet};
+
+        const PEER: libc::pid_t = 2_000_000_001;
+        const PARENT: libc::pid_t = 2_000_000_002;
+        const ANCHOR: libc::pid_t = 2_000_000_003;
+
+        #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+        struct Handle(libc::pid_t, u8);
+
+        #[derive(Clone, Copy)]
+        enum Fault {
+            None,
+            ReusedForeignParent,
+            ParentDiesAfterPin,
+            ParentChangesWhileLive,
+            DeathDuringFinalValidation,
+            InterruptedLiveness,
+            UncertainLiveness,
         }
-        for _ in 0..1024 {
-            if pid == launcher as libc::pid_t {
-                return Ok(true);
-            }
-            if pid <= 1 || pid == std::process::id() as libc::pid_t {
-                return Ok(false);
-            }
-            let status = match fs::read_to_string(format!("/proc/{pid}/stat")) {
-                Ok(status) => status,
-                Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(false),
-                Err(error) => return Err(error),
-            };
-            let (_, fields) = status.rsplit_once(") ").ok_or(io::ErrorKind::InvalidData)?;
-            let parent = fields
-                .split_ascii_whitespace()
-                .nth(1)
-                .ok_or(io::ErrorKind::InvalidData)?
-                .parse::<libc::pid_t>()
-                .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-            if parent == pid {
-                return Err(io::ErrorKind::InvalidData.into());
-            }
-            pid = parent;
+
+        struct FakeAncestry {
+            live: BTreeSet<Handle>,
+            parents: BTreeMap<libc::pid_t, libc::pid_t>,
+            fault: Fault,
+            pins: Vec<Handle>,
+            reads: BTreeMap<libc::pid_t, usize>,
+            signals: Vec<Handle>,
         }
-        Err(io::Error::other(
-            "Guardian ownership ancestry exceeded its depth limit",
-        ))
+
+        impl FakeAncestry {
+            fn new(fault: Fault) -> Self {
+                Self {
+                    live: [Handle(PEER, 0), Handle(PARENT, 0), Handle(ANCHOR, 0)].into(),
+                    parents: [(PEER, PARENT), (PARENT, ANCHOR)].into(),
+                    fault,
+                    pins: Vec::new(),
+                    reads: BTreeMap::new(),
+                    signals: Vec::new(),
+                }
+            }
+
+            fn authenticate_and_signal(&mut self) -> io::Result<bool> {
+                let owned =
+                    inspect_ancestry(self, PEER, &Handle(PEER, 0), ANCHOR, &Handle(ANCHOR, 0))?;
+                if owned {
+                    self.signals.push(Handle(PEER, 0));
+                }
+                Ok(owned)
+            }
+        }
+
+        impl AncestryInspection for FakeAncestry {
+            type Handle = Handle;
+
+            fn pin(&mut self, pid: libc::pid_t) -> io::Result<Handle> {
+                let mut handle = Handle(pid, 0);
+                if pid == PARENT {
+                    match self.fault {
+                        Fault::ReusedForeignParent => {
+                            self.live.remove(&Handle(PARENT, 0));
+                            handle = Handle(PARENT, 1);
+                            self.live.insert(handle);
+                            self.parents.insert(PEER, 1);
+                            self.parents.insert(PARENT, ANCHOR);
+                        }
+                        Fault::ParentDiesAfterPin => {
+                            self.live.remove(&handle);
+                        }
+                        Fault::ParentChangesWhileLive => {
+                            self.parents.insert(PEER, 1);
+                        }
+                        _ => {}
+                    }
+                }
+                self.pins.push(handle);
+                Ok(handle)
+            }
+
+            fn live(&mut self, handle: &Handle) -> io::Result<bool> {
+                if matches!(self.fault, Fault::InterruptedLiveness) {
+                    return Err(io::ErrorKind::Interrupted.into());
+                }
+                if matches!(self.fault, Fault::UncertainLiveness) {
+                    return Err(io::Error::other("Injected uncertain pidfd poll"));
+                }
+                Ok(self.live.contains(handle))
+            }
+
+            fn parent(
+                &mut self,
+                pid: libc::pid_t,
+                handle: &Handle,
+            ) -> io::Result<Option<libc::pid_t>> {
+                let reads = self.reads.entry(pid).or_default();
+                *reads += 1;
+                if matches!(self.fault, Fault::DeathDuringFinalValidation)
+                    && pid == PEER
+                    && *reads == 3
+                {
+                    self.live.remove(&Handle(PARENT, 0));
+                }
+                if self.live.contains(handle) {
+                    Ok(self.parents.get(&pid).copied())
+                } else {
+                    Ok(None)
+                }
+            }
+        }
+
+        #[test]
+        fn ancestry_rejects_foreign_parent_pid_reuse_without_signalling_the_peer() {
+            let mut inspector = FakeAncestry::new(Fault::ReusedForeignParent);
+            inspector.parents.insert(PARENT, 1);
+            assert!(
+                !inspector
+                    .authenticate_and_signal()
+                    .expect("Reject changed parent identity")
+            );
+            assert_eq!(inspector.pins, [Handle(PARENT, 1)]);
+            assert!(inspector.signals.is_empty());
+            assert!(inspector.live.contains(&Handle(PEER, 0)));
+        }
+
+        #[test]
+        fn ancestry_rejects_parent_death_and_changed_ppid_even_when_other_handles_are_live() {
+            for fault in [
+                Fault::ParentDiesAfterPin,
+                Fault::ParentChangesWhileLive,
+                Fault::DeathDuringFinalValidation,
+            ] {
+                let mut inspector = FakeAncestry::new(fault);
+                assert!(
+                    !inspector
+                        .authenticate_and_signal()
+                        .expect("Reject unstable ancestry")
+                );
+                assert!(inspector.signals.is_empty());
+            }
+        }
+
+        #[test]
+        fn ancestry_propagates_interrupted_liveness_without_accepting_or_signalling() {
+            let mut inspector = FakeAncestry::new(Fault::InterruptedLiveness);
+            assert_eq!(
+                inspector
+                    .authenticate_and_signal()
+                    .expect_err("Interruption is not proof of life")
+                    .kind(),
+                io::ErrorKind::Interrupted
+            );
+            assert!(inspector.signals.is_empty());
+        }
+
+        #[test]
+        fn ancestry_propagates_uncertain_liveness_without_accepting_or_signalling() {
+            let mut inspector = FakeAncestry::new(Fault::UncertainLiveness);
+            let error = inspector
+                .authenticate_and_signal()
+                .expect_err("Uncertain readiness is not proof of life");
+            assert!(error.to_string().contains("uncertain pidfd poll"));
+            assert!(inspector.signals.is_empty());
+        }
+
+        #[test]
+        fn ancestry_retains_and_revalidates_every_owned_hop_before_acceptance() {
+            let mut inspector = FakeAncestry::new(Fault::None);
+            assert!(
+                inspector
+                    .authenticate_and_signal()
+                    .expect("Complete live ownership chain")
+            );
+            assert_eq!(inspector.pins, [Handle(PARENT, 0), Handle(ANCHOR, 0)]);
+            assert_eq!(inspector.signals, [Handle(PEER, 0)]);
+            assert!(inspector.reads[&PEER] >= 3);
+            assert!(inspector.reads[&PARENT] >= 3);
+        }
+
+        #[test]
+        fn guardian_failure_retention_is_bounded_and_reports_additional_errors_explicitly() {
+            let mut failures = FailureLog::default();
+            for index in 0..10_000 {
+                failures.record(format!("Injected guardian failure {index}"));
+            }
+            assert_eq!(failures.details.len(), MAX_FAILURES);
+            assert_eq!(failures.additional, 10_000 - MAX_FAILURES);
+            assert!(
+                failures
+                    .description()
+                    .contains("9984 further guardian failures")
+            );
+            assert!(
+                failures
+                    .description()
+                    .contains("Injected guardian failure 0")
+            );
+        }
     }
 }

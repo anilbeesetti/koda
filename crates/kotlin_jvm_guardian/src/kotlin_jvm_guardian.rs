@@ -463,19 +463,96 @@ pub fn launcher_entrypoint() -> io::Result<i32> {
         },
         Err(error) => Err(error),
     };
-    close_descendants(Instant::now() + shutdown)?;
-    // This message is sent only after waitpid reports ECHILD, including JVMs
-    // that were detached but had not loaded their native agent when cancelled.
-    match write_before(&mut lifetime, &[CLOSED], Instant::now() + shutdown) {
-        Ok(()) => {}
-        Err(error)
-            if matches!(
-                error.kind(),
-                io::ErrorKind::BrokenPipe | io::ErrorKind::ConnectionReset
-            ) => {}
-        Err(error) => return Err(error),
+    finish_launcher_with(
+        outcome,
+        || retain_descendant_closure(shutdown),
+        || write_before(&mut lifetime, &[CLOSED], Instant::now() + shutdown),
+    )
+}
+
+#[cfg(target_os = "linux")]
+#[derive(Debug)]
+struct LauncherFailures {
+    operation: Option<io::Error>,
+    closure: Option<io::Error>,
+    acknowledgement: Option<io::Error>,
+}
+
+#[cfg(target_os = "linux")]
+impl std::fmt::Display for LauncherFailures {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut separator = "";
+        for (phase, failure) in [
+            ("wrapper operation", &self.operation),
+            ("descendant closure", &self.closure),
+            ("CLOSED acknowledgement delivery", &self.acknowledgement),
+        ] {
+            if let Some(failure) = failure {
+                write!(formatter, "{separator}{phase} failed: {failure}")?;
+                separator = "; ";
+            }
+        }
+        Ok(())
     }
-    outcome
+}
+
+#[cfg(target_os = "linux")]
+impl std::error::Error for LauncherFailures {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        self.operation
+            .as_ref()
+            .or(self.closure.as_ref())
+            .or(self.acknowledgement.as_ref())
+            .map(|error| error as &(dyn std::error::Error + 'static))
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn finish_launcher_with(
+    outcome: io::Result<i32>,
+    close: impl FnOnce() -> io::Result<()>,
+    acknowledge: impl FnOnce() -> io::Result<()>,
+) -> io::Result<i32> {
+    let closure = close();
+    // An acknowledgement cannot authorize successful closure if ECHILD was
+    // not established within the issued closure operation.
+    let acknowledgement = if closure.is_ok() {
+        acknowledge()
+    } else {
+        Ok(())
+    };
+    if outcome.is_ok() && closure.is_ok() && acknowledgement.is_ok() {
+        return outcome;
+    }
+    let failures = LauncherFailures {
+        operation: outcome.err(),
+        closure: closure.err(),
+        acknowledgement: acknowledgement.err(),
+    };
+    let kind = failures
+        .operation
+        .as_ref()
+        .or(failures.closure.as_ref())
+        .or(failures.acknowledgement.as_ref())
+        .map_or(io::ErrorKind::Other, io::Error::kind);
+    Err(io::Error::new(kind, failures))
+}
+
+#[cfg(target_os = "linux")]
+fn retain_descendant_closure(shutdown: Duration) -> io::Result<()> {
+    let first = close_descendants(Instant::now() + shutdown);
+    if first.is_err() {
+        // Keep subreaper ownership after the reported deadline. Exiting here
+        // would orphan delayed children; the host can report its bounded error
+        // while its retained supervisor waits for this launcher to finish.
+        loop {
+            if close_descendants(Instant::now() + shutdown).is_ok() {
+                break;
+            }
+            thread::sleep(POLL_INTERVAL);
+        }
+    }
+    first
 }
 
 #[cfg(target_os = "linux")]
@@ -635,5 +712,62 @@ mod tests {
         assert!(decode_launch(&bytes[..bytes.len() - 1]).is_err());
         assert!(encode_launch(OsStr::new(""), &[]).is_err());
         assert!(encode_launch(OsStr::new("/tmp/program"), &[OsString::from("\0")]).is_err());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn launcher_keeps_wrapper_and_descendant_closure_errors_without_acknowledging() {
+        let acknowledged = std::cell::Cell::new(false);
+        let error = finish_launcher_with(
+            Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                "Original wrapper spawn failure",
+            )),
+            || {
+                Err(io::Error::new(
+                    io::ErrorKind::TimedOut,
+                    "Injected descendant closure failure",
+                ))
+            },
+            || {
+                acknowledged.set(true);
+                Ok(())
+            },
+        )
+        .expect_err("Both causes must survive");
+        assert_eq!(error.kind(), io::ErrorKind::NotFound);
+        assert!(error.to_string().contains("Original wrapper spawn failure"));
+        assert!(
+            error
+                .to_string()
+                .contains("Injected descendant closure failure")
+        );
+        assert!(!acknowledged.get());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn launcher_keeps_wrapper_and_acknowledgement_delivery_errors() {
+        let error = finish_launcher_with(
+            Err(io::Error::new(
+                io::ErrorKind::PermissionDenied,
+                "Original wrapper wait failure",
+            )),
+            || Ok(()),
+            || {
+                Err(io::Error::new(
+                    io::ErrorKind::BrokenPipe,
+                    "Injected CLOSED delivery failure",
+                ))
+            },
+        )
+        .expect_err("Operation and acknowledgement causes must survive");
+        assert_eq!(error.kind(), io::ErrorKind::PermissionDenied);
+        assert!(error.to_string().contains("Original wrapper wait failure"));
+        assert!(
+            error
+                .to_string()
+                .contains("Injected CLOSED delivery failure")
+        );
     }
 }

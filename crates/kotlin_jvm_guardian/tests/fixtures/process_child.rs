@@ -41,6 +41,18 @@ fn run() -> std::io::Result<()> {
         connect_registered(&Configuration::parse(&configuration)?, Role::Jvm)
     }
 
+    if std::env::var_os("KODA_GUARDIAN_FIXTURE_PREAUTH_STOP").is_some() {
+        // This single-threaded launcher fixture pauses before authentication,
+        // then runs the real containment launcher once the test resumes it.
+        // Consume the flag before the real launcher's child inherits its environment.
+        unsafe { std::env::remove_var("KODA_GUARDIAN_FIXTURE_PREAUTH_STOP") };
+        if unsafe { libc::raise(libc::SIGSTOP) } != 0 {
+            return Err(io::Error::last_os_error());
+        }
+        let code = kotlin_jvm_guardian::launcher_entrypoint()?;
+        std::process::exit(code);
+    }
+
     let arguments = std::env::args().skip(1).collect::<Vec<_>>();
     let mode = std::env::var("KODA_GUARDIAN_FIXTURE_MODE").unwrap_or_else(|_| {
         if arguments
@@ -134,7 +146,7 @@ fn run() -> std::io::Result<()> {
             }
         }
         "getter-final-output" => {
-            let _lifetime = lifetime()?;
+            let mut lifetime = lifetime()?;
             ready(Path::new("fixture-pid"))?;
             let port = arguments
                 .iter()
@@ -155,13 +167,33 @@ fn run() -> std::io::Result<()> {
             writeln!(socket, "{{\"kind\":\"hello\",\"value\":\"{token}\"}}")?;
             let mut request = String::new();
             BufReader::new(socket.try_clone()?).read_line(&mut request)?;
+            let stream = fs::read_to_string("final-output-stream")?;
+            if stream == "malformed" {
+                if !request.starts_with("{\"kind\":\"discover\",") {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "Expected discover request",
+                    ));
+                }
+                match lifetime.write_all(&vec![255; 65_536]) {
+                    Ok(()) => {}
+                    Err(error)
+                        if matches!(
+                            error.kind(),
+                            io::ErrorKind::BrokenPipe | io::ErrorKind::ConnectionReset
+                        ) => {}
+                    Err(error) => return Err(error),
+                }
+                // Keep the malformed owned peer alive until the actual host
+                // runtime closes it; EOF alone must not be mistaken for exit.
+                forever();
+            }
             if request.trim() != "{\"kind\":\"finish\",\"value\":null}" {
                 return Err(io::Error::new(
                     io::ErrorKind::InvalidData,
                     "Expected finish request",
                 ));
             }
-            let stream = fs::read_to_string("final-output-stream")?;
             if stream == "stdout" {
                 io::stdout().write_all(&vec![b'O'; 8192])?;
                 io::stdout().flush()?;

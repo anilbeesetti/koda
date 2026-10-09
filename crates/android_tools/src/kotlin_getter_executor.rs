@@ -4,7 +4,7 @@
 
 use crate::{
     import_facts::ImportFactsSnapshot,
-    kotlin_capture_budget::BoundedJsonWriter,
+    kotlin_capture_budget::{BoundedJsonWriter, JsonUsage},
     kotlin_getter_lifetime::OwnedGradleRuntime,
     kotlin_import_facts::{
         CaptureBinding, CaptureContext, CaptureLimits, CaptureMode, CaptureObject, CaptureValue,
@@ -82,6 +82,15 @@ pub struct FixtureBoundary {
 
 impl FixtureBoundary {
     pub fn capture(root: &Path, relative_paths: &[PathBuf]) -> Result<Self> {
+        Self::capture_monitored(root, relative_paths, &mut || Ok(()))
+    }
+
+    fn capture_monitored(
+        root: &Path,
+        relative_paths: &[PathBuf],
+        monitor: &mut impl FnMut() -> Result<()>,
+    ) -> Result<Self> {
+        monitor()?;
         let root = root
             .canonicalize()
             .context("Resolve capture fixture root")?;
@@ -101,6 +110,7 @@ impl FixtureBoundary {
             ensure!(paths.insert(relative_path), "Duplicate fixture path");
         }
         for relative_path in paths {
+            monitor()?;
             let mut path = root.clone();
             for part in relative_path.components() {
                 path.push(part.as_os_str());
@@ -109,7 +119,7 @@ impl FixtureBoundary {
                     "Fixture path contains a symlink"
                 );
             }
-            let (bytes, sha256) = hash_regular_file(&path)?;
+            let (bytes, sha256) = hash_regular_file_monitored(&path, monitor)?;
             let name = relative_path
                 .to_str()
                 .context("Fixture path is not UTF-8")?;
@@ -135,20 +145,33 @@ impl FixtureBoundary {
     }
 
     pub fn ensure_unchanged(&self) -> Result<()> {
+        self.ensure_unchanged_monitored(&mut || Ok(()))
+    }
+
+    fn ensure_unchanged_monitored(&self, monitor: &mut impl FnMut() -> Result<()>) -> Result<()> {
         let paths = self
             .files
             .iter()
             .map(|file| file.relative_path.clone())
             .collect::<Vec<_>>();
         ensure!(
-            Self::capture(&self.root, &paths)? == *self,
+            Self::capture_monitored(&self.root, &paths, monitor)? == *self,
             "Fixture changed during Kotlin getter capture"
         );
         Ok(())
     }
 }
 
+#[cfg(test)]
 fn hash_regular_file(path: &Path) -> Result<(u64, String)> {
+    hash_regular_file_monitored(path, &mut || Ok(()))
+}
+
+fn hash_regular_file_monitored(
+    path: &Path,
+    monitor: &mut impl FnMut() -> Result<()>,
+) -> Result<(u64, String)> {
+    monitor()?;
     let before = fs::symlink_metadata(path)?;
     ensure!(
         before.is_file() && !before.file_type().is_symlink(),
@@ -164,17 +187,21 @@ fn hash_regular_file(path: &Path) -> Result<(u64, String)> {
     let mut buffer = [0_u8; 64 * 1024];
     let mut bytes = 0_u64;
     loop {
+        monitor()?;
         let count = file.read(&mut buffer)?;
+        monitor()?;
         if count == 0 {
             break;
         }
         bytes = bytes
             .checked_add(count as u64)
             .context("Artifact byte count overflow")?;
+        ensure!(bytes <= before.len(), "Artifact grew while hashing");
         digest.update(&buffer[..count]);
     }
     let after = file.metadata()?;
     let path_after = fs::symlink_metadata(path)?;
+    monitor()?;
     ensure!(
         same_file(&before, &after) && same_file(&before, &path_after) && bytes == before.len(),
         "Artifact changed while hashing"
@@ -232,9 +259,15 @@ pub struct DiscoveryInventory {
 }
 
 impl DiscoveryInventory {
+    #[cfg(test)]
     fn verify_artifacts(&self) -> Result<()> {
+        self.verify_artifacts_monitored(&mut || Ok(()))
+    }
+
+    fn verify_artifacts_monitored(&self, monitor: &mut impl FnMut() -> Result<()>) -> Result<()> {
         let mut ids = BTreeSet::new();
         for artifact in &self.runtime.artifacts {
+            monitor()?;
             ensure!(
                 ids.insert(&artifact.id),
                 "Duplicate runtime artifact identity"
@@ -243,7 +276,7 @@ impl DiscoveryInventory {
                 artifact.path.is_absolute() && artifact.path.canonicalize()? == artifact.path,
                 "Runtime artifact is not canonical"
             );
-            let (bytes, digest) = hash_regular_file(&artifact.path)?;
+            let (bytes, digest) = hash_regular_file_monitored(&artifact.path, monitor)?;
             ensure!(
                 bytes == artifact.bytes && digest == artifact.sha256,
                 "Runtime artifact bytes/digest disagree with owned discovery"
@@ -256,7 +289,7 @@ impl DiscoveryInventory {
         Ok(())
     }
 
-    fn extend(&mut self, next: Self) -> Result<()> {
+    fn validate_extension(&self, next: &Self) -> Result<()> {
         ensure!(
             self.runtime.gradle_version == next.runtime.gradle_version
                 && self.runtime.java == next.runtime.java
@@ -287,52 +320,163 @@ impl DiscoveryInventory {
                 "Runtime loader provenance was rewritten"
             );
         }
+        Ok(())
+    }
+
+    #[cfg(test)]
+    fn extend(&mut self, next: Self) -> Result<()> {
+        self.extend_monitored(next, &mut || Ok(()))
+    }
+
+    #[cfg(test)]
+    fn extend_monitored(
+        &mut self,
+        next: Self,
+        monitor: &mut impl FnMut() -> Result<()>,
+    ) -> Result<()> {
+        self.validate_extension(&next)?;
+        self.accept_validated_extension(next, monitor)
+    }
+
+    fn accept_validated_extension(
+        &mut self,
+        next: Self,
+        monitor: &mut impl FnMut() -> Result<()>,
+    ) -> Result<()> {
         // New return objects are discovered in a separate frame, before an event
         // can refer to them. Existing rows are never accepted from event metadata.
-        let artifacts = index_rows(&self.runtime.artifacts, |row| &row.id)?;
-        for artifact in &next.runtime.artifacts {
-            if !artifacts.contains_key(artifact.id.as_str()) {
-                let (bytes, digest) = hash_regular_file(&artifact.path)?;
-                ensure!(
-                    bytes == artifact.bytes && digest == artifact.sha256,
-                    "New runtime artifact differs from discovery"
-                );
-            }
+        for artifact in next
+            .runtime
+            .artifacts
+            .iter()
+            .skip(self.runtime.artifacts.len())
+        {
+            let (bytes, digest) = hash_regular_file_monitored(&artifact.path, monitor)?;
+            ensure!(
+                bytes == artifact.bytes && digest == artifact.sha256,
+                "New runtime artifact differs from discovery"
+            );
         }
         *self = next;
         Ok(())
     }
+}
 
-    fn object(&self, id: &str) -> Result<&CaptureObject> {
+#[derive(Default)]
+struct DiscoveryIndex {
+    objects: BTreeMap<String, usize>,
+    catalogues: BTreeMap<String, usize>,
+    class_catalogues: BTreeMap<String, usize>,
+    classes: BTreeMap<String, usize>,
+    named_classes: BTreeMap<String, BTreeMap<String, usize>>,
+}
+
+impl DiscoveryIndex {
+    fn new(inventory: &DiscoveryInventory) -> Result<Self> {
+        let mut index = Self::default();
+        index.append(inventory, 0, 0, 0)?;
+        for (position, lookup) in inventory.class_lookups.iter().enumerate() {
+            ensure!(
+                index
+                    .named_classes
+                    .entry(lookup.project.clone())
+                    .or_default()
+                    .insert(lookup.name.clone(), position)
+                    .is_none(),
+                "Duplicate explicit class lookup"
+            );
+        }
+        Ok(index)
+    }
+
+    fn append(
+        &mut self,
+        inventory: &DiscoveryInventory,
+        objects: usize,
+        catalogues: usize,
+        classes: usize,
+    ) -> Result<()> {
+        for (position, row) in inventory.objects.iter().enumerate().skip(objects) {
+            ensure!(
+                self.objects.insert(row.id.clone(), position).is_none(),
+                "Duplicate discovered object identity"
+            );
+        }
+        for (position, row) in inventory.catalogues.iter().enumerate().skip(catalogues) {
+            ensure!(
+                self.catalogues.insert(row.id.clone(), position).is_none(),
+                "Duplicate discovered catalogue identity"
+            );
+            ensure!(
+                self.class_catalogues
+                    .insert(row.class_id.clone(), position)
+                    .is_none(),
+                "Several catalogues describe one runtime class"
+            );
+        }
+        for (position, row) in inventory.runtime.classes.iter().enumerate().skip(classes) {
+            ensure!(
+                self.classes.insert(row.id.clone(), position).is_none(),
+                "Duplicate discovered class identity"
+            );
+        }
+        Ok(())
+    }
+
+    fn object<'a>(&self, inventory: &'a DiscoveryInventory, id: &str) -> Result<&'a CaptureObject> {
         self.objects
-            .iter()
-            .find(|object| object.id == id)
+            .get(id)
+            .and_then(|position| inventory.objects.get(*position))
             .context("Getter receiver object was not discovered")
     }
 
-    fn catalogue(&self, owner: &str) -> Result<&MethodCatalogue> {
-        let object = self.object(owner)?;
+    fn catalogue<'a>(
+        &self,
+        inventory: &'a DiscoveryInventory,
+        id: &str,
+    ) -> Result<&'a MethodCatalogue> {
         self.catalogues
-            .iter()
-            .find(|catalogue| catalogue.class_id == object.class_id)
+            .get(id)
+            .and_then(|position| inventory.catalogues.get(*position))
+            .context("Requested catalogue has not been discovered")
+    }
+
+    fn object_catalogue<'a>(
+        &self,
+        inventory: &'a DiscoveryInventory,
+        owner: &str,
+    ) -> Result<&'a MethodCatalogue> {
+        let object = self.object(inventory, owner)?;
+        self.class_catalogues
+            .get(&object.class_id)
+            .and_then(|position| inventory.catalogues.get(*position))
             .context("Getter receiver lacks a reflected catalogue")
     }
 
-    fn named_class_catalogue(&self, project: &str, name: &str) -> Result<Option<&MethodCatalogue>> {
-        let lookup = self
-            .class_lookups
-            .iter()
-            .find(|lookup| lookup.project == project && lookup.name == name)
+    fn named_class_catalogue<'a>(
+        &self,
+        inventory: &'a DiscoveryInventory,
+        project: &str,
+        name: &str,
+    ) -> Result<Option<&'a MethodCatalogue>> {
+        let position = self
+            .named_classes
+            .get(project)
+            .and_then(|names| names.get(name))
             .context("Class was not explicitly looked up")?;
+        let lookup = inventory
+            .class_lookups
+            .get(*position)
+            .context("Captured class lookup missing")?;
         ensure!(
             lookup.classes.len() <= 1,
             "Several plugin loaders resolve the requested class; choose a captured loader explicitly"
         );
-        Ok(lookup.classes.first().and_then(|class| {
-            self.catalogues
-                .iter()
-                .find(|catalogue| &catalogue.class_id == class)
-        }))
+        Ok(lookup
+            .classes
+            .first()
+            .and_then(|class| self.class_catalogues.get(class))
+            .and_then(|position| inventory.catalogues.get(*position)))
     }
 }
 
@@ -396,6 +540,7 @@ pub trait GetterTransport {
     fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryInventory, GetterEvent)>;
     fn finish(&mut self) -> Result<()>;
     fn abort(&mut self) -> Result<()>;
+    fn check_progress(&mut self) -> Result<()>;
 }
 
 fn abort_capture<T>(transport: &mut impl GetterTransport, error: anyhow::Error) -> Result<T> {
@@ -571,12 +716,23 @@ impl GradleTransport {
             .context("Bounded Kotlin getter request frame")?;
         let mut bytes = writer.into_inner();
         bytes.push(b'\n');
-        self.writer.write_all(&bytes)?;
-        self.writer.flush()?;
-        Ok(())
+        let child = &self.child;
+        let logs_directory = &self.logs_directory;
+        let diagnostic_bytes = self.diagnostic_bytes;
+        write_frame_monitored(
+            &mut self.writer,
+            &bytes,
+            self.deadline,
+            &self.cancelled,
+            || {
+                child.health_check()?;
+                check_diagnostics(logs_directory, diagnostic_bytes)
+            },
+        )
     }
 
     fn receive(&mut self) -> Result<Response> {
+        let child = &self.child;
         let logs_directory = &self.logs_directory;
         let diagnostic_bytes = self.diagnostic_bytes;
         let bytes = read_frame_monitored(
@@ -584,7 +740,10 @@ impl GradleTransport {
             self.deadline,
             &self.cancelled,
             MAX_FRAME_BYTES,
-            || check_diagnostics(logs_directory, diagnostic_bytes),
+            || {
+                child.health_check()?;
+                check_diagnostics(logs_directory, diagnostic_bytes)
+            },
         )?;
         let mut bound = BoundedJsonWriter::new(std::io::sink(), CaptureLimits::default(), 0);
         bound
@@ -600,6 +759,11 @@ impl GradleTransport {
 }
 
 impl GetterTransport for GradleTransport {
+    fn check_progress(&mut self) -> Result<()> {
+        check_deadline(self.deadline, &self.cancelled)?;
+        self.child.health_check()?;
+        check_diagnostics(&self.logs_directory, self.diagnostic_bytes)
+    }
     fn discover(&mut self, projects: &[String]) -> Result<DiscoveryInventory> {
         self.checked(|this| {
             this.send(&Request::Discover(DiscoveryRequest {
@@ -731,14 +895,15 @@ fn await_capture_completion(
 }
 
 fn check_deadline(deadline: Instant, cancelled: &AtomicBool) -> Result<()> {
+    check_deadline_at(deadline, cancelled, Instant::now())
+}
+
+fn check_deadline_at(deadline: Instant, cancelled: &AtomicBool, now: Instant) -> Result<()> {
     ensure!(
         !cancelled.load(Ordering::Acquire),
         "Kotlin getter capture was cancelled"
     );
-    ensure!(
-        Instant::now() < deadline,
-        "Kotlin getter capture deadline elapsed"
-    );
+    ensure!(now < deadline, "Kotlin getter capture deadline elapsed");
     Ok(())
 }
 
@@ -787,6 +952,53 @@ fn read_frame_monitored(
             return Ok(bytes);
         }
     }
+}
+
+fn write_frame_monitored(
+    writer: &mut impl Write,
+    bytes: &[u8],
+    deadline: Instant,
+    cancelled: &AtomicBool,
+    monitor: impl FnMut() -> Result<()>,
+) -> Result<()> {
+    write_frame_monitored_with_clock(writer, bytes, deadline, cancelled, monitor, Instant::now)
+}
+
+fn write_frame_monitored_with_clock(
+    writer: &mut impl Write,
+    bytes: &[u8],
+    deadline: Instant,
+    cancelled: &AtomicBool,
+    mut monitor: impl FnMut() -> Result<()>,
+    mut now: impl FnMut() -> Instant,
+) -> Result<()> {
+    let mut offset = 0;
+    while offset < bytes.len() {
+        check_deadline_at(deadline, cancelled, now())?;
+        monitor()?;
+        let end = offset.saturating_add(64 * 1024).min(bytes.len());
+        match writer.write(&bytes[offset..end]) {
+            Ok(0) => return Err(std::io::ErrorKind::WriteZero.into()),
+            Ok(count) => offset += count,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
+            Err(error)
+                if matches!(
+                    error.kind(),
+                    std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut
+                ) =>
+            {
+                thread::sleep(Duration::from_millis(10));
+            }
+            Err(error) => return Err(error.into()),
+        }
+        check_deadline_at(deadline, cancelled, now())?;
+        monitor()?;
+    }
+    check_deadline_at(deadline, cancelled, now())?;
+    monitor()?;
+    writer.flush()?;
+    check_deadline_at(deadline, cancelled, now())?;
+    monitor()
 }
 
 fn check_diagnostics(directory: &Path, maximum: u64) -> Result<()> {
@@ -898,6 +1110,9 @@ struct CaptureRetention {
     root: PathBuf,
     modules: Box<serde_json::value::RawValue>,
     limits: CaptureLimits,
+    usage: JsonUsage,
+    #[cfg(test)]
+    measured_bytes: std::cell::Cell<usize>,
 }
 
 #[derive(Serialize)]
@@ -932,7 +1147,34 @@ impl CaptureRetention {
             root: model.root.clone(),
             modules,
             limits,
+            usage: JsonUsage::default(),
+            #[cfg(test)]
+            measured_bytes: std::cell::Cell::new(0),
         })
+    }
+
+    fn measure(&self, value: &impl Serialize) -> Result<JsonUsage> {
+        let mut writer = BoundedJsonWriter::new(std::io::sink(), self.limits, 0);
+        serde_json::to_writer(&mut writer, value)?;
+        let usage = writer.usage();
+        #[cfg(test)]
+        self.measured_bytes
+            .set(self.measured_bytes.get() + usage.bytes);
+        Ok(usage)
+    }
+
+    fn array_addition<T: Serialize>(
+        &self,
+        old_length: usize,
+        additional: &[T],
+    ) -> Result<JsonUsage> {
+        let mut usage = JsonUsage::default();
+        for (offset, row) in additional.iter().enumerate() {
+            let mut row = self.measure(row)?;
+            row.bytes += usize::from(old_length != 0 || offset != 0);
+            usage = usage.checked_add(row, self.limits)?;
+        }
+        Ok(usage)
     }
 }
 
@@ -947,6 +1189,8 @@ pub struct KotlinGetterCapture<T: GetterTransport, H: Clone + PartialEq> {
     events: Vec<GetterEvent>,
     event_ids: BTreeSet<String>,
     retention: CaptureRetention,
+    index: DiscoveryIndex,
+    failed: bool,
 }
 
 pub struct CapturedKotlinGetters<H> {
@@ -976,7 +1220,7 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                 current_host()? == issued_host,
                 "Host import revision changed before discovery"
             );
-            fixture.ensure_unchanged()?;
+            fixture.ensure_unchanged_monitored(&mut || transport.check_progress())?;
             ensure!(
                 model.root.canonicalize()? == fixture.root,
                 "Fixture boundary belongs to a different project root"
@@ -1030,7 +1274,7 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                     == projects.iter().collect::<BTreeSet<_>>(),
                 "Discovery omitted or invented imported projects"
             );
-            let retention = CaptureRetention::for_model(model)?;
+            let mut retention = CaptureRetention::for_model(model)?;
             let import_identity = ImportIdentity {
                 build_identity: imports.build_identity().clone(),
                 project_catalogue: imports.catalogue_observation().clone(),
@@ -1060,7 +1304,8 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                 BoundedJsonWriter::new(std::io::sink(), retention.limits, FACTS_ENVELOPE.len() + 1);
             serde_json::to_writer(&mut writer, &facts)
                 .context("Kotlin getter aggregate discovery budget")?;
-            inventory.verify_artifacts()?;
+            retention.usage = writer.usage();
+            inventory.verify_artifacts_monitored(&mut || transport.check_progress())?;
             ensure!(
                 current_host()? == issued_host,
                 "Host import revision changed during discovery"
@@ -1069,6 +1314,10 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         })();
         let (inventory, retention, imports) = match discovery {
             Ok(discovery) => discovery,
+            Err(error) => return abort_capture(&mut transport, error),
+        };
+        let index = match DiscoveryIndex::new(&inventory) {
+            Ok(index) => index,
             Err(error) => return abort_capture(&mut transport, error),
         };
         Ok(Self {
@@ -1082,11 +1331,21 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             events: Vec::new(),
             event_ids: BTreeSet::new(),
             retention,
+            index,
+            failed: false,
         })
     }
 
     pub fn inventory(&self) -> &DiscoveryInventory {
         &self.inventory
+    }
+
+    fn reject<TValue>(&mut self, error: anyhow::Error) -> Result<TValue> {
+        if self.failed {
+            return Err(error);
+        }
+        self.failed = true;
+        abort_capture(&mut self.transport, error)
     }
 
     fn borrowed_facts<'a>(
@@ -1123,25 +1382,109 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         inventory: &DiscoveryInventory,
         request: Option<&GetterRequest>,
         event: Option<&GetterEvent>,
-    ) -> Result<()> {
-        let mut writer = BoundedJsonWriter::new(
-            std::io::sink(),
-            self.retention.limits,
-            FACTS_ENVELOPE.len() + 1,
-        );
-        serde_json::to_writer(&mut writer, &self.borrowed_facts(inventory, request, event))
-            .context("Kotlin getter aggregate capture budget")?;
-        Ok(())
+    ) -> Result<JsonUsage> {
+        let mut usage = self.retention.usage;
+        let limits = self.retention.limits;
+        if let Some(request) = request {
+            usage = usage.checked_add(
+                self.retention
+                    .array_addition(self.requests.len(), std::slice::from_ref(request))?,
+                limits,
+            )?;
+        }
+        if let Some(event) = event {
+            usage = usage.checked_add(
+                self.retention
+                    .array_addition(self.events.len(), std::slice::from_ref(event))?,
+                limits,
+            )?;
+        }
+        if !std::ptr::eq(inventory, &self.inventory) {
+            usage = usage.checked_add(
+                self.retention.array_addition(
+                    self.inventory.runtime.artifacts.len(),
+                    inventory
+                        .runtime
+                        .artifacts
+                        .get(self.inventory.runtime.artifacts.len()..)
+                        .context("Runtime artifacts truncated")?,
+                )?,
+                limits,
+            )?;
+            usage = usage.checked_add(
+                self.retention.array_addition(
+                    self.inventory.runtime.classes.len(),
+                    inventory
+                        .runtime
+                        .classes
+                        .get(self.inventory.runtime.classes.len()..)
+                        .context("Runtime classes truncated")?,
+                )?,
+                limits,
+            )?;
+            usage = usage.checked_add(
+                self.retention.array_addition(
+                    self.inventory.objects.len(),
+                    inventory
+                        .objects
+                        .get(self.inventory.objects.len()..)
+                        .context("Runtime objects truncated")?,
+                )?,
+                limits,
+            )?;
+            usage = usage.checked_add(
+                self.retention.array_addition(
+                    self.inventory.catalogues.len(),
+                    inventory
+                        .catalogues
+                        .get(self.inventory.catalogues.len()..)
+                        .context("Runtime catalogues truncated")?,
+                )?,
+                limits,
+            )?;
+            for (old, current) in self
+                .inventory
+                .runtime
+                .loaders
+                .iter()
+                .zip(&inventory.runtime.loaders)
+            {
+                usage = usage.checked_add(
+                    self.retention.array_addition(
+                        old.artifacts.len(),
+                        current
+                            .artifacts
+                            .get(old.artifacts.len()..)
+                            .context("Runtime loader artifacts truncated")?,
+                    )?,
+                    limits,
+                )?;
+            }
+            usage = usage.checked_add(
+                self.retention.array_addition(
+                    self.inventory.runtime.loaders.len(),
+                    inventory
+                        .runtime
+                        .loaders
+                        .get(self.inventory.runtime.loaders.len()..)
+                        .context("Runtime loaders truncated")?,
+                )?,
+                limits,
+            )?;
+        }
+        Ok(usage.checked_add(JsonUsage::default(), limits)?)
     }
 
     fn issue(&mut self, invocation: GetterInvocation<'_>) -> Result<GetterEvent> {
+        ensure!(!self.failed, "Kotlin getter capture already failed");
         match self.issue_owned(invocation) {
             Ok(event) => Ok(event),
-            Err(error) => abort_capture(&mut self.transport, error),
+            Err(error) => self.reject(error),
         }
     }
 
     fn issue_owned(&mut self, invocation: GetterInvocation<'_>) -> Result<GetterEvent> {
+        self.transport.check_progress()?;
         let GetterInvocation {
             project,
             receiver,
@@ -1153,15 +1496,13 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             after,
         } = invocation;
         let (owner, catalogue) = match receiver {
-            GetterReceiver::Object(owner) => (Some(owner), self.inventory.catalogue(owner)?),
-            GetterReceiver::StaticCatalogue(id) => (
-                None,
-                self.inventory
-                    .catalogues
-                    .iter()
-                    .find(|catalogue| catalogue.id == id)
-                    .context("Requested catalogue has not been discovered")?,
+            GetterReceiver::Object(owner) => (
+                Some(owner),
+                self.index.object_catalogue(&self.inventory, owner)?,
             ),
+            GetterReceiver::StaticCatalogue(id) => {
+                (None, self.index.catalogue(&self.inventory, id)?)
+            }
         };
         let method = select_exact_method(catalogue, name, descriptor, owner.is_none())?;
         let request = GetterRequest {
@@ -1185,16 +1526,26 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         };
         // Retain the request before handing it to any transport. Neither a result
         // nor a catalogue update can replace this issued request or its order.
-        self.check_retention(&self.inventory, Some(&request), None)?;
+        let usage = self.check_retention(&self.inventory, Some(&request), None)?;
         self.requests.push(request.clone());
+        self.retention.usage = usage;
         let (discovery, event) = self.transport.invoke(&request)?;
-        self.check_retention(&discovery, None, Some(&event))?;
-        self.inventory.extend(discovery)?;
+        self.inventory.validate_extension(&discovery)?;
+        let usage = self.check_retention(&discovery, None, Some(&event))?;
+        self.index.append(
+            &discovery,
+            self.inventory.objects.len(),
+            self.inventory.catalogues.len(),
+            self.inventory.runtime.classes.len(),
+        )?;
+        self.inventory
+            .accept_validated_extension(discovery, &mut || self.transport.check_progress())?;
         ensure!(
             event.request == request.id && self.event_ids.insert(event.id.clone()),
             "Getter event identity/order differs from issued request"
         );
         self.events.push(event.clone());
+        self.retention.usage = usage;
         Ok(event)
     }
 
@@ -1218,6 +1569,15 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
     }
 
     pub fn capture_official_project(&mut self, project: &str) -> Result<OfficialProjectRequests> {
+        ensure!(!self.failed, "Kotlin getter capture already failed");
+        match self.capture_official_project_owned(project) {
+            Ok(plan) => Ok(plan),
+            Err(error) => self.reject(error),
+        }
+    }
+
+    fn capture_official_project_owned(&mut self, project: &str) -> Result<OfficialProjectRequests> {
+        self.transport.check_progress()?;
         let project_object = self
             .inventory
             .project_objects
@@ -1296,8 +1656,8 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                 .push("Project.getExtensions() unavailable".into());
         }
         if let Some(catalogue) = self
-            .inventory
-            .named_class_catalogue(project, WRAPPER)?
+            .index
+            .named_class_catalogue(&self.inventory, project, WRAPPER)?
             .map(|catalogue| catalogue.id.clone())
         {
             let event = self.issue(GetterInvocation {
@@ -1350,8 +1710,8 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             }
         };
         let resolver = if let Some(catalogue) = self
-            .inventory
-            .named_class_catalogue(project, RESOLVER)?
+            .index
+            .named_class_catalogue(&self.inventory, project, RESOLVER)?
             .map(|catalogue| catalogue.id.clone())
         {
             // The return descriptor comes from the exact reflected method, never
@@ -1390,19 +1750,21 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                 .push(format!("Class lookup unavailable: {RESOLVER}"));
             None
         };
-        for task in task_ids {
-            let object = self.inventory.object(&task)?;
+        for (position, task) in task_ids.into_iter().enumerate() {
+            if position % 64 == 0 {
+                self.transport.check_progress()?;
+            }
+            let object = self.index.object(&self.inventory, &task)?;
             let class = self
-                .inventory
-                .runtime
+                .index
                 .classes
-                .iter()
-                .find(|class| class.id == object.class_id)
+                .get(&object.class_id)
+                .and_then(|position| self.inventory.runtime.classes.get(*position))
                 .context("Task runtime class is undiscovered")?;
             if !KOTLIN_TASK_CLASSES.contains(&class.name.as_str()) {
                 continue;
             }
-            let catalogue = self.inventory.catalogue(&task)?;
+            let catalogue = self.index.object_catalogue(&self.inventory, &task)?;
             let source_method = catalogue
                 .methods
                 .iter()
@@ -1482,11 +1844,10 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                 continue;
             }
             if let Some(class) = self
-                .inventory
-                .runtime
+                .index
                 .classes
-                .iter()
-                .find(|class| class.id == id)
+                .get(id)
+                .and_then(|position| self.inventory.runtime.classes.get(*position))
             {
                 if class.name == name {
                     return true;
@@ -1508,19 +1869,24 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         mut current_host: impl FnMut() -> Result<H>,
     ) -> Result<CapturedKotlinGetters<H>> {
         let output = match (|| -> Result<String> {
+            ensure!(!self.failed, "Kotlin getter capture already failed");
             ensure!(
                 current_host()? == self.issued_host,
                 "Host import revision changed during getter capture"
             );
-            self.fixture.ensure_unchanged()?;
-            self.inventory.verify_artifacts()?;
+            self.fixture
+                .ensure_unchanged_monitored(&mut || self.transport.check_progress())?;
+            self.inventory
+                .verify_artifacts_monitored(&mut || self.transport.check_progress())?;
             self.transport.finish()?;
             ensure!(
                 current_host()? == self.issued_host,
                 "Host import revision changed during getter capture"
             );
-            self.fixture.ensure_unchanged()?;
-            self.inventory.verify_artifacts()?;
+            self.fixture
+                .ensure_unchanged_monitored(&mut || self.transport.check_progress())?;
+            self.inventory
+                .verify_artifacts_monitored(&mut || self.transport.check_progress())?;
             let mut bytes = b"KODA_ANDROID_PROJECT_MODEL=".to_vec();
             bytes.extend_from_slice(FACTS_ENVELOPE);
             let mut writer =
@@ -1535,7 +1901,7 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             Ok(String::from_utf8(bytes)?)
         })() {
             Ok(output) => output,
-            Err(error) => return abort_capture(&mut self.transport, error),
+            Err(error) => return self.reject(error),
         };
         let expected = CaptureContext {
             binding: self.binding,
@@ -1887,6 +2253,9 @@ mod tests {
         observed: Vec<GetterRequest>,
     }
     impl GetterTransport for ScriptedTransport {
+        fn check_progress(&mut self) -> Result<()> {
+            Ok(())
+        }
         fn discover(&mut self, _: &[String]) -> Result<DiscoveryInventory> {
             Ok(self.inventory.clone())
         }
@@ -1932,7 +2301,8 @@ mod tests {
         let (directory, inventory, imports) = inventory()?;
         fs::write(directory.path().join("build.gradle"), "synthetic")?;
         let fixture = FixtureBoundary::capture(directory.path(), &["build.gradle".into()])?;
-        let capture = KotlinGetterCapture {
+        let index = DiscoveryIndex::new(&inventory)?;
+        let mut capture = KotlinGetterCapture {
             issued_host: "synthetic-exact-host-revision".to_string(),
             transport: ScriptedTransport {
                 inventory: inventory.clone(),
@@ -1951,9 +2321,31 @@ mod tests {
                 root: directory.path().canonicalize()?,
                 modules: serde_json::value::RawValue::from_string("[]".into())?,
                 limits: CaptureLimits::default(),
+                usage: JsonUsage::default(),
+                measured_bytes: std::cell::Cell::new(0),
             },
+            index,
+            failed: false,
         };
+        refresh_synthetic_retention(&mut capture)?;
         Ok((directory, capture))
+    }
+
+    fn refresh_synthetic_retention<T: GetterTransport, H: Clone + PartialEq>(
+        capture: &mut KotlinGetterCapture<T, H>,
+    ) -> Result<()> {
+        let mut writer = BoundedJsonWriter::new(
+            std::io::sink(),
+            capture.retention.limits,
+            FACTS_ENVELOPE.len() + 1,
+        );
+        serde_json::to_writer(
+            &mut writer,
+            &capture.borrowed_facts(&capture.inventory, None, None),
+        )?;
+        capture.retention.usage = writer.usage();
+        capture.index = DiscoveryIndex::new(&capture.inventory)?;
+        Ok(())
     }
 
     #[test]
@@ -2123,6 +2515,7 @@ mod tests {
     -> Result<()> {
         let (_directory, mut capture) = scripted_capture(false, false)?;
         capture.binding.capture_id = "owned-session".repeat(100);
+        refresh_synthetic_retention(&mut capture)?;
         let catalogue = capture
             .inventory
             .catalogues
@@ -2250,9 +2643,19 @@ mod tests {
         scripted: ScriptedTransport,
         aborts: std::sync::Arc<std::sync::atomic::AtomicUsize>,
         closure_failure: bool,
+        progress: std::sync::Arc<std::sync::atomic::AtomicUsize>,
+        fail_progress_at: Option<usize>,
     }
 
     impl GetterTransport for TrackingTransport {
+        fn check_progress(&mut self) -> Result<()> {
+            let progress = self.progress.fetch_add(1, Ordering::AcqRel) + 1;
+            ensure!(
+                self.fail_progress_at != Some(progress),
+                "Injected capture health failure"
+            );
+            self.scripted.check_progress()
+        }
         fn discover(&mut self, projects: &[String]) -> Result<DiscoveryInventory> {
             self.scripted.discover(projects)
         }
@@ -2284,6 +2687,8 @@ mod tests {
                     scripted: capture.transport,
                     aborts: std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0)),
                     closure_failure,
+                    progress: std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0)),
+                    fail_progress_at: None,
                 },
                 binding: capture.binding,
                 fixture: capture.fixture,
@@ -2293,6 +2698,8 @@ mod tests {
                 events: capture.events,
                 event_ids: capture.event_ids,
                 retention: capture.retention,
+                index: capture.index,
+                failed: capture.failed,
             },
         ))
     }
@@ -2454,6 +2861,7 @@ mod tests {
             methods: vec![],
         });
         capture.transport.inventory = capture.inventory.clone();
+        refresh_synthetic_retention(&mut capture)?;
         let request = capture.capture_android_base_plugin(
             ":android",
             &container.id,
@@ -2494,6 +2902,356 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(serde_json::to_value(plan)?["androidBasePlugin"], request);
+        Ok(())
+    }
+
+    #[test]
+    fn project_plan_errors_abort_once_and_latch_failure_while_capture_is_retained() -> Result<()> {
+        for ambiguous_lookup in [false, true] {
+            for closure_failure in [false, true] {
+                let (_directory, mut capture) = tracking_capture(closure_failure)?;
+                capture.transport.scripted.wrong_request = false;
+                if ambiguous_lookup {
+                    capture.inventory.class_lookups.push(ClassLookup {
+                        project: ":android".into(),
+                        name: WRAPPER.into(),
+                        classes: vec!["project".into(), "resolver".into()],
+                        attempts: vec![],
+                        failures: vec![],
+                    });
+                } else {
+                    capture.inventory.project_objects.remove(":android");
+                }
+                capture.transport.scripted.inventory = capture.inventory.clone();
+                refresh_synthetic_retention(&mut capture)?;
+                let error = capture
+                    .capture_official_project(":android")
+                    .err()
+                    .context("Invalid project plan must abort")?;
+                let detail = format!("{error:#}");
+                assert!(detail.contains(if ambiguous_lookup {
+                    "Several plugin loaders"
+                } else {
+                    "Project object is missing"
+                }));
+                assert_eq!(detail.contains("closure also failed"), closure_failure);
+                assert_eq!(capture.transport.aborts.load(Ordering::Acquire), 1);
+                assert!(capture.failed);
+                let observed = capture.transport.scripted.observed.len();
+                assert_eq!(observed, if ambiguous_lookup { 3 } else { 0 });
+                assert!(capture.capture_official_project(":android").is_err());
+                assert_eq!(capture.transport.scripted.observed.len(), observed);
+                assert_eq!(capture.transport.aborts.load(Ordering::Acquire), 1);
+            }
+        }
+        Ok(())
+    }
+
+    struct PartialWriter<'a> {
+        cancelled: &'a AtomicBool,
+        writes: usize,
+        cancel_on_write: bool,
+        clock: Option<(&'a std::cell::Cell<Instant>, Instant)>,
+        bytes: Vec<u8>,
+        flushed: bool,
+    }
+
+    impl Write for PartialWriter<'_> {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.writes += 1;
+            let count = bytes.len().min(3);
+            self.bytes.extend_from_slice(&bytes[..count]);
+            if self.cancel_on_write {
+                self.cancelled.store(true, Ordering::Release);
+            }
+            if let Some((clock, expired)) = self.clock {
+                clock.set(expired);
+            }
+            Ok(count)
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            self.flushed = true;
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn partial_frame_writes_recheck_cancel_deadline_and_health_before_continuing() -> Result<()> {
+        for (cancel, expire, health_failure) in [
+            (true, false, false),
+            (false, true, false),
+            (false, false, true),
+        ] {
+            let cancelled = AtomicBool::new(false);
+            let started = Instant::now();
+            let deadline = started + Duration::from_secs(10);
+            let clock = std::cell::Cell::new(started);
+            let mut writer = PartialWriter {
+                cancelled: &cancelled,
+                writes: 0,
+                cancel_on_write: cancel,
+                clock: expire.then_some((&clock, deadline)),
+                bytes: vec![],
+                flushed: false,
+            };
+            let mut checks = 0;
+            let error = write_frame_monitored_with_clock(
+                &mut writer,
+                b"a-whole-frame-that-cannot-be-accepted-after-failure",
+                deadline,
+                &cancelled,
+                || {
+                    checks += 1;
+                    ensure!(!health_failure || checks != 2, "Injected guardian failure");
+                    Ok(())
+                },
+                || clock.get(),
+            )
+            .err()
+            .context("Partial write must stop on a capture-wide failure")?;
+            let detail = format!("{error:#}");
+            assert!(detail.contains(if cancel {
+                "cancelled"
+            } else if expire {
+                "deadline"
+            } else {
+                "Injected guardian failure"
+            }));
+            assert_eq!(writer.writes, 1);
+            assert_eq!(writer.bytes, b"a-w");
+            assert!(!writer.flushed);
+        }
+        let cancelled = AtomicBool::new(false);
+        let mut writer = PartialWriter {
+            cancelled: &cancelled,
+            writes: 0,
+            cancel_on_write: false,
+            clock: None,
+            bytes: vec![],
+            flushed: false,
+        };
+        write_frame_monitored(
+            &mut writer,
+            b"whole",
+            Instant::now() + Duration::from_secs(10),
+            &cancelled,
+            || Ok(()),
+        )?;
+        assert_eq!(writer.bytes, b"whole");
+        assert_eq!(writer.writes, 2);
+        assert!(writer.flushed);
+        Ok(())
+    }
+
+    #[test]
+    fn hashing_checks_capture_health_between_chunks_and_rejects_growing_files() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let path = directory.path().join("large-artifact");
+        let bytes = vec![b'x'; 256 * 1024];
+        fs::write(&path, &bytes)?;
+        let mut checks = 0;
+        let error = hash_regular_file_monitored(&path, &mut || {
+            checks += 1;
+            ensure!(checks != 3, "Injected hash cancellation");
+            Ok(())
+        })
+        .err()
+        .context("Hashing must observe cancellation during the first chunk")?;
+        assert!(error.to_string().contains("Injected hash cancellation"));
+        assert_eq!(checks, 3);
+        assert_eq!(fs::read(&path)?, bytes);
+        let mut checks = 0;
+        let error = hash_regular_file_monitored(&path, &mut || {
+            checks += 1;
+            if checks == 2 {
+                fs::OpenOptions::new()
+                    .append(true)
+                    .open(&path)?
+                    .write_all(b"growth")?;
+            }
+            Ok(())
+        })
+        .err()
+        .context("A growing file must not prolong hashing to a new EOF")?;
+        assert!(error.to_string().contains("Artifact grew while hashing"));
+        assert_eq!(fs::metadata(&path)?.len(), bytes.len() as u64 + 6);
+        Ok(())
+    }
+
+    #[test]
+    fn finish_health_failure_during_fixture_hashing_closes_runtime_before_returning() -> Result<()>
+    {
+        let (directory, mut capture) = tracking_capture(false)?;
+        let root = directory.path().canonicalize()?;
+        for name in ["android", "strange-parent", "shared-directory"] {
+            fs::create_dir(root.join(name))?;
+        }
+        let fixture_bytes = vec![b'x'; 256 * 1024];
+        fs::write(root.join("build.gradle"), &fixture_bytes)?;
+        capture.fixture = FixtureBoundary::capture(&root, &["build.gradle".into()])?;
+        capture.binding.fixture_before_sha256 = capture.fixture.sha256.clone();
+        capture.binding.fixture_after_sha256 = capture.fixture.sha256.clone();
+        refresh_synthetic_retention(&mut capture)?;
+        let wire = include_str!("../test_data/import_facts/wire-template.json")
+            .replace("$ROOT", root.to_str().context("Synthetic root")?);
+        let wire: serde_json::Value = serde_json::from_str(&wire)?;
+        let output = format!(
+            "KODA_ANDROID_PROJECT_MODEL={}",
+            serde_json::to_string(&wire)?
+        );
+        let model = crate::project_model::parse_model(&output, &root)?;
+        let imports = crate::import_facts::parse_import_facts(
+            &output,
+            &model,
+            crate::import_facts::ImportFactsBinding {
+                model_revision: 7,
+                selection_revision: 3,
+                selected_variants: vec![
+                    crate::project_model::VariantId {
+                        module: ":android".into(),
+                        variant: "debug".into(),
+                    },
+                    crate::project_model::VariantId {
+                        module: ":nested:library".into(),
+                        variant: "jvm".into(),
+                    },
+                ],
+            },
+        )?;
+        capture.transport.fail_progress_at = Some(6);
+        let progress = capture.transport.progress.clone();
+        let aborts = capture.transport.aborts.clone();
+        let issued_host = capture.issued_host.clone();
+        let error = capture
+            .finish(&model, &imports, vec![], || Ok(issued_host.clone()))
+            .err()
+            .context("Health failure while hashing must reject and close capture")?;
+        assert!(
+            error
+                .to_string()
+                .contains("Injected capture health failure")
+        );
+        assert_eq!(progress.load(Ordering::Acquire), 6);
+        assert_eq!(aborts.load(Ordering::Acquire), 1);
+        assert_eq!(fs::read(root.join("build.gradle"))?, fixture_bytes);
+        Ok(())
+    }
+
+    #[test]
+    fn incremental_retention_matches_full_json_and_measures_each_new_row_once() -> Result<()> {
+        let (_directory, mut capture) = scripted_capture(false, false)?;
+        let catalogue = capture
+            .inventory
+            .catalogues
+            .first()
+            .context("Catalogue")?
+            .id
+            .clone();
+        let mut expected_measured_bytes = 0;
+        for _ in 0..1000 {
+            capture.issue(missing_invocation(&catalogue))?;
+            expected_measured_bytes +=
+                serde_json::to_vec(capture.requests.last().context("Last request")?)?.len();
+            expected_measured_bytes +=
+                serde_json::to_vec(capture.events.last().context("Last event")?)?.len();
+            assert_eq!(
+                capture.retention.measured_bytes.get(),
+                expected_measured_bytes
+            );
+        }
+        let bytes = retained_record_bytes(&capture)?;
+        assert_eq!(
+            capture.retention.usage.bytes,
+            bytes.len() + FACTS_ENVELOPE.len() + 1
+        );
+        assert_eq!(
+            capture.retention.usage.entries,
+            value_nodes(&serde_json::from_slice(&bytes)?)
+        );
+        let mut next = capture.inventory.clone();
+        let artifact = next
+            .runtime
+            .artifacts
+            .last()
+            .context("Artifact")?
+            .id
+            .clone();
+        next.runtime
+            .loaders
+            .first_mut()
+            .context("Loader")?
+            .artifacts
+            .push(artifact);
+        let mut loader = next.runtime.loaders.last().context("Loader")?.clone();
+        loader.id = "new-loader".into();
+        next.runtime.loaders.push(loader);
+        let mut object = next.objects.last().context("Object")?.clone();
+        object.id = "new-object".into();
+        next.objects.push(object);
+        capture.inventory.validate_extension(&next)?;
+        let usage = capture.check_retention(&next, None, None)?;
+        let full = serde_json::to_vec(&capture.borrowed_facts(&next, None, None))?;
+        assert_eq!(usage.bytes, full.len() + FACTS_ENVELOPE.len() + 1);
+        assert_eq!(usage.entries, value_nodes(&serde_json::from_slice(&full)?));
+        Ok(())
+    }
+
+    #[test]
+    fn keyed_task_class_and_catalogue_indexes_preserve_identity_and_append_positions() -> Result<()>
+    {
+        for count in [100, 1000, 10000] {
+            let (_directory, mut inventory, _) = inventory()?;
+            let template = inventory
+                .objects
+                .iter()
+                .find(|object| object.kind == ObjectKind::Task)
+                .context("Task")?
+                .clone();
+            for position in 0..count {
+                let mut task = template.clone();
+                task.id = format!("ordered-task:{position}");
+                inventory.objects.push(task);
+            }
+            let mut index = DiscoveryIndex::new(&inventory)?;
+            for position in 0..count {
+                let id = format!("ordered-task:{position}");
+                let object = index.object(&inventory, &id)?;
+                assert_eq!(object.id, id);
+                assert_eq!(
+                    index.object_catalogue(&inventory, &id)?.class_id,
+                    object.class_id
+                );
+                assert_eq!(
+                    inventory
+                        .runtime
+                        .classes
+                        .get(*index.classes.get(&object.class_id).context("Class index")?)
+                        .context("Class")?
+                        .id,
+                    object.class_id
+                );
+            }
+            assert!(index.object(&inventory, "unknown-task").is_err());
+            let old_objects = inventory.objects.len();
+            let mut appended = template;
+            appended.id = "appended-task".into();
+            inventory.objects.push(appended);
+            index.append(
+                &inventory,
+                old_objects,
+                inventory.catalogues.len(),
+                inventory.runtime.classes.len(),
+            )?;
+            assert_eq!(index.objects.len(), inventory.objects.len());
+            assert_eq!(
+                index.object(&inventory, "appended-task")?.id,
+                "appended-task"
+            );
+            assert_eq!(
+                index.objects.get("ordered-task:0"),
+                Some(&(old_objects - count))
+            );
+        }
         Ok(())
     }
 }
