@@ -1966,7 +1966,18 @@ pub mod test {
     ) {
         cx.update(crate::AppState::test);
         let filesystem = project::FakeFs::new(cx.executor());
-        let project = project::Project::test(filesystem, [], cx).await;
+        filesystem
+            .insert_tree(
+                "/generic-dock-request",
+                serde_json::json!({"main.py":"print(1)"}),
+            )
+            .await;
+        let project = project::Project::test(
+            filesystem,
+            [std::path::Path::new("/generic-dock-request")],
+            cx,
+        )
+        .await;
         let (workspace, visual) =
             cx.add_window_view(|window, cx| crate::Workspace::test_new(project, window, cx));
         let generic = visual.new(|cx| TestPanel::new(DockPosition::Bottom, 200, cx));
@@ -1982,6 +1993,7 @@ pub mod test {
             workspace.add_panel(disabled.clone(), window, cx);
             assert!(!workspace.bottom_dock().read(cx).is_open());
         });
+        visual.run_until_parked();
         visual.update_global(|store: &mut SettingsStore, cx| {
             store.update_user_settings(cx, |settings| {
                 settings.workspace.close_panel_on_toggle = Some(true);
@@ -2054,7 +2066,18 @@ pub mod test {
     ) {
         cx.update(crate::AppState::test);
         let filesystem = project::FakeFs::new(cx.executor());
-        let project = project::Project::test(filesystem, [], cx).await;
+        filesystem
+            .insert_tree(
+                "/generic-dock-restore",
+                serde_json::json!({"index.html":"<p>Hello</p>"}),
+            )
+            .await;
+        let project = project::Project::test(
+            filesystem,
+            [std::path::Path::new("/generic-dock-restore")],
+            cx,
+        )
+        .await;
         let (workspace, visual) =
             cx.add_window_view(|window, cx| crate::Workspace::test_new(project, window, cx));
         let disabled = visual.new(|cx| DisabledPanel {

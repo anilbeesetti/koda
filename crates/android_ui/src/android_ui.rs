@@ -1417,6 +1417,9 @@ impl AndroidPanel {
                 Ok(Err(error)) => {
                     panel
                         .update(cx, |panel, cx| {
+                            if panel.verify_context_owner(&owner, cx).is_err() {
+                                return;
+                            }
                             panel.refreshing_devices = false;
                             cx.notify();
                         })
@@ -3434,10 +3437,22 @@ impl AndroidPanel {
 
     fn device_menu(panel: Entity<Self>, window: &mut Window, cx: &mut App) -> Entity<ContextMenu> {
         panel.update(cx, |panel, cx| panel.refresh_devices(cx));
+        let owner = panel
+            .read(cx)
+            .operation_owner(AndroidOperation::Devices, cx)
+            .ok();
         let menu = ContextMenu::build_persistent(window, cx, {
             let panel = panel.clone();
+            let owner = owner.clone();
             move |mut menu, _, cx| {
                 let state = panel.read(cx);
+                if owner.as_ref().is_none_or(|owner| {
+                    state
+                        .verify_operation_owner(owner, AndroidOperation::Devices, cx)
+                        .is_err()
+                }) {
+                    return menu;
+                }
                 if state.refreshing_devices {
                     menu = menu.label("Refreshing devices…");
                 } else if state.device_error.is_some() || state.emulator_error.is_some() {
@@ -3453,6 +3468,7 @@ impl AndroidPanel {
                     }
                     let panel = panel.downgrade();
                     let device = device.clone();
+                    let owner = owner.clone();
                     let label = format!("{} · {} · {}", device.model, device.serial, device.state);
                     menu = menu.toggleable_entry_disabled_when(
                         label,
@@ -3464,6 +3480,17 @@ impl AndroidPanel {
                         move |_, cx| {
                             panel
                                 .update(cx, |panel, cx| {
+                                    if owner.as_ref().is_none_or(|owner| {
+                                        panel
+                                            .verify_operation_owner(
+                                                owner,
+                                                AndroidOperation::Devices,
+                                                cx,
+                                            )
+                                            .is_err()
+                                    }) {
+                                        return;
+                                    }
                                     panel.selected_serial = Some(device.serial.clone());
                                     panel.selected_avd = None;
                                     cx.notify();
@@ -3477,6 +3504,7 @@ impl AndroidPanel {
                 }
                 for name in &state.emulators {
                     let panel = panel.downgrade();
+                    let owner = owner.clone();
                     let serial = state.emulator_serials.get(name).cloned();
                     let label = format!(
                         "{} · {}",
@@ -3497,6 +3525,17 @@ impl AndroidPanel {
                         move |_, cx| {
                             panel
                                 .update(cx, |panel, cx| {
+                                    if owner.as_ref().is_none_or(|owner| {
+                                        panel
+                                            .verify_operation_owner(
+                                                owner,
+                                                AndroidOperation::Devices,
+                                                cx,
+                                            )
+                                            .is_err()
+                                    }) {
+                                        return;
+                                    }
                                     panel.selected_avd = Some(name.clone());
                                     panel.selected_serial = serial.clone();
                                     cx.notify();
@@ -3509,14 +3548,35 @@ impl AndroidPanel {
                 menu.separator()
                     .entry("Refresh devices", None, move |_, cx| {
                         panel
-                            .update(cx, |panel, cx| panel.refresh_devices(cx))
+                            .update(cx, |panel, cx| {
+                                if owner.as_ref().is_some_and(|owner| {
+                                    panel
+                                        .verify_operation_owner(
+                                            owner,
+                                            AndroidOperation::Devices,
+                                            cx,
+                                        )
+                                        .is_ok()
+                                }) {
+                                    panel.refresh_devices(cx);
+                                }
+                            })
                             .log_err();
                     })
                     .keep_open_on_confirm(false)
             }
         });
         menu.update(cx, |_, cx| {
-            cx.observe_in(&panel, window, |menu, _, window, cx| {
+            cx.observe_in(&panel, window, move |menu, panel, window, cx| {
+                if owner.as_ref().is_none_or(|owner| {
+                    panel
+                        .read(cx)
+                        .verify_operation_owner(owner, AndroidOperation::Devices, cx)
+                        .is_err()
+                }) {
+                    cx.emit(gpui::DismissEvent);
+                    return;
+                }
                 menu.rebuild(window, cx);
                 // The refresh can reorder rows; never confirm a different device
                 // using the keyboard index from the previous list.
@@ -3529,6 +3589,15 @@ impl AndroidPanel {
     }
 
     fn notify_emulator_error(&mut self, message: String, cx: &mut Context<Self>) {
+        if !self.enabled(cx) {
+            return;
+        }
+        let Some(controller) = project_context::for_workspace(&self.workspace, cx) else {
+            return;
+        };
+        let Some(owner) = controller.read(cx).project_token(cx) else {
+            return;
+        };
         self.error = Some(message.clone());
         self.emulator_error_sequence += 1;
         let id = NotificationId::composite::<EmulatorStartup>(SharedString::from(format!(
@@ -3537,6 +3606,9 @@ impl AndroidPanel {
         )));
         let workspace = self.workspace.clone();
         cx.defer(move |cx| {
+            if !controller.read(cx).project_is_current(&owner, cx) {
+                return;
+            }
             workspace
                 .update(cx, |workspace, cx| {
                     workspace.show_toast(Toast::new(id, message).autohide(), cx);
@@ -3875,6 +3947,7 @@ impl AndroidPanel {
     fn emulator_picker(&self, cx: &Context<Self>) -> impl IntoElement {
         let emulators = self.emulators.clone();
         let panel = cx.weak_entity();
+        let owner = self.operation_owner(AndroidOperation::Devices, cx).ok();
         PopoverMenu::new("start-emulator")
             .trigger(Button::new("start-emulator", "Start emulator…")
                 .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall))
@@ -3886,8 +3959,15 @@ impl AndroidPanel {
                     for name in &emulators {
                         let panel = panel.clone();
                         let name = name.clone();
+                        let owner = owner.clone();
                         menu = menu.entry(name.clone(), None, move |window, cx| {
-                            panel.update(cx, |panel, cx| panel.start_emulator(name.clone(), window, cx)).log_err();
+                            panel.update(cx, |panel, cx| {
+                                if owner.as_ref().is_some_and(|owner| {
+                                    panel.verify_operation_owner(owner, AndroidOperation::Devices, cx).is_ok()
+                                }) {
+                                    panel.start_emulator(name.clone(), window, cx);
+                                }
+                            }).log_err();
                         });
                     }
                     menu
@@ -4910,14 +4990,14 @@ mod tests {
     async fn queued_partial_sync_rejection_preserves_the_new_context_and_generic_dock(
         cx: &mut TestAppContext,
     ) {
-        stale_failure_presentation_case(cx, true)
+        stale_failure_presentation_case(cx, true, false)
             .await
             .expect("Partial retry ownership fixture must complete");
     }
 
     #[gpui::test]
     async fn deferred_android_failure_reveal_remains_bound_to_its_context(cx: &mut TestAppContext) {
-        stale_failure_presentation_case(cx, false)
+        stale_failure_presentation_case(cx, false, false)
             .await
             .expect("Failure presentation ownership fixture must complete");
     }
@@ -4925,6 +5005,7 @@ mod tests {
     async fn stale_failure_presentation_case(
         cx: &mut TestAppContext,
         partial_retry: bool,
+        emulator_error: bool,
     ) -> Result<()> {
         use android_tools::project_context::PluginId;
         use workspace::dock::test::TestPanel;
@@ -5006,7 +5087,10 @@ mod tests {
             let focus = visual.update(|window, cx| {
                 let focus = window.focused(cx);
                 panel.update(cx, |panel, cx| {
-                    if partial_retry {
+                    if emulator_error {
+                        panel.notify_emulator_error("Owning A emulator failed".into(), cx);
+                        assert_eq!(panel.error.as_deref(), Some("Owning A emulator failed"));
+                    } else if partial_retry {
                         panel.sync_project(window, cx);
                     } else {
                         panel.fail_for_owner(
@@ -5082,6 +5166,12 @@ mod tests {
                     Some(generic.entity_id()),
                     "{transition}"
                 );
+                assert!(
+                    !workspace.has_notification(&NotificationId::composite::<EmulatorStartup>(
+                        SharedString::from("emulator-error-1"),
+                    )),
+                    "{transition}"
+                );
             });
             visual.update(|window, cx| assert_eq!(window.focused(cx), focus, "{transition}"));
             assert!(!controller.read_with(visual, |controller, cx| {
@@ -5089,6 +5179,13 @@ mod tests {
             }));
         }
         Ok(())
+    }
+
+    #[gpui::test]
+    async fn deferred_emulator_failure_toast_remains_bound_to_its_context(cx: &mut TestAppContext) {
+        stale_failure_presentation_case(cx, false, true)
+            .await
+            .expect("Emulator error presentation ownership fixture must complete");
     }
 
     #[gpui::test]
@@ -5126,6 +5223,183 @@ mod tests {
                     .is_some_and(|visible| visible.panel_id() == panel.entity_id())
             }));
         });
+        panel.update(visual, |panel, cx| {
+            panel.notify_emulator_error("Current emulator failed".into(), cx);
+        });
+        visual.run_until_parked();
+        workspace.read_with(visual, |workspace, _| {
+            assert!(
+                workspace.has_notification(&NotificationId::composite::<EmulatorStartup>(
+                    SharedString::from("emulator-error-1"),
+                ))
+            );
+        });
+    }
+
+    #[gpui::test]
+    async fn captured_android_menus_do_not_change_a_replacement_context(cx: &mut TestAppContext) {
+        captured_android_menus_do_not_change_a_replacement_context_case(cx)
+            .await
+            .expect("Captured menu ownership fixture must complete");
+    }
+
+    async fn captured_android_menus_do_not_change_a_replacement_context_case(
+        cx: &mut TestAppContext,
+    ) -> Result<()> {
+        use android_tools::project_context::PluginId;
+        cx.update(|cx| {
+            AppState::test(cx);
+            trusted_worktrees::init(Default::default(), cx);
+        });
+        for menu_kind in ["target", "device", "virtual", "refresh"] {
+            for transition in ["generic", "android-b", "a-b-a", "trust-replaced"] {
+                let filesystem = FakeFs::new(cx.executor());
+                for root in ["/menu-a", "/menu-b", "/menu-generic"] {
+                    filesystem
+                        .insert_tree(root, json!({"gradlew":"", "settings.gradle.kts":""}))
+                        .await;
+                }
+                let project = Project::test_with_worktree_trust(
+                    filesystem,
+                    [
+                        Path::new("/menu-a"),
+                        Path::new("/menu-b"),
+                        Path::new("/menu-generic"),
+                    ],
+                    cx,
+                )
+                .await;
+                let (workspace, visual) = cx
+                    .add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+                let panel = new_test_android_panel(&workspace, project.clone(), visual);
+                visual.update(|_, cx| {
+                    project_surfaces::tests::publish_catalogue(
+                        &project,
+                        Path::new("/menu-generic"),
+                        &[],
+                        &[],
+                        true,
+                        cx,
+                    )
+                })?;
+                visual.run_until_parked();
+                let controller = visual
+                    .update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx))
+                    .context("Controller")?;
+                let [a, b, generic] = project.read_with(visual, |project, cx| {
+                    ["/menu-a", "/menu-b", "/menu-generic"].map(|root| {
+                        project
+                            .find_worktree(Path::new(root), cx)
+                            .map(|(worktree, _)| worktree.read(cx).id())
+                            .context("Fixture root")
+                    })
+                });
+                let (a, b, generic) = (a?, b?, generic?);
+                controller.update(visual, |controller, cx| {
+                    controller.select_fixture_root(a, cx)
+                })?;
+                visual.run_until_parked();
+                let target = AndroidTarget {
+                    module: ":".into(),
+                    variant: "debug".into(),
+                    output_listing: PathBuf::from("/menu-a/output.json"),
+                };
+                let replacement = AndroidTarget {
+                    module: ":replacement".into(),
+                    variant: "release".into(),
+                    output_listing: PathBuf::from("/menu-b/output.json"),
+                };
+                panel.update(visual, |panel, _| {
+                    panel.targets = vec![target.clone()];
+                    panel.selected_target = None;
+                    panel.devices = if menu_kind == "device" {
+                        parse_devices("List of devices attached\noriginal device model:Original\n")
+                            .expect("Valid fixture device")
+                    } else {
+                        Vec::new()
+                    };
+                    panel.emulators = if menu_kind == "virtual" {
+                        vec!["original-avd".into()]
+                    } else {
+                        Vec::new()
+                    };
+                    panel.selected_serial = None;
+                    panel.selected_avd = None;
+                    // The real refresh is deliberately held; this test executes
+                    // actual menu callbacks rather than host SDK subprocesses.
+                    panel.refreshing_devices = true;
+                });
+                let menu = visual.update(|window, cx| {
+                    if menu_kind == "target" {
+                        AndroidPanel::target_menu(panel.clone(), window, cx)
+                    } else {
+                        AndroidPanel::device_menu(panel.clone(), window, cx)
+                    }
+                });
+                panel.update(visual, |panel, cx| {
+                    panel.refreshing_devices = false;
+                    cx.notify();
+                });
+                visual.run_until_parked();
+                menu.update_in(visual, |menu, window, cx| {
+                    menu.select_toggled_or_first(window, cx);
+                    assert!(menu.selected_index().is_some(), "{menu_kind}");
+                });
+                visual.update(|window, cx| {
+                    match transition {
+                        "generic" => controller.update(cx, |controller, cx| {
+                            controller.select_fixture_root(generic, cx)
+                        })?,
+                        "android-b" => controller
+                            .update(cx, |controller, cx| controller.select_fixture_root(b, cx))?,
+                        "a-b-a" => controller.update(cx, |controller, cx| {
+                            controller.select_fixture_root(b, cx)?;
+                            controller.select_fixture_root(a, cx)
+                        })?,
+                        "trust-replaced" => project.update(cx, |project, cx| {
+                            project.ensure_android_context(a, false, cx)?;
+                            project.ensure_android_context(a, true, cx)?;
+                            Ok::<_, anyhow::Error>(())
+                        })?,
+                        _ => unreachable!(),
+                    }
+                    if transition == "trust-replaced" {
+                        publish_test_android_catalogue(&project, Path::new("/menu-a"), cx)?;
+                    }
+                    panel.update(cx, |panel, _| {
+                        panel.selected_target = Some(replacement.clone());
+                        panel.selected_serial = Some("replacement-serial".into());
+                        panel.selected_avd = Some("replacement-avd".into());
+                        panel.refreshing_devices = false;
+                    });
+                    // Confirm before observers rebuild the persistent device
+                    // menu, so the actual captured A callback is exercised.
+                    menu.update(cx, |menu, cx| menu.confirm(&Default::default(), window, cx));
+                    panel.read_with(cx, |panel, _| {
+                        assert_eq!(
+                            panel.selected_target.as_ref(),
+                            Some(&replacement),
+                            "{menu_kind}/{transition}"
+                        );
+                        assert_eq!(
+                            panel.selected_serial.as_deref(),
+                            Some("replacement-serial"),
+                            "{menu_kind}/{transition}"
+                        );
+                        assert_eq!(
+                            panel.selected_avd.as_deref(),
+                            Some("replacement-avd"),
+                            "{menu_kind}/{transition}"
+                        );
+                        assert!(!panel.refreshing_devices, "{menu_kind}/{transition}");
+                        assert!(panel.device_task.is_none(), "{menu_kind}/{transition}");
+                    });
+                    Ok::<_, anyhow::Error>(())
+                })?;
+                visual.run_until_parked();
+            }
+        }
+        Ok(())
     }
 
     #[cfg(unix)]
