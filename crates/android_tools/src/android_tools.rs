@@ -11,6 +11,7 @@ pub mod project_tree;
 pub mod project_tree_adapter;
 pub mod project_tree_facts;
 pub mod project_view_preferences;
+pub mod string_helper;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
 pub mod kotlin;

@@ -1,0 +1,251 @@
+{
+  "schema_version": 1,
+  "repository": "platform/tools/base",
+  "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+  "license": "Apache-2.0",
+  "scope": "Complete pinned StringHelper source and 19-method test suite; no global census claim",
+  "files": [
+    {
+      "repository": "platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "common/src/main/java/com/android/utils/StringHelper.kt",
+      "local_path": "crates/android_tools/test_data/string_helper/reference/base/common/src/main/java/com/android/utils/StringHelper.kt",
+      "bytes": 8188,
+      "sha256": "870af52bb22c05b34aec04a13e8a4e94461154b0e66355b1171a7940dc7f17c3",
+      "git_blob_sha1": "59d45d5bd62282293c2dd8df61978576dd8ad88c",
+      "source_url": "https://android.googlesource.com/platform/tools/base/+/4a5d2ec9571e2021fc9a4621e24a195f966ee6dd/common/src/main/java/com/android/utils/StringHelper.kt?format=TEXT",
+      "license": "Apache-2.0",
+      "acquisition": "Gitiles pinned TEXT with strict base64 decoding",
+      "original_bytes_preserved": true
+    },
+    {
+      "repository": "platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "common/src/test/java/com/android/utils/StringHelperTest.kt",
+      "local_path": "crates/android_tools/test_data/string_helper/reference/base/common/src/test/java/com/android/utils/StringHelperTest.kt",
+      "bytes": 5036,
+      "sha256": "64c78dd2d8717c43b555760b578b9eaa5b5136eac2434d0a3f2a3d6246fa3950",
+      "git_blob_sha1": "97ecd9f06654c1157c3a3f4f087397ab425d4054",
+      "source_url": "https://android.googlesource.com/platform/tools/base/+/4a5d2ec9571e2021fc9a4621e24a195f966ee6dd/common/src/test/java/com/android/utils/StringHelperTest.kt?format=TEXT",
+      "license": "Apache-2.0",
+      "acquisition": "Gitiles pinned TEXT with strict base64 decoding",
+      "original_bytes_preserved": true
+    }
+  ],
+  "license_file": {
+    "path": "crates/android_tools/test_data/string_helper/LICENSE-APACHE",
+    "bytes": 11358,
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  "tests": [
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testBasicCapitalize",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testBasicCapitalize",
+      "declaration_line": 25,
+      "method_text_sha256": "9ab9e62aa152f10f116b6b6e6e54bb3b23b1f26f1669fe75197a94ee84c58e3f",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testNonLetterCapitalize",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testNonLetterCapitalize",
+      "declaration_line": 30,
+      "method_text_sha256": "e5fa93a1a646d81e4822865532fd25c6c28f9feca3589d95943e593c6b768a65",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testUnicodeCapitalize",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testUnicodeCapitalize",
+      "declaration_line": 35,
+      "method_text_sha256": "750c4c0daaaac62a2879b943c35809d812078eb546d961fd1fb20591badf8036",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testSurrogateValuesCapitalize",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testSurrogateValuesCapitalize",
+      "declaration_line": 40,
+      "method_text_sha256": "ee4c2116010ca929e5b592b8d7df25673811c726ebcecbe27ef628f6a235b607",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalized",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testAppendCapitalized",
+      "declaration_line": 47,
+      "method_text_sha256": "663947c91fcfd21f3b7990668d324355bcc076cd4aeb5ffc0693d610b0fd8b62",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalizedVarArgs",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testAppendCapitalizedVarArgs",
+      "declaration_line": 52,
+      "method_text_sha256": "10459b4534e0ad26159d1e661a726c97e82ca674c87692742c321ef5bde0ca92",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeEmpty",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testDecapitalizeEmpty",
+      "declaration_line": 57,
+      "method_text_sha256": "c7d5a317873a9c51c1718b301546579820c923716429d8c3fdd522100a55cd56",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeNonLetter",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testDecapitalizeNonLetter",
+      "declaration_line": 62,
+      "method_text_sha256": "80d09a813186a8ee91e67c14ec7b984671ed209d4e5fac5c360a8f3ffb005502",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testDecapitalizeUnicode",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testDecapitalizeUnicode",
+      "declaration_line": 67,
+      "method_text_sha256": "e8d56afbf643f3ef66d1515c3753d17c8e49cdcb9ac07292870baeb5f3802b98",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testSurrogateValuesDecapitalize",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testSurrogateValuesDecapitalize",
+      "declaration_line": 72,
+      "method_text_sha256": "6e5508d8cf617b7a01944f5ed7eba5c0ecdbae3bee9cd0c09625c9edc3383b39",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAsSeparatedListContains",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testAsSeparatedListContains",
+      "declaration_line": 77,
+      "method_text_sha256": "b8f86fc25f835f2ebfc0b29f3caebe6069143ca43dc1a2686449d820b71bdd93",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": 6
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testStringBuilderAppendCapitalized",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testStringBuilderAppendCapitalized",
+      "declaration_line": 87,
+      "method_text_sha256": "4dfc7df1c1ca15610abe0f7d92ed474fa6f556d6868697b9c7236f1aaf4701c0",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCapitalizedOverloads",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testAppendCapitalizedOverloads",
+      "declaration_line": 94,
+      "method_text_sha256": "ec50f5d4da046392410d9eebdd2a41b3b65bece2cf3ab0e94221bfef88644f1b",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testCapitalizeAndAppend",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testCapitalizeAndAppend",
+      "declaration_line": 100,
+      "method_text_sha256": "621d6c431d70f7ce6b87a2ffe005e74959c9e344e6ba674994cfe5e2f8639ef6",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testAppendCamelCase",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testAppendCamelCase",
+      "declaration_line": 106,
+      "method_text_sha256": "89d39baffe6823e9fd023ca9b1a8bc17cee72cb59ad1ed14574f5f57fc3ddf87",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testCombineAsCamelCase",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testCombineAsCamelCase",
+      "declaration_line": 113,
+      "method_text_sha256": "6f23d1d860545352e25f48f837b230709d7a60438015fd2952991e089789b3ba",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testToStrings",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testToStrings",
+      "declaration_line": 123,
+      "method_text_sha256": "5cbe764ff8d9b39a449ec5ee0e69a9f23147441241013c3fa12a6995cd2c9017",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testTokenizeCommandLine",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testTokenizeCommandLine",
+      "declaration_line": 137,
+      "method_text_sha256": "5e29d419007cdf89b7e85e7b7785bd60fad0d2f2de24321e885316aad4e59e15",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:common/src/test/java/com/android/utils/StringHelperTest.kt#com.android.utils.StringHelperTest.testToSystemLineSeparator",
+      "suite": "com.android.utils.StringHelperTest",
+      "method": "testToSystemLineSeparator",
+      "declaration_line": 146,
+      "method_text_sha256": "7482883e8ceba12fdb1229507e751ae309e275b95ed4710568e6db0d802e343e",
+      "method_text_hash_encoding": "UTF-8 bytes from fun keyword through matched closing brace, excluding leading indentation and final newline",
+      "selected_original_assertions": null
+    }
+  ],
+  "original_assertion_mapping": [
+    {
+      "original_line": 78,
+      "rust_assertion_index": 1,
+      "original_default_separator": true,
+      "separator_string": ","
+    },
+    {
+      "original_line": 79,
+      "rust_assertion_index": 2,
+      "original_default_separator": true,
+      "separator_string": ","
+    },
+    {
+      "original_line": 80,
+      "rust_assertion_index": 3,
+      "original_default_separator": true,
+      "separator_string": ","
+    },
+    {
+      "original_line": 81,
+      "rust_assertion_index": 4,
+      "original_default_separator": true,
+      "separator_string": ","
+    },
+    {
+      "original_line": 82,
+      "rust_assertion_index": 5,
+      "original_default_separator": false,
+      "separator_string": ", "
+    },
+    {
+      "original_line": 83,
+      "rust_assertion_index": 6,
+      "original_default_separator": false,
+      "separator_string": ", "
+    }
+  ]
+}
