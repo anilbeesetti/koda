@@ -263,6 +263,99 @@ pub struct ContextSnapshot {
     modules: BTreeMap<String, ModuleContext>,
     build_logic_directories: Vec<PathBuf>,
     build_layouts: Vec<BuildLayout>,
+    input_index: InputIndex,
+}
+
+#[derive(Clone, Debug)]
+struct InputIndex {
+    projects: BTreeSet<PathBuf>,
+    build_logic: BTreeSet<PathBuf>,
+    layouts: BTreeSet<PathBuf>,
+    generated_outputs: BTreeSet<PathBuf>,
+    observer_directories: Vec<PathBuf>,
+}
+
+impl InputIndex {
+    fn new(
+        root: &Path,
+        modules: &BTreeMap<String, ModuleContext>,
+        build_logic_directories: &[PathBuf],
+        build_layouts: &[BuildLayout],
+    ) -> Self {
+        let projects = std::iter::once(root.to_path_buf())
+            .chain(modules.values().map(|module| module.directory.clone()))
+            .collect();
+        let build_logic_roots = build_logic_directories.iter().cloned().collect();
+        let source_directories = build_layouts
+            .iter()
+            .filter(|layout| contains_prefix(&build_logic_roots, &layout.directory))
+            .flat_map(|layout| &layout.source_directories)
+            .collect::<Vec<_>>();
+        let build_logic = build_logic_directories
+            .iter()
+            .chain(source_directories.iter().copied())
+            .cloned()
+            .collect();
+        let layouts = build_layouts
+            .iter()
+            .map(|layout| layout.directory.clone())
+            .collect();
+        let generated_outputs = build_layouts
+            .iter()
+            .map(|layout| layout.build_directory.clone())
+            .collect();
+        let mut index = Self {
+            projects,
+            build_logic,
+            layouts,
+            generated_outputs,
+            observer_directories: Vec::new(),
+        };
+        let mut directories = build_logic_directories
+            .iter()
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        directories.extend(
+            modules
+                .values()
+                .filter(|module| !module.directory.starts_with(root))
+                .map(|module| module.directory.clone()),
+        );
+        directories.extend(
+            source_directories
+                .into_iter()
+                .filter(|directory| !index.is_excluded(directory))
+                .cloned(),
+        );
+        // Retain overflow until the observer getter, as before; no larger
+        // folder list can be returned through that bounded public API.
+        index.observer_directories = directories.into_iter().take(4097).collect();
+        index
+    }
+
+    fn is_generated_output(&self, path: &Path) -> bool {
+        // Validation keeps each project outside its own output. A closer
+        // evaluated project therefore exempts all ancestor output folders,
+        // while a closer output folder still excludes that project's output.
+        for ancestor in path.ancestors() {
+            if self.layouts.contains(ancestor) {
+                return false;
+            }
+            if self.generated_outputs.contains(ancestor) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn is_excluded(&self, path: &Path) -> bool {
+        self.is_generated_output(path)
+            || path.components().any(|part| matches!(part, Component::Normal(name) if name == ".gradle" || name == ".kotlin" || name == ".git"))
+    }
+}
+
+fn contains_prefix(directories: &BTreeSet<PathBuf>, path: &Path) -> bool {
+    path.ancestors().any(|ancestor| directories.contains(ancestor))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -311,31 +404,11 @@ impl ContextSnapshot {
     }
 
     pub fn is_input(&self, path: &Path) -> bool {
-        if self.is_generated_output(path)
-            || path.components().any(|part| matches!(part, Component::Normal(name) if name == ".gradle" || name == ".kotlin" || name == ".git")) {
+        if self.input_index.is_excluded(path) {
             return false;
         }
-        if self.build_layouts.iter().any(|layout| {
-            self.build_logic_directories
-                .iter()
-                .any(|directory| layout.directory.starts_with(directory))
-                && layout
-                    .source_directories
-                    .iter()
-                    .any(|source| path.starts_with(source))
-        }) {
-            return true;
-        }
-        ((path.starts_with(&self.root)
-            || self
-                .modules
-                .values()
-                .any(|module| path.starts_with(&module.directory)))
-            && is_context_input(path))
-            || self
-                .build_logic_directories
-                .iter()
-                .any(|directory| path.starts_with(directory))
+        (contains_prefix(&self.input_index.projects, path) && is_context_input(path))
+            || contains_prefix(&self.input_index.build_logic, path)
     }
 
     pub fn build_layouts(&self) -> &[BuildLayout] {
@@ -343,50 +416,17 @@ impl ContextSnapshot {
     }
 
     pub fn observer_directories(&self) -> Result<Vec<PathBuf>> {
-        let mut directories = self.build_logic_directories.clone();
-        directories.extend(
-            self.modules
-                .values()
-                .filter(|module| !module.directory.starts_with(&self.root))
-                .map(|module| module.directory.clone()),
-        );
-        for layout in self.build_layouts.iter().filter(|layout| {
-            self.build_logic_directories
-                .iter()
-                .any(|directory| layout.directory.starts_with(directory))
-        }) {
-            directories.extend(
-                layout
-                    .source_directories
-                    .iter()
-                    .filter(|directory| self.is_input(directory))
-                    .cloned(),
-            );
-        }
-        directories.sort();
-        directories.dedup();
         // An evaluated child can live inside an ancestor's previously excluded
         // output. An ancestor key alone cannot prove that child's coverage.
         ensure!(
-            directories.len() <= 4096,
+            self.input_index.observer_directories.len() <= 4096,
             "Too many evaluated Gradle input folders"
         );
-        Ok(directories)
+        Ok(self.input_index.observer_directories.clone())
     }
 
     pub fn is_generated_output(&self, path: &Path) -> bool {
-        self.build_layouts
-            .iter()
-            .filter(|layout| path.starts_with(&layout.build_directory))
-            .any(|output| {
-                // A separately evaluated project can live under another project's
-                // output directory; its own layout defines its input/output boundary.
-                !self.build_layouts.iter().any(|owner| {
-                    owner.directory != output.directory
-                        && owner.directory.starts_with(&output.build_directory)
-                        && path.starts_with(&owner.directory)
-                })
-            })
+        self.input_index.is_generated_output(path)
     }
 
     pub fn ecosystems(&self) -> Ecosystems {
@@ -693,6 +733,12 @@ pub fn decode_context_record(record: &[u8], expected_root: &Path) -> Result<Cont
         raw.phase != ObservationPhase::Complete || modules.contains_key(":"),
         "Complete context lacks the root module"
     );
+    let input_index = InputIndex::new(
+        &raw.root,
+        &modules,
+        &raw.build_logic_directories,
+        &raw.build_layouts,
+    );
     Ok(ContextSnapshot {
         root: raw.root,
         gradle_version: raw.gradle_version,
@@ -700,6 +746,7 @@ pub fn decode_context_record(record: &[u8], expected_root: &Path) -> Result<Cont
         modules,
         build_logic_directories: raw.build_logic_directories,
         build_layouts: raw.build_layouts,
+        input_index,
     })
 }
 
