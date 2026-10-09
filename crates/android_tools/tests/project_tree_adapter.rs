@@ -1307,3 +1307,89 @@ fn external_generated_children_cannot_prove_a_missing_module_directory() -> Resu
     );
     Ok(())
 }
+
+#[test]
+fn public_tree_projections_reject_empty_legacy_ids_and_labels() -> Result<()> {
+    use android_tools::{
+        project_tree::{
+            FileFact, FileKind, TreeFiles, TreeModel, TreeModule, project_tree,
+            project_tree_with_facts,
+        },
+        project_tree_facts::{
+            ActiveProviderIndex, ModuleProjectionFacts, ProviderPresence, RootEncounterFacts,
+            RootEncounterProvenance, TreeProjectionFacts,
+        },
+    };
+
+    let module = fixture(&[]);
+    let mut model = TreeModel {
+        revision: 7,
+        modules: vec![TreeModule {
+            id: module.path.clone(),
+            display_name: "app".into(),
+            directory: module.directory.clone(),
+            source_roots: Vec::new(),
+            compact_packages: true,
+        }],
+    };
+    let files = TreeFiles {
+        model_revision: 7,
+        revision: 11,
+        entries: vec![FileFact {
+            path: module.directory.clone(),
+            kind: FileKind::Directory,
+        }],
+    };
+    let facts = TreeProjectionFacts {
+        presence: ProviderPresence::new(
+            7,
+            11,
+            [(module.directory.clone(), RootPresence::Directory)],
+        )?,
+        modules: vec![ModuleProjectionFacts {
+            providers: ActiveProviderIndex::from_module(&module, "debug", 7)?,
+            roots: RootEncounterFacts {
+                model_revision: 7,
+                module: module.path.clone(),
+                variant: "debug".into(),
+                provenance: RootEncounterProvenance::ProducerIterator,
+                roots: Vec::new(),
+            },
+        }],
+    };
+    assert_eq!(project_tree(&model, &files)?.nodes().count(), 1);
+    assert_eq!(
+        project_tree_with_facts(&model, &files, &facts)?
+            .nodes()
+            .count(),
+        1
+    );
+    model
+        .modules
+        .first_mut()
+        .context("Legacy tree module")?
+        .id
+        .clear();
+    assert_eq!(
+        project_tree(&model, &files)
+            .expect_err("Legacy stable module ID cannot be empty")
+            .to_string(),
+        "Android module identity is empty"
+    );
+    let legacy = model.modules.first_mut().context("Legacy tree module")?;
+    legacy.id = module.path;
+    legacy.display_name.clear();
+    assert_eq!(
+        project_tree(&model, &files)
+            .expect_err("Public legacy labels cannot be empty")
+            .to_string(),
+        "Android module identity is empty"
+    );
+    assert_eq!(
+        project_tree_with_facts(&model, &files, &facts)
+            .expect_err("Public facts-aware legacy labels cannot be empty")
+            .to_string(),
+        "Android module identity is empty"
+    );
+    Ok(())
+}

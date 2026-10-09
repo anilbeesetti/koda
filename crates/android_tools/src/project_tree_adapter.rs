@@ -29,8 +29,8 @@ use crate::{
     java_class_facts::{JavaFactsError, MAX_JAVA_FACT_BYTES, discover_top_level_java_classes},
     project_model::{Module, ModuleKind, SourceKind, SourceProviderRootKind},
     project_tree::{
-        FileFact, FileKind, SourceGroup, SourceProvider, TreeFiles, TreeModel, TreeModule,
-        TreeSnapshot, TreeSourceRoot, project_tree_with_facts,
+        FileFact, FileKind, ModuleLabelPolicy, SourceGroup, SourceProvider, TreeFiles, TreeModel,
+        TreeModule, TreeSnapshot, TreeSourceRoot, project_tree_with_label_policy,
     },
     project_tree_facts::{
         ActiveProviderIndex, FactsUnavailable, FactsUnavailableReason, ModuleProjectionFacts,
@@ -135,6 +135,7 @@ pub struct ModuleRootPlan {
     module: TreeModule,
     providers: ActiveProviderIndex,
     unsupported_roots: Vec<UnsupportedRoot>,
+    label_policy: ModuleLabelPolicy,
 }
 
 impl ModuleRootPlan {
@@ -386,6 +387,11 @@ fn prepare_roots(
         },
         providers,
         unsupported_roots,
+        label_policy: if imported {
+            ModuleLabelPolicy::Imported
+        } else {
+            ModuleLabelPolicy::NonEmpty
+        },
     })
 }
 
@@ -682,17 +688,19 @@ pub fn adapt_captured_module(
             },
         }],
     };
-    let tree = project_tree_with_facts(&model, &files, &facts).map_err(|failure| {
-        if let Some(provider) = failure.downcast_ref::<FactsUnavailable>() {
-            provider.clone().into()
-        } else {
-            unavailable(
-                AdapterUnavailableReason::Projection,
-                failure.to_string(),
-                None,
-            )
-        }
-    })?;
+    let tree = project_tree_with_label_policy(&model, &files, &facts, plan.label_policy).map_err(
+        |failure| {
+            if let Some(provider) = failure.downcast_ref::<FactsUnavailable>() {
+                provider.clone().into()
+            } else {
+                unavailable(
+                    AdapterUnavailableReason::Projection,
+                    failure.to_string(),
+                    None,
+                )
+            }
+        },
+    )?;
     Ok(AdaptedModuleTree {
         binding: capture.binding.clone(),
         tree,

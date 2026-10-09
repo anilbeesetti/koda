@@ -762,8 +762,7 @@ fn unqualified_requires_nullable_idea_name_qualified_requires_captured_qname() -
 #[test]
 fn holder_only_capture_stays_unknown_with_unverified_or_failed_getters() -> Result<()> {
     let mut fixture = fixture()?;
-    fixture.value["modules"][0]["variants"][0]["components"] = json!([]);
-    fixture.model = parse_model(&wire(&fixture.value)?, &fixture.model.root)?;
+    prepare_holder_only_import_input(&mut fixture)?;
     fixture.identity = parse_import_facts(&wire(&fixture.value)?, &fixture.model, binding())?;
     fixture.kotlin = recapture(&fixture, &fixture.value)?;
     let publisher = ModuleImportPublisher::default();
@@ -830,8 +829,7 @@ fn explicit_holder_settings_survive_same_owner_reimport_and_do_not_cross_context
     });
     let expected = settings.clone();
     publisher.commit(transaction, &revision(&fixture, 1))?;
-    fixture.value["modules"][0]["variants"][0]["components"] = json!([]);
-    fixture.model = parse_model(&wire(&fixture.value)?, &fixture.model.root)?;
+    prepare_holder_only_import_input(&mut fixture)?;
     fixture.identity = parse_import_facts(&wire(&fixture.value)?, &fixture.model, binding())?;
     fixture.kotlin = recapture(&fixture, &fixture.value)?;
     publisher.commit(stage(&fixture, &publisher, 2)?, &revision(&fixture, 2))?;
@@ -1818,5 +1816,23 @@ fn strict_builtin_direct_interface_budget_failure_preserves_existing_publication
         retained.modules[":android"].kotlin_capability(),
         KotlinCapability::Enabled
     );
+    Ok(())
+}
+
+fn prepare_holder_only_import_input(fixture: &mut Fixture) -> Result<()> {
+    // This supplemental adapter input is constructed after valid Basic parsing;
+    // it is not an Android export, whose variants require a Main component.
+    fixture
+        .model
+        .modules
+        .iter_mut()
+        .find(|module| module.path == ":android")
+        .context("Constructed holder-only module")?
+        .variants
+        .iter_mut()
+        .find(|variant| variant.name == "debug")
+        .context("Constructed holder-only variant")?
+        .components
+        .clear();
     Ok(())
 }
