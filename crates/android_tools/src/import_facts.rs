@@ -29,7 +29,7 @@ const PROJECT_CATALOGUE: &str = "org.gradle.api.Project.getAllprojects()";
 
 type FactsResult<T> = Result<T, FactsUnavailable>;
 
-struct ObjectOnly<D>(D);
+pub(crate) struct ObjectOnly<D>(pub(crate) D);
 
 impl<'de, D: serde::Deserializer<'de>> serde::Deserializer<'de> for ObjectOnly<D> {
     type Error = D::Error;
@@ -556,7 +556,7 @@ fn validate_selection(model: &ProjectModel, binding: &ImportFactsBinding) -> Fac
     Ok(())
 }
 
-fn validate_observation<T>(value: &GetterObservation<T>, getter: &str) -> FactsResult<()> {
+pub(crate) fn validate_observation<T>(value: &GetterObservation<T>, getter: &str) -> FactsResult<()> {
     if value.getter != getter {
         return Err(unavailable(
             FactsUnavailableReason::Malformed,

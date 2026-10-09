@@ -300,6 +300,78 @@ fn missing_presentation_never_uses_directory_or_module_basename() -> Result<()> 
 }
 
 #[test]
+fn committed_source_set_empty_label_preserves_physical_module_identity() -> Result<()> {
+    use android_tools::module_import::{
+        CommittedImport, ImportRevision, ImportedMember, ImportedModule, KotlinMemberState,
+    };
+    use std::collections::BTreeMap;
+
+    let module = fixture(&[]);
+    let revision = ImportRevision {
+        context_generation: 3,
+        model_revision: 7,
+        selection_revision: 2,
+        import_revision: 4,
+        root: path(""),
+    };
+    let imported = ImportedModule {
+        module: module.path.clone(),
+        variant: "debug".into(),
+        directory: module.directory.clone(),
+        holder_internal_name: "Imported.app".into(),
+        display_name: "app".into(),
+        sort_name: "Imported.app".into(),
+        members: vec![ImportedMember {
+            internal_name: "Imported.app.".into(),
+            external_id: ":app:".into(),
+            source_set_name: Some(String::new()),
+            kotlin: KotlinMemberState::Absent,
+        }],
+    };
+    let committed = CommittedImport {
+        revision: revision.clone(),
+        modules: BTreeMap::from([(module.path.clone(), imported)]),
+    };
+    let model = android_tools::project_model::ProjectModel {
+        version: 1,
+        root: revision.root.clone(),
+        modules: vec![module.clone()],
+        diagnostics: Vec::new(),
+    };
+    let metadata = committed.prepare_member_roots(
+        &model,
+        &revision,
+        &module.path,
+        Some("Imported.app."),
+        true,
+    )?;
+    assert_eq!(metadata.binding().module, module.path);
+    assert_eq!(metadata.binding().variant, "debug");
+    let result = adapt_captured_module(&metadata, &capture(&metadata, vec![directory("")]))?;
+    let row = result.tree.nodes().next().context("Imported module node")?;
+    assert_eq!(row.label, "");
+    assert!(matches!(
+        row.key,
+        android_tools::project_tree::NodeKey::Module { .. }
+    ));
+    assert_eq!(committed.modules[&module.path].sort_name, "Imported.app");
+    assert_eq!(
+        committed.modules[&module.path].holder_internal_name,
+        "Imported.app"
+    );
+    let mut stale = revision;
+    stale.context_generation += 2;
+    assert_eq!(
+        committed
+            .prepare_member_roots(&model, &stale, &module.path, Some("Imported.app."), true)
+            .expect_err("Stale imported label cannot publish")
+            .reason,
+        android_tools::project_tree_facts::FactsUnavailableReason::Stale,
+    );
+    Ok(())
+}
+
+#[test]
 fn missing_provider_metadata_and_variants_remain_typed() -> Result<()> {
     let mut module = fixture(&[]);
     module.evaluated_providers = None;
