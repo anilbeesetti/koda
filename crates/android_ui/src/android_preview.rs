@@ -4794,7 +4794,7 @@ mod tests {
                         .refresh_entries_for_paths(vec![parent]),
                 )
             })?;
-            loaded.recv().await;
+            loaded.next().await;
         }
         let (workspace, visual) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
