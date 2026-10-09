@@ -1,3 +1,4 @@
+use crate::init_test;
 use android_tools::project_context::{
     ActiveContext, ContextSnapshot, PluginId, decode_context_record,
 };
@@ -28,6 +29,7 @@ fn observed_fixture(root: &Path, logic: &Path) -> Result<ContextSnapshot> {
 async fn context_input_observers_preserve_outputs_and_invalidate_real_external_inputs(
     cx: &mut TestAppContext,
 ) -> Result<()> {
+    init_test(cx);
     let root = Path::new(path!("/context-project"));
     let logic = Path::new(path!("/external-convention"));
     let filesystem = FakeFs::new(cx.executor());
@@ -123,6 +125,7 @@ async fn context_input_observers_preserve_outputs_and_invalidate_real_external_i
 async fn real_linux_deleted_input_root_requires_ready_reinstallation_before_reimport(
     cx: &mut TestAppContext,
 ) -> Result<()> {
+    init_test(cx);
     use fs::RealFs;
     cx.executor().allow_parking();
     let fixture = tempfile::TempDir::new()?;
@@ -240,6 +243,7 @@ async fn real_linux_deleted_input_root_requires_ready_reinstallation_before_reim
 async fn real_linux_new_evaluated_build_logic_inside_old_output_installs_deep_coverage(
     cx: &mut TestAppContext,
 ) -> Result<()> {
+    init_test(cx);
     use fs::{Fs as _, RealFs};
     cx.executor().allow_parking();
     let fixture = tempfile::TempDir::new()?;
@@ -364,6 +368,7 @@ async fn real_linux_new_evaluated_build_logic_inside_old_output_installs_deep_co
 async fn input_observers_are_reused_and_pending_source_edits_reject_publication(
     cx: &mut TestAppContext,
 ) -> Result<()> {
+    init_test(cx);
     let root = Path::new(path!("/context-reimport"));
     let logic = Path::new(path!("/convention-reimport"));
     let filesystem = FakeFs::new(cx.executor());
@@ -455,6 +460,7 @@ async fn input_observers_are_reused_and_pending_source_edits_reject_publication(
 async fn selected_root_observer_detects_later_buildsrc_creation_without_new_worktrees(
     cx: &mut TestAppContext,
 ) -> Result<()> {
+    init_test(cx);
     let root = Path::new(path!("/later-convention-project"));
     let logic = root.join("buildSrc");
     let filesystem = FakeFs::new(cx.executor());
@@ -530,6 +536,7 @@ async fn selected_root_observer_detects_later_buildsrc_creation_without_new_work
 async fn external_linked_git_observer_tracks_actual_head_without_cancelling_on_unrelated_refs(
     cx: &mut TestAppContext,
 ) -> Result<()> {
+    init_test(cx);
     let root = Path::new(path!("/head-context-project"));
     let logic = Path::new(path!("/head-external-logic"));
     let common = Path::new(path!("/shared-context-git"));
@@ -675,6 +682,7 @@ async fn external_linked_git_observer_tracks_actual_head_without_cancelling_on_u
 async fn recursive_inputs_track_nested_and_enclosing_git_owners_without_extra_worktrees(
     cx: &mut TestAppContext,
 ) -> Result<()> {
+    init_test(cx);
     for nested in [true, false] {
         let root = if nested {
             Path::new(path!("/nested-head-project"))
@@ -789,6 +797,7 @@ async fn recursive_inputs_track_nested_and_enclosing_git_owners_without_extra_wo
 async fn root_removal_releases_only_owned_inputs_and_keeps_other_worktrees(
     cx: &mut TestAppContext,
 ) -> Result<()> {
+    init_test(cx);
     let root_a = Path::new(path!("/owned-context-a"));
     let root_b = Path::new(path!("/owned-context-b"));
     let logic_a = Path::new(path!("/owned-logic-a"));
@@ -895,6 +904,7 @@ async fn root_removal_releases_only_owned_inputs_and_keeps_other_worktrees(
 async fn real_linux_observer_registers_deep_inputs_and_later_directories(
     cx: &mut TestAppContext,
 ) -> Result<()> {
+    init_test(cx);
     use fs::{Fs as _, RealFs, fs_watcher::OsWatcherKind};
     cx.executor().allow_parking();
     let fixture = tempfile::TempDir::new()?;
