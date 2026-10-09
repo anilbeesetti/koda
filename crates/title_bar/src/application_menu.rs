@@ -53,6 +53,7 @@ pub struct ApplicationMenu {
 }
 
 impl ApplicationMenu {
+    #[cfg(test)]
     pub fn new(_: &mut Window, cx: &mut Context<Self>) -> Self {
         Self::new_with_workspace(None, cx)
     }
