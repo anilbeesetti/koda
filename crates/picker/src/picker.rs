@@ -230,6 +230,11 @@ pub trait PickerDelegate: Sized + 'static {
         cx: &mut Context<Picker<Self>>,
     ) -> Task<()>;
 
+    /// Override when a refresh changes the search scope or highlighted target.
+    fn retain_pending_confirmation(&self) -> bool {
+        true
+    }
+
     // Delegates that support this method (e.g. the CommandPalette) can chose to block on any background
     // work for up to `duration` to try and get a result synchronously.
     // This avoids a flash of an empty command-palette on cmd-shift-p, and lets workspace::SendKeystrokes
@@ -1063,6 +1068,7 @@ impl<D: PickerDelegate> Picker<D> {
         {
             self.confirm_on_update = Some(true)
         } else {
+            self.pending_update_matches.take();
             self.do_confirm(true, window, cx);
         }
     }
@@ -1163,6 +1169,7 @@ impl<D: PickerDelegate> Picker<D> {
     }
 
     fn do_confirm(&mut self, secondary: bool, window: &mut Window, cx: &mut Context<Self>) {
+        self.confirm_on_update = None;
         if self.delegate.supports_multi_select() && self.delegate.selected_item_count() > 0 {
             self.select_instead_of_open = false;
             self.delegate.confirm_multi(secondary, window, cx);
@@ -1238,6 +1245,9 @@ impl<D: PickerDelegate> Picker<D> {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if !self.delegate.retain_pending_confirmation() {
+            self.confirm_on_update = None;
+        }
         let delegate_pending_update_matches = self.delegate.update_matches(query, window, cx);
 
         self.matches_updated(scroll_behavior, window, cx);
@@ -1650,6 +1660,7 @@ mod tests {
         confirmed_index: Rc<Cell<Option<usize>>>,
         confirmations: Vec<(usize, bool)>,
         match_update: Option<(Duration, usize)>,
+        ready_for_confirmation: bool,
         supports_multi_select: bool,
         selected_items: Vec<usize>,
         multi_confirmed: Rc<Cell<Option<Vec<usize>>>>,
@@ -1663,6 +1674,7 @@ mod tests {
                 confirmed_index: Rc::new(Cell::new(None)),
                 confirmations: Vec::new(),
                 match_update: None,
+                ready_for_confirmation: false,
                 supports_multi_select: false,
                 selected_items: Vec::new(),
                 multi_confirmed: Rc::new(Cell::new(None)),
@@ -1740,6 +1752,16 @@ mod tests {
         ) {
             self.confirmed_index.set(Some(self.selected_index));
             self.confirmations.push((self.selected_index, secondary));
+        }
+
+        fn finalize_update_matches(
+            &mut self,
+            _: String,
+            _: Duration,
+            _: &mut Window,
+            _: &mut Context<Picker<Self>>,
+        ) -> bool {
+            self.ready_for_confirmation
         }
 
         fn supports_multi_select(&self) -> bool {
@@ -1853,6 +1875,53 @@ mod tests {
             picker.read_with(cx, |picker, _| {
                 assert_eq!(picker.delegate.selected_index(), 2);
                 assert_eq!(picker.delegate.confirmations, vec![(2, secondary)]);
+            });
+        }
+    }
+
+    #[gpui::test]
+    async fn immediate_confirmation_cancels_an_earlier_queued_confirmation(
+        cx: &mut TestAppContext,
+    ) {
+        init_test(cx);
+        for secondary in [false, true] {
+            let (picker, cx) = cx.add_window_view(|window, cx| {
+                Picker::uniform_list(TestDelegate::new(vec![true, true]), window, cx)
+            });
+            cx.run_until_parked();
+            picker.update_in(cx, |picker, window, cx| {
+                picker.delegate.match_update = Some((Duration::from_millis(100), 1));
+                picker.set_query("pending query", window, cx);
+            });
+            cx.run_until_parked();
+            picker.update_in(cx, |picker, window, cx| {
+                picker.confirm(&menu::Confirm, window, cx);
+                assert_eq!(picker.confirm_on_update, Some(false));
+                picker.delegate.ready_for_confirmation = true;
+                if secondary {
+                    picker.secondary_confirm(&menu::SecondaryConfirm, window, cx);
+                } else {
+                    picker.confirm(&menu::Confirm, window, cx);
+                }
+                assert_eq!(picker.delegate.confirmations, vec![(0, secondary)]);
+                assert!(picker.pending_update_matches.is_none());
+                assert_eq!(picker.confirm_on_update, None);
+            });
+            cx.executor().advance_clock(Duration::from_millis(100));
+            cx.run_until_parked();
+            picker.read_with(cx, |picker, _| {
+                assert_eq!(picker.delegate.confirmations, vec![(0, secondary)]);
+                assert_eq!(picker.delegate.selected_index, 0);
+            });
+            picker.update_in(cx, |picker, window, cx| {
+                picker.delegate.match_update = Some((Duration::from_millis(50), 1));
+                picker.refresh(window, cx);
+            });
+            cx.run_until_parked();
+            cx.executor().advance_clock(Duration::from_millis(50));
+            cx.run_until_parked();
+            picker.read_with(cx, |picker, _| {
+                assert_eq!(picker.delegate.confirmations, vec![(0, secondary)]);
             });
         }
     }

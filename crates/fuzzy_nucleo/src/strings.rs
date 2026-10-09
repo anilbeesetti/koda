@@ -121,7 +121,9 @@ where
     let base_size = candidates.len() / num_cpus;
     let remainder = candidates.len() % num_cpus;
     let mut segment_results = (0..num_cpus)
-        .map(|_| Vec::with_capacity(max_results.min(candidates.len())))
+        .map(|index| {
+            Vec::with_capacity(max_results.min(base_size + usize::from(index < remainder)))
+        })
         .collect::<Vec<_>>();
 
     let config = nucleo::Config::DEFAULT;
