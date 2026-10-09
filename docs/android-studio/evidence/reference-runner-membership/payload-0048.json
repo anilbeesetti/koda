@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 1053,
+  "original_sha256": "20639fc37f7a113e8ccba37be53bc4299acb77351cc770815338ecc4d4afd4b0",
+  "contents": "{\n  \"schema_version\": 1,\n  \"stage\": \"xtask-build\",\n  \"source_commit\": \"5fbebd9df3a60b6c29e09f7236c1b916fe4c4418\",\n  \"started_at_utc\": \"2026-10-08T04:21:46.591639+00:00\",\n  \"duration_seconds\": 6.271850231001736,\n  \"command\": [\n    \"cargo\",\n    \"build\",\n    \"--locked\",\n    \"-p\",\n    \"xtask\",\n    \"--message-format=json\"\n  ],\n  \"exit_code\": 0,\n  \"raw_log\": \"/workspace/android-studio-artifacts/reference-runner-membership/runtime/xtask-build.log\",\n  \"raw_log_bytes\": 236125,\n  \"raw_log_sha256\": \"1a01bf83b38195b32eec704334ce0236e6ece25101fb8796d1d53fa2c6339e4a\",\n  \"full_source_index_status_unchanged\": true,\n  \"source_file_count\": 4750,\n  \"before_snapshot\": \"/workspace/android-studio-artifacts/reference-runner-membership/runtime/xtask-build-whole-source-before.json\",\n  \"free_bytes_before\": {\n    \"/workspace\": 1656918016,\n    \"/tmp\": 92274688\n  },\n  \"free_bytes_after\": {\n    \"/workspace\": 1652940800,\n    \"/tmp\": 92274688\n  },\n  \"compiler_executed\": true,\n  \"original_behavior_credit\": 0,\n  \"runtime_cases\": null,\n  \"global_census_complete\": false\n}\n"
+}

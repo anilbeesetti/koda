@@ -19,6 +19,8 @@ enum CliCommand {
     AndroidReferenceCensus(tasks::android_reference_census::AndroidReferenceCensusArgs),
     /// Record bounded, hash-bound source JUnit4 annotation declarations.
     AndroidJunit4Declarations(tasks::android_junit4_declarations::AndroidJunit4DeclarationsArgs),
+    /// Link pinned literal Android build targets to source runner protocol evidence.
+    AndroidReferenceMembership(tasks::android_reference_membership::AndroidReferenceMembershipArgs),
     /// Runs `cargo clippy`.
     Clippy(tasks::clippy::ClippyArgs),
     Compliance(tasks::compliance::ComplianceArgs),
@@ -48,6 +50,9 @@ fn main() -> Result<()> {
         CliCommand::AndroidReferenceCensus(args) => tasks::android_reference_census::run(args),
         CliCommand::AndroidJunit4Declarations(args) => {
             tasks::android_junit4_declarations::run(args)
+        }
+        CliCommand::AndroidReferenceMembership(args) => {
+            tasks::android_reference_membership::run(args)
         }
         CliCommand::Clippy(args) => tasks::clippy::run_clippy(args),
         CliCommand::Compliance(args) => tasks::compliance::check_compliance(args),

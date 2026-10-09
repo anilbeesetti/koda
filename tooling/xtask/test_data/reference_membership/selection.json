@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "scope": "Pinned source target and runner evidence for adt-ui and project-system-gradle-sync; runtime membership unresolved",
+  "files": [
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+      "path": "adt-ui/BUILD",
+      "sha256": "6be1f61c6600348939ad8058441de095447a8b4debba4b740c26785e249b6d92",
+      "bytes": 2403,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+      "path": "project-system-gradle-sync/BUILD",
+      "sha256": "5c82bd87f7cabac58ef3752e4062d03faeab4f0f9b20e88399b50207c197ff26",
+      "bytes": 3721,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5",
+      "bytes": 879,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+      "sha256": "33d296249b80ad61a7de3dd25abdf44779cd2bd6ade5847024d0b30b2cb6d09e",
+      "bytes": 5447,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "bytes": 4201,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15",
+      "bytes": 4006,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+      "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+      "bytes": 16649,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+      "path": "adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+      "sha256": "26cd53f9592d29bc21f531c7e22c142e29922b412a31bd3937a71d720b0614c4",
+      "bytes": 9419,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_sha256": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4",
+      "path": "bazel/bazel.bzl",
+      "sha256": "f2d3850c522a794e8ced96915624a7fb0b7fde3c12e862e9e53a067e1279553b",
+      "bytes": 47058,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_sha256": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4",
+      "path": "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+      "sha256": "da503cfd8096ae4be970e29f5a96d882bbc6eeb31f0c1ec8a47bed9a7d2abc3a",
+      "bytes": 10038,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_sha256": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4",
+      "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+      "bytes": 10390,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_sha256": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4",
+      "path": "testutils/src/main/java/com/android/testutils/DelegatingRunnerBuilder.java",
+      "sha256": "b5b0f2c7f33fcf61e109dc3fb4972f7f3356cd9800c08c42c21a9a905bcc8ce7",
+      "bytes": 1399,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "archive_sha256": "d7bb6a155c077166a6aed54ddaaa7d1629cbee8c200ceced0bddc0bcedfd92e2",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5",
+      "bytes": 879,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "archive_sha256": "d7bb6a155c077166a6aed54ddaaa7d1629cbee8c200ceced0bddc0bcedfd92e2",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "sha256": "f524898eb42526b57242d0c79db1ecf88ead8105a623eb7c64d57cea45d47bb6",
+      "bytes": 4236,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "archive_sha256": "d7bb6a155c077166a6aed54ddaaa7d1629cbee8c200ceced0bddc0bcedfd92e2",
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "sha256": "e79c781a5e7f96a24a1f55278351cb708d8f2a5417ad676f78b925b47430544a",
+      "bytes": 4197,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "archive_sha256": "d7bb6a155c077166a6aed54ddaaa7d1629cbee8c200ceced0bddc0bcedfd92e2",
+      "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+      "bytes": 16649,
+      "license": "Apache-2.0; original complete bytes and headers retained"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 832,
+  "original_sha256": "18230cb9201997ee19dd698970ac8eb0a03ca2e7afa1365795e840c502f32fd7",
+  "contents": "{\n  \"schema_version\": 1,\n  \"fix_round\": 1,\n  \"time_utc\": \"2026-10-08T04:15:40.108500+00:00\",\n  \"prior_failure_report\": \"reviews/code-static.json\",\n  \"prior_failure_report_sha256\": \"a51639df4ce009723b331a582cd18b59d5a216ea78d2b808b5e448f08279fa4c\",\n  \"prior_source\": \"source-before-fix-round1.rs\",\n  \"prior_source_sha256\": \"b30138984f6b634ef871a650f7cc7114c567936913e41afcf73c958a8a8e8401\",\n  \"current_module_sha256\": \"fef14bc8bc85bb76ed9b88578bbeb4390f2d409403b6fcda87e8d040aecb47d9\",\n  \"resolved_findings\": [\n    \"C1 inferred split-loop whole-module borrow conflict\",\n    \"C2 null/wrong per-split tags/data/JVM argument shapes\"\n  ],\n  \"previous_tests_preserved\": 18,\n  \"additional_tests\": 1,\n  \"runtime_tests_executed\": false,\n  \"original_behavior_credit\": 0,\n  \"global_census_complete\": false,\n  \"effective_runtime_cases\": null\n}\n"
+}
