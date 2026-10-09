@@ -92,7 +92,7 @@ impl DebugAdapter for AndroidKotlinAdapter {
                                 })
                             })
                     })
-            })?,
+            }),
             "Use Android: Debug in the active Android application to establish a current device attachment"
         );
         let executable = match user_installed_path {

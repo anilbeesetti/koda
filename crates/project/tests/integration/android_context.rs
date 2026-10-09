@@ -28,8 +28,8 @@ fn observed_fixture(root: &Path, logic: &Path) -> Result<ContextSnapshot> {
 async fn context_input_observers_preserve_outputs_and_invalidate_real_external_inputs(
     cx: &mut TestAppContext,
 ) -> Result<()> {
-    let root = path!("/context-project");
-    let logic = path!("/external-convention");
+    let root = Path::new(path!("/context-project"));
+    let logic = Path::new(path!("/external-convention"));
     let filesystem = FakeFs::new(cx.executor());
     filesystem
         .insert_tree(root, json!({"build.gradle":"", "main.py":"print(1)"}))
@@ -364,8 +364,8 @@ async fn real_linux_new_evaluated_build_logic_inside_old_output_installs_deep_co
 async fn input_observers_are_reused_and_pending_source_edits_reject_publication(
     cx: &mut TestAppContext,
 ) -> Result<()> {
-    let root = path!("/context-reimport");
-    let logic = path!("/convention-reimport");
+    let root = Path::new(path!("/context-reimport"));
+    let logic = Path::new(path!("/convention-reimport"));
     let filesystem = FakeFs::new(cx.executor());
     filesystem
         .insert_tree(root, json!({"build.gradle":""}))
@@ -455,7 +455,7 @@ async fn input_observers_are_reused_and_pending_source_edits_reject_publication(
 async fn selected_root_observer_detects_later_buildsrc_creation_without_new_worktrees(
     cx: &mut TestAppContext,
 ) -> Result<()> {
-    let root = path!("/later-convention-project");
+    let root = Path::new(path!("/later-convention-project"));
     let logic = root.join("buildSrc");
     let filesystem = FakeFs::new(cx.executor());
     filesystem
@@ -498,7 +498,7 @@ async fn selected_root_observer_detects_later_buildsrc_creation_without_new_work
         project.android_context_observes(handle, &logic)
     }));
     assert!(!project.read_with(cx, |project, _| {
-        project.android_context_observes(handle, path!("/different-project"))
+        project.android_context_observes(handle, Path::new(path!("/different-project")))
     }));
     project.update(cx, |project, cx| {
         project.publish_android_context(
@@ -530,9 +530,9 @@ async fn selected_root_observer_detects_later_buildsrc_creation_without_new_work
 async fn external_linked_git_observer_tracks_actual_head_without_cancelling_on_unrelated_refs(
     cx: &mut TestAppContext,
 ) -> Result<()> {
-    let root = path!("/head-context-project");
-    let logic = path!("/head-external-logic");
-    let common = path!("/shared-context-git");
+    let root = Path::new(path!("/head-context-project"));
+    let logic = Path::new(path!("/head-external-logic"));
+    let common = Path::new(path!("/shared-context-git"));
     let git_directory = common.join("worktrees/logic");
     let original = "1".repeat(40);
     let unrelated = "2".repeat(40);
@@ -677,14 +677,14 @@ async fn recursive_inputs_track_nested_and_enclosing_git_owners_without_extra_wo
 ) -> Result<()> {
     for nested in [true, false] {
         let root = if nested {
-            path!("/nested-head-project")
+            Path::new(path!("/nested-head-project"))
         } else {
-            path!("/enclosing-head-project")
+            Path::new(path!("/enclosing-head-project"))
         };
         let owner = if nested {
             root.join("buildSrc")
         } else {
-            path!("/enclosing-logic-repository").to_path_buf()
+            Path::new(path!("/enclosing-logic-repository")).to_path_buf()
         };
         let logic = if nested {
             owner.clone()
@@ -789,10 +789,10 @@ async fn recursive_inputs_track_nested_and_enclosing_git_owners_without_extra_wo
 async fn root_removal_releases_only_owned_inputs_and_keeps_other_worktrees(
     cx: &mut TestAppContext,
 ) -> Result<()> {
-    let root_a = path!("/owned-context-a");
-    let root_b = path!("/owned-context-b");
-    let logic_a = path!("/owned-logic-a");
-    let logic_b = path!("/owned-logic-b");
+    let root_a = Path::new(path!("/owned-context-a"));
+    let root_b = Path::new(path!("/owned-context-b"));
+    let logic_a = Path::new(path!("/owned-logic-a"));
+    let logic_b = Path::new(path!("/owned-logic-b"));
     let filesystem = FakeFs::new(cx.executor());
     for root in [root_a, root_b] {
         filesystem

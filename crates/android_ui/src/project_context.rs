@@ -13,7 +13,7 @@ use futures::{
     future::{BoxFuture, Shared},
 };
 use gpui::{
-    App, BackgroundExecutor, Context, Entity, EntityId, Global, InteractiveElement as _,
+    App, AppContext as _, BackgroundExecutor, Context, Entity, EntityId, Global, InteractiveElement as _,
     Subscription, Task, WeakEntity, Window, actions,
 };
 use project::{
@@ -21,7 +21,7 @@ use project::{
     git_store::{GitStoreEvent, RepositoryEvent},
     trusted_worktrees::{TrustedWorktrees, TrustedWorktreesEvent},
 };
-use std::{collections::HashMap, path::PathBuf, time::Duration};
+use std::{collections::HashMap, path::{Path, PathBuf}, time::Duration};
 use util::{ResultExt as _, rel_path::RelPath};
 use workspace::{Toast, Workspace, notifications::NotificationId};
 
@@ -50,10 +50,157 @@ pub(crate) fn for_workspace(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use fs::Fs as _;
     use gpui::{AppContext as _, TestAppContext};
     use project::trusted_worktrees::{self, PathTrust};
     use serde_json::json;
     use workspace::AppState;
+
+    #[gpui::test]
+    async fn import_availability_tracks_cached_root_files_without_qualifying_generic_projects(
+        cx: &mut TestAppContext,
+    ) -> Result<()> {
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            trusted_worktrees::init(Default::default(), cx);
+        });
+        let filesystem = project::FakeFs::new(cx.executor());
+        filesystem.insert_tree("/cached-import-owner", json!({"main.py":"print(1)"})).await;
+        let project = Project::test_with_worktree_trust(filesystem.clone(), [Path::new("/cached-import-owner")], cx).await;
+        cx.update(|cx| crate::project_surfaces::tests::trust(&project, cx))?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let build = visual.new(|cx| BuildPanel::new(workspace.downgrade(), cx));
+        workspace.update_in(visual, |workspace, window, cx| { register(workspace, build, window, cx); });
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/cached-import-owner/main.py"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        let controller = visual.update(|_, cx| for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+        assert!(controller.read_with(visual, |controller, cx| controller.import_candidate(cx).is_none()));
+        filesystem.write(Path::new("/cached-import-owner/gradlew"), b"wrapper").await?;
+        visual.run_until_parked();
+        assert!(controller.read_with(visual, |controller, cx| controller.import_candidate(cx).is_none()));
+        filesystem.write(Path::new("/cached-import-owner/settings.gradle.kts"), b"rootProject.name = \"plain\"").await?;
+        visual.run_until_parked();
+        controller.read_with(visual, |controller, cx| {
+            assert_eq!(controller.import_candidate(cx), Some(PathBuf::from("/cached-import-owner")));
+            assert_eq!(controller.capabilities(Default::default(), cx), Default::default(),
+                "Wrapper/build entries only enable neutral explicit import; they cannot establish Android or multiplatform facts");
+        });
+        filesystem.remove_file(Path::new("/cached-import-owner/gradlew"), Default::default()).await?;
+        filesystem.create_dir(Path::new("/cached-import-owner/gradlew")).await?;
+        visual.run_until_parked();
+        assert!(controller.read_with(visual, |controller, cx| controller.import_candidate(cx).is_none()),
+            "A cached directory named gradlew is not a wrapper file");
+        filesystem.write(Path::new("/cached-import-owner/gradlew.bat"), b"wrapper").await?;
+        visual.run_until_parked();
+        assert!(controller.read_with(visual, |controller, cx| controller.import_candidate(cx).is_some()));
+        filesystem.remove_file(Path::new("/cached-import-owner/settings.gradle.kts"), Default::default()).await?;
+        visual.run_until_parked();
+        assert!(controller.read_with(visual, |controller, cx| controller.import_candidate(cx).is_none()));
+        Ok(())
+    }
+
+    #[gpui::test]
+    async fn nested_repository_selection_preserves_source_and_import_owners_but_rapid_roots_do_not(
+        cx: &mut TestAppContext,
+    ) -> Result<()> {
+        cx.update(|cx| {
+            let state = AppState::test(cx);
+            editor::init(cx);
+            workspace::init(state, cx);
+            trusted_worktrees::init(Default::default(), cx);
+        });
+        let filesystem = project::FakeFs::new(cx.executor());
+        filesystem.insert_tree("/repo-owner", json!({".git":{},"Main.kt":"class Main",
+            "nested":{".git":{},"Other.kt":"class Other"}})).await;
+        filesystem.insert_tree("/repo-other", json!({".git":{},"main.py":"print(1)"})).await;
+        for git in ["/repo-owner/.git", "/repo-owner/nested/.git", "/repo-other/.git"] {
+            filesystem.set_branch_name(Path::new(git), Some("main"));
+        }
+        let project = Project::test_with_worktree_trust(filesystem,
+            [Path::new("/repo-owner"), Path::new("/repo-other")], cx).await;
+        project.update(cx, |project, cx| project.git_scans_complete(cx)).await;
+        cx.update(|cx| {
+            crate::project_surfaces::tests::trust(&project, cx)?;
+            crate::project_surfaces::tests::publish_catalogue(&project, Path::new("/repo-owner"),
+                &[android_tools::project_context::PluginId::AndroidApplication], &[("android", "androidJvm")], true, cx)
+        })?;
+        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let build = visual.new(|cx| BuildPanel::new(workspace.downgrade(), cx));
+        workspace.update_in(visual, |workspace, window, cx| { register(workspace, build, window, cx); });
+        visual.update(|window, _| window.activate_window());
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/repo-owner/Main.kt"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        let controller = visual.update(|_, cx| for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+        let (source, owner) = controller.read_with(visual, |controller, cx| {
+            Ok::<_, anyhow::Error>((controller.action_token(cx).context("Source token")?,
+                controller.project_token(cx).context("Project token")?))
+        })?;
+        let nested_path = project.read_with(visual, |project, cx| {
+            project.find_project_path("/repo-owner/nested/Other.kt", cx).context("Nested path")
+        })?;
+        let git = project.read_with(visual, |project, cx| project.git_store().clone());
+        let previous_repository = git.read_with(visual, |git, cx| git.active_repository().context("Root repo").map(|repo| repo.read(cx).id))?;
+        git.update(visual, |git, cx| git.set_active_repo_for_path(&nested_path, cx));
+        visual.run_until_parked();
+        git.read_with(visual, |git, cx| {
+            let repository = git.active_repository().expect("Nested repository").read(cx);
+            assert_ne!(repository.id, previous_repository, "The real active-repository event must change repositories");
+            assert_eq!(repository.work_directory_abs_path.as_ref(), Path::new("/repo-owner/nested"));
+        });
+        controller.read_with(visual, |controller, cx| {
+            assert!(controller.action_is_current(&source, cx), "A repository-only chooser change must retain the current source");
+            assert!(controller.project_is_current(&owner, cx));
+        });
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(Path::new("/repo-owner/nested/Other.kt"), Default::default(), window, cx)
+        }).await?;
+        visual.run_until_parked();
+        controller.read_with(visual, |controller, cx| {
+            assert!(!controller.action_is_current(&source, cx), "An actual file switch invalidates source work");
+            assert!(controller.project_is_current(&owner, cx));
+        });
+        let (mut cancelled, importing) = controller.update(visual, |controller, cx| {
+            let root = controller.active.root().context("Import root")?;
+            let discovery = project.update(cx, |project, cx| project.begin_android_context_import(root, cx))?;
+            let active = controller.active.project_discovery_token(project.read(cx).android_context()).context("Import owner")?;
+            let (cancel, cancelled) = oneshot::channel();
+            controller.import_owner = Some(ImportOwner { root, active: active.clone(), discovery, session: 1 });
+            controller.cancel = Some(cancel);
+            controller.task = Some(Task::ready(()));
+            Ok::<_, anyhow::Error>((cancelled, active))
+        })?;
+        let (root_id, other_id) = project.read_with(visual, |project, cx| {
+            Ok::<_, anyhow::Error>((project.find_worktree(Path::new("/repo-owner"), cx).context("Owner root")?.0.read(cx).id(),
+                project.find_worktree(Path::new("/repo-other"), cx).context("Other root")?.0.read(cx).id()))
+        })?;
+        git.update(visual, |git, cx| git.set_active_repo_for_worktree(root_id, cx));
+        visual.run_until_parked();
+        assert_eq!(cancelled.try_recv()?, None);
+        controller.read_with(visual, |controller, cx| {
+            assert!(controller.import_in_progress(cx));
+            assert!(controller.project_is_current(&importing, cx));
+        });
+        // Both queued Git events are emitted before pumping; reading only the
+        // store's final active repository would silently collapse this B/A pair.
+        git.update(visual, |git, cx| {
+            git.set_active_repo_for_worktree(other_id, cx);
+            git.set_active_repo_for_worktree(root_id, cx);
+        });
+        visual.run_until_parked();
+        assert_eq!(cancelled.try_recv()?, Some(()));
+        controller.read_with(visual, |controller, cx| {
+            assert_eq!(controller.root(cx), Some(PathBuf::from("/repo-owner")));
+            assert!(!controller.project_is_current(&importing, cx));
+            assert!(controller.import_owner.is_none() && controller.task.is_none());
+        });
+        Ok(())
+    }
 
     #[gpui::test]
     async fn queued_import_keeps_its_project_across_files_and_cancels_rapid_root_switches(
@@ -569,6 +716,10 @@ async fn evaluate(
     output: mpsc::Sender<android_build::OutputLine>,
     cancelled: Cancellation,
 ) -> Result<CapturedProcessOutput> {
+    ensure!(
+        android_tools::is_gradle_project(&root),
+        "The selected project no longer has a Gradle wrapper and build definition"
+    );
     let adapter = android_tools::project_context::prepare()?;
     let program = if cfg!(windows) {
         root.join("gradlew.bat")
@@ -661,6 +812,16 @@ impl ProjectContextController {
                         | project::Event::WorktreeOrderChanged
                 ) {
                     this.request_reconcile(window, cx);
+                } else if let project::Event::WorktreeUpdatedEntries(id, entries) = event {
+                    let project = this.project.read(cx);
+                    let is_root = project.worktree_for_id(*id, cx).is_some_and(|worktree| {
+                        this.root(cx).as_deref() == Some(worktree.read(cx).abs_path().as_ref())
+                    });
+                    if is_root && entries.iter().any(|(path, _, _)| {
+                        matches!(path.as_unix_str(), "gradlew" | "gradlew.bat" | "settings.gradle" | "settings.gradle.kts" | "build.gradle" | "build.gradle.kts")
+                    }) {
+                        this.request_reconcile(window, cx);
+                    }
                 }
             }),
         );
@@ -669,10 +830,8 @@ impl ProjectContextController {
             &git_store,
             window,
             |this, store, event, window, cx| match event {
-                GitStoreEvent::ActiveRepositoryChanged(_) if window.is_window_active() => {
-                    let directory = store
-                        .read(cx)
-                        .active_repository()
+                GitStoreEvent::ActiveRepositoryChanged(id) if window.is_window_active() => {
+                    let directory = id.and_then(|id| store.read(cx).repositories().get(&id))
                         .map(|repository| repository.read(cx).work_directory_abs_path.clone());
                     // The Git store is shared by Project windows. Resolve the
                     // current Workspace after chooser/editor leases have closed.
@@ -686,13 +845,9 @@ impl ProjectContextController {
                         {
                             return;
                         }
-                        this.clear_active(cx);
-                        this.selected_root = directory.and_then(|path| {
-                            this.project
-                                .read(cx)
-                                .find_worktree(&path, cx)
-                                .map(|(worktree, _)| worktree.read(cx).id())
-                        });
+                        if let Some(directory) = directory {
+                            this.select_repository_directory(&directory, cx).log_err();
+                        }
                         this.request_reconcile(window, cx);
                     });
                 }
@@ -776,13 +931,6 @@ impl ProjectContextController {
         });
     }
 
-    fn clear_active(&mut self, cx: &mut Context<Self>) {
-        self.cancel_import(cx);
-        self.active.select(None, None).log_err();
-        self.source_worktree = None;
-        cx.notify();
-    }
-
     fn cancel_import(&mut self, cx: &mut Context<Self>) {
         if let Some(cancel) = self.cancel.take() {
             if cancel.send(()).is_err() {
@@ -835,20 +983,12 @@ impl ProjectContextController {
         Ok(())
     }
 
-    fn select_path(
-        &mut self,
-        path: Option<project::ProjectPath>,
-        cx: &mut Context<Self>,
-    ) -> Result<()> {
+    fn resolve_path_owner(
+        &self,
+        path: &project::ProjectPath,
+        cx: &App,
+    ) -> Result<(Option<WorktreeId>, PathBuf)> {
         let project = self.project.clone();
-        let roots = project
-            .read(cx)
-            .visible_worktrees(cx)
-            .filter(|worktree| !worktree.read(cx).is_single_file())
-            .map(|worktree| (worktree.read(cx).id(), worktree.read(cx).abs_path()))
-            .collect::<Vec<_>>();
-        let source_worktree = path.as_ref().map(|path| path.worktree_id);
-        let (worktree, owner) = if let Some(path) = path {
             let worktree = project
                 .read(cx)
                 .worktree_for_id(path.worktree_id, cx)
@@ -882,14 +1022,15 @@ impl ProjectContextController {
                 Some(path.worktree_id)
             } else {
                 let store = project.read(cx).android_context();
-                let owners = roots
-                    .iter()
-                    .filter_map(|(id, _)| {
+                let owners = project.read(cx).visible_worktrees(cx)
+                    .filter(|worktree| !worktree.read(cx).is_single_file())
+                    .filter_map(|worktree| {
+                        let id = worktree.read(cx).id();
                         let handle = store.handle(id.to_proto())?;
                         (store.snapshot(handle).is_some_and(|snapshot| {
                             matches!(snapshot.module_owner(&owner), ModuleOwner::Module(_))
                         }) || self.active.retained_external_owner(handle, &owner, store))
-                        .then_some(*id)
+                        .then_some(id)
                     })
                     .collect::<Vec<_>>();
                 match owners.as_slice() {
@@ -898,6 +1039,45 @@ impl ProjectContextController {
                     _ => None,
                 }
             };
+        Ok((owning_root, owner))
+    }
+
+    fn select_repository_directory(&mut self, directory: &Path, cx: &mut Context<Self>) -> Result<()> {
+        let project = self.project.clone();
+        let (worktree, path) = project.read(cx).find_worktree(directory, cx)
+            .context("Selected repository is outside this project")?;
+        let path = project::ProjectPath { worktree_id: worktree.read(cx).id(), path };
+        let (worktree, _) = self.resolve_path_owner(&path, cx)?;
+        let handle = worktree.and_then(|id| project.read(cx).android_context().handle(id.to_proto()));
+        self.selected_root = worktree;
+        if handle != self.active.root() {
+            // Process each captured repository transition, even when a later
+            // chooser event returns to the original root before reconciliation.
+            self.active.select_evaluated_owner(handle, None, project.read(cx).android_context())?;
+            self.source_worktree = None;
+            if self.import_owner.as_ref().is_some_and(|owner| !self.project_is_current(&owner.active, cx)) {
+                self.cancel_import(cx);
+            }
+            cx.notify();
+        }
+        Ok(())
+    }
+
+    fn select_path(
+        &mut self,
+        path: Option<project::ProjectPath>,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
+        let project = self.project.clone();
+        let roots = project
+            .read(cx)
+            .visible_worktrees(cx)
+            .filter(|worktree| !worktree.read(cx).is_single_file())
+            .map(|worktree| (worktree.read(cx).id(), worktree.read(cx).abs_path()))
+            .collect::<Vec<_>>();
+        let source_worktree = path.as_ref().map(|path| path.worktree_id);
+        let (worktree, owner) = if let Some(path) = path {
+            let (owning_root, owner) = self.resolve_path_owner(&path, cx)?;
             (owning_root, owning_root.map(|_| owner))
         } else {
             let selected = self
@@ -1038,7 +1218,23 @@ impl ProjectContextController {
 
     pub(crate) fn import_candidate(&self, cx: &App) -> Option<PathBuf> {
         let root = self.root(cx)?;
-        (self.project.read(cx).is_local() && android_tools::is_gradle_project(&root))
+        let project = self.project.read(cx);
+        if !project.is_local() {
+            return None;
+        }
+        let (worktree, _) = project.find_worktree(&root, cx)?;
+        let worktree = worktree.read(cx);
+        if worktree.abs_path().as_ref() != root.as_path() {
+            return None;
+        }
+        let is_file = |name| {
+            RelPath::from_unix_str(name).is_ok_and(|path| {
+                worktree.entry_for_path(path).is_some_and(|entry| entry.is_file())
+            })
+        };
+        ((is_file("gradlew") || is_file("gradlew.bat"))
+            && ["settings.gradle.kts", "settings.gradle", "build.gradle.kts", "build.gradle"]
+                .into_iter().any(is_file))
             .then_some(root)
     }
 

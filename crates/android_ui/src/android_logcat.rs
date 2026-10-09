@@ -268,10 +268,13 @@ impl LogcatView {
                     view.control_task = None;
                     view.device_owner = None;
                     view.capturing = false;
-                    cx.defer(|view, cx| {
-                        if view.watching_requested && view.device_context_token(cx).is_ok() {
-                            view.watch_devices(cx);
-                        }
+                    let view = cx.entity().downgrade();
+                    cx.defer(move |cx| {
+                        view.update(cx, |view, cx| {
+                            if view.watching_requested && view.device_context_token(cx).is_ok() {
+                                view.watch_devices(cx);
+                            }
+                        }).log_err();
                     });
                 }
             }));
@@ -4468,9 +4471,12 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
     filesystem
         .insert_tree(
             "/logcat-owner",
-            serde_json::json!({"Main.kt":"fun main() {}", "Other.kt":"fun other() {}"}),
+            serde_json::json!({".git":{}, "Main.kt":"fun main() {}", "Other.kt":"fun other() {}",
+                "nested":{".git":{},"Nested.kt":"class Nested"}}),
         )
         .await;
+    filesystem.set_branch_name(Path::new("/logcat-owner/.git"), Some("main"));
+    filesystem.set_branch_name(Path::new("/logcat-owner/nested/.git"), Some("main"));
     filesystem
         .insert_tree(
             "/python-untrusted",
@@ -4483,6 +4489,7 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
         cx,
     )
     .await;
+    project.update(cx, |project, cx| project.git_scans_complete(cx)).await;
     cx.update(|cx| {
         let store = project.read(cx).worktree_store();
         let root = project
@@ -4514,6 +4521,7 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
     })?;
     let (workspace, visual) =
         cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+    visual.update(|window, _| window.activate_window());
     workspace
         .update_in(visual, |workspace, window, cx| {
             workspace.open_abs_path(
@@ -4579,6 +4587,17 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
                 && view.stream_task.is_some()
                 && view.control_task.is_some()
         );
+    });
+    workspace.update_in(visual, |workspace, window, cx| {
+        workspace.open_abs_path(Path::new("/logcat-owner/nested/Nested.kt"), Default::default(), window, cx)
+    }).await?;
+    visual.run_until_parked();
+    assert!(!cancelled.load(Ordering::Acquire), "A nested Git repository inside the same Gradle root keeps Logcat running");
+    view.read_with(visual, |view, cx| {
+        assert!(view.verify_device_context(&owner, cx).is_ok());
+        assert!(view.capturing && view.device_task.is_some() && view.stream_task.is_some() && view.control_task.is_some());
+        assert_eq!(project.read(cx).git_store().read(cx).active_repository().expect("Nested Git repo").read(cx).work_directory_abs_path.as_ref(),
+            Path::new("/logcat-owner/nested"));
     });
     workspace
         .update_in(visual, |workspace, window, cx| {

@@ -159,6 +159,7 @@ fn register_ready(watcher: &Arc<dyn fs::Watcher>, directory: &Path) -> Result<()
 struct InputScan {
     discovered: Vec<PathBuf>,
     git_roots: BTreeSet<PathBuf>,
+    coverage_updates: BTreeMap<PathBuf, Option<u64>>,
 }
 
 #[derive(Clone)]
@@ -230,6 +231,7 @@ async fn scan_inputs(
     let mut queue = VecDeque::from(roots);
     let mut discovered = Vec::new();
     let mut git_roots = BTreeSet::new();
+    let mut coverage_updates = BTreeMap::new();
     let mut entries = 0;
     while let Some(directory) = queue.pop_front() {
         if provenance.is_some_and(|snapshot| snapshot.is_generated_output(&directory)) {
@@ -252,7 +254,9 @@ async fn scan_inputs(
                 .collect::<Vec<_>>();
             for path in previous {
                 watcher.remove(&path)?;
-                watched.remove(&path);
+                if watched.remove(&path).is_some() {
+                    coverage_updates.insert(path, None);
+                }
             }
         }
         anyhow::ensure!(
@@ -261,6 +265,7 @@ async fn scan_inputs(
         );
         register_ready(watcher, &directory)?;
         watched.insert(directory.clone(), metadata.inode);
+        coverage_updates.insert(directory.clone(), Some(metadata.inode));
         discovered.push(directory.clone());
         let mut children = filesystem.read_dir(&directory).await?;
         while let Some(child) = children.next().await {
@@ -294,6 +299,7 @@ async fn scan_inputs(
     Ok(InputScan {
         discovered,
         git_roots,
+        coverage_updates,
     })
 }
 
@@ -668,13 +674,16 @@ impl Project {
                             }
                             let mut discovered = Vec::new();
                             if !git && !failed {
+                                let mut coverage_updates = BTreeMap::new();
                                 let paths = batch.iter().map(|event| event.path.clone()).collect::<Vec<_>>();
                                 let scan_provenance = task_coverage.provenance.lock().clone();
                                 for event in batch.iter().filter(|event| event.kind == Some(fs::PathEventKind::Removed)) {
                                     let removed = watched.keys().filter(|directory| directory.starts_with(&event.path)).cloned().collect::<Vec<_>>();
                                     for directory in removed {
                                         if let Err(error) = input_watcher.remove(&directory) { log::error!("Cannot retire removed Gradle input directory: {error:#}"); failed = true; }
-                                        watched.remove(&directory);
+                                        if watched.remove(&directory).is_some() {
+                                            coverage_updates.insert(directory, None);
+                                        }
                                     }
                                     let removed_inputs = known_inputs.iter().filter(|path| path.starts_with(&event.path)).cloned().collect::<Vec<_>>();
                                     for path in removed_inputs { known_inputs.remove(&path); discovered.push(path); }
@@ -691,7 +700,17 @@ impl Project {
                                     }).await {
                                         (scanned, Ok(scan)) => {
                                             watched = scanned;
-                                            *task_coverage.directories.lock() = watched.clone();
+                                            coverage_updates.extend(scan.coverage_updates);
+                                            if !coverage_updates.is_empty() {
+                                                let mut directories = task_coverage.directories.lock();
+                                                for (directory, inode) in coverage_updates {
+                                                    if let Some(inode) = inode {
+                                                        directories.insert(directory, inode);
+                                                    } else {
+                                                        directories.remove(&directory);
+                                                    }
+                                                }
+                                            }
                                             known_inputs.extend(scan.discovered.iter().filter(|path| android_tools::project_context::is_context_input(path)).cloned());
                                             discovered.extend(scan.discovered);
                                             if scan.git_roots.iter().any(|root| !heads.contains_key(root)) { failed = true; }
