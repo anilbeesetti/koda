@@ -2326,7 +2326,7 @@ fn show_markdown_app_notification<F>(
 
 fn reload_menus(cx: &mut App) {
     let menus = app_menus(cx);
-    cx.set_menus(menus);
+    android_ui::install_application_menus(menus, cx);
 }
 
 fn reload_keymaps(cx: &mut App, mut user_key_bindings: Vec<KeyBinding>) {
@@ -5971,6 +5971,7 @@ mod tests {
                 "outline_panel",
                 "pane",
                 "picker",
+                "project",
                 "project_panel",
                 "project_search",
                 "project_symbols",

@@ -1,0 +1,9 @@
+plugins { id 'com.android.application' version '9.4.0' }
+android {
+    namespace 'dev.koda.context.missingsdk'
+    compileSdk 37
+    defaultConfig { applicationId 'dev.koda.context.missingsdk'; minSdk 26; targetSdk 37 }
+}
+// The runtime harness supplies a missing private sdk.dir. Read the official
+// provider after plugin application so its affirmative callback can be retained.
+afterEvaluate { androidComponents.sdkComponents.sdkDirectory.get() }
