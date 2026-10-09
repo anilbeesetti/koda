@@ -1130,8 +1130,7 @@ impl AndroidPanel {
                                 cx,
                             )
                         })
-                    })
-                    .and_then(|result| result);
+                    });
                 if let Err(error) = result {
                     panel
                         .update(cx, |panel, cx| panel.fail(error, window, cx))
