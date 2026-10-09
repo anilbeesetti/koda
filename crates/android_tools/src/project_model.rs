@@ -458,22 +458,38 @@ pub struct SelectedProject {
 
 impl ProjectModel {
     pub fn library_variants(&self) -> Vec<VariantId> {
-        let mut variants = self.modules.iter()
+        let mut variants = self
+            .modules
+            .iter()
             .filter(|module| module.kind == ModuleKind::Library)
-            .flat_map(|module| module.variants.iter().map(move |variant| VariantId {
-                module: module.path.clone(), variant: variant.name.clone(),
-            })).collect::<Vec<_>>();
+            .flat_map(|module| {
+                module.variants.iter().map(move |variant| VariantId {
+                    module: module.path.clone(),
+                    variant: variant.name.clone(),
+                })
+            })
+            .collect::<Vec<_>>();
         variants.sort();
         variants
     }
 
     pub fn default_library_variant(&self) -> Option<VariantId> {
-        self.modules.iter().filter(|module| module.kind == ModuleKind::Library)
+        self.modules
+            .iter()
+            .filter(|module| module.kind == ModuleKind::Library)
             .flat_map(|module| module.variants.iter().map(move |variant| (module, variant)))
-            .min_by_key(|(module, variant)| (&module.path,
-                module.default_variant.as_ref() != Some(&variant.name),
-                !(variant.name == "debug" || variant.name.ends_with("Debug")), &variant.name))
-            .map(|(module, variant)| VariantId { module: module.path.clone(), variant: variant.name.clone() })
+            .min_by_key(|(module, variant)| {
+                (
+                    &module.path,
+                    module.default_variant.as_ref() != Some(&variant.name),
+                    !(variant.name == "debug" || variant.name.ends_with("Debug")),
+                    &variant.name,
+                )
+            })
+            .map(|(module, variant)| VariantId {
+                module: module.path.clone(),
+                variant: variant.name.clone(),
+            })
     }
 
     pub fn default_target(&self) -> Option<AndroidTarget> {
@@ -736,23 +752,43 @@ pub struct EvaluatedModelPaths {
 }
 
 impl EvaluatedModelPaths {
-    pub fn capture(store: &crate::project_context::ContextStore,
-        token: &crate::project_context::RootToken, root: &Path) -> Result<Self> {
+    pub fn capture(
+        store: &crate::project_context::ContextStore,
+        token: &crate::project_context::RootToken,
+        root: &Path,
+    ) -> Result<Self> {
         use crate::project_context::{ModuleOwner, ObservationPhase};
-        ensure!(store.is_current(token), "Evaluated model paths require a current trusted root");
-        let handle = store.handles().find(|handle| store.token(*handle).as_ref() == Some(token))
+        ensure!(
+            store.is_current(token),
+            "Evaluated model paths require a current trusted root"
+        );
+        let handle = store
+            .handles()
+            .find(|handle| store.token(*handle).as_ref() == Some(token))
             .context("Evaluated model root was removed")?;
-        let snapshot = store.snapshot(handle).context("Import the evaluated project context first")?;
-        ensure!(store.root_path(handle) == Some(root) && snapshot.root() == root
-            && snapshot.phase() == ObservationPhase::Complete,
-            "Evaluated model paths belong to an incomplete or different root");
+        let snapshot = store
+            .snapshot(handle)
+            .context("Import the evaluated project context first")?;
+        ensure!(
+            store.root_path(handle) == Some(root)
+                && snapshot.root() == root
+                && snapshot.phase() == ObservationPhase::Complete,
+            "Evaluated model paths belong to an incomplete or different root"
+        );
         let mut modules = BTreeMap::new();
         for module in snapshot.modules() {
-            ensure!(matches!(snapshot.module_owner(module.directory()), ModuleOwner::Module(owner) if owner == module.path()),
-                "Evaluated module {} has ambiguous directory ownership", module.path());
+            ensure!(
+                matches!(snapshot.module_owner(module.directory()), ModuleOwner::Module(owner) if owner == module.path()),
+                "Evaluated module {} has ambiguous directory ownership",
+                module.path()
+            );
             modules.insert(module.path().to_owned(), module.directory().to_path_buf());
         }
-        Ok(Self { root: root.to_path_buf(), token: token.clone(), modules })
+        Ok(Self {
+            root: root.to_path_buf(),
+            token: token.clone(),
+            modules,
+        })
     }
 
     pub fn is_current(&self, store: &crate::project_context::ContextStore) -> bool {
@@ -766,12 +802,23 @@ pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
 
 /// Parse paths proven by evaluated Gradle module getters. The caller retains
 /// responsibility for rejecting a result after the captured context expires.
-pub fn parse_model_with_context(output: &str, root: &Path, paths: &EvaluatedModelPaths) -> Result<ProjectModel> {
-    ensure!(paths.root == root, "Evaluated model paths belong to a different root");
+pub fn parse_model_with_context(
+    output: &str,
+    root: &Path,
+    paths: &EvaluatedModelPaths,
+) -> Result<ProjectModel> {
+    ensure!(
+        paths.root == root,
+        "Evaluated model paths belong to a different root"
+    );
     parse_model_with_paths(output, root, Some(paths))
 }
 
-fn parse_model_with_paths(output: &str, root: &Path, paths: Option<&EvaluatedModelPaths>) -> Result<ProjectModel> {
+fn parse_model_with_paths(
+    output: &str,
+    root: &Path,
+    paths: Option<&EvaluatedModelPaths>,
+) -> Result<ProjectModel> {
     let mut records = output.lines().filter_map(|line| line.strip_prefix(OUTPUT));
     let exported: ExportedProjectModel = serde_json::from_str(
         records
@@ -810,15 +857,29 @@ fn parse_model_with_paths(output: &str, root: &Path, paths: Option<&EvaluatedMod
             module.path
         );
         let boundary = if let Some(paths) = paths {
-            let directory = paths.modules.get(&module.path)
+            let directory = paths
+                .modules
+                .get(&module.path)
                 .context("Android model module has no evaluated directory provenance")?;
-            ensure!(module.directory == *directory && directory.is_absolute()
-                && directory.canonicalize()? == *directory,
-                "Android model module {} does not match its evaluated canonical directory", module.path);
-            if directory.starts_with(&root) { root.as_path() } else { directory.as_path() }
+            ensure!(
+                module.directory == *directory
+                    && directory.is_absolute()
+                    && directory.canonicalize()? == *directory,
+                "Android model module {} does not match its evaluated canonical directory",
+                module.path
+            );
+            if directory.starts_with(&root) {
+                root.as_path()
+            } else {
+                directory.as_path()
+            }
         } else {
-            ensure!(module.directory.is_absolute() && module.directory.canonicalize()?.starts_with(&root),
-                "Module {} is outside the selected build; included builds and external project directories are unsupported", module.path);
+            ensure!(
+                module.directory.is_absolute()
+                    && module.directory.canonicalize()?.starts_with(&root),
+                "Module {} is outside the selected build; included builds and external project directories are unsupported",
+                module.path
+            );
             root.as_path()
         };
         if let Some(catalog) = &module.source_providers {

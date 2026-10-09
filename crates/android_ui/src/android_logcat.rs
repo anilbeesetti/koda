@@ -274,7 +274,8 @@ impl LogcatView {
                             if view.watching_requested && view.device_context_token(cx).is_ok() {
                                 view.watch_devices(cx);
                             }
-                        }).log_err();
+                        })
+                        .log_err();
                     });
                 }
             }));
@@ -4489,7 +4490,9 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
         cx,
     )
     .await;
-    project.update(cx, |project, cx| project.git_scans_complete(cx)).await;
+    project
+        .update(cx, |project, cx| project.git_scans_complete(cx))
+        .await;
     cx.update(|cx| {
         let store = project.read(cx).worktree_store();
         let root = project
@@ -4588,16 +4591,41 @@ async fn logcat_owns_only_its_trusted_project_and_rejects_stale_device_dispatch(
                 && view.control_task.is_some()
         );
     });
-    workspace.update_in(visual, |workspace, window, cx| {
-        workspace.open_abs_path(Path::new("/logcat-owner/nested/Nested.kt"), Default::default(), window, cx)
-    }).await?;
+    workspace
+        .update_in(visual, |workspace, window, cx| {
+            workspace.open_abs_path(
+                Path::new("/logcat-owner/nested/Nested.kt"),
+                Default::default(),
+                window,
+                cx,
+            )
+        })
+        .await?;
     visual.run_until_parked();
-    assert!(!cancelled.load(Ordering::Acquire), "A nested Git repository inside the same Gradle root keeps Logcat running");
+    assert!(
+        !cancelled.load(Ordering::Acquire),
+        "A nested Git repository inside the same Gradle root keeps Logcat running"
+    );
     view.read_with(visual, |view, cx| {
         assert!(view.verify_device_context(&owner, cx).is_ok());
-        assert!(view.capturing && view.device_task.is_some() && view.stream_task.is_some() && view.control_task.is_some());
-        assert_eq!(project.read(cx).git_store().read(cx).active_repository().expect("Nested Git repo").read(cx).work_directory_abs_path.as_ref(),
-            Path::new("/logcat-owner/nested"));
+        assert!(
+            view.capturing
+                && view.device_task.is_some()
+                && view.stream_task.is_some()
+                && view.control_task.is_some()
+        );
+        assert_eq!(
+            project
+                .read(cx)
+                .git_store()
+                .read(cx)
+                .active_repository()
+                .expect("Nested Git repo")
+                .read(cx)
+                .work_directory_abs_path
+                .as_ref(),
+            Path::new("/logcat-owner/nested")
+        );
     });
     workspace
         .update_in(visual, |workspace, window, cx| {

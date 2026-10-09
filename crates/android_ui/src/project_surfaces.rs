@@ -47,12 +47,16 @@ impl SurfaceState {
         Self {
             capabilities,
             build,
-            configuration: build && model.selected.as_ref().is_some_and(|selected| {
-                selected.model.variant(&selected.selected).is_some_and(|(module, variant)| {
-                    module.kind == android_tools::project_model::ModuleKind::Application
-                        && variant.output_listing.is_some()
-                })
-            }),
+            configuration: build
+                && model.selected.as_ref().is_some_and(|selected| {
+                    selected
+                        .model
+                        .variant(&selected.selected)
+                        .is_some_and(|(module, variant)| {
+                            module.kind == android_tools::project_model::ModuleKind::Application
+                                && variant.output_listing.is_some()
+                        })
+                }),
             build_window: capabilities.android_sync || controller.owns_sync_session(cx),
         }
     }
@@ -110,10 +114,7 @@ impl SurfaceState {
             self.capabilities.android_devices
         } else if action.is::<Run>() || action.is::<Debug>() {
             self.capabilities.android_run
-        } else if action.is::<Build>()
-            || action.is::<Test>()
-            || action.is::<Lint>()
-        {
+        } else if action.is::<Build>() || action.is::<Test>() || action.is::<Lint>() {
             self.build
         } else if action.is::<ConfigureJava>()
             || action.is::<ConfigureKotlin>()
@@ -238,7 +239,10 @@ pub(crate) fn register_actions(workspace: &mut Workspace) {
     });
     register!(
         android_logcat::Toggle,
-        |workspace: &mut Workspace, _: &android_logcat::Toggle, window: &mut Window, cx: &mut Context<Workspace>| {
+        |workspace: &mut Workspace,
+         _: &android_logcat::Toggle,
+         window: &mut Window,
+         cx: &mut Context<Workspace>| {
             if workspace
                 .panel::<LogcatPanel>(cx)
                 .is_some_and(|panel| panel.read(cx).has_views(cx))

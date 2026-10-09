@@ -243,12 +243,21 @@ impl AndroidApk {
     }
 }
 
-pub(crate) fn gradle_variant_task(module: &str, variant: &str, prefix: &str, suffix: &str) -> String {
+pub(crate) fn gradle_variant_task(
+    module: &str,
+    variant: &str,
+    prefix: &str,
+    suffix: &str,
+) -> String {
     let mut characters = variant.chars();
-    let capitalized = characters.next()
+    let capitalized = characters
+        .next()
         .map(|first| first.to_uppercase().collect::<String>() + characters.as_str())
         .unwrap_or_default();
-    format!("{}:{prefix}{capitalized}{suffix}", module.trim_end_matches(':'))
+    format!(
+        "{}:{prefix}{capitalized}{suffix}",
+        module.trim_end_matches(':')
+    )
 }
 
 impl AndroidTarget {

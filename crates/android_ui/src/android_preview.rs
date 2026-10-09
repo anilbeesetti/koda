@@ -1085,16 +1085,23 @@ impl ComposePreviewView {
                     for variant in &module.variants {
                         for component in &variant.components {
                             for source in &component.sources {
-                                if !absolute.starts_with(&source.path) { continue; }
+                                if !absolute.starts_with(&source.path) {
+                                    continue;
+                                }
                                 let active = visible.contains(&module.path)
                                     && selected.variants.get(&module.path) == Some(&variant.name)
                                     && !source.generated
-                                    && component.scope == android_tools::project_model::SourceScope::Main;
+                                    && component.scope
+                                        == android_tools::project_model::SourceScope::Main;
                                 // Shared main roots remain active; inactive variant
                                 // and generated/test roots still exclude deeper paths.
                                 let depth = source.path.components().count();
                                 match &mut input {
-                                    Some((previous_depth, previous_active)) if *previous_depth == depth => *previous_active |= active,
+                                    Some((previous_depth, previous_active))
+                                        if *previous_depth == depth =>
+                                    {
+                                        *previous_active |= active
+                                    }
                                     Some((previous_depth, _)) if *previous_depth > depth => {}
                                     _ => input = Some((depth, active)),
                                 }
@@ -4635,10 +4642,13 @@ mod tests {
             ("/android/app/src/shared/generated/Generated.kt", false),
         ];
         for (path, _) in paths {
-            filesystem.create_dir(Path::new(path).parent().context("Input parent")?).await?;
+            filesystem
+                .create_dir(Path::new(path).parent().context("Input parent")?)
+                .await?;
             filesystem.write(Path::new(path), b"initial").await?;
         }
-        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (workspace, visual) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let (view, panel, _pane) = workspace.update_in(visual, |workspace, window, cx| {
             let result = add_preview(workspace, project.clone(), buffer, window, cx);
             result.2.update(cx, |pane, cx| {
@@ -4647,24 +4657,66 @@ mod tests {
             });
             result
         });
-        let target = panel.read_with(visual, |panel, _| panel.selected_target.clone().expect("Target"));
+        let target = panel.read_with(visual, |panel, _| {
+            panel.selected_target.clone().expect("Target")
+        });
         project.update(visual, |project, cx| {
-            let mut model = project.android_model().model.as_deref().context("Model")?.clone();
-            let module = model.modules.iter_mut().find(|module| module.path == target.module).context("App module")?;
-            let debug = module.variants.iter_mut().find(|variant| variant.name == target.variant).context("Selected variant")?;
-            let main = debug.components.iter_mut().find(|component| component.scope == SourceScope::Main).context("Main component")?;
+            let mut model = project
+                .android_model()
+                .model
+                .as_deref()
+                .context("Model")?
+                .clone();
+            let module = model
+                .modules
+                .iter_mut()
+                .find(|module| module.path == target.module)
+                .context("App module")?;
+            let debug = module
+                .variants
+                .iter_mut()
+                .find(|variant| variant.name == target.variant)
+                .context("Selected variant")?;
+            let main = debug
+                .components
+                .iter_mut()
+                .find(|component| component.scope == SourceScope::Main)
+                .context("Main component")?;
             main.sources.extend([
-                SourceRoot { path: "/android/app/src/shared".into(), kind: SourceKind::Kotlin, generated: false },
-                SourceRoot { path: "/android/app/src/shared/generated".into(), kind: SourceKind::Kotlin, generated: true },
+                SourceRoot {
+                    path: "/android/app/src/shared".into(),
+                    kind: SourceKind::Kotlin,
+                    generated: false,
+                },
+                SourceRoot {
+                    path: "/android/app/src/shared/generated".into(),
+                    kind: SourceKind::Kotlin,
+                    generated: true,
+                },
             ]);
             let mut release = debug.clone();
             release.name = "release".into();
             release.output_listing = Some("/android/app/build/release/output-metadata.json".into());
-            release.components.retain(|component| component.scope == SourceScope::Main);
+            release
+                .components
+                .retain(|component| component.scope == SourceScope::Main);
             release.components[0].name = "release".into();
-            release.components[0].sources = ["app/src/shared", "app/src/shared/release", "app/src/release/kotlin", "app/src/release/res"]
-                .map(|path| SourceRoot { path: Path::new("/android").join(path),
-                    kind: if path.ends_with("res") { SourceKind::Resources } else { SourceKind::Kotlin }, generated: false }).into();
+            release.components[0].sources = [
+                "app/src/shared",
+                "app/src/shared/release",
+                "app/src/release/kotlin",
+                "app/src/release/res",
+            ]
+            .map(|path| SourceRoot {
+                path: Path::new("/android").join(path),
+                kind: if path.ends_with("res") {
+                    SourceKind::Resources
+                } else {
+                    SourceKind::Kotlin
+                },
+                generated: false,
+            })
+            .into();
             module.variants.push(release);
             let token = project.invalidate_android_model(Some(PathBuf::from("/android")), cx);
             project.publish_android_model(&token, model, cx)?;
@@ -4676,8 +4728,12 @@ mod tests {
             let events = events.clone();
             cx.subscribe(&project, move |_, event, _| {
                 if let project::Event::WorktreeUpdatedEntries(_, changes) = event {
-                    events.borrow_mut().extend(changes.iter().filter(|(_, _, change)| *change != project::PathChange::Loaded)
-                        .map(|(path, _, _)| Path::new("/android").join(path.as_std_path())));
+                    events.borrow_mut().extend(
+                        changes
+                            .iter()
+                            .filter(|(_, _, change)| *change != project::PathChange::Loaded)
+                            .map(|(path, _, _)| Path::new("/android").join(path.as_std_path())),
+                    );
                 }
             })
         });
@@ -4690,11 +4746,22 @@ mod tests {
             events.borrow_mut().clear();
             filesystem.write(Path::new(path), b"changed").await?;
             visual.run_until_parked();
-            assert!(events.borrow().iter().any(|changed| changed == Path::new(path)), "Actual non-Loaded event required for {path}");
+            assert!(
+                events
+                    .borrow()
+                    .iter()
+                    .any(|changed| changed == Path::new(path)),
+                "Actual non-Loaded event required for {path}"
+            );
             view.read_with(visual, |view, _| {
-                if refresh { assert!(view.revision > revision && view.pending); }
-                else { assert_eq!(view.revision, revision, "Excluded scope {path}"); }
-                assert!(!view.building && view.debounce_task.is_none() && view.render_task.is_none());
+                if refresh {
+                    assert!(view.revision > revision && view.pending);
+                } else {
+                    assert_eq!(view.revision, revision, "Excluded scope {path}");
+                }
+                assert!(
+                    !view.building && view.debounce_task.is_none() && view.render_task.is_none()
+                );
             });
         }
         view.update(visual, |view, cx| view.stop(cx));

@@ -1066,13 +1066,20 @@ impl AndroidPanel {
         let root = owner.root.clone();
         let path_policy = match (|| {
             let store = self.project.read(cx).android_context();
-            let handle = store.handles().find(|handle| store.root_path(*handle) == Some(root.as_path()))
+            let handle = store
+                .handles()
+                .find(|handle| store.root_path(*handle) == Some(root.as_path()))
                 .context("The evaluated Gradle root is no longer available")?;
-            let token = store.token(handle).context("Trust the evaluated Gradle root before syncing")?;
+            let token = store
+                .token(handle)
+                .context("Trust the evaluated Gradle root before syncing")?;
             android_tools::project_model::EvaluatedModelPaths::capture(store, &token, &root)
         })() {
             Ok(paths) => paths,
-            Err(error) => { self.fail(error, window, cx); return; }
+            Err(error) => {
+                self.fail(error, window, cx);
+                return;
+            }
         };
         self.backend_owner = Some(owner.context.clone());
         if !self.android_context_capabilities(cx).android_sync {
@@ -1119,8 +1126,10 @@ impl AndroidPanel {
             let result = async {
                 panel.update(cx, |panel, cx| {
                     panel.verify_operation_owner(&owner, AndroidOperation::Sync, cx)?;
-                    ensure!(path_policy.is_current(panel.project.read(cx).android_context()),
-                        "Evaluated Gradle module paths changed before model sync");
+                    ensure!(
+                        path_policy.is_current(panel.project.read(cx).android_context()),
+                        "Evaluated Gradle module paths changed before model sync"
+                    );
                     Ok::<_, anyhow::Error>(())
                 })??;
                 cx.background_spawn(async move {
@@ -1161,7 +1170,12 @@ impl AndroidPanel {
                     .await?
                     {
                         ProcessOutput::Success(output) => {
-                            android_tools::project_model::parse_model_with_context(&output, &root, &parse_paths).map(Some)
+                            android_tools::project_model::parse_model_with_context(
+                                &output,
+                                &root,
+                                &parse_paths,
+                            )
+                            .map(Some)
                         }
                         ProcessOutput::Cancelled => Ok(None),
                     }
@@ -1180,8 +1194,10 @@ impl AndroidPanel {
                     panel.syncing = false;
                     let result = result.and_then(|targets| {
                         panel.verify_operation_owner(&owner, AndroidOperation::Sync, cx)?;
-                        ensure!(path_policy.is_current(panel.project.read(cx).android_context()),
-                            "Evaluated Gradle module paths changed during model sync");
+                        ensure!(
+                            path_policy.is_current(panel.project.read(cx).android_context()),
+                            "Evaluated Gradle module paths changed during model sync"
+                        );
                         ensure!(
                             panel.trusted_root(cx)? == expected_root
                                 && panel
@@ -1227,7 +1243,10 @@ impl AndroidPanel {
                                 return;
                             }
                             panel.apply_targets(targets, cx);
-                            if panel.targets.is_empty() && panel.library_variants(cx).is_empty() && !diagnostics.is_empty() {
+                            if panel.targets.is_empty()
+                                && panel.library_variants(cx).is_empty()
+                                && !diagnostics.is_empty()
+                            {
                                 panel.status = diagnostics.into();
                                 panel.pending_gradle_operation = None;
                             }
@@ -1428,16 +1447,35 @@ impl AndroidPanel {
                 cx.notify();
                 return Ok(());
             }
-            if matches!(operation, GradleOperation::Build | GradleOperation::Test | GradleOperation::Lint) {
+            if matches!(
+                operation,
+                GradleOperation::Build | GradleOperation::Test | GradleOperation::Lint
+            ) {
                 let (name, task) = self.build_variant_task(operation, cx)?;
                 let (program, args) = if cfg!(windows) {
-                    (root.join("gradlew.bat"), vec![task, "--console=plain".into()])
+                    (
+                        root.join("gradlew.bat"),
+                        vec![task, "--console=plain".into()],
+                    )
                 } else {
-                    (PathBuf::from("/bin/sh"), vec!["./gradlew".into(), task, "--console=plain".into()])
+                    (
+                        PathBuf::from("/bin/sh"),
+                        vec!["./gradlew".into(), task, "--console=plain".into()],
+                    )
                 };
                 self.last_build_operation = Some(operation);
-                self.schedule_build(format!("{name} {}", root.file_name().unwrap_or_default().to_string_lossy()),
-                    program, args, root, None, window, cx)?;
+                self.schedule_build(
+                    format!(
+                        "{name} {}",
+                        root.file_name().unwrap_or_default().to_string_lossy()
+                    ),
+                    program,
+                    args,
+                    root,
+                    None,
+                    window,
+                    cx,
+                )?;
                 return Ok(());
             }
             let target = self
@@ -1726,8 +1764,14 @@ impl AndroidPanel {
         }
     }
 
-    fn build_variant_task(&self, operation: GradleOperation, cx: &App) -> Result<(&'static str, String)> {
-        let variant = self.build_variant(cx).context("Sync the project and select a current build variant first.")?;
+    fn build_variant_task(
+        &self,
+        operation: GradleOperation,
+        cx: &App,
+    ) -> Result<(&'static str, String)> {
+        let variant = self
+            .build_variant(cx)
+            .context("Sync the project and select a current build variant first.")?;
         match operation {
             GradleOperation::Build => Ok(("Build", variant.gradle_task("assemble", ""))),
             GradleOperation::Test => Ok(("Test", variant.gradle_task("test", "UnitTest"))),
@@ -1737,8 +1781,13 @@ impl AndroidPanel {
     }
 
     fn library_variants(&self, cx: &App) -> Vec<android_tools::project_model::VariantId> {
-        self.project.read(cx).android_model().model.as_ref()
-            .map(|model| model.library_variants()).unwrap_or_default()
+        self.project
+            .read(cx)
+            .android_model()
+            .model
+            .as_ref()
+            .map(|model| model.library_variants())
+            .unwrap_or_default()
     }
 
     fn restore_library_variant(&self, cx: &App) -> Option<android_tools::project_model::VariantId> {
@@ -2919,9 +2968,12 @@ impl AndroidPanel {
         let Some(key) = self.target_selection_key() else {
             return;
         };
-        let Some(target) = self.selected_target.as_ref()
+        let Some(target) = self
+            .selected_target
+            .as_ref()
             .map(android_tools::project_model::VariantId::from)
-            .or_else(|| self.build_variant(cx)) else {
+            .or_else(|| self.build_variant(cx))
+        else {
             return;
         };
         let Some(value) = serde_json::to_string(&(&target.module, &target.variant)).log_err()
@@ -2976,7 +3028,11 @@ impl AndroidPanel {
             .update(cx, |project, cx| project.select_android_variant(id, cx))?;
         self.model_input_roots = self.selected_model_input_roots(cx);
         if library_selected {
-            self.status = format!("Sync complete · {} build variants", self.library_variants(cx).len()).into();
+            self.status = format!(
+                "Sync complete · {} build variants",
+                self.library_variants(cx).len()
+            )
+            .into();
             self.remember_target(cx);
         }
         Ok(())
@@ -3120,7 +3176,11 @@ impl AndroidPanel {
                 Button::new("target", label)
                     .label_size(LabelSize::Small)
                     .end_icon(Icon::new(IconName::ChevronDown).size(IconSize::XSmall))
-                    .disabled(self.syncing || self.running || (self.targets.is_empty() && self.library_variants(cx).is_empty()))
+                    .disabled(
+                        self.syncing
+                            || self.running
+                            || (self.targets.is_empty() && self.library_variants(cx).is_empty()),
+                    )
                     .tab_index(0isize),
             )
             .menu(move |window, cx| Some(Self::target_menu(panel.upgrade()?, window, cx)))
@@ -3128,7 +3188,11 @@ impl AndroidPanel {
 
     fn target_menu(panel: Entity<Self>, window: &mut Window, cx: &mut App) -> Entity<ContextMenu> {
         let targets = panel.read(cx).targets.clone();
-        let library_variants = if targets.is_empty() { panel.read(cx).library_variants(cx) } else { Vec::new() };
+        let library_variants = if targets.is_empty() {
+            panel.read(cx).library_variants(cx)
+        } else {
+            Vec::new()
+        };
         let root = panel.read(cx).root.clone();
         let panel = panel.downgrade();
         ContextMenu::build(window, cx, |mut menu, _, _| {
@@ -3136,17 +3200,30 @@ impl AndroidPanel {
                 let panel = panel.clone();
                 let root = root.clone();
                 menu = menu.entry(variant.label(), None, move |window, cx| {
-                    panel.update(cx, |panel, cx| {
-                        if panel.running || panel.syncing || panel.root != root
-                            || !panel.library_variants(cx).contains(&variant) { return; }
-                        if let Err(error) = panel.project.update(cx, |project, cx| {
-                            project.select_android_variant(Some(variant.clone()), cx)
-                        }) { panel.fail(error, window, cx); return; }
-                        panel.selected_target = None;
-                        if let Err(error) = panel.publish_selection(cx) { panel.fail(error, window, cx); return; }
-                        panel.remember_target(cx);
-                        cx.notify();
-                    }).log_err();
+                    panel
+                        .update(cx, |panel, cx| {
+                            if panel.running
+                                || panel.syncing
+                                || panel.root != root
+                                || !panel.library_variants(cx).contains(&variant)
+                            {
+                                return;
+                            }
+                            if let Err(error) = panel.project.update(cx, |project, cx| {
+                                project.select_android_variant(Some(variant.clone()), cx)
+                            }) {
+                                panel.fail(error, window, cx);
+                                return;
+                            }
+                            panel.selected_target = None;
+                            if let Err(error) = panel.publish_selection(cx) {
+                                panel.fail(error, window, cx);
+                                return;
+                            }
+                            panel.remember_target(cx);
+                            cx.notify();
+                        })
+                        .log_err();
                 });
             }
             for target in &targets {
@@ -3798,7 +3875,11 @@ impl Render for AndroidPanel {
                 .disabled(
                     self.syncing
                         || self.running
-                        || (if is_run { self.selected_target.is_none() } else { self.build_variant(cx).is_none() })
+                        || (if is_run {
+                            self.selected_target.is_none()
+                        } else {
+                            self.build_variant(cx).is_none()
+                        })
                         || (is_run && !self.can_run_on_selected_device()),
                 )
                 .tab_index(0isize)
@@ -4702,25 +4783,45 @@ mod tests {
         let root = directory.path().canonicalize()?;
         // Exercise the actual wrapper command transport without a Gradle/SDK
         // installation. This is supplemental dispatch coverage, not Gradle parity.
-        std::fs::write(root.join("gradlew"), "printf '%s\\n' \"$1\" >> dispatched-tasks\n")?;
+        std::fs::write(
+            root.join("gradlew"),
+            "printf '%s\\n' \"$1\" >> dispatched-tasks\n",
+        )?;
         std::fs::write(root.join("settings.gradle.kts"), "")?;
         let filesystem = FakeFs::new(cx.executor());
-        filesystem.insert_tree(&root, json!({"gradlew":"", "settings.gradle.kts":"", "Main.kt":"class Library"})).await;
+        filesystem
+            .insert_tree(
+                &root,
+                json!({"gradlew":"", "settings.gradle.kts":"", "Main.kt":"class Library"}),
+            )
+            .await;
         let project = Project::test(filesystem, [root.as_path()], cx).await;
-        let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (workspace, visual) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let panel = new_test_android_panel(&workspace, project.clone(), visual);
         panel.update(visual, |panel, cx| {
             panel.root = Some(root.clone());
             panel.auto_sync_root = Some(root.clone());
             panel.refreshing_devices = true;
-            crate::project_surfaces::tests::publish_catalogue(&project, &root,
-                &[PluginId::AndroidLibrary], &[("android", "androidJvm")], true, cx)?;
+            crate::project_surfaces::tests::publish_catalogue(
+                &project,
+                &root,
+                &[PluginId::AndroidLibrary],
+                &[("android", "androidJvm")],
+                true,
+                cx,
+            )?;
             let exported = json!({"version":1,"root":root,"diagnostics":[],"modules":[{
                 "path":":","directory":root,"namespace":"example.library","kind":"library",
                 "variants":[{"name":"debug","outputListing":null,"components":[{
                     "name":"debug","scope":"main","dependencies":[],"sources":[]}]}]}]});
             let model = android_tools::project_model::parse_model(
-                &format!("{}{exported}", android_tools::project_model::MODEL_OUTPUT_PREFIX), &root)?;
+                &format!(
+                    "{}{exported}",
+                    android_tools::project_model::MODEL_OUTPUT_PREFIX
+                ),
+                &root,
+            )?;
             let targets = model.targets();
             project.update(cx, |project, cx| {
                 let token = project.invalidate_android_model(Some(root.clone()), cx);
@@ -4729,7 +4830,13 @@ mod tests {
             panel.apply_targets(targets, cx);
             panel.publish_selection(cx)?;
             assert!(panel.selected_target.is_none());
-            assert_eq!(panel.build_variant(cx).context("Library selection")?.variant, "debug");
+            assert_eq!(
+                panel
+                    .build_variant(cx)
+                    .context("Library selection")?
+                    .variant,
+                "debug"
+            );
             assert!(panel.operation_permitted(AndroidOperation::Build, cx));
             for operation in [AndroidOperation::Run, AndroidOperation::Preview] {
                 assert!(!panel.operation_permitted(operation, cx));
@@ -4739,14 +4846,23 @@ mod tests {
             Ok::<_, anyhow::Error>(())
         })?;
         visual.run_until_parked();
-        for (operation, expected) in [(GradleOperation::Build, ":assembleDebug"),
-            (GradleOperation::Test, ":testDebugUnitTest"), (GradleOperation::Lint, ":lintDebug")] {
+        for (operation, expected) in [
+            (GradleOperation::Build, ":assembleDebug"),
+            (GradleOperation::Test, ":testDebugUnitTest"),
+            (GradleOperation::Lint, ":lintDebug"),
+        ] {
             let task = panel.update_in(visual, |panel, window, cx| {
                 assert_eq!(panel.build_variant_task(operation, cx)?.1, expected);
                 panel.gradle(operation, window, cx);
-                assert!(panel.running, "The production library command was not scheduled");
+                assert!(
+                    panel.running,
+                    "The production library command was not scheduled"
+                );
                 assert_eq!(panel.last_build_operation, Some(operation));
-                panel.build_task.take().context("Production build transport")
+                panel
+                    .build_task
+                    .take()
+                    .context("Production build transport")
             })?;
             task.await;
             visual.run_until_parked();
@@ -4756,12 +4872,18 @@ mod tests {
                 assert!(panel.selected_target.is_none());
             });
         }
-        assert_eq!(std::fs::read_to_string(root.join("dispatched-tasks"))?,
-            ":assembleDebug\n:testDebugUnitTest\n:lintDebug\n");
+        assert_eq!(
+            std::fs::read_to_string(root.join("dispatched-tasks"))?,
+            ":assembleDebug\n:testDebugUnitTest\n:lintDebug\n"
+        );
         panel.update(visual, |panel, cx| {
             panel.invalidate_model(Some(root.clone()), cx);
             assert!(panel.build_variant(cx).is_none());
-            assert!(panel.build_variant_task(GradleOperation::Build, cx).is_err());
+            assert!(
+                panel
+                    .build_variant_task(GradleOperation::Build, cx)
+                    .is_err()
+            );
         });
         Ok(())
     }
@@ -4801,7 +4923,9 @@ mod tests {
             cx,
         )
         .await;
-        project.update(cx, |project, cx| project.git_scans_complete(cx)).await;
+        project
+            .update(cx, |project, cx| project.git_scans_complete(cx))
+            .await;
         cx.update(|cx| {
             project_surfaces::tests::trust(&project, cx)?;
             project_surfaces::tests::publish_catalogue(
@@ -4915,21 +5039,40 @@ mod tests {
                     .is_some_and(|pending| pending.0 == Path::new("/work-owner"))
             );
         });
-        workspace.update_in(visual, |workspace, window, cx| {
-            workspace.open_abs_path(Path::new("/work-owner/nested/Nested.kt"), Default::default(), window, cx)
-        }).await?;
+        workspace
+            .update_in(visual, |workspace, window, cx| {
+                workspace.open_abs_path(
+                    Path::new("/work-owner/nested/Nested.kt"),
+                    Default::default(),
+                    window,
+                    cx,
+                )
+            })
+            .await?;
         visual.run_until_parked();
         panel.read_with(visual, |panel, cx| {
-            assert!(owners.iter().all(|owner| owner.ensure_active().is_ok()),
-                "A nested Git repository must not cancel the owning Gradle project's work");
-            for (owner, operation) in owners.iter().zip([AndroidOperation::Sync, AndroidOperation::Build,
-                AndroidOperation::Devices, AndroidOperation::Run]) {
+            assert!(
+                owners.iter().all(|owner| owner.ensure_active().is_ok()),
+                "A nested Git repository must not cancel the owning Gradle project's work"
+            );
+            for (owner, operation) in owners.iter().zip([
+                AndroidOperation::Sync,
+                AndroidOperation::Build,
+                AndroidOperation::Devices,
+                AndroidOperation::Run,
+            ]) {
                 assert!(panel.verify_operation_owner(owner, operation, cx).is_ok());
             }
             assert!(panel.running && panel.build_task.is_some() && panel.device_task.is_some());
             let git = project.read(cx).git_store().read(cx);
-            assert_eq!(git.active_repository().expect("Nested Git repo").read(cx).work_directory_abs_path.as_ref(),
-                Path::new("/work-owner/nested"));
+            assert_eq!(
+                git.active_repository()
+                    .expect("Nested Git repo")
+                    .read(cx)
+                    .work_directory_abs_path
+                    .as_ref(),
+                Path::new("/work-owner/nested")
+            );
         });
         let android = workspace.read_with(visual, |workspace, cx| {
             workspace.active_item(cx).context("Android item")
