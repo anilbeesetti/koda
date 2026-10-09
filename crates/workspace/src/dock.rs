@@ -583,6 +583,10 @@ impl Dock {
     }
 
     fn set_open_internal(&mut self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
+        let open = open
+            && self
+                .active_panel_entry()
+                .is_none_or(|entry| entry.panel.enabled(cx));
         if open != self.is_open {
             self.is_open = open;
             if let Some(active_panel) = self.active_panel_entry() {
@@ -634,7 +638,40 @@ impl Dock {
         cx: &mut Context<Self>,
     ) -> usize {
         let subscriptions = [
-            cx.observe(&panel, |_, _, cx| cx.notify()),
+            cx.observe_in(&panel, window, {
+                let workspace = workspace.clone();
+                move |dock, panel, window, cx| {
+                    if !panel.read(cx).enabled(cx)
+                        && dock
+                            .visible_panel()
+                            .is_some_and(|active| active.panel_id() == panel.entity_id())
+                    {
+                        let focus = panel.read(cx).focus_handle(cx);
+                        let was_focused = focus.contains_focused(window, cx);
+                        let was_zoomed = panel.read(cx).is_zoomed(window, cx);
+                        dock.set_open_internal(false, window, cx);
+                        let workspace = workspace.clone();
+                        window.defer(cx, move |window, cx| {
+                            if was_zoomed && !panel.read(cx).enabled(cx) {
+                                panel.update(cx, |panel, cx| {
+                                    panel.set_zoomed(false, window, cx);
+                                    cx.emit(PanelEvent::ZoomOut);
+                                });
+                            }
+                            if was_focused && focus.contains_focused(window, cx) {
+                                workspace
+                                    .update(cx, |workspace, cx| {
+                                        workspace.active_pane().update(cx, |pane, cx| {
+                                            window.focus(&pane.focus_handle(cx), cx)
+                                        });
+                                    })
+                                    .log_err();
+                            }
+                        });
+                    }
+                    cx.notify();
+                }
+            }),
             cx.observe_global_in::<SettingsStore>(window, {
                 let workspace = workspace.clone();
                 let panel = panel.clone();
@@ -759,13 +796,16 @@ impl Dock {
                             .ok();
                     }
                     PanelEvent::Activate => {
+                        if !panel.read(cx).enabled(cx) {
+                            return;
+                        }
                         if let Some(ix) = this
                             .panel_entries
                             .iter()
                             .position(|entry| entry.panel.panel_id() == Entity::entity_id(panel))
                         {
-                            this.set_open(true, window, cx);
                             this.activate_panel(ix, window, cx);
+                            this.set_open(true, window, cx);
                             window.focus(&panel.read(cx).activation_focus_handle(cx), cx);
                         }
                     }
@@ -878,6 +918,14 @@ impl Dock {
             .filter(|_| serialized.visible)
             && let Some(idx) = self.panel_index_for_persistent_name(active_panel, cx)
         {
+            if self
+                .panel_entries
+                .get(idx)
+                .is_none_or(|entry| !entry.panel.enabled(cx))
+            {
+                self.set_open_internal(false, window, cx);
+                return;
+            }
             self.activate_panel_internal(idx, window, cx);
         }
         if serialized.zoom
@@ -948,6 +996,13 @@ impl Dock {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self
+            .panel_entries
+            .get(panel_ix)
+            .is_none_or(|entry| !entry.panel.enabled(cx))
+        {
+            return;
+        }
         if Some(panel_ix) != self.active_panel_index {
             if let Some(active_panel) = self.active_panel_entry() {
                 active_panel.panel.set_active(false, window, cx);
@@ -982,7 +1037,7 @@ impl Dock {
 
     pub fn zoomed_panel(&self, window: &Window, cx: &App) -> Option<Arc<dyn PanelHandle>> {
         let entry = self.visible_entry()?;
-        if entry.panel.is_zoomed(window, cx) {
+        if entry.panel.enabled(cx) && entry.panel.is_zoomed(window, cx) {
             Some(entry.panel.clone())
         } else {
             None
@@ -1270,7 +1325,7 @@ impl Dock {
 impl Render for Dock {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let dispatch_context = Self::dispatch_context();
-        if let Some(entry) = self.visible_entry() {
+        if let Some(entry) = self.visible_entry().filter(|entry| entry.panel.enabled(cx)) {
             let position = self.position;
             let create_resize_handle = || {
                 let handle = div()
@@ -1407,6 +1462,9 @@ impl Render for PanelButtons {
             .iter()
             .enumerate()
             .filter_map(|(i, entry)| {
+                if !entry.panel.enabled(cx) {
+                    return None;
+                }
                 let icon = entry.panel.icon(window, cx)?;
                 let icon_tooltip = entry
                     .panel
@@ -1672,6 +1730,7 @@ pub mod test {
         pub default_size: Pixels,
         pub flexible: bool,
         pub activation_priority: u32,
+        pub enabled: bool,
     }
     actions!(test_only, [ToggleTestPanel]);
 
@@ -1688,6 +1747,7 @@ pub mod test {
                 default_size: px(300.),
                 flexible: false,
                 activation_priority,
+                enabled: true,
             }
         }
 
@@ -1808,11 +1868,220 @@ pub mod test {
         fn activation_priority(&self) -> u32 {
             self.activation_priority
         }
+
+        fn enabled(&self, _: &App) -> bool {
+            self.enabled
+        }
     }
 
     impl Focusable for TestPanel {
         fn focus_handle(&self, _cx: &App) -> FocusHandle {
             self.focus_handle.clone()
         }
+    }
+
+    #[gpui::test]
+    async fn disabled_panel_does_not_restore_activate_or_leave_a_dock_open(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        cx.update(crate::AppState::test);
+        let filesystem = project::FakeFs::new(cx.executor());
+        let project = project::Project::test(filesystem, [], cx).await;
+        let (workspace, visual) =
+            cx.add_window_view(|window, cx| crate::Workspace::test_new(project, window, cx));
+        let panel = visual.new(|cx| {
+            let mut panel = TestPanel::new(DockPosition::Bottom, 100, cx);
+            panel.enabled = false;
+            panel
+        });
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.add_panel(panel.clone(), window, cx);
+            workspace.bottom_dock().update(cx, |dock, cx| {
+                dock.restore_serialized_state(
+                    DockData {
+                        visible: true,
+                        active_panel: Some(TestPanel::persistent_name().to_owned()),
+                        zoom: true,
+                    },
+                    window,
+                    cx,
+                );
+                assert!(!dock.is_open());
+                assert!(dock.visible_panel().is_none());
+                assert!(dock.zoomed_panel(window, cx).is_none());
+                dock.activate_panel(0, window, cx);
+                dock.set_open(true, window, cx);
+                assert!(dock.visible_panel().is_none());
+            });
+        });
+        panel.update_in(visual, |_, _, cx| cx.emit(PanelEvent::Activate));
+        visual.run_until_parked();
+        assert!(!panel.read_with(visual, |panel, _| panel.active));
+        panel.update(visual, |panel, cx| {
+            panel.enabled = true;
+            cx.notify();
+        });
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.bottom_dock().update(cx, |dock, cx| {
+                dock.restore_serialized_state(
+                    DockData {
+                        visible: true,
+                        active_panel: Some(TestPanel::persistent_name().to_owned()),
+                        zoom: false,
+                    },
+                    window,
+                    cx,
+                );
+                assert!(dock.is_open());
+                assert_eq!(
+                    dock.visible_panel().map(|visible| visible.panel_id()),
+                    Some(panel.entity_id())
+                );
+            });
+        });
+        assert!(panel.read_with(visual, |panel, _| panel.active));
+        panel.update(visual, |panel, cx| {
+            panel.enabled = false;
+            cx.notify();
+        });
+        visual.run_until_parked();
+        workspace.read_with(visual, |workspace, cx| {
+            assert!(!workspace.bottom_dock().read(cx).is_open());
+            assert!(workspace.bottom_dock().read(cx).visible_panel().is_none());
+        });
+        assert!(!panel.read_with(visual, |panel, _| panel.active));
+    }
+
+    #[gpui::test]
+    async fn generic_dock_toggle_and_activation_recover_from_disabled_selection(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        cx.update(crate::AppState::test);
+        let filesystem = project::FakeFs::new(cx.executor());
+        let project = project::Project::test(filesystem, [], cx).await;
+        let (multi_workspace, visual) =
+            cx.add_window_view(|window, cx| crate::MultiWorkspace::test_new(project, window, cx));
+        let workspace = multi_workspace.read_with(visual, |multi, _| multi.workspace().clone());
+        let conditional = visual.new(|cx| TestPanel::new(DockPosition::Bottom, 100, cx));
+        let generic =
+            visual.new(|cx| TestPanel::new_with_activation_child(DockPosition::Bottom, 200, cx));
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.add_panel(conditional.clone(), window, cx);
+            workspace.add_panel(generic.clone(), window, cx);
+            workspace.bottom_dock().update(cx, |dock, cx| {
+                dock.activate_panel(0, window, cx);
+                dock.set_open(true, window, cx);
+            });
+        });
+        conditional.update(visual, |panel, cx| {
+            panel.enabled = false;
+            cx.notify();
+        });
+        visual.run_until_parked();
+        assert!(!workspace.read_with(visual, |workspace, cx| {
+            workspace.bottom_dock().read(cx).is_open()
+        }));
+        visual.dispatch_action(crate::ToggleBottomDock);
+        visual.run_until_parked();
+        workspace.read_with(visual, |workspace, cx| {
+            assert_eq!(
+                workspace
+                    .bottom_dock()
+                    .read(cx)
+                    .visible_panel()
+                    .map(|panel| panel.panel_id()),
+                Some(generic.entity_id())
+            );
+            assert_eq!(
+                workspace.bottom_dock().read(cx).active_panel_index(),
+                Some(1)
+            );
+        });
+        visual.update(|window, cx| {
+            assert!(
+                generic
+                    .read(cx)
+                    .activation_focus_handle(cx)
+                    .is_focused(window)
+            );
+            assert!(!conditional.read(cx).focus_handle(cx).is_focused(window));
+        });
+        conditional.update(visual, |panel, cx| {
+            panel.enabled = true;
+            cx.notify();
+        });
+        visual.run_until_parked();
+        workspace.read_with(visual, |workspace, cx| {
+            assert_eq!(
+                workspace
+                    .bottom_dock()
+                    .read(cx)
+                    .visible_panel()
+                    .map(|panel| panel.panel_id()),
+                Some(generic.entity_id())
+            );
+        });
+        visual.update(|window, cx| {
+            assert!(
+                generic
+                    .read(cx)
+                    .activation_focus_handle(cx)
+                    .is_focused(window)
+            )
+        });
+        workspace.update_in(visual, |workspace, window, cx| {
+            conditional.update(cx, |panel, cx| {
+                panel.enabled = true;
+                cx.notify();
+            });
+            workspace.bottom_dock().update(cx, |dock, cx| {
+                dock.activate_panel(0, window, cx);
+                dock.set_open(false, window, cx);
+            });
+            conditional.update(cx, |panel, cx| {
+                panel.enabled = false;
+                cx.notify();
+            });
+        });
+        generic.update_in(visual, |_, _, cx| cx.emit(PanelEvent::Activate));
+        visual.run_until_parked();
+        workspace.read_with(visual, |workspace, cx| {
+            assert_eq!(
+                workspace
+                    .bottom_dock()
+                    .read(cx)
+                    .visible_panel()
+                    .map(|panel| panel.panel_id()),
+                Some(generic.entity_id())
+            );
+        });
+        visual.update(|window, cx| {
+            assert!(
+                generic
+                    .read(cx)
+                    .activation_focus_handle(cx)
+                    .is_focused(window)
+            )
+        });
+        generic.update(visual, |panel, cx| {
+            panel.enabled = false;
+            cx.notify();
+        });
+        visual.run_until_parked();
+        workspace.update_in(visual, |workspace, window, cx| {
+            window.focus(&workspace.active_pane().read(cx).focus_handle(cx), cx)
+        });
+        let previous_focus = visual.update(|window, cx| window.focused(cx));
+        visual.dispatch_action(crate::ToggleBottomDock);
+        visual.run_until_parked();
+        workspace.read_with(visual, |workspace, cx| {
+            assert!(!workspace.bottom_dock().read(cx).is_open());
+            assert!(workspace.bottom_dock().read(cx).visible_panel().is_none());
+            assert_eq!(
+                workspace.bottom_dock().read(cx).active_panel_index(),
+                Some(1)
+            );
+        });
+        visual.update(|window, cx| assert_eq!(window.focused(cx), previous_focus));
     }
 }
