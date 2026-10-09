@@ -730,7 +730,6 @@ impl LogcatView {
     }
 
     pub(super) fn watch_devices(&mut self, cx: &mut Context<Self>) {
-        self.watching_requested = true;
         let owner = match self.device_context_token(cx) {
             Ok(owner) => owner,
             Err(error) => {
@@ -739,6 +738,7 @@ impl LogcatView {
                 return;
             }
         };
+        self.watching_requested = true;
         self.device_owner = Some(owner.clone());
         let cancellation = WorkCancellation::default();
         let cancelled = cancellation.0.clone();

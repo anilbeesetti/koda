@@ -4780,6 +4780,21 @@ mod tests {
                 .create_dir(Path::new(path).parent().context("Input parent")?)
                 .await?;
             filesystem.write(Path::new(path), b"initial").await?;
+            // The test preset defers non-Git directories at depth five. Load
+            // these inputs before requiring real non-Loaded change events.
+            let mut loaded = project.read_with(cx, |project, cx| {
+                let (worktree, parent) = project
+                    .find_worktree(Path::new(path).parent().context("Input parent")?, cx)
+                    .context("Input worktree")?;
+                Ok::<_, anyhow::Error>(
+                    worktree
+                        .read(cx)
+                        .as_local()
+                        .context("Local input worktree")?
+                        .refresh_entries_for_paths(vec![parent]),
+                )
+            })?;
+            loaded.recv().await;
         }
         let (workspace, visual) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
