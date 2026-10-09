@@ -596,8 +596,20 @@ impl<'a> StrictProjection<'a> {
                     "Task collection lacks exact getAllTasks(false)[project] provenance",
                 ));
             }
+            let returned_tasks = self.objects(iteration)?;
+            // The official Project task-map value is a Set<Task>. Check the
+            // whole collection before a repeated ID can multiply one payload.
+            let mut seen_task_ids = BTreeSet::new();
+            for id in returned_tasks {
+                if !seen_task_ids.insert(id.as_str()) {
+                    return Err(unavailable(
+                        FactsUnavailableReason::Malformed,
+                        "Official Project task set repeats a runtime task object",
+                    ));
+                }
+            }
             let mut tasks = Vec::new();
-            for id in self.objects(iteration)? {
+            for id in returned_tasks {
                 let object = self.objects.get(id.as_str()).copied().ok_or_else(|| {
                     unavailable(
                         FactsUnavailableReason::MissingMetadata,

@@ -1539,3 +1539,107 @@ fn strict_projection_budget_failure_preserves_basic_and_import_identity() -> Res
     assert!(publisher.committed().is_none());
     Ok(())
 }
+
+fn strict_large_task_arguments(
+    fixture: &Fixture,
+) -> Result<(Value, CaptureContext, StrictKotlinProjectPlan, Vec<String>)> {
+    let (mut value, expected, plan) = strict_fixture(fixture)?;
+    let arguments = vec![
+        "-module-name".into(),
+        "Name with space".into(),
+        "x".repeat(64 * 1024),
+        "-Xsame".into(),
+        "-Xsame".into(),
+    ];
+    let request = plan
+        .compiler_arguments
+        .get("first-task")
+        .context("Independently planned task arguments")?;
+    let event = value["kotlinFacts"]["events"]
+        .as_array_mut()
+        .context("Strict getter events")?
+        .iter_mut()
+        .find(|event| event["request"] == request.as_str())
+        .context("Captured task arguments event")?;
+    event["outcome"]["value"]["value"] = json!(&arguments);
+    Ok((value, expected, plan, arguments))
+}
+
+#[test]
+fn strict_unique_task_keeps_large_ordered_and_duplicate_compiler_arguments() -> Result<()> {
+    let mut fixture = fixture()?;
+    let (value, expected, plan, arguments) = strict_large_task_arguments(&fixture)?;
+    let snapshot = parse_kotlin_facts(
+        &wire(&value)?,
+        &fixture.model,
+        &fixture.identity,
+        &expected,
+        CaptureLimits::default(),
+    )?;
+    fixture.kotlin = import_kotlin_from_strict_capture(
+        &fixture.model,
+        &fixture.identity,
+        &snapshot,
+        &expected,
+        &revision(&fixture, 1),
+        &[plan],
+    )?;
+    let mut publisher = ModuleImportPublisher::default();
+    publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+    assert_eq!(
+        committed_settings(&publisher)?.compiler_arguments.as_ref(),
+        Some(&arguments)
+    );
+    assert_eq!(
+        publisher
+            .committed()
+            .context("Valid task publication")?
+            .modules[":android"]
+            .kotlin_capability(),
+        KotlinCapability::Enabled
+    );
+    Ok(())
+}
+
+#[test]
+fn strict_repeated_task_ids_are_rejected_before_payload_projection() -> Result<()> {
+    let fixture = fixture()?;
+    let (mut value, expected, plan, _) = strict_large_task_arguments(&fixture)?;
+    let event = value["kotlinFacts"]["events"]
+        .as_array_mut()
+        .context("Strict getter events")?
+        .iter_mut()
+        .find(|event| event["request"] == plan.task_iteration.as_str())
+        .context("Captured official task set")?;
+    event["outcome"]["value"]["value"] = json!(vec!["first-task"; 256]);
+    let snapshot = parse_kotlin_facts(
+        &wire(&value)?,
+        &fixture.model,
+        &fixture.identity,
+        &expected,
+        CaptureLimits::default(),
+    )?;
+    assert_eq!(snapshot.raw_context(), &expected);
+    let before_root = fixture.model.root.clone();
+    let before_binding = fixture.identity.binding().clone();
+    let publisher = ModuleImportPublisher::default();
+    let failure = import_kotlin_from_strict_capture(
+        &fixture.model,
+        &fixture.identity,
+        &snapshot,
+        &expected,
+        &revision(&fixture, 1),
+        &[plan],
+    )
+    .expect_err("The strict decoder accepted the record, but official task sets cannot repeat IDs");
+    assert_eq!(failure.reason, FactsUnavailableReason::Malformed);
+    assert_eq!(
+        failure.detail,
+        "Official Project task set repeats a runtime task object"
+    );
+    assert_eq!(fixture.model.root, before_root);
+    assert_eq!(fixture.identity.binding(), &before_binding);
+    assert!(fixture.identity.project(":android").is_ok());
+    assert!(publisher.committed().is_none());
+    Ok(())
+}
