@@ -626,8 +626,10 @@ pub(crate) mod tests {
         let project =
             Project::test_with_worktree_trust(filesystem, [Path::new("/generic")], cx).await;
         cx.update(|cx| trust(&project, cx))?;
-        let (workspace, visual) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (multi, visual) = cx.add_window_view(|window, cx| {
+            workspace::MultiWorkspace::test_new(project.clone(), window, cx)
+        });
+        let workspace = multi.read_with(visual, |multi, _| multi.workspace().clone());
         for path in [
             "main.py",
             "index.html",
@@ -711,8 +713,10 @@ pub(crate) mod tests {
         let project =
             Project::test_with_worktree_trust(filesystem, [Path::new("/desktop")], cx).await;
         cx.update(|cx| trust(&project, cx))?;
-        let (workspace, visual) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (multi, visual) = cx.add_window_view(|window, cx| {
+            workspace::MultiWorkspace::test_new(project.clone(), window, cx)
+        });
+        let workspace = multi.read_with(visual, |multi, _| multi.workspace().clone());
         visual.update(|_, cx| {
             publish_catalogue(
                 &project,
@@ -800,8 +804,10 @@ pub(crate) mod tests {
         let project =
             Project::test_with_worktree_trust(filesystem, [Path::new("/partial")], cx).await;
         cx.update(|cx| trust(&project, cx))?;
-        let (workspace, visual) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (multi, visual) = cx.add_window_view(|window, cx| {
+            workspace::MultiWorkspace::test_new(project.clone(), window, cx)
+        });
+        let workspace = multi.read_with(visual, |multi, _| multi.workspace().clone());
         visual.update(|_, cx| {
             publish_catalogue(
                 &project,
@@ -858,8 +864,7 @@ pub(crate) mod tests {
         cx.update(initialize);
         let directory = tempfile::tempdir()?;
         let root = directory.path();
-        std::fs::write(root.join("gradlew"), "")?;
-        std::fs::write(root.join("settings.gradle"), "")?;
+        // Keep Gradle files in FakeFs so this surface fixture cannot launch host tools.
         let filesystem = FakeFs::new(cx.executor());
         filesystem
             .insert_tree(
@@ -869,8 +874,10 @@ pub(crate) mod tests {
             .await;
         let project = Project::test_with_worktree_trust(filesystem, [root], cx).await;
         cx.update(|cx| trust(&project, cx))?;
-        let (workspace, visual) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (multi, visual) = cx.add_window_view(|window, cx| {
+            workspace::MultiWorkspace::test_new(project.clone(), window, cx)
+        });
+        let workspace = multi.read_with(visual, |multi, _| multi.workspace().clone());
         let panel = workspace
             .read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx))
             .context("Project tools")?;
@@ -1003,11 +1010,25 @@ pub(crate) mod tests {
         )
         .await;
         cx.update(|cx| trust(&project, cx))?;
-        let (android, android_visual) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (android_multi, android_visual) = cx.add_window_view(|window, cx| {
+            workspace::MultiWorkspace::test_new(project.clone(), window, cx)
+        });
+        let android =
+            android_multi.read_with(android_visual, |multi, _| multi.workspace().clone());
         let android_window = android_visual.update(|window, _| window.window_handle());
-        let (generic, generic_visual) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let app_state = android.read_with(android_visual, |workspace, _| {
+            workspace.app_state().clone()
+        });
+        // Project windows share one store because it registers handlers on their client.
+        let (generic_multi, generic_visual) = cx.add_window_view(|window, cx| {
+            window.activate_window();
+            let workspace = cx.new(|cx| {
+                Workspace::new(None, project.clone(), app_state, window, cx)
+            });
+            workspace::MultiWorkspace::new(workspace, window, cx)
+        });
+        let generic =
+            generic_multi.read_with(generic_visual, |multi, _| multi.workspace().clone());
         let generic_window = generic_visual.update(|window, _| window.window_handle());
         let mut android_visual = gpui::VisualTestContext::from_window(android_window, cx);
         let mut generic_visual = gpui::VisualTestContext::from_window(generic_window, cx);
