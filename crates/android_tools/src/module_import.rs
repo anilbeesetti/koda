@@ -753,6 +753,17 @@ impl<'a> StrictProjection<'a> {
                             "Compiler argument result belongs to another task",
                         ));
                     }
+                    if let Some(source_request) = plan.source_set_names.get(id) {
+                        let source_request = self.request(source_request, &plan.project)?;
+                        if request.model_call != source_request.model_call
+                            || request.parameter != source_request.parameter
+                        {
+                            return Err(unavailable(
+                                FactsUnavailableReason::Malformed,
+                                "Task source-set and compiler arguments belong to different model calls",
+                            ));
+                        }
+                    }
                     match self.outcome(request)? {
                         Some(CaptureValue::Strings(value)) => Ok(Some(value.clone())),
                         None => Ok(None),
@@ -2039,8 +2050,10 @@ fn propose_kotlin_member(
     let mut selected = None;
     for task in tasks {
         let name = match task.source_set_name.available() {
-            Ok(Some(name)) => name,
-            Ok(None) => continue,
+            Ok(Some(name)) => name.as_str(),
+            // The reference derives main from a known null; unavailable
+            // getter evidence remains distinct and cannot supply this fallback.
+            Ok(None) => "main",
             Err(error) => {
                 return KotlinMemberState::Unknown(KotlinUnknownReason::GetterUnavailable(
                     error.to_string(),
