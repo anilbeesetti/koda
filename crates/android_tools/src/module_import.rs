@@ -15,7 +15,7 @@ use crate::{
     kotlin_import_facts::{
         CaptureContext, CaptureMode, CaptureObject, CaptureValue, ContainerOrder, GetterArgument,
         GetterMethod, GetterOutcome, GetterPurpose, GetterRequest, KotlinFactsSnapshot,
-        MethodSelection, ObjectKind, RuntimeClass,
+        MethodSelection, ObjectKind, RuntimeClass, ValueKind,
     },
     module_presentation::{
         CapturedExternalSystemIdentity, CapturedGradleIdentity, CapturedModuleIdentity,
@@ -38,6 +38,8 @@ const MAX_RECORD_BYTES: usize = 16 * 1024 * 1024;
 pub const PLUGIN_IDS: &str =
     "org.gradle.api.plugins.PluginContainer.findPlugin(reference Kotlin plugin IDs)";
 pub const PLUGIN_INTERFACES: &str = "org.gradle.api.Project.getPlugins() runtime interfaces";
+pub const ANDROID_BASE_PLUGIN: &str =
+    "org.gradle.api.plugins.PluginContainer.hasPlugin(com.android.base)";
 pub const KOTLIN_EXTENSION: &str = "org.gradle.api.plugins.ExtensionContainer.findByName(kotlin)";
 pub const COMPILER_VERSION: &str = "org.jetbrains.kotlin.gradle.plugin.KotlinPluginWrapperKt.getKotlinPluginVersion(org.gradle.api.Project)";
 pub const COMPILE_TASKS: &str = "org.gradle.api.Project.getAllTasks(false)";
@@ -114,6 +116,7 @@ pub struct KotlinImportFacts {
     binding: ImportFactsBinding,
     identity: Vec<ModuleIdentity>,
     projects: BTreeMap<String, RawKotlinProject>,
+    android_base_plugins: BTreeMap<String, GetterObservation<bool>>,
     capture_context: Option<CaptureContext>,
     capture_revision: Option<ImportRevision>,
 }
@@ -123,6 +126,10 @@ pub struct StrictKotlinProjectPlan {
     pub project: String,
     pub plugin_lookups: BTreeMap<String, String>,
     pub plugin_iteration: String,
+    /// Independent exact predicate used by the reference builtin Kotlin fallback.
+    /// Older capture plans omit it and retain typed unavailable evidence.
+    #[serde(default)]
+    pub android_base_plugin: Option<String>,
     pub extension_lookup: String,
     pub compiler_version: String,
     pub task_iteration: String,
@@ -238,6 +245,74 @@ impl<'a> StrictProjection<'a> {
             _ => Err(unavailable(
                 FactsUnavailableReason::Malformed,
                 "Official getter returned a different shape",
+            )),
+        }
+    }
+
+    fn superclass_interfaces(&self, object: &str) -> ImportResult<Vec<String>> {
+        let class = self
+            .objects
+            .get(object)
+            .and_then(|object| self.classes.get(object.class_id.as_str()))
+            .ok_or_else(|| {
+                unavailable(
+                    FactsUnavailableReason::MissingMetadata,
+                    "Missing plugin runtime class",
+                )
+            })?;
+        let superclass = class
+            .superclass
+            .as_deref()
+            .and_then(|id| self.classes.get(id))
+            .ok_or_else(|| {
+                unavailable(
+                    FactsUnavailableReason::Capability,
+                    "Plugin runtime class has no captured immediate superclass",
+                )
+            })?;
+        superclass
+            .interfaces
+            .iter()
+            .map(|id| {
+                self.classes
+                    .get(id.as_str())
+                    .map(|class| class.name.clone())
+                    .ok_or_else(|| {
+                        unavailable(
+                            FactsUnavailableReason::MissingMetadata,
+                            "Missing direct superclass interface",
+                        )
+                    })
+            })
+            .collect()
+    }
+
+    fn android_base_plugin(&self, plan: &StrictKotlinProjectPlan) -> ImportResult<bool> {
+        let request = self.request(
+            plan.android_base_plugin.as_deref().ok_or_else(|| {
+                unavailable(
+                    FactsUnavailableReason::Capability,
+                    "Exact Android base plugin predicate was not independently planned",
+                )
+            })?,
+            &plan.project,
+        )?;
+        if request.purpose != GetterPurpose::Raw
+            || self.method_name(request)? != "hasPlugin"
+            || request.arguments != [GetterArgument::String("com.android.base".into())]
+            || request.return_shape.kind != ValueKind::Boolean
+        {
+            return Err(unavailable(
+                FactsUnavailableReason::Malformed,
+                "Android base plugin predicate does not match its official request",
+            ));
+        }
+        self.check_container(request, "org.gradle.api.plugins.PluginContainer")?;
+        match self.outcome(request)? {
+            Some(CaptureValue::Boolean(value)) => Ok(*value),
+            _ => Err(unavailable(
+                FactsUnavailableReason::Malformed,
+                "Android base plugin predicate returned a different shape",
             )),
         }
     }
@@ -364,7 +439,7 @@ impl<'a> StrictProjection<'a> {
             }
             let mut interfaces = BTreeSet::new();
             for plugin in self.objects(request)? {
-                interfaces.extend(self.class_names(plugin)?.into_iter().map(str::to_owned));
+                interfaces.extend(self.superclass_interfaces(plugin)?);
             }
             Ok(interfaces.into_iter().collect())
         })();
@@ -658,6 +733,7 @@ pub fn import_kotlin_from_strict_capture(
             .collect(),
     };
     let mut projects = BTreeMap::new();
+    let mut android_base_plugins = BTreeMap::new();
     for plan in plans {
         identities.project(&plan.project)?;
         if projects
@@ -669,6 +745,19 @@ pub fn import_kotlin_from_strict_capture(
                 "Duplicate strict Kotlin project plan",
             ));
         }
+        let base = projection.android_base_plugin(plan);
+        if let Err(error) = &base {
+            if matches!(
+                error.reason,
+                FactsUnavailableReason::Malformed | FactsUnavailableReason::Stale
+            ) {
+                return Err(error.clone());
+            }
+        }
+        android_base_plugins.insert(
+            plan.project.clone(),
+            projection.observed(ANDROID_BASE_PLUGIN, base),
+        );
     }
     let binding = ImportFactsBinding {
         model_revision: expected.binding.model_revision,
@@ -696,6 +785,7 @@ pub fn import_kotlin_from_strict_capture(
         binding,
         identity: model_identity(model),
         projects,
+        android_base_plugins,
         capture_context: Some(expected.clone()),
         capture_revision: Some(issued.clone()),
     })
@@ -821,6 +911,7 @@ pub fn parse_kotlin_import_facts(
         binding,
         identity: export.modules,
         projects,
+        android_base_plugins: BTreeMap::new(),
         capture_context: None,
         capture_revision: None,
     })
@@ -1024,6 +1115,7 @@ pub enum KotlinUnknownReason {
     UnverifiedTransport,
     GetterUnavailable(String),
     UnrecognizedKotlinExtension,
+    AmbiguousKotlinPluginIds,
     MultiplatformImport,
     MissingSourceSet,
     UnknownCompilerVersion,
@@ -1527,6 +1619,7 @@ impl ModuleImportPublisher {
                     )
                 })?,
                 authoritative: kotlin.capture_context.is_some(),
+                android_base_plugin: kotlin.android_base_plugins.get(&module.path),
                 previous: self.committed.as_ref(),
                 revision: &revision,
             };
@@ -1546,6 +1639,7 @@ struct SourceSetImport<'a> {
     input: &'a ImportedNameInput<'a>,
     project: &'a RawKotlinProject,
     authoritative: bool,
+    android_base_plugin: Option<&'a GetterObservation<bool>>,
     previous: Option<&'a CommittedImport>,
     revision: &'a ImportRevision,
 }
@@ -1576,6 +1670,7 @@ fn add_source_set_members(
         input,
         project,
         authoritative,
+        android_base_plugin,
         previous,
         revision,
     } = source_sets;
@@ -1610,7 +1705,12 @@ fn add_source_set_members(
         let internal_name = imported_internal_name(&input, naming)?;
         naming.existing_names.insert(internal_name.clone());
         let mut state = if authoritative {
-            propose_legacy_kotlin_member(project, &component.name, &internal_name)
+            propose_kotlin_member(
+                project,
+                &component.name,
+                &internal_name,
+                Some(android_base_plugin),
+            )
         } else {
             KotlinMemberState::Unknown(KotlinUnknownReason::UnverifiedTransport)
         };
@@ -1658,10 +1758,21 @@ fn add_source_set_members(
 
 /// A source-derived proposal over raw transport, not committed membership.
 /// Only the strict capture adapter can supply its automatic publication authority.
+/// Its legacy Android plugin proxy remains a supplemental compatibility constraint;
+/// strict publication requires the independently observed `hasPlugin(com.android.base)`.
 pub fn propose_legacy_kotlin_member(
     project: &RawKotlinProject,
     source_set: &str,
     internal_name: &str,
+) -> KotlinMemberState {
+    propose_kotlin_member(project, source_set, internal_name, None)
+}
+
+fn propose_kotlin_member(
+    project: &RawKotlinProject,
+    source_set: &str,
+    internal_name: &str,
+    strict_android_base: Option<Option<&GetterObservation<bool>>>,
 ) -> KotlinMemberState {
     let known = (|| -> ImportResult<_> {
         Ok((
@@ -1687,28 +1798,55 @@ pub fn propose_legacy_kotlin_member(
     }) {
         return KotlinMemberState::Unknown(KotlinUnknownReason::MultiplatformImport);
     }
-    let has_plugin = plugins.iter().any(|plugin| {
-        matches!(
-            plugin.as_str(),
-            "kotlin"
-                | "kotlin2js"
-                | "kotlin-android"
-                | "kotlin-platform-jvm"
-                | "kotlin-platform-js"
-                | "kotlin-platform-common"
-        )
-    }) || (plugins.iter().any(|plugin| {
-        matches!(
-            plugin.as_str(),
-            "com.android.application"
-                | "com.android.library"
-                | "com.android.dynamic-feature"
-                | "com.android.test"
-        )
-    }) && interfaces
+    let legacy_count = plugins
         .iter()
-        .any(|name| name == "org.jetbrains.kotlin.gradle.plugin.KotlinJvmFactory"));
+        .filter(|plugin| matches!(plugin.as_str(), "kotlin" | "kotlin2js" | "kotlin-android"))
+        .count();
+    let platform_count = plugins
+        .iter()
+        .filter(|plugin| {
+            matches!(
+                plugin.as_str(),
+                "kotlin-platform-jvm" | "kotlin-platform-js" | "kotlin-platform-common"
+            )
+        })
+        .count();
+    let factory = interfaces
+        .iter()
+        .any(|name| name == "org.jetbrains.kotlin.gradle.plugin.KotlinJvmFactory");
+    let singleton = legacy_count == 1 || platform_count == 1;
+    let builtin = if singleton || !factory {
+        false
+    } else if let Some(base) = strict_android_base {
+        match base.map(GetterObservation::available) {
+            Some(Ok(value)) => *value,
+            Some(Err(error)) => {
+                return KotlinMemberState::Unknown(KotlinUnknownReason::GetterUnavailable(
+                    error.to_string(),
+                ));
+            }
+            None => {
+                return KotlinMemberState::Unknown(KotlinUnknownReason::GetterUnavailable(
+                    "Missing exact Android base plugin predicate".into(),
+                ));
+            }
+        }
+    } else {
+        plugins.iter().any(|plugin| {
+            matches!(
+                plugin.as_str(),
+                "com.android.application"
+                    | "com.android.library"
+                    | "com.android.dynamic-feature"
+                    | "com.android.test"
+            )
+        })
+    };
+    let has_plugin = singleton || builtin;
     if !has_plugin {
+        if legacy_count > 1 || platform_count > 1 {
+            return KotlinMemberState::Unknown(KotlinUnknownReason::AmbiguousKotlinPluginIds);
+        }
         return if *extension {
             KotlinMemberState::Unknown(KotlinUnknownReason::UnrecognizedKotlinExtension)
         } else {

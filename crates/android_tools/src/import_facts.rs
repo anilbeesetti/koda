@@ -556,7 +556,10 @@ fn validate_selection(model: &ProjectModel, binding: &ImportFactsBinding) -> Fac
     Ok(())
 }
 
-pub(crate) fn validate_observation<T>(value: &GetterObservation<T>, getter: &str) -> FactsResult<()> {
+pub(crate) fn validate_observation<T>(
+    value: &GetterObservation<T>,
+    getter: &str,
+) -> FactsResult<()> {
     if value.getter != getter {
         return Err(unavailable(
             FactsUnavailableReason::Malformed,

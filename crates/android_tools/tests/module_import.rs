@@ -990,3 +990,304 @@ fn grouped_import_preserves_root_nonroot_and_source_set_external_ids() -> Result
     assert_eq!(root.sort_name, root.holder_internal_name);
     Ok(())
 }
+
+// These mutations define independently retained synthetic request contexts.
+// They are adapter regressions, never original fixture/runtime parity evidence.
+fn set_strict_plugin_ids(
+    value: &mut Value,
+    plan: &StrictKotlinProjectPlan,
+    ids: &[&str],
+) -> Result<()> {
+    for (plugin, request) in &plan.plugin_lookups {
+        let event = value["kotlinFacts"]["events"]
+            .as_array_mut()
+            .context("Strict events")?
+            .iter_mut()
+            .find(|event| event["request"] == request.as_str())
+            .context("Planned plugin event")?;
+        event["outcome"]["value"] = if ids.contains(&plugin.as_str()) {
+            json!({"kind": "object", "value": "kotlin-plugin"})
+        } else {
+            Value::Null
+        };
+    }
+    Ok(())
+}
+
+fn set_strict_factory_location(value: &mut Value, location: &str) -> Result<()> {
+    let classes = value["kotlinFacts"]["context"]["runtime"]["classes"]
+        .as_array_mut()
+        .context("Runtime classes")?;
+    let mut factory = classes
+        .iter()
+        .find(|class| class["id"] == "plugin-wrapper")
+        .context("Plugin class")?
+        .clone();
+    factory["id"] = json!("jvm-factory");
+    factory["name"] = json!("org.jetbrains.kotlin.gradle.plugin.KotlinJvmFactory");
+    factory["superclass"] = Value::Null;
+    factory["interfaces"] = json!([]);
+    classes.push(factory.clone());
+    let mut parent = factory.clone();
+    parent["id"] = json!("plugin-parent");
+    parent["name"] = json!("synthetic.PluginParent");
+    parent["superclass"] = json!("object");
+    parent["interfaces"] = if location == "immediate" {
+        json!(["jvm-factory"])
+    } else {
+        json!([])
+    };
+    if location == "grandparent" {
+        let mut grandparent = parent.clone();
+        grandparent["id"] = json!("plugin-grandparent");
+        grandparent["name"] = json!("synthetic.PluginGrandparent");
+        grandparent["interfaces"] = json!(["jvm-factory"]);
+        classes.push(grandparent);
+        parent["superclass"] = json!("plugin-grandparent");
+    } else if location == "transitive" {
+        let mut bridge = factory;
+        bridge["id"] = json!("factory-bridge");
+        bridge["name"] = json!("synthetic.FactoryBridge");
+        bridge["interfaces"] = json!(["jvm-factory"]);
+        classes.push(bridge);
+        parent["interfaces"] = json!(["factory-bridge"]);
+    }
+    classes.push(parent);
+    let plugin = classes
+        .iter_mut()
+        .find(|class| class["id"] == "plugin-wrapper")
+        .context("Plugin runtime class")?;
+    plugin["superclass"] = json!("plugin-parent");
+    if location == "self" {
+        plugin["interfaces"] = json!(["plugin-base", "jvm-factory"]);
+    }
+    Ok(())
+}
+
+fn add_strict_android_base_predicate(
+    value: &mut Value,
+    plan: &mut StrictKotlinProjectPlan,
+    applied: bool,
+) -> Result<()> {
+    let catalogue = value["kotlinFacts"]["context"]["catalogues"]
+        .as_array_mut()
+        .context("Runtime catalogues")?
+        .iter_mut()
+        .find(|catalogue| catalogue["id"] == "plugin-catalogue")
+        .context("Plugin catalogue")?;
+    catalogue["methods"]
+        .as_array_mut()
+        .context("Plugin methods")?
+        .push(json!({
+            "id": "has-plugin", "name": "hasPlugin", "descriptor": "(Ljava/lang/String;)Z",
+            "declaringClass": "plugins", "isStatic": false,
+            "parameterClasses": ["string"], "returnClass": null
+        }));
+    let requests = value["kotlinFacts"]["context"]["requests"]
+        .as_array_mut()
+        .context("Planned requests")?;
+    let mut request = requests
+        .iter()
+        .find(|request| request["id"] == "lookup-0")
+        .context("Plugin request template")?
+        .clone();
+    request["id"] = json!("android-base-plugin");
+    request["method"]["value"] = json!("has-plugin");
+    request["arguments"] = json!([{"kind": "string", "value": "com.android.base"}]);
+    request["returnShape"] = json!({
+        "kind": "boolean", "nullable": false, "objectKind": null, "order": null
+    });
+    requests.push(request);
+    value["kotlinFacts"]["events"]
+        .as_array_mut()
+        .context("Captured events")?
+        .push(json!({
+            "id": "event-android-base-plugin", "request": "android-base-plugin",
+            "outcome": {"status": "available", "value": {"kind": "boolean", "value": applied}},
+            "container": null
+        }));
+    plan.android_base_plugin = Some("android-base-plugin".into());
+    Ok(())
+}
+
+fn import_strict_case(
+    fixture: &Fixture,
+    value: &Value,
+    plan: &StrictKotlinProjectPlan,
+) -> Result<KotlinImportFacts> {
+    let expected = serde_json::from_value(value["kotlinFacts"]["context"].clone())?;
+    let snapshot = parse_kotlin_facts(
+        &wire(value)?,
+        &fixture.model,
+        &fixture.identity,
+        &expected,
+        CaptureLimits::default(),
+    )?;
+    Ok(import_kotlin_from_strict_capture(
+        &fixture.model,
+        &fixture.identity,
+        &snapshot,
+        &expected,
+        &revision(fixture, 1),
+        std::slice::from_ref(plan),
+    )?)
+}
+
+#[test]
+fn strict_ambiguous_plugin_families_do_not_enable_membership() -> Result<()> {
+    for ids in [
+        vec!["kotlin", "kotlin-android"],
+        vec!["kotlin-platform-jvm", "kotlin-platform-js"],
+    ] {
+        let mut fixture = fixture()?;
+        let (mut value, _, plan) = strict_fixture(&fixture)?;
+        set_strict_plugin_ids(&mut value, &plan, &ids)?;
+        fixture.kotlin = import_strict_case(&fixture, &value, &plan)?;
+        let mut publisher = ModuleImportPublisher::default();
+        publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+        let module = &publisher
+            .committed()
+            .context("Published ambiguity")?
+            .modules[":android"];
+        assert_eq!(module.kotlin_capability(), KotlinCapability::Unknown);
+        assert_eq!(
+            module.members[1].kotlin,
+            KotlinMemberState::Unknown(KotlinUnknownReason::AmbiguousKotlinPluginIds)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_other_singleton_family_still_resolves_membership() -> Result<()> {
+    for ids in [
+        vec!["kotlin", "kotlin-android", "kotlin-platform-jvm"],
+        vec![
+            "kotlin-android",
+            "kotlin-platform-jvm",
+            "kotlin-platform-js",
+        ],
+    ] {
+        let mut fixture = fixture()?;
+        let (mut value, _, plan) = strict_fixture(&fixture)?;
+        set_strict_plugin_ids(&mut value, &plan, &ids)?;
+        fixture.kotlin = import_strict_case(&fixture, &value, &plan)?;
+        let mut publisher = ModuleImportPublisher::default();
+        publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+        assert_eq!(
+            publisher.committed().context("Resolved singleton")?.modules[":android"]
+                .kotlin_capability(),
+            KotlinCapability::Enabled
+        );
+        assert_eq!(
+            committed_settings(&publisher)?.target_platform.as_deref(),
+            Some("JVM")
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_builtin_requires_exact_base_predicate_and_immediate_superclass_interface() -> Result<()> {
+    for location in ["immediate", "self", "grandparent", "transitive"] {
+        let mut fixture = fixture()?;
+        let (mut value, _, mut plan) = strict_fixture(&fixture)?;
+        set_strict_plugin_ids(&mut value, &plan, &["com.android.library"])?;
+        set_strict_factory_location(&mut value, location)?;
+        add_strict_android_base_predicate(&mut value, &mut plan, true)?;
+        // A known absent Kotlin extension distinguishes proven absence from Unknown.
+        value["kotlinFacts"]["events"]
+            .as_array_mut()
+            .context("Events")?
+            .iter_mut()
+            .find(|event| event["request"] == "extension-lookup")
+            .context("Extension event")?["outcome"]["value"] = Value::Null;
+        fixture.kotlin = import_strict_case(&fixture, &value, &plan)?;
+        let mut publisher = ModuleImportPublisher::default();
+        publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+        let module = &publisher.committed().context("Builtin decision")?.modules[":android"];
+        if location == "immediate" {
+            assert_eq!(module.kotlin_capability(), KotlinCapability::Enabled);
+            assert!(matches!(
+                module.members[1].kotlin,
+                KotlinMemberState::Present(_)
+            ));
+        } else {
+            assert_eq!(module.kotlin_capability(), KotlinCapability::Disabled);
+            assert_eq!(module.members[1].kotlin, KotlinMemberState::Absent);
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_builtin_missing_or_false_base_predicate_never_uses_android_plugin_proxy() -> Result<()> {
+    for base in [None, Some(false)] {
+        let mut fixture = fixture()?;
+        let (mut value, _, mut plan) = strict_fixture(&fixture)?;
+        set_strict_plugin_ids(&mut value, &plan, &["com.android.library"])?;
+        set_strict_factory_location(&mut value, "immediate")?;
+        if let Some(applied) = base {
+            add_strict_android_base_predicate(&mut value, &mut plan, applied)?;
+        }
+        fixture.kotlin = import_strict_case(&fixture, &value, &plan)?;
+        let mut publisher = ModuleImportPublisher::default();
+        publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+        let module = &publisher.committed().context("Missing base guard")?.modules[":android"];
+        assert_eq!(module.kotlin_capability(), KotlinCapability::Unknown);
+        if base.is_none() {
+            assert!(matches!(
+                module.members[1].kotlin,
+                KotlinMemberState::Unknown(KotlinUnknownReason::GetterUnavailable(_))
+            ));
+        } else {
+            assert_eq!(
+                module.members[1].kotlin,
+                KotlinMemberState::Unknown(KotlinUnknownReason::UnrecognizedKotlinExtension)
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_builtin_fallback_resolves_ambiguous_legacy_family() -> Result<()> {
+    let mut fixture = fixture()?;
+    let (mut value, _, mut plan) = strict_fixture(&fixture)?;
+    set_strict_plugin_ids(&mut value, &plan, &["kotlin", "kotlin-android"])?;
+    set_strict_factory_location(&mut value, "immediate")?;
+    add_strict_android_base_predicate(&mut value, &mut plan, true)?;
+    fixture.kotlin = import_strict_case(&fixture, &value, &plan)?;
+    let mut publisher = ModuleImportPublisher::default();
+    publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+    assert_eq!(
+        publisher.committed().context("Builtin fallback")?.modules[":android"].kotlin_capability(),
+        KotlinCapability::Enabled
+    );
+    assert_eq!(
+        committed_settings(&publisher)?.target_platform.as_deref(),
+        Some("JVM")
+    );
+    Ok(())
+}
+
+#[test]
+fn strict_android_base_predicate_rejects_wrong_plugin_argument() -> Result<()> {
+    let fixture = fixture()?;
+    let (mut value, _, mut plan) = strict_fixture(&fixture)?;
+    add_strict_android_base_predicate(&mut value, &mut plan, true)?;
+    value["kotlinFacts"]["context"]["requests"]
+        .as_array_mut()
+        .context("Requests")?
+        .iter_mut()
+        .find(|request| request["id"] == "android-base-plugin")
+        .context("Base plugin request")?["arguments"][0]["value"] = json!("com.android.library");
+    assert_eq!(
+        import_strict_case(&fixture, &value, &plan)
+            .expect_err("An Android plugin proxy cannot prove com.android.base")
+            .downcast::<android_tools::project_tree_facts::FactsUnavailable>()?
+            .reason,
+        FactsUnavailableReason::Malformed
+    );
+    Ok(())
+}
