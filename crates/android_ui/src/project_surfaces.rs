@@ -592,7 +592,7 @@ pub(crate) mod tests {
     }
 
     pub(crate) fn trust(project: &Entity<Project>, cx: &mut App) -> Result<()> {
-        let store = project.read(cx).worktree_store().clone();
+        let store = project.read(cx).worktree_store();
         let roots = project
             .read(cx)
             .visible_worktrees(cx)

@@ -5247,7 +5247,6 @@ mod tests {
     async fn captured_android_menus_do_not_change_a_replacement_context_case(
         cx: &mut TestAppContext,
     ) -> Result<()> {
-        use android_tools::project_context::PluginId;
         cx.update(|cx| {
             AppState::test(cx);
             trusted_worktrees::init(Default::default(), cx);

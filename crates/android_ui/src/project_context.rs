@@ -869,7 +869,7 @@ mod tests {
                     .map(|worktree| worktree.read(cx).id())
             })
             .context("Root worktree")?;
-        let store = project.read_with(cx, |project, _| project.worktree_store().clone());
+        let store = project.read_with(cx, |project, _| project.worktree_store());
         let trust = cx
             .read(TrustedWorktrees::try_get_global)
             .context("Trust store")?;
