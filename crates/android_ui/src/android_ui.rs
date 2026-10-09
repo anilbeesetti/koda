@@ -5072,6 +5072,7 @@ mod tests {
         cx: &mut TestAppContext,
     ) {
         let result: Result<()> = async {
+            eprintln!("sync-abort boundary: setup-start");
             use android_tools::project_context::PluginId;
             cx.executor().allow_parking();
             let _state = cx.update(|cx| {
@@ -5102,10 +5103,16 @@ mod tests {
             for root in [&a, &b] {
                 filesystem.insert_tree(root, json!({"gradlew":"", "settings.gradle.kts":""})).await;
             }
+            eprintln!("sync-abort boundary: project-construction-start");
             let project = Project::test_with_worktree_trust(filesystem, [a.as_path(), b.as_path()], cx).await;
+            eprintln!("sync-abort boundary: project-construction-finished");
+            eprintln!("sync-abort boundary: window-construction-start");
             let (multi_workspace, visual) = cx.add_window_view(|window, cx| workspace::MultiWorkspace::test_new(project.clone(), window, cx));
+            eprintln!("sync-abort boundary: window-construction-finished");
             let workspace = multi_workspace.read_with(visual, |multi_workspace, _| multi_workspace.workspace().clone());
+            eprintln!("sync-abort boundary: panel-construction-start");
             let panel = new_test_android_panel(&workspace, project.clone(), visual);
+            eprintln!("sync-abort boundary: panel-construction-finished");
             workspace.update_in(visual, |workspace, window, cx| {
                 workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
                 workspace.add_panel(panel.clone(), window, cx);
@@ -5119,10 +5126,15 @@ mod tests {
                 panel.auto_sync_root = Some(a.clone());
             });
             let controller = visual.update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+            eprintln!("sync-abort boundary: sync-dispatch-start");
             visual.dispatch_action(SyncProject);
+            eprintln!("sync-abort boundary: sync-dispatch-finished");
             visual.run_until_parked();
+            eprintln!("sync-abort boundary: post-dispatch-drain-finished");
             let build_panel = panel.read_with(visual, |panel, _| panel.build_panel.clone());
+            eprintln!("sync-abort boundary: shell-entry-condition-start");
             visual.condition(&build_panel, |_, _| a.join("context-entered").exists()).await;
+            eprintln!("sync-abort boundary: shell-entry-condition-finished");
             let [a_id, b_id] = project.read_with(visual, |project, cx| {
                 [a.as_path(), b.as_path()].map(|root| {
                     project.find_worktree(root, cx).map(|(worktree, _)| worktree.read(cx).id()).context("Fixture root")
@@ -5130,6 +5142,7 @@ mod tests {
             });
             let a_id = a_id?;
             let b_id = b_id?;
+            eprintln!("sync-abort boundary: root-a-b-a-cancellation-start");
             controller.update(visual, |controller, cx| {
                 assert!(controller.manual_model_sync_pending(cx));
                 controller.select_fixture_root(b_id, cx)?;
@@ -5138,14 +5151,18 @@ mod tests {
                 assert!(controller.import_owner_is_finished_for_test());
                 Ok::<_, anyhow::Error>(())
             })?;
+            eprintln!("sync-abort boundary: root-a-b-a-cancellation-finished");
             std::fs::write(a.join("context-release"), "continue")?;
+            eprintln!("sync-abort boundary: cancelled-import-drain-start");
             visual.run_until_parked();
+            eprintln!("sync-abort boundary: cancelled-import-drain-finished");
             assert!(project.read_with(visual, |project, _| project.android_model().model.is_none()));
             assert!(!panel.read_with(visual, |panel, _| panel.syncing));
             let commands = std::fs::read_to_string(a.join("retry-commands"))?;
             assert_eq!(commands.lines().count(), 1);
             assert!(commands.contains(":kodaProjectContext"));
             assert!(!commands.contains(android_tools::project_model::MODEL_TASK));
+            eprintln!("sync-abort boundary: assertions-finished");
             Ok(())
         }
         .await;
