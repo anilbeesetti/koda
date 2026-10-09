@@ -3325,7 +3325,16 @@ impl AndroidPanel {
             .operation_owner(AndroidOperation::Sync, cx)
             .ok();
         let panel = panel.downgrade();
-        ContextMenu::build(window, cx, |mut menu, _, _| {
+        ContextMenu::build(window, cx, |mut menu, window, cx| {
+            if !window.is_a11y_enabled() {
+                let mut first_focus = true;
+                cx.on_focus_in(&menu.focus_handle(cx), window, move |menu, window, cx| {
+                    if std::mem::take(&mut first_focus) && menu.selected_index().is_none() {
+                        menu.select_toggled_or_first(window, cx);
+                    }
+                })
+                .detach();
+            }
             for variant in library_variants {
                 let label = variant.label();
                 let selected = selected_variant.as_ref() == Some(&variant);
@@ -8845,6 +8854,237 @@ fi
         }
         .await;
         result.expect("Initial focus fixture must complete");
+    }
+
+    #[gpui::test]
+    async fn mixed_variant_picker_focuses_and_confirms_without_accessibility(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            cx.disable_accessibility();
+            cx.update(AppState::test);
+            let root = PathBuf::from("/picker-normal-keyboard");
+            let filesystem = FakeFs::new(cx.executor());
+            filesystem
+                .insert_tree(&root, json!({"gradlew":"", "settings.gradle.kts":""}))
+                .await;
+            let project = Project::test(filesystem, [root.as_path()], cx).await;
+            let (workspace, visual) =
+                cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let panel = new_test_android_panel(&workspace, project.clone(), visual);
+            visual.update(|_, cx| publish_picker_catalogue(&project, &root, cx))?;
+            visual.run_until_parked();
+            panel.update(visual, |panel, cx| {
+                panel.context_operations_changed(cx);
+                panel.root = Some(root.clone());
+                panel.auto_sync_root = Some(root.clone());
+                panel.refreshing_devices = true;
+                publish_picker_model(
+                    panel,
+                    &["debug", "release"],
+                    &["debug", "release"],
+                    "first",
+                    cx,
+                )
+            })?;
+            visual.run_until_parked();
+            visual.update(|window, _| {
+                assert!(!window.is_a11y_enabled());
+                window.activate_window();
+            });
+            visual.run_until_parked();
+            visual.simulate_mouse_move(
+                gpui::point(px(-1.), px(-1.)),
+                None,
+                gpui::Modifiers::default(),
+            );
+            for (index, module, variant) in [
+                (2, ":app", "debug"),
+                (1, ":library", "release"),
+                (3, ":app", "release"),
+                (0, ":library", "debug"),
+            ] {
+                select_picker_entry(&panel, index, visual);
+                visual.run_until_parked();
+                let menu = visual
+                    .update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+                assert_eq!(
+                    menu.read_with(visual, |menu, _| menu.selected_index()),
+                    None
+                );
+                visual.update(|window, cx| {
+                    window.replace_root(cx, |_, _| PickerMenuRoot(menu.clone()));
+                });
+                visual.run_until_parked();
+                visual.update(|window, cx| window.blur(cx));
+                visual.run_until_parked();
+                visual.update(|window, cx| window.focus(&menu.focus_handle(cx), cx));
+                visual.run_until_parked();
+                assert_eq!(
+                    menu.read_with(visual, |menu, _| menu.selected_index()),
+                    Some(index)
+                );
+                visual.dispatch_action(menu::Confirm);
+                visual.run_until_parked();
+                panel.read_with(visual, |panel, cx| {
+                    let selected = panel.build_variant(cx).expect("Ordinary keyboard variant");
+                    assert_eq!(
+                        (selected.module.as_str(), selected.variant.as_str()),
+                        (module, variant)
+                    );
+                    assert_eq!(panel.selected_target.is_some(), module == ":app");
+                    assert_eq!(
+                        panel.operation_permitted(AndroidOperation::Run, cx),
+                        module == ":app"
+                    );
+                });
+            }
+            Ok(())
+        }
+        .await;
+        result.expect("Ordinary keyboard picker fixture must complete");
+    }
+
+    struct PickerPointerMenuRoot(Entity<ContextMenu>);
+
+    impl Render for PickerPointerMenuRoot {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            v_flex().items_start().child(
+                div()
+                    .w(px(400.))
+                    .flex_shrink_0()
+                    .debug_selector(|| "ANDROID_PICKER_POINTER_MENU".into())
+                    .child(self.0.clone()),
+            )
+        }
+    }
+
+    #[gpui::test]
+    async fn mixed_variant_picker_preserves_hover_and_keyboard_navigation_without_accessibility(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            cx.disable_accessibility();
+            cx.update(AppState::test);
+            let root = PathBuf::from("/picker-normal-keyboard-pointer");
+            let filesystem = FakeFs::new(cx.executor());
+            filesystem
+                .insert_tree(&root, json!({"gradlew":"", "settings.gradle.kts":""}))
+                .await;
+            let project = Project::test(filesystem, [root.as_path()], cx).await;
+            let (workspace, visual) =
+                cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let panel = new_test_android_panel(&workspace, project.clone(), visual);
+            visual.update(|_, cx| publish_picker_catalogue(&project, &root, cx))?;
+            visual.run_until_parked();
+            panel.update(visual, |panel, cx| {
+                panel.context_operations_changed(cx);
+                panel.root = Some(root.clone());
+                panel.auto_sync_root = Some(root.clone());
+                panel.refreshing_devices = true;
+                publish_picker_model(
+                    panel,
+                    &["debug", "release"],
+                    &["debug", "release"],
+                    "first",
+                    cx,
+                )
+            })?;
+            visual.run_until_parked();
+            visual.update(|window, _| {
+                assert!(!window.is_a11y_enabled());
+                window.activate_window();
+            });
+            visual.run_until_parked();
+            select_picker_entry(&panel, 3, visual);
+            visual.run_until_parked();
+            visual.simulate_mouse_move(
+                gpui::point(px(-1.), px(-1.)),
+                None,
+                gpui::Modifiers::default(),
+            );
+            let menu =
+                visual.update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+            assert_eq!(
+                menu.read_with(visual, |menu, _| menu.selected_index()),
+                None
+            );
+            visual.update(|window, cx| {
+                window.replace_root(cx, |_, _| PickerPointerMenuRoot(menu.clone()));
+            });
+            visual.run_until_parked();
+            visual.update(|window, cx| window.blur(cx));
+            visual.run_until_parked();
+            visual.update(|window, cx| window.focus(&menu.focus_handle(cx), cx));
+            visual.run_until_parked();
+            assert_eq!(
+                menu.read_with(visual, |menu, _| menu.selected_index()),
+                Some(3)
+            );
+            visual.dispatch_action(menu::SelectPrevious);
+            assert_eq!(
+                menu.read_with(visual, |menu, _| menu.selected_index()),
+                Some(2)
+            );
+            visual.update(|window, cx| window.blur(cx));
+            visual.run_until_parked();
+            visual.update(|window, cx| window.focus(&menu.focus_handle(cx), cx));
+            visual.run_until_parked();
+            assert_eq!(
+                menu.read_with(visual, |menu, _| menu.selected_index()),
+                Some(2)
+            );
+            visual.dispatch_action(menu::SelectNext);
+            assert_eq!(
+                menu.read_with(visual, |menu, _| menu.selected_index()),
+                Some(3)
+            );
+            let bounds = visual
+                .debug_bounds("ANDROID_PICKER_POINTER_MENU")
+                .context("Rendered picker pointer bounds")?;
+            visual.simulate_mouse_move(
+                gpui::point(bounds.center().x, bounds.top() + bounds.size.height / 8.),
+                None,
+                gpui::Modifiers::default(),
+            );
+            assert_eq!(
+                menu.read_with(visual, |menu, _| menu.selected_index()),
+                None
+            );
+            visual.update(|window, cx| window.blur(cx));
+            visual.run_until_parked();
+            visual.update(|window, cx| window.focus(&menu.focus_handle(cx), cx));
+            visual.run_until_parked();
+            assert_eq!(
+                menu.read_with(visual, |menu, _| menu.selected_index()),
+                None
+            );
+            panel.read_with(visual, |panel, cx| {
+                let selected = panel
+                    .build_variant(cx)
+                    .expect("Unconfirmed application variant");
+                assert_eq!(selected.module, ":app");
+                assert_eq!(selected.variant, "release");
+                assert!(panel.selected_target.is_some());
+            });
+            visual.dispatch_action(menu::SelectNext);
+            assert_eq!(
+                menu.read_with(visual, |menu, _| menu.selected_index()),
+                Some(0)
+            );
+            visual.dispatch_action(menu::Confirm);
+            visual.run_until_parked();
+            panel.read_with(visual, |panel, cx| {
+                let selected = panel.build_variant(cx).expect("Confirmed library variant");
+                assert_eq!(selected.module, ":library");
+                assert_eq!(selected.variant, "debug");
+                assert!(panel.selected_target.is_none());
+                assert!(!panel.operation_permitted(AndroidOperation::Run, cx));
+            });
+            Ok(())
+        }
+        .await;
+        result.expect("Pointer and keyboard picker fixture must complete");
     }
 
     #[gpui::test]
