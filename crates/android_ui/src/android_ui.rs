@@ -8669,17 +8669,43 @@ fi
                                 .configuration,
                             *module == ":app"
                         );
-                        for (operation, prefix, suffix) in [
-                            (GradleOperation::Build, "assemble", ""),
-                            (GradleOperation::Test, "test", "UnitTest"),
-                            (GradleOperation::Lint, "lint", ""),
-                        ] {
+                        let expected_tasks = match (*module, *variant) {
+                            (":app", "debug") => [
+                                ":app:assembleDebug",
+                                ":app:testDebugUnitTest",
+                                ":app:lintDebug",
+                            ],
+                            (":app", "release") => [
+                                ":app:assembleRelease",
+                                ":app:testReleaseUnitTest",
+                                ":app:lintRelease",
+                            ],
+                            (":library", "debug") => [
+                                ":library:assembleDebug",
+                                ":library:testDebugUnitTest",
+                                ":library:lintDebug",
+                            ],
+                            (":library", "release") => [
+                                ":library:assembleRelease",
+                                ":library:testReleaseUnitTest",
+                                ":library:lintRelease",
+                            ],
+                            _ => panic!("Unexpected build variant fixture: {module} {variant}"),
+                        };
+                        for (operation, expected_task) in [
+                            GradleOperation::Build,
+                            GradleOperation::Test,
+                            GradleOperation::Lint,
+                        ]
+                        .into_iter()
+                        .zip(expected_tasks)
+                        {
                             assert_eq!(
                                 panel
                                     .build_variant_task(operation, cx)
                                     .expect("Build task")
                                     .1,
-                                android_tools::gradle_variant_task(module, variant, prefix, suffix)
+                                expected_task
                             );
                         }
                     });
