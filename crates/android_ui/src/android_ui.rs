@@ -927,9 +927,9 @@ impl AndroidPanel {
         }
         // A manual repair carries its own fresh import owner through completion.
         // Let that continuation schedule the model export exactly once.
-        if project_context::for_workspace(&self.workspace, cx).is_some_and(|controller| {
-            controller.read(cx).manual_model_sync_pending(cx)
-        }) {
+        if project_context::for_workspace(&self.workspace, cx)
+            .is_some_and(|controller| controller.read(cx).manual_model_sync_pending(cx))
+        {
             return;
         }
         let Some(root) = self.auto_sync_candidate(cx) else {
@@ -1090,16 +1090,26 @@ impl AndroidPanel {
             }
         };
         let root = owner.root.clone();
-        let partial_context = self.project.read(cx).android_context().handles().any(|handle| {
-            let store = self.project.read(cx).android_context();
-            store.root_path(handle) == Some(root.as_path())
-                && store.snapshot(handle).is_some_and(|snapshot| {
-                    snapshot.phase() == android_tools::project_context::ObservationPhase::Partial
-                })
-        });
+        let partial_context = self
+            .project
+            .read(cx)
+            .android_context()
+            .handles()
+            .any(|handle| {
+                let store = self.project.read(cx).android_context();
+                store.root_path(handle) == Some(root.as_path())
+                    && store.snapshot(handle).is_some_and(|snapshot| {
+                        snapshot.phase()
+                            == android_tools::project_context::ObservationPhase::Partial
+                    })
+            });
         if partial_context {
             let Some(controller) = project_context::for_workspace(&self.workspace, cx) else {
-                self.fail(anyhow::anyhow!("The Android project's window closed before retry"), window, cx);
+                self.fail(
+                    anyhow::anyhow!("The Android project's window closed before retry"),
+                    window,
+                    cx,
+                );
                 return;
             };
             let panel = cx.weak_entity();
@@ -1113,12 +1123,19 @@ impl AndroidPanel {
                     .and_then(|result| result)
                     .and_then(|()| {
                         controller.update(cx, |controller, cx| {
-                            controller.retry_partial_android_import(&owner.context, &root, window, cx)
+                            controller.retry_partial_android_import(
+                                &owner.context,
+                                &root,
+                                window,
+                                cx,
+                            )
                         })
                     })
                     .and_then(|result| result);
                 if let Err(error) = result {
-                    panel.update(cx, |panel, cx| panel.fail(error, window, cx)).log_err();
+                    panel
+                        .update(cx, |panel, cx| panel.fail(error, window, cx))
+                        .log_err();
                 }
             });
             return;
@@ -4975,35 +4992,74 @@ mod tests {
             });
             let filesystem = FakeFs::new(cx.executor());
             for root in ["/partial-retry-a", "/partial-retry-b"] {
-                filesystem.insert_tree(root, json!({"gradlew":"", "settings.gradle.kts":""})).await;
+                filesystem
+                    .insert_tree(root, json!({"gradlew":"", "settings.gradle.kts":""}))
+                    .await;
             }
-            let project = Project::test_with_worktree_trust(filesystem,
-                [Path::new("/partial-retry-a"), Path::new("/partial-retry-b")], cx).await;
-            let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let project = Project::test_with_worktree_trust(
+                filesystem,
+                [Path::new("/partial-retry-a"), Path::new("/partial-retry-b")],
+                cx,
+            )
+            .await;
+            let (workspace, visual) =
+                cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
             let panel = new_test_android_panel(&workspace, project.clone(), visual);
-            visual.update(|_, cx| project_surfaces::tests::publish_catalogue(
-                &project, Path::new("/partial-retry-a"), &[PluginId::AndroidLibrary], &[], false, cx))?;
+            visual.update(|_, cx| {
+                project_surfaces::tests::publish_catalogue(
+                    &project,
+                    Path::new("/partial-retry-a"),
+                    &[PluginId::AndroidLibrary],
+                    &[],
+                    false,
+                    cx,
+                )
+            })?;
             visual.run_until_parked();
-            let controller = visual.update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
+            let controller = visual
+                .update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx))
+                .context("Controller")?;
             let roots = project.read_with(visual, |project, cx| {
                 ["/partial-retry-a", "/partial-retry-b"].map(|root| {
-                    project.find_worktree(Path::new(root), cx).map(|(worktree, _)| worktree.read(cx).id()).context("Fixture root")
+                    project
+                        .find_worktree(Path::new(root), cx)
+                        .map(|(worktree, _)| worktree.read(cx).id())
+                        .context("Fixture root")
                 })
             });
             let [a, b] = roots;
             let a = a?;
             let b = b?;
-            controller.update(visual, |controller, cx| controller.select_fixture_root(a, cx))?;
-            let owner = controller.read_with(visual, |controller, cx| controller.project_token(cx)).context("Partial project owner")?;
+            controller.update(visual, |controller, cx| {
+                controller.select_fixture_root(a, cx)
+            })?;
+            let owner = controller
+                .read_with(visual, |controller, cx| controller.project_token(cx))
+                .context("Partial project owner")?;
             controller.update_in(visual, |controller, window, cx| {
                 controller.select_fixture_root(b, cx)?;
                 controller.select_fixture_root(a, cx)?;
                 assert!(!controller.project_is_current(&owner, cx));
-                assert!(controller.retry_partial_android_import(&owner, Path::new("/partial-retry-a"), window, cx).is_err());
+                assert!(
+                    controller
+                        .retry_partial_android_import(
+                            &owner,
+                            Path::new("/partial-retry-a"),
+                            window,
+                            cx
+                        )
+                        .is_err()
+                );
                 assert!(controller.import_owner_is_finished_for_test());
                 Ok::<_, anyhow::Error>(())
             })?;
-            assert!(panel.read_with(visual, |panel, cx| panel.build_panel.read(cx).session_id(BuildTab::Sync).is_none()));
+            assert!(panel.read_with(visual, |panel, cx| {
+                panel
+                    .build_panel
+                    .read(cx)
+                    .session_id(BuildTab::Sync)
+                    .is_none()
+            }));
             Ok(())
         }
         .await;
@@ -5628,7 +5684,12 @@ mod tests {
         ] {
             workspace
                 .update_in(visual, |workspace, window, cx| {
-                    workspace.open_abs_path(Path::new(path).to_path_buf(), Default::default(), window, cx)
+                    workspace.open_abs_path(
+                        Path::new(path).to_path_buf(),
+                        Default::default(),
+                        window,
+                        cx,
+                    )
                 })
                 .await?;
             visual.run_until_parked();
@@ -6016,9 +6077,11 @@ mod tests {
     async fn sibling_model_inputs_reconcile_dirty_and_saved_resources_without_unrelated_refreshes(
         cx: &mut TestAppContext,
     ) {
-        sibling_model_inputs_reconcile_dirty_and_saved_resources_without_unrelated_refreshes_case(cx)
-            .await
-            .expect("Android project-context fixture must complete successfully");
+        sibling_model_inputs_reconcile_dirty_and_saved_resources_without_unrelated_refreshes_case(
+            cx,
+        )
+        .await
+        .expect("Android project-context fixture must complete successfully");
     }
 
     async fn sibling_model_inputs_reconcile_dirty_and_saved_resources_without_unrelated_refreshes_case(

@@ -54,8 +54,8 @@ pub(crate) fn for_workspace(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use project::Fs as _;
     use gpui::TestAppContext;
+    use project::Fs as _;
     use project::trusted_worktrees::{self, PathTrust};
     use serde_json::json;
     use workspace::AppState;
@@ -171,9 +171,11 @@ mod tests {
     async fn nested_repository_selection_preserves_source_and_import_owners_but_rapid_roots_do_not(
         cx: &mut TestAppContext,
     ) {
-        nested_repository_selection_preserves_source_and_import_owners_but_rapid_roots_do_not_case(cx)
-            .await
-            .expect("Android project-context fixture must complete successfully");
+        nested_repository_selection_preserves_source_and_import_owners_but_rapid_roots_do_not_case(
+            cx,
+        )
+        .await
+        .expect("Android project-context fixture must complete successfully");
     }
 
     async fn nested_repository_selection_preserves_source_and_import_owners_but_rapid_roots_do_not_case(
@@ -950,31 +952,32 @@ pub(crate) fn register(
     });
 }
 
-fn defer_import(
-    controller: &Entity<ProjectContextController>,
-    window: &mut Window,
-    cx: &mut App,
-) {
-    let owner = controller.read(cx).active.project_discovery_token(
-        controller.read(cx).project.read(cx).android_context(),
-    );
+fn defer_import(controller: &Entity<ProjectContextController>, window: &mut Window, cx: &mut App) {
+    let owner = controller
+        .read(cx)
+        .active
+        .project_discovery_token(controller.read(cx).project.read(cx).android_context());
     let controller = controller.downgrade();
     // Import reconciliation reads the Workspace; release the action
     // listener's Workspace lease before resolving its selected root.
     window.defer(cx, move |window, cx| {
-        controller.update(cx, |controller, cx| {
-            let result = controller.reconcile(cx).and_then(|()| {
-                ensure!(
-                    owner.as_ref().is_some_and(|owner| controller.project_is_current(owner, cx)),
-                    "Project context changed before Gradle import dispatch"
-                );
-                controller.import(window, cx);
-                Ok(())
-            });
-            if let Err(error) = result {
-                controller.notify_import_error(error, cx);
-            }
-        }).log_err();
+        controller
+            .update(cx, |controller, cx| {
+                let result = controller.reconcile(cx).and_then(|()| {
+                    ensure!(
+                        owner
+                            .as_ref()
+                            .is_some_and(|owner| controller.project_is_current(owner, cx)),
+                        "Project context changed before Gradle import dispatch"
+                    );
+                    controller.import(window, cx);
+                    Ok(())
+                });
+                if let Err(error) = result {
+                    controller.notify_import_error(error, cx);
+                }
+            })
+            .log_err();
     });
 }
 
@@ -1578,7 +1581,9 @@ impl ProjectContextController {
             "The Android project changed before retrying its partial import"
         );
         ensure!(
-            self.active.root().and_then(|handle| self.project.read(cx).android_context().snapshot(handle))
+            self.active
+                .root()
+                .and_then(|handle| self.project.read(cx).android_context().snapshot(handle))
                 .is_some_and(|snapshot| snapshot.phase() == ObservationPhase::Partial),
             "The Android import no longer has partial facts to retry"
         );
@@ -1588,14 +1593,20 @@ impl ProjectContextController {
         // begin_import intentionally expires the pre-import RootToken. Transfer
         // the verified explicit request to this import's fresh discovery owner.
         self.manual_model_sync = Some(
-            self.import_owner.as_ref().context("Partial retry has no import owner")?.active.clone(),
+            self.import_owner
+                .as_ref()
+                .context("Partial retry has no import owner")?
+                .active
+                .clone(),
         );
         cx.notify();
         Ok(())
     }
 
     pub(crate) fn manual_model_sync_pending(&self, cx: &App) -> bool {
-        self.manual_model_sync.as_ref().is_some_and(|owner| self.project_is_current(owner, cx))
+        self.manual_model_sync
+            .as_ref()
+            .is_some_and(|owner| self.project_is_current(owner, cx))
     }
 
     fn take_manual_model_sync(
@@ -1610,18 +1621,24 @@ impl ProjectContextController {
             return None;
         }
         self.manual_model_sync = None;
-        let complete = self.active.root().and_then(|handle| self.project.read(cx).android_context().snapshot(handle))
+        let complete = self
+            .active
+            .root()
+            .and_then(|handle| self.project.read(cx).android_context().snapshot(handle))
             .is_some_and(|snapshot| snapshot.phase() == ObservationPhase::Complete);
-        if !complete || !self.project_is_current(owner, cx)
+        if !complete
+            || !self.project_is_current(owner, cx)
             || self.project_token(cx).as_ref() != Some(owner)
             || self.root(cx).as_deref() != Some(root)
         {
             cx.notify();
             return None;
         }
-        let current = Workspace::for_window(window, cx)
-            .or_else(|| window.root::<Workspace>().flatten());
-        if current.as_ref().map(|workspace| workspace.entity_id()) != Some(self.workspace.entity_id()) {
+        let current =
+            Workspace::for_window(window, cx).or_else(|| window.root::<Workspace>().flatten());
+        if current.as_ref().map(|workspace| workspace.entity_id())
+            != Some(self.workspace.entity_id())
+        {
             cx.notify();
             return None;
         }

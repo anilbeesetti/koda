@@ -2,7 +2,8 @@ use crate::{
     AndroidPanel, Build, BuildPanel, ComposePreview, ConfigureJava, ConfigureKotlin,
     ConfigureOfficialKotlin, Debug, GradleOperation, Lint, Logcat, RefreshDevices, Run,
     StopEmulator, SyncProject, Test, ToggleBuild, ToggleComposePreview, ToggleFocus,
-    android_logcat, android_logcat_panel::LogcatPanel, project_context, with_panel, with_source_panel,
+    android_logcat, android_logcat_panel::LogcatPanel, project_context, with_panel,
+    with_source_panel,
 };
 use android_tools::project_context::{ContextCapabilities, OperationalReadiness};
 use gpui::{
@@ -224,7 +225,10 @@ pub(crate) fn register_actions(workspace: &mut Workspace) {
     operation!(ConfigureJava, Java);
     operation!(ConfigureKotlin, Kotlin);
     operation!(ConfigureOfficialKotlin, Kotlin);
-    register!(ComposePreview, |workspace: &mut Workspace, _: &ComposePreview, window, cx| {
+    register!(ComposePreview, |workspace: &mut Workspace,
+                               _: &ComposePreview,
+                               window,
+                               cx| {
         with_source_panel(workspace, window, cx, |panel, window, cx| {
             panel.gradle(GradleOperation::Preview, window, cx);
         });
@@ -690,9 +694,7 @@ pub(crate) mod tests {
     }
 
     #[gpui::test]
-    async fn desktop_multiplatform_tools_do_not_expose_android_operations(
-        cx: &mut TestAppContext,
-    ) {
+    async fn desktop_multiplatform_tools_do_not_expose_android_operations(cx: &mut TestAppContext) {
         desktop_multiplatform_tools_do_not_expose_android_operations_case(cx)
             .await
             .expect("Android project-context fixture must complete successfully");
@@ -844,9 +846,7 @@ pub(crate) mod tests {
     }
 
     #[gpui::test]
-    async fn current_library_model_exposes_build_without_synthesizing_run(
-        cx: &mut TestAppContext,
-    ) {
+    async fn current_library_model_exposes_build_without_synthesizing_run(cx: &mut TestAppContext) {
         current_library_model_exposes_build_without_synthesizing_run_case(cx)
             .await
             .expect("Android project-context fixture must complete successfully");
@@ -979,9 +979,7 @@ pub(crate) mod tests {
     }
 
     #[gpui::test]
-    async fn windows_sharing_a_project_keep_distinct_active_root_surfaces(
-        cx: &mut TestAppContext,
-    ) {
+    async fn windows_sharing_a_project_keep_distinct_active_root_surfaces(cx: &mut TestAppContext) {
         windows_sharing_a_project_keep_distinct_active_root_surfaces_case(cx)
             .await
             .expect("Android project-context fixture must complete successfully");
@@ -1188,30 +1186,72 @@ pub(crate) mod tests {
         async {
             cx.update(initialize);
             let filesystem = FakeFs::new(cx.executor());
-            filesystem.insert_tree("/dispatch-owner", json!({"Main.kt":"class Main", "Other.kt":"class Other"})).await;
-            filesystem.insert_tree("/dispatch-other", json!({"main.py":"print(1)"})).await;
-            let project = Project::test_with_worktree_trust(filesystem,
-                [Path::new("/dispatch-owner"), Path::new("/dispatch-other")], cx).await;
+            filesystem
+                .insert_tree(
+                    "/dispatch-owner",
+                    json!({"Main.kt":"class Main", "Other.kt":"class Other"}),
+                )
+                .await;
+            filesystem
+                .insert_tree("/dispatch-other", json!({"main.py":"print(1)"}))
+                .await;
+            let project = Project::test_with_worktree_trust(
+                filesystem,
+                [Path::new("/dispatch-owner"), Path::new("/dispatch-other")],
+                cx,
+            )
+            .await;
             cx.update(|cx| trust(&project, cx))?;
             let (workspace, visual) =
                 cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
-            let panel = workspace.read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx)).context("Panel")?;
+            let panel = workspace
+                .read_with(visual, |workspace, cx| workspace.panel::<AndroidPanel>(cx))
+                .context("Panel")?;
             panel.update(visual, |panel, _| {
                 panel.root = Some(Path::new("/dispatch-owner").to_path_buf());
                 panel.syncing = true;
                 panel.refreshing_devices = true;
             });
-            visual.update(|_, cx| publish_catalogue(&project, Path::new("/dispatch-owner"),
-                &[PluginId::AndroidApplication, PluginId::ComposeCompiler], &[("android", "androidJvm")], true, cx))?;
+            visual.update(|_, cx| {
+                publish_catalogue(
+                    &project,
+                    Path::new("/dispatch-owner"),
+                    &[PluginId::AndroidApplication, PluginId::ComposeCompiler],
+                    &[("android", "androidJvm")],
+                    true,
+                    cx,
+                )
+            })?;
             let mut items = Vec::new();
-            for path in ["/dispatch-owner/Other.kt", "/dispatch-other/main.py", "/dispatch-owner/Main.kt"] {
-                workspace.update_in(visual, |workspace, window, cx| workspace.open_abs_path(Path::new(path).to_path_buf(), Default::default(), window, cx)).await?;
+            for path in [
+                "/dispatch-owner/Other.kt",
+                "/dispatch-other/main.py",
+                "/dispatch-owner/Main.kt",
+            ] {
+                workspace
+                    .update_in(visual, |workspace, window, cx| {
+                        workspace.open_abs_path(
+                            Path::new(path).to_path_buf(),
+                            Default::default(),
+                            window,
+                            cx,
+                        )
+                    })
+                    .await?;
                 visual.run_until_parked();
-                items.push(workspace.read_with(visual, |workspace, cx| workspace.active_item(cx).expect("Fixture item")));
+                items.push(workspace.read_with(visual, |workspace, cx| {
+                    workspace.active_item(cx).expect("Fixture item")
+                }));
             }
-            let controller = visual.update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx)).context("Controller")?;
-            let project_owner = controller.read_with(visual, |controller, cx| controller.project_token(cx)).context("Project owner")?;
-            let source_owner = controller.read_with(visual, |controller, cx| controller.action_token(cx)).context("Source owner")?;
+            let controller = visual
+                .update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx))
+                .context("Controller")?;
+            let project_owner = controller
+                .read_with(visual, |controller, cx| controller.project_token(cx))
+                .context("Project owner")?;
+            let source_owner = controller
+                .read_with(visual, |controller, cx| controller.action_token(cx))
+                .context("Source owner")?;
             let project_entered = Rc::new(Cell::new(0));
             let source_entered = Rc::new(Cell::new(0));
             workspace.update_in(visual, |workspace, window, cx| {
@@ -1219,15 +1259,29 @@ pub(crate) mod tests {
                 // A captured Workspace transition already queued before a deferred
                 // callback must retain its complete path and ordering, not be folded
                 // into a later read of the final pane state.
-                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(
+                    workspace.active_project_path(cx),
+                ));
                 let entered = project_entered.clone();
-                with_panel(workspace, window, cx, move |_, _, _| entered.set(entered.get() + 1));
+                with_panel(workspace, window, cx, move |_, _, _| {
+                    entered.set(entered.get() + 1)
+                });
                 let entered = source_entered.clone();
-                with_source_panel(workspace, window, cx, move |_, _, _| entered.set(entered.get() + 1));
+                with_source_panel(workspace, window, cx, move |_, _, _| {
+                    entered.set(entered.get() + 1)
+                });
             });
             visual.run_until_parked();
-            assert_eq!(project_entered.get(), 1, "Same-root project dispatch must enter exactly once");
-            assert_eq!(source_entered.get(), 0, "A queued preview must not redirect to the new source");
+            assert_eq!(
+                project_entered.get(),
+                1,
+                "Same-root project dispatch must enter exactly once"
+            );
+            assert_eq!(
+                source_entered.get(),
+                0,
+                "A queued preview must not redirect to the new source"
+            );
             controller.read_with(visual, |controller, cx| {
                 assert!(controller.project_is_current(&project_owner, cx));
                 assert!(!controller.action_is_current(&source_owner, cx));
@@ -1235,17 +1289,31 @@ pub(crate) mod tests {
             project_entered.set(0);
             workspace.update_in(visual, |workspace, window, cx| {
                 assert!(workspace.activate_item(items[1].as_ref(), false, false, window, cx));
-                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(
+                    workspace.active_project_path(cx),
+                ));
                 assert!(workspace.activate_item(items[2].as_ref(), false, false, window, cx));
-                cx.emit(workspace::Event::ActiveProjectPathChanged(workspace.active_project_path(cx)));
+                cx.emit(workspace::Event::ActiveProjectPathChanged(
+                    workspace.active_project_path(cx),
+                ));
                 let entered = project_entered.clone();
-                with_panel(workspace, window, cx, move |_, _, _| entered.set(entered.get() + 1));
+                with_panel(workspace, window, cx, move |_, _, _| {
+                    entered.set(entered.get() + 1)
+                });
             });
             visual.run_until_parked();
-            assert_eq!(project_entered.get(), 0, "Captured root A/B/A must not revive deferred dispatch");
-            assert!(!controller.read_with(visual, |controller, cx| controller.project_is_current(&project_owner, cx)));
+            assert_eq!(
+                project_entered.get(),
+                0,
+                "Captured root A/B/A must not revive deferred dispatch"
+            );
+            assert!(!controller.read_with(visual, |controller, cx| {
+                controller.project_is_current(&project_owner, cx)
+            }));
             Ok::<_, anyhow::Error>(())
-        }.await.expect("Deferred UX regression must reach every assertion");
+        }
+        .await
+        .expect("Deferred UX regression must reach every assertion");
     }
 
     #[gpui::test]

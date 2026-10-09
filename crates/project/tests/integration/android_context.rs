@@ -967,9 +967,7 @@ async fn root_removal_releases_only_owned_inputs_and_keeps_other_worktrees_case(
 
 #[cfg(target_os = "linux")]
 #[gpui::test]
-async fn real_linux_observer_registers_deep_inputs_and_later_directories(
-    cx: &mut TestAppContext,
-) {
+async fn real_linux_observer_registers_deep_inputs_and_later_directories(cx: &mut TestAppContext) {
     real_linux_observer_registers_deep_inputs_and_later_directories_case(cx)
         .await
         .expect("Android project-context fixture must complete successfully");
@@ -1212,7 +1210,6 @@ async fn real_linux_observer_registers_deep_inputs_and_later_directories_case(
     Ok(())
 }
 
-
 #[gpui::test]
 async fn removed_input_batches_retire_watchers_on_background_and_do_not_revive_restricted_roots(
     cx: &mut TestAppContext,
@@ -1228,7 +1225,10 @@ async fn removed_input_batches_retire_watchers_on_background_and_do_not_revive_r
         let filesystem = FakeFs::new(cx.executor());
         for root in [root_a, root_b] {
             filesystem
-                .insert_tree(root, json!({"build.gradle":"", "retained":{"main.py":"print(1)"}}))
+                .insert_tree(
+                    root,
+                    json!({"build.gradle":"", "retained":{"main.py":"print(1)"}}),
+                )
                 .await;
         }
         for index in 0..512 {
@@ -1275,18 +1275,22 @@ async fn removed_input_batches_retire_watchers_on_background_and_do_not_revive_r
             let mut active = ActiveContext::default();
             active.select(Some(handle), None)?;
             let owner = project
-                .read_with(cx, |project, _| active.discovery_token(project.android_context()))
+                .read_with(cx, |project, _| {
+                    active.discovery_token(project.android_context())
+                })
                 .context("Input observer import owner")?;
             let snapshot = observed_fixture(root, &root.join("build-logic"))?;
-            assert!(project
-                .update(cx, |project, cx| project.observe_android_context_inputs(
-                    handle,
-                    discovery.clone(),
-                    vec![root.to_path_buf()],
-                    Some(snapshot.clone()),
-                    cx,
-                ))
-                .await?);
+            assert!(
+                project
+                    .update(cx, |project, cx| project.observe_android_context_inputs(
+                        handle,
+                        discovery.clone(),
+                        vec![root.to_path_buf()],
+                        Some(snapshot.clone()),
+                        cx,
+                    ))
+                    .await?
+            );
             project.update(cx, |project, cx| {
                 project.publish_android_context(&active, &owner, &discovery, snapshot, cx)
             })?;
@@ -1300,7 +1304,11 @@ async fn removed_input_batches_retire_watchers_on_background_and_do_not_revive_r
         let (worktree_a, handle_a, token_a) = contexts.first().cloned().context("First owner")?;
         let (_, handle_b, token_b) = contexts.get(1).cloned().context("Second owner")?;
         assert_eq!(
-            filesystem.watched_paths().into_iter().filter(|path| path == root_a).count(),
+            filesystem
+                .watched_paths()
+                .into_iter()
+                .filter(|path| path == root_a)
+                .count(),
             baseline_owner_a_watchers + 1,
         );
 
@@ -1308,14 +1316,23 @@ async fn removed_input_batches_retire_watchers_on_background_and_do_not_revive_r
         for index in 0..512 {
             filesystem
                 .remove_file(
-                    &root_a.join("ordinary").join(index.to_string()).join("main.py"),
+                    &root_a
+                        .join("ordinary")
+                        .join(index.to_string())
+                        .join("main.py"),
                     RemoveOptions::default(),
                 )
                 .await?;
         }
         let removed_directory = root_a.join("ordinary/17");
         filesystem
-            .remove_dir(&removed_directory, RemoveOptions { recursive: true, ..Default::default() })
+            .remove_dir(
+                &removed_directory,
+                RemoveOptions {
+                    recursive: true,
+                    ..Default::default()
+                },
+            )
             .await?;
         assert!(filesystem.buffered_event_count() >= 512);
         filesystem.unpause_events_and_flush();
@@ -1324,7 +1341,10 @@ async fn removed_input_batches_retire_watchers_on_background_and_do_not_revive_r
         // background task has returned but its owning foreground continuation has
         // not run; revoke that owner's trust before resuming it.
         while removals.lock().is_empty() {
-            assert!(cx.executor().tick(), "Actual input observer retirement must become runnable");
+            assert!(
+                cx.executor().tick(),
+                "Actual input observer retirement must become runnable"
+            );
         }
         let recorded = removals.lock().clone();
         assert!(recorded.iter().any(|(path, _)| path == &removed_directory));
@@ -1334,7 +1354,9 @@ async fn removed_input_batches_retire_watchers_on_background_and_do_not_revive_r
             assert!(project.android_context().is_current(&token_a));
             assert!(project.android_context().is_current(&token_b));
         });
-        project.update(cx, |project, cx| project.ensure_android_context(worktree_a, false, cx))?;
+        project.update(cx, |project, cx| {
+            project.ensure_android_context(worktree_a, false, cx)
+        })?;
         cx.executor().run_until_parked();
         project.read_with(cx, |project, _| {
             assert!(!project.android_context().is_current(&token_a));
@@ -1343,12 +1365,19 @@ async fn removed_input_batches_retire_watchers_on_background_and_do_not_revive_r
             assert!(project.android_context().snapshot(handle_b).is_some());
         });
         assert_eq!(
-            filesystem.watched_paths().into_iter().filter(|path| path == root_a).count(),
+            filesystem
+                .watched_paths()
+                .into_iter()
+                .filter(|path| path == root_a)
+                .count(),
             baseline_owner_a_watchers,
             "Only the revoked root's input observer is released",
         );
         filesystem
-            .insert_file(root_b.join("build.gradle"), b"changed retained input".to_vec())
+            .insert_file(
+                root_b.join("build.gradle"),
+                b"changed retained input".to_vec(),
+            )
             .await;
         cx.executor().run_until_parked();
         assert!(!project.read_with(cx, |project, _| {

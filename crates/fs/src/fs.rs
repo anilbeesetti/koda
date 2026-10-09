@@ -2185,10 +2185,7 @@ impl FakeFs {
 
     /// Applies only to watchers created after this call, so a test can observe
     /// an input observer without intercepting the existing Worktree scanner.
-    pub fn observe_new_watcher_removals(
-        &self,
-        observer: Arc<dyn Fn(&Path) + Send + Sync>,
-    ) {
+    pub fn observe_new_watcher_removals(&self, observer: Arc<dyn Fn(&Path) + Send + Sync>) {
         self.state.lock().watch_removal_observer = Some(observer);
     }
 

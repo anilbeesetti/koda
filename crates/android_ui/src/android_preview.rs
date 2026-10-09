@@ -2858,9 +2858,7 @@ mod tests {
     /// at tools/adt/idea a84efec3ba9542d9bfa1255103f0dc94833a3796. The complete
     /// original and Apache notice are in test_data/project_context/NonComposeProjectTest.kt.
     #[gpui::test]
-    async fn compose_preview_not_available_in_non_compose_project(
-        cx: &mut TestAppContext,
-    ) {
+    async fn compose_preview_not_available_in_non_compose_project(cx: &mut TestAppContext) {
         compose_preview_not_available_in_non_compose_project_case(cx)
             .await
             .expect("Android project-context fixture must complete successfully");
@@ -3869,10 +3867,11 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn closing_an_inactive_tab_preserves_the_current_preview_owner(
-        cx: &mut TestAppContext,
-    ) {
-        assert!(cfg!(feature = "bundled-preview"), "Use the normal zed preview graph");
+    async fn closing_an_inactive_tab_preserves_the_current_preview_owner(cx: &mut TestAppContext) {
+        assert!(
+            cfg!(feature = "bundled-preview"),
+            "Use the normal zed preview graph"
+        );
         let (project, buffer) = test_project(cx).await;
         let (workspace, visual) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
@@ -3883,15 +3882,33 @@ mod tests {
             panel.observe_context_operations(window, cx);
         });
         visual.run_until_parked();
-        let editor = view.read_with(visual, |view, _| view.editor.upgrade().expect("Source editor"));
+        let editor = view.read_with(visual, |view, _| {
+            view.editor.upgrade().expect("Source editor")
+        });
         let inactive = visual.new(TestItem::new);
         pane.update_in(visual, |pane, window, cx| {
-            pane.add_item_inner(Box::new(inactive.clone()), false, false, false, None, window, cx);
+            pane.add_item_inner(
+                Box::new(inactive.clone()),
+                false,
+                false,
+                false,
+                None,
+                window,
+                cx,
+            );
         });
         visual.run_until_parked();
-        assert_eq!(pane.read_with(visual, |pane, _| pane.active_item().expect("Source tab").item_id()), editor.entity_id());
+        assert_eq!(
+            pane.read_with(visual, |pane, _| pane
+                .active_item()
+                .expect("Source tab")
+                .item_id()),
+            editor.entity_id()
+        );
         let owner = panel.read_with(visual, |panel, cx| {
-            panel.operation_owner(AndroidOperation::Preview, cx).expect("Current preview owner")
+            panel
+                .operation_owner(AndroidOperation::Preview, cx)
+                .expect("Current preview owner")
         });
         let source_owner = owner.source.clone().expect("Source-bound preview");
         let generation = view.read_with(visual, |view, _| view.gallery_generation);
@@ -3904,12 +3921,29 @@ mod tests {
             pane.remove_item(inactive.entity_id(), false, false, window, cx);
         });
         visual.run_until_parked();
-        assert_eq!(pane.read_with(visual, |pane, _| pane.active_item().expect("Unchanged source tab").item_id()), editor.entity_id());
+        assert_eq!(
+            pane.read_with(visual, |pane, _| pane
+                .active_item()
+                .expect("Unchanged source tab")
+                .item_id()),
+            editor.entity_id()
+        );
         panel.read_with(visual, |panel, cx| {
-            assert!(owner.ensure_active().is_ok(), "An unrelated tab close must not cancel a valid render");
-            assert!(panel.verify_operation_owner(&owner, AndroidOperation::Preview, cx).is_ok());
-            let controller = project_context::for_workspace(&panel.workspace, cx).expect("Controller");
-            assert_eq!(controller.read(cx).action_token(cx).as_ref(), Some(&source_owner));
+            assert!(
+                owner.ensure_active().is_ok(),
+                "An unrelated tab close must not cancel a valid render"
+            );
+            assert!(
+                panel
+                    .verify_operation_owner(&owner, AndroidOperation::Preview, cx)
+                    .is_ok()
+            );
+            let controller =
+                project_context::for_workspace(&panel.workspace, cx).expect("Controller");
+            assert_eq!(
+                controller.read(cx).action_token(cx).as_ref(),
+                Some(&source_owner)
+            );
         });
         view.read_with(visual, |view, _| {
             assert!(view.building && view.render_task.is_some());
