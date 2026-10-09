@@ -186,7 +186,7 @@ impl AndroidPanel {
     ) -> Result<()> {
         let owner = self.operation_owner(AndroidOperation::Preview, cx)?;
         self.backend_owner = Some(owner.context.clone());
-        let root = owner.root.clone();
+        let root = owner.root;
         let target = self
             .selected_target
             .clone()
