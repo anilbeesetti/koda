@@ -1212,3 +1212,212 @@ fn sibling_invalidation_retains_only_explicit_reimport_and_never_operational_tok
     assert!(active.discovery_token(&store).is_none());
     Ok(())
 }
+
+fn input_index_test_root(name: &str) -> PathBuf {
+    // These catalogues never access the filesystem. A long host temp directory
+    // must not consume their bounded wire record before input indexing is tested.
+    #[cfg(windows)]
+    let root = Path::new(r"C:\koda-input-index");
+    #[cfg(not(windows))]
+    let root = Path::new("/koda-input-index");
+    root.join(name)
+}
+
+#[test]
+fn large_composite_input_batches_preserve_external_source_and_module_ownership() -> Result<()> {
+    let project_root = input_index_test_root;
+    let root = project_root("large-input-index");
+    let sibling = project_root("indexed-ordinary-module");
+    let sources = project_root("indexed-external-sources");
+    let build_logic = (0..64)
+        .map(|index| root.join(format!("logic-{index}")))
+        .collect::<Vec<_>>();
+    let mut layouts = Vec::new();
+    let mut observers = build_logic.clone();
+    observers.push(sibling.clone());
+    for index in 0..2048 {
+        let directory = build_logic
+            .get(index % build_logic.len())
+            .context("Build-logic root")?
+            .join(format!("project-{index}"));
+        let source = sources.join(index.to_string());
+        observers.push(source.clone());
+        layouts.push(json!({
+            "directory": directory,
+            "buildDirectory": root.join(format!("outputs/{index}")),
+            "sourceDirectories": [source],
+        }));
+    }
+    let mut value = android_catalogue(&root);
+    value["modules"][1]["directory"] = json!(&sibling);
+    value["buildLogicDirectories"] = json!(&build_logic);
+    value["buildLayouts"] = json!(layouts);
+    let record = serde_json::to_vec(&value)?;
+    assert!(record.len() <= MAX_CONTEXT_RECORD_BYTES);
+    let snapshot = decode_context_record(&record, &root)?;
+    assert_eq!(snapshot.build_layouts().len(), 2048);
+    assert_eq!(snapshot.build_logic_directories(), build_logic.as_slice());
+    observers.sort();
+    observers.dedup();
+    assert_eq!(snapshot.observer_directories()?, observers);
+    let mut returned_observers = snapshot.observer_directories()?;
+    returned_observers.clear();
+    assert_eq!(snapshot.observer_directories()?, observers);
+    let cloned = snapshot.clone();
+    for index in 0..2048 {
+        let source = sources.join(index.to_string()).join("Convention.kt");
+        assert!(snapshot.is_input(&source), "{}", source.display());
+        assert!(cloned.is_input(&source), "{}", source.display());
+        assert!(!snapshot.is_generated_output(&source));
+        assert!(!snapshot.is_input(&sources.join(format!("{index}-unowned/Convention.kt"))));
+        assert!(!snapshot.is_input(&root.join(format!("app/src/{index}/Main.kt"))));
+        assert!(!snapshot.is_input(&sibling.join(format!("src/{index}/Main.kt"))));
+        let generated = root.join(format!("outputs/{index}/settings.gradle.kts"));
+        assert!(snapshot.is_generated_output(&generated));
+        assert!(!snapshot.is_input(&generated));
+    }
+    assert!(snapshot.is_input(&sibling.join("settings.gradle.kts")));
+    assert!(!snapshot.is_input(&project_root("indexed-unrelated").join("settings.gradle.kts")));
+    Ok(())
+}
+
+#[test]
+fn input_prefixes_preserve_custom_sources_and_nested_output_boundaries() -> Result<()> {
+    let project_root = input_index_test_root;
+    let root = project_root("indexed-boundaries");
+    let logic = root.join("custom-logic");
+    let child = root.join("staging/child");
+    let grandchild = child.join("out/grandchild");
+    let external = project_root("indexed-custom-sources");
+    let generated = external.join("generated");
+    let mut value = android_catalogue(&root);
+    value["buildLogicDirectories"] = json!([&logic, &child, &grandchild]);
+    value["buildLayouts"] = json!([
+        {"directory": &root, "buildDirectory": root.join("staging"), "sourceDirectories": []},
+        {"directory": &logic, "buildDirectory": root.join("custom-output"), "sourceDirectories": [
+            &external, external.join(".gradle/cache"), &generated, root.join("custom-output/source")
+        ]},
+        {"directory": &child, "buildDirectory": child.join("out"), "sourceDirectories": [child.join("src")]},
+        {"directory": &grandchild, "buildDirectory": &generated, "sourceDirectories": [grandchild.join("src")]},
+        {"directory": root.join("other"), "buildDirectory": &generated, "sourceDirectories": []}
+    ]);
+    let snapshot = decode(&root, &value)?;
+    for path in [
+        logic.join("README.md"),
+        external.join("Convention.kt"),
+        child.join("src/Convention.kt"),
+        grandchild.clone(),
+        grandchild.join("src/Convention.kt"),
+    ] {
+        assert!(snapshot.is_input(&path), "{}", path.display());
+        assert!(!snapshot.is_generated_output(&path), "{}", path.display());
+    }
+    for path in [
+        root.join("staging/unowned/Convention.kt"),
+        root.join("custom-output/source/Convention.kt"),
+        child.join("out/classes/Convention.class"),
+        generated.join("Convention.kt"),
+    ] {
+        assert!(snapshot.is_generated_output(&path), "{}", path.display());
+        assert!(!snapshot.is_input(&path), "{}", path.display());
+    }
+    for path in [
+        external.join(".gradle/cache/Convention.kt"),
+        external.join(".kotlin/session"),
+        child.join("src/.git/config"),
+        project_root("indexed-custom-sources-unowned").join("Convention.kt"),
+        root.join("app/src/Main.kt"),
+    ] {
+        assert!(!snapshot.is_input(&path), "{}", path.display());
+    }
+    let mut expected = vec![
+        logic,
+        child.clone(),
+        grandchild.clone(),
+        external,
+        child.join("src"),
+        grandchild.join("src"),
+    ];
+    expected.sort();
+    assert_eq!(snapshot.observer_directories()?, expected);
+    value["buildLayouts"]
+        .as_array_mut()
+        .context("Build layouts")?
+        .push(json!({
+            "directory": &generated,
+            "buildDirectory": generated.join("child-output"),
+            "sourceDirectories": [],
+        }));
+    let evaluated_output_root = decode(&root, &value)?;
+    assert!(!evaluated_output_root.is_generated_output(&generated));
+    assert!(evaluated_output_root.is_input(&generated.join("Convention.kt")));
+    assert!(evaluated_output_root.observer_directories()?.contains(&generated));
+    let child_output = generated.join("child-output/Convention.class");
+    assert!(evaluated_output_root.is_generated_output(&child_output));
+    assert!(!evaluated_output_root.is_input(&child_output));
+    Ok(())
+}
+
+#[test]
+fn observer_folder_limit_applies_after_deduplication_without_rejecting_decode() -> Result<()> {
+    let project_root = input_index_test_root;
+    let root = project_root("indexed-observer-limit");
+    let mut value = android_catalogue(&root);
+    value["buildLogicDirectories"] = json!([&root]);
+    value["buildLayouts"] = json!((0usize..16)
+        .map(|layout| {
+            let sources = (layout * 256..((layout + 1) * 256).min(4095))
+                .map(|source| root.join(format!("sources/{source}")))
+                .collect::<Vec<_>>();
+            json!({
+                "directory": root.join(format!("logic/{layout}")),
+                "buildDirectory": root.join(format!("outputs/{layout}")),
+                "sourceDirectories": sources,
+            })
+        })
+        .collect::<Vec<_>>());
+    let last_sources = value["buildLayouts"]
+        .as_array_mut()
+        .context("Build layouts")?
+        .last_mut()
+        .context("Last build layout")?["sourceDirectories"]
+        .as_array_mut()
+        .context("Source directories")?;
+    last_sources.push(json!(root.join("sources/0")));
+    let at_limit = decode(&root, &value)?;
+    let observers = at_limit.observer_directories()?;
+    assert_eq!(observers.len(), 4096);
+    assert!(observers.contains(&root));
+    assert!(observers.contains(&root.join("sources/0")));
+    assert!(observers.contains(&root.join("sources/4094")));
+    assert!(at_limit.is_input(&root.join("sources/4094/Convention.kt")));
+    assert!(!at_limit.is_input(&root.join("outputs/15/Convention.kt")));
+    assert_eq!(at_limit.clone().observer_directories()?, observers);
+    let last_source = value["buildLayouts"]
+        .as_array_mut()
+        .context("Build layouts")?
+        .last_mut()
+        .context("Last build layout")?["sourceDirectories"]
+        .as_array_mut()
+        .context("Source directories")?
+        .last_mut()
+        .context("Last source directory")?;
+    *last_source = json!(root.join("sources/4095"));
+    let overflow = decode(&root, &value)?;
+    assert!(overflow.is_input(&root.join("sources/4095/Convention.kt")));
+    let error = overflow
+        .observer_directories()
+        .err()
+        .context("Observer folder overflow")?;
+    assert_eq!(error.to_string(), "Too many evaluated Gradle input folders");
+    assert_eq!(
+        overflow
+            .clone()
+            .observer_directories()
+            .err()
+            .context("Cloned observer folder overflow")?
+            .to_string(),
+        "Too many evaluated Gradle input folders"
+    );
+    Ok(())
+}
