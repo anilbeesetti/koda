@@ -4,6 +4,8 @@
 
 use crate::{
     import_facts::ImportFactsSnapshot,
+    kotlin_capture_budget::BoundedJsonWriter,
+    kotlin_getter_lifetime::OwnedGradleRuntime,
     kotlin_import_facts::{
         CaptureBinding, CaptureContext, CaptureLimits, CaptureMode, CaptureObject, CaptureValue,
         Consumer, ContainerOrder, GetterArgument, GetterEvent, GetterOutcome, GetterPurpose,
@@ -11,10 +13,10 @@ use crate::{
         MissingMethod, ObjectKind, RequestParameter, ReturnShape, RuntimeIdentity, ValueKind,
         parse_kotlin_facts,
     },
-    project_model::ProjectModel,
+    project_model::{Module, ModuleKind, ProjectModel, Variant},
 };
 use anyhow::{Context as _, Result, bail, ensure};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, ser::SerializeSeq as _};
 use sha2::{Digest, Sha256};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -22,7 +24,7 @@ use std::{
     io::{BufRead, BufReader, Read, Write},
     net::{TcpListener, TcpStream},
     path::{Component, Path, PathBuf},
-    process::{Child, Command, Stdio},
+    process::{Command, ExitStatus, Stdio},
     sync::atomic::{AtomicBool, Ordering},
     thread,
     time::{Duration, Instant},
@@ -30,6 +32,7 @@ use std::{
 use tempfile::TempDir;
 
 const MAX_FRAME_BYTES: usize = 16 * 1024 * 1024;
+const FACTS_ENVELOPE: &[u8] = b"{\"kotlinFacts\":";
 const BRIDGE: &str = include_str!("kotlin_getter_capture.gradle");
 pub const KOTLIN_PLUGIN_IDS: &[&str] = &[
     "kotlin",
@@ -268,31 +271,27 @@ impl DiscoveryInventory {
         preserve_rows(&self.runtime.classes, &next.runtime.classes, |row| &row.id)?;
         preserve_rows(&self.objects, &next.objects, |row| &row.id)?;
         preserve_rows(&self.catalogues, &next.catalogues, |row| &row.id)?;
-        let mut loader_ids = BTreeSet::new();
-        for loader in &next.runtime.loaders {
-            ensure!(loader_ids.insert(&loader.id), "Duplicate runtime loader");
-        }
-        for loader in &self.runtime.loaders {
-            let current = next
-                .runtime
-                .loaders
-                .iter()
-                .find(|row| row.id == loader.id)
+        let loaders = index_rows(&next.runtime.loaders, |row| &row.id)?;
+        for (position, loader) in self.runtime.loaders.iter().enumerate() {
+            let current = loaders
+                .get(loader.id.as_str())
                 .context("Runtime loader disappeared")?;
             ensure!(
-                current.parent == loader.parent && current.artifacts.starts_with(&loader.artifacts),
+                current.parent == loader.parent
+                    && current.artifacts.starts_with(&loader.artifacts)
+                    && next
+                        .runtime
+                        .loaders
+                        .get(position)
+                        .is_some_and(|row| row.id == loader.id),
                 "Runtime loader provenance was rewritten"
             );
         }
         // New return objects are discovered in a separate frame, before an event
         // can refer to them. Existing rows are never accepted from event metadata.
+        let artifacts = index_rows(&self.runtime.artifacts, |row| &row.id)?;
         for artifact in &next.runtime.artifacts {
-            if !self
-                .runtime
-                .artifacts
-                .iter()
-                .any(|old| old.id == artifact.id)
-            {
+            if !artifacts.contains_key(artifact.id.as_str()) {
                 let (bytes, digest) = hash_regular_file(&artifact.path)?;
                 ensure!(
                     bytes == artifact.bytes && digest == artifact.sha256,
@@ -338,19 +337,26 @@ impl DiscoveryInventory {
 }
 
 fn preserve_rows<T: PartialEq>(before: &[T], after: &[T], id: impl Fn(&T) -> &str) -> Result<()> {
-    let mut ids = BTreeSet::new();
-    for row in after {
-        ensure!(ids.insert(id(row)), "Duplicate discovery identity");
-    }
-    for row in before {
+    let rows = index_rows(after, &id)?;
+    for (position, row) in before.iter().enumerate() {
         ensure!(
-            after
-                .iter()
-                .any(|current| id(current) == id(row) && current == row),
+            rows.get(id(row)).is_some_and(|current| *current == row)
+                && after.get(position) == Some(row),
             "Discovery catalogue was overwritten or truncated"
         );
     }
     Ok(())
+}
+
+fn index_rows<T>(rows: &[T], id: impl Fn(&T) -> &str) -> Result<BTreeMap<&str, &T>> {
+    let mut indexed = BTreeMap::new();
+    for row in rows {
+        ensure!(
+            indexed.insert(id(row), row).is_none(),
+            "Duplicate discovery identity"
+        );
+    }
+    Ok(indexed)
 }
 
 #[derive(Deserialize)]
@@ -389,31 +395,20 @@ pub trait GetterTransport {
     fn discover(&mut self, projects: &[String]) -> Result<DiscoveryInventory>;
     fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryInventory, GetterEvent)>;
     fn finish(&mut self) -> Result<()>;
+    fn abort(&mut self) -> Result<()>;
 }
 
-struct OwnedGradleChild(Child);
-
-impl std::ops::Deref for OwnedGradleChild {
-    type Target = Child;
-    fn deref(&self) -> &Child {
-        &self.0
-    }
-}
-impl std::ops::DerefMut for OwnedGradleChild {
-    fn deref_mut(&mut self) -> &mut Child {
-        &mut self.0
-    }
-}
-impl Drop for OwnedGradleChild {
-    fn drop(&mut self) {
-        if let Err(error) = terminate(&mut self.0) {
-            log::error!("Unable to reap owned Gradle getter child: {error:#}");
-        }
+fn abort_capture<T>(transport: &mut impl GetterTransport, error: anyhow::Error) -> Result<T> {
+    match transport.abort() {
+        Ok(()) => Err(error),
+        Err(closure) => Err(error.context(format!(
+            "Owned getter runtime closure also failed: {closure:#}"
+        ))),
     }
 }
 
 pub struct GradleTransport {
-    child: OwnedGradleChild,
+    child: OwnedGradleRuntime,
     reader: BufReader<TcpStream>,
     writer: TcpStream,
     _directory: TempDir,
@@ -430,6 +425,9 @@ pub struct GradleCaptureOptions {
     pub project_root: PathBuf,
     /// Runtime artifacts and fixture must be on this host, not a remote daemon.
     pub java_home: PathBuf,
+    pub guardian_launcher: PathBuf,
+    pub guardian_library: PathBuf,
+    pub shutdown_timeout: Duration,
     pub timeout: Duration,
     /// Fresh caller-owned directory; logs survive successful or failed capture.
     pub logs_directory: PathBuf,
@@ -447,13 +445,19 @@ impl GradleTransport {
         ensure!(
             options.wrapper.is_absolute()
                 && options.project_root.is_absolute()
-                && options.java_home.is_absolute(),
+                && options.java_home.is_absolute()
+                && options.guardian_launcher.is_absolute()
+                && options.guardian_library.is_absolute(),
             "Owned Gradle paths must be absolute"
         );
         ensure!(
             options.diagnostic_bytes > 0 && options.logs_directory.is_absolute(),
             "Capture requires an absolute log directory and diagnostic budget"
         );
+        let deadline = Instant::now()
+            .checked_add(options.timeout)
+            .context("Capture deadline overflow")?;
+        check_deadline(deadline, &options.cancelled)?;
         fs::create_dir(&options.logs_directory)
             .context("Create fresh owned Gradle log directory")?;
         let directory = tempfile::Builder::new()
@@ -469,61 +473,61 @@ impl GradleTransport {
         let port = listener.local_addr()?.port();
         let output = File::create(options.logs_directory.join("stdout.log"))?;
         let errors = File::create(options.logs_directory.join("stderr.log"))?;
-        let mut child = OwnedGradleChild(
-            Command::new(&options.wrapper)
-                .current_dir(&options.project_root)
-                .env("JAVA_HOME", &options.java_home)
-                .args(["--no-daemon", "--console=plain", "--init-script"])
-                .arg(&script)
-                .arg(format!("-Dkoda.kotlin.capture.port={port}"))
-                .arg(format!("-Dkoda.kotlin.capture.token={token}"))
-                .arg(format!(
-                    "-Dkoda.kotlin.capture.timeoutMillis={}",
-                    options.timeout.as_millis()
-                ))
-                .arg("help")
-                .stdin(Stdio::null())
-                .stdout(Stdio::from(output))
-                .stderr(Stdio::from(errors))
-                .spawn()
-                .context("Start owned Gradle getter runtime")?,
-        );
-        let deadline = Instant::now()
-            .checked_add(options.timeout)
-            .context("Capture deadline overflow")?;
-        let stream = loop {
-            if let Err(error) = check_deadline(deadline, &options.cancelled)
-                .and_then(|()| check_diagnostics(&options.logs_directory, options.diagnostic_bytes))
-            {
-                terminate(&mut child)?;
-                return Err(error);
-            }
-            match listener.accept() {
-                Ok((stream, peer)) => {
-                    ensure!(
-                        peer.ip().is_loopback(),
-                        "Getter transport accepted a nonlocal connection"
-                    );
-                    break stream;
-                }
-                Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
-                    if let Some(status) = child.try_wait()? {
-                        bail!(
-                            "Gradle getter runtime exited before discovery: {status}; logs in {}",
-                            options.logs_directory.display()
+        let mut command = Command::new(&options.wrapper);
+        command
+            .current_dir(&options.project_root)
+            .env("JAVA_HOME", &options.java_home)
+            .args(["--no-daemon", "--console=plain", "--init-script"])
+            .arg(&script)
+            .arg(format!("-Dkoda.kotlin.capture.port={port}"))
+            .arg(format!("-Dkoda.kotlin.capture.token={token}"))
+            .arg(format!(
+                "-Dkoda.kotlin.capture.timeoutMillis={}",
+                options.timeout.as_millis()
+            ))
+            .arg("help");
+        let mut child = OwnedGradleRuntime::spawn(
+            command,
+            &options.guardian_launcher,
+            &options.guardian_library,
+            Stdio::from(output),
+            Stdio::from(errors),
+            options.shutdown_timeout,
+        )
+        .context("Start owned Gradle getter runtime")?;
+        let connection = (|| -> Result<_> {
+            let stream = loop {
+                check_deadline(deadline, &options.cancelled)?;
+                check_diagnostics(&options.logs_directory, options.diagnostic_bytes)?;
+                match listener.accept() {
+                    Ok((stream, peer)) => {
+                        ensure!(
+                            peer.ip().is_loopback(),
+                            "Getter transport accepted a nonlocal connection"
                         );
+                        break stream;
                     }
-                    thread::sleep(Duration::from_millis(10));
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
+                        if let Some(status) = child.try_wait()? {
+                            bail!(
+                                "Gradle getter runtime exited before discovery: {status}; logs in {}",
+                                options.logs_directory.display()
+                            );
+                        }
+                        thread::sleep(Duration::from_millis(10));
+                    }
+                    Err(error) => return Err(error.into()),
                 }
-                Err(error) => {
-                    terminate(&mut child)?;
-                    return Err(error.into());
-                }
-            }
+            };
+            stream.set_read_timeout(Some(Duration::from_millis(100)))?;
+            stream.set_write_timeout(Some(Duration::from_millis(100)))?;
+            let writer = stream.try_clone()?;
+            Ok((stream, writer))
+        })();
+        let (stream, writer) = match connection {
+            Ok(connection) => connection,
+            Err(error) => return close_runtime_error(&mut child, error),
         };
-        stream.set_read_timeout(Some(Duration::from_millis(100)))?;
-        stream.set_write_timeout(Some(Duration::from_millis(100)))?;
-        let writer = stream.try_clone()?;
         let mut transport = Self {
             child,
             reader: BufReader::new(stream),
@@ -535,9 +539,16 @@ impl GradleTransport {
             cancelled: options.cancelled.clone(),
             finished: false,
         };
-        match transport.receive()? {
-            Response::Hello(actual) if actual == token => Ok(transport),
-            _ => bail!("Getter runtime did not authenticate the owned session"),
+        let authentication = match transport.receive() {
+            Ok(Response::Hello(actual)) if actual == token => Ok(()),
+            Ok(_) => Err(anyhow::anyhow!(
+                "Getter runtime did not authenticate the owned session"
+            )),
+            Err(error) => Err(error),
+        };
+        match authentication {
+            Ok(()) => Ok(transport),
+            Err(error) => abort_capture(&mut transport, error),
         }
     }
 
@@ -545,14 +556,20 @@ impl GradleTransport {
         &self.logs_directory
     }
 
+    fn checked<T>(&mut self, operation: impl FnOnce(&mut Self) -> Result<T>) -> Result<T> {
+        match operation(self) {
+            Ok(value) => Ok(value),
+            Err(error) => abort_capture(self, error),
+        }
+    }
+
     fn send(&mut self, request: &Request<'_>) -> Result<()> {
         check_deadline(self.deadline, &self.cancelled)?;
         check_diagnostics(&self.logs_directory, self.diagnostic_bytes)?;
-        let mut bytes = serde_json::to_vec(request)?;
-        ensure!(
-            bytes.len() <= MAX_FRAME_BYTES,
-            "Getter request exceeds frame budget"
-        );
+        let mut writer = BoundedJsonWriter::new(Vec::new(), CaptureLimits::default(), 0);
+        serde_json::to_writer(&mut writer, request)
+            .context("Bounded Kotlin getter request frame")?;
+        let mut bytes = writer.into_inner();
         bytes.push(b'\n');
         self.writer.write_all(&bytes)?;
         self.writer.flush()?;
@@ -569,6 +586,10 @@ impl GradleTransport {
             MAX_FRAME_BYTES,
             || check_diagnostics(logs_directory, diagnostic_bytes),
         )?;
+        let mut bound = BoundedJsonWriter::new(std::io::sink(), CaptureLimits::default(), 0);
+        bound
+            .write_all(&bytes)
+            .context("Bounded Kotlin getter response frame")?;
         let response: Response =
             serde_json::from_slice(&bytes).context("Decode owned getter response frame")?;
         if let Response::Failure(detail) = response {
@@ -580,45 +601,74 @@ impl GradleTransport {
 
 impl GetterTransport for GradleTransport {
     fn discover(&mut self, projects: &[String]) -> Result<DiscoveryInventory> {
-        self.send(&Request::Discover(DiscoveryRequest {
-            projects,
-            class_names: &[WRAPPER, RESOLVER],
-        }))?;
-        match self.receive()? {
-            Response::Discovery(inventory) => Ok(inventory),
-            _ => bail!("Expected separate discovery frame"),
-        }
-    }
-    fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryInventory, GetterEvent)> {
-        self.send(&Request::Invoke(request))?;
-        let inventory = match self.receive()? {
-            Response::Discovery(inventory) => inventory,
-            _ => bail!("Getter event arrived without discovery metadata"),
-        };
-        let event = match self.receive()? {
-            Response::Event(event) => event,
-            _ => bail!("Expected exact getter event"),
-        };
-        Ok((inventory, event))
-    }
-    fn finish(&mut self) -> Result<()> {
-        self.send(&Request::Finish(()))?;
-        ensure!(
-            matches!(self.receive()?, Response::Finished(())),
-            "Runtime did not acknowledge capture completion"
-        );
-        loop {
-            check_deadline(self.deadline, &self.cancelled)?;
-            check_diagnostics(&self.logs_directory, self.diagnostic_bytes)?;
-            if let Some(status) = self.child.try_wait()? {
-                ensure!(
-                    status.success(),
-                    "Gradle runtime failed after getter capture: {status}"
-                );
-                self.finished = true;
-                return Ok(());
+        self.checked(|this| {
+            this.send(&Request::Discover(DiscoveryRequest {
+                projects,
+                class_names: &[WRAPPER, RESOLVER],
+            }))?;
+            match this.receive()? {
+                Response::Discovery(inventory) => Ok(inventory),
+                _ => bail!("Expected separate discovery frame"),
             }
-            thread::sleep(Duration::from_millis(10));
+        })
+    }
+
+    fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryInventory, GetterEvent)> {
+        self.checked(|this| {
+            this.send(&Request::Invoke(request))?;
+            let inventory = match this.receive()? {
+                Response::Discovery(inventory) => inventory,
+                _ => bail!("Getter event arrived without discovery metadata"),
+            };
+            let event = match this.receive()? {
+                Response::Event(event) => event,
+                _ => bail!("Expected exact getter event"),
+            };
+            Ok((inventory, event))
+        })
+    }
+
+    fn finish(&mut self) -> Result<()> {
+        self.checked(|this| {
+            this.send(&Request::Finish(()))?;
+            ensure!(
+                matches!(this.receive()?, Response::Finished(())),
+                "Runtime did not acknowledge capture completion"
+            );
+            await_capture_completion(
+                &mut this.child,
+                this.deadline,
+                &this.cancelled,
+                &this.logs_directory,
+                this.diagnostic_bytes,
+            )?;
+            this.finished = true;
+            Ok(())
+        })
+    }
+
+    fn abort(&mut self) -> Result<()> {
+        let socket = self
+            .writer
+            .shutdown(std::net::Shutdown::Both)
+            .or_else(|error| {
+                if error.kind() == std::io::ErrorKind::NotConnected {
+                    Ok(())
+                } else {
+                    Err(error)
+                }
+            });
+        let closure = self.child.close();
+        match (socket, closure) {
+            (Ok(()), Ok(())) => {
+                self.finished = true;
+                Ok(())
+            }
+            (Err(socket), Err(closure)) => {
+                Err(closure.context(format!("Owned getter socket close also failed: {socket}")))
+            }
+            (Err(socket), Ok(())) => Err(socket.into()),
+            (Ok(()), Err(closure)) => Err(closure),
         }
     }
 }
@@ -626,22 +676,58 @@ impl GetterTransport for GradleTransport {
 impl Drop for GradleTransport {
     fn drop(&mut self) {
         if !self.finished {
-            if let Err(error) = self.writer.shutdown(std::net::Shutdown::Both) {
-                log::error!("Unable to close owned Kotlin getter socket: {error:#}");
-            }
-            if let Err(error) = terminate(&mut self.child) {
+            if let Err(error) = self.abort() {
                 log::error!("Unable to close owned Kotlin getter runtime: {error:#}");
             }
         }
     }
 }
 
-fn terminate(child: &mut Child) -> Result<()> {
-    if child.try_wait()?.is_none() {
-        child.kill()?;
-        child.wait()?;
+fn close_runtime_error<T>(runtime: &mut OwnedGradleRuntime, error: anyhow::Error) -> Result<T> {
+    match runtime.close() {
+        Ok(()) => Err(error),
+        Err(closure) => Err(error.context(format!(
+            "Owned getter runtime closure also failed: {closure:#}"
+        ))),
     }
-    Ok(())
+}
+
+trait CaptureProcess {
+    fn terminal_status(&mut self) -> Result<Option<ExitStatus>>;
+    fn close_owned(&mut self) -> Result<()>;
+}
+
+impl CaptureProcess for OwnedGradleRuntime {
+    fn terminal_status(&mut self) -> Result<Option<ExitStatus>> {
+        self.try_wait()
+    }
+    fn close_owned(&mut self) -> Result<()> {
+        self.close()
+    }
+}
+
+fn await_capture_completion(
+    process: &mut impl CaptureProcess,
+    deadline: Instant,
+    cancelled: &AtomicBool,
+    logs_directory: &Path,
+    diagnostic_bytes: u64,
+) -> Result<()> {
+    loop {
+        check_deadline(deadline, cancelled)?;
+        check_diagnostics(logs_directory, diagnostic_bytes)?;
+        if let Some(status) = process.terminal_status()? {
+            process.close_owned()?;
+            check_deadline(deadline, cancelled)?;
+            check_diagnostics(logs_directory, diagnostic_bytes)?;
+            ensure!(
+                status.success(),
+                "Gradle runtime failed after getter capture: {status}"
+            );
+            return Ok(());
+        }
+        thread::sleep(Duration::from_millis(10));
+    }
 }
 
 fn check_deadline(deadline: Instant, cancelled: &AtomicBool) -> Result<()> {
@@ -731,6 +817,7 @@ pub struct OfficialProjectRequests {
     pub project: String,
     pub plugin_lookups: BTreeMap<String, String>,
     pub plugin_iteration: Option<String>,
+    pub android_base_plugin: Option<String>,
     pub extension_lookup: Option<String>,
     pub compiler_version: Option<String>,
     pub task_iteration: Option<String>,
@@ -755,6 +842,100 @@ struct GetterInvocation<'a> {
     after: Option<&'a str>,
 }
 
+struct AdditionalRow<'a, T> {
+    rows: &'a [T],
+    additional: Option<&'a T>,
+}
+
+impl<T: Serialize> Serialize for AdditionalRow<'_, T> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut sequence = serializer.serialize_seq(Some(
+            self.rows.len() + usize::from(self.additional.is_some()),
+        ))?;
+        for row in self.rows.iter().chain(self.additional) {
+            sequence.serialize_element(row)?;
+        }
+        sequence.end()
+    }
+}
+
+struct ModuleRows<'a>(&'a [Module]);
+struct VariantNames<'a>(&'a [Variant]);
+
+impl Serialize for VariantNames<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut sequence = serializer.serialize_seq(Some(self.0.len()))?;
+        for variant in self.0 {
+            sequence.serialize_element(&variant.name)?;
+        }
+        sequence.end()
+    }
+}
+
+impl Serialize for ModuleRows<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        #[derive(Serialize)]
+        struct Identity<'a> {
+            module: &'a str,
+            directory: &'a Path,
+            kind: ModuleKind,
+            variants: VariantNames<'a>,
+        }
+        let mut sequence = serializer.serialize_seq(Some(self.0.len()))?;
+        for module in self.0 {
+            sequence.serialize_element(&Identity {
+                module: &module.path,
+                directory: &module.directory,
+                kind: module.kind,
+                variants: VariantNames(&module.variants),
+            })?;
+        }
+        sequence.end()
+    }
+}
+
+struct CaptureRetention {
+    root: PathBuf,
+    modules: Box<serde_json::value::RawValue>,
+    limits: CaptureLimits,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct BorrowedCaptureContext<'a> {
+    binding: &'a CaptureBinding,
+    imports: &'a ImportIdentity,
+    mode: CaptureMode,
+    runtime: &'a RuntimeIdentity,
+    objects: &'a [CaptureObject],
+    catalogues: &'a [MethodCatalogue],
+    requests: AdditionalRow<'a, GetterRequest>,
+}
+
+#[derive(Serialize)]
+struct BorrowedKotlinFacts<'a> {
+    schema: u32,
+    root: &'a Path,
+    modules: &'a serde_json::value::RawValue,
+    context: BorrowedCaptureContext<'a>,
+    events: AdditionalRow<'a, GetterEvent>,
+}
+
+impl CaptureRetention {
+    fn for_model(model: &ProjectModel) -> Result<Self> {
+        let limits = CaptureLimits::default();
+        let mut writer = BoundedJsonWriter::new(Vec::new(), limits, FACTS_ENVELOPE.len() + 1);
+        serde_json::to_writer(&mut writer, &ModuleRows(&model.modules))?;
+        let modules =
+            serde_json::value::RawValue::from_string(String::from_utf8(writer.into_inner())?)?;
+        Ok(Self {
+            root: model.root.clone(),
+            modules,
+            limits,
+        })
+    }
+}
+
 pub struct KotlinGetterCapture<T: GetterTransport, H: Clone + PartialEq> {
     issued_host: H,
     transport: T,
@@ -765,6 +946,7 @@ pub struct KotlinGetterCapture<T: GetterTransport, H: Clone + PartialEq> {
     requests: Vec<GetterRequest>,
     events: Vec<GetterEvent>,
     event_ids: BTreeSet<String>,
+    retention: CaptureRetention,
 }
 
 pub struct CapturedKotlinGetters<H> {
@@ -789,82 +971,117 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         model: &ProjectModel,
         imports: &ImportFactsSnapshot,
     ) -> Result<Self> {
-        ensure!(
-            current_host()? == issued_host,
-            "Host import revision changed before discovery"
-        );
-        fixture.ensure_unchanged()?;
-        ensure!(
-            model.root.canonicalize()? == fixture.root,
-            "Fixture boundary belongs to a different project root"
-        );
-        ensure!(
-            binding.fixture_before_sha256 == fixture.sha256
-                && binding.fixture_after_sha256 == fixture.sha256,
-            "Host capture binding does not match fixture boundary"
-        );
-        ensure!(
-            binding.model_revision == imports.binding().model_revision
-                && binding.selection_revision == imports.binding().selection_revision,
-            "Host capture revision does not match import identity"
-        );
-        ensure!(
-            binding
-                .selected_variants
-                .iter()
-                .map(|variant| (&variant.module, &variant.variant))
-                .eq(imports
-                    .binding()
+        let discovery = (|| -> Result<_> {
+            ensure!(
+                current_host()? == issued_host,
+                "Host import revision changed before discovery"
+            );
+            fixture.ensure_unchanged()?;
+            ensure!(
+                model.root.canonicalize()? == fixture.root,
+                "Fixture boundary belongs to a different project root"
+            );
+            ensure!(
+                binding.fixture_before_sha256 == fixture.sha256
+                    && binding.fixture_after_sha256 == fixture.sha256,
+                "Host capture binding does not match fixture boundary"
+            );
+            ensure!(
+                binding.model_revision == imports.binding().model_revision
+                    && binding.selection_revision == imports.binding().selection_revision,
+                "Host capture revision does not match import identity"
+            );
+            ensure!(
+                binding
                     .selected_variants
                     .iter()
-                    .map(|variant| (&variant.module, &variant.variant))),
-            "Host capture selection differs from import identity"
-        );
-        imports
-            .ensure_current(model, imports.binding())
-            .map_err(|error| anyhow::anyhow!("{error:?}"))?;
-        let projects = imports
-            .projects()
-            .map_err(|error| anyhow::anyhow!("{error:?}"))?
-            .iter()
-            .map(|project| {
-                project
-                    .project_path
-                    .as_ref()
-                    .context("Imported project path was not captured")?
-                    .available()
-                    .cloned()
-                    .map_err(|error| anyhow::anyhow!("{error:?}"))
-            })
-            .collect::<Result<Vec<_>>>()?;
-        let inventory = transport.discover(&projects)?;
-        ensure!(
-            inventory.runtime.gradle_version == imports.gradle_version(),
-            "Runtime Gradle version differs from imported identity"
-        );
-        ensure!(
-            inventory.project_objects.keys().collect::<BTreeSet<_>>()
-                == projects.iter().collect::<BTreeSet<_>>(),
-            "Discovery omitted or invented imported projects"
-        );
-        inventory.verify_artifacts()?;
-        ensure!(
-            current_host()? == issued_host,
-            "Host import revision changed during discovery"
-        );
+                    .map(|variant| (&variant.module, &variant.variant))
+                    .eq(imports
+                        .binding()
+                        .selected_variants
+                        .iter()
+                        .map(|variant| (&variant.module, &variant.variant))),
+                "Host capture selection differs from import identity"
+            );
+            imports
+                .ensure_current(model, imports.binding())
+                .map_err(|error| anyhow::anyhow!("{error:?}"))?;
+            let projects = imports
+                .projects()
+                .map_err(|error| anyhow::anyhow!("{error:?}"))?
+                .iter()
+                .map(|project| {
+                    project
+                        .project_path
+                        .as_ref()
+                        .context("Imported project path was not captured")?
+                        .available()
+                        .cloned()
+                        .map_err(|error| anyhow::anyhow!("{error:?}"))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            let inventory = transport.discover(&projects)?;
+            ensure!(
+                inventory.runtime.gradle_version == imports.gradle_version(),
+                "Runtime Gradle version differs from imported identity"
+            );
+            ensure!(
+                inventory.project_objects.keys().collect::<BTreeSet<_>>()
+                    == projects.iter().collect::<BTreeSet<_>>(),
+                "Discovery omitted or invented imported projects"
+            );
+            let retention = CaptureRetention::for_model(model)?;
+            let import_identity = ImportIdentity {
+                build_identity: imports.build_identity().clone(),
+                project_catalogue: imports.catalogue_observation().clone(),
+            };
+            let facts = BorrowedKotlinFacts {
+                schema: 1,
+                root: &retention.root,
+                modules: &retention.modules,
+                context: BorrowedCaptureContext {
+                    binding: &binding,
+                    imports: &import_identity,
+                    mode: CaptureMode::Invocation,
+                    runtime: &inventory.runtime,
+                    objects: &inventory.objects,
+                    catalogues: &inventory.catalogues,
+                    requests: AdditionalRow {
+                        rows: &[],
+                        additional: None,
+                    },
+                },
+                events: AdditionalRow {
+                    rows: &[],
+                    additional: None,
+                },
+            };
+            let mut writer =
+                BoundedJsonWriter::new(std::io::sink(), retention.limits, FACTS_ENVELOPE.len() + 1);
+            serde_json::to_writer(&mut writer, &facts)
+                .context("Kotlin getter aggregate discovery budget")?;
+            inventory.verify_artifacts()?;
+            ensure!(
+                current_host()? == issued_host,
+                "Host import revision changed during discovery"
+            );
+            Ok((inventory, retention, import_identity))
+        })();
+        let (inventory, retention, imports) = match discovery {
+            Ok(discovery) => discovery,
+            Err(error) => return abort_capture(&mut transport, error),
+        };
         Ok(Self {
             issued_host,
             transport,
             binding,
             fixture,
-            imports: ImportIdentity {
-                build_identity: imports.build_identity().clone(),
-                project_catalogue: imports.catalogue_observation().clone(),
-            },
+            imports,
             inventory,
             requests: Vec::new(),
             events: Vec::new(),
             event_ids: BTreeSet::new(),
+            retention,
         })
     }
 
@@ -872,7 +1089,59 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         &self.inventory
     }
 
+    fn borrowed_facts<'a>(
+        &'a self,
+        inventory: &'a DiscoveryInventory,
+        request: Option<&'a GetterRequest>,
+        event: Option<&'a GetterEvent>,
+    ) -> BorrowedKotlinFacts<'a> {
+        BorrowedKotlinFacts {
+            schema: 1,
+            root: &self.retention.root,
+            modules: &self.retention.modules,
+            context: BorrowedCaptureContext {
+                binding: &self.binding,
+                imports: &self.imports,
+                mode: CaptureMode::Invocation,
+                runtime: &inventory.runtime,
+                objects: &inventory.objects,
+                catalogues: &inventory.catalogues,
+                requests: AdditionalRow {
+                    rows: &self.requests,
+                    additional: request,
+                },
+            },
+            events: AdditionalRow {
+                rows: &self.events,
+                additional: event,
+            },
+        }
+    }
+
+    fn check_retention(
+        &self,
+        inventory: &DiscoveryInventory,
+        request: Option<&GetterRequest>,
+        event: Option<&GetterEvent>,
+    ) -> Result<()> {
+        let mut writer = BoundedJsonWriter::new(
+            std::io::sink(),
+            self.retention.limits,
+            FACTS_ENVELOPE.len() + 1,
+        );
+        serde_json::to_writer(&mut writer, &self.borrowed_facts(inventory, request, event))
+            .context("Kotlin getter aggregate capture budget")?;
+        Ok(())
+    }
+
     fn issue(&mut self, invocation: GetterInvocation<'_>) -> Result<GetterEvent> {
+        match self.issue_owned(invocation) {
+            Ok(event) => Ok(event),
+            Err(error) => abort_capture(&mut self.transport, error),
+        }
+    }
+
+    fn issue_owned(&mut self, invocation: GetterInvocation<'_>) -> Result<GetterEvent> {
         let GetterInvocation {
             project,
             receiver,
@@ -916,8 +1185,10 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         };
         // Retain the request before handing it to any transport. Neither a result
         // nor a catalogue update can replace this issued request or its order.
+        self.check_retention(&self.inventory, Some(&request), None)?;
         self.requests.push(request.clone());
         let (discovery, event) = self.transport.invoke(&request)?;
+        self.check_retention(&discovery, None, Some(&event))?;
         self.inventory.extend(discovery)?;
         ensure!(
             event.request == request.id && self.event_ids.insert(event.id.clone()),
@@ -925,6 +1196,25 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         );
         self.events.push(event.clone());
         Ok(event)
+    }
+
+    fn capture_android_base_plugin(
+        &mut self,
+        project: &str,
+        container: &str,
+        plugins_request: &str,
+    ) -> Result<String> {
+        let event = self.issue(GetterInvocation {
+            project,
+            receiver: GetterReceiver::Object(container),
+            name: "hasPlugin",
+            descriptor: "(Ljava/lang/String;)Z",
+            shape: scalar_shape(ValueKind::Boolean, false),
+            arguments: vec![GetterArgument::String("com.android.base".into())],
+            purpose: GetterPurpose::Raw,
+            after: Some(plugins_request),
+        })?;
+        Ok(event.request)
     }
 
     pub fn capture_official_project(&mut self, project: &str) -> Result<OfficialProjectRequests> {
@@ -973,6 +1263,8 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
                 })?;
                 plan.plugin_lookups.insert((*plugin).into(), event.request);
             }
+            plan.android_base_plugin =
+                Some(self.capture_android_base_plugin(project, &container, &plugins.request)?);
         } else {
             plan.unavailable
                 .push("Project.getPlugins() unavailable".into());
@@ -1215,19 +1507,36 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
         projects: Vec<OfficialProjectRequests>,
         mut current_host: impl FnMut() -> Result<H>,
     ) -> Result<CapturedKotlinGetters<H>> {
-        ensure!(
-            current_host()? == self.issued_host,
-            "Host import revision changed during getter capture"
-        );
-        self.fixture.ensure_unchanged()?;
-        self.inventory.verify_artifacts()?;
-        self.transport.finish()?;
-        ensure!(
-            current_host()? == self.issued_host,
-            "Host import revision changed during getter capture"
-        );
-        self.fixture.ensure_unchanged()?;
-        self.inventory.verify_artifacts()?;
+        let output = match (|| -> Result<String> {
+            ensure!(
+                current_host()? == self.issued_host,
+                "Host import revision changed during getter capture"
+            );
+            self.fixture.ensure_unchanged()?;
+            self.inventory.verify_artifacts()?;
+            self.transport.finish()?;
+            ensure!(
+                current_host()? == self.issued_host,
+                "Host import revision changed during getter capture"
+            );
+            self.fixture.ensure_unchanged()?;
+            self.inventory.verify_artifacts()?;
+            let mut bytes = b"KODA_ANDROID_PROJECT_MODEL=".to_vec();
+            bytes.extend_from_slice(FACTS_ENVELOPE);
+            let mut writer =
+                BoundedJsonWriter::new(bytes, self.retention.limits, FACTS_ENVELOPE.len() + 1);
+            serde_json::to_writer(
+                &mut writer,
+                &self.borrowed_facts(&self.inventory, None, None),
+            )
+            .context("Serialize bounded Kotlin getter capture")?;
+            let mut bytes = writer.into_inner();
+            bytes.push(b'}');
+            Ok(String::from_utf8(bytes)?)
+        })() {
+            Ok(output) => output,
+            Err(error) => return abort_capture(&mut self.transport, error),
+        };
         let expected = CaptureContext {
             binding: self.binding,
             imports: self.imports,
@@ -1237,14 +1546,8 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             catalogues: self.inventory.catalogues,
             requests: self.requests,
         };
-        let modules = model.modules.iter().map(|module| serde_json::json!({"module": module.path, "directory": module.directory, "kind": module.kind, "variants": module.variants.iter().map(|variant| &variant.name).collect::<Vec<_>>() })).collect::<Vec<_>>();
-        let packet = serde_json::json!({"kotlinFacts": {"schema":1, "root":model.root, "modules":modules, "context":expected, "events":self.events}});
-        let output = format!(
-            "KODA_ANDROID_PROJECT_MODEL={}",
-            serde_json::to_string(&packet)?
-        );
         let snapshot =
-            parse_kotlin_facts(&output, model, imports, &expected, CaptureLimits::default())
+            parse_kotlin_facts(&output, model, imports, &expected, self.retention.limits)
                 .map_err(|error| anyhow::anyhow!("Strict Kotlin capture rejected: {error:?}"))?;
         Ok(CapturedKotlinGetters {
             issued_host: self.issued_host,
@@ -1617,6 +1920,9 @@ mod tests {
         fn finish(&mut self) -> Result<()> {
             Ok(())
         }
+        fn abort(&mut self) -> Result<()> {
+            Ok(())
+        }
     }
 
     fn scripted_capture(
@@ -1641,6 +1947,11 @@ mod tests {
             requests: vec![],
             events: vec![],
             event_ids: BTreeSet::new(),
+            retention: CaptureRetention {
+                root: directory.path().canonicalize()?,
+                modules: serde_json::value::RawValue::from_string("[]".into())?,
+                limits: CaptureLimits::default(),
+            },
         };
         Ok((directory, capture))
     }
@@ -1719,7 +2030,11 @@ mod tests {
         }
         let wire = include_str!("../test_data/import_facts/wire-template.json")
             .replace("$ROOT", root.to_str().context("Synthetic root")?);
-        let output = format!("KODA_ANDROID_PROJECT_MODEL={wire}");
+        let wire: serde_json::Value = serde_json::from_str(&wire)?;
+        let output = format!(
+            "KODA_ANDROID_PROJECT_MODEL={}",
+            serde_json::to_string(&wire)?
+        );
         let model = crate::project_model::parse_model(&output, &root)?;
         let imports = crate::import_facts::parse_import_facts(
             &output,
@@ -1769,6 +2084,416 @@ mod tests {
         assert!(error.to_string().contains("diagnostic output exceeded"));
         assert_eq!(fs::read(directory.path().join("stdout.log"))?, b"12345");
         assert_eq!(fs::read(directory.path().join("stderr.log"))?, b"67890");
+        Ok(())
+    }
+
+    fn missing_invocation(catalogue: &str) -> GetterInvocation<'_> {
+        GetterInvocation {
+            project: ":android",
+            receiver: GetterReceiver::StaticCatalogue(catalogue),
+            name: "absentOfficialMethod",
+            descriptor: "()Ljava/lang/String;",
+            shape: scalar_shape(ValueKind::String, true),
+            arguments: vec![],
+            purpose: GetterPurpose::Raw,
+            after: None,
+        }
+    }
+
+    fn retained_record_bytes<T: GetterTransport, H: Clone + PartialEq>(
+        capture: &KotlinGetterCapture<T, H>,
+    ) -> Result<Vec<u8>> {
+        Ok(serde_json::to_vec(&capture.borrowed_facts(
+            &capture.inventory,
+            None,
+            None,
+        ))?)
+    }
+
+    fn value_nodes(value: &serde_json::Value) -> usize {
+        1 + match value {
+            serde_json::Value::Array(values) => values.iter().map(value_nodes).sum(),
+            serde_json::Value::Object(values) => values.values().map(value_nodes).sum(),
+            _ => 0,
+        }
+    }
+
+    #[test]
+    fn individually_valid_events_exceed_aggregate_bytes_before_second_event_is_retained()
+    -> Result<()> {
+        let (_directory, mut capture) = scripted_capture(false, false)?;
+        capture.binding.capture_id = "owned-session".repeat(100);
+        let catalogue = capture
+            .inventory
+            .catalogues
+            .first()
+            .context("Catalogue")?
+            .id
+            .clone();
+        let initial_bytes = retained_record_bytes(&capture)?.len();
+        capture.issue(missing_invocation(&catalogue))?;
+        let first_bytes = retained_record_bytes(&capture)?.len();
+        let first_event = capture.events.first().context("First event")?.clone();
+        assert!(serde_json::to_vec(&first_event)?.len() < MAX_FRAME_BYTES);
+        capture.retention.limits.record_bytes =
+            initial_bytes + 2 * (first_bytes - initial_bytes) + FACTS_ENVELOPE.len();
+        let error = capture
+            .issue(missing_invocation(&catalogue))
+            .err()
+            .context("Second event crosses aggregate bytes")?;
+        assert!(format!("{error:#}").contains("aggregate byte budget"));
+        assert_eq!(capture.transport.observed.len(), 2);
+        assert_eq!(capture.requests.len(), 2);
+        assert_eq!(capture.events.len(), 1);
+        assert_eq!(
+            capture.events.first().context("Retained event")?.id,
+            first_event.id
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn individually_valid_events_exceed_aggregate_nodes_without_truncating_first_event()
+    -> Result<()> {
+        let (_directory, mut capture) = scripted_capture(false, false)?;
+        let catalogue = capture
+            .inventory
+            .catalogues
+            .first()
+            .context("Catalogue")?
+            .id
+            .clone();
+        let initial_nodes =
+            value_nodes(&serde_json::from_slice(&retained_record_bytes(&capture)?)?);
+        capture.issue(missing_invocation(&catalogue))?;
+        let first_record = retained_record_bytes(&capture)?;
+        let first_nodes = value_nodes(&serde_json::from_slice(&first_record)?);
+        let first_event = capture.events.first().context("First event")?.clone();
+        capture.retention.limits.entries = initial_nodes + 2 * (first_nodes - initial_nodes) - 1;
+        assert!(
+            value_nodes(&serde_json::to_value(&first_event)?) < capture.retention.limits.entries
+        );
+        let error = capture
+            .issue(missing_invocation(&catalogue))
+            .err()
+            .context("Second event crosses aggregate nodes")?;
+        assert!(format!("{error:#}").contains("aggregate entry budget"));
+        assert_eq!(capture.transport.observed.len(), 2);
+        assert_eq!(capture.requests.len(), 2);
+        assert_eq!(capture.events, vec![first_event]);
+        Ok(())
+    }
+
+    #[test]
+    fn oversized_issued_request_is_rejected_before_transport_or_retention() -> Result<()> {
+        let (_directory, mut capture) = scripted_capture(false, false)?;
+        let catalogue = capture
+            .inventory
+            .catalogues
+            .first()
+            .context("Catalogue")?
+            .id
+            .clone();
+        capture.retention.limits.record_bytes =
+            retained_record_bytes(&capture)?.len() + FACTS_ENVELOPE.len() + 1;
+        let mut invocation = missing_invocation(&catalogue);
+        invocation.arguments = vec![GetterArgument::String("x".repeat(1024))];
+        assert!(capture.issue(invocation).is_err());
+        assert!(capture.requests.is_empty());
+        assert!(capture.events.is_empty());
+        assert!(capture.transport.observed.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn retained_catalogue_validation_has_linear_identity_work_and_preserves_order() -> Result<()> {
+        #[derive(Clone, PartialEq)]
+        struct Row {
+            id: String,
+            value: usize,
+        }
+        for count in [100, 1_000, 10_000] {
+            let before = (0..count)
+                .map(|value| Row {
+                    id: format!("owned:{value}"),
+                    value,
+                })
+                .collect::<Vec<_>>();
+            let mut after = before.clone();
+            after.push(Row {
+                id: "appended".into(),
+                value: count,
+            });
+            let identities = std::cell::Cell::new(0);
+            preserve_rows(&before, &after, |row| {
+                identities.set(identities.get() + 1);
+                &row.id
+            })?;
+            assert_eq!(identities.get(), before.len() + after.len());
+            let mut rewritten = after.clone();
+            rewritten.get_mut(count / 2).context("Middle row")?.value += 1;
+            assert!(preserve_rows(&before, &rewritten, |row| &row.id).is_err());
+            let mut missing = after.clone();
+            missing.remove(count / 2);
+            assert!(preserve_rows(&before, &missing, |row| &row.id).is_err());
+            let mut duplicate = after.clone();
+            duplicate.push(before.first().context("First row")?.clone());
+            assert!(preserve_rows(&before, &duplicate, |row| &row.id).is_err());
+            let mut reordered = after;
+            reordered.swap(0, 1);
+            assert!(preserve_rows(&before, &reordered, |row| &row.id).is_err());
+        }
+        Ok(())
+    }
+
+    struct TrackingTransport {
+        scripted: ScriptedTransport,
+        aborts: std::sync::Arc<std::sync::atomic::AtomicUsize>,
+        closure_failure: bool,
+    }
+
+    impl GetterTransport for TrackingTransport {
+        fn discover(&mut self, projects: &[String]) -> Result<DiscoveryInventory> {
+            self.scripted.discover(projects)
+        }
+        fn invoke(&mut self, request: &GetterRequest) -> Result<(DiscoveryInventory, GetterEvent)> {
+            self.scripted.invoke(request)
+        }
+        fn finish(&mut self) -> Result<()> {
+            self.scripted.finish()
+        }
+        fn abort(&mut self) -> Result<()> {
+            self.aborts.fetch_add(1, Ordering::AcqRel);
+            ensure!(
+                !self.closure_failure,
+                "Injected owned runtime closure failure"
+            );
+            Ok(())
+        }
+    }
+
+    fn tracking_capture(
+        closure_failure: bool,
+    ) -> Result<(TempDir, KotlinGetterCapture<TrackingTransport, String>)> {
+        let (directory, capture) = scripted_capture(true, false)?;
+        Ok((
+            directory,
+            KotlinGetterCapture {
+                issued_host: capture.issued_host,
+                transport: TrackingTransport {
+                    scripted: capture.transport,
+                    aborts: std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0)),
+                    closure_failure,
+                },
+                binding: capture.binding,
+                fixture: capture.fixture,
+                imports: capture.imports,
+                inventory: capture.inventory,
+                requests: capture.requests,
+                events: capture.events,
+                event_ids: capture.event_ids,
+                retention: capture.retention,
+            },
+        ))
+    }
+
+    #[test]
+    fn failed_event_closes_transport_and_retains_original_failure_if_closure_also_fails()
+    -> Result<()> {
+        for closure_failure in [false, true] {
+            let (_directory, mut capture) = tracking_capture(closure_failure)?;
+            let catalogue = capture
+                .inventory
+                .catalogues
+                .first()
+                .context("Catalogue")?
+                .id
+                .clone();
+            let error = capture
+                .issue(missing_invocation(&catalogue))
+                .err()
+                .context("Invalid event must fail capture")?;
+            let detail = format!("{error:#}");
+            assert!(detail.contains("Getter event identity/order differs"));
+            assert_eq!(detail.contains("closure also failed"), closure_failure);
+            assert_eq!(capture.transport.aborts.load(Ordering::Acquire), 1);
+            assert_eq!(capture.requests.len(), 1);
+            assert!(capture.events.is_empty());
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn aggregate_limit_failure_aborts_before_retaining_event_or_accepting_partial_success()
+    -> Result<()> {
+        let (_directory, mut capture) = tracking_capture(false)?;
+        capture.transport.scripted.wrong_request = false;
+        let catalogue = capture
+            .inventory
+            .catalogues
+            .first()
+            .context("Catalogue")?
+            .id
+            .clone();
+        let initial_nodes =
+            value_nodes(&serde_json::from_slice(&retained_record_bytes(&capture)?)?);
+        capture.issue(missing_invocation(&catalogue))?;
+        let first_nodes = value_nodes(&serde_json::from_slice(&retained_record_bytes(&capture)?)?);
+        capture.retention.limits.entries = initial_nodes + 2 * (first_nodes - initial_nodes) - 1;
+        assert!(capture.issue(missing_invocation(&catalogue)).is_err());
+        assert_eq!(capture.transport.aborts.load(Ordering::Acquire), 1);
+        assert_eq!(capture.transport.scripted.observed.len(), 2);
+        assert_eq!(capture.requests.len(), 2);
+        assert_eq!(capture.events.len(), 1);
+        Ok(())
+    }
+
+    struct CompletionRace {
+        logs: PathBuf,
+        closed: bool,
+        closure_failure: bool,
+    }
+
+    impl CaptureProcess for CompletionRace {
+        fn terminal_status(&mut self) -> Result<Option<ExitStatus>> {
+            ensure!(!self.closed, "Completion was already closed");
+            fs::write(self.logs.join("stdout.log"), b"start-final-output")?;
+            fs::write(self.logs.join("stderr.log"), b"final-warning")?;
+            #[cfg(unix)]
+            use std::os::unix::process::ExitStatusExt as _;
+            #[cfg(windows)]
+            use std::os::windows::process::ExitStatusExt as _;
+            Ok(Some(ExitStatus::from_raw(0)))
+        }
+        fn close_owned(&mut self) -> Result<()> {
+            ensure!(!self.closure_failure, "Injected completion closure failure");
+            self.closed = true;
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn final_write_between_budget_check_and_exit_is_rejected_after_owned_closure() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        fs::write(directory.path().join("stdout.log"), b"start")?;
+        fs::write(directory.path().join("stderr.log"), b"")?;
+        check_diagnostics(directory.path(), 5)?;
+        let mut process = CompletionRace {
+            logs: directory.path().into(),
+            closed: false,
+            closure_failure: false,
+        };
+        let error = await_capture_completion(
+            &mut process,
+            Instant::now() + Duration::from_secs(10),
+            &AtomicBool::new(false),
+            directory.path(),
+            5,
+        )
+        .err()
+        .context("Final output must exceed budget")?;
+        assert!(error.to_string().contains("diagnostic output exceeded"));
+        assert!(process.closed);
+        assert_eq!(
+            fs::read(directory.path().join("stdout.log"))?,
+            b"start-final-output"
+        );
+        assert_eq!(
+            fs::read(directory.path().join("stderr.log"))?,
+            b"final-warning"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn successful_terminal_status_cannot_hide_owned_completion_closure_failure() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        fs::write(directory.path().join("stdout.log"), b"start")?;
+        fs::write(directory.path().join("stderr.log"), b"")?;
+        let mut process = CompletionRace {
+            logs: directory.path().into(),
+            closed: false,
+            closure_failure: true,
+        };
+        let error = await_capture_completion(
+            &mut process,
+            Instant::now() + Duration::from_secs(10),
+            &AtomicBool::new(false),
+            directory.path(),
+            100,
+        )
+        .err()
+        .context("Closure failure must reject success")?;
+        assert!(error.to_string().contains("completion closure failure"));
+        assert!(!process.closed);
+        assert_eq!(
+            fs::read(directory.path().join("stdout.log"))?,
+            b"start-final-output"
+        );
+        assert_eq!(
+            fs::read(directory.path().join("stderr.log"))?,
+            b"final-warning"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn android_base_plugin_guard_has_its_own_exact_boolean_request_and_unavailable_result()
+    -> Result<()> {
+        let (_directory, mut capture) = scripted_capture(false, false)?;
+        let container = capture
+            .inventory
+            .objects
+            .iter()
+            .find(|object| object.kind == ObjectKind::Container)
+            .context("Synthetic container")?
+            .clone();
+        capture.inventory.catalogues.push(MethodCatalogue {
+            id: "synthetic-plugin-container".into(),
+            class_id: container.class_id,
+            methods: vec![],
+        });
+        capture.transport.inventory = capture.inventory.clone();
+        let request = capture.capture_android_base_plugin(
+            ":android",
+            &container.id,
+            "synthetic-get-plugins-request",
+        )?;
+        let issued = capture
+            .requests
+            .first()
+            .context("Issued base plugin request")?;
+        assert_eq!(issued.id, request);
+        assert_eq!(issued.owner.as_deref(), Some(container.id.as_str()));
+        assert_eq!(
+            issued.after.as_deref(),
+            Some("synthetic-get-plugins-request")
+        );
+        assert_eq!(issued.purpose, GetterPurpose::Raw);
+        assert_eq!(issued.return_shape, scalar_shape(ValueKind::Boolean, false));
+        assert_eq!(
+            issued.arguments,
+            vec![GetterArgument::String("com.android.base".into())]
+        );
+        assert_eq!(
+            issued.method,
+            MethodSelection::Missing(MissingMethod {
+                name: "hasPlugin".into(),
+                descriptor: "(Ljava/lang/String;)Z".into(),
+                is_static: false,
+            })
+        );
+        assert_eq!(capture.requests, capture.transport.observed);
+        assert!(matches!(
+            capture.events.first().context("Base plugin event")?.outcome,
+            GetterOutcome::Unavailable(_)
+        ));
+        let plan = OfficialProjectRequests {
+            project: ":android".into(),
+            android_base_plugin: Some(request.clone()),
+            ..Default::default()
+        };
+        assert_eq!(serde_json::to_value(plan)?["androidBasePlugin"], request);
         Ok(())
     }
 }

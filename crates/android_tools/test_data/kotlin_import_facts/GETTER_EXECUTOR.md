@@ -23,6 +23,13 @@ getter membership remain Rust policies. The JVM bridge only performs reflection
 and raw serialization because those APIs and live objects exist in Gradle's JVM.
 This is the approved official Gradle/JVM exception, not an IntelliJ importer.
 
+The official request plan separately records
+`PluginContainer.hasPlugin("com.android.base")` as a raw, non-null Boolean getter
+with descriptor `(Ljava/lang/String;)Z`. Its receiver and preceding request come
+from the same `Project.getPlugins()` observation. Android application/library
+plugin lookups do not substitute for this predicate; missing or unavailable
+capabilities preserve Unknown in the importer.
+
 The explicit fixture file inventory is sorted and hashes each relative path,
 byte length and digest. Root must supply every original prepared fixture file,
 including all 39 KOTLIN_KAPT files and all preparation transformations. Generated
@@ -33,7 +40,8 @@ an exhaustive effective version runner.
 
 The Root-run example accepts a JSON configuration with projectRoot, wrapper,
 javaHome, modelOutput, hostRevisionFile, fixtureFiles, selectedVariants,
-captureId, sourceEpoch, timeoutMillis and outputDirectory. modelOutput contains
+captureId, sourceEpoch, timeoutMillis, guardianLauncher, guardianLibrary,
+shutdownTimeoutMillis and outputDirectory. modelOutput contains
 an independently captured current Basic/importFacts record. hostRevisionFile
 contains contextGeneration, modelRevision, selectionRevision, importRevision and
 root. The example reads this file before/after capture, retains it separately,
@@ -41,9 +49,57 @@ and writes separate owned expected context, events, request plans, fixture
 boundary and original host revision to a fresh output directory. Gradle stdout
 and stderr survive failure in gradle-logs; exceeding the combined diagnostic
 budget rejects the entire capture. There is no output truncation or partial
-successful receipt. Cancellation closes the owned socket and launcher; Root's
-runtime wrapper must independently verify descendant/JVM shutdown before any
-successful runtime receipt.
+successful receipt. The required guardianLauncher is the Rust
+`kotlin_jvm_guardian` binary; guardianLibrary is its native cdylib. The public
+transport executes this launcher and injects the Rust native JVM agent through
+JAVA_TOOL_OPTIONS into the owned invocation. The original JAVA_TOOL_OPTIONS
+are retained. No existing shared Gradle daemon is reused or signalled.
+
+On Linux 6.5 or newer, OS-authenticated socket peer identities provide kernel
+pidfds. The Rust launcher installs itself as a subreaper before launching the
+wrapper. It remains the ancestor of double-forked or detached children, including
+JVMs which have not loaded their native agent when cancellation arrives. Shutdown
+requires the launcher's authenticated ECHILD acknowledgement, stable process
+handle exit, and direct launcher reaping. The agent exits its own JVM immediately
+when its lifeline closes; it does not wait for blocked project configuration or
+getter code. Startup failure, cancellation, deadline expiry, malformed responses,
+stale host revisions, retention overflow, and drop all close the owned lifetime.
+Cleanup is bounded by shutdownTimeoutMillis (at most 30 seconds), and cleanup
+failure is reported alongside the original capture error. Root must still run
+the process regressions and a real official Gradle probe; source inspection is
+not runtime closure evidence.
+
+Windows Job containment, macOS kernel child tracking, and safe support for older
+Linux kernels remain planned. Those platforms currently return a typed
+capability-unavailable error before starting a process. They are unported, not
+inapplicable. Bundling the two guardian artifacts into the final IDE distribution
+and connecting the real getter producer to the project importer remain pending.
+
+The whole capture retains at most the unchanged strict 16 MiB record and 131,072
+JSON value nodes. Streaming accounting checks incoming frames before decoding,
+issued requests before handing them to a transport, and incoming discovery/events
+before retention or cloning. Final serialization uses a bounded writer over
+borrowed context and events, without constructing a complete intermediate JSON
+Value. Budget exhaustion rejects the capture and aborts its runtime; no values,
+events, or raw diagnostics are truncated. The final diagnostic budget is checked
+after verified owned process/writer closure. Incoming immutable discovery rows
+are indexed once per update; duplicate, rewritten, removed, or reordered prior
+identities reject the capture.
+
+Root validation commands, with the normal repository toolchain and environment:
+
+```text
+cargo build --locked -p kotlin_jvm_guardian --lib --bin kotlin_jvm_guardian
+cargo test --locked -p kotlin_jvm_guardian --test process_lifetime
+cargo test --locked -p android_tools --lib kotlin_getter_executor
+cargo test --locked -p android_tools --lib kotlin_capture_budget
+./script/clippy --locked -p android_tools -p kotlin_jvm_guardian
+```
+
+The binary and native library paths must come from the actual build output and
+be pinned for each probe. Process-fixture tests exercise the real Rust supervisor
+with controlled Rust children. They do not establish official JVM Agent_OnLoad,
+Kotlin getter membership, KAPT preparation, or reference-version parity.
 
 Original KOTLIN_KAPT preparation/version expansion and the exact members
 `debugAndroidTest`, `debug`, `debugUnitTest` are still unported/not run. The

@@ -119,6 +119,7 @@ members = [
     "crates/journal",
     "crates/json_schema_store",
     "crates/keymap_editor",
+    "crates/kotlin_jvm_guardian",
     "crates/language",
     "crates/language_core",
     "crates/language_detection",
@@ -392,6 +393,7 @@ install_cli = { path = "crates/install_cli" }
 journal = { path = "crates/journal" }
 json_schema_store = { path = "crates/json_schema_store" }
 keymap_editor = { path = "crates/keymap_editor" }
+kotlin_jvm_guardian = { path = "crates/kotlin_jvm_guardian" }
 language = { path = "crates/language" }
 language_core = { path = "crates/language_core" }
 language_detection = { path = "crates/language_detection" }
