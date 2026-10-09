@@ -1,0 +1,491 @@
+{
+  "schema": 1,
+  "root": "$ROOT",
+  "modules": [],
+  "context": {
+    "binding": {
+      "captureId": "synthetic-session",
+      "sourceEpoch": "synthetic-epoch",
+      "fixtureBeforeSha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "fixtureAfterSha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "modelRevision": 7,
+      "selectionRevision": 3,
+      "selectedVariants": [
+        {
+          "module": ":android",
+          "variant": "debug"
+        },
+        {
+          "module": ":nested:library",
+          "variant": "jvm"
+        }
+      ]
+    },
+    "mode": "invocation",
+    "runtime": {
+      "gradleVersion": "9.6.1",
+      "java": {
+        "vendor": "synthetic-vendor",
+        "version": "17",
+        "build": "synthetic-build",
+        "artifact": "jdk-runtime"
+      },
+      "locale": {
+        "identifier": "tr-TR",
+        "implementation": "synthetic-locale",
+        "version": "synthetic-version"
+      },
+      "artifacts": [
+        {
+          "id": "gradle-jar",
+          "path": "$ROOT/runtime/gradle.jar",
+          "bytes": 1,
+          "sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+          "coordinate": null,
+          "version": "9.6.1"
+        },
+        {
+          "id": "kgp-jar",
+          "path": "$ROOT/runtime/kgp.jar",
+          "bytes": 1,
+          "sha256": "4444444444444444444444444444444444444444444444444444444444444444",
+          "coordinate": "synthetic:kgp:1",
+          "version": "synthetic-version"
+        },
+        {
+          "id": "jdk-runtime",
+          "path": "$ROOT/runtime/jdk.tar.gz",
+          "bytes": 1,
+          "sha256": "5555555555555555555555555555555555555555555555555555555555555555",
+          "coordinate": null,
+          "version": "synthetic-jdk"
+        }
+      ],
+      "loaders": [
+        {
+          "id": "bootstrap",
+          "parent": null,
+          "artifacts": []
+        },
+        {
+          "id": "gradle",
+          "parent": "bootstrap",
+          "artifacts": [
+            "gradle-jar"
+          ]
+        },
+        {
+          "id": "kgp",
+          "parent": "gradle",
+          "artifacts": [
+            "kgp-jar"
+          ]
+        }
+      ],
+      "classes": [
+        {
+          "id": "object",
+          "name": "java.lang.Object",
+          "loader": "bootstrap",
+          "origin": {
+            "kind": "jdk",
+            "value": "java.base"
+          },
+          "superclass": null,
+          "interfaces": []
+        },
+        {
+          "id": "string",
+          "name": "java.lang.String",
+          "loader": "bootstrap",
+          "origin": {
+            "kind": "jdk",
+            "value": "java.base"
+          },
+          "superclass": "object",
+          "interfaces": []
+        },
+        {
+          "id": "list",
+          "name": "java.util.List",
+          "loader": "bootstrap",
+          "origin": {
+            "kind": "jdk",
+            "value": "java.base"
+          },
+          "superclass": null,
+          "interfaces": [
+            "iterable"
+          ]
+        },
+        {
+          "id": "file",
+          "name": "java.io.File",
+          "loader": "bootstrap",
+          "origin": {
+            "kind": "jdk",
+            "value": "java.base"
+          },
+          "superclass": "object",
+          "interfaces": []
+        },
+        {
+          "id": "project",
+          "name": "org.gradle.api.Project",
+          "loader": "gradle",
+          "origin": {
+            "kind": "artifact",
+            "value": "gradle-jar"
+          },
+          "superclass": null,
+          "interfaces": []
+        },
+        {
+          "id": "task-base",
+          "name": "org.gradle.api.DefaultTask",
+          "loader": "gradle",
+          "origin": {
+            "kind": "artifact",
+            "value": "gradle-jar"
+          },
+          "superclass": "object",
+          "interfaces": []
+        },
+        {
+          "id": "task",
+          "name": "synthetic.KotlinCaptureTask",
+          "loader": "kgp",
+          "origin": {
+            "kind": "artifact",
+            "value": "kgp-jar"
+          },
+          "superclass": "task-base",
+          "interfaces": []
+        },
+        {
+          "id": "property",
+          "name": "org.gradle.api.provider.Property",
+          "loader": "gradle",
+          "origin": {
+            "kind": "artifact",
+            "value": "gradle-jar"
+          },
+          "superclass": null,
+          "interfaces": []
+        },
+        {
+          "id": "resolver",
+          "name": "org.jetbrains.kotlin.gradle.plugin.ide.IdeCompilerArgumentsResolver",
+          "loader": "kgp",
+          "origin": {
+            "kind": "artifact",
+            "value": "kgp-jar"
+          },
+          "superclass": "object",
+          "interfaces": []
+        },
+        {
+          "id": "iterable",
+          "name": "java.lang.Iterable",
+          "loader": "bootstrap",
+          "origin": {
+            "kind": "jdk",
+            "value": "java.base"
+          },
+          "superclass": null,
+          "interfaces": []
+        },
+        {
+          "id": "array-list",
+          "name": "java.util.ArrayList",
+          "loader": "bootstrap",
+          "origin": {
+            "kind": "jdk",
+            "value": "java.base"
+          },
+          "superclass": "object",
+          "interfaces": [
+            "list"
+          ]
+        }
+      ]
+    },
+    "objects": [
+      {
+        "id": "project-object",
+        "kind": "project",
+        "project": ":android",
+        "classId": "project",
+        "task": null
+      },
+      {
+        "id": "other-project",
+        "kind": "project",
+        "project": ":nested:library",
+        "classId": "project",
+        "task": null
+      },
+      {
+        "id": "first-task",
+        "kind": "task",
+        "project": ":android",
+        "classId": "task",
+        "task": {
+          "name": "compileFirst",
+          "path": ":android:compileFirst"
+        }
+      },
+      {
+        "id": "second-task",
+        "kind": "task",
+        "project": ":android",
+        "classId": "task",
+        "task": {
+          "name": "compileSecond",
+          "path": ":android:compileSecond"
+        }
+      },
+      {
+        "id": "property-object",
+        "kind": "property",
+        "project": ":android",
+        "classId": "property",
+        "task": null
+      },
+      {
+        "id": "resolver-object",
+        "kind": "resolver",
+        "project": ":android",
+        "classId": "resolver",
+        "task": null
+      },
+      {
+        "id": "list-container",
+        "kind": "container",
+        "project": ":android",
+        "classId": "array-list",
+        "task": null
+      }
+    ],
+    "catalogues": [
+      {
+        "id": "tasks",
+        "classId": "task",
+        "methods": [
+          {
+            "id": "source-string",
+            "name": "getSourceSetName",
+            "descriptor": "()Ljava/lang/String;",
+            "declaringClass": "task",
+            "isStatic": false,
+            "parameterClasses": [],
+            "returnClass": "string"
+          },
+          {
+            "id": "source-property",
+            "name": "getSourceSetNameInternal",
+            "descriptor": "()Lorg/gradle/api/provider/Property;",
+            "declaringClass": "task",
+            "isStatic": false,
+            "parameterClasses": [],
+            "returnClass": "property"
+          },
+          {
+            "id": "source-argument",
+            "name": "getSourceSetNameOther",
+            "descriptor": "(Ljava/lang/String;)Ljava/lang/String;",
+            "declaringClass": "task",
+            "isStatic": false,
+            "parameterClasses": [
+              "string"
+            ],
+            "returnClass": "string"
+          },
+          {
+            "id": "source-number",
+            "name": "getSourceSetNameNumber",
+            "descriptor": "()I",
+            "declaringClass": "task",
+            "isStatic": false,
+            "parameterClasses": [],
+            "returnClass": null
+          },
+          {
+            "id": "inherited",
+            "name": "getSyntheticFile",
+            "descriptor": "()Ljava/io/File;",
+            "declaringClass": "task-base",
+            "isStatic": false,
+            "parameterClasses": [],
+            "returnClass": "file"
+          }
+        ]
+      },
+      {
+        "id": "properties",
+        "classId": "property",
+        "methods": [
+          {
+            "id": "property-get",
+            "name": "get",
+            "descriptor": "()Ljava/lang/Object;",
+            "declaringClass": "property",
+            "isStatic": false,
+            "parameterClasses": [],
+            "returnClass": "object"
+          }
+        ]
+      },
+      {
+        "id": "resolvers",
+        "classId": "resolver",
+        "methods": [
+          {
+            "id": "resolver-instance",
+            "name": "instance",
+            "descriptor": "(Lorg/gradle/api/Project;)Lorg/jetbrains/kotlin/gradle/plugin/ide/IdeCompilerArgumentsResolver;",
+            "declaringClass": "resolver",
+            "isStatic": true,
+            "parameterClasses": [
+              "project"
+            ],
+            "returnClass": "resolver"
+          },
+          {
+            "id": "arguments",
+            "name": "resolveCompilerArguments",
+            "descriptor": "(Ljava/lang/Object;)Ljava/util/List;",
+            "declaringClass": "resolver",
+            "isStatic": false,
+            "parameterClasses": [
+              "object"
+            ],
+            "returnClass": "list"
+          }
+        ]
+      },
+      {
+        "id": "projects",
+        "classId": "project",
+        "methods": [
+          {
+            "id": "task-list",
+            "name": "syntheticTasks",
+            "descriptor": "()Ljava/util/List;",
+            "declaringClass": "project",
+            "isStatic": false,
+            "parameterClasses": [],
+            "returnClass": "list"
+          },
+          {
+            "id": "find-task",
+            "name": "findByName",
+            "descriptor": "(Ljava/lang/String;)Ljava/lang/Object;",
+            "declaringClass": "project",
+            "isStatic": false,
+            "parameterClasses": [
+              "string"
+            ],
+            "returnClass": "object"
+          }
+        ]
+      }
+    ],
+    "requests": [
+      {
+        "id": "source-first",
+        "project": ":android",
+        "consumer": "kotlin",
+        "modelCall": "call-1",
+        "parameter": {
+          "kind": "explicit",
+          "value": "debug,debugUnitTest,debugAndroidTest,debugScreenshotTest,debugTestFixtures"
+        },
+        "variant": {
+          "module": ":android",
+          "variant": "debug"
+        },
+        "owner": "first-task",
+        "catalogue": "tasks",
+        "method": {
+          "kind": "selected",
+          "value": "source-string"
+        },
+        "arguments": [],
+        "returnShape": {
+          "kind": "string",
+          "nullable": true,
+          "objectKind": null,
+          "order": null
+        },
+        "purpose": "sourceSet",
+        "after": null
+      },
+      {
+        "id": "source-second",
+        "project": ":android",
+        "consumer": "kotlin",
+        "modelCall": "call-1",
+        "parameter": {
+          "kind": "explicit",
+          "value": "debug,debugUnitTest,debugAndroidTest,debugScreenshotTest,debugTestFixtures"
+        },
+        "variant": {
+          "module": ":android",
+          "variant": "debug"
+        },
+        "owner": "second-task",
+        "catalogue": "tasks",
+        "method": {
+          "kind": "selected",
+          "value": "source-string"
+        },
+        "arguments": [],
+        "returnShape": {
+          "kind": "string",
+          "nullable": true,
+          "objectKind": null,
+          "order": null
+        },
+        "purpose": "sourceSet",
+        "after": null
+      }
+    ],
+    "imports": {
+      "buildIdentity": {},
+      "projectCatalogue": {
+        "getter": "org.gradle.api.Project.getAllprojects()",
+        "result": {
+          "status": "available",
+          "value": []
+        }
+      }
+    }
+  },
+  "events": [
+    {
+      "id": "event-first",
+      "request": "source-first",
+      "outcome": {
+        "status": "available",
+        "value": {
+          "kind": "string",
+          "value": "debug"
+        }
+      },
+      "container": null
+    },
+    {
+      "id": "event-second",
+      "request": "source-second",
+      "outcome": {
+        "status": "available",
+        "value": {
+          "kind": "string",
+          "value": "debug"
+        }
+      },
+      "container": null
+    }
+  ]
+}

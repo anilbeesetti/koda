@@ -29,8 +29,8 @@ use crate::{
     java_class_facts::{JavaFactsError, MAX_JAVA_FACT_BYTES, discover_top_level_java_classes},
     project_model::{Module, ModuleKind, SourceKind, SourceProviderRootKind},
     project_tree::{
-        FileFact, FileKind, SourceGroup, SourceProvider, TreeFiles, TreeModel, TreeModule,
-        TreeSnapshot, TreeSourceRoot, project_tree_with_facts,
+        FileFact, FileKind, ModuleLabelPolicy, SourceGroup, SourceProvider, TreeFiles, TreeModel,
+        TreeModule, TreeSnapshot, TreeSourceRoot, project_tree_with_label_policy,
     },
     project_tree_facts::{
         ActiveProviderIndex, FactsUnavailable, FactsUnavailableReason, ModuleProjectionFacts,
@@ -135,6 +135,7 @@ pub struct ModuleRootPlan {
     module: TreeModule,
     providers: ActiveProviderIndex,
     unsupported_roots: Vec<UnsupportedRoot>,
+    label_policy: ModuleLabelPolicy,
 }
 
 impl ModuleRootPlan {
@@ -184,6 +185,27 @@ pub fn prepare_module_roots(
     model_revision: u64,
     presentation: Option<&CapturedModulePresentation>,
 ) -> AdapterResult<ModuleRootPlan> {
+    prepare_roots(module, variant, model_revision, presentation, false)
+}
+
+/// Imported labels may legitimately be empty (a source-set ID ending in `:`).
+/// The import publisher must retain the separate internal identity for navigation.
+pub(crate) fn prepare_imported_module_roots(
+    module: &Module,
+    variant: &str,
+    model_revision: u64,
+    presentation: &CapturedModulePresentation,
+) -> AdapterResult<ModuleRootPlan> {
+    prepare_roots(module, variant, model_revision, Some(presentation), true)
+}
+
+fn prepare_roots(
+    module: &Module,
+    variant: &str,
+    model_revision: u64,
+    presentation: Option<&CapturedModulePresentation>,
+    imported: bool,
+) -> AdapterResult<ModuleRootPlan> {
     if module.kind == ModuleKind::Jvm {
         return Err(unavailable(
             AdapterUnavailableReason::UnsupportedModule,
@@ -201,7 +223,7 @@ pub fn prepare_module_roots(
     let display_name = presentation
         .display_name
         .as_deref()
-        .filter(|name| !name.is_empty() && !name.contains(['\n', '\r']))
+        .filter(|name| (imported || !name.is_empty()) && !name.contains(['\n', '\r']))
         .ok_or_else(|| {
             unavailable(
                 AdapterUnavailableReason::MissingPresentation,
@@ -365,6 +387,11 @@ pub fn prepare_module_roots(
         },
         providers,
         unsupported_roots,
+        label_policy: if imported {
+            ModuleLabelPolicy::Imported
+        } else {
+            ModuleLabelPolicy::NonEmpty
+        },
     })
 }
 
@@ -661,17 +688,19 @@ pub fn adapt_captured_module(
             },
         }],
     };
-    let tree = project_tree_with_facts(&model, &files, &facts).map_err(|failure| {
-        if let Some(provider) = failure.downcast_ref::<FactsUnavailable>() {
-            provider.clone().into()
-        } else {
-            unavailable(
-                AdapterUnavailableReason::Projection,
-                failure.to_string(),
-                None,
-            )
-        }
-    })?;
+    let tree = project_tree_with_label_policy(&model, &files, &facts, plan.label_policy).map_err(
+        |failure| {
+            if let Some(provider) = failure.downcast_ref::<FactsUnavailable>() {
+                provider.clone().into()
+            } else {
+                unavailable(
+                    AdapterUnavailableReason::Projection,
+                    failure.to_string(),
+                    None,
+                )
+            }
+        },
+    )?;
     Ok(AdaptedModuleTree {
         binding: capture.binding.clone(),
         tree,

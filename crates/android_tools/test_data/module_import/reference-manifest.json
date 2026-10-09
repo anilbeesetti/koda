@@ -1,0 +1,368 @@
+{
+  "schema": 1,
+  "sources": [
+    {
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "path": "reference/intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "bytes": 7673,
+      "adaptation": "none; exact source bytes"
+    },
+    {
+      "source_path": "intellij-core/plugins/kotlin/gradle/gradle-java/src/org/jetbrains/kotlin/idea/gradleJava/configuration/KotlinGradleSourceSetDataService.kt",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "path": "reference/intellij-core/plugins/kotlin/gradle/gradle-java/src/org/jetbrains/kotlin/idea/gradleJava/configuration/KotlinGradleSourceSetDataService.kt",
+      "sha256": "3d64686ee4e9d1dc6b9f607b54884738ed7b996befef83439ed265d5cd5d479b",
+      "bytes": 17971,
+      "adaptation": "none; exact source bytes"
+    },
+    {
+      "source_path": "intellij-core/plugins/kotlin/gradle/gradle-tooling/impl/src/org/jetbrains/kotlin/idea/gradleTooling/KotlinGradleModelBuilder.kt",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "path": "reference/intellij-core/plugins/kotlin/gradle/gradle-tooling/impl/src/org/jetbrains/kotlin/idea/gradleTooling/KotlinGradleModelBuilder.kt",
+      "sha256": "658a5bb4099cafec6058517737a2434a04f8f88a507510608f9c5ab800e2dcbd",
+      "bytes": 17994,
+      "adaptation": "none; exact source bytes"
+    },
+    {
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/gradle/project/sync/runsGradleSyncIntegration/KotlinSingleVariantSyncIntegrationTest.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "reference/idea/project-system-gradle/testSrc/com/android/tools/idea/gradle/project/sync/runsGradleSyncIntegration/KotlinSingleVariantSyncIntegrationTest.kt",
+      "sha256": "aa40b06f23aa9cfcefac44791d5056e1f5b6e94a4e556d692ef67c5ad8093ac5",
+      "bytes": 2356,
+      "adaptation": "none; exact source bytes"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/MainActivity.iml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/MainActivity.iml",
+      "sha256": "ae82af46812de37a7d17640fd9e8a4cfdde7d3c0e841e61e1adbc5bf6be8fcaa",
+      "bytes": 889,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/app.iml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/app.iml",
+      "sha256": "86b0047d1976d45ad442f2dcdbf4c7b9c07e80df4cafd7d217e51d9f21730241",
+      "bytes": 21976,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/build.gradle",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/build.gradle",
+      "sha256": "666ac102938853fbdf7d4797eee1e04294fdb50046bed887a7ed3416e379cbc9",
+      "bytes": 1200,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/proguard-rules.pro",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/proguard-rules.pro",
+      "sha256": "1cf8c57e8f79c250b0af9c1a5a4edad71a5c348a79ab70243b6bae086c150ad2",
+      "bytes": 751,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/androidTest/java/com/example/mainactivity/ExampleInstrumentedTest.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/androidTest/java/com/example/mainactivity/ExampleInstrumentedTest.kt",
+      "sha256": "3bad8a2b6ef324b861c37eddf6a0afda9869ec25b085ed201440bbf8fb83fcff",
+      "bytes": 676,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/AndroidManifest.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/AndroidManifest.xml",
+      "sha256": "f31efe9f189cbd615187f12f08422d614f77cbcfeabfcfb9ab61b439427c1f8b",
+      "bytes": 831,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/java/com/example/mainactivity/CoolThingDoer.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/java/com/example/mainactivity/CoolThingDoer.kt",
+      "sha256": "df7d681e73eae5194ff49a7a4f623444af639f886b994ed940034b81c3aa2dcd",
+      "bytes": 136,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/java/com/example/mainactivity/Info.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/java/com/example/mainactivity/Info.kt",
+      "sha256": "2dc562eab99961427612ae76ea2f9b23e6f1a9246d601e202175f076536ad334",
+      "bytes": 152,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/java/com/example/mainactivity/MainActivity.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/java/com/example/mainactivity/MainActivity.kt",
+      "sha256": "64c0dc5a36622d0a009fe37190e057b87b6c7cd19b3b2c9d2b124e6bd1d278e2",
+      "bytes": 1569,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/drawable/ic_launcher_background.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/drawable/ic_launcher_background.xml",
+      "sha256": "5b64022770a2aa5ba3d0a955024240c54bf0d26e5f96d2c5bcdadb26d271e038",
+      "bytes": 5606,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/drawable-v24/ic_launcher_foreground.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/drawable-v24/ic_launcher_foreground.xml",
+      "sha256": "48bea10489c27df6d828ba016e061e1cf9bb9f08a0c0aba9f0446bd5f93cd57d",
+      "bytes": 1880,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/layout/activity_main.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/layout/activity_main.xml",
+      "sha256": "7908f05deddccc9f94bcde33c895b17090c8cd6e05b5ca41bcd37156830da4e1",
+      "bytes": 1379,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/layout/content_main.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/layout/content_main.xml",
+      "sha256": "b89c9c20af1ed2dad09ef26a2e793abddef38a6fdedfd3bd6c401c18b52e139d",
+      "bytes": 886,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/menu/menu_main.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/menu/menu_main.xml",
+      "sha256": "93db62b65749df98de5579605fef29d5a4d90c1406a932fa85dec61f370136eb",
+      "bytes": 413,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "sha256": "993b38e238eaf485eca875727e0a128293d612a52e20ea8e2ef84a15493bb06e",
+      "bytes": 272,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "sha256": "993b38e238eaf485eca875727e0a128293d612a52e20ea8e2ef84a15493bb06e",
+      "bytes": 272,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+      "sha256": "4683af2638dfddbce1a800c05a8b8eb771ec0e5f292b1ceeb3bfb5b1df62c697",
+      "bytes": 2963,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-hdpi/ic_launcher_round.png",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-hdpi/ic_launcher_round.png",
+      "sha256": "11785e5b24c561bbababb5617269700a9476861c69fb2c1f4744670648354d9c",
+      "bytes": 4905,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+      "sha256": "a77a8562cf075c66c713f77349e57bb68dfb5efe079afb3bc99f7c6a08bdcc9f",
+      "bytes": 2060,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-mdpi/ic_launcher_round.png",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-mdpi/ic_launcher_round.png",
+      "sha256": "e6e68a9d55a50e996b7e118345649c40bdbe87cc818a214739ff745a511f1751",
+      "bytes": 2783,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+      "sha256": "9dbda8dca63948cadbc41f87c03313133e6932148056f2673bae36612ebc1ab3",
+      "bytes": 4490,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-xhdpi/ic_launcher_round.png",
+      "sha256": "ae82ec1c74d1a15686cfe18e0a883409adcf544b581e95e8a0604955abbe0b1b",
+      "bytes": 6895,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+      "sha256": "64e4121eca4ead79391139f5cc0e6b0f5e89b766aa5a32b9c59307fc02ab63f5",
+      "bytes": 6387,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-xxhdpi/ic_launcher_round.png",
+      "sha256": "0848f934592a738511e01cfdb1db1f1edfb44c40c4b5c72dddf62a9dc5757eea",
+      "bytes": 10413,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+      "sha256": "e3712391d7de0f98769117825845d34f60de18a3a3f82a6a8f4ef9a9e28bb23b",
+      "bytes": 9128,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png",
+      "sha256": "b3829fe0710e22d8a1fadf53884a78caf47c555b4326d372cb31baec371ef8fa",
+      "bytes": 15132,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/values/colors.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/values/colors.xml",
+      "sha256": "0d8dfb13ccf057e3ebb2d08eaa87f7b24e19283a42d9de0f161453021a279655",
+      "bytes": 208,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/values/dimens.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/values/dimens.xml",
+      "sha256": "73f5a83f80fbd3d4efa64a8dbd1c491892b948b5ba123fb4a5f4c59a77010c45",
+      "bytes": 67,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/values/strings.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/values/strings.xml",
+      "sha256": "f866c3d6952f0dcc623dffea2fe2b4d110f05d493bc39226ddbd6e3a2ba28f3e",
+      "bytes": 128,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/main/res/values/styles.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/main/res/values/styles.xml",
+      "sha256": "7be528fd4393a20bcedf1cf478bc5308d5919bd98f5abc853cd89b7f8758dcd9",
+      "bytes": 708,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/app/src/test/java/com/example/mainactivity/ExampleUnitTest.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/app/src/test/java/com/example/mainactivity/ExampleUnitTest.kt",
+      "sha256": "162436f4ed71bae34d0626617fcba061b8a61841fbd608783f3ccc3bf5603789",
+      "bytes": 349,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/build.gradle",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/build.gradle",
+      "sha256": "0fb61cbea98f0dfacb38a44560ca272874df95945c248026fd7d222bc6253046",
+      "bytes": 665,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/gradle.properties",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/gradle.properties",
+      "sha256": "660c117e14dcb710d249acf120298ce731867c15c84da6859ae9c19fce201370",
+      "bytes": 1164,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/javaLib/build.gradle",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/javaLib/build.gradle",
+      "sha256": "4cbec2c5362471ba89f9bea2f125757190bd18ea3ed3dcdcba42f90aad790d8c",
+      "bytes": 351,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/javaLib/src/main/java/MyClass.java",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/javaLib/src/main/java/MyClass.java",
+      "sha256": "4f576c1549a95f12d5975c2baa3a67d1b35d98a0f67bb432430d2a2f9367741b",
+      "bytes": 83,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/lib/build.gradle",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/lib/build.gradle",
+      "sha256": "473a98054e2de15058f506b46c7b25a9281de0d35639cda7e92a143895c1b38b",
+      "bytes": 573,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/lib/src/main/AndroidManifest.xml",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/lib/src/main/AndroidManifest.xml",
+      "sha256": "6e7b8d2db69ef28679c9a6af1b2ea9503391749036bae98bd46dc9a5705afdbe",
+      "bytes": 152,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/local.properties",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/local.properties",
+      "sha256": "f5fc92442fe471bcbbd60925a827007aacef79560390ace132bbd076ef0247e1",
+      "bytes": 483,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "idea/android/testData/snapshots/projects/kotlinKapt/settings.gradle",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "kotlinKapt/settings.gradle",
+      "sha256": "a8e8d3c122fad5bc3bba4b0ef5a1ac750bb050741af62846dcfafd4abe0d4498",
+      "bytes": 81,
+      "adaptation": "none; exact original fixture bytes, not yet prepared or executed"
+    },
+    {
+      "source_path": "intellij-core/platform/util-rt/src/com/intellij/util/PathUtilRt.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "path": "reference/intellij-core/platform/util-rt/src/com/intellij/util/PathUtilRt.java",
+      "sha256": "87c11e005aed7870f8051ddee27a2c08eda37af97f7f1d5539f023d98f14198c",
+      "bytes": 7597,
+      "github_blob_sha1": "8c52345742efc9f2ece92ca562cfdc3765a4f7a7",
+      "adaptation": "none; full pinned source recovered through GitHub integration"
+    },
+    {
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetTestCase.kt",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "path": "reference/intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetTestCase.kt",
+      "sha256": "1466d89e215f91c2eb4aaec949a287f2f4c92d60958b173b4510efc1fd213a8e",
+      "bytes": 3381,
+      "adaptation": "none; exact retained helper source"
+    }
+  ],
+  "reference_test_execution_credit": 0,
+  "fixture_preparation_and_effective_version_execution": "pending"
+}

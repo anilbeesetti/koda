@@ -1,0 +1,402 @@
+{
+  "schema": 1,
+  "source_inventory": "/workspace/android-studio-artifacts/module-presentation-preflight/bounded-test-inventory.json",
+  "scope": "Eight individually inspected KotlinFacetBridgeTest declarations plus exact original KAPT membership gate; not a global census or effective runtime case count",
+  "actual_passing_credit": 0,
+  "cases": [
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testSimpleKotlinFacetCreate",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 19,
+      "body_end_line": 22,
+      "body_sha256": "8998f973f44a0304f7d7494d9e163485b9564d27c22a01a958ef07ff57b9bfbe",
+      "body": "{\n        getKotlinFacet()\n        checkStorageForEntityAndFacet()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 21,
+          "text": "checkStorageForEntityAndFacet()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file",
+      "proposed_status": "adapted_when_passing",
+      "rust_target": "module_import::kotlin_facet_bridge_test_simple_kotlin_facet_create",
+      "adaptation": "Explicit Kotlin settings state, stable module-member identity, staged-versus-committed rename/removal and nullable field roundtrip, using Rust immutable publication; no actual Gradle import parity implied.",
+      "platform_assertion_classification": [
+        {
+          "assertion": "WorkspaceModel/FacetManager entity and facet object identity APIs",
+          "status": "not_applicable_assertion",
+          "reason": "IntelliJ platform APIs have no Rust counterpart; immutable Rust committed state and stable member identity are asserted separately."
+        },
+        {
+          "assertion": "helper fireFacetChangedEvent assertSame physical JVM object identity",
+          "status": "not_applicable_assertion",
+          "reason": "Rust publication swaps immutable snapshots; stable member/module identity is preserved rather than a JVM Facet pointer."
+        }
+      ],
+      "actual_passing_credit": false
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testEditorTabConfigurationOnFacetCreation",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 24,
+      "body_end_line": 38,
+      "body_sha256": "6f4590b1a665fd3f5563b187491027c2e9697870baf6d830f65a02139db9eef8",
+      "body": "{\n        val facet = getKotlinFacet()\n        val editorContext: FacetEditorContext = MockFacetEditorContext(getKotlinFacet())\n        var facetEditorTab: FacetEditorImpl? = null\n        try {\n            facetEditorTab = FacetEditorImpl(editorContext, facet.configuration)\n            facetEditorTab.let {\n                it.getComponent()\n                it.reset()\n                assertNotNull(it.component)\n            }\n        } finally {\n            facetEditorTab?.disposeUIResources()\n        }\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 33,
+          "text": "assertNotNull(it.component)"
+        }
+      ],
+      "status": "not_applicable_proposed",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file",
+      "rust_target": null,
+      "reason": "Its sole assertion is a nonnull Swing FacetEditorImpl component after reset and disposal of internal UI resources; no IntelliJ facet editor exists in Koda. Product settings UI is separately required in phase 5.",
+      "platform_assertion_classification": [
+        {
+          "assertion": "WorkspaceModel/FacetManager entity and facet object identity APIs",
+          "status": "not_applicable_assertion",
+          "reason": "IntelliJ platform APIs have no Rust counterpart; immutable Rust committed state and stable member identity are asserted separately."
+        }
+      ],
+      "actual_passing_credit": false
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testFacetRenameAndRemove",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 40,
+      "body_end_line": 70,
+      "body_sha256": "9ebda069d4b90e3ee8f73d66c22f36a32b4aaa5add4d04e256599ec71686675e",
+      "body": "{\n        val oldFacetName = \"Kotlin\"\n        val newFacetName = \"NewFacetName\"\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        val facetManager = FacetManager.getInstance(myModule)\n        var modifiableModel = facetManager.createModifiableModel()\n        assertEquals(oldFacetName, modifiableModel.getFacetName(mainFacet))\n        modifiableModel.rename(mainFacet, newFacetName)\n        checkStorageForEntityAndFacet()\n        assertEquals(oldFacetName, modifiableModel.getFacetName(mainFacet))\n        assertEquals(newFacetName, modifiableModel.getNewName(mainFacet))\n\n        runWriteActionAndWait {\n            modifiableModel.commit()\n        }\n\n        assertEquals(newFacetName, mainFacet.name)\n        checkStorageForEntityAndFacet(facetName = newFacetName)\n\n        modifiableModel = facetManager.createModifiableModel()\n        modifiableModel.removeFacet(mainFacet)\n        runWriteActionAndWait {\n            modifiableModel.commit()\n        }\n\n        val entityStorage = WorkspaceModel.getInstance(myProject).currentSnapshot\n        assertEmpty(entityStorage.entities(KotlinSettingsEntity::class.java).toList())\n        assertEmpty(facetManager.allFacets)\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 44,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 48,
+          "text": "assertEquals(oldFacetName, modifiableModel.getFacetName(mainFacet))"
+        },
+        {
+          "line": 50,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 51,
+          "text": "assertEquals(oldFacetName, modifiableModel.getFacetName(mainFacet))"
+        },
+        {
+          "line": 52,
+          "text": "assertEquals(newFacetName, modifiableModel.getNewName(mainFacet))"
+        },
+        {
+          "line": 58,
+          "text": "assertEquals(newFacetName, mainFacet.name)"
+        },
+        {
+          "line": 59,
+          "text": "checkStorageForEntityAndFacet(facetName = newFacetName)"
+        },
+        {
+          "line": 68,
+          "text": "assertEmpty(entityStorage.entities(KotlinSettingsEntity::class.java).toList())"
+        },
+        {
+          "line": 69,
+          "text": "assertEmpty(facetManager.allFacets)"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file",
+      "proposed_status": "adapted_when_passing",
+      "rust_target": "module_import::kotlin_facet_bridge_test_facet_rename_and_remove",
+      "adaptation": "Explicit Kotlin settings state, stable module-member identity, staged-versus-committed rename/removal and nullable field roundtrip, using Rust immutable publication; no actual Gradle import parity implied.",
+      "platform_assertion_classification": [
+        {
+          "assertion": "WorkspaceModel/FacetManager entity and facet object identity APIs",
+          "status": "not_applicable_assertion",
+          "reason": "IntelliJ platform APIs have no Rust counterpart; immutable Rust committed state and stable member identity are asserted separately."
+        },
+        {
+          "assertion": "helper fireFacetChangedEvent assertSame physical JVM object identity",
+          "status": "not_applicable_assertion",
+          "reason": "Rust publication swaps immutable snapshots; stable member/module identity is preserved rather than a JVM Facet pointer."
+        }
+      ],
+      "actual_passing_credit": false
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testCreateFacetWithDisabledUseProjectSettingsFlag",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 72,
+      "body_end_line": 80,
+      "body_sha256": "d3a9d2dddcc73f4c509e518049f826bb855fb6535d2dda2330e458058ecf3aa6",
+      "body": "{\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        mainFacet.configuration.settings.useProjectSettings = false\n\n        fireFacetChangedEvent(mainFacet)\n        checkStorageForEntityAndFacet()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 74,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 79,
+          "text": "checkStorageForEntityAndFacet()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file",
+      "proposed_status": "adapted_when_passing",
+      "rust_target": "module_import::kotlin_facet_bridge_test_create_facet_with_disabled_use_project_settings_flag",
+      "adaptation": "Explicit Kotlin settings state, stable module-member identity, staged-versus-committed rename/removal and nullable field roundtrip, using Rust immutable publication; no actual Gradle import parity implied.",
+      "platform_assertion_classification": [
+        {
+          "assertion": "WorkspaceModel/FacetManager entity and facet object identity APIs",
+          "status": "not_applicable_assertion",
+          "reason": "IntelliJ platform APIs have no Rust counterpart; immutable Rust committed state and stable member identity are asserted separately."
+        },
+        {
+          "assertion": "helper fireFacetChangedEvent assertSame physical JVM object identity",
+          "status": "not_applicable_assertion",
+          "reason": "Rust publication swaps immutable snapshots; stable member/module identity is preserved rather than a JVM Facet pointer."
+        }
+      ],
+      "actual_passing_credit": false
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testCreateFacetEnableHmpp",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 82,
+      "body_end_line": 90,
+      "body_sha256": "c676d5715d810d61b741dd301fcb55c607fa44ac18fd1e40d04d719e1c4d659e",
+      "body": "{\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        mainFacet.configuration.settings.isHmppEnabled = true\n\n        fireFacetChangedEvent(mainFacet)\n        checkStorageForEntityAndFacet()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 84,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 89,
+          "text": "checkStorageForEntityAndFacet()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file",
+      "proposed_status": "adapted_when_passing",
+      "rust_target": "module_import::kotlin_facet_bridge_test_create_facet_enable_hmpp",
+      "adaptation": "Explicit Kotlin settings state, stable module-member identity, staged-versus-committed rename/removal and nullable field roundtrip, using Rust immutable publication; no actual Gradle import parity implied.",
+      "platform_assertion_classification": [
+        {
+          "assertion": "WorkspaceModel/FacetManager entity and facet object identity APIs",
+          "status": "not_applicable_assertion",
+          "reason": "IntelliJ platform APIs have no Rust counterpart; immutable Rust committed state and stable member identity are asserted separately."
+        },
+        {
+          "assertion": "helper fireFacetChangedEvent assertSame physical JVM object identity",
+          "status": "not_applicable_assertion",
+          "reason": "Rust publication swaps immutable snapshots; stable member/module identity is preserved rather than a JVM Facet pointer."
+        }
+      ],
+      "actual_passing_credit": false
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testCreateFacetExternalSystemProjectId",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 92,
+      "body_end_line": 101,
+      "body_sha256": "0552784ead496aa5656068b25a43182935412db81bd604b8d569e45531dc514d",
+      "body": "{\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        mainFacet.configuration.settings.externalSystemRunTasks =\n            listOf(ExternalSystemTestRunTask(\"taskName\", \"externalSystemProjectId\", \"targetName\", \"kotlinPlatformId\"))\n\n        fireFacetChangedEvent(mainFacet)\n        checkStorageForEntityAndFacet()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 94,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 100,
+          "text": "checkStorageForEntityAndFacet()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file",
+      "proposed_status": "adapted_when_passing",
+      "rust_target": "module_import::kotlin_facet_bridge_test_create_facet_external_system_project_id",
+      "adaptation": "Explicit Kotlin settings state, stable module-member identity, staged-versus-committed rename/removal and nullable field roundtrip, using Rust immutable publication; no actual Gradle import parity implied.",
+      "platform_assertion_classification": [
+        {
+          "assertion": "WorkspaceModel/FacetManager entity and facet object identity APIs",
+          "status": "not_applicable_assertion",
+          "reason": "IntelliJ platform APIs have no Rust counterpart; immutable Rust committed state and stable member identity are asserted separately."
+        },
+        {
+          "assertion": "helper fireFacetChangedEvent assertSame physical JVM object identity",
+          "status": "not_applicable_assertion",
+          "reason": "Rust publication swaps immutable snapshots; stable member/module identity is preserved rather than a JVM Facet pointer."
+        }
+      ],
+      "actual_passing_credit": false
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testCreateFacetAndCheckNullableTypes",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 103,
+      "body_end_line": 115,
+      "body_sha256": "7330a6e85e975b1f30e67f4bed3484935039a5e8db2254ad28bc0eae244c3b23",
+      "body": "{\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        mainFacet.configuration.settings.compilerArguments = null\n        mainFacet.configuration.settings.compilerSettings = null\n        mainFacet.configuration.settings.targetPlatform = null\n        mainFacet.configuration.settings.productionOutputPath = null\n        mainFacet.configuration.settings.testOutputPath = null\n\n        fireFacetChangedEvent(mainFacet)\n        checkStorageForEntityAndFacet()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 105,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 114,
+          "text": "checkStorageForEntityAndFacet()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file",
+      "proposed_status": "adapted_when_passing",
+      "rust_target": "module_import::kotlin_facet_bridge_test_create_facet_and_check_nullable_types",
+      "adaptation": "Explicit Kotlin settings state, stable module-member identity, staged-versus-committed rename/removal and nullable field roundtrip, using Rust immutable publication; no actual Gradle import parity implied.",
+      "platform_assertion_classification": [
+        {
+          "assertion": "WorkspaceModel/FacetManager entity and facet object identity APIs",
+          "status": "not_applicable_assertion",
+          "reason": "IntelliJ platform APIs have no Rust counterpart; immutable Rust committed state and stable member identity are asserted separately."
+        },
+        {
+          "assertion": "helper fireFacetChangedEvent assertSame physical JVM object identity",
+          "status": "not_applicable_assertion",
+          "reason": "Rust publication swaps immutable snapshots; stable member/module identity is preserved rather than a JVM Facet pointer."
+        }
+      ],
+      "actual_passing_credit": false
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testChangeCompilerSettingsAfterCreation",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 117,
+      "body_end_line": 136,
+      "body_sha256": "6aba4225e4860dbda0b98fa76cf6a67892c1fc5ee2e360e3d22a7c6cf60de382",
+      "body": "{\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        val additionalArgs = \"foo\"\n        val scriptTemplates = \"bar\"\n        // setup initial compiler settings\n        mainFacet.configuration.settings.compilerSettings = CompilerSettings().apply {\n            additionalArguments = additionalArgs\n        }\n        fireFacetChangedEvent(mainFacet)\n\n        // change compiler settings after setup\n        mainFacet.configuration.settings.compilerSettings?.scriptTemplates = scriptTemplates\n        fireFacetChangedEvent(mainFacet)\n\n        // check that both changes were applied\n        assertTrue(getEntity().compilerSettings!!.additionalArguments == additionalArgs)\n        assertTrue(getEntity().compilerSettings!!.scriptTemplates == scriptTemplates)\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 119,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 134,
+          "text": "assertTrue(getEntity().compilerSettings!!.additionalArguments == additionalArgs)"
+        },
+        {
+          "line": 135,
+          "text": "assertTrue(getEntity().compilerSettings!!.scriptTemplates == scriptTemplates)"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file",
+      "proposed_status": "adapted_when_passing",
+      "rust_target": "module_import::kotlin_facet_bridge_test_change_compiler_settings_after_creation",
+      "adaptation": "Explicit Kotlin settings state, stable module-member identity, staged-versus-committed rename/removal and nullable field roundtrip, using Rust immutable publication; no actual Gradle import parity implied.",
+      "platform_assertion_classification": [
+        {
+          "assertion": "WorkspaceModel/FacetManager entity and facet object identity APIs",
+          "status": "not_applicable_assertion",
+          "reason": "IntelliJ platform APIs have no Rust counterpart; immutable Rust committed state and stable member identity are asserted separately."
+        },
+        {
+          "assertion": "helper fireFacetChangedEvent assertSame physical JVM object identity",
+          "status": "not_applicable_assertion",
+          "reason": "Rust publication swaps immutable snapshots; stable member/module identity is preserved rather than a JVM Facet pointer."
+        }
+      ],
+      "actual_passing_credit": false
+    },
+    {
+      "suite": "com.android.tools.idea.gradle.project.sync.runsGradleSyncIntegration.KotlinSingleVariantSyncIntegrationTest",
+      "method": "kotlinSingleVariantSync",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/gradle/project/sync/runsGradleSyncIntegration/KotlinSingleVariantSyncIntegrationTest.kt",
+      "source_sha256": "aa40b06f23aa9cfcefac44791d5056e1f5b6e94a4e556d692ef67c5ad8093ac5",
+      "declaration_line": 39,
+      "body_end_line": 47,
+      "body_sha256": "0108573b6595559e332c9381b2deab4d4d359ae66c92f5c9e1c1ce8f62623ac2",
+      "body": "{\n    registerTestHelperProjectResolver(CapturePlatformModelsProjectResolverExtension.IdeModels(), projectRule.testRootDisposable)\n    val preparedProject = projectRule.prepareTestProject(AndroidCoreTestProject.KOTLIN_KAPT)\n    preparedProject.open { project ->\n      expect\n        .that(getKotlinModel(project.gradleModule(\":app\")!!)?.testSourceSetNames().orEmpty())\n        .containsExactly(\"debugAndroidTest\", \"debug\", \"debugUnitTest\")\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 43,
+          "text": "expect"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file",
+      "fixture": "kotlinKapt (39 original files byte exact)",
+      "exact_expected_membership": [
+        "debugAndroidTest",
+        "debug",
+        "debugUnitTest"
+      ],
+      "blockers": [
+        "original prepareTestProject transformations and version runner",
+        "strict actual discovery and official getter executor",
+        "Root-owned actual SDK/KGP/AGP version probes and import capture"
+      ]
+    }
+  ],
+  "other_pending_cases": [
+    "KotlinJvmSimpleFacetImportTest.testSimpleFacetImport (exact fixture/version runner not executed)",
+    "GradleFacetImportTest.testCommonImportByPlatformPlugin (not fully inspected)",
+    "GradleFacetImportTest.testKotlinAndroidPluginDetection (not fully inspected)",
+    "SourceProvidersSnapshotComparisonTest.testJpsWithQualifiedNames and 22 source-provider definitions",
+    "ComposableCompileTest.testModuleName (later compiler/runtime work)"
+  ]
+}

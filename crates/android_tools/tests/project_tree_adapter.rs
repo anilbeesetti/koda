@@ -300,6 +300,78 @@ fn missing_presentation_never_uses_directory_or_module_basename() -> Result<()> 
 }
 
 #[test]
+fn committed_source_set_empty_label_preserves_physical_module_identity() -> Result<()> {
+    use android_tools::module_import::{
+        CommittedImport, ImportRevision, ImportedMember, ImportedModule, KotlinMemberState,
+    };
+    use std::collections::BTreeMap;
+
+    let module = fixture(&[]);
+    let revision = ImportRevision {
+        context_generation: 3,
+        model_revision: 7,
+        selection_revision: 2,
+        import_revision: 4,
+        root: path(""),
+    };
+    let imported = ImportedModule {
+        module: module.path.clone(),
+        variant: "debug".into(),
+        directory: module.directory.clone(),
+        holder_internal_name: "Imported.app".into(),
+        display_name: "app".into(),
+        sort_name: "Imported.app".into(),
+        members: vec![ImportedMember {
+            internal_name: "Imported.app.".into(),
+            external_id: ":app:".into(),
+            source_set_name: Some(String::new()),
+            kotlin: KotlinMemberState::Absent,
+        }],
+    };
+    let committed = CommittedImport {
+        revision: revision.clone(),
+        modules: BTreeMap::from([(module.path.clone(), imported)]),
+    };
+    let model = android_tools::project_model::ProjectModel {
+        version: 1,
+        root: revision.root.clone(),
+        modules: vec![module.clone()],
+        diagnostics: Vec::new(),
+    };
+    let metadata = committed.prepare_member_roots(
+        &model,
+        &revision,
+        &module.path,
+        Some("Imported.app."),
+        true,
+    )?;
+    assert_eq!(metadata.binding().module, module.path);
+    assert_eq!(metadata.binding().variant, "debug");
+    let result = adapt_captured_module(&metadata, &capture(&metadata, vec![directory("")]))?;
+    let row = result.tree.nodes().next().context("Imported module node")?;
+    assert_eq!(row.label, "");
+    assert!(matches!(
+        row.key,
+        android_tools::project_tree::NodeKey::Module { .. }
+    ));
+    assert_eq!(committed.modules[&module.path].sort_name, "Imported.app");
+    assert_eq!(
+        committed.modules[&module.path].holder_internal_name,
+        "Imported.app"
+    );
+    let mut stale = revision;
+    stale.context_generation += 2;
+    assert_eq!(
+        committed
+            .prepare_member_roots(&model, &stale, &module.path, Some("Imported.app."), true)
+            .expect_err("Stale imported label cannot publish")
+            .reason,
+        android_tools::project_tree_facts::FactsUnavailableReason::Stale,
+    );
+    Ok(())
+}
+
+#[test]
 fn missing_provider_metadata_and_variants_remain_typed() -> Result<()> {
     let mut module = fixture(&[]);
     module.evaluated_providers = None;
@@ -1232,6 +1304,92 @@ fn external_generated_children_cannot_prove_a_missing_module_directory() -> Resu
             .tree
             .nodes()
             .any(|node| node.label == "child.txt")
+    );
+    Ok(())
+}
+
+#[test]
+fn public_tree_projections_reject_empty_legacy_ids_and_labels() -> Result<()> {
+    use android_tools::{
+        project_tree::{
+            FileFact, FileKind, TreeFiles, TreeModel, TreeModule, project_tree,
+            project_tree_with_facts,
+        },
+        project_tree_facts::{
+            ActiveProviderIndex, ModuleProjectionFacts, ProviderPresence, RootEncounterFacts,
+            RootEncounterProvenance, TreeProjectionFacts,
+        },
+    };
+
+    let module = fixture(&[]);
+    let mut model = TreeModel {
+        revision: 7,
+        modules: vec![TreeModule {
+            id: module.path.clone(),
+            display_name: "app".into(),
+            directory: module.directory.clone(),
+            source_roots: Vec::new(),
+            compact_packages: true,
+        }],
+    };
+    let files = TreeFiles {
+        model_revision: 7,
+        revision: 11,
+        entries: vec![FileFact {
+            path: module.directory.clone(),
+            kind: FileKind::Directory,
+        }],
+    };
+    let facts = TreeProjectionFacts {
+        presence: ProviderPresence::new(
+            7,
+            11,
+            [(module.directory.clone(), RootPresence::Directory)],
+        )?,
+        modules: vec![ModuleProjectionFacts {
+            providers: ActiveProviderIndex::from_module(&module, "debug", 7)?,
+            roots: RootEncounterFacts {
+                model_revision: 7,
+                module: module.path.clone(),
+                variant: "debug".into(),
+                provenance: RootEncounterProvenance::ProducerIterator,
+                roots: Vec::new(),
+            },
+        }],
+    };
+    assert_eq!(project_tree(&model, &files)?.nodes().count(), 1);
+    assert_eq!(
+        project_tree_with_facts(&model, &files, &facts)?
+            .nodes()
+            .count(),
+        1
+    );
+    model
+        .modules
+        .first_mut()
+        .context("Legacy tree module")?
+        .id
+        .clear();
+    assert_eq!(
+        project_tree(&model, &files)
+            .expect_err("Legacy stable module ID cannot be empty")
+            .to_string(),
+        "Android module identity is empty"
+    );
+    let legacy = model.modules.first_mut().context("Legacy tree module")?;
+    legacy.id = module.path;
+    legacy.display_name.clear();
+    assert_eq!(
+        project_tree(&model, &files)
+            .expect_err("Public legacy labels cannot be empty")
+            .to_string(),
+        "Android module identity is empty"
+    );
+    assert_eq!(
+        project_tree_with_facts(&model, &files, &facts)
+            .expect_err("Public facts-aware legacy labels cannot be empty")
+            .to_string(),
+        "Android module identity is empty"
     );
     Ok(())
 }

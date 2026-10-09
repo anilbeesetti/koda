@@ -234,8 +234,14 @@ impl TreeSnapshot {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ModuleLabelPolicy {
+    NonEmpty,
+    Imported,
+}
+
 pub fn project_tree(model: &TreeModel, files: &TreeFiles) -> Result<TreeSnapshot> {
-    project_tree_internal(model, files, None)
+    project_tree_internal(model, files, None, ModuleLabelPolicy::NonEmpty)
 }
 
 /// Preserves explicitly captured root encounters and resolves annotations for
@@ -245,13 +251,23 @@ pub fn project_tree_with_facts(
     files: &TreeFiles,
     facts: &TreeProjectionFacts,
 ) -> Result<TreeSnapshot> {
-    project_tree_internal(model, files, Some(facts))
+    project_tree_internal(model, files, Some(facts), ModuleLabelPolicy::NonEmpty)
+}
+
+pub(crate) fn project_tree_with_label_policy(
+    model: &TreeModel,
+    files: &TreeFiles,
+    facts: &TreeProjectionFacts,
+    label_policy: ModuleLabelPolicy,
+) -> Result<TreeSnapshot> {
+    project_tree_internal(model, files, Some(facts), label_policy)
 }
 
 fn project_tree_internal(
     model: &TreeModel,
     files: &TreeFiles,
     facts: Option<&TreeProjectionFacts>,
+    label_policy: ModuleLabelPolicy,
 ) -> Result<TreeSnapshot> {
     ensure!(
         model.revision == files.model_revision,
@@ -432,7 +448,8 @@ fn project_tree_internal(
     };
     for module in modules {
         ensure!(
-            !module.id.is_empty() && !module.display_name.is_empty(),
+            !module.id.is_empty()
+                && (label_policy == ModuleLabelPolicy::Imported || !module.display_name.is_empty()),
             "Android module identity is empty"
         );
         ensure!(
@@ -1058,5 +1075,60 @@ fn sort_children(tree: &mut TreeSnapshot) {
                 .then_with(|| left.key.cmp(&right.key))
         });
         tree.nodes[index].children = children;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn imported_label_permission_never_allows_empty_stable_module_ids() -> Result<()> {
+        let mut model = TreeModel {
+            revision: 7,
+            modules: vec![TreeModule {
+                id: ":app".into(),
+                display_name: String::new(),
+                directory: std::env::temp_dir().components().collect(),
+                source_roots: Vec::new(),
+                compact_packages: true,
+            }],
+        };
+        let files = TreeFiles {
+            model_revision: 7,
+            revision: 11,
+            entries: Vec::new(),
+        };
+        let imported = project_tree_internal(&model, &files, None, ModuleLabelPolicy::Imported)?;
+        let row = imported.nodes().next().context("Imported module row")?;
+        assert_eq!(row.label, "");
+        assert_eq!(
+            row.key,
+            NodeKey::Module {
+                module: ":app".into()
+            }
+        );
+        model
+            .modules
+            .first_mut()
+            .context("Imported module")?
+            .id
+            .clear();
+        for label_policy in [ModuleLabelPolicy::NonEmpty, ModuleLabelPolicy::Imported] {
+            for display_name in ["", "app"] {
+                model
+                    .modules
+                    .first_mut()
+                    .context("Imported module")?
+                    .display_name = display_name.into();
+                assert_eq!(
+                    project_tree_internal(&model, &files, None, label_policy)
+                        .expect_err("An imported label permission never replaces stable identity")
+                        .to_string(),
+                    "Android module identity is empty"
+                );
+            }
+        }
+        Ok(())
     }
 }

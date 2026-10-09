@@ -731,6 +731,7 @@ dependencies = [
  "dirs",
  "flate2",
  "fs2",
+ "icu_locale_core",
  "regex",
  "serde",
  "serde_json",

@@ -2,10 +2,13 @@ pub mod generated_artifacts;
 pub mod gradle_import;
 pub mod import_facts;
 pub mod java_class_facts;
+pub mod kotlin_import_facts;
 pub mod logcat;
+pub mod module_import;
 pub mod module_presentation;
 pub mod parallel_sync;
 pub mod preview;
+pub mod project_context;
 pub mod project_model;
 pub mod project_tree;
 pub mod project_tree_adapter;
@@ -242,21 +245,30 @@ impl AndroidApk {
     }
 }
 
+pub(crate) fn gradle_variant_task(
+    module: &str,
+    variant: &str,
+    prefix: &str,
+    suffix: &str,
+) -> String {
+    let mut characters = variant.chars();
+    let capitalized = characters
+        .next()
+        .map(|first| first.to_uppercase().collect::<String>() + characters.as_str())
+        .unwrap_or_default();
+    format!(
+        "{}:{prefix}{capitalized}{suffix}",
+        module.trim_end_matches(':')
+    )
+}
+
 impl AndroidTarget {
     pub fn label(&self) -> String {
         format!("{} · {}", self.module, self.variant)
     }
 
     pub fn gradle_task(&self, prefix: &str, suffix: &str) -> String {
-        let mut characters = self.variant.chars();
-        let capitalized = characters
-            .next()
-            .map(|first| first.to_uppercase().collect::<String>() + characters.as_str())
-            .unwrap_or_default();
-        format!(
-            "{}:{prefix}{capitalized}{suffix}",
-            self.module.trim_end_matches(':')
-        )
+        gradle_variant_task(&self.module, &self.variant, prefix, suffix)
     }
 
     pub fn apk_paths(&self) -> Result<Vec<PathBuf>> {
