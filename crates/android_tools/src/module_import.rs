@@ -35,6 +35,7 @@ use std::{
 };
 
 const MAX_RECORD_BYTES: usize = 16 * 1024 * 1024;
+const KOTLIN_JVM_FACTORY: &str = "org.jetbrains.kotlin.gradle.plugin.KotlinJvmFactory";
 pub const PLUGIN_IDS: &str =
     "org.gradle.api.plugins.PluginContainer.findPlugin(reference Kotlin plugin IDs)";
 pub const PLUGIN_INTERFACES: &str = "org.gradle.api.Project.getPlugins() runtime interfaces";
@@ -70,6 +71,8 @@ pub struct RawKotlinTask {
 pub struct RawKotlinProject {
     pub project_path: String,
     pub plugin_ids: GetterObservation<Vec<String>>,
+    /// Strict imports retain the immediate-superclass KotlinJvmFactory predicate
+    /// as an empty or singleton list; reduced transport preserves its raw list.
     pub plugin_interfaces: GetterObservation<Vec<String>>,
     pub kotlin_extension: GetterObservation<bool>,
     pub compiler_version: GetterObservation<Option<String>>,
@@ -164,6 +167,7 @@ struct StrictProjection<'a> {
 
 struct ContainerRelations<'a> {
     answers: BTreeMap<(&'a str, &'static str), bool>,
+    direct_answers: BTreeMap<(&'a str, &'static str), bool>,
     steps: usize,
     limit: usize,
     exhausted: bool,
@@ -173,6 +177,7 @@ impl<'a> ContainerRelations<'a> {
     fn new(limit: usize) -> Self {
         Self {
             answers: BTreeMap::new(),
+            direct_answers: BTreeMap::new(),
             steps: 0,
             limit,
             exhausted: false,
@@ -242,6 +247,61 @@ impl<'a> ContainerRelations<'a> {
             }
         }
         self.answers.insert((class, interface), false);
+        Ok(false)
+    }
+
+    fn superclass_contains(
+        &mut self,
+        classes: &BTreeMap<&'a str, &'a RuntimeClass>,
+        class: &'a str,
+        interface: &'static str,
+    ) -> ImportResult<bool> {
+        self.ensure_available()?;
+        let superclass = classes
+            .get(class)
+            .copied()
+            .ok_or_else(|| {
+                unavailable(
+                    FactsUnavailableReason::MissingMetadata,
+                    "Missing plugin runtime class",
+                )
+            })?
+            .superclass
+            .as_deref()
+            .and_then(|id| classes.get(id).copied())
+            .ok_or_else(|| {
+                unavailable(
+                    FactsUnavailableReason::Capability,
+                    "Plugin runtime class has no captured immediate superclass",
+                )
+            })?;
+        let key = (superclass.id.as_str(), interface);
+        if let Some(answer) = self.direct_answers.get(&key) {
+            return Ok(*answer);
+        }
+        if superclass.interfaces.is_empty() {
+            // Known-empty metadata requires no traversal, preserving the budget
+            // for queries that actually examine class/interface edges.
+            self.direct_answers.insert(key, false);
+            return Ok(false);
+        }
+        self.charge()?;
+        for id in &superclass.interfaces {
+            // Following an interface examines both its edge and target vertex.
+            self.charge()?;
+            self.charge()?;
+            let direct = classes.get(id.as_str()).copied().ok_or_else(|| {
+                unavailable(
+                    FactsUnavailableReason::MissingMetadata,
+                    "Missing direct superclass interface",
+                )
+            })?;
+            if direct.name == interface {
+                self.direct_answers.insert(key, true);
+                return Ok(true);
+            }
+        }
+        self.direct_answers.insert(key, false);
         Ok(false)
     }
 }
@@ -318,42 +378,40 @@ impl<'a> StrictProjection<'a> {
         }
     }
 
-    fn superclass_interfaces(&self, object: &str) -> ImportResult<Vec<String>> {
+    fn superclass_has_interface(
+        &mut self,
+        object: &str,
+        interface: &'static str,
+    ) -> ImportResult<bool> {
         let class = self
             .objects
             .get(object)
-            .and_then(|object| self.classes.get(object.class_id.as_str()))
+            .copied()
+            .map(|object| object.class_id.as_str())
             .ok_or_else(|| {
                 unavailable(
                     FactsUnavailableReason::MissingMetadata,
                     "Missing plugin runtime class",
                 )
             })?;
-        let superclass = class
-            .superclass
-            .as_deref()
-            .and_then(|id| self.classes.get(id))
-            .ok_or_else(|| {
-                unavailable(
-                    FactsUnavailableReason::Capability,
-                    "Plugin runtime class has no captured immediate superclass",
-                )
-            })?;
-        superclass
-            .interfaces
-            .iter()
-            .map(|id| {
-                self.classes
-                    .get(id.as_str())
-                    .map(|class| class.name.clone())
-                    .ok_or_else(|| {
-                        unavailable(
-                            FactsUnavailableReason::MissingMetadata,
-                            "Missing direct superclass interface",
-                        )
-                    })
-            })
-            .collect()
+        self.container_relations
+            .superclass_contains(&self.classes, class, interface)
+    }
+
+    fn plugin_factory_interfaces(&mut self, plugins: &[String]) -> ImportResult<Vec<String>> {
+        // The reference consumes only this predicate. Retaining every
+        // shared interface name per project would multiply capture bytes.
+        let mut factory = false;
+        for plugin in plugins {
+            if self.superclass_has_interface(plugin, KOTLIN_JVM_FACTORY)? {
+                factory = true;
+            }
+        }
+        Ok(if factory {
+            vec![KOTLIN_JVM_FACTORY.to_owned()]
+        } else {
+            Vec::new()
+        })
     }
 
     fn android_base_plugin(&mut self, plan: &StrictKotlinProjectPlan) -> ImportResult<bool> {
@@ -510,11 +568,7 @@ impl<'a> StrictProjection<'a> {
                     "Plugin enumeration is not an official typed iteration",
                 ));
             }
-            let mut interfaces = BTreeSet::new();
-            for plugin in self.objects(request)? {
-                interfaces.extend(self.superclass_interfaces(plugin)?);
-            }
-            Ok(interfaces.into_iter().collect())
+            self.plugin_factory_interfaces(self.objects(request)?)
         })();
         let extension = (|| {
             let request = self.request(&plan.extension_lookup, &plan.project)?;
@@ -780,10 +834,13 @@ pub fn import_kotlin_from_strict_capture(
 }
 
 /// The decoder's traversal budget does not cover this subsequent projection.
-/// `limits.ancestry_steps` bounds cumulative examined vertices and edges across
-/// every project plan; callers can raise it for larger independently captured
-/// graphs. Exhaustion leaves Basic/import facts intact and supplies no Kotlin
-/// publication. Other capture limits apply when parsing the snapshot.
+/// `limits.ancestry_steps` bounds cumulative container ancestry and nonempty
+/// immediate-superclass direct-interface traversal across every project plan.
+/// Callers can raise it for larger independently captured graphs. Strict plugin
+/// interface observations retain only the reference's KotlinJvmFactory predicate;
+/// they do not duplicate complete runtime interface-name lists for each project.
+/// Exhaustion leaves Basic/import facts intact and supplies no Kotlin publication.
+/// Other capture limits apply when parsing the snapshot.
 pub fn import_kotlin_from_strict_capture_with_limits(
     model: &ProjectModel,
     identities: &ImportFactsSnapshot,
@@ -1919,9 +1976,7 @@ fn propose_kotlin_member(
             )
         })
         .count();
-    let factory = interfaces
-        .iter()
-        .any(|name| name == "org.jetbrains.kotlin.gradle.plugin.KotlinJvmFactory");
+    let factory = interfaces.iter().any(|name| name == KOTLIN_JVM_FACTORY);
     let singleton = legacy_count == 1 || platform_count == 1;
     let builtin = if singleton || !factory {
         false
@@ -2222,5 +2277,266 @@ mod tests {
         );
         assert_eq!(relations.steps, usize::MAX);
         assert!(relations.exhausted);
+    }
+
+    #[test]
+    fn direct_superclass_predicate_reuses_wide_shared_metadata_and_negative_answers()
+    -> ImportResult<()> {
+        let mut captured = vec![runtime_class("factory", KOTLIN_JVM_FACTORY, Vec::new())];
+        let mut interfaces = Vec::new();
+        for index in 0..32 {
+            let id = format!("noise-{index}");
+            captured.push(runtime_class(
+                &id,
+                &format!("org.example.Interface{index}.{}", "x".repeat(4096)),
+                Vec::new(),
+            ));
+            interfaces.push(id);
+        }
+        interfaces.push("factory".into());
+        captured.push(runtime_class("parent", "org.example.Parent", interfaces));
+        for index in 0..128 {
+            let mut plugin = runtime_class(
+                &format!("plugin-{index}"),
+                "org.example.SharedPluginName",
+                Vec::new(),
+            );
+            plugin.superclass = Some("parent".into());
+            captured.push(plugin);
+        }
+        let classes = captured
+            .iter()
+            .map(|class| (class.id.as_str(), class))
+            .collect();
+        let mut relations = ContainerRelations::new(134);
+        assert!(relations.superclass_contains(&classes, "plugin-0", KOTLIN_JVM_FACTORY)?);
+        assert!(!relations.superclass_contains(&classes, "plugin-0", "org.example.Absent")?);
+        assert_eq!(relations.steps, 134);
+        for _ in 0..8 {
+            for plugin in captured
+                .iter()
+                .filter(|class| class.id.starts_with("plugin-"))
+            {
+                let id = plugin.id.as_str();
+                assert!(relations.superclass_contains(&classes, id, KOTLIN_JVM_FACTORY)?);
+                assert!(!relations.superclass_contains(&classes, id, "org.example.Absent")?);
+            }
+        }
+        assert_eq!(relations.steps, 134);
+        assert!(!relations.exhausted);
+        Ok(())
+    }
+
+    #[test]
+    fn direct_superclass_predicate_separates_class_ids_targets_and_transitive_queries()
+    -> ImportResult<()> {
+        let mut first = runtime_class("first", "org.example.SamePlugin", Vec::new());
+        first.superclass = Some("first-parent".into());
+        let mut second = runtime_class("second", "org.example.SamePlugin", vec!["factory".into()]);
+        second.loader = "other-loader".into();
+        second.superclass = Some("second-parent".into());
+        let first_parent = runtime_class(
+            "first-parent",
+            "org.example.SameParent",
+            vec!["factory".into()],
+        );
+        let mut second_parent = runtime_class(
+            "second-parent",
+            "org.example.SameParent",
+            vec!["bridge".into()],
+        );
+        second_parent.loader = "other-loader".into();
+        second_parent.superclass = Some("first-parent".into());
+        let captured = [
+            runtime_class("factory", KOTLIN_JVM_FACTORY, Vec::new()),
+            runtime_class("bridge", "org.example.Bridge", vec!["factory".into()]),
+            first_parent,
+            second_parent,
+            first,
+            second,
+        ];
+        let classes = captured
+            .iter()
+            .map(|class| (class.id.as_str(), class))
+            .collect();
+        let mut relations = ContainerRelations::new(128);
+        assert!(relations.contains(&classes, "second", KOTLIN_JVM_FACTORY)?);
+        assert!(!relations.superclass_contains(&classes, "second", KOTLIN_JVM_FACTORY)?);
+        assert!(relations.superclass_contains(&classes, "first", KOTLIN_JVM_FACTORY)?);
+        assert!(!relations.superclass_contains(&classes, "first", "org.example.Bridge")?);
+        assert!(relations.superclass_contains(&classes, "second", "org.example.Bridge")?);
+        let initial_steps = relations.steps;
+        relations.limit = initial_steps;
+        for _ in 0..1000 {
+            assert!(relations.superclass_contains(&classes, "first", KOTLIN_JVM_FACTORY)?);
+            assert!(!relations.superclass_contains(&classes, "second", KOTLIN_JVM_FACTORY)?);
+            assert!(!relations.superclass_contains(&classes, "first", "org.example.Bridge")?);
+            assert!(relations.superclass_contains(&classes, "second", "org.example.Bridge")?);
+        }
+        assert_eq!(relations.steps, initial_steps);
+        Ok(())
+    }
+
+    #[test]
+    fn empty_direct_superclass_interfaces_require_no_traversal_budget() -> ImportResult<()> {
+        let mut plugin = runtime_class("plugin", "org.example.Plugin", Vec::new());
+        plugin.superclass = Some("object".into());
+        let captured = [
+            runtime_class("object", "java.lang.Object", Vec::new()),
+            runtime_class("factory", KOTLIN_JVM_FACTORY, Vec::new()),
+            plugin,
+        ];
+        let classes = captured
+            .iter()
+            .map(|class| (class.id.as_str(), class))
+            .collect();
+        let mut relations = ContainerRelations::new(0);
+        for _ in 0..1000 {
+            assert!(!relations.superclass_contains(&classes, "plugin", KOTLIN_JVM_FACTORY)?);
+        }
+        assert_eq!(relations.steps, 0);
+        assert_eq!(
+            relations
+                .contains(&classes, "factory", KOTLIN_JVM_FACTORY)
+                .expect_err("An uncached vertex needs traversal budget")
+                .reason,
+            FactsUnavailableReason::UnsupportedShape
+        );
+        assert_eq!(
+            relations
+                .superclass_contains(&classes, "plugin", KOTLIN_JVM_FACTORY)
+                .expect_err("Known-empty cached evidence cannot escape exhaustion")
+                .reason,
+            FactsUnavailableReason::UnsupportedShape
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn direct_superclass_budget_is_cumulative_with_container_queries() -> ImportResult<()> {
+        let mut plugin = runtime_class("plugin", "org.example.Plugin", Vec::new());
+        plugin.superclass = Some("parent".into());
+        let captured = [
+            runtime_class("factory", KOTLIN_JVM_FACTORY, Vec::new()),
+            runtime_class("parent", "org.example.Parent", vec!["factory".into()]),
+            runtime_class(
+                "plugins",
+                "org.gradle.api.plugins.PluginContainer",
+                Vec::new(),
+            ),
+            runtime_class(
+                "extensions",
+                "org.gradle.api.plugins.ExtensionContainer",
+                Vec::new(),
+            ),
+            plugin,
+        ];
+        let classes = captured
+            .iter()
+            .map(|class| (class.id.as_str(), class))
+            .collect();
+        let mut relations = ContainerRelations::new(4);
+        assert!(relations.contains(
+            &classes,
+            "plugins",
+            "org.gradle.api.plugins.PluginContainer"
+        )?);
+        assert!(relations.superclass_contains(&classes, "plugin", KOTLIN_JVM_FACTORY)?);
+        assert_eq!(relations.steps, 4);
+        assert!(relations.superclass_contains(&classes, "plugin", KOTLIN_JVM_FACTORY)?);
+        assert_eq!(
+            relations
+                .contains(
+                    &classes,
+                    "extensions",
+                    "org.gradle.api.plugins.ExtensionContainer",
+                )
+                .expect_err("Direct and transitive queries share the work budget")
+                .reason,
+            FactsUnavailableReason::UnsupportedShape
+        );
+        assert_eq!(
+            relations
+                .superclass_contains(&classes, "plugin", KOTLIN_JVM_FACTORY)
+                .expect_err("An exhausted projection cannot return cached direct evidence")
+                .reason,
+            FactsUnavailableReason::UnsupportedShape
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn shared_project_plugin_metadata_retains_only_the_factory_marker() -> ImportResult<()> {
+        for factory_present in [false, true] {
+            let mut captured = vec![runtime_class("factory", KOTLIN_JVM_FACTORY, Vec::new())];
+            let mut interfaces = Vec::new();
+            for index in 0..32 {
+                let id = format!("noise-{index}");
+                captured.push(runtime_class(
+                    &id,
+                    &format!("org.example.Interface{index}.{}", "x".repeat(4096)),
+                    Vec::new(),
+                ));
+                interfaces.push(id);
+            }
+            if factory_present {
+                interfaces.push("factory".into());
+            }
+            captured.push(runtime_class("parent", "org.example.Parent", interfaces));
+            let mut plugin = runtime_class("plugin", "org.example.Plugin", Vec::new());
+            plugin.superclass = Some("parent".into());
+            captured.push(plugin);
+            let objects = (0..128)
+                .map(|index| CaptureObject {
+                    id: format!("plugin-object-{index}"),
+                    kind: ObjectKind::Plugin,
+                    project: format!(":project-{index}"),
+                    class_id: "plugin".into(),
+                    task: None,
+                })
+                .collect::<Vec<_>>();
+            let mut projection = StrictProjection {
+                events: BTreeMap::new(),
+                requests: BTreeMap::new(),
+                objects: objects
+                    .iter()
+                    .map(|object| (object.id.as_str(), object))
+                    .collect(),
+                classes: captured
+                    .iter()
+                    .map(|class| (class.id.as_str(), class))
+                    .collect(),
+                methods: BTreeMap::new(),
+                container_relations: ContainerRelations::new(67),
+            };
+            let retained = objects
+                .iter()
+                .map(|object| {
+                    projection.plugin_factory_interfaces(std::slice::from_ref(&object.id))
+                })
+                .collect::<ImportResult<Vec<_>>>()?;
+            let expected = if factory_present {
+                vec![KOTLIN_JVM_FACTORY.to_owned()]
+            } else {
+                Vec::new()
+            };
+            assert_eq!(retained.len(), objects.len());
+            assert!(retained.iter().all(|interfaces| interfaces == &expected));
+            assert_eq!(
+                retained.iter().flatten().map(String::len).sum::<usize>(),
+                if factory_present {
+                    objects.len() * KOTLIN_JVM_FACTORY.len()
+                } else {
+                    0
+                }
+            );
+            assert_eq!(
+                projection.container_relations.steps,
+                if factory_present { 67 } else { 65 }
+            );
+            assert_eq!(projection.container_relations.direct_answers.len(), 1);
+            assert!(!projection.container_relations.exhausted);
+        }
+        Ok(())
     }
 }

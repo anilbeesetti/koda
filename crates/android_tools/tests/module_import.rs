@@ -1643,3 +1643,180 @@ fn strict_repeated_task_ids_are_rejected_before_payload_projection() -> Result<(
     assert!(publisher.committed().is_none());
     Ok(())
 }
+
+fn strict_wide_builtin(
+    value: &mut Value,
+    plan: &mut StrictKotlinProjectPlan,
+    distinct_plugins: bool,
+    factory_present: bool,
+) -> Result<()> {
+    set_strict_plugin_ids(value, plan, &["com.android.library"])?;
+    set_strict_factory_location(value, "immediate")?;
+    add_strict_android_base_predicate(value, plan, true)?;
+    let classes = value["kotlinFacts"]["context"]["runtime"]["classes"]
+        .as_array_mut()
+        .context("Runtime classes")?;
+    let template = classes
+        .iter()
+        .find(|class| class["id"] == "jvm-factory")
+        .context("Factory interface")?
+        .clone();
+    let mut interfaces = Vec::new();
+    for index in 0..32 {
+        let id = format!("wide-interface-{index}");
+        let mut interface = template.clone();
+        interface["id"] = json!(id);
+        interface["name"] = json!(format!("synthetic.Interface{index}.{}", "x".repeat(8192)));
+        classes.push(interface);
+        interfaces.push(id);
+    }
+    if factory_present {
+        interfaces.push("jvm-factory".into());
+    }
+    classes
+        .iter_mut()
+        .find(|class| class["id"] == "plugin-parent")
+        .context("Immediate plugin superclass")?["interfaces"] = json!(interfaces);
+    let objects = value["kotlinFacts"]["context"]["objects"]
+        .as_array_mut()
+        .context("Runtime objects")?;
+    let template = objects
+        .iter()
+        .find(|object| object["id"] == "kotlin-plugin")
+        .context("Plugin runtime object")?
+        .clone();
+    let mut plugins = Vec::new();
+    for index in 0..512 {
+        if distinct_plugins {
+            let id = format!("shared-plugin-{index}");
+            let mut plugin = template.clone();
+            plugin["id"] = json!(id);
+            objects.push(plugin);
+            plugins.push(id);
+        } else {
+            plugins.push("kotlin-plugin".into());
+        }
+    }
+    let events = value["kotlinFacts"]["events"]
+        .as_array_mut()
+        .context("Strict getter events")?;
+    events
+        .iter_mut()
+        .find(|event| event["request"] == plan.plugin_iteration.as_str())
+        .context("Plugin enumeration event")?["outcome"]["value"]["value"] = json!(plugins);
+    if !factory_present {
+        events
+            .iter_mut()
+            .find(|event| event["request"] == plan.extension_lookup.as_str())
+            .context("Kotlin extension event")?["outcome"]["value"] = Value::Null;
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_builtin_shared_metadata_caches_positive_and_negative_predicates() -> Result<()> {
+    for distinct_plugins in [false, true] {
+        for factory_present in [false, true] {
+            let mut fixture = fixture()?;
+            let (mut value, _, mut plan) = strict_fixture(&fixture)?;
+            strict_wide_builtin(&mut value, &mut plan, distinct_plugins, factory_present)?;
+            let expected: CaptureContext =
+                serde_json::from_value(value["kotlinFacts"]["context"].clone())?;
+            let snapshot = parse_kotlin_facts(
+                &wire(&value)?,
+                &fixture.model,
+                &fixture.identity,
+                &expected,
+                CaptureLimits::default(),
+            )?;
+            assert_eq!(snapshot.raw_context(), &expected);
+            fixture.kotlin =
+                android_tools::module_import::import_kotlin_from_strict_capture_with_limits(
+                    &fixture.model,
+                    &fixture.identity,
+                    &snapshot,
+                    &expected,
+                    &revision(&fixture, 1),
+                    &[plan],
+                    CaptureLimits {
+                        ancestry_steps: 69,
+                        ..CaptureLimits::default()
+                    },
+                )?;
+            let mut publisher = ModuleImportPublisher::default();
+            publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+            let module = &publisher
+                .committed()
+                .context("Shared plugin metadata publication")?
+                .modules[":android"];
+            if factory_present {
+                assert_eq!(module.kotlin_capability(), KotlinCapability::Enabled);
+                assert!(matches!(
+                    module.members[1].kotlin,
+                    KotlinMemberState::Present(_)
+                ));
+                assert_eq!(
+                    committed_settings(&publisher)?.target_platform.as_deref(),
+                    Some("JVM")
+                );
+            } else {
+                assert_eq!(module.kotlin_capability(), KotlinCapability::Disabled);
+                assert_eq!(module.members[1].kotlin, KotlinMemberState::Absent);
+            }
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_builtin_direct_interface_budget_failure_preserves_existing_publication() -> Result<()> {
+    let mut fixture = fixture()?;
+    let (initial_value, _, initial_plan) = strict_fixture(&fixture)?;
+    fixture.kotlin = import_strict_case(&fixture, &initial_value, &initial_plan)?;
+    let mut publisher = ModuleImportPublisher::default();
+    publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+    let before = publisher.committed().context("Prior publication")?.clone();
+    let before_root = fixture.model.root.clone();
+    let before_binding = fixture.identity.binding().clone();
+    let issued = revision(&fixture, 2);
+    let (mut value, _, mut plan) = strict_fixture(&fixture)?;
+    strict_wide_builtin(&mut value, &mut plan, true, true)?;
+    let expected: CaptureContext = serde_json::from_value(value["kotlinFacts"]["context"].clone())?;
+    let snapshot = parse_kotlin_facts(
+        &wire(&value)?,
+        &fixture.model,
+        &fixture.identity,
+        &expected,
+        CaptureLimits::default(),
+    )?;
+    assert_eq!(
+        android_tools::module_import::import_kotlin_from_strict_capture_with_limits(
+            &fixture.model,
+            &fixture.identity,
+            &snapshot,
+            &expected,
+            &issued,
+            &[plan],
+            CaptureLimits {
+                ancestry_steps: 2,
+                ..CaptureLimits::default()
+            },
+        )
+        .expect_err("Nonempty direct interfaces cannot exceed the shared work budget")
+        .reason,
+        FactsUnavailableReason::UnsupportedShape
+    );
+    assert_eq!(fixture.model.root, before_root);
+    assert_eq!(fixture.identity.binding(), &before_binding);
+    assert!(fixture.identity.project(":android").is_ok());
+    let retained = publisher
+        .committed()
+        .context("Prior publication retained")?;
+    assert_eq!(retained.revision, before.revision);
+    assert_eq!(retained.modules, before.modules);
+    assert_eq!(
+        retained.modules[":android"].kotlin_capability(),
+        KotlinCapability::Enabled
+    );
+    Ok(())
+}
