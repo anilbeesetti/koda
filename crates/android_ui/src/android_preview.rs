@@ -3067,11 +3067,11 @@ mod tests {
         )
         .await;
         let publish = |cx: &mut App| -> Result<()> {
-            let record = serde_json::json!({"schema":1,"root":"/sibling-parent","gradleVersion":"9.6.1","phase":"complete", "modules":[
+            let record = serde_json::json!({"schema":1,"root":"/sibling-parent","gradleVersion":"9.6.1","phase":"complete", "modules":([
                 (":", "/sibling-parent", false), (":app", "/sibling-app", true), (":independent", "/independent-jvm", true)
             ].map(|(module,directory,android)|serde_json::json!({"path":module,"directory":directory,
                 "plugins":PluginId::ALL.map(|plugin|serde_json::json!({"plugin":plugin,"applied":android && matches!(plugin, PluginId::AndroidApplication | PluginId::ComposeCompiler)})),
-                "targets":{"status":"available","value":if android {vec![serde_json::json!({"name":"android","platform":"androidJvm"})]} else {vec![]}}}))});
+                "targets":{"status":"available","value":if android {vec![serde_json::json!({"name":"android","platform":"androidJvm"})]} else {vec![]}}})))});
             let snapshot =
                 decode_context_record(&serde_json::to_vec(&record)?, Path::new("/sibling-parent"))?;
             project.update(cx, |project, cx| {
@@ -3339,11 +3339,11 @@ mod tests {
         .await;
         cx.update(|cx| {
             project_surfaces::tests::trust(&project, cx)?;
-            let record = serde_json::json!({"schema":1,"root":"/watch-parent","gradleVersion":"9.6.1","phase":"complete", "modules":[
+            let record = serde_json::json!({"schema":1,"root":"/watch-parent","gradleVersion":"9.6.1","phase":"complete", "modules":([
                 (":", "/watch-parent", false), (":app", "/watch-sibling", true)
             ].map(|(module,directory,android)|serde_json::json!({"path":module,"directory":directory,
                 "plugins":PluginId::ALL.map(|plugin|serde_json::json!({"plugin":plugin,"applied":android && matches!(plugin, PluginId::AndroidApplication | PluginId::ComposeCompiler)})),
-                "targets":{"status":"available","value":if android {vec![serde_json::json!({"name":"android","platform":"androidJvm"})]} else {vec![]}}}))});
+                "targets":{"status":"available","value":if android {vec![serde_json::json!({"name":"android","platform":"androidJvm"})]} else {vec![]}}})))});
             let snapshot = decode_context_record(&serde_json::to_vec(&record)?, Path::new("/watch-parent"))?;
             project.update(cx, |project, cx| {
                 let worktree = project.visible_worktrees(cx)

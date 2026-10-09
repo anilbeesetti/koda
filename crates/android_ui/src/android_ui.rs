@@ -5373,10 +5373,10 @@ mod tests {
         use android_tools::project_context::{ActiveContext, PluginId, decode_context_record};
         // These evaluated-getter records qualify inherited backend fixtures. Actual Gradle evaluation remains a separate test gate.
         let payload = json!({"schema":1,"root":root,"gradleVersion":"9.6.1","phase":"complete",
-            "modules":[(":",root.to_path_buf()),(":app",root.join("app")),(":mobile",root.join("mobile"))].map(|(module,directory)|json!({
+            "modules":([(":",root.to_path_buf()),(":app",root.join("app")),(":mobile",root.join("mobile"))].map(|(module,directory)|json!({
                 "path":module,"directory":directory,
                 "plugins":PluginId::ALL.map(|plugin|json!({"plugin":plugin,"applied":matches!(plugin, PluginId::AndroidApplication | PluginId::KotlinAndroid | PluginId::ComposeCompiler)})),
-                "targets":{"status":"available","value":[{"name":"android","platform":"androidJvm"}]}}))});
+                "targets":{"status":"available","value":[{"name":"android","platform":"androidJvm"}]}})))});
         let snapshot = decode_context_record(&serde_json::to_vec(&payload)?, root)?;
         project.update(cx, |project, cx| {
             let worktree = project
@@ -5704,11 +5704,11 @@ mod tests {
         .await;
         cx.update(|cx| {
             project_surfaces::tests::trust(&project, cx)?;
-            let record = json!({"schema":1,"root":"/input-parent","gradleVersion":"9.6.1","phase":"complete", "modules":[
+            let record = json!({"schema":1,"root":"/input-parent","gradleVersion":"9.6.1","phase":"complete", "modules":([
                 (":", "/input-parent", false), (":app", "/input-sibling", true)
             ].map(|(module,directory,android)|json!({"path":module,"directory":directory,
                 "plugins":PluginId::ALL.map(|plugin|json!({"plugin":plugin,"applied":android && matches!(plugin, PluginId::AndroidApplication | PluginId::ComposeCompiler)})),
-                "targets":{"status":"available","value":if android {vec![json!({"name":"android","platform":"androidJvm"})]} else {vec![]}}}))});
+                "targets":{"status":"available","value":if android {vec![json!({"name":"android","platform":"androidJvm"})]} else {vec![]}}})))});
             let snapshot = decode_context_record(&serde_json::to_vec(&record)?, Path::new("/input-parent"))?;
             project.update(cx, |project, cx| {
                 let worktree = project.visible_worktrees(cx)
