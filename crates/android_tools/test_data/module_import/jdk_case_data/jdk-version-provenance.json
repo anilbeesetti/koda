@@ -1,0 +1,74 @@
+[
+  {
+    "jdk": 17,
+    "expected": "13.0",
+    "observed": "13.0",
+    "url": "https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Character.html",
+    "bytes": 305130,
+    "sha256": "c1bb90f148c1b88cba87a3c370389d0267b8c16d15eae9d84b2e442f0f29330b"
+  },
+  {
+    "jdk": 18,
+    "expected": "13.0",
+    "observed": "13.0",
+    "url": "https://docs.oracle.com/en/java/javase/18/docs/api/java.base/java/lang/Character.html",
+    "bytes": 306914,
+    "sha256": "e3534afd4759f0e54aa2f66c0c25ddab43c34b028292a6bfedf9e5182d340ea9"
+  },
+  {
+    "jdk": 19,
+    "expected": "14.0",
+    "observed": "14.0",
+    "url": "https://docs.oracle.com/en/java/javase/19/docs/api/java.base/java/lang/Character.html",
+    "bytes": 306882,
+    "sha256": "998c8f389337776a97ceb07a868e58509df55f7b81b6f40840291fa07252d013"
+  },
+  {
+    "jdk": 20,
+    "expected": "15.0",
+    "observed": "15.0",
+    "url": "https://docs.oracle.com/en/java/javase/20/docs/api/java.base/java/lang/Character.html",
+    "bytes": 306881,
+    "sha256": "7bb2018dabbc2f756a97c388b2fd4603e8004d17174bb5c6677e0b5f5005f308"
+  },
+  {
+    "jdk": 21,
+    "expected": "15.0",
+    "observed": "15.0",
+    "url": "https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/Character.html",
+    "bytes": 318436,
+    "sha256": "15d02b4c047ab53bca44bca420ef546e9dc9846d5c201751ccdfeff3fd52385e"
+  },
+  {
+    "jdk": 22,
+    "expected": "15.1",
+    "observed": "15.1",
+    "url": "https://docs.oracle.com/en/java/javase/22/docs/api/java.base/java/lang/Character.html",
+    "bytes": 325268,
+    "sha256": "48aa66be2193781a1e8b36323b1b33052b381b13615909461e45d0bc40604134"
+  },
+  {
+    "jdk": 23,
+    "expected": "15.1",
+    "observed": "15.1",
+    "url": "https://docs.oracle.com/en/java/javase/23/docs/api/java.base/java/lang/Character.html",
+    "bytes": 338922,
+    "sha256": "07ed858986e6d2a3c22e01a4ca6cd63617d74666ee579ec0fdde6984b55b96dc"
+  },
+  {
+    "jdk": 24,
+    "expected": "16.0",
+    "observed": "16.0",
+    "url": "https://docs.oracle.com/en/java/javase/24/docs/api/java.base/java/lang/Character.html",
+    "bytes": 339042,
+    "sha256": "44f48067767859dba5157d95428e3857c7bc3b1bb6cce67cb89c5804f077e018"
+  },
+  {
+    "jdk": 25,
+    "expected": "16.0",
+    "observed": "16.0",
+    "url": "https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Character.html",
+    "bytes": 338862,
+    "sha256": "ff395a2387eea0958083e637858f07557cd9986c9d68438c77f8fec8bad22139"
+  }
+]

@@ -2677,3 +2677,244 @@ fn strict_requested_source_sets_preserve_order_and_filter_each_original_call() -
     }
     Ok(())
 }
+
+fn unicode_source_set_fixture(source_set: &str) -> Result<Fixture> {
+    let mut fixture = main_source_set_fixture()?;
+    // Supplemental casing/publication adapter input, constructed after valid
+    // Basic parsing. Basic's ASCII component-name restriction is unchanged;
+    // this fixture proves no end-to-end Unicode-named Android model import.
+    fixture
+        .model
+        .modules
+        .iter_mut()
+        .find(|module| module.path == ":android")
+        .context("Synthetic Unicode source module")?
+        .variants
+        .iter_mut()
+        .find(|variant| variant.name == "debug")
+        .context("Synthetic Unicode source variant")?
+        .components
+        .iter_mut()
+        .find(|component| component.name == "main")
+        .context("Validated Main component")?
+        .name = source_set.into();
+    Ok(fixture)
+}
+
+fn unicode_source_capture(
+    fixture: &Fixture,
+    java_version: &str,
+    parameter: &str,
+    source_set: &str,
+    arguments: &[&str],
+) -> Result<(Value, StrictKotlinProjectPlan)> {
+    let (mut value, _, plan) =
+        strict_main_capture(fixture, "synthetic-versioned-Unicode-selection", arguments)?;
+    value["kotlinFacts"]["context"]["runtime"]["java"]["version"] = json!(java_version);
+    value["kotlinFacts"]["context"]["runtime"]["locale"]["identifier"] = json!("en-US");
+    requested_parameter(&mut value, &json!({"kind": "explicit", "value": parameter}))?;
+    value["kotlinFacts"]["events"]
+        .as_array_mut()
+        .context("Versioned source events")?
+        .iter_mut()
+        .find(|event| event["request"] == "source-first")
+        .context("Versioned source getter")?["outcome"]["value"] =
+        json!({"kind": "string", "value": source_set});
+    Ok((value, plan))
+}
+
+fn committed_source_state<'a>(
+    publisher: &'a ModuleImportPublisher,
+    source_set: &str,
+) -> Result<&'a KotlinMemberState> {
+    Ok(&publisher
+        .committed()
+        .context("Committed Unicode selection")?
+        .modules[":android"]
+        .members
+        .iter()
+        .find(|member| member.source_set_name.as_deref() == Some(source_set))
+        .context("Unicode source-set member")?
+        .kotlin)
+}
+
+#[test]
+fn strict_jdk_unicode_versions_control_first_import_and_reimport_selection() -> Result<()> {
+    for (java_version, parameter, included) in [
+        ("17.0.17", "\u{a7cc}", false),
+        ("21.0.9", "\u{a7cc}", false),
+        ("25.0.1", "\u{a7cc}", true),
+        ("21.0.9", "\u{a7cd}", true),
+    ] {
+        let source_set = "\u{a7cd}";
+        let mut fixture = unicode_source_set_fixture(source_set)?;
+        let (initial, initial_plan) = unicode_source_capture(
+            &fixture,
+            java_version,
+            source_set,
+            source_set,
+            &["-Xprior-Unicode"],
+        )?;
+        import_requested_capture(&mut fixture, &initial, initial_plan, 1)?;
+        let mut prior = ModuleImportPublisher::default();
+        prior.commit(stage(&fixture, &prior, 1)?, &revision(&fixture, 1))?;
+        let old = committed_settings(&prior)?.clone();
+        let (value, plan) = unicode_source_capture(
+            &fixture,
+            java_version,
+            parameter,
+            source_set,
+            &["-Xnew-Unicode"],
+        )?;
+        let snapshot = import_requested_capture(&mut fixture, &value, plan, 2)?;
+        let mut fresh = ModuleImportPublisher::default();
+        fresh.commit(stage(&fixture, &fresh, 2)?, &revision(&fixture, 2))?;
+        prior.commit(stage(&fixture, &prior, 2)?, &revision(&fixture, 2))?;
+        if included {
+            assert_eq!(
+                committed_settings(&fresh)?.compiler_arguments,
+                Some(vec!["-Xnew-Unicode".into()])
+            );
+            assert_eq!(
+                committed_settings(&prior)?.compiler_arguments,
+                Some(vec!["-Xnew-Unicode".into()])
+            );
+        } else {
+            assert_eq!(
+                committed_source_state(&fresh, source_set)?,
+                &KotlinMemberState::Unknown(KotlinUnknownReason::MissingSourceSet)
+            );
+            assert_eq!(committed_settings(&prior)?, &old);
+        }
+        assert_eq!(snapshot.raw_context().runtime.java.version, java_version);
+        assert!(
+            snapshot
+                .raw_context()
+                .requests
+                .iter()
+                .all(|request| request.parameter
+                    == android_tools::kotlin_import_facts::RequestParameter::Explicit(Some(
+                        parameter.into()
+                    )))
+        );
+        assert_eq!(
+            snapshot
+                .raw_events()
+                .iter()
+                .find(|event| event.request == "source-first")
+                .context("Retained raw Unicode getter")?
+                .outcome,
+            android_tools::kotlin_import_facts::GetterOutcome::Available(Some(
+                android_tools::kotlin_import_facts::CaptureValue::String(source_set.into())
+            ))
+        );
+        assert_eq!(
+            prior
+                .committed()
+                .context("Advanced Unicode import")?
+                .revision
+                .import_revision,
+            2
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_unknown_jdk_non_ascii_selection_remains_unavailable_and_preserves_prior_import()
+-> Result<()> {
+    let source_set = "\u{a7cd}";
+    let mut fixture = unicode_source_set_fixture(source_set)?;
+    let (initial, initial_plan) =
+        unicode_source_capture(&fixture, "21", source_set, source_set, &["-Xprior-Unicode"])?;
+    import_requested_capture(&mut fixture, &initial, initial_plan, 1)?;
+    let mut prior = ModuleImportPublisher::default();
+    prior.commit(stage(&fixture, &prior, 1)?, &revision(&fixture, 1))?;
+    let old = committed_settings(&prior)?.clone();
+    let (value, plan) = unicode_source_capture(
+        &fixture,
+        "unsupported-JDK",
+        source_set,
+        source_set,
+        &["-Xmust-not-publish"],
+    )?;
+    let snapshot = import_requested_capture(&mut fixture, &value, plan, 2)?;
+    let mut fresh = ModuleImportPublisher::default();
+    fresh.commit(stage(&fixture, &fresh, 2)?, &revision(&fixture, 2))?;
+    assert!(
+        matches!(committed_source_state(&fresh, source_set)?, KotlinMemberState::Unknown(KotlinUnknownReason::GetterUnavailable(detail)) if detail.contains("supported Unicode casing data"))
+    );
+    assert!(
+        fresh
+            .committed()
+            .context("Basic Unicode import retained")?
+            .modules
+            .contains_key(":android")
+    );
+    prior.commit(stage(&fixture, &prior, 2)?, &revision(&fixture, 2))?;
+    assert_eq!(committed_settings(&prior)?, &old);
+    assert_eq!(
+        snapshot.raw_context().runtime.java.version,
+        "unsupported-JDK"
+    );
+    Ok(())
+}
+
+#[test]
+fn strict_unknown_jdk_keeps_ascii_and_unfiltered_selection_usable() -> Result<()> {
+    for parameter in [
+        json!({"kind": "absent", "value": null}),
+        json!({"kind": "explicit", "value": null}),
+        json!({"kind": "explicit", "value": "MAIN"}),
+    ] {
+        let mut fixture = main_source_set_fixture()?;
+        let (mut value, _, plan) =
+            strict_main_capture(&fixture, "synthetic-unknown-JDK-ASCII", &["-XASCII"])?;
+        value["kotlinFacts"]["context"]["runtime"]["java"]["version"] = json!("unsupported-JDK");
+        value["kotlinFacts"]["context"]["runtime"]["locale"]["identifier"] = json!("en-US");
+        requested_parameter(&mut value, &parameter)?;
+        import_requested_capture(&mut fixture, &value, plan, 1)?;
+        let mut publisher = ModuleImportPublisher::default();
+        publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+        assert_eq!(
+            committed_settings(&publisher)?.compiler_arguments,
+            Some(vec!["-XASCII".into()])
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_unknown_jdk_literal_wildcard_still_excludes_non_ascii_source() -> Result<()> {
+    let source_set = "\u{a7cd}";
+    let mut fixture = unicode_source_set_fixture(source_set)?;
+    let (value, plan) = unicode_source_capture(
+        &fixture,
+        "unsupported-JDK",
+        "*",
+        source_set,
+        &["-Xmust-not-publish"],
+    )?;
+    let snapshot = import_requested_capture(&mut fixture, &value, plan, 1)?;
+    let mut publisher = ModuleImportPublisher::default();
+    publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+    assert_eq!(
+        committed_source_state(&publisher, source_set)?,
+        &KotlinMemberState::Unknown(KotlinUnknownReason::MissingSourceSet)
+    );
+    assert!(
+        snapshot
+            .raw_context()
+            .requests
+            .iter()
+            .all(|request| request.parameter
+                == android_tools::kotlin_import_facts::RequestParameter::Explicit(Some(
+                    "*".into()
+                )))
+    );
+    assert_eq!(
+        snapshot.raw_context().runtime.java.version,
+        "unsupported-JDK"
+    );
+    Ok(())
+}

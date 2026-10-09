@@ -48,6 +48,9 @@ pub const COMPILE_TASKS: &str = "org.gradle.api.Project.getAllTasks(false)";
 pub const SOURCE_SET_NAME: &str = "org.jetbrains.kotlin.gradle.tasks.getSourceSetName*()";
 pub const COMPILER_ARGUMENTS: &str = "org.jetbrains.kotlin.gradle.plugin.ide.IdeCompilerArgumentsResolver.instance(Project).resolveCompilerArguments(task)";
 
+#[path = "jdk_source_set_case.rs"]
+mod jdk_source_set_case;
+
 type ImportResult<T> = Result<T, FactsUnavailable>;
 
 fn unavailable(reason: FactsUnavailableReason, detail: impl Into<String>) -> FactsUnavailable {
@@ -121,7 +124,7 @@ pub struct KotlinImportFacts {
     identity: Vec<ModuleIdentity>,
     projects: BTreeMap<String, RawKotlinProject>,
     android_base_plugins: BTreeMap<String, GetterObservation<bool>>,
-    requested_source_sets: BTreeMap<String, Vec<bool>>,
+    requested_source_sets: BTreeMap<String, Vec<ImportResult<bool>>>,
     capture_context: Option<CaptureContext>,
     capture_revision: Option<ImportRevision>,
 }
@@ -169,13 +172,20 @@ struct StrictProjection<'a> {
 
 struct RequestedSourceSets<'a> {
     locale: icu_locale_core::LanguageIdentifier,
+    casing: jdk_source_set_case::JdkCaseMap,
     // A model call may issue many task getters with the same parameter; retain
     // one folded token set rather than expanding it for every task.
     parameters: BTreeMap<&'a str, BTreeSet<String>>,
+    parameter_errors: BTreeMap<&'a str, FactsUnavailable>,
 }
 
 impl<'a> RequestedSourceSets<'a> {
+    #[cfg(test)]
     fn new(identifier: &str) -> ImportResult<Self> {
+        Self::for_runtime(identifier, "17")
+    }
+
+    fn for_runtime(identifier: &str, java_version: &str) -> ImportResult<Self> {
         let locale = identifier
             .parse::<icu_locale_core::Locale>()
             .map_err(|error| {
@@ -186,29 +196,55 @@ impl<'a> RequestedSourceSets<'a> {
             })?;
         Ok(Self {
             locale: locale.id,
+            casing: jdk_source_set_case::JdkCaseMap::for_version(java_version),
             parameters: BTreeMap::new(),
+            parameter_errors: BTreeMap::new(),
         })
     }
 
+    #[cfg(test)]
     fn allows(&mut self, request: &'a GetterRequest, source_set: &str) -> bool {
+        self.try_allows(request, source_set)
+            .expect("Supported test casing provenance")
+    }
+
+    fn try_allows(&mut self, request: &'a GetterRequest, source_set: &str) -> ImportResult<bool> {
         let RequestParameter::Explicit(Some(parameter)) = &request.parameter else {
-            return true;
+            return Ok(true);
         };
-        let mapper = icu_casemap::CaseMapper::new();
-        let requested = self
+        // The reference treats '*' as a literal token. No Unicode lowercase
+        // mapping can create it, so this comparison needs no JDK data.
+        if parameter == "*" {
+            return Ok(source_set == "*");
+        }
+        if let Some(error) = self.parameter_errors.get(parameter.as_str()) {
+            return Err(error.clone());
+        }
+        let fold = |name: &str| {
+            self.casing
+                .lowercase(name, self.locale.language.as_str())
+                .map_err(|detail| unavailable(FactsUnavailableReason::UnsupportedShape, detail))
+        };
+        if !self.parameters.contains_key(parameter.as_str()) {
+            match parameter
+                .split(',')
+                .map(fold)
+                .collect::<ImportResult<BTreeSet<_>>>()
+            {
+                Ok(folded) => {
+                    self.parameters.insert(parameter, folded);
+                }
+                Err(error) => {
+                    self.parameter_errors.insert(parameter, error.clone());
+                    return Err(error);
+                }
+            }
+        }
+        let source = fold(source_set)?;
+        Ok(self
             .parameters
-            .entry(parameter.as_str())
-            .or_insert_with(|| {
-                parameter
-                    .split(',')
-                    .map(|name| mapper.lowercase_to_string(name, &self.locale).into_owned())
-                    .collect()
-            });
-        requested.contains(
-            mapper
-                .lowercase_to_string(source_set, &self.locale)
-                .as_ref(),
-        )
+            .get(parameter.as_str())
+            .is_some_and(|requested| requested.contains(&source)))
     }
 }
 
@@ -568,7 +604,7 @@ impl<'a> StrictProjection<'a> {
         &mut self,
         plan: &StrictKotlinProjectPlan,
         requested: &mut RequestedSourceSets<'a>,
-    ) -> ImportResult<(RawKotlinProject, Vec<bool>)> {
+    ) -> ImportResult<(RawKotlinProject, Vec<ImportResult<bool>>)> {
         if plan
             .plugin_lookups
             .keys()
@@ -840,9 +876,9 @@ impl<'a> StrictProjection<'a> {
                 }
                 requested_source_sets.push(match (&source, recorded_source_request) {
                     (Ok(name), Some(request)) => {
-                        requested.allows(request, name.as_deref().unwrap_or("main"))
+                        requested.try_allows(request, name.as_deref().unwrap_or("main"))
                     }
-                    _ => false,
+                    _ => Ok(false),
                 });
                 tasks.push(RawKotlinTask {
                     path: identity.path.clone(),
@@ -976,7 +1012,10 @@ pub fn import_kotlin_from_strict_capture_with_limits(
     };
     let mut projects = BTreeMap::new();
     let mut android_base_plugins = BTreeMap::new();
-    let mut requested = RequestedSourceSets::new(&expected.runtime.locale.identifier)?;
+    let mut requested = RequestedSourceSets::for_runtime(
+        &expected.runtime.locale.identifier,
+        &expected.runtime.java.version,
+    )?;
     let mut requested_source_sets = BTreeMap::new();
     for plan in plans {
         identities.project(&plan.project)?;
@@ -1888,7 +1927,7 @@ struct SourceSetImport<'a> {
     project: &'a RawKotlinProject,
     authoritative: bool,
     android_base_plugin: Option<&'a GetterObservation<bool>>,
-    requested_source_sets: Option<&'a [bool]>,
+    requested_source_sets: Option<&'a [ImportResult<bool>]>,
     previous: Option<&'a CommittedImport>,
     revision: &'a ImportRevision,
 }
@@ -2024,7 +2063,7 @@ fn propose_kotlin_member(
     source_set: &str,
     internal_name: &str,
     strict_android_base: Option<Option<&GetterObservation<bool>>>,
-    requested_source_sets: Option<&[bool]>,
+    requested_source_sets: Option<&[ImportResult<bool>]>,
 ) -> KotlinMemberState {
     let known = (|| -> ImportResult<_> {
         Ok((
@@ -2140,8 +2179,13 @@ fn propose_kotlin_member(
             // An unavailable getter must remain unknown even when the request
             // could exclude a known name. Only successful observations filter.
             match requested.get(index) {
-                Some(false) => continue,
-                Some(true) => {}
+                Some(Ok(false)) => continue,
+                Some(Ok(true)) => {}
+                Some(Err(error)) => {
+                    return KotlinMemberState::Unknown(KotlinUnknownReason::GetterUnavailable(
+                        error.to_string(),
+                    ));
+                }
                 None => {
                     return KotlinMemberState::Unknown(KotlinUnknownReason::GetterUnavailable(
                         "Missing recorded source-set selection".into(),
