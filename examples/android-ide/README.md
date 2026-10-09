@@ -219,7 +219,7 @@ Do not run builds or other performance probes during timing collection.
 ## Java, debugging, and preview
 
 Run `script/install-android-kotlin` and `script/install-android-debugger`
-once before launching the IDE. Compose preview dependencies are bundled by Cargo;
+once before launching the IDE. Compose preview dependencies download on first use;
 `cargo run --locked -p zed --bin koda` needs a JDK 21 selection in Android Setup. **Configure Java**
 imports the selected variant into JDT LS. Once configured, managed official Kotlin
 setup refreshes that Java model after variant or Gradle input changes. Java model
@@ -239,7 +239,7 @@ explicit emulator-only smoke test after building `demoDebug`.
 including multipreview annotations and parameter values. Use **Build & Refresh**
 or leave **Auto** enabled to rebuild after edits, including unsaved Kotlin changes.
 Click a preview to inspect its layout outlines, then click a component to navigate
-to its source. Rendering uses bundled Google tooling, the selected full JDK 21, and the selected
+to its source. Rendering uses cached Google tooling, the selected full JDK 21, and the selected
 variant's resources. See [Compose previews](COMPOSE_PREVIEW.md) for controls,
 implementation research, compatibility boundaries, and integration checks.
 

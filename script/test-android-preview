@@ -22,7 +22,7 @@ def main():
     parser.add_argument("--source", default="mobile/src/main/kotlin/dev/zed/androidsample/PreviewGallery.kt")
     args = parser.parse_args()
     if not args.installation:
-        parser.error("Set --installation to an extracted bundled preview runtime")
+        parser.error("Set --installation to an installed preview runtime from Koda's application cache")
     project = args.project.resolve(strict=True)
     installation = args.installation.resolve(strict=True)
     source = (project / args.source).resolve(strict=True)
