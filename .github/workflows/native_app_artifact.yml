@@ -1,0 +1,239 @@
+name: Native app artifact
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - .github/workflows/native_app_artifact.yml
+      - .github/native-app-artifact-request.json
+      - .github/native-app-artifact.md
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-app-artifact-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: '0'
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+  RUST_BACKTRACE: '1'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  app:
+    name: Build exact-source Linux app for native QA
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      CC: clang
+      CXX: clang++
+      WGPU_BACKEND: vulkan
+      KODA_ARTIFACT_DIRECTORY: ${{ runner.temp }}/koda-native-app
+    steps:
+      - name: Checkout artifact controls
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Validate immutable source request
+        id: request
+        run: |
+          mkdir -p "$KODA_ARTIFACT_DIRECTORY"
+          cp .github/native-app-artifact-request.json "$KODA_ARTIFACT_DIRECTORY/request.json"
+          jq -e '
+            (keys == ["schema_version", "source_commit", "source_tree"]) and
+            (.schema_version == 1) and
+            (.source_commit | type == "string" and test("^[0-9a-f]{40}$")) and
+            (.source_tree | type == "string" and test("^[0-9a-f]{40}$"))
+          ' "$KODA_ARTIFACT_DIRECTORY/request.json"
+          source_commit="$(jq -r .source_commit "$KODA_ARTIFACT_DIRECTORY/request.json")"
+          source_tree="$(jq -r .source_tree "$KODA_ARTIFACT_DIRECTORY/request.json")"
+          printf 'source_commit=%s\nsource_tree=%s\n' "$source_commit" "$source_tree" >> "$GITHUB_OUTPUT"
+          jq -n \
+            --arg commit "$(git rev-parse HEAD)" \
+            --arg tree "$(git rev-parse HEAD^{tree})" \
+            --arg request_sha256 "$(sha256sum "$KODA_ARTIFACT_DIRECTORY/request.json" | cut -d ' ' -f 1)" \
+            --arg workflow_sha256 "$(sha256sum .github/workflows/native_app_artifact.yml | cut -d ' ' -f 1)" \
+            '{commit: $commit, tree: $tree, request_sha256: $request_sha256, workflow_sha256: $workflow_sha256}' \
+            > "$KODA_ARTIFACT_DIRECTORY/control.json"
+      - name: Checkout exact app source
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ steps.request.outputs.source_commit }}
+      - name: Verify exact app tree and normal build environment
+        env:
+          REQUESTED_COMMIT: ${{ steps.request.outputs.source_commit }}
+          REQUESTED_TREE: ${{ steps.request.outputs.source_tree }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$REQUESTED_COMMIT"
+          test "$(git rev-parse HEAD^{tree})" = "$REQUESTED_TREE"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          for variable in RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER ZED_COMMIT_SHA; do
+            if [[ -v "$variable" ]]; then
+              printf 'Unexpected build override: %s\n' "$variable" >&2
+              exit 1
+            fi
+          done
+          cp Cargo.lock rust-toolchain.toml "$KODA_ARTIFACT_DIRECTORY/"
+          git rev-parse HEAD HEAD^{tree} > "$KODA_ARTIFACT_DIRECTORY/source-identity.txt"
+      - name: Select runner concurrency
+        run: python3 script/ci-run resources --github-env "$GITHUB_ENV"
+      - name: Free runner disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+      - name: Install Linux dependencies
+        run: ./script/linux
+      - name: Install software graphics driver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan1 mesa-vulkan-drivers
+          vulkan_icd="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          test -n "$vulkan_icd"
+          echo "VK_DRIVER_FILES=$vulkan_icd" >> "$GITHUB_ENV"
+      - name: Install repository Rust toolchain
+        run: |
+          rustup show active-toolchain | tee "$KODA_ARTIFACT_DIRECTORY/rustup.txt"
+          rustc -Vv > "$KODA_ARTIFACT_DIRECTORY/rustc.txt"
+          cargo -V > "$KODA_ARTIFACT_DIRECTORY/cargo.txt"
+          clang --version > "$KODA_ARTIFACT_DIRECTORY/clang.txt"
+          clang++ --version > "$KODA_ARTIFACT_DIRECTORY/clang++.txt"
+          ldd --version > "$KODA_ARTIFACT_DIRECTORY/ldd-version.txt"
+          cp /etc/os-release "$KODA_ARTIFACT_DIRECTORY/os-release.txt"
+      - name: Restore shared portable Cargo sources
+        id: source-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        continue-on-error: true
+        with:
+          path: |
+            .ci-cache/cargo-sources/registry
+            .ci-cache/cargo-sources/git
+          enableCrossOsArchive: true
+          key: fork-ci-source-v3-shared-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock', 'extensions/test-extension/Cargo.lock') }}
+          restore-keys: fork-ci-source-v3-shared-${{ hashFiles('rust-toolchain.toml') }}-
+      - name: Install shared Cargo sources into original Cargo home
+        id: materialize-sources
+        if: steps.source-cache.outputs.cache-matched-key != ''
+        continue-on-error: true
+        run: python3 script/ci-source-cache restore
+      - name: Restore legacy Cargo sources during cache migration
+        if: steps.source-cache.outputs.cache-matched-key == '' || steps.materialize-sources.outcome == 'failure'
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        continue-on-error: true
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: fork-ci-source-v2-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}
+          restore-keys: fork-ci-source-v2-${{ runner.os }}-${{ runner.arch }}-
+      - name: Restore Linux build cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        continue-on-error: true
+        with:
+          path: |
+            target/debug/.fingerprint
+            target/debug/build
+            target/debug/deps/*.rlib
+            target/debug/deps/*.rmeta
+            target/debug/deps/*.so
+            target/debug/deps/*.a
+            target/debug/deps/*.d
+            extensions/test-extension/target/debug/.fingerprint
+            extensions/test-extension/target/debug/build
+            extensions/test-extension/target/debug/deps/*.rlib
+            extensions/test-extension/target/debug/deps/*.rmeta
+            extensions/test-extension/target/debug/deps/*.so
+            extensions/test-extension/target/debug/deps/*.a
+            extensions/test-extension/target/debug/deps/*.d
+            extensions/test-extension/target/wasm32-wasip2/debug/.fingerprint
+            extensions/test-extension/target/wasm32-wasip2/debug/build
+            extensions/test-extension/target/wasm32-wasip2/debug/deps
+            extensions/test-extension/target/wasm32-wasip2/debug/*.wasm
+          key: fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-${{ github.event.pull_request.base.sha || github.sha }}
+          restore-keys: |
+            fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock') }}-
+            fork-ci-build-v2-${{ runner.os }}-${{ runner.arch }}-ubuntu24.04-dev-debug0-${{ hashFiles('rust-toolchain.toml') }}-
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install WASI SDK
+        run: ./script/download-wasi-sdk
+      - name: Build full application
+        run: |
+          printf '%s\n' 'cargo build --locked -p zed --bin koda --message-format=json-render-diagnostics' \
+            > "$KODA_ARTIFACT_DIRECTORY/build-command.txt"
+          cargo build --locked -p zed --bin koda --message-format=json-render-diagnostics \
+            2>&1 | tee "$KODA_ARTIFACT_DIRECTORY/build.log"
+      - name: Package full executable and provenance
+        env:
+          REQUESTED_COMMIT: ${{ steps.request.outputs.source_commit }}
+          REQUESTED_TREE: ${{ steps.request.outputs.source_tree }}
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+          WORKFLOW_SHA: ${{ github.workflow_sha }}
+        run: |
+          test -x target/debug/koda
+          test -z "$(git status --porcelain --untracked-files=no)"
+          test "$(git rev-parse HEAD)" = "$REQUESTED_COMMIT"
+          test "$(git rev-parse HEAD^{tree})" = "$REQUESTED_TREE"
+          cmp Cargo.lock "$KODA_ARTIFACT_DIRECTORY/Cargo.lock"
+          target/debug/koda --system-specs > "$KODA_ARTIFACT_DIRECTORY/system-specs.txt"
+          grep -F "$REQUESTED_COMMIT" "$KODA_ARTIFACT_DIRECTORY/system-specs.txt"
+          readelf --file-header --program-headers --dynamic --version-info target/debug/koda \
+            > "$KODA_ARTIFACT_DIRECTORY/elf.txt"
+          ldd target/debug/koda > "$KODA_ARTIFACT_DIRECTORY/dynamic-dependencies.txt"
+          if grep -F 'not found' "$KODA_ARTIFACT_DIRECTORY/dynamic-dependencies.txt"; then
+            exit 1
+          fi
+          tar -C target/debug --owner=0 --group=0 --numeric-owner -cf - koda \
+            | gzip -1 > "$KODA_ARTIFACT_DIRECTORY/koda.tar.gz"
+          jq -n \
+            --arg source_commit "$(git rev-parse HEAD)" \
+            --arg source_tree "$(git rev-parse HEAD^{tree})" \
+            --arg binary_sha256 "$(sha256sum target/debug/koda | cut -d ' ' -f 1)" \
+            --argjson binary_bytes "$(stat -c '%s' target/debug/koda)" \
+            --arg binary_mode "$(stat -c '%a' target/debug/koda)" \
+            --arg lock_sha256 "$(sha256sum Cargo.lock | cut -d ' ' -f 1)" \
+            --arg archive_sha256 "$(sha256sum "$KODA_ARTIFACT_DIRECTORY/koda.tar.gz" | cut -d ' ' -f 1)" \
+            --arg workflow_ref "$WORKFLOW_REF" --arg workflow_sha "$WORKFLOW_SHA" \
+            --arg repository "$GITHUB_REPOSITORY" --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --slurpfile control "$KODA_ARTIFACT_DIRECTORY/control.json" \
+            '{schema_version: 1, source_commit: $source_commit, source_tree: $source_tree,
+              binary: {name: "koda", sha256: $binary_sha256, bytes: $binary_bytes, mode: $binary_mode},
+              lock_sha256: $lock_sha256, archive_sha256: $archive_sha256,
+              command: ["cargo", "build", "--locked", "-p", "zed", "--bin", "koda", "--message-format=json-render-diagnostics"],
+              profile: "dev", features: "default", platform: "ubuntu-24.04-x86_64",
+              ci: {repository: $repository, workflow_ref: $workflow_ref, workflow_sha: $workflow_sha,
+                run_id: $run_id, run_attempt: $run_attempt}, control: $control[0]}' \
+            > "$KODA_ARTIFACT_DIRECTORY/provenance.json"
+          (cd "$KODA_ARTIFACT_DIRECTORY" && find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 \
+            | sort -z | xargs -0 sha256sum > SHA256SUMS)
+      - name: Upload verified app artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: koda-native-app-${{ steps.request.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.KODA_ARTIFACT_DIRECTORY }}/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+      - name: Upload build evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: koda-native-app-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ env.KODA_ARTIFACT_DIRECTORY }}/*.json
+            ${{ env.KODA_ARTIFACT_DIRECTORY }}/*.txt
+            ${{ env.KODA_ARTIFACT_DIRECTORY }}/build.log
+            ${{ env.KODA_ARTIFACT_DIRECTORY }}/Cargo.lock
+            ${{ env.KODA_ARTIFACT_DIRECTORY }}/rust-toolchain.toml
+          if-no-files-found: warn
+          retention-days: 7
