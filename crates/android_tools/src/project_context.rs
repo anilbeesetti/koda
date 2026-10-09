@@ -355,7 +355,8 @@ impl InputIndex {
 }
 
 fn contains_prefix(directories: &BTreeSet<PathBuf>, path: &Path) -> bool {
-    path.ancestors().any(|ancestor| directories.contains(ancestor))
+    path.ancestors()
+        .any(|ancestor| directories.contains(ancestor))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

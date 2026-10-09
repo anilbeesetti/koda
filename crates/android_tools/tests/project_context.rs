@@ -1351,7 +1351,11 @@ fn input_prefixes_preserve_custom_sources_and_nested_output_boundaries() -> Resu
     let evaluated_output_root = decode(&root, &value)?;
     assert!(!evaluated_output_root.is_generated_output(&generated));
     assert!(evaluated_output_root.is_input(&generated.join("Convention.kt")));
-    assert!(evaluated_output_root.observer_directories()?.contains(&generated));
+    assert!(
+        evaluated_output_root
+            .observer_directories()?
+            .contains(&generated)
+    );
     let child_output = generated.join("child-output/Convention.class");
     assert!(evaluated_output_root.is_generated_output(&child_output));
     assert!(!evaluated_output_root.is_input(&child_output));
@@ -1364,18 +1368,20 @@ fn observer_folder_limit_applies_after_deduplication_without_rejecting_decode() 
     let root = project_root("indexed-observer-limit");
     let mut value = android_catalogue(&root);
     value["buildLogicDirectories"] = json!([&root]);
-    value["buildLayouts"] = json!((0usize..16)
-        .map(|layout| {
-            let sources = (layout * 256..((layout + 1) * 256).min(4095))
-                .map(|source| root.join(format!("sources/{source}")))
-                .collect::<Vec<_>>();
-            json!({
-                "directory": root.join(format!("logic/{layout}")),
-                "buildDirectory": root.join(format!("outputs/{layout}")),
-                "sourceDirectories": sources,
+    value["buildLayouts"] = json!(
+        (0usize..16)
+            .map(|layout| {
+                let sources = (layout * 256..((layout + 1) * 256).min(4095))
+                    .map(|source| root.join(format!("sources/{source}")))
+                    .collect::<Vec<_>>();
+                json!({
+                    "directory": root.join(format!("logic/{layout}")),
+                    "buildDirectory": root.join(format!("outputs/{layout}")),
+                    "sourceDirectories": sources,
+                })
             })
-        })
-        .collect::<Vec<_>>());
+            .collect::<Vec<_>>()
+    );
     let last_sources = value["buildLayouts"]
         .as_array_mut()
         .context("Build layouts")?
