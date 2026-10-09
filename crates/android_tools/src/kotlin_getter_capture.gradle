@@ -1,0 +1,328 @@
+// Reflection boundaries adapted from JetBrains KotlinGradleModelBuilder and
+// KotlinCompilerArgumentsResolverReflection (Apache-2.0); original files and
+// copyright notices are retained in test_data/kotlin_import_facts/reference.
+// This bridge performs reflection only. Rust supplies every getter contract.
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import java.lang.reflect.Modifier
+import java.nio.charset.StandardCharsets
+import java.security.MessageDigest
+import org.gradle.util.GradleVersion
+
+class KodaKotlinGetterBridge {
+    def gradle
+    def socket
+    def reader
+    def writer
+    def objects = new IdentityHashMap()
+    def objectValues = [:]
+    def objectRows = []
+    def classes = new IdentityHashMap()
+    def classRows = []
+    def loaders = new IdentityHashMap()
+    def loaderRows = []
+    def artifacts = [:]
+    def artifactRows = []
+    def catalogues = [:]
+    def catalogueRows = []
+    def methodValues = [:]
+    def projectObjects = [:]
+    def classLookups = []
+    def events = 0
+    def runtime
+    int maximumFrameBytes = 16 * 1024 * 1024
+
+    KodaKotlinGetterBridge(gradle, socket) {
+        this.gradle = gradle
+        this.socket = socket
+        reader = new BufferedReader(new InputStreamReader(socket.inputStream, StandardCharsets.UTF_8))
+        writer = new BufferedWriter(new OutputStreamWriter(socket.outputStream, StandardCharsets.UTF_8))
+        def javaArtifact = new File(System.getProperty('java.home'), 'lib/modules')
+        if (!javaArtifact.isFile()) javaArtifact = new File(System.getProperty('java.home'), 'lib/rt.jar')
+        runtime = [gradleVersion: GradleVersion.current().version,
+            java: [vendor: System.getProperty('java.vendor'), version: System.getProperty('java.version'),
+                build: System.getProperty('java.runtime.version'), artifact: artifact(javaArtifact)],
+            locale: [identifier: Locale.getDefault().toLanguageTag(), implementation: Locale.class.name,
+                version: System.getProperty('java.runtime.version')]]
+        [Object, String, Boolean, Iterable, List, Map].each { runtimeClass(it) }
+    }
+
+    String artifact(File file) {
+        file = file.canonicalFile
+        if (!file.isFile()) throw new IOException('Runtime code source is not a regular artifact: ' + file)
+        if (artifacts.containsKey(file.path)) return artifacts[file.path]
+        def before = java.nio.file.Files.readAttributes(file.toPath(), java.nio.file.attribute.BasicFileAttributes)
+        def hash = MessageDigest.getInstance('SHA-256')
+        file.withInputStream { input ->
+            byte[] buffer = new byte[65536]
+            int count
+            while ((count = input.read(buffer)) != -1) hash.update(buffer, 0, count)
+        }
+        def after = java.nio.file.Files.readAttributes(file.toPath(), java.nio.file.attribute.BasicFileAttributes)
+        if (before.size() != after.size() || before.lastModifiedTime() != after.lastModifiedTime() || before.fileKey() != after.fileKey())
+            throw new IOException('Runtime artifact changed during discovery')
+        def id = 'artifact:' + artifactRows.size()
+        artifacts[file.path] = id
+        artifactRows.add([id: id, path: file.path, bytes: after.size(), sha256: hash.digest().encodeHex().toString(), coordinate: null, version: null])
+        return id
+    }
+
+    String loader(ClassLoader loader) {
+        if (loaders.containsKey(loader)) return loaders[loader]
+        def id = 'loader:' + loaderRows.size()
+        loaders[loader] = id
+        def row = [id: id, parent: null, artifacts: []]
+        loaderRows.add(row)
+        if (loader != null) row.parent = this.loader(loader.parent)
+        return id
+    }
+
+    String runtimeClass(Class type) {
+        if (classes.containsKey(type)) return classes[type]
+        def id = 'class:' + classRows.size()
+        classes[type] = id
+        def loaderId = loader(type.classLoader)
+        def origin
+        if (type.module.named && type.module.name.startsWith('java.')) {
+            origin = [kind: 'jdk', value: type.module.name]
+        } else if (type.module.named && type.module.name.startsWith('jdk.')) {
+            origin = [kind: 'jdk', value: type.module.name]
+        } else {
+            def originType = type
+            while (originType.array) originType = originType.componentType
+            def location = originType.protectionDomain?.codeSource?.location
+            if (location == null || location.protocol != 'file') throw new IOException('Runtime class has unavailable code source: ' + type.name)
+            def artifactId = artifact(new File(location.toURI()))
+            origin = [kind: 'artifact', value: artifactId]
+            def row = loaderRows.find { it.id == loaderId }
+            if (!row.artifacts.contains(artifactId)) row.artifacts.add(artifactId)
+        }
+        def row = [id: id, name: type.name, loader: loaderId, origin: origin, superclass: null, interfaces: []]
+        classRows.add(row)
+        if (type.superclass != null) row.superclass = runtimeClass(type.superclass)
+        row.interfaces = type.interfaces.collect { runtimeClass(it) }
+        return id
+    }
+
+    String descriptor(Class type) {
+        if (type.array) return type.name.replace('.', '/')
+        if (!type.primitive) return 'L' + type.name.replace('.', '/') + ';'
+        return [(Void.TYPE):'V', (Boolean.TYPE):'Z', (Byte.TYPE):'B', (Character.TYPE):'C',
+            (Short.TYPE):'S', (Integer.TYPE):'I', (Long.TYPE):'J', (Float.TYPE):'F', (Double.TYPE):'D'][type]
+    }
+
+    String catalogue(Class type) {
+        if (catalogues.containsKey(type)) return catalogues[type]
+        def id = 'catalogue:' + catalogueRows.size()
+        catalogues[type] = id
+        def row = [id: id, classId: runtimeClass(type), methods: []]
+        catalogueRows.add(row)
+        // Preserve Class.getMethods() order: source-set selection in the
+        // reference selects the first matching zero-argument getter.
+        type.methods.each { method ->
+            def methodId = id + ':method:' + row.methods.size()
+            def parameters = method.parameterTypes
+            row.methods.add([id: methodId, name: method.name,
+                descriptor: '(' + parameters.collect { descriptor(it) }.join('') + ')' + descriptor(method.returnType),
+                declaringClass: runtimeClass(method.declaringClass), isStatic: Modifier.isStatic(method.modifiers),
+                parameterClasses: parameters.collect { it.primitive ? null : runtimeClass(it) },
+                returnClass: method.returnType.primitive ? null : runtimeClass(method.returnType)])
+            methodValues[methodId] = method
+        }
+        return id
+    }
+
+    String object(Object value, String kind, String project) {
+        if (objects.containsKey(value)) {
+            def id = objects[value]
+            def row = objectRows.find { it.id == id }
+            if (row.kind != kind || row.project != project) throw new IOException('One runtime object crossed project/type ownership')
+            return id
+        }
+        def id = 'object:' + objectRows.size()
+        objects[value] = id
+        objectValues[id] = value
+        def task = kind == 'task' ? [name: value.name, path: value.path] : null
+        objectRows.add([id: id, kind: kind, project: project, classId: runtimeClass(value.getClass()), task: task])
+        catalogue(value.getClass())
+        return id
+    }
+
+    def inventory() {
+        return [runtime: runtime + [artifacts: artifactRows, loaders: loaderRows, classes: classRows],
+            objects: objectRows, catalogues: catalogueRows, projectObjects: projectObjects, classLookups: classLookups]
+    }
+
+    def causes(Throwable failure) {
+        def rows = []
+        def seen = Collections.newSetFromMap(new IdentityHashMap())
+        while (failure != null && rows.size() < 64 && seen.add(failure)) {
+            rows.add([class: failure.class.name, message: failure.message])
+            failure = failure.cause
+        }
+        if (failure != null) throw new IOException('Exception cause chain exceeds capture budget or cycles')
+        return rows
+    }
+
+    void discover(List projects, List classNames) {
+        projects.each { path ->
+            def project = gradle.rootProject.findProject(path)
+            if (project == null) throw new IOException('Imported project no longer exists: ' + path)
+            projectObjects[path] = object(project, 'project', path)
+            def candidates = Collections.newSetFromMap(new IdentityHashMap())
+            candidates.add(project.buildscript.classLoader)
+            project.plugins.each { candidates.add(it.class.classLoader) }
+            classNames.each { name ->
+                def found = new LinkedHashSet()
+                def failures = []
+                def attempts = []
+                candidates.each { candidate ->
+                    try {
+                        def type = Class.forName(name, false, candidate)
+                        found.add(runtimeClass(type))
+                        catalogue(type)
+                        attempts.add([loader: loader(candidate), class: runtimeClass(type), failures: []])
+                    } catch (ClassNotFoundException error) {
+                        def captured = causes(error)
+                        failures.addAll(captured)
+                        attempts.add([loader: loader(candidate), class: null, failures: captured])
+                    }
+                }
+                classLookups.add([project: path, name: name, classes: found.toList(), attempts: attempts, failures: failures])
+            }
+        }
+    }
+
+    def unavailable(request, kind, stage, detail, Throwable cause = null, actualClass = null) {
+        return [status: 'unavailable', value: [kind: kind, stage: stage, capability: request.id,
+            detail: detail, actualClass: actualClass, exceptions: cause == null ? [] : causes(cause)]]
+    }
+
+    def decode(request, value) {
+        if (value == null) return [outcome: [status: 'available', value: null], container: null]
+        def shape = request.returnShape
+        def result
+        def container = null
+        switch (shape.kind) {
+            case 'string': if (value instanceof String) result = [kind: 'string', value: value]; break
+            case 'boolean': if (value instanceof Boolean) result = [kind: 'boolean', value: value]; break
+            case 'file': if (value instanceof File) result = [kind: 'file', value: value.path]; break
+            case 'object': result = [kind: 'object', value: object(value, shape.objectKind, request.project)]; break
+            case 'strings':
+                if (value instanceof List && value.every { it instanceof String }) {
+                    container = object(value, 'container', request.project)
+                    result = [kind: 'strings', value: value.toList()]
+                }
+                break
+            case 'objects':
+                if (value instanceof Iterable) {
+                    container = object(value, 'container', request.project)
+                    result = [kind: 'objects', value: value.collect { element ->
+                        if (element == null) throw new IOException('Null element in typed object iterable')
+                        object(element, shape.objectKind, request.project)
+                    }]
+                }
+                break
+        }
+        if (result == null) return [outcome: unavailable(request, 'unsupportedReturnShape', 'returnDecode',
+            'Actual getter value does not support issued return contract', null, runtimeClass(value.getClass())), container: null]
+        return [outcome: [status: 'available', value: result], container: container]
+    }
+
+    void invoke(request) {
+        def event = [id: 'event:' + events++, request: request.id, outcome: null, container: null]
+        if (request.method.kind == 'missing') {
+            event.outcome = unavailable(request, 'missingMethod', 'methodDiscovery', 'Exact reflected getter is unavailable')
+        } else {
+            def method = methodValues[request.method.value]
+            if (method == null) throw new IOException('Request selected an undiscovered method')
+            def expected = catalogueRows.find { it.id == request.catalogue }?.methods?.find { it.id == request.method.value }
+            if (expected == null) throw new IOException('Request method belongs to a different catalogue')
+            def owner = request.owner == null ? null : objectValues[request.owner]
+            if (request.owner != null && owner == null) throw new IOException('Request receiver is unavailable')
+            def arguments = request.arguments.collect { argument ->
+                switch (argument.kind) {
+                    case 'string': return argument.value
+                    case 'boolean': return argument.value
+                    case 'null': return null
+                    case 'object':
+                        if (!objectValues.containsKey(argument.value)) throw new IOException('Request argument is unavailable')
+                        return objectValues[argument.value]
+                    default: throw new IOException('Unsupported typed request argument')
+                }
+            }
+            try {
+                def value = method.invoke(owner, arguments.toArray())
+                def decoded = decode(request, value)
+                event.outcome = decoded.outcome
+                event.container = decoded.container
+            } catch (java.lang.reflect.InvocationTargetException error) {
+                event.outcome = unavailable(request, 'invocation', 'invoke', 'Official getter threw', error)
+            } catch (IllegalAccessException error) {
+                event.outcome = unavailable(request, 'access', 'invoke', 'Official getter is inaccessible', error)
+            } catch (LinkageError error) {
+                event.outcome = unavailable(request, 'linkage', 'invoke', 'Official getter linkage failed', error)
+            }
+        }
+        send('discovery', inventory())
+        send('event', event)
+    }
+
+    void send(String kind, value) {
+        def line = JsonOutput.toJson([kind: kind, value: value])
+        if (line.getBytes(StandardCharsets.UTF_8).length > maximumFrameBytes) throw new IOException('Discovery exceeds frame budget')
+        writer.write(line)
+        writer.newLine()
+        writer.flush()
+    }
+
+    String readFrame() {
+        def line = new StringBuilder()
+        int character
+        while ((character = reader.read()) != -1) {
+            if (character == 10) return line.toString()
+            if (line.length() >= maximumFrameBytes) throw new IOException('Request exceeds frame budget')
+            line.append((char) character)
+        }
+        if (line.length() != 0) throw new EOFException('Incomplete request frame')
+        return null
+    }
+
+    void run(String token) {
+        send('hello', token)
+        boolean discovered = false
+        String line
+        while ((line = readFrame()) != null) {
+            def request = new JsonSlurper().parseText(line)
+            switch (request.kind) {
+                case 'discover':
+                    if (discovered) throw new IOException('Discovery bootstrap already issued')
+                    discover(request.value.projects, request.value.classNames)
+                    discovered = true
+                    send('discovery', inventory())
+                    break
+                case 'invoke':
+                    if (!discovered) throw new IOException('Invocation before owned discovery')
+                    invoke(request.value)
+                    break
+                case 'finish': send('finished', null); return
+                default: throw new IOException('Unknown getter transport request')
+            }
+        }
+    }
+}
+
+gradle.projectsEvaluated {
+    def port = Integer.parseInt(System.getProperty('koda.kotlin.capture.port'))
+    def timeout = Integer.parseInt(System.getProperty('koda.kotlin.capture.timeoutMillis'))
+    def socket = new Socket(InetAddress.getByName('127.0.0.1'), port)
+    socket.soTimeout = timeout
+    try {
+        def bridge = new KodaKotlinGetterBridge(gradle, socket)
+        try { bridge.run(System.getProperty('koda.kotlin.capture.token')) }
+        catch (Exception error) {
+            bridge.send('failure', error.class.name + ': ' + error.message)
+            throw error
+        }
+    } finally { socket.close() }
+}

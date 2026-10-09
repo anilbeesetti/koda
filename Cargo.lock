@@ -731,6 +731,8 @@ dependencies = [
  "dirs",
  "flate2",
  "fs2",
+ "log",
+ "rand 0.9.4",
  "regex",
  "serde",
  "serde_json",
