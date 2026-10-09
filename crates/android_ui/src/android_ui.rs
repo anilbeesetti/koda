@@ -8747,6 +8747,14 @@ fi
         result.expect("Picker catalogue fixture must complete");
     }
 
+    struct PickerMenuRoot(Entity<ContextMenu>);
+
+    impl Render for PickerMenuRoot {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            self.0.clone()
+        }
+    }
+
     #[gpui::test]
     async fn mixed_variant_picker_focuses_and_confirms_the_current_variant(
         cx: &mut TestAppContext,
@@ -8794,6 +8802,10 @@ fi
                 let menu = visual
                     .update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
                 assert_eq!(menu.read_with(visual, |menu, _| menu.selected_index()), None);
+                visual.update(|window, cx| {
+                    window.replace_root(cx, |_, _| PickerMenuRoot(menu.clone()));
+                });
+                visual.run_until_parked();
                 visual.update(|window, cx| window.blur(cx));
                 visual.run_until_parked();
                 visual.update(|window, cx| window.focus(&menu.focus_handle(cx), cx));
