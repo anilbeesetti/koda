@@ -15,7 +15,8 @@ use crate::{
     kotlin_import_facts::{
         CaptureContext, CaptureLimits, CaptureMode, CaptureObject, CaptureValue, ContainerOrder,
         GetterArgument, GetterMethod, GetterOutcome, GetterPurpose, GetterRequest,
-        KotlinFactsSnapshot, MethodSelection, ObjectKind, RuntimeClass, ValueKind,
+        KotlinFactsSnapshot, MethodSelection, ObjectKind, RequestParameter, RuntimeClass,
+        ValueKind,
     },
     module_presentation::{
         CapturedExternalSystemIdentity, CapturedGradleIdentity, CapturedModuleIdentity,
@@ -120,6 +121,7 @@ pub struct KotlinImportFacts {
     identity: Vec<ModuleIdentity>,
     projects: BTreeMap<String, RawKotlinProject>,
     android_base_plugins: BTreeMap<String, GetterObservation<bool>>,
+    requested_source_sets: BTreeMap<String, Vec<bool>>,
     capture_context: Option<CaptureContext>,
     capture_revision: Option<ImportRevision>,
 }
@@ -163,6 +165,51 @@ struct StrictProjection<'a> {
     classes: BTreeMap<&'a str, &'a RuntimeClass>,
     methods: BTreeMap<(&'a str, &'a str), &'a GetterMethod>,
     container_relations: ContainerRelations<'a>,
+}
+
+struct RequestedSourceSets<'a> {
+    locale: icu_locale_core::LanguageIdentifier,
+    // A model call may issue many task getters with the same parameter; retain
+    // one folded token set rather than expanding it for every task.
+    parameters: BTreeMap<&'a str, BTreeSet<String>>,
+}
+
+impl<'a> RequestedSourceSets<'a> {
+    fn new(identifier: &str) -> ImportResult<Self> {
+        let locale = identifier
+            .parse::<icu_locale_core::Locale>()
+            .map_err(|error| {
+                unavailable(
+                    FactsUnavailableReason::UnsupportedShape,
+                    format!("Cannot interpret captured source-set selection locale: {error}"),
+                )
+            })?;
+        Ok(Self {
+            locale: locale.id,
+            parameters: BTreeMap::new(),
+        })
+    }
+
+    fn allows(&mut self, request: &'a GetterRequest, source_set: &str) -> bool {
+        let RequestParameter::Explicit(Some(parameter)) = &request.parameter else {
+            return true;
+        };
+        let mapper = icu_casemap::CaseMapper::new();
+        let requested = self
+            .parameters
+            .entry(parameter.as_str())
+            .or_insert_with(|| {
+                parameter
+                    .split(',')
+                    .map(|name| mapper.lowercase_to_string(name, &self.locale).into_owned())
+                    .collect()
+            });
+        requested.contains(
+            mapper
+                .lowercase_to_string(source_set, &self.locale)
+                .as_ref(),
+        )
+    }
 }
 
 struct ContainerRelations<'a> {
@@ -517,7 +564,11 @@ impl<'a> StrictProjection<'a> {
         Ok(())
     }
 
-    fn project(&mut self, plan: &StrictKotlinProjectPlan) -> ImportResult<RawKotlinProject> {
+    fn project(
+        &mut self,
+        plan: &StrictKotlinProjectPlan,
+        requested: &mut RequestedSourceSets<'a>,
+    ) -> ImportResult<(RawKotlinProject, Vec<bool>)> {
         if plan
             .plugin_lookups
             .keys()
@@ -639,6 +690,7 @@ impl<'a> StrictProjection<'a> {
                 )),
             }
         })();
+        let mut requested_source_sets = Vec::new();
         let tasks = (|| {
             let iteration = self.request(&plan.task_iteration, &plan.project)?;
             if iteration.purpose != GetterPurpose::ContainerIterate
@@ -697,6 +749,7 @@ impl<'a> StrictProjection<'a> {
                         "Missing Kotlin task path",
                     )
                 })?;
+                let mut recorded_source_request = None;
                 let source = (|| {
                     let request_id = plan.source_set_names.get(id).ok_or_else(|| {
                         unavailable(
@@ -726,6 +779,7 @@ impl<'a> StrictProjection<'a> {
                             "Source-set result belongs to another task",
                         ));
                     }
+                    recorded_source_request = Some(request);
                     match self.outcome(request)? {
                         Some(CaptureValue::String(value)) => Ok(Some(value.clone())),
                         None => Ok(None),
@@ -784,6 +838,12 @@ impl<'a> StrictProjection<'a> {
                         return Err(failure.clone());
                     }
                 }
+                requested_source_sets.push(match (&source, recorded_source_request) {
+                    (Ok(name), Some(request)) => {
+                        requested.allows(request, name.as_deref().unwrap_or("main"))
+                    }
+                    _ => false,
+                });
                 tasks.push(RawKotlinTask {
                     path: identity.path.clone(),
                     class_name: class.name.clone(),
@@ -810,14 +870,17 @@ impl<'a> StrictProjection<'a> {
                 return Err(failure.clone());
             }
         }
-        Ok(RawKotlinProject {
-            project_path: plan.project.clone(),
-            plugin_ids: self.observed(PLUGIN_IDS, ids),
-            plugin_interfaces: self.observed(PLUGIN_INTERFACES, interfaces),
-            kotlin_extension: self.observed(KOTLIN_EXTENSION, extension),
-            compiler_version: self.observed(COMPILER_VERSION, version),
-            compile_tasks: self.observed(COMPILE_TASKS, tasks),
-        })
+        Ok((
+            RawKotlinProject {
+                project_path: plan.project.clone(),
+                plugin_ids: self.observed(PLUGIN_IDS, ids),
+                plugin_interfaces: self.observed(PLUGIN_INTERFACES, interfaces),
+                kotlin_extension: self.observed(KOTLIN_EXTENSION, extension),
+                compiler_version: self.observed(COMPILER_VERSION, version),
+                compile_tasks: self.observed(COMPILE_TASKS, tasks),
+            },
+            requested_source_sets,
+        ))
     }
 }
 
@@ -913,9 +976,11 @@ pub fn import_kotlin_from_strict_capture_with_limits(
     };
     let mut projects = BTreeMap::new();
     let mut android_base_plugins = BTreeMap::new();
+    let mut requested = RequestedSourceSets::new(&expected.runtime.locale.identifier)?;
+    let mut requested_source_sets = BTreeMap::new();
     for plan in plans {
         identities.project(&plan.project)?;
-        let project = projection.project(plan)?;
+        let (project, selected_source_sets) = projection.project(plan, &mut requested)?;
         projection.container_relations.ensure_available()?;
         if projects.insert(plan.project.clone(), project).is_some() {
             return Err(unavailable(
@@ -923,6 +988,7 @@ pub fn import_kotlin_from_strict_capture_with_limits(
                 "Duplicate strict Kotlin project plan",
             ));
         }
+        requested_source_sets.insert(plan.project.clone(), selected_source_sets);
         let base = projection.android_base_plugin(plan);
         projection.container_relations.ensure_available()?;
         if let Err(error) = &base {
@@ -965,6 +1031,7 @@ pub fn import_kotlin_from_strict_capture_with_limits(
         identity: model_identity(model),
         projects,
         android_base_plugins,
+        requested_source_sets,
         capture_context: Some(expected.clone()),
         capture_revision: Some(issued.clone()),
     })
@@ -1091,6 +1158,7 @@ pub fn parse_kotlin_import_facts(
         identity: export.modules,
         projects,
         android_base_plugins: BTreeMap::new(),
+        requested_source_sets: BTreeMap::new(),
         capture_context: None,
         capture_revision: None,
     })
@@ -1796,6 +1864,10 @@ impl ModuleImportPublisher {
                 })?,
                 authoritative: kotlin.capture_context.is_some(),
                 android_base_plugin: kotlin.android_base_plugins.get(&module.path),
+                requested_source_sets: kotlin
+                    .requested_source_sets
+                    .get(&module.path)
+                    .map(Vec::as_slice),
                 previous: self.committed.as_ref(),
                 revision: &revision,
             };
@@ -1816,6 +1888,7 @@ struct SourceSetImport<'a> {
     project: &'a RawKotlinProject,
     authoritative: bool,
     android_base_plugin: Option<&'a GetterObservation<bool>>,
+    requested_source_sets: Option<&'a [bool]>,
     previous: Option<&'a CommittedImport>,
     revision: &'a ImportRevision,
 }
@@ -1847,6 +1920,7 @@ fn add_source_set_members(
         project,
         authoritative,
         android_base_plugin,
+        requested_source_sets,
         previous,
         revision,
     } = source_sets;
@@ -1886,6 +1960,7 @@ fn add_source_set_members(
                 &component.name,
                 &internal_name,
                 Some(android_base_plugin),
+                requested_source_sets,
             )
         } else {
             KotlinMemberState::Unknown(KotlinUnknownReason::UnverifiedTransport)
@@ -1941,7 +2016,7 @@ pub fn propose_legacy_kotlin_member(
     source_set: &str,
     internal_name: &str,
 ) -> KotlinMemberState {
-    propose_kotlin_member(project, source_set, internal_name, None)
+    propose_kotlin_member(project, source_set, internal_name, None, None)
 }
 
 fn propose_kotlin_member(
@@ -1949,6 +2024,7 @@ fn propose_kotlin_member(
     source_set: &str,
     internal_name: &str,
     strict_android_base: Option<Option<&GetterObservation<bool>>>,
+    requested_source_sets: Option<&[bool]>,
 ) -> KotlinMemberState {
     let known = (|| -> ImportResult<_> {
         Ok((
@@ -2048,7 +2124,7 @@ fn propose_kotlin_member(
         ));
     }
     let mut selected = None;
-    for task in tasks {
+    for (index, task) in tasks.iter().enumerate() {
         let name = match task.source_set_name.available() {
             Ok(Some(name)) => name.as_str(),
             // The reference derives main from a known null; unavailable
@@ -2060,6 +2136,19 @@ fn propose_kotlin_member(
                 ));
             }
         };
+        if let Some(requested) = requested_source_sets {
+            // An unavailable getter must remain unknown even when the request
+            // could exclude a known name. Only successful observations filter.
+            match requested.get(index) {
+                Some(false) => continue,
+                Some(true) => {}
+                None => {
+                    return KotlinMemberState::Unknown(KotlinUnknownReason::GetterUnavailable(
+                        "Missing recorded source-set selection".into(),
+                    ));
+                }
+            }
+        }
         if name != source_set {
             continue;
         }
@@ -2549,6 +2638,73 @@ mod tests {
             );
             assert_eq!(projection.container_relations.direct_answers.len(), 1);
             assert!(!projection.container_relations.exhausted);
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod requested_source_set_tests {
+    use super::*;
+    use anyhow::{Context as _, Result};
+
+    fn source_request() -> Result<GetterRequest> {
+        let template: serde_json::Value = serde_json::from_str(include_str!(
+            "../test_data/module_import/strict-projection-template.json"
+        ))?;
+        let request = template["packet"]["context"]["requests"]
+            .as_array()
+            .context("Synthetic request catalogue")?
+            .iter()
+            .find(|request| request["id"] == "source-first")
+            .context("Synthetic source-set request")?;
+        Ok(serde_json::from_value(request.clone())?)
+    }
+
+    #[test]
+    fn repeated_task_selection_retains_one_folded_parameter_set() -> Result<()> {
+        let mut request = source_request()?;
+        let names = (0..1024)
+            .map(|index| format!("SOURCE{index}"))
+            .collect::<Vec<_>>();
+        request.parameter = RequestParameter::Explicit(Some(names.join(",")));
+        let mut requested = RequestedSourceSets::new("tr-TR")?;
+        for name in &names {
+            assert!(requested.allows(&request, name));
+            assert!(!requested.allows(&request, "excluded"));
+        }
+        assert_eq!(requested.parameters.len(), 1);
+        let (raw, folded) = requested
+            .parameters
+            .first_key_value()
+            .context("One folded set")?;
+        assert_eq!(*raw, names.join(","));
+        assert_eq!(folded.len(), names.len());
+        assert!(folded.contains("source0"));
+        assert!(folded.contains("source1023"));
+        assert_eq!(
+            request.parameter,
+            RequestParameter::Explicit(Some(names.join(",")))
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn source_set_selection_preserves_contextual_unicode_lowercase() -> Result<()> {
+        for (locale, parameter, source_set) in [
+            ("tr-TR", "MAİN", "main"),
+            ("lt-LT", "I\u{301}", "i\u{307}\u{301}"),
+            ("el-GR", "ΟΣ", "ος"),
+        ] {
+            let mut request = source_request()?;
+            request.parameter = RequestParameter::Explicit(Some(parameter.into()));
+            let mut requested = RequestedSourceSets::new(locale)?;
+            assert!(requested.allows(&request, source_set));
+            assert!(!requested.allows(&request, "excluded"));
+            assert_eq!(
+                request.parameter,
+                RequestParameter::Explicit(Some(parameter.into()))
+            );
         }
         Ok(())
     }

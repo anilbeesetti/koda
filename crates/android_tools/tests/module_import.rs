@@ -2228,3 +2228,452 @@ fn strict_main_source_set_rejects_cross_call_compiler_arguments() -> Result<()> 
     }
     Ok(())
 }
+
+fn requested_parameter(value: &mut Value, parameter: &Value) -> Result<()> {
+    for request in value["kotlinFacts"]["context"]["requests"]
+        .as_array_mut()
+        .context("Independently retained original model-call parameters")?
+    {
+        request["parameter"] = parameter.clone();
+    }
+    Ok(())
+}
+
+fn import_requested_capture(
+    fixture: &mut Fixture,
+    value: &Value,
+    plan: StrictKotlinProjectPlan,
+    sequence: u64,
+) -> Result<android_tools::kotlin_import_facts::KotlinFactsSnapshot> {
+    let expected = serde_json::from_value(value["kotlinFacts"]["context"].clone())?;
+    let snapshot = parse_kotlin_facts(
+        &wire(value)?,
+        &fixture.model,
+        &fixture.identity,
+        &expected,
+        CaptureLimits::default(),
+    )?;
+    assert_eq!(snapshot.raw_context(), &expected);
+    fixture.kotlin = import_kotlin_from_strict_capture(
+        &fixture.model,
+        &fixture.identity,
+        &snapshot,
+        &expected,
+        &revision(fixture, sequence),
+        &[plan],
+    )?;
+    Ok(snapshot)
+}
+
+fn committed_main_state(publisher: &ModuleImportPublisher) -> Result<&KotlinMemberState> {
+    Ok(&publisher
+        .committed()
+        .context("Committed requested-source-set import")?
+        .modules
+        .get(":android")
+        .context("Imported Android module")?
+        .members
+        .iter()
+        .find(|member| member.source_set_name.as_deref() == Some("main"))
+        .context("Main source-set member")?
+        .kotlin)
+}
+
+#[test]
+fn strict_requested_debug_excludes_main_without_overwriting_prior_settings() -> Result<()> {
+    for property in [false, true] {
+        for known_null in [false, true] {
+            let mut fixture = main_source_set_fixture()?;
+            let (initial, _, initial_plan) =
+                strict_main_capture(&fixture, "synthetic-requested-prior-main", &["-Xprior"])?;
+            import_requested_capture(&mut fixture, &initial, initial_plan, 1)?;
+            let mut prior = ModuleImportPublisher::default();
+            prior.commit(stage(&fixture, &prior, 1)?, &revision(&fixture, 1))?;
+            let old = committed_settings(&prior)?.clone();
+            let (mut value, _, mut plan) = strict_main_capture(
+                &fixture,
+                &format!("synthetic-excluded-main-{property}-{known_null}"),
+                &["-Xexcluded", "-Xexcluded"],
+            )?;
+            if property {
+                known_null_source_set_property(&mut value, &mut plan)?;
+            }
+            let source_request = if property {
+                "source-first-property"
+            } else {
+                "source-first"
+            };
+            if !known_null {
+                value["kotlinFacts"]["events"]
+                    .as_array_mut()
+                    .context("Recorded non-null source set")?
+                    .iter_mut()
+                    .find(|event| event["request"] == source_request)
+                    .context("Recorded Main source result")?["outcome"]["value"] =
+                    json!({"kind": "string", "value": "main"});
+            }
+            requested_parameter(&mut value, &json!({"kind": "explicit", "value": "debug"}))?;
+            let snapshot = import_requested_capture(&mut fixture, &value, plan, 2)?;
+            let mut fresh = ModuleImportPublisher::default();
+            fresh.commit(stage(&fixture, &fresh, 2)?, &revision(&fixture, 2))?;
+            assert_eq!(
+                committed_main_state(&fresh)?,
+                &KotlinMemberState::Unknown(KotlinUnknownReason::MissingSourceSet)
+            );
+            assert_eq!(
+                fresh
+                    .committed()
+                    .context("Unresolved first publication")?
+                    .modules[":android"]
+                    .kotlin_capability(),
+                KotlinCapability::Unknown
+            );
+            prior.commit(stage(&fixture, &prior, 2)?, &revision(&fixture, 2))?;
+            assert_eq!(committed_settings(&prior)?, &old);
+            assert_eq!(
+                prior
+                    .committed()
+                    .context("Preserved import")?
+                    .revision
+                    .import_revision,
+                2
+            );
+            assert_eq!(
+                prior.committed().context("Preserved import")?.modules[":android"]
+                    .kotlin_capability(),
+                KotlinCapability::Enabled
+            );
+            let raw = &snapshot
+                .raw_events()
+                .iter()
+                .find(|event| event.request == source_request)
+                .context("Raw excluded source-set observation")?
+                .outcome;
+            if known_null {
+                assert!(matches!(
+                    raw,
+                    android_tools::kotlin_import_facts::GetterOutcome::Available(None)
+                ));
+            } else {
+                assert_eq!(
+                    raw,
+                    &android_tools::kotlin_import_facts::GetterOutcome::Available(Some(
+                        android_tools::kotlin_import_facts::CaptureValue::String("main".into())
+                    ))
+                );
+            }
+            assert!(
+                snapshot
+                    .raw_context()
+                    .requests
+                    .iter()
+                    .all(|request| request.parameter
+                        == android_tools::kotlin_import_facts::RequestParameter::Explicit(Some(
+                            "debug".into()
+                        )))
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_source_set_parameter_preserves_null_empty_and_comma_set_semantics() -> Result<()> {
+    for (parameter, included) in [
+        (json!({"kind": "absent", "value": null}), true),
+        (json!({"kind": "explicit", "value": null}), true),
+        (json!({"kind": "explicit", "value": ""}), false),
+        (json!({"kind": "explicit", "value": "main"}), true),
+        (
+            json!({"kind": "explicit", "value": "debug,main,main"}),
+            true,
+        ),
+        (json!({"kind": "explicit", "value": "debug,,main,"}), true),
+        (json!({"kind": "explicit", "value": ",,"}), false),
+        (json!({"kind": "explicit", "value": " main"}), false),
+        (json!({"kind": "explicit", "value": "main "}), false),
+        (json!({"kind": "explicit", "value": "*"}), false),
+    ] {
+        let mut fixture = main_source_set_fixture()?;
+        let (mut value, _, plan) = strict_main_capture(
+            &fixture,
+            "synthetic-original-request-parameter",
+            &["-Xselected"],
+        )?;
+        requested_parameter(&mut value, &parameter)?;
+        let snapshot = import_requested_capture(&mut fixture, &value, plan, 1)?;
+        let mut publisher = ModuleImportPublisher::default();
+        publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+        let retained: android_tools::kotlin_import_facts::RequestParameter =
+            serde_json::from_value(parameter)?;
+        assert!(
+            snapshot
+                .raw_context()
+                .requests
+                .iter()
+                .all(|request| request.parameter == retained)
+        );
+        if included {
+            assert_eq!(
+                committed_settings(&publisher)?.compiler_arguments,
+                Some(vec!["-Xselected".into()])
+            );
+        } else {
+            assert_eq!(
+                committed_main_state(&publisher)?,
+                &KotlinMemberState::Unknown(KotlinUnknownReason::MissingSourceSet)
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_source_set_selection_uses_captured_turkish_locale() -> Result<()> {
+    for (locale, parameter, included) in [
+        ("tr-TR", "MAIN", false),
+        ("tr-TR", "MAİN", true),
+        ("tr-TR", "debug,MAIN", false),
+        ("tr-TR", "debug,MAİN", true),
+        ("az-AZ", "MAIN", false),
+        ("az-AZ", "MAİN", true),
+        ("en-US", "MAIN", true),
+        ("en-US", "MAİN", false),
+    ] {
+        let mut fixture = main_source_set_fixture()?;
+        let (mut value, _, plan) = strict_main_capture(
+            &fixture,
+            &format!("synthetic-locale-selection-{locale}-{included}"),
+            &["-Xlocale"],
+        )?;
+        value["kotlinFacts"]["context"]["runtime"]["locale"]["identifier"] = json!(locale);
+        requested_parameter(&mut value, &json!({"kind": "explicit", "value": parameter}))?;
+        let snapshot = import_requested_capture(&mut fixture, &value, plan, 1)?;
+        let mut publisher = ModuleImportPublisher::default();
+        publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+        assert_eq!(snapshot.raw_context().runtime.locale.identifier, locale);
+        assert!(
+            snapshot
+                .raw_context()
+                .requests
+                .iter()
+                .all(|request| request.parameter
+                    == android_tools::kotlin_import_facts::RequestParameter::Explicit(Some(
+                        parameter.into()
+                    )))
+        );
+        if included {
+            assert_eq!(
+                committed_settings(&publisher)?.compiler_arguments,
+                Some(vec!["-Xlocale".into()])
+            );
+        } else {
+            assert_eq!(
+                committed_main_state(&publisher)?,
+                &KotlinMemberState::Unknown(KotlinUnknownReason::MissingSourceSet)
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_excluded_source_set_does_not_require_compiler_arguments() -> Result<()> {
+    for unavailable in [false, true] {
+        let mut fixture = main_source_set_fixture()?;
+        let (mut value, _, mut plan) = strict_main_capture(
+            &fixture,
+            "synthetic-filter-before-arguments",
+            &["-Xexcluded"],
+        )?;
+        requested_parameter(&mut value, &json!({"kind": "explicit", "value": "debug"}))?;
+        if unavailable {
+            let event = value["kotlinFacts"]["events"]
+                .as_array_mut()
+                .context("Compiler observations")?
+                .iter_mut()
+                .find(|event| event["request"] == "arguments")
+                .context("Resolver result")?;
+            event["container"] = Value::Null;
+            event["outcome"] = json!({
+                "status": "unavailable", "value": {
+                    "kind": "invocation", "stage": "invoke", "capability": COMPILER_ARGUMENTS,
+                    "detail": "Synthetic excluded compiler invocation", "actualClass": null,
+                    "exceptions": [{"class": "java.lang.reflect.InvocationTargetException", "message": "synthetic failure"}]
+                }
+            });
+        } else {
+            plan.compiler_arguments
+                .remove("first-task")
+                .context("Excluded task needs no planned arguments")?;
+        }
+        import_requested_capture(&mut fixture, &value, plan, 1)?;
+        let mut publisher = ModuleImportPublisher::default();
+        publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+        assert_eq!(
+            committed_main_state(&publisher)?,
+            &KotlinMemberState::Unknown(KotlinUnknownReason::MissingSourceSet)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_excluded_parameter_cannot_hide_unavailable_source_getter() -> Result<()> {
+    for property in [false, true] {
+        let mut fixture = main_source_set_fixture()?;
+        let (mut value, _, mut plan) = strict_main_capture(
+            &fixture,
+            "synthetic-unavailable-excluded-source",
+            &["-Xmust-not-publish"],
+        )?;
+        if property {
+            known_null_source_set_property(&mut value, &mut plan)?;
+        }
+        let source_request = if property {
+            "source-first-property"
+        } else {
+            "source-first"
+        };
+        requested_parameter(&mut value, &json!({"kind": "explicit", "value": "debug"}))?;
+        value["kotlinFacts"]["events"]
+            .as_array_mut()
+            .context("Source observations")?
+            .iter_mut()
+            .find(|event| event["request"] == source_request)
+            .context("Unavailable getter")?["outcome"] = json!({
+            "status": "unavailable", "value": {
+                "kind": "invocation", "stage": "invoke", "capability": SOURCE_SET_NAME,
+                "detail": "Synthetic unavailable source invocation", "actualClass": null,
+                "exceptions": [{"class": "java.lang.reflect.InvocationTargetException", "message": "synthetic failure"}]
+            }
+        });
+        import_requested_capture(&mut fixture, &value, plan, 1)?;
+        let mut publisher = ModuleImportPublisher::default();
+        publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+        assert!(matches!(
+            committed_main_state(&publisher)?,
+            KotlinMemberState::Unknown(KotlinUnknownReason::GetterUnavailable(_))
+        ));
+    }
+    Ok(())
+}
+
+#[test]
+fn strict_requested_source_sets_preserve_order_and_filter_each_original_call() -> Result<()> {
+    for (first_parameter, second_parameter, second_name, reverse, expected_arguments) in [
+        ("main", "main", "main", false, Some("-Xsecond")),
+        ("main", "main", "main", true, Some("-Xfirst")),
+        ("main,debug", "main,debug", "debug", false, Some("-Xfirst")),
+        ("main", "debug", "main", false, Some("-Xfirst")),
+        ("debug", "main", "main", false, Some("-Xsecond")),
+        ("debug", "debug", "main", false, None),
+    ] {
+        let mut fixture = main_source_set_fixture()?;
+        let (mut value, _, mut plan) = strict_main_capture(
+            &fixture,
+            "synthetic-ordered-requested-source-sets",
+            &["-Xfirst"],
+        )?;
+        requested_parameter(
+            &mut value,
+            &json!({"kind": "explicit", "value": first_parameter}),
+        )?;
+        let requests = value["kotlinFacts"]["context"]["requests"]
+            .as_array_mut()
+            .context("Ordered task requests")?;
+        let mut resolver = requests
+            .iter()
+            .find(|request| request["id"] == "resolver-instance")
+            .context("Independent second resolver request")?
+            .clone();
+        resolver["id"] = json!("resolver-second");
+        resolver["modelCall"] = json!("call-second");
+        resolver["parameter"] = json!({"kind": "explicit", "value": second_parameter});
+        let mut arguments = requests
+            .iter()
+            .find(|request| request["id"] == "arguments")
+            .context("Independent second compiler request")?
+            .clone();
+        arguments["id"] = json!("arguments-second");
+        arguments["modelCall"] = json!("call-second");
+        arguments["parameter"] = json!({"kind": "explicit", "value": second_parameter});
+        arguments["arguments"] = json!([{"kind": "object", "value": "second-task"}]);
+        arguments["after"] = json!("resolver-second");
+        let second_source = requests
+            .iter_mut()
+            .find(|request| request["id"] == "source-second")
+            .context("Independently issued second source-set request")?;
+        second_source["modelCall"] = json!("call-second");
+        second_source["parameter"] = json!({"kind": "explicit", "value": second_parameter});
+        requests.push(resolver);
+        requests.push(arguments);
+        let events = value["kotlinFacts"]["events"]
+            .as_array_mut()
+            .context("Ordered getter results")?;
+        events
+            .iter_mut()
+            .find(|event| event["request"] == "source-second")
+            .context("Second task source set")?["outcome"]["value"] =
+            json!({"kind": "string", "value": second_name});
+        events
+            .iter_mut()
+            .find(|event| event["request"] == "tasks-enumeration")
+            .context("Ordered Project task-map set")?["outcome"]["value"]["value"] = if reverse {
+            json!(["second-task", "first-task"])
+        } else {
+            json!(["first-task", "second-task"])
+        };
+        let mut resolver_event = events
+            .iter()
+            .find(|event| event["request"] == "resolver-instance")
+            .context("Second resolver return")?
+            .clone();
+        resolver_event["id"] = json!("event-resolver-second");
+        resolver_event["request"] = json!("resolver-second");
+        let mut arguments_event = events
+            .iter()
+            .find(|event| event["request"] == "arguments")
+            .context("Second compiler return")?
+            .clone();
+        arguments_event["id"] = json!("event-arguments-second");
+        arguments_event["request"] = json!("arguments-second");
+        arguments_event["outcome"]["value"]["value"] = json!(["-Xsecond"]);
+        events.push(resolver_event);
+        events.push(arguments_event);
+        assert_eq!(
+            plan.source_set_names
+                .insert("second-task".into(), "source-second".into()),
+            None
+        );
+        assert_eq!(
+            plan.compiler_arguments
+                .insert("second-task".into(), "arguments-second".into()),
+            None
+        );
+        let snapshot = import_requested_capture(&mut fixture, &value, plan, 1)?;
+        let mut publisher = ModuleImportPublisher::default();
+        publisher.commit(stage(&fixture, &publisher, 1)?, &revision(&fixture, 1))?;
+        if let Some(arguments) = expected_arguments {
+            assert_eq!(
+                committed_settings(&publisher)?.compiler_arguments,
+                Some(vec![arguments.into()])
+            );
+        } else {
+            assert_eq!(
+                committed_main_state(&publisher)?,
+                &KotlinMemberState::Unknown(KotlinUnknownReason::MissingSourceSet)
+            );
+        }
+        let raw = snapshot
+            .raw_events()
+            .iter()
+            .find(|event| event.request == "source-first")
+            .context("Raw first task remains null after ordered selection")?;
+        assert!(matches!(
+            raw.outcome,
+            android_tools::kotlin_import_facts::GetterOutcome::Available(None)
+        ));
+    }
+    Ok(())
+}

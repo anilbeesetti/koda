@@ -20,6 +20,8 @@ anyhow.workspace = true
 chrono.workspace = true
 dirs.workspace = true
 fs2 = { version = "0.4.3", optional = true }
+icu_casemap = "2.3.0"
+icu_locale_core = "2.3.0"
 regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
