@@ -1846,7 +1846,7 @@ impl AndroidPanel {
     ) -> Result<(&'static str, String)> {
         let variant = self
             .build_variant(cx)
-            .context("Sync the project and select a current build variant first.")?;
+            .context("Sync and select a build variant first.")?;
         match operation {
             GradleOperation::Build => Ok(("Build", variant.gradle_task("assemble", ""))),
             GradleOperation::Test => Ok(("Test", variant.gradle_task("test", "UnitTest"))),
@@ -4889,7 +4889,8 @@ mod tests {
                 let filesystem = FakeFs::new(cx.executor());
                 filesystem.insert_tree(&root, json!({"gradlew":"", "settings.gradle.kts":""})).await;
                 let project = Project::test_with_worktree_trust(filesystem, [root.as_path()], cx).await;
-                let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+                let (multi_workspace, visual) = cx.add_window_view(|window, cx| workspace::MultiWorkspace::test_new(project.clone(), window, cx));
+                let workspace = multi_workspace.read_with(visual, |multi_workspace, _| multi_workspace.workspace().clone());
                 let panel = new_test_android_panel(&workspace, project.clone(), visual);
                 workspace.update_in(visual, |workspace, window, cx| {
                     workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
@@ -5102,7 +5103,8 @@ mod tests {
                 filesystem.insert_tree(root, json!({"gradlew":"", "settings.gradle.kts":""})).await;
             }
             let project = Project::test_with_worktree_trust(filesystem, [a.as_path(), b.as_path()], cx).await;
-            let (workspace, visual) = cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let (multi_workspace, visual) = cx.add_window_view(|window, cx| workspace::MultiWorkspace::test_new(project.clone(), window, cx));
+            let workspace = multi_workspace.read_with(visual, |multi_workspace, _| multi_workspace.workspace().clone());
             let panel = new_test_android_panel(&workspace, project.clone(), visual);
             workspace.update_in(visual, |workspace, window, cx| {
                 workspace.add_panel(panel.read(cx).build_panel.clone(), window, cx);
@@ -6175,7 +6177,7 @@ mod tests {
             output_listing: PathBuf::from("/input-sibling/output.json"),
         };
         let model = serde_json::from_value::<android_tools::project_model::ProjectModel>(json!({
-            "version":1,"root":"/canonical-parent","diagnostics":[],"modules":[{
+            "version":1,"root":"/input-parent","diagnostics":[],"modules":[{
                 "path":":app","directory":"/canonical-sibling","kind":"application","namespace":"sample",
                 "variants":[
                     {"name":"debug","outputListing":target.output_listing,"components":[
@@ -6246,6 +6248,31 @@ mod tests {
                         || path.starts_with("/input-unrelated"))
             );
         });
+        let input_cases = [
+            ("/input-sibling/inputs/generated/values/strings.xml", false),
+            ("/input-sibling/inputs/tests/values/strings.xml", false),
+            ("/input-sibling/release-res/values/strings.xml", false),
+            ("/input-sibling/src/release/res/values/strings.xml", false),
+            ("/input-unrelated/src/main/res/values/strings.xml", false),
+            ("/input-sibling/inputs/values/strings.xml", true),
+            ("/input-sibling/manifest/custom.xml", true),
+        ];
+        // Unloaded parents filter watch events under the test's shallow scan depth.
+        for (path, _) in input_cases {
+            let mut loaded = project.read_with(visual, |project, cx| {
+                let (worktree, parent) = project
+                    .find_worktree(Path::new(path).parent().context("Input parent")?, cx)
+                    .context("Input worktree")?;
+                Ok::<_, anyhow::Error>(
+                    worktree
+                        .read(cx)
+                        .as_local()
+                        .context("Local input worktree")?
+                        .refresh_entries_for_paths(vec![parent]),
+                )
+            })?;
+            loaded.next().await;
+        }
         let roots = project.read_with(visual, |project, cx| {
             project
                 .visible_worktrees(cx)
@@ -6270,15 +6297,7 @@ mod tests {
                 }
             })
         });
-        for (path, refresh) in [
-            ("/input-sibling/inputs/generated/values/strings.xml", false),
-            ("/input-sibling/inputs/tests/values/strings.xml", false),
-            ("/input-sibling/release-res/values/strings.xml", false),
-            ("/input-sibling/src/release/res/values/strings.xml", false),
-            ("/input-unrelated/src/main/res/values/strings.xml", false),
-            ("/input-sibling/inputs/values/strings.xml", true),
-            ("/input-sibling/manifest/custom.xml", true),
-        ] {
+        for (path, refresh) in input_cases {
             panel.update(visual, publish_model)?;
             let buffer = project
                 .update(visual, |project, cx| project.open_local_buffer(path, cx))
@@ -7114,8 +7133,22 @@ fi
             panel.startup_settings_ready = true;
             panel.running = true;
         });
-        project.update(cx, |project, cx| project.remove_worktree(worktree_id, cx));
         panel.update_in(cx, |panel, window, cx| {
+            // Deliver completion before deferred context cancellation is processed.
+            project.update(cx, |project, cx| project.remove_worktree(worktree_id, cx));
+            let remaining = project
+                .read(cx)
+                .visible_worktrees(cx)
+                .next()
+                .expect("Remaining fixture worktree")
+                .read(cx)
+                .id();
+            project_context::for_workspace(&panel.workspace, cx)
+                .expect("Fixture project context")
+                .update(cx, |controller, cx| {
+                    controller.select_fixture_root(remaining, cx)
+                })
+                .expect("Select remaining fixture project");
             panel.auto_sync_project(window, cx);
             assert!(panel.running, "the original Gradle task is still pending");
             assert!(panel.root.is_none());
@@ -7867,7 +7900,14 @@ fi
     #[gpui::test]
     async fn device_menu_uses_refreshed_devices_and_preserves_selection(cx: &mut TestAppContext) {
         let _app_state = cx.update(AppState::test);
-        let project = Project::test(FakeFs::new(cx.executor()), [], cx).await;
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem
+            .insert_tree(
+                "/device-menu",
+                json!({"settings.gradle.kts":"", "gradlew":""}),
+            )
+            .await;
+        let project = Project::test(filesystem, [Path::new("/device-menu")], cx).await;
         let (workspace, cx) =
             cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
         let panel = new_test_android_panel(&workspace, project, cx);

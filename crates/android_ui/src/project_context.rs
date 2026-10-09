@@ -880,8 +880,12 @@ mod tests {
                 cx,
             )
         });
-        let (workspace, visual) =
-            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+        let (multi_workspace, visual) = cx.add_window_view(|window, cx| {
+            workspace::MultiWorkspace::test_new(project.clone(), window, cx)
+        });
+        let workspace = multi_workspace.read_with(visual, |multi_workspace, _| {
+            multi_workspace.workspace().clone()
+        });
         let build_panel = visual.new(|cx| BuildPanel::new(workspace.downgrade(), cx));
         workspace.update_in(visual, |workspace, window, cx| {
             workspace.add_panel(build_panel.clone(), window, cx);
