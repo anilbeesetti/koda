@@ -8901,8 +8901,8 @@ fi
                 "removed-library",
             ] {
                 let root = PathBuf::from(format!("/picker-captured-{transition}"));
-                let other = root.join("other");
-                let generic = root.join("generic");
+                let other = PathBuf::from(format!("/picker-captured-{transition}-other"));
+                let generic = PathBuf::from(format!("/picker-captured-{transition}-generic"));
                 let filesystem = FakeFs::new(cx.executor());
                 for path in [&root, &other, &generic] {
                     filesystem
@@ -8941,6 +8941,9 @@ fi
                             .expect("Picker worktree")
                     })
                 });
+                assert_ne!(a, b, "Android roots must be distinct");
+                assert_ne!(a, plain, "Generic root must differ from A");
+                assert_ne!(b, plain, "Generic root must differ from B");
                 controller.update(visual, |controller, cx| {
                     controller.select_fixture_root(a, cx)
                 })?;
