@@ -910,7 +910,7 @@ impl<T: GetterTransport, H: Clone + PartialEq> KotlinGetterCapture<T, H> {
             catalogue: catalogue.id.clone(),
             method,
             arguments,
-            return_shape,
+            return_shape: shape,
             purpose,
             after: after.map(str::to_owned),
         };
