@@ -1,0 +1,1481 @@
+use crate::{Project, ProjectPath, trusted_worktrees::TrustedWorktrees};
+use android_tools::{
+    java_class_facts::MAX_JAVA_FACT_BYTES,
+    project_context::{ObservationPhase, RootHandle, RootToken},
+    project_model::{ModelToken, ProjectModel, SelectedProject},
+    project_tree::SourceGroup,
+    project_tree_adapter::{
+        AdaptedModuleTree, CaptureBinding, CapturedEntry, CapturedEntryKind, CapturedJavaSource,
+        CapturedModuleFiles, MAX_PARSED_JAVA_BYTES, ModuleRootPlan, adapt_captured_module,
+    },
+    project_tree_facts::RootPresence,
+};
+use anyhow::{Context as _, Result, ensure};
+use fs::{Fs, MTime, Metadata};
+use gpui::{App, AppContext as _, AsyncApp, Context, Entity, EntityId, Task, WeakEntity};
+use postage::stream::Stream as _;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    io::Read as _,
+    path::{Path, PathBuf},
+    sync::{
+        Arc,
+        atomic::{AtomicBool, AtomicU64, Ordering},
+    },
+};
+use util::{paths::PathStyle, rel_path::RelPath};
+use worktree::{Entry, EntryKind, Snapshot, Worktree, WorktreeId};
+
+const MAX_CAPTURE_ROOTS: usize = 4096;
+const MAX_CAPTURE_ENTRIES: usize = 100_000;
+static NEXT_FILE_REVISION: AtomicU64 = AtomicU64::new(1);
+
+/// The caller validates its evaluated module plan before creating the request,
+/// and retains that plan's original selection token. Each window owns its task.
+#[derive(Clone)]
+pub struct AndroidTreeCaptureRequest {
+    root: RootHandle,
+    context_token: RootToken,
+    model_token: ModelToken,
+    plan: Arc<ModuleRootPlan>,
+    owner_generation: u64,
+    request_generation: u64,
+    cancelled: Arc<AtomicBool>,
+    #[cfg(test)]
+    gate: Option<Arc<TestGate>>,
+}
+
+impl AndroidTreeCaptureRequest {
+    pub fn new(
+        root: RootHandle,
+        context_token: RootToken,
+        model_token: ModelToken,
+        plan: Arc<ModuleRootPlan>,
+        owner_generation: u64,
+        request_generation: u64,
+    ) -> Self {
+        Self {
+            root,
+            context_token,
+            model_token,
+            plan,
+            owner_generation,
+            request_generation,
+            cancelled: Arc::new(AtomicBool::new(false)),
+            #[cfg(test)]
+            gate: None,
+        }
+    }
+
+    /// Also cancels clones retained by an in-flight capture or its result.
+    pub fn cancel(&self) {
+        self.cancelled.store(true, Ordering::Release);
+    }
+
+    fn check_cancelled(&self) -> Result<()> {
+        ensure!(
+            !self.cancelled.load(Ordering::Acquire),
+            "Android tree capture was cancelled"
+        );
+        Ok(())
+    }
+}
+
+#[derive(Clone)]
+struct CaptureOwner {
+    project: EntityId,
+    model: Arc<ProjectModel>,
+    selected: Arc<SelectedProject>,
+    root_path: PathBuf,
+    module_directory: PathBuf,
+}
+
+#[derive(Clone)]
+struct WorktreeScope {
+    worktree: Entity<Worktree>,
+    refresh: BTreeSet<Arc<RelPath>>,
+    recursive: BTreeSet<Arc<RelPath>>,
+    inventory: BTreeSet<Arc<RelPath>>,
+}
+
+#[derive(Clone)]
+struct WorktreeCapture {
+    scope: WorktreeScope,
+    id: WorktreeId,
+    scan_id: usize,
+    completed_scan_id: usize,
+    snapshot: Snapshot,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct FileVersion {
+    inode: u64,
+    mtime: MTime,
+    len: u64,
+    directory: bool,
+    fifo: bool,
+    symlink: bool,
+}
+
+impl From<Metadata> for FileVersion {
+    fn from(metadata: Metadata) -> Self {
+        Self {
+            inode: metadata.inode,
+            mtime: metadata.mtime,
+            len: metadata.len,
+            directory: metadata.is_dir,
+            fifo: metadata.is_fifo,
+            symlink: metadata.is_symlink,
+        }
+    }
+}
+
+type PresenceVersions = BTreeMap<PathBuf, Option<FileVersion>>;
+type PhysicalEntries = BTreeMap<PathBuf, (ProjectPath, Entry)>;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum AndroidTreeReadLimit {
+    JavaFileTooLarge(PathBuf),
+    JavaCaptureBudget(PathBuf),
+}
+
+/// Immutable projection and the actual physical handles/revisions it used.
+/// It has not been installed in any panel. Consumers check their window's owner
+/// and request generations as well as `is_android_tree_capture_current`.
+pub struct CapturedAndroidModuleTree {
+    request: AndroidTreeCaptureRequest,
+    owner: CaptureOwner,
+    worktrees: Vec<WorktreeCapture>,
+    entries: PhysicalEntries,
+    java_sources: BTreeMap<PathBuf, Arc<[u8]>>,
+    tree: AdaptedModuleTree,
+    read_limits: Vec<AndroidTreeReadLimit>,
+}
+
+impl CapturedAndroidModuleTree {
+    pub fn tree(&self) -> &AdaptedModuleTree {
+        &self.tree
+    }
+
+    pub fn owner_generation(&self) -> u64 {
+        self.request.owner_generation
+    }
+
+    pub fn request_generation(&self) -> u64 {
+        self.request.request_generation
+    }
+
+    /// Raw bytes, so a navigation consumer can map/revalidate parser offsets
+    /// against the opened editor buffer's encoding and line endings.
+    pub fn java_source(&self, path: &Path) -> Option<&Arc<[u8]>> {
+        self.java_sources.get(path)
+    }
+
+    pub fn read_limits(&self) -> &[AndroidTreeReadLimit] {
+        &self.read_limits
+    }
+}
+
+impl Project {
+    pub fn capture_android_module_tree(
+        &mut self,
+        request: AndroidTreeCaptureRequest,
+        cx: &mut Context<Self>,
+    ) -> Task<Result<CapturedAndroidModuleTree>> {
+        let owner = match self.android_tree_capture_owner(&request, cx.entity_id(), cx) {
+            Ok(owner) => owner,
+            Err(error) => return Task::ready(Err(error)),
+        };
+        let filesystem = self.fs().clone();
+        let owner_observer = cx.observe_self({
+            let owner = owner.clone();
+            let request = request.clone();
+            move |project, cx| {
+                if !project.android_tree_owner_is_current(&owner, &request, cx) {
+                    request.cancel();
+                }
+            }
+        });
+        cx.spawn(async move |project, cx| {
+            let _owner_observer = owner_observer;
+            let mut presence_paths = request.plan.required_presence_paths();
+            let special_file = owner.module_directory.join("google-services.json");
+            presence_paths.insert(special_file.clone());
+            ensure!(
+                presence_paths.len() <= MAX_CAPTURE_ROOTS,
+                "Android tree has too many roots"
+            );
+            let initial_presence = cx
+                .background_spawn({
+                    let filesystem = filesystem.clone();
+                    let paths = presence_paths.clone();
+                    let request = request.clone();
+                    async move { probe_paths(&filesystem, &paths, &request).await }
+                })
+                .await?;
+            check_owner(&project, &owner, &request, cx)?;
+
+            let scopes = resolve_worktrees(
+                &project,
+                &owner,
+                &request,
+                &initial_presence,
+                &special_file,
+                cx,
+            )
+            .await?;
+            let scanned = scan_worktrees(&project, &owner, &request, &scopes, true, cx).await?;
+            #[cfg(test)]
+            wait_at_test_gate(&request, TestPhase::Scanned).await?;
+            check_owner(&project, &owner, &request, cx)?;
+
+            let entries = cx
+                .background_spawn({
+                    let scanned = scanned.clone();
+                    let request = request.clone();
+                    async move { collect_entries(&scanned, &request) }
+                })
+                .await?;
+            let (java_sources, read_limits) = cx
+                .background_spawn({
+                    let filesystem = filesystem.clone();
+                    let entries = entries.clone();
+                    let request = request.clone();
+                    async move { read_java_sources(&filesystem, &entries, &request).await }
+                })
+                .await?;
+            check_owner(&project, &owner, &request, cx)?;
+
+            // Byte reads are not part of WorktreeSnapshot. Reconcile both the
+            // inventory and file versions after a second actual refresh.
+            let worktrees = scan_worktrees(&project, &owner, &request, &scopes, false, cx).await?;
+            let final_entries = cx
+                .background_spawn({
+                    let worktrees = worktrees.clone();
+                    let request = request.clone();
+                    async move { collect_entries(&worktrees, &request) }
+                })
+                .await?;
+            ensure!(
+                entries == final_entries,
+                "Android tree files changed during capture"
+            );
+            let presence = cx
+                .background_spawn({
+                    let filesystem = filesystem.clone();
+                    let request = request.clone();
+                    let paths = presence_paths;
+                    let entries = final_entries.clone();
+                    let java_sources = java_sources.clone();
+                    async move {
+                        let presence = probe_paths(&filesystem, &paths, &request).await?;
+                        ensure!(
+                            presence == initial_presence,
+                            "Android tree roots changed during capture"
+                        );
+                        verify_file_bytes(&filesystem, &entries, &java_sources, &request).await?;
+                        Ok::<_, anyhow::Error>(presence)
+                    }
+                })
+                .await?;
+            check_owner(&project, &owner, &request, cx)?;
+            check_worktrees(&project, &worktrees, cx)?;
+
+            let file_revision = NEXT_FILE_REVISION
+                .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |revision| {
+                    revision.checked_add(1)
+                })
+                .map_err(|_| anyhow::anyhow!("Android file revision space exhausted"))?;
+            let tree = cx
+                .background_spawn({
+                    let request = request.clone();
+                    let entries = final_entries.clone();
+                    let java_sources = java_sources.clone();
+                    async move {
+                        request.check_cancelled()?;
+                        let mut captured_entries = entries
+                            .iter()
+                            .map(|(path, (_, entry))| CapturedEntry {
+                                path: path.clone(),
+                                kind: if entry.is_dir() {
+                                    CapturedEntryKind::Directory
+                                } else {
+                                    CapturedEntryKind::File {
+                                        java_source: java_sources.get(path).map(|bytes| {
+                                            CapturedJavaSource {
+                                                file_revision,
+                                                bytes: bytes.clone(),
+                                            }
+                                        }),
+                                    }
+                                },
+                            })
+                            .collect::<Vec<_>>();
+                        for (path, version) in &presence {
+                            if version.as_ref().is_some_and(|version| version.directory)
+                                && !entries.contains_key(path)
+                            {
+                                captured_entries.push(CapturedEntry {
+                                    path: path.clone(),
+                                    kind: CapturedEntryKind::Directory,
+                                });
+                            }
+                        }
+                        let binding = request.plan.binding();
+                        let capture = CapturedModuleFiles {
+                            binding: CaptureBinding {
+                                module: binding.module.clone(),
+                                variant: binding.variant.clone(),
+                                model_revision: binding.model_revision,
+                                file_revision,
+                            },
+                            entries: captured_entries,
+                            presence: presence
+                                .into_iter()
+                                .map(|(path, version)| {
+                                    let presence = match version {
+                                        None => RootPresence::Missing,
+                                        Some(version) if version.directory => {
+                                            RootPresence::Directory
+                                        }
+                                        Some(_) => RootPresence::File,
+                                    };
+                                    (path, presence)
+                                })
+                                .collect(),
+                        };
+                        Ok::<_, anyhow::Error>(adapt_captured_module(&request.plan, &capture)?)
+                    }
+                })
+                .await?;
+            check_owner(&project, &owner, &request, cx)?;
+            check_worktrees(&project, &worktrees, cx)?;
+            Ok(CapturedAndroidModuleTree {
+                request,
+                owner,
+                worktrees,
+                entries: final_entries,
+                java_sources,
+                tree,
+                read_limits,
+            })
+        })
+    }
+
+    pub fn is_android_tree_capture_current(
+        &self,
+        capture: &CapturedAndroidModuleTree,
+        cx: &App,
+    ) -> bool {
+        self.android_tree_owner_is_current(&capture.owner, &capture.request, cx)
+            && capture.worktrees.iter().all(|captured| {
+                self.worktree_for_id(captured.id, cx)
+                    .is_some_and(|worktree| {
+                        worktree == captured.scope.worktree
+                            && !worktree_is_restricted(self, captured.id, cx)
+                            && worktree.read(cx).scan_id() == captured.scan_id
+                            && worktree.read(cx).completed_scan_id() == captured.completed_scan_id
+                    })
+            })
+    }
+
+    /// Resolves only actual captured entries; virtual groups have no filesystem ID.
+    pub fn android_tree_project_path(
+        &self,
+        capture: &CapturedAndroidModuleTree,
+        path: &Path,
+        cx: &App,
+    ) -> Result<ProjectPath> {
+        ensure!(
+            self.is_android_tree_capture_current(capture, cx),
+            "Android tree capture is outdated"
+        );
+        let (project_path, expected) = capture
+            .entries
+            .get(path)
+            .context("Android tree target was not captured")?;
+        let actual = self
+            .entry_for_path(project_path, cx)
+            .context("Android tree target was removed")?;
+        ensure!(actual == expected, "Android tree target changed");
+        Ok(project_path.clone())
+    }
+
+    fn android_tree_capture_owner(
+        &self,
+        request: &AndroidTreeCaptureRequest,
+        project: EntityId,
+        cx: &App,
+    ) -> Result<CaptureOwner> {
+        request.check_cancelled()?;
+        ensure!(
+            self.is_local(),
+            "Android tree capture requires local worktrees"
+        );
+        let context = self.android_context();
+        ensure!(
+            context.token(request.root).as_ref() == Some(&request.context_token),
+            "Android tree root context is outdated or untrusted"
+        );
+        let snapshot = context
+            .snapshot(request.root)
+            .context("Evaluate the Android project context first")?;
+        ensure!(
+            snapshot.phase() == ObservationPhase::Complete,
+            "Android project context is incomplete"
+        );
+        let root_path = context
+            .root_path(request.root)
+            .context("Android tree root was removed")?
+            .to_path_buf();
+        let worktree_id = WorktreeId::from_proto(request.root.worktree());
+        let worktree = self
+            .worktree_for_id(worktree_id, cx)
+            .context("Android tree root worktree was removed")?;
+        ensure!(
+            worktree.read(cx).is_visible()
+                && worktree.read(cx).abs_path().as_ref() == root_path.as_path(),
+            "Android tree root does not own the visible project"
+        );
+        ensure!(
+            !worktree_is_restricted(self, worktree_id, cx),
+            "Android tree root is restricted"
+        );
+        let state = self.android_model();
+        ensure!(
+            state.is_current(&request.model_token) && state.root() == Some(root_path.as_path()),
+            "Android tree model is outdated"
+        );
+        let model = state
+            .model
+            .as_ref()
+            .context("Sync the Android project first")?
+            .clone();
+        ensure!(
+            model.root == root_path,
+            "Android tree model belongs to another root"
+        );
+        let selected = state
+            .selected
+            .as_ref()
+            .context("Select an Android variant first")?
+            .clone();
+        ensure!(
+            Arc::ptr_eq(&selected.model, &model),
+            "Android tree selection belongs to another model"
+        );
+        let binding = request.plan.binding();
+        ensure!(
+            selected.variants.get(&binding.module) == Some(&binding.variant),
+            "Android tree plan belongs to another selected variant"
+        );
+        let module = model
+            .modules
+            .iter()
+            .find(|module| module.path == binding.module)
+            .context("Android tree module is absent")?;
+        ensure!(
+            snapshot
+                .modules()
+                .any(|observed| observed.path() == module.path
+                    && observed.directory() == module.directory),
+            "Android tree module has no evaluated context owner"
+        );
+        let module_directory = module.directory.clone();
+        Ok(CaptureOwner {
+            project,
+            model,
+            selected,
+            root_path,
+            module_directory,
+        })
+    }
+
+    fn android_tree_owner_is_current(
+        &self,
+        owner: &CaptureOwner,
+        request: &AndroidTreeCaptureRequest,
+        cx: &App,
+    ) -> bool {
+        request.check_cancelled().is_ok()
+            && self.android_context().token(request.root).as_ref() == Some(&request.context_token)
+            && self.android_context().root_path(request.root) == Some(owner.root_path.as_path())
+            && self
+                .android_context()
+                .snapshot(request.root)
+                .is_some_and(|snapshot| snapshot.phase() == ObservationPhase::Complete)
+            && self.android_model().is_current(&request.model_token)
+            && self.android_model().root() == Some(owner.root_path.as_path())
+            && self
+                .android_model()
+                .model
+                .as_ref()
+                .is_some_and(|model| Arc::ptr_eq(model, &owner.model))
+            && self
+                .android_model()
+                .selected
+                .as_ref()
+                .is_some_and(|selected| Arc::ptr_eq(selected, &owner.selected))
+            && self
+                .worktree_for_id(WorktreeId::from_proto(request.root.worktree()), cx)
+                .is_some_and(|worktree| {
+                    worktree.read(cx).is_visible()
+                        && worktree.read(cx).abs_path().as_ref() == owner.root_path.as_path()
+                })
+            && !worktree_is_restricted(self, WorktreeId::from_proto(request.root.worktree()), cx)
+    }
+}
+
+fn worktree_is_restricted(project: &Project, id: WorktreeId, cx: &App) -> bool {
+    TrustedWorktrees::try_get_global(cx).is_some_and(|trusted| {
+        trusted
+            .read(cx)
+            .is_worktree_restricted(&project.worktree_store(), id)
+    })
+}
+
+fn check_owner(
+    project: &WeakEntity<Project>,
+    owner: &CaptureOwner,
+    request: &AndroidTreeCaptureRequest,
+    cx: &AsyncApp,
+) -> Result<()> {
+    ensure!(
+        project.entity_id() == owner.project,
+        "Android tree project owner changed"
+    );
+    ensure!(
+        project.read_with(cx, |project, cx| project
+            .android_tree_owner_is_current(owner, request, cx))?,
+        "Android tree capture owner is outdated or untrusted"
+    );
+    Ok(())
+}
+
+async fn probe_paths(
+    filesystem: &Arc<dyn Fs>,
+    paths: &BTreeSet<PathBuf>,
+    request: &AndroidTreeCaptureRequest,
+) -> Result<PresenceVersions> {
+    let mut presence = BTreeMap::new();
+    for path in paths {
+        request.check_cancelled()?;
+        let version = filesystem
+            .metadata(path)
+            .await
+            .with_context(|| {
+                format!(
+                    "Reading Android source-root metadata for {}",
+                    path.display()
+                )
+            })?
+            .map(FileVersion::from);
+        presence.insert(path.clone(), version);
+    }
+    Ok(presence)
+}
+
+async fn resolve_worktrees(
+    project: &WeakEntity<Project>,
+    owner: &CaptureOwner,
+    request: &AndroidTreeCaptureRequest,
+    presence: &PresenceVersions,
+    special_file: &Path,
+    cx: &mut AsyncApp,
+) -> Result<Vec<WorktreeScope>> {
+    let mut scopes = BTreeMap::<WorktreeId, WorktreeScope>::new();
+    let inventory_paths = request
+        .plan
+        .source_roots()
+        .iter()
+        .map(|root| root.path.clone())
+        .chain(std::iter::once(special_file.to_path_buf()))
+        .collect::<BTreeSet<_>>();
+    for path in &inventory_paths {
+        check_owner(project, owner, request, cx)?;
+        let existing = project.read_with(cx, |project, cx| project.find_worktree(path, cx))?;
+        let (worktree, relative) = if let Some(existing) = existing {
+            existing
+        } else if let Some(version) = presence.get(path).and_then(Option::as_ref) {
+            let target = if version.directory {
+                path.as_path()
+            } else {
+                path.parent().context("Android source file has no parent")?
+            };
+            ensure!(
+                target != Path::new("/") && target.parent().is_some(),
+                "Android source root is too broad"
+            );
+            let (worktree, _) = project
+                .update(cx, |project, cx| {
+                    project.find_or_create_worktree(target, false, cx)
+                })?
+                .await?;
+            check_owner(project, owner, request, cx)?;
+            let relative = RelPath::new(
+                path.strip_prefix(worktree.read_with(cx, |worktree, _| worktree.abs_path()))?,
+                PathStyle::local(),
+            )?
+            .into_arc();
+            (worktree, relative)
+        } else {
+            // Absence is retained by two actual metadata probes. Do not create
+            // an unrelated ancestor worktree to scan a nonexistent external root.
+            continue;
+        };
+        let id = worktree.read_with(cx, |worktree, _| worktree.id());
+        ensure!(
+            !project.read_with(cx, |project, cx| worktree_is_restricted(project, id, cx))?,
+            "Android source worktree is restricted"
+        );
+        ensure!(
+            worktree.read_with(cx, |worktree, _| worktree.is_local()),
+            "Android source worktree is remote"
+        );
+        let scope = scopes.entry(id).or_insert_with(|| WorktreeScope {
+            worktree,
+            refresh: BTreeSet::new(),
+            recursive: BTreeSet::new(),
+            inventory: BTreeSet::new(),
+        });
+        scope.refresh.insert(relative.clone());
+        scope.inventory.insert(relative.clone());
+        if path != special_file
+            && presence
+                .get(path)
+                .and_then(Option::as_ref)
+                .is_some_and(|version| version.directory)
+        {
+            scope.recursive.insert(relative);
+        }
+    }
+    Ok(scopes.into_values().collect())
+}
+
+async fn scan_worktrees(
+    project: &WeakEntity<Project>,
+    owner: &CaptureOwner,
+    request: &AndroidTreeCaptureRequest,
+    scopes: &[WorktreeScope],
+    expand: bool,
+    cx: &mut AsyncApp,
+) -> Result<Vec<WorktreeCapture>> {
+    let mut pending = Vec::new();
+    for scope in scopes {
+        check_owner(project, owner, request, cx)?;
+        let (next_scan, barriers) =
+            scope.worktree.downgrade().read_with(cx, |worktree, _| {
+                let local = worktree
+                    .as_local()
+                    .context("Android source worktree is remote")?;
+                ensure!(
+                    scope
+                        .refresh
+                        .iter()
+                        .all(|path| !local.settings().is_path_excluded(path)),
+                    "An Android source root is excluded from worktree scans"
+                );
+                let mut barriers = Vec::new();
+                if expand {
+                    for path in &scope.recursive {
+                        barriers.push(local.add_path_prefix_to_scan(path.clone()));
+                    }
+                }
+                barriers
+                    .push(local.refresh_entries_for_paths(scope.refresh.iter().cloned().collect()));
+                Ok::<_, anyhow::Error>((
+                    worktree
+                        .scan_id()
+                        .checked_add(1)
+                        .context("Worktree scan revision space exhausted")?,
+                    barriers,
+                ))
+            })??;
+        pending.push((scope.clone(), next_scan, barriers));
+    }
+    let mut captured = Vec::new();
+    for (scope, next_scan, barriers) in pending {
+        for mut barrier in barriers {
+            barrier.next().await;
+            check_owner(project, owner, request, cx)?;
+        }
+        scope
+            .worktree
+            .downgrade()
+            .update(cx, |worktree, _| worktree.wait_for_snapshot(next_scan))?
+            .await?;
+        check_owner(project, owner, request, cx)?;
+        let (id, scan_id, completed_scan_id, snapshot) =
+            scope.worktree.downgrade().read_with(cx, |worktree, _| {
+                ensure!(
+                    worktree.completed_scan_id() >= worktree.scan_id(),
+                    "Android worktree changed while its scan was captured"
+                );
+                Ok::<_, anyhow::Error>((
+                    worktree.id(),
+                    worktree.scan_id(),
+                    worktree.completed_scan_id(),
+                    worktree.snapshot(),
+                ))
+            })??;
+        captured.push(WorktreeCapture {
+            scope,
+            id,
+            scan_id,
+            completed_scan_id,
+            snapshot,
+        });
+    }
+    Ok(captured)
+}
+
+fn check_worktrees(
+    project: &WeakEntity<Project>,
+    worktrees: &[WorktreeCapture],
+    cx: &AsyncApp,
+) -> Result<()> {
+    for captured in worktrees {
+        ensure!(
+            project.read_with(cx, |project, cx| {
+                project
+                    .worktree_for_id(captured.id, cx)
+                    .is_some_and(|worktree| {
+                        worktree == captured.scope.worktree
+                            && !worktree_is_restricted(project, captured.id, cx)
+                            && worktree.read(cx).scan_id() == captured.scan_id
+                            && worktree.read(cx).completed_scan_id() == captured.completed_scan_id
+                    })
+            })?,
+            "Android source worktree changed during capture"
+        );
+    }
+    Ok(())
+}
+
+fn collect_entries(
+    worktrees: &[WorktreeCapture],
+    request: &AndroidTreeCaptureRequest,
+) -> Result<PhysicalEntries> {
+    let mut entries = BTreeMap::new();
+    for captured in worktrees {
+        request.check_cancelled()?;
+        for entry in captured.snapshot.entries(true, 0) {
+            if !captured.scope.inventory.contains(&entry.path)
+                && !entry
+                    .path
+                    .ancestors()
+                    .any(|ancestor| captured.scope.recursive.contains(ancestor))
+            {
+                continue;
+            }
+            ensure!(
+                !matches!(entry.kind, EntryKind::UnloadedDir | EntryKind::PendingDir),
+                "Android source directory has not completed scanning"
+            );
+            ensure!(!entry.is_fifo, "Android source root contains a FIFO");
+            let absolute = captured.snapshot.abs_path().join(entry.path.as_std_path());
+            let value = (
+                ProjectPath {
+                    worktree_id: captured.id,
+                    path: entry.path.clone(),
+                },
+                entry.clone(),
+            );
+            if let Some(previous) = entries.insert(absolute, value.clone()) {
+                ensure!(
+                    previous == value,
+                    "Android tree has ambiguous physical worktree ownership"
+                );
+            }
+            ensure!(
+                entries.len() <= MAX_CAPTURE_ENTRIES,
+                "Android tree file inventory exceeds its capture limit"
+            );
+        }
+    }
+    Ok(entries)
+}
+
+fn matches_version(entry: &Entry, version: &FileVersion) -> bool {
+    entry.inode == version.inode
+        && entry.mtime == Some(version.mtime)
+        && entry.size == version.len
+        && entry.is_dir() == version.directory
+        && !version.fifo
+}
+
+async fn read_versioned_java(
+    filesystem: &Arc<dyn Fs>,
+    path: &Path,
+    entry: &Entry,
+    request: &AndroidTreeCaptureRequest,
+) -> Result<Arc<[u8]>> {
+    request.check_cancelled()?;
+    let before: FileVersion = filesystem
+        .metadata(path)
+        .await?
+        .context("Android Java file was removed")?
+        .into();
+    ensure!(
+        matches_version(entry, &before),
+        "Android Java file changed before its byte capture"
+    );
+    ensure!(
+        before.len <= MAX_JAVA_FACT_BYTES as u64,
+        "Android Java file exceeds its capture limit"
+    );
+    let source = filesystem.open_sync(path).await?;
+    let mut bytes = Vec::with_capacity(before.len as usize);
+    source
+        .take(MAX_JAVA_FACT_BYTES as u64 + 1)
+        .read_to_end(&mut bytes)?;
+    ensure!(
+        bytes.len() <= MAX_JAVA_FACT_BYTES,
+        "Android Java file grew beyond its capture limit"
+    );
+    #[cfg(test)]
+    wait_at_test_gate(request, TestPhase::JavaRead).await?;
+    request.check_cancelled()?;
+    let after: FileVersion = filesystem
+        .metadata(path)
+        .await?
+        .context("Android Java file was removed during capture")?
+        .into();
+    ensure!(
+        before == after && bytes.len() as u64 == before.len,
+        "Android Java file changed during its byte capture"
+    );
+    Ok(bytes.into())
+}
+
+async fn read_java_sources(
+    filesystem: &Arc<dyn Fs>,
+    entries: &PhysicalEntries,
+    request: &AndroidTreeCaptureRequest,
+) -> Result<(BTreeMap<PathBuf, Arc<[u8]>>, Vec<AndroidTreeReadLimit>)> {
+    let mut sources = BTreeMap::new();
+    let mut limits = Vec::new();
+    let mut bytes = 0;
+    for (path, (_, entry)) in entries {
+        request.check_cancelled()?;
+        if entry.is_dir()
+            || path.extension().is_none_or(|extension| extension != "java")
+            || !request.plan.source_roots().iter().any(|root| {
+                matches!(
+                    root.group,
+                    SourceGroup::Java
+                        | SourceGroup::Kotlin
+                        | SourceGroup::KotlinAndJava
+                        | SourceGroup::GeneratedJava
+                ) && path.starts_with(&root.path)
+            })
+        {
+            continue;
+        }
+        if entry.size > MAX_JAVA_FACT_BYTES as u64 {
+            limits.push(AndroidTreeReadLimit::JavaFileTooLarge(path.clone()));
+            continue;
+        }
+        let size = entry.size as usize;
+        if size > MAX_PARSED_JAVA_BYTES - bytes {
+            limits.push(AndroidTreeReadLimit::JavaCaptureBudget(path.clone()));
+            continue;
+        }
+        let source = read_versioned_java(filesystem, path, entry, request).await?;
+        bytes += source.len();
+        sources.insert(path.clone(), source);
+    }
+    Ok((sources, limits))
+}
+
+async fn verify_file_bytes(
+    filesystem: &Arc<dyn Fs>,
+    entries: &PhysicalEntries,
+    sources: &BTreeMap<PathBuf, Arc<[u8]>>,
+    request: &AndroidTreeCaptureRequest,
+) -> Result<()> {
+    for (path, (_, entry)) in entries {
+        request.check_cancelled()?;
+        let current: FileVersion = filesystem
+            .metadata(path)
+            .await?
+            .context("Android tree entry was removed during capture")?
+            .into();
+        ensure!(
+            matches_version(entry, &current),
+            "Android tree entry changed during capture"
+        );
+        if let Some(expected) = sources.get(path) {
+            let actual = read_versioned_java(filesystem, path, entry, request).await?;
+            ensure!(
+                actual.as_ref() == expected.as_ref(),
+                "Android Java source bytes changed during reconciliation"
+            );
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum TestPhase {
+    Scanned,
+    JavaRead,
+}
+
+#[cfg(test)]
+struct TestGate {
+    phase: TestPhase,
+    reached: parking_lot::Mutex<Option<futures::channel::oneshot::Sender<()>>>,
+    resume: parking_lot::Mutex<Option<futures::channel::oneshot::Receiver<()>>>,
+}
+
+#[cfg(test)]
+async fn wait_at_test_gate(request: &AndroidTreeCaptureRequest, phase: TestPhase) -> Result<()> {
+    if let Some(gate) = &request.gate
+        && gate.phase == phase
+    {
+        let resume = gate.resume.lock().take();
+        if let Some(resume) = resume {
+            gate.reached
+                .lock()
+                .take()
+                .context("Capture test gate lost its observer")?
+                .send(())
+                .map_err(|_| anyhow::anyhow!("Capture test observer was dropped"))?;
+            resume.await?;
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use android_tools::{
+        project_context::{ActiveContext, PluginId, decode_context_record},
+        project_model::{SourceScope, VariantId},
+        project_tree::NodeKey,
+        project_tree_adapter::{
+            CapturedModulePresentation, KotlinCapability, prepare_module_roots,
+        },
+    };
+    use fs::{FakeFs, RealFs};
+    use futures::channel::oneshot;
+    use gpui::TestAppContext;
+    use serde_json::json;
+    use settings::SettingsStore;
+
+    const JAVA: &str = "// é\r\npackage example;\r\nclass ActualClass {}\r\n";
+
+    fn init(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            let settings = SettingsStore::test(cx);
+            cx.set_global(settings);
+            release_channel::init(semver::Version::new(0, 0, 0), cx);
+        });
+    }
+
+    // Supplemental host fixtures, deliberately independent of the six original
+    // Android Studio Gradle workflows. These test real capture races, not parity.
+    async fn request(
+        project: &Entity<Project>,
+        root: &Path,
+        external: Option<&Path>,
+        cx: &mut TestAppContext,
+    ) -> Result<AndroidTreeCaptureRequest> {
+        let worktree = project
+            .read_with(cx, |project, cx| {
+                project
+                    .visible_worktrees(cx)
+                    .next()
+                    .map(|tree| tree.read(cx).id())
+            })
+            .context("Fixture root worktree")?;
+        let handle = project.update(cx, |project, cx| {
+            project.ensure_android_context(worktree, true, cx)
+        })?;
+        let discovery = project.update(cx, |project, cx| {
+            project.begin_android_context_import(handle, cx)
+        })?;
+        let mut active = ActiveContext::default();
+        active.select(Some(handle), None)?;
+        let owner = project
+            .read_with(cx, |project, _| {
+                active.discovery_token(project.android_context())
+            })
+            .context("Fixture import owner")?;
+        let module_directory = root.join("app");
+        let record = json!({"schema":1,"root":root,"gradleVersion":"9.4","phase":"complete",
+            "modules":[{"path":":","directory":root,
+                "plugins":PluginId::ALL.map(|plugin| json!({"plugin":plugin,"applied":false})),
+                "targets":{"status":"unavailable","value":{"detail":"Supplemental fixture root"}},
+                "android":{"status":"unavailable","value":{"detail":"Root is not an Android module"}}},
+                {"path":":app","directory":module_directory,
+                "plugins":PluginId::ALL.map(|plugin| json!({"plugin":plugin,"applied":plugin==PluginId::AndroidApplication})),
+                "targets":{"status":"unavailable","value":{"detail":"Supplemental Java fixture"}},
+                "android":{"status":"available","value":{"pluginVersion":"9.4.0"}}}]});
+        let snapshot = decode_context_record(&serde_json::to_vec(&record)?, root)?;
+        project.update(cx, |project, cx| {
+            project.publish_android_context(&active, &owner, &discovery, snapshot, cx)
+        })?;
+
+        let java_root = external
+            .map(Path::to_path_buf)
+            .unwrap_or_else(|| module_directory.join("src/main/java"));
+        let provider = json!({"name":"main","roots":[
+            {"path":java_root,"kind":"java"},
+            {"path":module_directory.join("src/main/res"),"kind":"resources"},
+            {"path":module_directory.join("src/main/assets"),"kind":"assets"}]});
+        let container = json!({"main":provider,"hostTests":[],"deviceTests":[],"fixtures":null});
+        let variants = ["debug", "release"].map(|name| json!({"name":name,"outputListing":null,"components":[{
+            "name":name,"scope":SourceScope::Main,"namespace":"example","dependencies":[],"sources":[
+                {"path":module_directory.join("build/generated/source/config"),"kind":"java","generated":true}]}]}));
+        let provider_variants = ["debug", "release"].map(|name| json!({"name":name,"buildType":name,"productFlavors":[],
+            "main":{"multiFlavor":null,"variant":null},"hostTests":[],"deviceTests":[],"fixtures":null,"testSuites":[]}));
+        let module = json!({"path":":app","directory":module_directory,"namespace":"example","kind":"application",
+            "defaultVariant":"debug","sourceProviders":null,"variants":variants,
+            "evaluatedProviders":{"status":"available","value":{"version":1,"agpVersion":"9.4.0","modelProducer":{"major":22,"minor":0},
+                "defaultSourceSet":container,"buildTypes":[
+                    {"name":"debug","container":{"main":{"name":"debug","roots":[]},"hostTests":[],"deviceTests":[],"fixtures":null}},
+                    {"name":"release","container":{"main":{"name":"release","roots":[]},"hostTests":[],"deviceTests":[],"fixtures":null}}],
+                "productFlavors":[],"variants":provider_variants,"testSuites":[],"nativeMembership":null}}});
+        let model: ProjectModel = serde_json::from_value(
+            json!({"version":1,"root":root,"modules":[module],"diagnostics":[]}),
+        )?;
+        let sync = project.update(cx, |project, cx| {
+            project.invalidate_android_model(Some(root.to_path_buf()), cx)
+        });
+        project.update(cx, |project, cx| {
+            project.publish_android_model(&sync, model, cx)
+        })?;
+        project.update(cx, |project, cx| {
+            project.select_android_variant(
+                Some(VariantId {
+                    module: ":app".into(),
+                    variant: "debug".into(),
+                }),
+                cx,
+            )
+        })?;
+        project.read_with(cx, |project, _| {
+            let state = project.android_model();
+            let model = state.model.as_ref().context("Fixture model")?;
+            let plan = prepare_module_roots(
+                &model.modules[0],
+                "debug",
+                state.model_revision().context("Fixture revision")?,
+                Some(&CapturedModulePresentation {
+                    display_name: Some("app".into()),
+                    kotlin: KotlinCapability::Disabled,
+                    compact_packages: true,
+                }),
+            )?;
+            Ok(AndroidTreeCaptureRequest::new(
+                handle,
+                project
+                    .android_context()
+                    .token(handle)
+                    .context("Fixture context")?,
+                state.token(),
+                Arc::new(plan),
+                17,
+                23,
+            ))
+        })
+    }
+
+    fn gate(
+        request: &mut AndroidTreeCaptureRequest,
+        phase: TestPhase,
+    ) -> (oneshot::Receiver<()>, oneshot::Sender<()>) {
+        let (reached_sender, reached) = oneshot::channel();
+        let (resume, resume_receiver) = oneshot::channel();
+        request.gate = Some(Arc::new(TestGate {
+            phase,
+            reached: parking_lot::Mutex::new(Some(reached_sender)),
+            resume: parking_lot::Mutex::new(Some(resume_receiver)),
+        }));
+        (reached, resume)
+    }
+
+    async fn fake_project(cx: &mut TestAppContext) -> (Arc<FakeFs>, Entity<Project>, PathBuf) {
+        init(cx);
+        let root = PathBuf::from(util::path!("/android-capture"));
+        let filesystem = FakeFs::new(cx.executor());
+        filesystem.insert_tree(&root, json!({".gitignore":"app/build/\n", "main.py":"print(1)", "index.html":"<p>Hello</p>", "app":{
+            "build.gradle":"", "src":{"main":{"java":{"example":{"Different.java":JAVA}}, "res":{"layout":{"screen.xml":"<View/>"}},"assets":{"nested":{"asset.bin":"asset"}}}},
+            "build":{"generated":{"source":{"config":{"BuildConfig.java":"class BuildConfig {}"}}}}}})).await;
+        let project = Project::test(filesystem.clone(), [root.as_path()], cx).await;
+        (filesystem, project, root)
+    }
+
+    #[gpui::test]
+    async fn real_ignored_generated_and_external_sources_are_captured_and_navigable(
+        cx: &mut TestAppContext,
+    ) {
+        real_capture_case(cx)
+            .await
+            .expect("Actual filesystem capture must succeed");
+    }
+
+    async fn real_capture_case(cx: &mut TestAppContext) -> Result<()> {
+        init(cx);
+        cx.executor().allow_parking();
+        let temporary = tempfile::TempDir::new()?;
+        let root = temporary.path().join("project");
+        let external = temporary.path().join("external-java");
+        let generated = root.join("app/build/generated/source/config/BuildConfig.java");
+        let source = external.join("example/Different.java");
+        let resource = root.join("app/src/main/res/layout/screen.xml");
+        let asset = root.join("app/src/main/assets/nested/asset.bin");
+        for path in [&generated, &source, &resource, &asset] {
+            std::fs::create_dir_all(path.parent().context("Fixture file parent")?)?;
+        }
+        std::fs::create_dir(root.join(".git"))?;
+        std::fs::write(root.join(".gitignore"), "app/build/\n")?;
+        std::fs::write(root.join("main.py"), "print(1)")?;
+        std::fs::write(root.join("index.html"), "<p>Hello</p>")?;
+        std::fs::write(&generated, "class BuildConfig {}")?;
+        std::fs::write(&source, JAVA)?;
+        std::fs::write(&resource, "<View/>")?;
+        std::fs::write(&asset, [0, 1, 255])?;
+        let project = Project::test(RealFs::new(None, cx.executor()), [root.as_path()], cx).await;
+        let request = request(&project, &root, Some(&external), cx).await?;
+        let capture = project
+            .update(cx, |project, cx| {
+                project.capture_android_module_tree(request, cx)
+            })
+            .await?;
+        assert_eq!(capture.owner_generation(), 17);
+        assert_eq!(capture.request_generation(), 23);
+        assert_eq!(
+            capture
+                .java_source(&source)
+                .context("Captured Java bytes")?
+                .as_ref(),
+            JAVA.as_bytes()
+        );
+        assert!(capture.read_limits().is_empty());
+        let class = capture.tree().tree.nodes().find(|node| matches!(&node.key, NodeKey::JavaClass { name, path, .. } if name == "ActualClass" && path == &source)).context("Parsed actual class declaration")?;
+        let target = class.navigation.as_ref().context("Class navigation")?;
+        let offset = target.byte_offset.context("Class byte offset")?;
+        assert_eq!(
+            &JAVA.as_bytes()[offset..offset + "ActualClass".len()],
+            b"ActualClass"
+        );
+        for path in [&source, &generated, &resource, &asset] {
+            let physical = project.read_with(cx, |project, cx| {
+                project.android_tree_project_path(&capture, path, cx)
+            })?;
+            assert_eq!(
+                project.read_with(cx, |project, cx| project
+                    .entry_for_path(&physical, cx)
+                    .map(|entry| entry.id)),
+                capture.entries.get(path).map(|(_, entry)| entry.id)
+            );
+        }
+        assert!(
+            capture
+                .entries
+                .get(&generated)
+                .is_some_and(|(_, entry)| entry.is_ignored)
+        );
+        assert_eq!(
+            project.read_with(cx, |project, cx| project.visible_worktrees(cx).count()),
+            1
+        );
+        let external_tree = capture
+            .worktrees
+            .iter()
+            .find(|tree| tree.snapshot.abs_path().as_ref() == external.as_path())
+            .context("Exact external root worktree")?;
+        assert!(
+            !external_tree
+                .scope
+                .worktree
+                .read_with(cx, |tree, _| tree.is_visible())
+        );
+        assert!(!capture.entries.contains_key(&root.join("main.py")));
+        assert!(!capture.entries.contains_key(&root.join("index.html")));
+        assert_eq!(std::fs::read_to_string(root.join("main.py"))?, "print(1)");
+        assert_eq!(
+            std::fs::read_to_string(root.join("index.html"))?,
+            "<p>Hello</p>"
+        );
+        Ok(())
+    }
+
+    #[gpui::test]
+    async fn variant_aba_and_trust_revocation_reject_pending_capture(cx: &mut TestAppContext) {
+        stale_owner_case(cx)
+            .await
+            .expect("Owner invalidation fixture must complete");
+    }
+
+    async fn stale_owner_case(cx: &mut TestAppContext) -> Result<()> {
+        let (_, project, root) = fake_project(cx).await;
+        for revoke_trust in [false, true] {
+            let mut request = request(&project, &root, None, cx).await?;
+            let handle = request.root;
+            let (reached, resume) = gate(&mut request, TestPhase::Scanned);
+            let capture = project.update(cx, |project, cx| {
+                project.capture_android_module_tree(request, cx)
+            });
+            reached.await?;
+            if revoke_trust {
+                project.update(cx, |project, cx| {
+                    project.ensure_android_context(
+                        WorktreeId::from_proto(handle.worktree()),
+                        false,
+                        cx,
+                    )
+                })?;
+                project.update(cx, |project, cx| {
+                    project.ensure_android_context(
+                        WorktreeId::from_proto(handle.worktree()),
+                        true,
+                        cx,
+                    )
+                })?;
+            } else {
+                for variant in ["release", "debug"] {
+                    project.update(cx, |project, cx| {
+                        project.select_android_variant(
+                            Some(VariantId {
+                                module: ":app".into(),
+                                variant: variant.into(),
+                            }),
+                            cx,
+                        )
+                    })?;
+                }
+            }
+            resume
+                .send(())
+                .map_err(|_| anyhow::anyhow!("Owner gate dropped"))?;
+            assert!(
+                capture.await.is_err(),
+                "An old completion must not publish after an ABA transition"
+            );
+        }
+        Ok(())
+    }
+
+    #[gpui::test]
+    async fn changed_java_bytes_are_rejected_before_publication_with_watch_events_paused(
+        cx: &mut TestAppContext,
+    ) {
+        changed_bytes_case(cx)
+            .await
+            .expect("Read-version fixture must complete");
+    }
+
+    async fn changed_bytes_case(cx: &mut TestAppContext) -> Result<()> {
+        let (filesystem, project, root) = fake_project(cx).await;
+        let mut request = request(&project, &root, None, cx).await?;
+        let (reached, resume) = gate(&mut request, TestPhase::JavaRead);
+        filesystem.pause_events();
+        let capture = project.update(cx, |project, cx| {
+            project.capture_android_module_tree(request, cx)
+        });
+        reached.await?;
+        // The generated Java root sorts before src; change every Java file so
+        // this is independent of read scheduling or scanner enumeration.
+        for path in [
+            root.join("app/build/generated/source/config/BuildConfig.java"),
+            root.join("app/src/main/java/example/Different.java"),
+        ] {
+            filesystem
+                .insert_file(path, b"class ReplacedDuringRead {}".to_vec())
+                .await;
+        }
+        resume
+            .send(())
+            .map_err(|_| anyhow::anyhow!("Byte gate dropped"))?;
+        assert!(
+            capture.await.is_err(),
+            "Paused watcher delivery must not allow stale Java bytes"
+        );
+        filesystem.unpause_events_and_flush();
+        Ok(())
+    }
+
+    #[gpui::test]
+    async fn dropping_pending_capture_releases_external_worktree_and_cancelled_navigation(
+        cx: &mut TestAppContext,
+    ) {
+        cancelled_case(cx)
+            .await
+            .expect("Cancellation fixture must complete");
+    }
+
+    async fn cancelled_case(cx: &mut TestAppContext) -> Result<()> {
+        let (filesystem, project, root) = fake_project(cx).await;
+        let external = PathBuf::from(util::path!("/external-android-java"));
+        filesystem
+            .insert_tree(&external, json!({"example":{"Different.java":JAVA}}))
+            .await;
+        let mut request = request(&project, &root, Some(&external), cx).await?;
+        let (reached, resume) = gate(&mut request, TestPhase::Scanned);
+        let task = project.update(cx, |project, cx| {
+            project.capture_android_module_tree(request.clone(), cx)
+        });
+        reached.await?;
+        assert!(filesystem.watched_paths().contains(&external));
+        drop(task);
+        cx.executor().run_until_parked();
+        assert!(
+            resume.send(()).is_err(),
+            "Dropping the owner task must cancel its pending read gate"
+        );
+        cx.executor().run_until_parked();
+        assert!(
+            !filesystem.watched_paths().contains(&external),
+            "A cancelled capture must release its invisible worktree watcher"
+        );
+        request.gate = None;
+        let capture = project
+            .update(cx, |project, cx| {
+                project.capture_android_module_tree(request.clone(), cx)
+            })
+            .await?;
+        let source = external.join("example/Different.java");
+        assert!(
+            project
+                .read_with(cx, |project, cx| project
+                    .android_tree_project_path(&capture, &source, cx))
+                .is_ok()
+        );
+        request.cancel();
+        assert!(!project.read_with(cx, |project, cx| {
+            project.is_android_tree_capture_current(&capture, cx)
+        }));
+        assert!(
+            project
+                .read_with(cx, |project, cx| project
+                    .android_tree_project_path(&capture, &source, cx))
+                .is_err()
+        );
+        Ok(())
+    }
+
+    #[gpui::test]
+    async fn outdated_scan_and_wrong_root_tokens_cannot_navigate(cx: &mut TestAppContext) {
+        stale_scan_case(cx)
+            .await
+            .expect("Scan invalidation fixture must complete");
+    }
+
+    async fn stale_scan_case(cx: &mut TestAppContext) -> Result<()> {
+        let (filesystem, project, root) = fake_project(cx).await;
+        let request = request(&project, &root, None, cx).await?;
+        let source = root.join("app/src/main/java/example/Different.java");
+        let capture = project
+            .update(cx, |project, cx| {
+                project.capture_android_module_tree(request.clone(), cx)
+            })
+            .await?;
+        filesystem
+            .insert_file(source.clone(), b"class Changed {}".to_vec())
+            .await;
+        cx.condition(&project, |project, cx| {
+            !project.is_android_tree_capture_current(&capture, cx)
+        })
+        .await;
+        assert!(
+            project
+                .read_with(cx, |project, cx| project
+                    .android_tree_project_path(&capture, &source, cx))
+                .is_err()
+        );
+        assert_eq!(
+            capture
+                .java_source(&source)
+                .context("Immutable old bytes")?
+                .as_ref(),
+            JAVA.as_bytes()
+        );
+        project.update(cx, |project, cx| {
+            project.remove_android_context(WorktreeId::from_proto(request.root.worktree()), cx)
+        });
+        project.update(cx, |project, cx| {
+            project.ensure_android_context(
+                WorktreeId::from_proto(request.root.worktree()),
+                true,
+                cx,
+            )
+        })?;
+        assert!(
+            project
+                .update(cx, |project, cx| project
+                    .capture_android_module_tree(request, cx))
+                .await
+                .is_err()
+        );
+        Ok(())
+    }
+
+    #[gpui::test]
+    async fn restricted_invisible_external_worktree_rejects_pending_capture(
+        cx: &mut TestAppContext,
+    ) {
+        external_trust_case(cx)
+            .await
+            .expect("External trust fixture must complete");
+    }
+
+    async fn external_trust_case(cx: &mut TestAppContext) -> Result<()> {
+        use crate::trusted_worktrees::{
+            DbTrustedPaths, PathTrust, init as init_trust, track_worktree_trust,
+        };
+        let (filesystem, project, root) = fake_project(cx).await;
+        let external = PathBuf::from(util::path!("/restricted-external-android-java"));
+        filesystem
+            .insert_tree(&external, json!({"example":{"Different.java":JAVA}}))
+            .await;
+        let mut request = request(&project, &root, Some(&external), cx).await?;
+        let (reached, resume) = gate(&mut request, TestPhase::Scanned);
+        let task = project.update(cx, |project, cx| {
+            project.capture_android_module_tree(request, cx)
+        });
+        reached.await?;
+        let store = project.read_with(cx, |project, _| project.worktree_store());
+        let external_id = project
+            .read_with(cx, |project, cx| {
+                project
+                    .find_worktree(&external, cx)
+                    .map(|(tree, _)| tree.read(cx).id())
+            })
+            .context("Captured external worktree")?;
+        cx.update(|cx| {
+            init_trust(DbTrustedPaths::default(), cx);
+            track_worktree_trust(store.clone(), None, None, None, cx);
+        });
+        let trusted = cx
+            .update(|cx| TrustedWorktrees::try_get_global(cx))
+            .context("Fixture trust store")?;
+        trusted.update(cx, |trusted, cx| {
+            trusted.restrict(
+                store.downgrade(),
+                collections::HashSet::from_iter([PathTrust::Worktree(external_id)]),
+                cx,
+            )
+        });
+        assert!(trusted.read_with(cx, |trusted, _| {
+            trusted.is_worktree_restricted(&store, external_id)
+        }));
+        resume
+            .send(())
+            .map_err(|_| anyhow::anyhow!("External trust gate dropped"))?;
+        assert!(
+            task.await.is_err(),
+            "An explicitly restricted invisible source root must not publish"
+        );
+        assert_eq!(
+            project.read_with(cx, |project, cx| project.visible_worktrees(cx).count()),
+            1
+        );
+        Ok(())
+    }
+}
