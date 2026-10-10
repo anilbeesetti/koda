@@ -22647,6 +22647,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "sha2",
+ "smol",
  "strum 0.28.0",
  "tar",
  "tempfile",

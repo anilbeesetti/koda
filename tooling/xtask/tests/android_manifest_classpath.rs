@@ -8,11 +8,11 @@ pub mod android_manifest_classpath;
 use android_manifest_classpath::{Diagnostic, Limits, add_manifest_class_path};
 use anyhow::{Context, Result};
 use sha2::{Digest, Sha256};
+use smol::process::Command;
 use std::collections::VecDeque;
 use std::fs::{self, File};
 use std::io::{Cursor, Write};
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use tempfile::TempDir;
 use url::Url;
 use zip::write::FileOptions;
@@ -609,13 +609,15 @@ fn test_cli_reports_direct_entries_without_runtime_case_claims() -> Result<()> {
     create_target(&target)?;
     let wrapper = temporary.path().join("wrapper.jar");
     create_jar_with_class_path(&wrapper, "target.jar missing.jar")?;
-    let output = Command::new(env!("CARGO_BIN_EXE_xtask"))
-        .arg("android-manifest-class-path")
-        .arg("--jar")
-        .arg(&wrapper)
-        .arg("--existing-path")
-        .arg("seed.jar")
-        .output()?;
+    let output = smol::block_on(
+        Command::new(env!("CARGO_BIN_EXE_xtask"))
+            .arg("android-manifest-class-path")
+            .arg("--jar")
+            .arg(&wrapper)
+            .arg("--existing-path")
+            .arg("seed.jar")
+            .output(),
+    )?;
     assert!(
         output.status.success(),
         "{}",
@@ -654,11 +656,13 @@ fn test_cli_invalid_zip_fails_with_context() -> Result<()> {
     let temporary = TempDir::new()?;
     let wrapper = temporary.path().join("wrapper.jar");
     fs::write(&wrapper, b"invalid zip")?;
-    let output = Command::new(env!("CARGO_BIN_EXE_xtask"))
-        .arg("android-manifest-class-path")
-        .arg("--jar")
-        .arg(&wrapper)
-        .output()?;
+    let output = smol::block_on(
+        Command::new(env!("CARGO_BIN_EXE_xtask"))
+            .arg("android-manifest-class-path")
+            .arg("--jar")
+            .arg(&wrapper)
+            .output(),
+    )?;
     assert!(!output.status.success());
     assert!(output.stdout.is_empty());
     assert!(String::from_utf8_lossy(&output.stderr).contains("end-of-central-directory"));
