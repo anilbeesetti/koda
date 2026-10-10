@@ -130,6 +130,7 @@ impl BuildVariantTableModel {
             .context("Module-name collation is unavailable")?;
         let mut identities = BTreeMap::new();
         let mut input_items = 0usize;
+        let mut feature_references = 0usize;
         let mut text_bytes = 0usize;
         for module in modules {
             ensure!(
@@ -144,6 +145,13 @@ impl BuildVariantTableModel {
                 &mut input_items,
                 module.variants.len(),
                 MAXIMUM_VARIANT_ITEMS,
+            )?;
+            // Each feature has one owning app, so valid references cannot
+            // exceed the module limit even when the strings are empty.
+            add_budget(
+                &mut feature_references,
+                module.dynamic_features.len(),
+                MAXIMUM_MODULES,
             )?;
             add_budget(
                 &mut text_bytes,
@@ -304,6 +312,15 @@ impl BuildVariantTableModel {
             )?;
             for variant in &module.variants {
                 add_budget(&mut text_bytes, variant.name.len(), MAXIMUM_TEXT_BYTES)?;
+            }
+            for name in [
+                selected.variants.get(&module.path),
+                module.default_variant.as_ref(),
+            ]
+            .into_iter()
+            .flatten()
+            {
+                add_budget(&mut text_bytes, name.len(), MAXIMUM_TEXT_BYTES)?;
             }
         }
         let modules = selected.model.modules.iter().filter(|module| module.kind != ModuleKind::Jvm)

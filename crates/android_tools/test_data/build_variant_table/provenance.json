@@ -84,6 +84,37 @@
       "parity_credit": "Supplemental GPUI window-isolation regression; current full-app/native validation and original reference parity remain pending."
     }
   ],
+  "supplemental_limit_regressions": [
+    {
+      "rust_test": "tests/build_variant_table.rs::dynamic_feature_reference_limit_is_checked_before_reference_contents",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "PERF-418460-1",
+      "behavior": "At the 16,384-reference limit, empty references reach invalid-ownership rejection. One additional reference is rejected by the size limit before scanning its contents."
+    },
+    {
+      "rust_test": "tests/build_variant_table.rs::dynamic_feature_reference_limit_is_shared_across_modules",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "PERF-418460-1",
+      "behavior": "Two individually smaller ownership-reference lists exceed the shared project reference budget and receive early size rejection."
+    },
+    {
+      "rust_test": "tests/build_variant_table.rs::adapter_rejects_oversized_selected_and_default_names_before_cloning",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "PERF-418460-2",
+      "behavior": "Oversized public typed selected/default names receive adapter size rejection rather than later membership errors after owned-string cloning."
+    },
+    {
+      "rust_test": "tests/build_variant_table.rs::adapter_budgets_repeated_selected_default_and_variant_names_together",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "PERF-418460-2",
+      "behavior": "Individually valid 22 MiB selected/default/variant names are counted as three owned copies, exceeding the 64 MiB aggregate adapter budget."
+    }
+  ],
+  "limit_failure_semantics": "Oversized typed input leaves selection and project data untouched and returns an unavailable projection through the existing error presentation. Missing selections remain unavailable; no first/default variant is guessed. These are supplemental bounded-input regressions, with no original-reference passing parity or measured performance credit.",
   "deferred": [
     {
       "original_method": "withAbi",

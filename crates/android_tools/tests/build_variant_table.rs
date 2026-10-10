@@ -457,3 +457,88 @@ fn adapter_does_not_omit_unselected_modules_or_guess_from_defaults() -> Result<(
     assert!(BuildVariantTableModel::from_selected_project(&selected, "en").is_err());
     Ok(())
 }
+
+#[test]
+fn dynamic_feature_reference_limit_is_checked_before_reference_contents() -> Result<()> {
+    use anyhow::Context as _;
+    let mut app = module(":app", AndroidProjectType::Application, None);
+    app.dynamic_features = vec![String::new(); 16_384];
+    let error = BuildVariantTableModel::create(&[app.clone()], "en")
+        .err()
+        .context("Empty ownership references must be rejected")?;
+    assert_eq!(
+        error.to_string(),
+        "Dynamic feature ownership is missing, invalid, or duplicated"
+    );
+    app.dynamic_features.push(String::new());
+    let error = BuildVariantTableModel::create(&[app], "en")
+        .err()
+        .context("Oversized reference list must be rejected before its contents")?;
+    assert_eq!(error.to_string(), "Build variant table is too large");
+    Ok(())
+}
+
+#[test]
+fn dynamic_feature_reference_limit_is_shared_across_modules() -> Result<()> {
+    use anyhow::Context as _;
+    let mut first = module(":app", AndroidProjectType::Application, None);
+    let mut second = module(":otherApp", AndroidProjectType::Application, None);
+    first.dynamic_features = vec![String::new(); 8193];
+    second.dynamic_features = vec![String::new(); 8193];
+    let error = BuildVariantTableModel::create(&[first, second], "en")
+        .err()
+        .context("Aggregate reference count must be rejected before ownership scanning")?;
+    assert_eq!(error.to_string(), "Build variant table is too large");
+    Ok(())
+}
+
+#[test]
+fn adapter_rejects_oversized_selected_and_default_names_before_cloning() -> Result<()> {
+    use anyhow::Context as _;
+    for selected_name in [true, false] {
+        let mut selected = selected_project(true)?;
+        let oversized = "v".repeat(64 * 1024 * 1024 + 1);
+        if selected_name {
+            selected.variants.insert(":app".into(), oversized);
+        } else {
+            std::sync::Arc::make_mut(&mut selected.model)
+                .modules
+                .iter_mut()
+                .find(|module| module.path == ":app")
+                .context("Application module")?
+                .default_variant = Some(oversized);
+        }
+        let error = BuildVariantTableModel::from_selected_project(&selected, "en")
+            .err()
+            .context("Oversized typed name must be rejected before cloning or membership checks")?;
+        assert_eq!(error.to_string(), "Build variant table is too large");
+    }
+    Ok(())
+}
+
+#[test]
+fn adapter_budgets_repeated_selected_default_and_variant_names_together() -> Result<()> {
+    use anyhow::Context as _;
+    let mut selected = selected_project(true)?;
+    let app = std::sync::Arc::make_mut(&mut selected.model)
+        .modules
+        .iter_mut()
+        .find(|module| module.path == ":app")
+        .context("Application module")?;
+    let variant = app
+        .variants
+        .iter_mut()
+        .find(|variant| variant.name == "debug")
+        .context("Selected debug variant")?;
+    variant.name = "v".repeat(22 * 1024 * 1024);
+    app.default_variant = Some(variant.name.clone());
+    selected
+        .variants
+        .insert(":app".into(), variant.name.clone());
+    selected.selected.variant = variant.name.clone();
+    let error = BuildVariantTableModel::from_selected_project(&selected, "en")
+        .err()
+        .context("Three individually valid 22 MiB names exceed the aggregate clone budget")?;
+    assert_eq!(error.to_string(), "Build variant table is too large");
+    Ok(())
+}
