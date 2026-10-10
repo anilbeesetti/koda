@@ -1,0 +1,395 @@
+{
+  "effective_runtime_cases": null,
+  "global_census_complete": false,
+  "inventory_slices": [
+    {
+      "complete_decompressed_inventory_bytes": 73473422,
+      "complete_decompressed_inventory_sha256": "cdd1057451c73dd1a6c76c035f8cbf1e3a66281e76155d511372c9c57774b5ad",
+      "compressed_inventory_sha256": "561454f18ddcb695f954963f4d0727e140ec083e4084ca01852d8f72632b69e9",
+      "fixture_bytes_sha256": "b116f00f3601c3fee5ea937182508c604195a7f9efb201e7a49e61839fa98e5a",
+      "fixture_record_count": 4,
+      "original_record_bindings": [
+        {
+          "original_record_ordinal": 15743,
+          "path": "testutils/BUILD",
+          "raw_record_sha256": "4c6a132d75cc18974369bbfcbce38abb31e6bc5806fb84b2465ea2f75e8dca27"
+        },
+        {
+          "original_record_ordinal": 15766,
+          "path": "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+          "raw_record_sha256": "e76c0fcdc01d09a8df1f5a9faad68c940417a9aceba0641861246a854f77c953"
+        },
+        {
+          "original_record_ordinal": 15780,
+          "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+          "raw_record_sha256": "d9d8c91ecd5ceb3d5251b51adc5731d26d05e9732183b7093059a8f07cf327d5"
+        },
+        {
+          "original_record_ordinal": 15864,
+          "path": "testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+          "raw_record_sha256": "e726dc27777e12dfbd64e845925e2ec94032dfa72b9038fa7ad0eefddab3eeb0"
+        }
+      ],
+      "role": "candidates",
+      "source": "base"
+    },
+    {
+      "complete_decompressed_inventory_bytes": 11234145,
+      "complete_decompressed_inventory_sha256": "c30bd69ecc3391916bbc97b6a2deb801ad108fb598b003262f35e77ea444df34",
+      "compressed_inventory_sha256": "67645f1b568eababc853798f02fb52e1674b6030f9aec638f7659d8a292dcfad",
+      "fixture_bytes_sha256": "df1dd62b703f205b787b8b4b6a3436c68e858eb75a252671c2173da20ba161e0",
+      "fixture_record_count": 4,
+      "original_record_bindings": [
+        {
+          "original_record_ordinal": 27860,
+          "path": "testutils/BUILD",
+          "raw_record_sha256": "c1d446c3beaa9faee2a8f3f60ffa4885e92f8ccc2442d25a91006407626d17ef"
+        },
+        {
+          "original_record_ordinal": 27893,
+          "path": "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+          "raw_record_sha256": "0b486a092fb95e75c24821bff01ff121f4d5a0671acd577071e264fa35ebf783"
+        },
+        {
+          "original_record_ordinal": 27907,
+          "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+          "raw_record_sha256": "4e6b71310dc53dcdfd4cf0abe22b5b2bff32313a276337bfb30a6cef23308a2a"
+        },
+        {
+          "original_record_ordinal": 28014,
+          "path": "testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+          "raw_record_sha256": "dcaf768958ea5d7480022049c7813cd754940793c8276c2f5163e74f57e81766"
+        }
+      ],
+      "role": "members",
+      "source": "base"
+    },
+    {
+      "complete_decompressed_inventory_bytes": 63508520,
+      "complete_decompressed_inventory_sha256": "de57a4e8d3b178ae89adb1af884141632cd950e1e7936ae624c560b28c6f172e",
+      "compressed_inventory_sha256": "a400bea4cc8712da3c5bc1a9beb8f8a4d577b7abddb6301e307ba0e2f3358584",
+      "fixture_bytes_sha256": "b7e29f0ebc3338341a52a5da7e4cf1a8513e0359bfd91765a436e4d513bdae68",
+      "fixture_record_count": 13,
+      "original_record_bindings": [
+        {
+          "original_record_ordinal": 494,
+          "path": "adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+          "raw_record_sha256": "d184727d056c014a7db76ff0f4b3df645871f64e92dee24e43467215c9bc3262"
+        },
+        {
+          "original_record_ordinal": 495,
+          "path": "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+          "raw_record_sha256": "bb58adf2cf3ad7311f36bef40bfbe538621330e231c5d12df8b93897d10a2347"
+        },
+        {
+          "original_record_ordinal": 940,
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+          "raw_record_sha256": "a870777dee5f2f1cbd558828c06f04f89dfa58670f67642133aac1bdfd33a84e"
+        },
+        {
+          "original_record_ordinal": 981,
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+          "raw_record_sha256": "bc1d468aab435ba46c50a00199d22f27e44f76032d62fc20fc67b0db3f84e751"
+        },
+        {
+          "original_record_ordinal": 7207,
+          "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+          "raw_record_sha256": "530e334a3b8e0914ed5b738b5702938b3ce8af1077cac3a8283efebd7b7893b8"
+        },
+        {
+          "original_record_ordinal": 41725,
+          "path": "project-system-gradle-sync/BUILD",
+          "raw_record_sha256": "d46419990e2e59681246cdf1713b0fec35a1ca0e8b4f83b04a399f7c962355e9"
+        },
+        {
+          "original_record_ordinal": 41775,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+          "raw_record_sha256": "5bd89949d1a48d69ad91cf6aaf31c7e2bac8794ace26102379dd891e3b8e7de1"
+        },
+        {
+          "original_record_ordinal": 41776,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/InternedModelsTest.kt",
+          "raw_record_sha256": "b39ac4317bd32d1a912ff4e4f040558b130c2c6250f341acf48ca4d016d51626"
+        },
+        {
+          "original_record_ordinal": 41777,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelResultTest.kt",
+          "raw_record_sha256": "5bfe212efaf95715a5f14354a66c8f21634783ae302ebca82fffd1b96fc55cae"
+        },
+        {
+          "original_record_ordinal": 41778,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+          "raw_record_sha256": "f898c30e77605bab2994e46d91bfee1da970d98d2224a8adf73018f55ebe1d51"
+        },
+        {
+          "original_record_ordinal": 41779,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/PhasedSyncVariantNameResolutionTest.kt",
+          "raw_record_sha256": "29c8dc10b24690ad70e176c6e3eb4005e63abb7bb17e6e4098bf698fc76d7989"
+        },
+        {
+          "original_record_ordinal": 41780,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/VariantNameResolutionTest.kt",
+          "raw_record_sha256": "0400de148b0fd73e2e68832dbc5225a113dec9a5ce2619b95f297b08e5c914bf"
+        },
+        {
+          "original_record_ordinal": 41781,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/projectsystem/gradle/sync/GradleProjectSystemSyncTestSuite.java",
+          "raw_record_sha256": "431fe2a6eb69856b3ca99cb17c91dff323cc2077bfb647547dc0c9ddd064fdb0"
+        }
+      ],
+      "role": "candidates",
+      "source": "idea"
+    },
+    {
+      "complete_decompressed_inventory_bytes": 29442713,
+      "complete_decompressed_inventory_sha256": "425511c489f57e32065c185441007ba8d9656521c7e2df4fe8e25e58988a9d0d",
+      "compressed_inventory_sha256": "c2f5ec02bf26d5254322b284eb67cfd797058679a30958a5dde22f5858632f9a",
+      "fixture_bytes_sha256": "c5bbe9ec621862907783fb87840464944138fb2fc3d6f500bb620f487621cc51",
+      "fixture_record_count": 13,
+      "original_record_bindings": [
+        {
+          "original_record_ordinal": 523,
+          "path": "adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+          "raw_record_sha256": "c68b4375d3aee4ad943aa60c199da27f4f543a098ccb4acd9b201cda9ae0e799"
+        },
+        {
+          "original_record_ordinal": 524,
+          "path": "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+          "raw_record_sha256": "f11c87667dd2c50d7bcd793476065dea86725ca4dfb16fa79b31d9a5ed794ce5"
+        },
+        {
+          "original_record_ordinal": 1119,
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+          "raw_record_sha256": "44d8183b219f535da2329a31905222b6d510a5734c1503b8b92893d47528ae3c"
+        },
+        {
+          "original_record_ordinal": 1168,
+          "path": "adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+          "raw_record_sha256": "93ba78372317ef50f5032b5e2a71d0614d55bede2cf1b72dbbfe87bba1fe6f93"
+        },
+        {
+          "original_record_ordinal": 13241,
+          "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+          "raw_record_sha256": "5ff1a4e24124d6ccf5406ef86a1253d77c66c8a2ddbb29f27a205795a345c8a8"
+        },
+        {
+          "original_record_ordinal": 75191,
+          "path": "project-system-gradle-sync/BUILD",
+          "raw_record_sha256": "42946fd1bf600974fd9ef93f8616920e82058e0aaf0ee14e069cbc6001c3dd76"
+        },
+        {
+          "original_record_ordinal": 75263,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+          "raw_record_sha256": "9c392b64441efa41a8c8e4c5aefc6216e6ed157cf491cb52d2b05b7c8913c39e"
+        },
+        {
+          "original_record_ordinal": 75264,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/InternedModelsTest.kt",
+          "raw_record_sha256": "395a04dc56f4709da029f3205abe678800c9bef1aa85793f5eba2d905f40f5d8"
+        },
+        {
+          "original_record_ordinal": 75265,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelResultTest.kt",
+          "raw_record_sha256": "45337467053c66921b8e67f28b8fe9db415188fc595035d0097d554478494400"
+        },
+        {
+          "original_record_ordinal": 75266,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+          "raw_record_sha256": "6ccc69c0a2d37e21ea6d8ea46b8504876d40bcc868a7eb35392150dc88448cd2"
+        },
+        {
+          "original_record_ordinal": 75267,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/PhasedSyncVariantNameResolutionTest.kt",
+          "raw_record_sha256": "68ca4775487688ed5d8baedcbad1c72de504a2147314e20e0e39a92ebebdf516"
+        },
+        {
+          "original_record_ordinal": 75268,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/VariantNameResolutionTest.kt",
+          "raw_record_sha256": "690099c318e480604c058fe7c22f5b53c4224600910ed46b47d0a748fa7390f6"
+        },
+        {
+          "original_record_ordinal": 75272,
+          "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/projectsystem/gradle/sync/GradleProjectSystemSyncTestSuite.java",
+          "raw_record_sha256": "186f7a04013b5faeb3d515b34735766ab4245832886aa79471f5fa8cda1d36ac"
+        }
+      ],
+      "role": "members",
+      "source": "idea"
+    }
+  ],
+  "license": "Apache-2.0; complete original file headers retained. Rust index/discovery regression assertions add no behavior-port credit.",
+  "original_behavior_credit": 0,
+  "original_sources": [
+    {
+      "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/base/testutils/BUILD",
+      "archive_record_ordinal": 15744,
+      "bytes": 4107,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "testutils/BUILD",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "sha256": "c1c78be6ae712f5c346525a5cb4318d2fd55d8da99b4fad7c7271f17fc5617f1",
+      "source": "base"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/base/testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+      "archive_record_ordinal": 15767,
+      "bytes": 10038,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "sha256": "da503cfd8096ae4be970e29f5a96d882bbc6eeb31f0c1ec8a47bed9a7d2abc3a",
+      "source": "base"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/base/testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "archive_record_ordinal": 15781,
+      "bytes": 10390,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+      "source": "base"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/base/testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+      "archive_record_ordinal": 15865,
+      "bytes": 3006,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "sha256": "0f6a26754d7afa899e37e82936450f33fbad2339aa907924468c8c31dddf4743",
+      "source": "base"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/idea/adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+      "archive_record_ordinal": 495,
+      "bytes": 9419,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "26cd53f9592d29bc21f531c7e22c142e29922b412a31bd3937a71d720b0614c4",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-references/samples/idea/adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+      "archive_record_ordinal": 496,
+      "bytes": 2053,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "67b883002362195992b7111d0e8d88cda30ccfeeae355a2ada761bb83f95c274",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "archive_record_ordinal": 941,
+      "bytes": 879,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+      "archive_record_ordinal": 982,
+      "bytes": 5447,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "33d296249b80ad61a7de3dd25abdf44779cd2bd6ade5847024d0b30b2cb6d09e",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/idea/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "archive_record_ordinal": 7208,
+      "bytes": 16649,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/idea/project-system-gradle-sync/BUILD",
+      "archive_record_ordinal": 41726,
+      "bytes": 3721,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "project-system-gradle-sync/BUILD",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "5c82bd87f7cabac58ef3752e4062d03faeab4f0f9b20e88399b50207c197ff26",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "archive_record_ordinal": 41776,
+      "bytes": 4006,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/InternedModelsTest.kt",
+      "archive_record_ordinal": 41777,
+      "bytes": 15928,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/InternedModelsTest.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "550d9f4399f7d0c50c7d7b2b4120d9bc246555ac816daed16e2db2c43865634f",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelResultTest.kt",
+      "archive_record_ordinal": 41778,
+      "bytes": 3246,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelResultTest.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "cee8d470ed6d0ca5027a8be2fe83d63952a7f1da4ff0855d1c82b3072f85754a",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+      "archive_record_ordinal": 41779,
+      "bytes": 3273,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/PhasedSyncVariantNameResolutionTest.kt",
+      "archive_record_ordinal": 41780,
+      "bytes": 61975,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/PhasedSyncVariantNameResolutionTest.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "d0d75603108b990ec8b803d68128c23d65fed32b35abfc246fd8e30296125e7d",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/VariantNameResolutionTest.kt",
+      "archive_record_ordinal": 41781,
+      "bytes": 3924,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/VariantNameResolutionTest.kt",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "5fcb2361a523b78e4b2df65fb6d480b2a145aaaad88a8347d0b26e65ca3a7dfe",
+      "source": "idea"
+    },
+    {
+      "actual_path": "/workspace/android-studio-artifacts/canonical-reference-refresh-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/projectsystem/gradle/sync/GradleProjectSystemSyncTestSuite.java",
+      "bytes": 1319,
+      "original_hash_matches_authenticated_inventory": true,
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/projectsystem/gradle/sync/GradleProjectSystemSyncTestSuite.java",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "sha256": "419a1a1dcda7e59c0a145439117680df5fc378d31dd89e972cf9c338d935518b",
+      "source": "idea"
+    }
+  ],
+  "schema_version": 1,
+  "scope": "Complete unmodified pinned originals and exact discovery-record slices; synthetic gzip/physical transport in Rust tests is not upstream runner evidence."
+}
