@@ -30,10 +30,11 @@ fn main() -> Result<()> {
     fs::write(
         &script,
         format!(
-            "{}\n{}\n{}",
+            "{}\n{}\n{}\n{}",
             &bridge[..boundary],
             include_str!("../test_data/kotlin_import_facts/bridge_shared_collections.gradle"),
-            include_str!("../test_data/kotlin_import_facts/bridge_producer_limits.gradle")
+            include_str!("../test_data/kotlin_import_facts/bridge_producer_limits.gradle"),
+            include_str!("../test_data/kotlin_import_facts/bridge_native_safety.gradle")
         ),
     )?;
     let output_path = directory.path().join("stdout.log");
@@ -95,6 +96,10 @@ fn main() -> Result<()> {
             thread::sleep(Duration::from_millis(10));
         }
         runtime.close()?;
+        ensure!(
+            runtime.try_wait()?.is_some_and(|status| status.success()),
+            "Native safety runtime must exit without JVM crash and verified owned closure"
+        );
         let output = fs::read_to_string(&output_path)?;
         let lines = output
             .lines()
@@ -152,6 +157,7 @@ fn main() -> Result<()> {
             "Ordered values changed"
         );
         validate_producer_fixture(&output)?;
+        validate_native_safety_fixture(&output)?;
         validate_uncaught_producer_failure(&arguments, &script, directory.path())?;
         println!(
             "KODA_KOTLIN_SHARED_COLLECTIONS_FIXTURE={}",
@@ -402,4 +408,52 @@ fn validate_uncaught_producer_failure(
             bail!("{error:#}; owned producer failure closure also failed: {closure:#}")
         }
     }
+}
+
+fn validate_native_safety_fixture(output: &str) -> Result<()> {
+    let lines = output
+        .lines()
+        .filter_map(|line| line.strip_prefix("KODA_KOTLIN_NATIVE_SAFETY_FIXTURE="))
+        .collect::<Vec<_>>();
+    ensure!(
+        lines.len() == 1,
+        "Expected one actual JNI safety fixture record"
+    );
+    let value: serde_json::Value =
+        serde_json::from_str(lines.first().context("JNI safety fixture record")?)?;
+    ensure!(
+        value["unchangedSettings"] == true,
+        "Native safety fixture changed runtime settings"
+    );
+    let cases = value["cases"]
+        .as_array()
+        .context("Actual JNI safety cases")?;
+    ensure!(
+        cases.len() == 6,
+        "Expected all six additive JNI safety cases"
+    );
+    for name in [
+        "nullMapKey",
+        "nestedNullMapKey",
+        "nonStringMapKey",
+        "nullRootValue",
+        "primaryRustErrorAndPublicationFailure",
+        "primaryJvmErrorAndPublicationFailure",
+    ] {
+        let case = cases
+            .iter()
+            .find(|case| case["name"] == name)
+            .context("Required JNI safety case")?;
+        ensure!(
+            case["passed"] == true && case["outputBytes"] == 0,
+            "Actual JNI safety case failed: {name}"
+        );
+        if name.ends_with("PublicationFailure") {
+            ensure!(
+                case["suppressed"] == "java.lang.OutOfMemoryError",
+                "Secondary publication error lost in {name}"
+            );
+        }
+    }
+    Ok(())
 }

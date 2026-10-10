@@ -45,6 +45,12 @@ class KodaKotlinBoundedJson {
         encode(value, maximumBytes, maximumNodes, maximumScalarBytes, monitor, retain)
     }
 
+    void acceptNativeState(long bytes, long nodes, Object chunks) {
+        this.bytes = bytes
+        this.nodes = nodes
+        this.chunks = chunks
+    }
+
     void writeTo(OutputStream output) {
         for (byte[] chunk : chunks) { monitor.call(); output.write(chunk) }
     }

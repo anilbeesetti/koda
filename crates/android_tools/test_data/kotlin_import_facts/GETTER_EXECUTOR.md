@@ -191,3 +191,15 @@ executor does not implement KAPT model synthesis or multiply synthetic fixtures
 into reference credit. Real original/version Gradle probes, full strict Clippy,
 full workspace tests, normal app import workflows and five final reviews remain
 required. No Kotlin, KAPT, feature or parity completion is claimed here.
+
+
+The additive `bridge_native_safety.gradle` fixture invokes the actual JNI encoder
+for null and non-String Map keys, nested null keys, and a legal null root. It
+requires typed IOException rejection with zero socket output, normal wrapper
+exit without a JVM crash, verified owned runtime closure, and unchanged capture
+properties, project properties and default locale. A controlled subclass rejects
+admitted diagnostic state with OutOfMemoryError; two actual JNI cases require
+the original Rust IOException and original JVM exception identity to survive,
+with that publication failure attached as suppressed. The existing eleven
+producer assertions and six native Rust test bodies remain unchanged. These
+six additive JNI cases require Root execution and add no reference parity credit.

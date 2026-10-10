@@ -219,6 +219,9 @@ impl Encoder<'_, '_> {
     }
 
     fn string(&mut self, value: &JObject<'_>) -> Result<()> {
+        if value.is_null() || !self.is(value, "java/lang/String")? {
+            return Err("Raw observation value is not a String".into());
+        }
         // Reading fixed UTF-16 regions avoids copying a giant JVM String before
         // admission. JNI modified UTF-8 would also change NUL/surrogate semantics.
         let interface = self.environment.get_native_interface();
@@ -280,6 +283,11 @@ impl Encoder<'_, '_> {
     }
 
     fn is(&mut self, value: &JObject<'_>, class: &str) -> Result<bool> {
+        // JNI IsInstanceOf(null, any_class) is true, unlike JVM instanceof.
+        // Reject null before any typed JNI operation can dereference a value.
+        if value.is_null() {
+            return Ok(false);
+        }
         self.environment
             .is_instance_of(value, class)
             .map_err(|error| error.to_string())
@@ -420,12 +428,6 @@ fn publish_state(
     receiver: &JObject<'_>,
     output: &Output,
 ) -> Result<()> {
-    environment
-        .set_field(receiver, "bytes", "J", JValue::Long(output.bytes as jlong))
-        .map_err(|error| error.to_string())?;
-    environment
-        .set_field(receiver, "nodes", "J", JValue::Long(output.nodes as jlong))
-        .map_err(|error| error.to_string())?;
     let chunks = environment
         .new_object("java/util/ArrayList", "()V", &[])
         .map_err(|error| error.to_string())?;
@@ -445,13 +447,18 @@ fn publish_state(
             .map_err(|error| error.to_string())?;
     }
     environment
-        .set_field(
+        .call_method(
             receiver,
-            "chunks",
-            "Ljava/lang/Object;",
-            JValue::Object(chunks.as_ref()),
+            "acceptNativeState",
+            "(JJLjava/lang/Object;)V",
+            &[
+                JValue::Long(output.bytes as jlong),
+                JValue::Long(output.nodes as jlong),
+                JValue::Object(chunks.as_ref()),
+            ],
         )
-        .map_err(|error| error.to_string())
+        .map_err(|error| error.to_string())?;
+    Ok(())
 }
 
 fn fail(environment: &mut JNIEnv<'_>, error: &str) {
@@ -491,8 +498,22 @@ pub unsafe extern "system" fn encode_native<'local>(
             active: Vec::new(),
         }
         .value(&value, 0);
-        // A health/iterator exception is preserved verbatim across publishing the
-        // bounded diagnostic counters needed by the unchanged JVM probes.
+        // Create a Rust rejection's IOException before allocating diagnostic
+        // chunks, so publication failure cannot replace the original rejection.
+        // Existing JVM exceptions retain their exact identity.
+        if !environment
+            .exception_check()
+            .map_err(|error| error.to_string())?
+        {
+            if let Err(error) = &result {
+                if let Err(creation) = environment.throw_new("java/io/IOException", error) {
+                    eprintln!(
+                        "Unable to materialize original Rust producer rejection {error}: {creation}"
+                    );
+                    return Err(error.clone());
+                }
+            }
+        }
         let exception = if environment
             .exception_check()
             .map_err(|error| error.to_string())?
