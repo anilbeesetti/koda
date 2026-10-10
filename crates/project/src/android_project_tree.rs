@@ -20,13 +20,16 @@ use futures::{
     future::{Either, select},
 };
 use gpui::{
-    App, AppContext as _, AsyncApp, Context, Entity, EntityId, Subscription, Task, WeakEntity,
+    App, AppContext as _, AsyncApp, BackgroundExecutor, Context, Entity, EntityId, Subscription,
+    Task, WeakEntity,
 };
 use parking_lot::Mutex;
 use postage::stream::Stream as _;
 use std::{
     collections::{BTreeMap, BTreeSet},
     io::Read as _,
+    mem::ManuallyDrop,
+    ops::Deref,
     path::{Path, PathBuf},
     sync::{
         Arc,
@@ -168,6 +171,48 @@ impl From<Metadata> for FileVersion {
 type PresenceVersions = BTreeMap<PathBuf, Option<FileVersion>>;
 type PhysicalEntries = BTreeMap<PathBuf, (ProjectPath, Entry)>;
 type JavaSources = BTreeMap<PathBuf, Arc<[u8]>>;
+type SharedEntries = Arc<BackgroundDrop<PhysicalEntries>>;
+type SharedJavaSources = Arc<BackgroundDrop<JavaSources>>;
+
+/// Pure capture data can contain many allocations. Its final owner may be a
+/// cancelled foreground future or a replaced panel result, so release the
+/// allocation on the background executor regardless of that owner's lifetime.
+/// GPUI entities and subscriptions remain outside this wrapper.
+struct BackgroundDrop<T: Send + 'static> {
+    value: ManuallyDrop<T>,
+    executor: BackgroundExecutor,
+}
+
+impl<T: Send + 'static> BackgroundDrop<T> {
+    fn new(value: T, executor: BackgroundExecutor) -> Self {
+        Self {
+            value: ManuallyDrop::new(value),
+            executor,
+        }
+    }
+}
+
+impl<T: Send + 'static> Deref for BackgroundDrop<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl<T: Send + 'static> Drop for BackgroundDrop<T> {
+    fn drop(&mut self) {
+        // SAFETY: value is initialized exactly once by new, is private, and is
+        // taken only during this unique Drop call. ManuallyDrop prevents a
+        // second automatic drop, and borrowed access cannot outlive self.
+        let value = unsafe { ManuallyDrop::take(&mut self.value) };
+        if self.executor.is_main_thread() {
+            self.executor.spawn(async move { drop(value) }).detach();
+        } else {
+            drop(value);
+        }
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AndroidTreeReadLimit {
@@ -182,10 +227,10 @@ pub struct CapturedAndroidModuleTree {
     request: AndroidTreeCaptureRequest,
     owner: CaptureOwner,
     worktrees: Vec<WorktreeCapture>,
-    entries: Arc<PhysicalEntries>,
-    java_sources: Arc<JavaSources>,
-    tree: AdaptedModuleTree,
-    read_limits: Vec<AndroidTreeReadLimit>,
+    entries: SharedEntries,
+    java_sources: SharedJavaSources,
+    tree: BackgroundDrop<AdaptedModuleTree>,
+    read_limits: BackgroundDrop<Vec<AndroidTreeReadLimit>>,
     _trust_observer: Option<Subscription>,
 }
 
@@ -273,6 +318,7 @@ impl Project {
         });
         let cancellation = request.cancellation_receiver();
         let deadline = cx.background_executor().timer(MAX_CAPTURE_DURATION);
+        let release_executor = cx.background_executor().clone();
         let stop_request = request.clone();
         cx.spawn(async move |project, cx| {
             let capture = async move {
@@ -316,7 +362,12 @@ impl Project {
                     .background_spawn({
                         let scanned = scanned.clone();
                         let request = request.clone();
-                        async move { collect_entries(&scanned, &request).map(Arc::new) }
+                        let release_executor = release_executor.clone();
+                        async move {
+                            collect_entries(&scanned, &request).map(|entries| {
+                                Arc::new(BackgroundDrop::new(entries, release_executor))
+                            })
+                        }
                     })
                     .await?;
                 let (java_sources, read_limits) = cx
@@ -324,7 +375,11 @@ impl Project {
                         let filesystem = filesystem.clone();
                         let entries = entries.clone();
                         let request = request.clone();
-                        async move { read_java_sources(&filesystem, &entries, &request).await }
+                        let release_executor = release_executor.clone();
+                        async move {
+                            read_java_sources(&filesystem, &entries, &request, &release_executor)
+                                .await
+                        }
                     })
                     .await?;
                 check_owner(&project, &owner, &request, cx)?;
@@ -338,14 +393,18 @@ impl Project {
                     .background_spawn({
                         let worktrees = worktrees.clone();
                         let request = request.clone();
-                        let initial_entries = entries.clone();
+                        let initial_entries = entries;
+                        let release_executor = release_executor.clone();
                         async move {
                             let final_entries = collect_entries(&worktrees, &request)?;
                             ensure!(
-                                initial_entries.as_ref() == &final_entries,
+                                initial_entries.as_ref().deref() == &final_entries,
                                 "Android tree files changed during capture"
                             );
-                            Ok::<_, anyhow::Error>(Arc::new(final_entries))
+                            Ok::<_, anyhow::Error>(Arc::new(BackgroundDrop::new(
+                                final_entries,
+                                release_executor,
+                            )))
                         }
                     })
                     .await?;
@@ -381,6 +440,7 @@ impl Project {
                         let request = request.clone();
                         let entries = final_entries.clone();
                         let java_sources = java_sources.clone();
+                        let release_executor = release_executor.clone();
                         async move {
                             request.check_cancelled()?;
                             let mut captured_entries = entries
@@ -434,7 +494,8 @@ impl Project {
                                     })
                                     .collect(),
                             };
-                            Ok::<_, anyhow::Error>(adapt_captured_module(&request.plan, &capture)?)
+                            let tree = adapt_captured_module(&request.plan, &capture)?;
+                            Ok::<_, anyhow::Error>(BackgroundDrop::new(tree, release_executor))
                         }
                     })
                     .await?;
@@ -1077,7 +1138,8 @@ async fn read_java_sources(
     filesystem: &Arc<dyn Fs>,
     entries: &PhysicalEntries,
     request: &AndroidTreeCaptureRequest,
-) -> Result<(Arc<JavaSources>, Vec<AndroidTreeReadLimit>)> {
+    release_executor: &BackgroundExecutor,
+) -> Result<(SharedJavaSources, BackgroundDrop<Vec<AndroidTreeReadLimit>>)> {
     let mut sources = BTreeMap::new();
     let mut limits = Vec::new();
     let mut bytes = 0;
@@ -1110,7 +1172,10 @@ async fn read_java_sources(
         bytes += source.len();
         sources.insert(path.clone(), source);
     }
-    Ok((Arc::new(sources), limits))
+    Ok((
+        Arc::new(BackgroundDrop::new(sources, release_executor.clone())),
+        BackgroundDrop::new(limits, release_executor.clone()),
+    ))
 }
 
 async fn verify_file_bytes(
@@ -2057,6 +2122,123 @@ mod tests {
             project.read_with(cx, |project, cx| project.visible_worktrees(cx).count()),
             1
         );
+        Ok(())
+    }
+
+    struct ReleaseProbe {
+        executor: BackgroundExecutor,
+        released: Option<oneshot::Sender<bool>>,
+        _owned_payload: Vec<String>,
+    }
+
+    impl Drop for ReleaseProbe {
+        fn drop(&mut self) {
+            if let Some(released) = self.released.take() {
+                match released.send(self.executor.is_main_thread()) {
+                    Ok(()) | Err(_) => {}
+                }
+            }
+        }
+    }
+
+    fn tracked_payload(
+        executor: &BackgroundExecutor,
+    ) -> (Arc<BackgroundDrop<ReleaseProbe>>, oneshot::Receiver<bool>) {
+        let (released, observed) = oneshot::channel();
+        let payload = ReleaseProbe {
+            executor: executor.clone(),
+            released: Some(released),
+            _owned_payload: vec!["Owned capture allocation".to_owned(); 16],
+        };
+        (
+            Arc::new(BackgroundDrop::new(payload, executor.clone())),
+            observed,
+        )
+    }
+
+    #[gpui::test]
+    async fn capture_payload_cleanup_runs_in_background_for_shared_results_errors_and_cancelled_tasks(
+        cx: &mut TestAppContext,
+    ) {
+        payload_cleanup_case(cx)
+            .await
+            .expect("Capture allocation cleanup fixture must complete");
+    }
+
+    async fn payload_cleanup_case(cx: &mut TestAppContext) -> Result<()> {
+        let executor = cx.executor();
+
+        // A retained result can outlive its original owner. Replacing the first
+        // foreground result must preserve that reference, and releasing the
+        // final result must destroy its actual payload on the background lane.
+        let (result, mut completed_release) = tracked_payload(&executor);
+        let retained = result.clone();
+        cx.spawn({
+            let executor = executor.clone();
+            move |_| async move {
+                assert!(executor.is_main_thread());
+                drop(result);
+            }
+        })
+        .await;
+        assert_eq!(completed_release.try_recv()?, None);
+        cx.spawn({
+            let executor = executor.clone();
+            move |_| async move {
+                assert!(executor.is_main_thread());
+                drop(retained);
+            }
+        })
+        .await;
+        assert!(!completed_release.await?);
+
+        // Error propagation tears down foreground locals before a result can be
+        // published, including data already returned from a background capture.
+        let (payload, error_release) = tracked_payload(&executor);
+        let failed = cx
+            .spawn({
+                let executor = executor.clone();
+                move |_| async move {
+                    assert!(executor.is_main_thread());
+                    let _owned = payload;
+                    Err::<(), _>(anyhow::anyhow!("Capture failed after data acquisition"))
+                }
+            })
+            .await;
+        assert!(failed.is_err());
+        assert!(!error_release.await?);
+
+        // Cancel a real foreground GPUI task while it retains an acquired
+        // payload across an await. TestDispatcher can execute both lanes on the
+        // same OS thread; is_main_thread checks the dispatched lane instead.
+        let (payload, mut pending_release) = tracked_payload(&executor);
+        let (entered, reached) = oneshot::channel();
+        let (resume, wait) = oneshot::channel::<()>();
+        let pending = cx.spawn({
+            let executor = executor.clone();
+            move |_| async move {
+                assert!(executor.is_main_thread());
+                let _owned = payload;
+                entered
+                    .send(())
+                    .map_err(|_| anyhow::anyhow!("Pending cleanup observer dropped"))?;
+                wait.await?;
+                Ok::<_, anyhow::Error>(())
+            }
+        });
+        reached.await?;
+        assert_eq!(pending_release.try_recv()?, None);
+        cx.spawn({
+            let executor = executor.clone();
+            move |_| async move {
+                assert!(executor.is_main_thread());
+                drop(pending);
+            }
+        })
+        .await;
+        cx.executor().run_until_parked();
+        assert!(resume.send(()).is_err());
+        assert!(!pending_release.await?);
         Ok(())
     }
 }
