@@ -740,9 +740,18 @@ mod tests {
 
     fn publish_context(project: &Entity<Project>, cx: &mut App) -> Result<()> {
         let root = Path::new(ROOT);
+        // Complete Gradle observations include the root even when it applies no supported plugin.
         let record = json!({
             "schema": 1, "root": ROOT, "gradleVersion": "9.6.1", "phase": "complete",
-            "modules": [{"path": ":app", "directory": root.join("app"),
+            "modules": [{
+                "path": ":", "directory": root,
+                "plugins": PluginId::ALL.into_iter().map(|plugin| json!({
+                    "plugin": plugin, "applied": false
+                })).collect::<Vec<_>>(),
+                "targets": {"status": "unavailable", "value": {
+                    "detail": "No evaluated Kotlin target extension"
+                }}
+            }, {"path": ":app", "directory": root.join("app"),
                 "plugins": PluginId::ALL.into_iter().map(|plugin| json!({
                     "plugin": plugin, "applied": plugin == PluginId::AndroidApplication
                 })).collect::<Vec<_>>(),
