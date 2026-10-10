@@ -621,7 +621,7 @@ fn nonblocking(pipe: &impl std::os::fd::AsFd) -> Result<()> {
 #[cfg(target_os = "linux")]
 fn capture_available(
     input: &mut impl Read,
-    file: &mut File,
+    file: &mut impl Write,
     total_bytes: &AtomicU64,
     process_bytes: &mut u64,
 ) -> Result<bool> {
@@ -640,11 +640,12 @@ fn capture_available(
     match input.read(&mut buffer[..capacity]) {
         Ok(0) => Ok(true),
         Ok(count) => {
-            file.write_all(&buffer[..count])?;
+            // A partial write may fail; reserve all consumed capacity before retaining any bytes.
             *process_bytes = process_bytes
                 .checked_add(count as u64)
                 .context("process output byte overflow")?;
             total_bytes.fetch_add(count as u64, Ordering::Relaxed);
+            file.write_all(&buffer[..count])?;
             Ok(false)
         }
         Err(error)
@@ -1627,6 +1628,59 @@ mod tests {
         assert_eq!(total.load(Ordering::Relaxed), ceiling);
         assert!(fs::read(stdout_path)?.is_empty() && fs::read(stderr_path)?.is_empty());
         assert!(started.elapsed() < Duration::from_secs(4));
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn partial_write_error_reserves_capacity_before_later_captures() -> Result<()> {
+        struct PartialWriter {
+            retained: Vec<u8>,
+        }
+        impl Write for PartialWriter {
+            fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+                if !self.retained.is_empty() {
+                    return Err(std::io::Error::other(
+                        "fixture failure after retained prefix",
+                    ));
+                }
+                match bytes.first() {
+                    Some(byte) => {
+                        self.retained.push(*byte);
+                        Ok(1)
+                    }
+                    None => Ok(0),
+                }
+            }
+            fn flush(&mut self) -> std::io::Result<()> {
+                Ok(())
+            }
+        }
+        let ceiling = MAX_ARCHIVE_LOG_BYTES + MAX_DRAIN_LOG_BYTES;
+        let total = AtomicU64::new(ceiling - 2);
+        let mut process = 0;
+        let mut input = std::io::Cursor::new(b"abcdef");
+        let mut writer = PartialWriter {
+            retained: Vec::new(),
+        };
+        assert!(capture_available(&mut input, &mut writer, &total, &mut process).is_err());
+        assert_eq!(writer.retained, b"a");
+        assert_eq!(input.position(), 2);
+        assert_eq!(process, 2);
+        assert_eq!(total.load(Ordering::Relaxed), ceiling);
+        let mut next_process = 0;
+        let mut next_input = std::io::Cursor::new(b"next independent case output");
+        let mut next_output = Vec::new();
+        assert!(!capture_available(
+            &mut next_input,
+            &mut next_output,
+            &total,
+            &mut next_process
+        )?);
+        assert_eq!(next_input.position(), 0);
+        assert_eq!(next_process, 0);
+        assert!(next_output.is_empty());
+        assert_eq!(total.load(Ordering::Relaxed), ceiling);
         Ok(())
     }
 
