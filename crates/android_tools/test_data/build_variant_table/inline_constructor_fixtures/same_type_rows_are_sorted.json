@@ -73,7 +73,7 @@
       ]
     }
   ],
-  "ordinary_app_dependency_note": "An original app\u2192lib debug dependency prepares selected module identities. Table projection consumes the independently selected row identities, so explicit constructor inputs do not claim dependency switching behavior.",
+  "ordinary_app_dependency_note": "The original sorting test constructs each Android module with an independently selected debug variant and no dependencyList. Its row-order assertions do not exercise dependency-driven selection or switching.",
   "original_assertion_outcomes": 5,
   "original_jvm_root": {
     "adaptation": "Excluded from Android projection inputs because the original Java root has no Android facet/model; source retained unchanged.",

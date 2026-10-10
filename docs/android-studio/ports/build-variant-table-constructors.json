@@ -196,8 +196,8 @@
       ],
       "fixture": {
         "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/same_type_rows_are_sorted.json",
-        "bytes": 3867,
-        "sha256": "205a7169f52b7395c60f70ab3d06e4eb4feec04d9c04dfab717a5a6086a6e47d"
+        "bytes": 3852,
+        "sha256": "5679f0f958805d7f8d08e34b51bd0d74bc88ef25b1b119ab36bbc9d2ed5500bb"
       },
       "fixture_preparation_input": {
         "bytes": 4072,
@@ -215,6 +215,10 @@
         {
           "property": "status",
           "change": "Record that the source adaptation exists but matching execution and passing parity credit remain pending."
+        },
+        {
+          "property": "ordinary_app_dependency_note",
+          "change": "Correct the prepared fixture description: this original sorting method constructs independently selected debug modules with no dependencyList, so it does not exercise app-to-library dependency selection."
         }
       ],
       "planned_rust_target": {
@@ -267,8 +271,8 @@
       ],
       "fixture": {
         "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/different_type_rows_are_sorted_by_android_project_type.json",
-        "bytes": 4936,
-        "sha256": "ecf60007640d5dfb024313d011a63da3bd982434c3c2c967d7d0517eebe64602"
+        "bytes": 4921,
+        "sha256": "fbe58d3bfee413a0aedc710392c7be8769569d714d958d823d96ab81f0e8279c"
       },
       "fixture_preparation_input": {
         "bytes": 5141,
@@ -286,6 +290,10 @@
         {
           "property": "status",
           "change": "Record that the source adaptation exists but matching execution and passing parity credit remain pending."
+        },
+        {
+          "property": "ordinary_app_dependency_note",
+          "change": "Correct the prepared fixture description: this original sorting method constructs independently selected debug modules with no dependencyList, so it does not exercise app-to-library dependency selection."
         }
       ],
       "planned_rust_target": {
