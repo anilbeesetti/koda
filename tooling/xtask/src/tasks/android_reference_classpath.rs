@@ -359,7 +359,14 @@ fn file_uri_path(path: &Path) -> Result<String> {
         .to_str()
         .context("Wrapper path cannot be represented by a Java file URI")?;
     #[cfg(windows)]
-    let path = format!("/{}", path.replace('\\', "/"));
+    let path = {
+        let path = path.replace('\\', "/");
+        if path.starts_with('/') {
+            path
+        } else {
+            format!("/{path}")
+        }
+    };
     let mut encoded = String::new();
     for byte in path.as_bytes() {
         if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b'~' | b'/') {
@@ -370,6 +377,28 @@ fn file_uri_path(path: &Path) -> Result<String> {
         }
     }
     Ok(encoded)
+}
+
+fn file_uri_reference_path(path: &str) -> Result<&str> {
+    if let Some(authority_path) = path.strip_prefix("//") {
+        ensure!(
+            authority_path.starts_with('/'),
+            "Java file URI cannot have authority: {path}"
+        );
+        Ok(authority_path)
+    } else {
+        Ok(path)
+    }
+}
+
+#[cfg(any(windows, test))]
+fn windows_file_uri_native_path(path: &str) -> String {
+    let path = if path.starts_with('/') && path.as_bytes().get(2) == Some(&b':') {
+        &path[1..]
+    } else {
+        path
+    };
+    path.replace('/', "\\")
 }
 
 fn resolve_file_reference(base_path: &str, reference: &str) -> Result<PathBuf> {
@@ -415,12 +444,7 @@ fn resolve_file_reference(base_path: &str, reference: &str) -> Result<PathBuf> {
         !absolute_uri || path.starts_with('/'),
         "Opaque file URI: {reference}"
     );
-    if let Some(authority_path) = path.strip_prefix("//") {
-        ensure!(
-            authority_path.starts_with('/'),
-            "Java file URI cannot have authority: {reference}"
-        );
-    }
+    let path = file_uri_reference_path(path)?;
     let encoded = if absolute_uri || path.starts_with('/') {
         path.to_owned()
     } else {
@@ -439,7 +463,12 @@ fn resolve_file_reference(base_path: &str, reference: &str) -> Result<PathBuf> {
                 _ => segments.push(segment),
             }
         }
-        format!("/{}", segments.join("/"))
+        let root = if cfg!(windows) && joined.starts_with("//") {
+            "//"
+        } else {
+            "/"
+        };
+        format!("{root}{}", segments.join("/"))
     };
     let mut decoded = Vec::new();
     let bytes = encoded.as_bytes();
@@ -468,10 +497,15 @@ fn resolve_file_reference(base_path: &str, reference: &str) -> Result<PathBuf> {
             .join("/")
     );
     #[cfg(windows)]
-    let path = decoded
-        .strip_prefix('/')
-        .context("File URI is not an absolute Windows path")?
-        .replace('/', "\\");
+    let path = {
+        let path = PathBuf::from(windows_file_uri_native_path(&decoded));
+        if path.has_root() && !path.is_absolute() {
+            std::env::current_dir()?.join(path)
+        } else {
+            path
+        }
+    };
+    #[cfg(not(windows))]
     let path = PathBuf::from(path);
     ensure!(
         path.is_absolute(),
@@ -822,6 +856,70 @@ mod tests {
             vec![directory.path().join("link/../target.jar")]
         );
         assert_eq!(fs::canonicalize(&result.paths[0])?, expected);
+        Ok(())
+    }
+
+    #[test]
+    fn empty_uri_authority_is_separate_from_the_native_path() -> Result<()> {
+        assert_eq!(
+            file_uri_reference_path("/C:/tmp/target.jar")?,
+            "/C:/tmp/target.jar"
+        );
+        assert_eq!(
+            file_uri_reference_path("///C:/tmp/target.jar")?,
+            "/C:/tmp/target.jar"
+        );
+        assert_eq!(
+            file_uri_reference_path("////server/share/target.jar")?,
+            "//server/share/target.jar"
+        );
+        assert!(file_uri_reference_path("//localhost/C:/target.jar").is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn windows_drive_and_unc_uri_paths_have_native_spellings() {
+        assert_eq!(
+            windows_file_uri_native_path("/C:/tmp/target.jar"),
+            "C:\\tmp\\target.jar"
+        );
+        assert_eq!(
+            windows_file_uri_native_path("//server/share/target.jar"),
+            "\\\\server\\share\\target.jar"
+        );
+        assert_eq!(
+            windows_file_uri_native_path("/root/target.jar"),
+            "\\root\\target.jar"
+        );
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn windows_absolute_uri_spellings_use_real_manifest_files() -> Result<()> {
+        let directory = TempDir::new()?;
+        let target = directory.path().join("target.jar");
+        File::create(&target)?;
+        let uri = url::Url::from_file_path(&target)
+            .map_err(|()| anyhow::anyhow!("Invalid target file URI"))?
+            .to_string();
+        assert!(uri.starts_with("file:///"));
+        for reference in [uri.clone(), uri.replacen("file:///", "file:/", 1)] {
+            let path = wrapper(directory.path(), &reference)?;
+            assert_eq!(
+                read_manifest_classpath(&path, &ManifestLimits::default())?.paths,
+                vec![target.clone()]
+            );
+        }
+        let unc_wrapper = Path::new("\\\\server\\share\\wrapper.jar");
+        assert_eq!(file_uri_path(unc_wrapper)?, "//server/share/wrapper.jar");
+        assert_eq!(
+            resolve_file_reference("//server/share/wrapper.jar", "target.jar")?,
+            PathBuf::from("\\\\server\\share\\target.jar")
+        );
+        assert_eq!(
+            resolve_file_reference("/C:/tmp/wrapper.jar", "file:////server/share/target.jar")?,
+            PathBuf::from("\\\\server\\share\\target.jar")
+        );
         Ok(())
     }
 }
