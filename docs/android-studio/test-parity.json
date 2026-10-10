@@ -4,9 +4,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -14,34 +14,13 @@
           "test_name": "project_model::tests::default_variants_one_variant",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c"
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--lib",
-              "project_model::tests::default_variants_one_variant",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-01.log",
-              "sha256": "cfa78f66e8a364d995accb1cfb40ae5f5d195e823efca86f4641d0484f572bc9"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -49,9 +28,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -59,34 +38,13 @@
           "test_name": "project_model::tests::default_variants_debug_preferred",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c"
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--lib",
-              "project_model::tests::default_variants_debug_preferred",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-02.log",
-              "sha256": "2c47af4230563194277303e2b10a253bae53e9350c30f0a24743ba4814e21eb4"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -94,9 +52,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -104,34 +62,13 @@
           "test_name": "project_model::tests::default_variants_preferred_build_type",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c"
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--lib",
-              "project_model::tests::default_variants_preferred_build_type",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-03.log",
-              "sha256": "cdb1f66ed8033c1b4410a4615c5197964c28e7006e903629800536fe64731b49"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -139,9 +76,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -149,34 +86,13 @@
           "test_name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c"
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--lib",
-              "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-04.log",
-              "sha256": "f428039c45c6b91dd68cfddf3c6d34ef358a63d3e552cee2089417d7a3ec5bbb"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -184,9 +100,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -194,34 +110,13 @@
           "test_name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c"
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--lib",
-              "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-05.log",
-              "sha256": "7348fe944c7492b43eba2a42690ef5b55c6e7d764248c78072b8e740957072ed"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -229,9 +124,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -239,34 +134,13 @@
           "test_name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c"
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--lib",
-              "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-06.log",
-              "sha256": "e57b845c0d7e6e7bd4eb4ed3f915c506fecaa1381cd1135f121130c4a6983d45"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -274,9 +148,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -284,34 +158,13 @@
           "test_name": "project_model::tests::default_variants_mismatched_product_flavour_length",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c"
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--lib",
-              "project_model::tests::default_variants_mismatched_product_flavour_length",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-07.log",
-              "sha256": "9298b5f68580af360b9e656b070a9fd564fca091eda3ff4449f9b75e6e2a166a"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -319,9 +172,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -329,34 +182,13 @@
           "test_name": "project_model::tests::default_variants_on_empty",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/src/project_model.rs",
-            "sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c"
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--lib",
-              "project_model::tests::default_variants_on_empty",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-08.log",
-              "sha256": "8eb15aa164bbcecd7962e75d069e2ec0a997cf79e58876cef9969f8b568a8d6e"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -364,9 +196,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -374,35 +206,13 @@
           "test_name": "import_simple_gradle_project",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/gradle_import_reference.rs",
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "gradle_import_reference",
-              "import_simple_gradle_project",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-09.log",
-              "sha256": "148797919bad7862141496832827f3b0afa2f4ab1a715c3104ce03e045c1b4ff"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -410,9 +220,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -420,35 +230,13 @@
           "test_name": "import_subprojects",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/gradle_import_reference.rs",
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "gradle_import_reference",
-              "import_subprojects",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-10.log",
-              "sha256": "5e5dc64d17fd2fb4021e6a6ef79c74433f3e8c9d9550f07300e3cc036c44404f"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -456,9 +244,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -466,35 +254,13 @@
           "test_name": "import_subprojects_with_missing_submodule",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/gradle_import_reference.rs",
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "gradle_import_reference",
-              "import_subprojects_with_missing_submodule",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-11.log",
-              "sha256": "8ad95e70137d07433003884fc5c36d44553a3c113b9d90fc16495f9adec3685d"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -502,9 +268,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -512,35 +278,13 @@
           "test_name": "import_subproject_with_custom_location",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/gradle_import_reference.rs",
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "gradle_import_reference",
-              "import_subproject_with_custom_location",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-12.log",
-              "sha256": "1c76d4e2bc8e4b1d2db6fe10e53e39a56e3826ea4f04a22e0909a60a6e49af9e"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -548,9 +292,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -558,35 +302,13 @@
           "test_name": "required_projects",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/gradle_import_reference.rs",
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "gradle_import_reference",
-              "required_projects",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-13.log",
-              "sha256": "d9e08982bd603f894e6096a429892edc39fdf184299e6cdbaad20a7a80fa5afe"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -594,9 +316,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -604,35 +326,13 @@
           "test_name": "missing_required_projects",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/gradle_import_reference.rs",
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "gradle_import_reference",
-              "missing_required_projects",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-14.log",
-              "sha256": "59a8be847513760bf1b6b9197746db94da614b173590e36da00b3438f4cf6e8a"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -640,9 +340,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -650,35 +350,13 @@
           "test_name": "missing_enclosing_project",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/gradle_import_reference.rs",
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "gradle_import_reference",
-              "missing_enclosing_project",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-15.log",
-              "sha256": "ce32e517812743e9eca403053b0dbb2dd163a707222c20330aa26e6582a93c71"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -686,9 +364,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -696,35 +374,13 @@
           "test_name": "transitive_dependencies",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/gradle_import_reference.rs",
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "gradle_import_reference",
-              "transitive_dependencies",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-16.log",
-              "sha256": "e0fe0a06e18f01f3fa3ddd396346df9a943c2d042b2870119400e3d131910cbb"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -732,9 +388,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -742,35 +398,13 @@
           "test_name": "circular_dependencies",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/gradle_import_reference.rs",
             "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "gradle_import_reference",
-              "circular_dependencies",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-17.log",
-              "sha256": "db47d57f8e78c6fd18d75d7a816614b1ff9f0c0982b3fae7ed579ed40a45704b"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -805,9 +439,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -815,35 +449,13 @@
           "test_name": "test_show_visibility_icons_when_option_is_selected",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "project_view_preferences_reference",
-              "test_show_visibility_icons_when_option_is_selected",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-18.log",
-              "sha256": "43c42398c4cec95ba576cb3a8f71528424c65dfea48ba2a1f288f1d35c8c521f"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -851,9 +463,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -861,35 +473,13 @@
           "test_name": "test_show_visibility_icons_when_option_is_unselected",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "project_view_preferences_reference",
-              "test_show_visibility_icons_when_option_is_unselected",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-19.log",
-              "sha256": "1e2ddc77814252c8d67c53a1f2e1cff4e346752c8cb00394bfbb36ed2548696b"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -915,9 +505,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -925,35 +515,13 @@
           "test_name": "test_android_view_is_default",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "project_view_preferences_reference",
-              "test_android_view_is_default",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-20.log",
-              "sha256": "3a4b5f464d8280534d4d29774626d838ca3330315a000ae3e4d5e9cc6d34d4e2"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -961,9 +529,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -971,35 +539,13 @@
           "test_name": "test_android_view_not_visible_in_unsupported_project_system",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "project_view_preferences_reference",
-              "test_android_view_not_visible_in_unsupported_project_system",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-21.log",
-              "sha256": "cbcff0f162f25fa01f8489516c6ebce40ca106009a5ea3636c26a3d223524a85"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1007,9 +553,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -1017,35 +563,13 @@
           "test_name": "test_android_view_not_visible_in_non_android_project",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "project_view_preferences_reference",
-              "test_android_view_not_visible_in_non_android_project",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-22.log",
-              "sha256": "2086cb3952fbe856a669209c5ac9899a5a55c9bbc1219dfa70b0d8a15cdc6f70"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1053,9 +577,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -1063,35 +587,13 @@
           "test_name": "test_android_view_is_default_custom_property_handling",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "project_view_preferences_reference",
-              "test_android_view_is_default_custom_property_handling",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-23.log",
-              "sha256": "c177eb63ea45a2d155b5e92e422ca8a1e3bca4695c3351b50a7a7792d4b1794e"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1099,9 +601,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -1109,35 +611,13 @@
           "test_name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "project_view_preferences_reference",
-              "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-24.log",
-              "sha256": "b37b1ecb336305039b58696d75cc0c58206d97574b48b4e766d961085d49c6d7"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1145,9 +625,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -1155,35 +635,13 @@
           "test_name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "project_view_preferences_reference",
-              "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-25.log",
-              "sha256": "ab7699d3c2fcc26de85cd66ad3ccc11a9759ba333d2cd8dbf723aa881260f803"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1191,9 +649,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "IntelliJ services and mutable JVM properties become explicit Rust capabilities/configuration; tree visibility settings become the backend preference accessor; notifications and protobuf metrics become local typed return values. Every original assertion is retained; product UI wiring remains a separate task.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -1201,35 +659,13 @@
           "test_name": "test_android_view_is_default_metrics",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
             "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "project_view_preferences_reference",
-              "test_android_view_is_default_metrics",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-26.log",
-              "sha256": "b11d35ecd4debe25f219bd29b6886bd83cac7387a6d945644f3996b68293394a"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1273,9 +709,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_ui",
@@ -1289,28 +725,7 @@
             "path": "crates/android_ui/src/tabbed_toolbar.rs",
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_ui/Cargo.toml",
-              "-p",
-              "android_ui",
-              "--lib",
-              "tabbed_toolbar::tests::component_is_added_element",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-01.log",
-              "sha256": "4bc31f4566dbe304f60803dc1777a378cffb54627940e29e2e56b4ffd73f5998"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1318,9 +733,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_ui",
@@ -1334,28 +749,7 @@
             "path": "crates/android_ui/src/tabbed_toolbar.rs",
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_ui/Cargo.toml",
-              "-p",
-              "android_ui",
-              "--lib",
-              "tabbed_toolbar::tests::tab_is_added",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-02.log",
-              "sha256": "cade428fd459c02f3ac2bf5f0a5cf846d416a4d00a955d11a4205fc4f8944723"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1363,9 +757,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_ui",
@@ -1379,28 +773,7 @@
             "path": "crates/android_ui/src/tabbed_toolbar.rs",
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_ui/Cargo.toml",
-              "-p",
-              "android_ui",
-              "--lib",
-              "tabbed_toolbar::tests::closed_is_called_when_clicked",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-03.log",
-              "sha256": "038019a7b67fac20c7ca25026fbcc18a7b972b6aefec3373b57ab6f4bdf96315"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1408,9 +781,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_ui",
@@ -1424,28 +797,7 @@
             "path": "crates/android_ui/src/tabbed_toolbar.rs",
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_ui/Cargo.toml",
-              "-p",
-              "android_ui",
-              "--lib",
-              "tabbed_toolbar::tests::no_close_button_when_no_listener",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-04.log",
-              "sha256": "78b764f6c94553511248d1a52f7f9e9c8f31bb7e3ad90d06476883c31c82361b"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1453,9 +805,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_ui",
@@ -1469,28 +821,7 @@
             "path": "crates/android_ui/src/tabbed_toolbar.rs",
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_ui/Cargo.toml",
-              "-p",
-              "android_ui",
-              "--lib",
-              "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-05.log",
-              "sha256": "2e4d5383042e781ae2b9ae614d34b5dd1f84911fc9b03fa500ce227558c1a962"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1498,9 +829,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_ui",
@@ -1514,28 +845,7 @@
             "path": "crates/android_ui/src/tabbed_toolbar.rs",
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_ui/Cargo.toml",
-              "-p",
-              "android_ui",
-              "--lib",
-              "tabbed_toolbar::tests::can_select_tab_by_index",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-06.log",
-              "sha256": "a03453611b241400cbb602596ad15fd9c00b077590837765a98c97082200f704"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -1543,9 +853,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
       "port_status": "adapted",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_ui",
@@ -1559,28 +869,7 @@
             "path": "crates/android_ui/src/tabbed_toolbar.rs",
             "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_ui/Cargo.toml",
-              "-p",
-              "android_ui",
-              "--lib",
-              "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-07.log",
-              "sha256": "cee26712e8e68465b7197a3346fbf7db6019d55a1620ae3ceab44724733a359c"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -2038,9 +1327,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -2048,35 +1337,13 @@
           "test_name": "check_model_consumer_version_ordering",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/generated_artifacts.rs",
             "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "generated_artifacts",
-              "check_model_consumer_version_ordering",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-27.log",
-              "sha256": "d60beb8d4d704aa2d55cffcdf16e20cda0fc9d07f490460cd6b22c663e5824f9"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -2084,9 +1351,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -2094,35 +1361,13 @@
           "test_name": "check_model_version_ordering",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/generated_artifacts.rs",
             "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "generated_artifacts",
-              "check_model_version_ordering",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-28.log",
-              "sha256": "ef3bacb24d720c5e8860653c853f44170dbf13a70e34956c33f5d2703f6fcc10"
-            }
-          }
+          "run": null
         }
       ],
       "fixtures": []
@@ -2130,9 +1375,9 @@
     {
       "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
       "port_status": "ported",
-      "run_status": "passing",
+      "run_status": "blocked",
       "reason": null,
-      "run_blocker": null,
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
       "rust_targets": [
         {
           "package": "android_tools",
@@ -2140,35 +1385,127 @@
           "test_name": "check_supports_parallel_sync",
           "manifest": {
             "path": "crates/android_tools/Cargo.toml",
-            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
           },
           "source": {
             "path": "crates/android_tools/tests/parallel_sync.rs",
             "sha256": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77"
           },
-          "run": {
-            "tested_commit": "f763baebb6d0970b283f759967d7980084317e67",
-            "command": [
-              "cargo",
-              "test",
-              "--locked",
-              "--manifest-path",
-              "crates/android_tools/Cargo.toml",
-              "-p",
-              "android_tools",
-              "--test",
-              "parallel_sync",
-              "check_supports_parallel_sync",
-              "--",
-              "--exact",
-              "--show-output"
-            ],
-            "exit_code": 0,
-            "log": {
-              "path": "docs/android-studio/evidence/sync-console-filter/exact/tools-29.log",
-              "sha256": "aeda17cefd10c1839351aeff087a6a7ad61a8eb82c3b988cb78eb9dd81cd3b38"
-            }
-          }
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:compose-designer/testSrc/com/android/tools/idea/compose/preview/NonComposeProjectTest.kt#com.android.tools.idea.compose.preview.NonComposeProjectTest.compose preview not available",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior rejects a Kotlin file in a non-Compose project through ComposePreviewRepresentationProvider.accept. A Rust candidate exists, but no reference port or run credit is assigned until the production preview provider and a Compose-enabled positive control execute and pass under the normal bundled feature graph. Effective upstream runtime case descriptions remain unresolved.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.withoutAbi",
+      "port_status": "adapted",
+      "run_status": "blocked",
+      "reason": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct. All nineteen constructor-suite outcomes are retained; four exact source0d155a5 named cases pass. UI wiring, native execution, the other applicable cases, and the combined task tree remain separate completion gates.",
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "build_variant_table",
+          "test_name": "without_abi",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/build_variant_table.rs",
+            "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.testDefaultVariantIndicator",
+      "port_status": "adapted",
+      "run_status": "blocked",
+      "reason": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct. All nineteen constructor-suite outcomes are retained; four exact source0d155a5 named cases pass. UI wiring, native execution, the other applicable cases, and the combined task tree remain separate completion gates.",
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "build_variant_table",
+          "test_name": "test_default_variant_indicator",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/build_variant_table.rs",
+            "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.withAbi",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "User deferred NDK/C++ support. This original ABI case remains unported; all ABI/native-model expectations are retained in the original source and must be implemented if NDK scope resumes.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+      "port_status": "adapted",
+      "run_status": "blocked",
+      "reason": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct. All nineteen constructor-suite outcomes are retained; four exact source0d155a5 named cases pass. UI wiring, native execution, the other applicable cases, and the combined task tree remain separate completion gates.",
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "build_variant_table",
+          "test_name": "same_type_rows_are_sorted",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/build_variant_table.rs",
+            "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199"
+          },
+          "run": null
+        }
+      ],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
+      "port_status": "adapted",
+      "run_status": "blocked",
+      "reason": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct. All nineteen constructor-suite outcomes are retained; four exact source0d155a5 named cases pass. UI wiring, native execution, the other applicable cases, and the combined task tree remain separate completion gates.",
+      "run_blocker": "Exact40 run38033202999 passed on source594bf185 (36 cases) and source0d155a5 (four cases), not on this combined task tree. Its implementation/dependency snapshot differs from both tested revisions. The unchanged parity validator rejects stale-source RunEvidence; a matching combined-source exact run is required.",
+      "rust_targets": [
+        {
+          "package": "android_tools",
+          "integration_target": "build_variant_table",
+          "test_name": "different_type_rows_are_sorted_by_android_project_type",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
+          },
+          "source": {
+            "path": "crates/android_tools/tests/build_variant_table.rs",
+            "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199"
+          },
+          "run": null
         }
       ],
       "fixtures": []

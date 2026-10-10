@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "label": "table4",
+  "tested_commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+  "tested_tree": "c5306d1dc5714e629eb0dd658fd230f77af84f52",
+  "runner_commit": "1a1927e2fa59949233386391bc8bc534305a711c",
+  "manifest_sha256": "61c460e6a01e45fb28e56e9620c3a95f868749b80669a5520a28a205f2db1ce7",
+  "environment": {
+    "CARGO_BUILD_JOBS": "4",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CC": "clang",
+    "CXX": "clang++",
+    "RUSTC_WRAPPER": null,
+    "RUSTFLAGS": null,
+    "VK_DRIVER_FILES": "/usr/share/vulkan/icd.d/lvp_icd.json",
+    "WGPU_BACKEND": null
+  },
+  "source_before": {
+    "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+    "tree": "c5306d1dc5714e629eb0dd658fd230f77af84f52",
+    "index_sha256": "0f8b551f385956dc748c48737c20614b787c9c7cec7261be266c2421b981aa82",
+    "tracked_files": 7168,
+    "bound_files": 22,
+    "full_materialization": true
+  },
+  "source_after": {
+    "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+    "tree": "c5306d1dc5714e629eb0dd658fd230f77af84f52",
+    "index_sha256": "0f8b551f385956dc748c48737c20614b787c9c7cec7261be266c2421b981aa82",
+    "tracked_files": 7168,
+    "bound_files": 22,
+    "full_materialization": true
+  },
+  "source_error": null,
+  "groups": [
+    {
+      "package": "android_tools",
+      "integration_target": "build_variant_table",
+      "error": null,
+      "compilation": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "build_variant_table",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 17587,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "group-00.stdout.log",
+          "bytes": 75807,
+          "sha256": "e8fc3d9ec9fe208fb276366da1fd83d3c0519faf33247db55d2cb1cb1326baf8"
+        },
+        "stderr": {
+          "path": "group-00.stderr.log",
+          "bytes": 2221,
+          "sha256": "ca3c0c6b2c794e42888a7b72d7717c0e45c2b0df3ee8f0fab53e00c5b5704238"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/build_variant_table-5b81d4a2c88dd804",
+        "executable_sha256": "0539f9aeaf26485e56ecfb8344e7a5cc6f6771aed38b0e149333876928c377f3",
+        "executable_bytes": 6789152,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/build_variant_table.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    }
+  ],
+  "cases": [
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.withoutAbi",
+      "name": "without_abi",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "build_variant_table",
+          "without_abi",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 450,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-00.stdout.log",
+          "bytes": 177,
+          "sha256": "78e1474fd5818f2f1ebf774b4fd7580ec80ea3d06ff2fa62c323921aef254b80"
+        },
+        "stderr": {
+          "path": "case-00.stderr.log",
+          "bytes": 199,
+          "sha256": "d2ad108cf5e23bb491459e15300f92cc1ca605dcade8f96a2fbe08d10a307f0b"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/build_variant_table-5b81d4a2c88dd804",
+        "executable_sha256": "0539f9aeaf26485e56ecfb8344e7a5cc6f6771aed38b0e149333876928c377f3",
+        "executable_bytes": 6789152,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/build_variant_table.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.testDefaultVariantIndicator",
+      "name": "test_default_variant_indicator",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "build_variant_table",
+          "test_default_variant_indicator",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 474,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-01.stdout.log",
+          "bytes": 215,
+          "sha256": "aed993860df9716dd124bb1f41d32b709da447ce62772328907d32a4d2703118"
+        },
+        "stderr": {
+          "path": "case-01.stderr.log",
+          "bytes": 199,
+          "sha256": "d2ad108cf5e23bb491459e15300f92cc1ca605dcade8f96a2fbe08d10a307f0b"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/build_variant_table-5b81d4a2c88dd804",
+        "executable_sha256": "0539f9aeaf26485e56ecfb8344e7a5cc6f6771aed38b0e149333876928c377f3",
+        "executable_bytes": 6789152,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/build_variant_table.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+      "name": "same_type_rows_are_sorted",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "build_variant_table",
+          "same_type_rows_are_sorted",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 468,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-02.stdout.log",
+          "bytes": 205,
+          "sha256": "9f117cb042b72b97f10cd7428a07dc4f1cf1706a9967ef9883b762c1a924dc3d"
+        },
+        "stderr": {
+          "path": "case-02.stderr.log",
+          "bytes": 199,
+          "sha256": "d2ad108cf5e23bb491459e15300f92cc1ca605dcade8f96a2fbe08d10a307f0b"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/build_variant_table-5b81d4a2c88dd804",
+        "executable_sha256": "0539f9aeaf26485e56ecfb8344e7a5cc6f6771aed38b0e149333876928c377f3",
+        "executable_bytes": 6789152,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/build_variant_table.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
+      "name": "different_type_rows_are_sorted_by_android_project_type",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "build_variant_table",
+          "different_type_rows_are_sorted_by_android_project_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 490,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-03.stdout.log",
+          "bytes": 263,
+          "sha256": "109686d4d1a669143571b6445b6af850935801e1a127e0e09b3fd835dedd173b"
+        },
+        "stderr": {
+          "path": "case-03.stderr.log",
+          "bytes": 199,
+          "sha256": "bc5b4a3a95ff87fab304ac1509957685df66e4addbfed48e2849bfa8c0cd55d9"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/build_variant_table-5b81d4a2c88dd804",
+        "executable_sha256": "0539f9aeaf26485e56ecfb8344e7a5cc6f6771aed38b0e149333876928c377f3",
+        "executable_bytes": 6789152,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/build_variant_table.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    }
+  ],
+  "no_reference_credit_added": true
+}

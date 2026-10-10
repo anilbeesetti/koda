@@ -1,0 +1,3 @@
+# Preserve uploaded raw evidence bytes and their recorded hashes.
+*.log -text -whitespace
+*.json.raw -text -whitespace

@@ -1,0 +1,82 @@
+[1m[92m   Compiling[0m xtask v0.1.0 (/home/runner/work/koda/koda/runner/tooling/xtask)
+[1m[92m    Finished[0m `dev` profile [unoptimized] target(s) in 3.59s
+[1m[92m     Running[0m `/home/runner/work/_temp/current40-runner-target/debug/xtask android-reference-runs --manifest docs/android-studio/reference-named-tests.json --source primary36 --checkout /home/runner/work/koda/koda/tested --target-dir /home/runner/work/_temp/current40-test-target --output-dir /home/runner/work/_temp/current40-proof`
+group-00: success=true stdout=46927 bytes stderr=1234 bytes
+case-00: success=true stdout=255 bytes stderr=195 bytes
+PASS project_model::tests::default_variants_one_variant
+case-01: success=true stdout=263 bytes stderr=195 bytes
+PASS project_model::tests::default_variants_debug_preferred
+case-02: success=true stdout=273 bytes stderr=195 bytes
+PASS project_model::tests::default_variants_preferred_build_type
+case-03: success=true stdout=325 bytes stderr=195 bytes
+PASS project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type
+case-04: success=true stdout=303 bytes stderr=195 bytes
+PASS project_model::tests::default_variants_preferred_flavors_in_two_dimensions
+case-05: success=true stdout=315 bytes stderr=195 bytes
+PASS project_model::tests::default_variants_preferred_flavor_in_second_dimension_only
+case-06: success=true stdout=299 bytes stderr=195 bytes
+PASS project_model::tests::default_variants_mismatched_product_flavour_length
+case-07: success=true stdout=249 bytes stderr=195 bytes
+PASS project_model::tests::default_variants_on_empty
+group-01: success=true stdout=47684 bytes stderr=153 bytes
+case-33: success=true stdout=229 bytes stderr=199 bytes
+PASS check_model_consumer_version_ordering
+case-34: success=true stdout=211 bytes stderr=199 bytes
+PASS check_model_version_ordering
+group-02: success=true stdout=47699 bytes stderr=153 bytes
+case-08: success=true stdout=211 bytes stderr=207 bytes
+PASS import_simple_gradle_project
+case-09: success=true stdout=191 bytes stderr=207 bytes
+PASS import_subprojects
+case-10: success=true stdout=237 bytes stderr=207 bytes
+PASS import_subprojects_with_missing_submodule
+case-11: success=true stdout=231 bytes stderr=207 bytes
+PASS import_subproject_with_custom_location
+case-12: success=true stdout=189 bytes stderr=207 bytes
+PASS required_projects
+case-13: success=true stdout=205 bytes stderr=207 bytes
+PASS missing_required_projects
+case-14: success=true stdout=205 bytes stderr=207 bytes
+PASS missing_enclosing_project
+case-15: success=true stdout=201 bytes stderr=207 bytes
+PASS transitive_dependencies
+case-16: success=true stdout=197 bytes stderr=207 bytes
+PASS circular_dependencies
+group-03: success=true stdout=47659 bytes stderr=153 bytes
+case-35: success=true stdout=210 bytes stderr=187 bytes
+PASS check_supports_parallel_sync
+group-04: success=true stdout=47743 bytes stderr=153 bytes
+case-17: success=true stdout=255 bytes stderr=229 bytes
+PASS test_show_visibility_icons_when_option_is_selected
+case-18: success=true stdout=259 bytes stderr=229 bytes
+PASS test_show_visibility_icons_when_option_is_unselected
+case-19: success=true stdout=211 bytes stderr=229 bytes
+PASS test_android_view_is_default
+case-20: success=true stdout=273 bytes stderr=229 bytes
+PASS test_android_view_not_visible_in_unsupported_project_system
+case-21: success=true stdout=259 bytes stderr=229 bytes
+PASS test_android_view_not_visible_in_non_android_project
+case-22: success=true stdout=261 bytes stderr=229 bytes
+PASS test_android_view_is_default_custom_property_handling
+case-23: success=true stdout=317 bytes stderr=229 bytes
+PASS test_android_view_is_default_custom_property_handling_with_custom_properties_file
+case-24: success=true stdout=323 bytes stderr=229 bytes
+PASS test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file
+case-25: success=true stdout=227 bytes stderr=229 bytes
+PASS test_android_view_is_default_metrics
+group-05: success=true stdout=787787 bytes stderr=30829 bytes
+case-26: success=true stdout=254 bytes stderr=189 bytes
+PASS tabbed_toolbar::tests::component_is_added_element
+case-27: success=true stdout=226 bytes stderr=189 bytes
+PASS tabbed_toolbar::tests::tab_is_added
+case-28: success=true stdout=260 bytes stderr=189 bytes
+PASS tabbed_toolbar::tests::closed_is_called_when_clicked
+case-29: success=true stdout=266 bytes stderr=189 bytes
+PASS tabbed_toolbar::tests::no_close_button_when_no_listener
+case-30: success=true stdout=270 bytes stderr=189 bytes
+PASS tabbed_toolbar::tests::icon_buttons_callback_when_clicked
+case-31: success=true stdout=248 bytes stderr=189 bytes
+PASS tabbed_toolbar::tests::can_select_tab_by_index
+case-32: success=true stdout=292 bytes stderr=189 bytes
+PASS tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener
+PASS: 36/36 named cases PASS; no parity credit changed

@@ -1,0 +1,13 @@
+[1m[92m   Compiling[0m xtask v0.1.0 (/home/runner/work/koda/koda/runner/tooling/xtask)
+[1m[92m    Finished[0m `dev` profile [unoptimized] target(s) in 2.94s
+[1m[92m     Running[0m `/home/runner/work/_temp/current40-runner-target/debug/xtask android-reference-runs --manifest docs/android-studio/reference-named-tests.json --source table4 --checkout /home/runner/work/koda/koda/tested --target-dir /home/runner/work/_temp/current40-test-target --output-dir /home/runner/work/_temp/current40-proof`
+group-00: success=true stdout=75807 bytes stderr=2221 bytes
+case-00: success=true stdout=177 bytes stderr=199 bytes
+PASS without_abi
+case-01: success=true stdout=215 bytes stderr=199 bytes
+PASS test_default_variant_indicator
+case-02: success=true stdout=205 bytes stderr=199 bytes
+PASS same_type_rows_are_sorted
+case-03: success=true stdout=263 bytes stderr=199 bytes
+PASS different_type_rows_are_sorted_by_android_project_type
+PASS: 4/4 named cases PASS; no parity credit changed
