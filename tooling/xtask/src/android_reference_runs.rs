@@ -3,7 +3,7 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::{self, File},
-    io::{Read, Write},
+    io::Read,
     path::{Component, Path, PathBuf},
     process::Command,
     sync::atomic::{AtomicU64, Ordering},
@@ -13,6 +13,7 @@ use std::{
 #[cfg(target_os = "linux")]
 use std::{
     fs::OpenOptions,
+    io::Write,
     os::{fd::AsFd as _, unix::process::CommandExt as _},
     process::{Child, ExitStatus, Stdio},
     time::Instant,
@@ -40,6 +41,7 @@ use sha2::{Digest, Sha256};
 const MAX_MANIFEST_BYTES: u64 = 512 * 1024;
 const MAX_PROCESS_LOG_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_ARCHIVE_LOG_BYTES: u64 = 128 * 1024 * 1024;
+const MAX_DRAIN_LOG_BYTES: u64 = 8 * 1024 * 1024;
 const MAX_RECEIPT_BYTES: usize = 2 * 1024 * 1024;
 
 #[derive(Parser)]
@@ -514,7 +516,7 @@ fn verify_log(directory: &Path, proof: &LogProof) -> Result<Vec<u8>> {
         file_digest(&path)? == (proof.bytes, proof.sha256.clone()),
         "raw log hash/size mismatch"
     );
-    bounded_read(&path, MAX_PROCESS_LOG_BYTES + 8 * 1024 * 1024)
+    bounded_read(&path, MAX_PROCESS_LOG_BYTES + MAX_DRAIN_LOG_BYTES)
 }
 
 #[cfg(target_os = "linux")]
@@ -624,7 +626,18 @@ fn capture_available(
     process_bytes: &mut u64,
 ) -> Result<bool> {
     let mut buffer = [0_u8; 64 * 1024];
-    match input.read(&mut buffer) {
+    let remaining = (MAX_PROCESS_LOG_BYTES + MAX_DRAIN_LOG_BYTES)
+        .saturating_sub(*process_bytes)
+        .min(
+            (MAX_ARCHIVE_LOG_BYTES + MAX_DRAIN_LOG_BYTES)
+                .saturating_sub(total_bytes.load(Ordering::Relaxed)),
+        );
+    let capacity = usize::try_from(remaining.min(buffer.len() as u64))?;
+    if capacity == 0 {
+        // Exhaustion cannot establish EOF. Leave the unread bytes intact and fail the drain.
+        return Ok(false);
+    }
+    match input.read(&mut buffer[..capacity]) {
         Ok(0) => Ok(true),
         Ok(count) => {
             file.write_all(&buffer[..count])?;
@@ -695,8 +708,8 @@ fn monitor(
             cleanup_started = Some(Instant::now());
         }
         if cleanup_started.is_some_and(|started| started.elapsed() >= Duration::from_secs(1))
-            || process_bytes > MAX_PROCESS_LOG_BYTES + 8 * 1024 * 1024
-            || total_bytes.load(Ordering::Relaxed) > MAX_ARCHIVE_LOG_BYTES + 8 * 1024 * 1024
+            || process_bytes >= MAX_PROCESS_LOG_BYTES + MAX_DRAIN_LOG_BYTES
+            || total_bytes.load(Ordering::Relaxed) >= MAX_ARCHIVE_LOG_BYTES + MAX_DRAIN_LOG_BYTES
         {
             stopped_reason = Some(
                 "owned group signalled; remaining pipe output incomplete after bounded drain"
@@ -1542,6 +1555,77 @@ mod tests {
             waitid(Id::Pid(leader), WaitPidFlag::WEXITED | WaitPidFlag::WNOHANG),
             Err(Errno::ECHILD)
         ));
+        assert!(started.elapsed() < Duration::from_secs(4));
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn capture_stops_at_exact_process_and_archive_drain_ceilings() -> Result<()> {
+        let process_ceiling = MAX_PROCESS_LOG_BYTES + MAX_DRAIN_LOG_BYTES;
+        let archive_ceiling = MAX_ARCHIVE_LOG_BYTES + MAX_DRAIN_LOG_BYTES;
+        for (initial_process, initial_archive) in [
+            (process_ceiling - 1, 0),
+            (0, archive_ceiling - 1),
+            (process_ceiling - 1, archive_ceiling - 1),
+        ] {
+            let directory = tempfile::tempdir()?;
+            let path = directory.path().join("raw.log");
+            let mut file = File::create(&path)?;
+            let mut input = std::io::Cursor::new(vec![b'x'; 128 * 1024]);
+            let total = AtomicU64::new(initial_archive);
+            let mut process = initial_process;
+            assert!(!capture_available(
+                &mut input,
+                &mut file,
+                &total,
+                &mut process
+            )?);
+            assert_eq!(input.position(), 1);
+            assert_eq!(process, initial_process + 1);
+            assert_eq!(total.load(Ordering::Relaxed), initial_archive + 1);
+            assert_eq!(fs::read(&path)?, b"x");
+            // A second ready pipe must not consume or write beyond either shared ceiling.
+            assert!(!capture_available(
+                &mut input,
+                &mut file,
+                &total,
+                &mut process
+            )?);
+            assert_eq!(input.position(), 1);
+            assert_eq!(process, initial_process + 1);
+            assert_eq!(total.load(Ordering::Relaxed), initial_archive + 1);
+            assert_eq!(fs::read(&path)?, b"x");
+        }
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn exact_archive_drain_ceiling_fails_with_incomplete_capture() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let stdout_path = directory.path().join("stdout.log");
+        let stderr_path = directory.path().join("stderr.log");
+        let mut stdout = File::create(&stdout_path)?;
+        let mut stderr = File::create(&stderr_path)?;
+        let ceiling = MAX_ARCHIVE_LOG_BYTES + MAX_DRAIN_LOG_BYTES;
+        let total = AtomicU64::new(ceiling);
+        let mut child = OwnedChild::spawn(fixture_command("hold")?)?;
+        let started = Instant::now();
+        let supervision = monitor(
+            &mut child,
+            &mut stdout,
+            &mut stderr,
+            Duration::from_secs(2),
+            &total,
+        )?;
+        assert!(supervision.stopped_reason.as_deref().is_some_and(|reason| {
+            reason.contains("remaining pipe output incomplete after bounded drain")
+        }));
+        assert!(!supervision.stdout_eof && !supervision.stderr_eof);
+        assert!(child.reaped && supervision.owned_group_signal_sent);
+        assert_eq!(total.load(Ordering::Relaxed), ceiling);
+        assert!(fs::read(stdout_path)?.is_empty() && fs::read(stderr_path)?.is_empty());
         assert!(started.elapsed() < Duration::from_secs(4));
         Ok(())
     }
