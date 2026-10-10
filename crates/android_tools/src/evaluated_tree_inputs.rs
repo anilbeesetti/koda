@@ -905,7 +905,12 @@ mod fixture_tests {
     );
 
     fn fixture_record(root: &Path) -> Result<String> {
-        let root = root.to_str().context("Fixture path must be UTF-8")?;
+        let root = serde_json::to_string(root.to_str().context("Fixture path must be UTF-8")?)?;
+        // The surrounding fixture JSON already provides the string delimiters.
+        let root = root
+            .strip_prefix('"')
+            .and_then(|root| root.strip_suffix('"'))
+            .context("Serialized fixture path must be a JSON string")?;
         Ok(format!(
             "{MODEL_OUTPUT_PREFIX}{}",
             EXPORTED_MODEL.replace(ORIGINAL_ROOT, root)
@@ -917,6 +922,30 @@ mod fixture_tests {
             .into_iter()
             .map(|path| (path.clone(), path))
             .collect()
+    }
+
+    #[test]
+    fn fixture_record_round_trips_escaped_path_text() -> Result<()> {
+        for root in [
+            r#"C:\Users\qa\AppData\Local\Temp\quoted"folder"#,
+            "/tmp/quoted\"folder/back\\slash",
+            "/tmp/control\nline\t\u{0001}",
+            "/tmp/trailing\"",
+        ] {
+            let record = fixture_record(Path::new(root))?;
+            let wire: serde_json::Value = serde_json::from_str(
+                record
+                    .strip_prefix(MODEL_OUTPUT_PREFIX)
+                    .context("Fixture record")?,
+            )?;
+            assert_eq!(wire["root"].as_str(), Some(root));
+            let module_directory = format!("{root}/app");
+            assert_eq!(
+                wire["modules"][0]["directory"].as_str(),
+                Some(module_directory.as_str())
+            );
+        }
+        Ok(())
     }
 
     #[test]
