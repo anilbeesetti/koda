@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "phase": "Foundation reference-runner infrastructure",
+  "task": "B02a manifest Class-Path helper",
+  "source_revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+  "scope": "AOSP TestGroup.addManifestClassPath only; ordered wrapper references and missing diagnostics, no effective configured census",
+  "original_sources": [
+    {
+      "repository": "platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "retained_path": "sources/base/testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "bytes": 10390,
+      "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+      "license": "Apache-2.0",
+      "original_complete_and_unchanged": true
+    },
+    {
+      "repository": "platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+      "retained_path": "sources/base/testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+      "bytes": 3006,
+      "sha256": "0f6a26754d7afa899e37e82936450f33fbad2339aa907924468c8c31dddf4743",
+      "license": "Apache-2.0",
+      "original_complete_and_unchanged": true
+    }
+  ],
+  "reference_tests": [
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:testutils/src/test/java/com/android/testutils/TestGroupTest.kt#com.android.testutils.TestGroupTest.testValidAbsolutePath",
+      "Rust_test": "tasks::android_reference_classpath::tests::test_valid_absolute_path",
+      "assertion_count": 2,
+      "assertions_preserved": true,
+      "status": "unported",
+      "applicability": "UNREVIEWED",
+      "implementation": "authored",
+      "runtime": null,
+      "ported_test_credit": 0
+    },
+    {
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:testutils/src/test/java/com/android/testutils/TestGroupTest.kt#com.android.testutils.TestGroupTest.testValidRelativePath",
+      "Rust_test": "tasks::android_reference_classpath::tests::test_valid_relative_path",
+      "assertion_count": 3,
+      "assertions_preserved": true,
+      "status": "unported",
+      "applicability": "UNREVIEWED",
+      "implementation": "authored",
+      "runtime": null,
+      "ported_test_credit": 0
+    }
+  ],
+  "supplemental_cases_are_original_parity_credit": false,
+  "CLI": {
+    "command": "cargo xtask android-reference-class-path --jar /absolute/path/wrapper.jar",
+    "writes_files": false,
+    "spawns_JVM_or_original_runner": false,
+    "JSON": "Ordered paths, ordered missing references with original diagnostic text, configured_suite_membership_verified=false"
+  },
+  "acceptance": {
+    "original_two_named_tests_pass": null,
+    "all_xtask_tests_pass": null,
+    "formatting_pass": null,
+    "strict_clippy_pass": null,
+    "full_project_build_and_tests_pass": null,
+    "all_five_independent_review_verdicts": null,
+    "lead_merge_or_push": null
+  },
+  "runtime_claims": "Pending Root execution; author did not run Cargo, rustfmt, Java, Gradle or native validation",
+  "global_matrix_unchanged": {
+    "rows": 96,
+    "ported": 20,
+    "adapted": 16,
+    "unported": 60
+  },
+  "effective_census_complete": false,
+  "feature_complete": false
+}
