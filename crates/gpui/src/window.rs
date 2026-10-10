@@ -8249,6 +8249,8 @@ mod tests {
 
     #[gpui::test]
     fn software_adapter_preserves_frame_demand(cx: &mut TestAppContext) {
+        // Keep invalidations pending until the platform requests their frame.
+        cx.update(|cx| cx.mode = crate::app::GpuiMode::Production);
         let renders = Rc::new(Cell::new(0));
         let window = cx.add_window({
             let renders = renders.clone();
