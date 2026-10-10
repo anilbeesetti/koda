@@ -5,6 +5,7 @@
  * Copyright (C) 2020 The Android Open Source Project
  * Copyright (C) 2021 The Android Open Source Project
  * Copyright (C) 2022 The Android Open Source Project
+ * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1415,5 +1416,267 @@ fn thousands_of_root_encounters_preserve_first_main_and_builtin_group_priority()
             ..
         }
     )));
+    Ok(())
+}
+
+// These captured-fact regressions retain both ordering assertions from
+// AndroidSourceTypeNodeTest.testNodeFoldersOrder. Its actual Gradle setup is
+// still required before the original case can receive port/run parity credit.
+fn source_folder_fixture(
+    root: &Path,
+    ordered_paths: Vec<PathBuf>,
+) -> Result<(TreeModel, TreeFiles, TreeProjectionFacts)> {
+    let main = path(root, "src/main/java");
+    let android_test = path(root, "src/androidTest/java");
+    let unit_test = path(root, "src/test/java");
+    let mut module = fixture(root);
+    let model = metadata(&mut module)?;
+    let default = model
+        .default_source_set
+        .as_mut()
+        .context("Default missing")?;
+    let source = |name, directory: PathBuf| {
+        provider(
+            name,
+            vec![
+                (directory.clone(), SourceProviderRootKind::Java),
+                (directory, SourceProviderRootKind::Kotlin),
+            ],
+        )
+    };
+    default.main = Some(source("main", main));
+    default.host_tests = vec![ArtifactSourceProvider {
+        artifact: "_unit_test_".into(),
+        provider: source("test", unit_test),
+    }];
+    default.device_tests = vec![ArtifactSourceProvider {
+        artifact: "_android_test_".into(),
+        provider: source("androidTest", android_test),
+    }];
+    model.variants[0].device_tests = vec![NamedProviderArtifact {
+        artifact: "_android_test_".into(),
+        sources: artifact(None),
+    }];
+    let providers = ActiveProviderIndex::from_module(&module, "redWideDebug", 4)?;
+    let (tree_model, files, mut facts) = projection_fixture(
+        root,
+        ordered_paths
+            .into_iter()
+            .map(|directory| (directory, SourceGroup::KotlinAndJava))
+            .collect(),
+    )?;
+    facts.modules[0].providers = providers;
+    Ok((tree_model, files, facts))
+}
+
+#[test]
+fn source_folders_match_reference_order_for_expected_and_shuffled_captured_roots() -> Result<()> {
+    let temporary = tempfile::tempdir()?;
+    let main = path(temporary.path(), "src/main/java");
+    let android_test = path(temporary.path(), "src/androidTest/java");
+    let unit_test = path(temporary.path(), "src/test/java");
+    let expected = vec![main.clone(), android_test.clone(), unit_test.clone()];
+    let source_key = NodeKey::Source {
+        module: ":app".into(),
+        group: SourceGroup::KotlinAndJava,
+    };
+    let (model, files, facts) = source_folder_fixture(temporary.path(), expected.clone())?;
+    let tree = project_tree_with_facts(&model, &files, &facts)?;
+    assert_eq!(
+        tree.source_folders(&source_key)
+            .context("Source folders missing")?,
+        expected
+    );
+
+    let shuffled = vec![unit_test, main, android_test];
+    let (model, files, facts) = source_folder_fixture(temporary.path(), shuffled)?;
+    let tree = project_tree_with_facts(&model, &files, &facts)?;
+    assert_eq!(
+        tree.source_folders(&source_key)
+            .context("Source folders missing")?,
+        expected
+    );
+    Ok(())
+}
+
+#[test]
+fn equal_provider_sort_keys_preserve_actual_root_encounters() -> Result<()> {
+    let temporary = tempfile::tempdir()?;
+    let first = path(temporary.path(), "z/shared");
+    let second = path(temporary.path(), "a/shared");
+    let source_key = NodeKey::Source {
+        module: ":app".into(),
+        group: SourceGroup::Assets,
+    };
+    let (model, files, mut facts) = projection_fixture(
+        temporary.path(),
+        vec![
+            (first.clone(), SourceGroup::Assets),
+            (second.clone(), SourceGroup::Assets),
+        ],
+    )?;
+    let tree = project_tree_with_facts(&model, &files, &facts)?;
+    assert_eq!(
+        tree.source_folders(&source_key)
+            .context("Source folders missing")?,
+        [first.clone(), second.clone()]
+    );
+    facts.modules[0].roots.roots.reverse();
+    let tree = project_tree_with_facts(&model, &files, &facts)?;
+    assert_eq!(
+        tree.source_folders(&source_key)
+            .context("Source folders missing")?,
+        [second, first]
+    );
+    Ok(())
+}
+
+#[test]
+fn actual_first_provider_orders_roots_instead_of_directory_names_or_deepest_roots() -> Result<()> {
+    let temporary = tempfile::tempdir()?;
+    let main = path(temporary.path(), "src/main/java");
+    let android_test = path(temporary.path(), "src/androidTest/java");
+    let unit_test = path(temporary.path(), "src/test/java");
+    let nested = main.join("nested");
+    let (model, mut files, mut facts) = source_folder_fixture(
+        temporary.path(),
+        vec![
+            unit_test.clone(),
+            android_test.clone(),
+            main.clone(),
+            nested.clone(),
+        ],
+    )?;
+    let mut provider_module = fixture(temporary.path());
+    let provider_model = metadata(&mut provider_module)?;
+    provider_model.default_source_set = Some(container(Some(provider(
+        "main",
+        vec![(main.clone(), SourceProviderRootKind::Java)],
+    ))));
+    provider_model.product_flavors[1].container.main = Some(provider(
+        "red",
+        vec![(nested.clone(), SourceProviderRootKind::Java)],
+    ));
+    provider_model.build_types[0].container.main = Some(provider(
+        "debug",
+        vec![(android_test.clone(), SourceProviderRootKind::Java)],
+    ));
+    provider_model.product_flavors[0].container.main = Some(provider(
+        "wide",
+        vec![(unit_test.clone(), SourceProviderRootKind::Java)],
+    ));
+    facts.modules[0].providers =
+        ActiveProviderIndex::from_module(&provider_module, "redWideDebug", 4)?;
+    // Both nested and outer roots resolve to main through actual provider lookup.
+    // Their equal keys preserve the supplied outer-before-nested encounters.
+    let tree = project_tree_with_facts(&model, &files, &facts)?;
+    let source_key = NodeKey::Source {
+        module: ":app".into(),
+        group: SourceGroup::KotlinAndJava,
+    };
+    assert_eq!(
+        tree.source_folders(&source_key)
+            .context("Source folders missing")?,
+        [main, nested, android_test, unit_test]
+    );
+    // A deleted selected source root must not survive as a group folder.
+    let deleted = model.modules[0].source_roots[0].path.clone();
+    files.entries.retain(|entry| entry.path != deleted);
+    facts.presence = ProviderPresence::new(4, 9, [(deleted.clone(), RootPresence::Missing)])?;
+    let tree = project_tree_with_facts(&model, &files, &facts)?;
+    assert!(
+        !tree
+            .source_folders(&source_key)
+            .context("Source folders missing")?
+            .contains(&deleted)
+    );
+    // The original metadata remains immutable across both projections.
+    assert_eq!(model.modules[0].source_roots[0].path, deleted);
+    Ok(())
+}
+
+#[test]
+fn source_folder_provider_order_uses_utf16_and_not_unicode_scalar_order() -> Result<()> {
+    let temporary = tempfile::tempdir()?;
+    let supplementary = path(temporary.path(), "supplementary/java");
+    let private_use = path(temporary.path(), "private/java");
+    let mut module = fixture(temporary.path());
+    let model = metadata(&mut module)?;
+    let default = model
+        .default_source_set
+        .as_mut()
+        .context("Default missing")?;
+    default.main = Some(provider(
+        "\u{e000}",
+        vec![(private_use.clone(), SourceProviderRootKind::Java)],
+    ));
+    default.host_tests = vec![ArtifactSourceProvider {
+        artifact: "_unit_test_".into(),
+        provider: provider(
+            "\u{10000}",
+            vec![(supplementary.clone(), SourceProviderRootKind::Java)],
+        ),
+    }];
+    let providers = ActiveProviderIndex::from_module(&module, "redWideDebug", 4)?;
+    let (tree_model, files, mut facts) = projection_fixture(
+        temporary.path(),
+        vec![
+            (private_use.clone(), SourceGroup::Java),
+            (supplementary.clone(), SourceGroup::Java),
+        ],
+    )?;
+    facts.modules[0].providers = providers;
+    let tree = project_tree_with_facts(&tree_model, &files, &facts)?;
+    let source_key = NodeKey::Source {
+        module: ":app".into(),
+        group: SourceGroup::Java,
+    };
+    assert_eq!(
+        tree.source_folders(&source_key)
+            .context("Source folders missing")?,
+        [supplementary, private_use]
+    );
+    Ok(())
+}
+
+#[test]
+fn source_folder_accessor_never_relabels_manifest_files_or_absent_groups_as_directories()
+-> Result<()> {
+    let temporary = tempfile::tempdir()?;
+    let manifest = path(temporary.path(), "src/main/AndroidManifest.xml");
+    let (model, mut files, mut facts) = projection_fixture(
+        temporary.path(),
+        vec![(manifest.clone(), SourceGroup::Manifests)],
+    )?;
+    files.entries[0].kind = FileKind::File {
+        java_classes: Vec::new(),
+    };
+    let mut module = fixture(temporary.path());
+    metadata(&mut module)?.default_source_set = Some(container(Some(provider(
+        "main",
+        vec![(manifest, SourceProviderRootKind::Manifest)],
+    ))));
+    facts.modules[0].providers = ActiveProviderIndex::from_module(&module, "redWideDebug", 4)?;
+    let tree = project_tree_with_facts(&model, &files, &facts)?;
+    assert!(
+        tree.source_folders(&NodeKey::Source {
+            module: ":app".into(),
+            group: SourceGroup::Manifests
+        })
+        .is_none()
+    );
+    assert!(
+        tree.source_folders(&NodeKey::Source {
+            module: ":app".into(),
+            group: SourceGroup::Java
+        })
+        .is_none()
+    );
+    assert!(
+        tree.source_folders(&NodeKey::Module {
+            module: ":app".into()
+        })
+        .is_none()
+    );
     Ok(())
 }

@@ -1,0 +1,155 @@
+{
+  "behavior_ports": [
+    {
+      "declaration_line": 50,
+      "method": "testValidAbsolutePath",
+      "original_assertion_lines": [
+        53,
+        59
+      ],
+      "original_assertions": [
+        {
+          "line": 53,
+          "original": "assertThat(classPath).startsWith(\"file:\")",
+          "rust_requirement": "Assert the URL used in the real wrapper manifest starts with file:."
+        },
+        {
+          "line": 59,
+          "original": "assertThat(existingPaths).containsExactly(absTarget.absolutePath)",
+          "rust_requirement": "Assert the complete output queue equals exactly the single absolute target path; no duplicate or extra entry."
+        }
+      ],
+      "ported_credit": false,
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:testutils/src/test/java/com/android/testutils/TestGroupTest.kt#com.android.testutils.TestGroupTest.testValidAbsolutePath",
+      "rust_target": {
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "tooling/xtask/Cargo.toml",
+          "-p",
+          "xtask",
+          "--test",
+          "android_manifest_classpath",
+          "test_valid_absolute_path",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "integration_target": "android_manifest_classpath",
+        "manifest_path": "tooling/xtask/Cargo.toml",
+        "package": "xtask",
+        "source_path": "tooling/xtask/tests/android_manifest_classpath.rs",
+        "test_name": "test_valid_absolute_path"
+      },
+      "status": "not_run"
+    },
+    {
+      "declaration_line": 63,
+      "method": "testValidRelativePath",
+      "original_assertion_lines": [
+        68,
+        71,
+        87
+      ],
+      "original_assertions": [
+        {
+          "line": 68,
+          "original": "assertThat(relTarget.createNewFile()).isTrue()",
+          "rust_requirement": "Create a new empty target file using create_new; explicitly assert creation succeeded."
+        },
+        {
+          "line": 71,
+          "original": "assertThat(inCwd.exists()).isFalse()",
+          "rust_requirement": "Assert the same unique relative basename does not exist in the process current working directory; do not change process cwd."
+        },
+        {
+          "line": 87,
+          "original": "assertThat(existingPaths).containsExactly(relTarget.absolutePath)",
+          "rust_requirement": "Assert the complete output queue equals exactly the wrapper-parent target path, not cwd, with no extra entry."
+        }
+      ],
+      "ported_credit": false,
+      "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:testutils/src/test/java/com/android/testutils/TestGroupTest.kt#com.android.testutils.TestGroupTest.testValidRelativePath",
+      "rust_target": {
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "tooling/xtask/Cargo.toml",
+          "-p",
+          "xtask",
+          "--test",
+          "android_manifest_classpath",
+          "test_valid_relative_path",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "integration_target": "android_manifest_classpath",
+        "manifest_path": "tooling/xtask/Cargo.toml",
+        "package": "xtask",
+        "source_path": "tooling/xtask/tests/android_manifest_classpath.rs",
+        "test_name": "test_valid_relative_path"
+      },
+      "status": "not_run"
+    }
+  ],
+  "census_complete": false,
+  "effective_runtime_cases": null,
+  "license": "Apache-2.0",
+  "new_behavior_credit": 0,
+  "original_zip_fixture_reason": "Both complete original tests construct ZIP/JAR fixtures at runtime; there is no separate original ZIP fixture. Rust repeats this construction using a real manifest member and dummy.txt containing dummy. Target files intentionally may be empty because the reference only checks File.isFile.",
+  "originals": [
+    {
+      "archive_record_ordinal": 15744,
+      "bytes": 4107,
+      "destination": "original/BUILD",
+      "license": "Apache-2.0",
+      "reference_path": "testutils/BUILD",
+      "repository": "https://android.googlesource.com/platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "sha256": "c1c78be6ae712f5c346525a5cb4318d2fd55d8da99b4fad7c7271f17fc5617f1",
+      "source": "base"
+    },
+    {
+      "archive_record_ordinal": 15767,
+      "bytes": 10038,
+      "destination": "original/JarTestSuiteRunner.java",
+      "license": "Apache-2.0",
+      "reference_path": "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+      "repository": "https://android.googlesource.com/platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "sha256": "da503cfd8096ae4be970e29f5a96d882bbc6eeb31f0c1ec8a47bed9a7d2abc3a",
+      "source": "base"
+    },
+    {
+      "archive_record_ordinal": 15781,
+      "bytes": 10390,
+      "destination": "original/TestGroup.java",
+      "license": "Apache-2.0",
+      "reference_path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "repository": "https://android.googlesource.com/platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+      "source": "base"
+    },
+    {
+      "archive_record_ordinal": 15865,
+      "bytes": 3006,
+      "destination": "original/TestGroupTest.kt",
+      "license": "Apache-2.0",
+      "reference_path": "testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+      "repository": "https://android.googlesource.com/platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "sha256": "0f6a26754d7afa899e37e82936450f33fbad2339aa907924468c8c31dddf4743",
+      "source": "base"
+    }
+  ],
+  "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+  "schema_version": 1,
+  "source": "base",
+  "supplementary_cases": "All other integration cases are Rust fidelity/resource-limit regressions and receive no additional original-test credit."
+}

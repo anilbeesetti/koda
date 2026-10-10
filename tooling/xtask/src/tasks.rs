@@ -1,4 +1,5 @@
 pub mod android_junit4_declarations;
+pub mod android_manifest_classpath;
 pub mod android_parity;
 pub mod android_reference_census;
 pub mod clippy;

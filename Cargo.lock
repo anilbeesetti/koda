@@ -22647,6 +22647,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "sha2",
+ "smol",
  "strum 0.28.0",
  "tar",
  "tempfile",
@@ -22655,6 +22656,7 @@ dependencies = [
  "toml 0.8.23",
  "toml_edit 0.22.27",
  "url",
+ "zip",
 ]
 
 [[package]]
