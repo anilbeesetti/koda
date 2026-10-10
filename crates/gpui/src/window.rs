@@ -8282,8 +8282,7 @@ mod tests {
             "platform-required presentation reuses the scene"
         );
 
-        window
-            .update(cx, |_, window, cx| window.draw(cx).clear(cx))
+        cx.update_window(window.into(), |_, window, cx| window.draw(cx).clear(cx))
             .unwrap();
         let render_count = renders.get();
         test_window.simulate_frame_request(RequestFrameOptions::default());
