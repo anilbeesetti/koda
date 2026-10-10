@@ -2,17 +2,33 @@
 
 use std::{
     collections::{BTreeMap, BTreeSet},
-    fs::{self, File, OpenOptions},
+    fs::{self, File},
     io::{Read, Write},
     path::{Component, Path, PathBuf},
-    process::{Command, Stdio},
-    sync::atomic::{AtomicBool, AtomicU64, Ordering},
-    thread,
-    time::{Duration, Instant},
+    process::Command,
+    sync::atomic::{AtomicU64, Ordering},
+    time::Duration,
 };
 
-#[cfg(unix)]
-use std::os::unix::process::CommandExt as _;
+#[cfg(target_os = "linux")]
+use std::{
+    fs::OpenOptions,
+    os::{fd::AsFd as _, unix::process::CommandExt as _},
+    process::{Child, ExitStatus, Stdio},
+    time::Instant,
+};
+
+#[cfg(target_os = "linux")]
+use nix::{
+    errno::Errno,
+    fcntl::{FcntlArg, OFlag, fcntl},
+    poll::{PollFd, PollFlags, poll},
+    sys::{
+        signal::{Signal, killpg},
+        wait::{Id, WaitPidFlag, WaitStatus, waitid},
+    },
+    unistd::Pid,
+};
 
 use anyhow::{Context as _, Result, bail, ensure};
 use clap::Parser;
@@ -127,6 +143,10 @@ struct ProcessProof {
     exit_code: Option<i32>,
     elapsed_ms: u128,
     stopped_reason: Option<String>,
+    stdout_eof: bool,
+    stderr_eof: bool,
+    leader_reaped: bool,
+    owned_group_signal_sent: bool,
     stdout: LogProof,
     stderr: LogProof,
 }
@@ -497,33 +517,240 @@ fn verify_log(directory: &Path, proof: &LogProof) -> Result<Vec<u8>> {
     bounded_read(&path, MAX_PROCESS_LOG_BYTES + 8 * 1024 * 1024)
 }
 
-fn capture_stream(
-    mut input: impl Read,
-    mut file: File,
-    process_bytes: &AtomicU64,
-    total_bytes: &AtomicU64,
-    exceeded: &AtomicBool,
-) -> Result<()> {
-    let mut buffer = [0_u8; 16 * 1024];
-    loop {
-        let count = input.read(&mut buffer)?;
-        if count == 0 {
-            break;
-        }
-        file.write_all(&buffer[..count])?;
-        let process = process_bytes.fetch_add(count as u64, Ordering::Relaxed) + count as u64;
-        let total = total_bytes.fetch_add(count as u64, Ordering::Relaxed) + count as u64;
-        if process > MAX_PROCESS_LOG_BYTES || total > MAX_ARCHIVE_LOG_BYTES {
-            exceeded.store(true, Ordering::Release);
+#[cfg(target_os = "linux")]
+struct OwnedChild {
+    child: Child,
+    group: Pid,
+    group_cleaned: bool,
+    signal_sent: bool,
+    reaped: bool,
+}
+
+#[cfg(target_os = "linux")]
+impl OwnedChild {
+    fn spawn(mut command: Command) -> Result<Self> {
+        command
+            .process_group(0)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        let child = command.spawn().context("spawn owned command group")?;
+        let group =
+            Pid::from_raw(i32::try_from(child.id()).context("child PID exceeds platform range")?);
+        Ok(Self {
+            child,
+            group,
+            group_cleaned: false,
+            signal_sent: false,
+            reaped: false,
+        })
+    }
+
+    fn exited_without_reaping(&self) -> Result<bool> {
+        match waitid(
+            Id::Pid(self.group),
+            WaitPidFlag::WEXITED | WaitPidFlag::WNOWAIT | WaitPidFlag::WNOHANG,
+        ) {
+            Ok(WaitStatus::StillAlive) => Ok(false),
+            Ok(WaitStatus::Exited(_, _) | WaitStatus::Signaled(_, _, _)) => Ok(true),
+            Ok(status) => bail!("unexpected owned child status: {status:?}"),
+            Err(Errno::EINTR) => Ok(false),
+            Err(error) => Err(error.into()),
         }
     }
-    file.sync_all()?;
+
+    fn stop_group(&mut self) -> Result<()> {
+        if self.group_cleaned {
+            return Ok(());
+        }
+        // WNOWAIT keeps this group's leader PID reserved until the scoped signal is sent.
+        match killpg(self.group, Signal::SIGKILL) {
+            Ok(()) => {
+                self.signal_sent = true;
+                self.group_cleaned = true;
+            }
+            Err(Errno::ESRCH) => self.group_cleaned = true,
+            Err(error) => return Err(error.into()),
+        }
+        Ok(())
+    }
+
+    fn reap_after_cleanup(&mut self) -> Result<ExitStatus> {
+        ensure!(
+            self.group_cleaned,
+            "owned group cleanup must precede reaping"
+        );
+        let deadline = Instant::now() + Duration::from_secs(2);
+        while !self.exited_without_reaping()? {
+            ensure!(
+                Instant::now() < deadline,
+                "owned leader did not exit after scoped cleanup; cleanup incomplete"
+            );
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let status = self.child.wait()?;
+        self.reaped = true;
+        Ok(status)
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl Drop for OwnedChild {
+    fn drop(&mut self) {
+        if self.reaped {
+            return;
+        }
+        match self.stop_group().and_then(|()| self.reap_after_cleanup()) {
+            Ok(_) => {}
+            Err(error) => eprintln!(
+                "owned process cleanup incomplete for reserved leader {}: {error:#}",
+                self.group
+            ),
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn nonblocking(pipe: &impl std::os::fd::AsFd) -> Result<()> {
+    let flags = OFlag::from_bits_truncate(fcntl(pipe, FcntlArg::F_GETFL)?);
+    fcntl(pipe, FcntlArg::F_SETFL(flags | OFlag::O_NONBLOCK))?;
     Ok(())
 }
 
-fn execute(
-    checkout: &Path,
-    target: &Path,
+#[cfg(target_os = "linux")]
+fn capture_available(
+    input: &mut impl Read,
+    file: &mut File,
+    total_bytes: &AtomicU64,
+    process_bytes: &mut u64,
+) -> Result<bool> {
+    let mut buffer = [0_u8; 64 * 1024];
+    match input.read(&mut buffer) {
+        Ok(0) => Ok(true),
+        Ok(count) => {
+            file.write_all(&buffer[..count])?;
+            *process_bytes = process_bytes
+                .checked_add(count as u64)
+                .context("process output byte overflow")?;
+            total_bytes.fetch_add(count as u64, Ordering::Relaxed);
+            Ok(false)
+        }
+        Err(error)
+            if matches!(
+                error.kind(),
+                std::io::ErrorKind::WouldBlock | std::io::ErrorKind::Interrupted
+            ) =>
+        {
+            Ok(false)
+        }
+        Err(error) => Err(error.into()),
+    }
+}
+
+#[cfg(target_os = "linux")]
+struct Supervision {
+    status: ExitStatus,
+    stopped_reason: Option<String>,
+    stdout_eof: bool,
+    stderr_eof: bool,
+    owned_group_signal_sent: bool,
+}
+
+#[cfg(target_os = "linux")]
+fn monitor(
+    child: &mut OwnedChild,
+    stdout_file: &mut File,
+    stderr_file: &mut File,
+    timeout: Duration,
+    total_bytes: &AtomicU64,
+) -> Result<Supervision> {
+    let mut stdout = child.child.stdout.take().context("stdout pipe missing")?;
+    let mut stderr = child.child.stderr.take().context("stderr pipe missing")?;
+    nonblocking(&stdout)?;
+    nonblocking(&stderr)?;
+    let started = Instant::now();
+    let mut stdout_eof = false;
+    let mut stderr_eof = false;
+    let mut stopped_reason = None;
+    let mut cleanup_started = None;
+    let mut process_bytes = 0_u64;
+    loop {
+        let exited = child.exited_without_reaping()?;
+        if exited && stdout_eof && stderr_eof {
+            break;
+        }
+        if stopped_reason.is_none()
+            && (started.elapsed() >= timeout
+                || process_bytes > MAX_PROCESS_LOG_BYTES
+                || total_bytes.load(Ordering::Relaxed) > MAX_ARCHIVE_LOG_BYTES)
+        {
+            stopped_reason = Some(
+                if started.elapsed() >= timeout {
+                    "process/stream deadline exceeded"
+                } else {
+                    "raw log budget exceeded"
+                }
+                .to_owned(),
+            );
+            child.stop_group()?;
+            cleanup_started = Some(Instant::now());
+        }
+        if cleanup_started.is_some_and(|started| started.elapsed() >= Duration::from_secs(1))
+            || process_bytes > MAX_PROCESS_LOG_BYTES + 8 * 1024 * 1024
+            || total_bytes.load(Ordering::Relaxed) > MAX_ARCHIVE_LOG_BYTES + 8 * 1024 * 1024
+        {
+            stopped_reason = Some(
+                "owned group signalled; remaining pipe output incomplete after bounded drain"
+                    .to_owned(),
+            );
+            break;
+        }
+        let mut descriptors = Vec::new();
+        if !stdout_eof {
+            descriptors.push(PollFd::new(
+                stdout.as_fd(),
+                PollFlags::POLLIN | PollFlags::POLLHUP | PollFlags::POLLERR,
+            ));
+        }
+        if !stderr_eof {
+            descriptors.push(PollFd::new(
+                stderr.as_fd(),
+                PollFlags::POLLIN | PollFlags::POLLHUP | PollFlags::POLLERR,
+            ));
+        }
+        match poll(&mut descriptors, 20_u16) {
+            Ok(_) => {}
+            Err(Errno::EINTR) => continue,
+            Err(error) => return Err(error.into()),
+        }
+        drop(descriptors);
+        if !stdout_eof {
+            stdout_eof =
+                capture_available(&mut stdout, stdout_file, total_bytes, &mut process_bytes)?;
+        }
+        if !stderr_eof {
+            stderr_eof =
+                capture_available(&mut stderr, stderr_file, total_bytes, &mut process_bytes)?;
+        }
+    }
+    // Readers are nonblocking and owned here: no worker threads or unbounded joins survive.
+    drop(stdout);
+    drop(stderr);
+    child.stop_group()?;
+    let status = child.reap_after_cleanup()?;
+    stdout_file.sync_all()?;
+    stderr_file.sync_all()?;
+    Ok(Supervision {
+        status,
+        stopped_reason,
+        stdout_eof,
+        stderr_eof,
+        owned_group_signal_sent: child.signal_sent,
+    })
+}
+
+#[cfg(target_os = "linux")]
+fn supervise(
+    command: Command,
     output: &Path,
     stem: &str,
     argv: &[String],
@@ -536,78 +763,36 @@ fn execute(
     );
     let stdout_path = output.join(format!("{stem}.stdout.log"));
     let stderr_path = output.join(format!("{stem}.stderr.log"));
-    let stdout_file = OpenOptions::new()
+    let mut stdout_file = OpenOptions::new()
         .write(true)
         .create_new(true)
         .open(&stdout_path)?;
-    let stderr_file = OpenOptions::new()
+    let mut stderr_file = OpenOptions::new()
         .write(true)
         .create_new(true)
         .open(&stderr_path)?;
-    let mut command = Command::new(argv.first().context("missing program")?);
-    command
-        .args(argv.get(1..).context("missing argv")?)
-        .current_dir(checkout)
-        .env("CARGO_TARGET_DIR", target)
-        .env("CARGO_TERM_COLOR", "never")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    #[cfg(unix)]
-    command.process_group(0);
-    let mut child = command.spawn().context("spawn exact Cargo command")?;
-    let stdout = child.stdout.take().context("stdout pipe missing")?;
-    let stderr = child.stderr.take().context("stderr pipe missing")?;
-    let process_bytes = AtomicU64::new(0);
-    let exceeded = AtomicBool::new(false);
     let started = Instant::now();
-    let (status, stopped_reason) = thread::scope(|scope| -> Result<_> {
-        let stdout_reader = scope
-            .spawn(|| capture_stream(stdout, stdout_file, &process_bytes, total_bytes, &exceeded));
-        let stderr_reader = scope
-            .spawn(|| capture_stream(stderr, stderr_file, &process_bytes, total_bytes, &exceeded));
-        let mut stopped_reason = None;
-        let status = loop {
-            if let Some(status) = child.try_wait()? {
-                break status;
-            }
-            if stopped_reason.is_none()
-                && (exceeded.load(Ordering::Acquire) || started.elapsed() > timeout)
-            {
-                stopped_reason = Some(
-                    if exceeded.load(Ordering::Acquire) {
-                        "raw log budget exceeded"
-                    } else {
-                        "process timeout exceeded"
-                    }
-                    .to_owned(),
-                );
-                let killed = Command::new("kill")
-                    .args(["-KILL", "--", &format!("-{}", child.id())])
-                    .status()?;
-                ensure!(
-                    killed.success() || child.try_wait()?.is_some(),
-                    "failed to terminate owned process group"
-                );
-            }
-            thread::sleep(Duration::from_millis(10));
-        };
-        stdout_reader
-            .join()
-            .map_err(|_| anyhow::anyhow!("stdout capture thread panicked"))??;
-        stderr_reader
-            .join()
-            .map_err(|_| anyhow::anyhow!("stderr capture thread panicked"))??;
-        if exceeded.load(Ordering::Acquire) && stopped_reason.is_none() {
-            stopped_reason = Some("raw log budget exceeded".to_owned());
-        }
-        Ok((status, stopped_reason))
-    })?;
+    let mut child = OwnedChild::spawn(command)?;
+    let supervision = monitor(
+        &mut child,
+        &mut stdout_file,
+        &mut stderr_file,
+        timeout,
+        total_bytes,
+    )?;
     let proof = ProcessProof {
         argv: argv.to_vec(),
-        success: status.success() && stopped_reason.is_none(),
-        exit_code: status.code(),
+        success: supervision.status.success()
+            && supervision.stopped_reason.is_none()
+            && supervision.stdout_eof
+            && supervision.stderr_eof,
+        exit_code: supervision.status.code(),
         elapsed_ms: started.elapsed().as_millis(),
-        stopped_reason,
+        stopped_reason: supervision.stopped_reason,
+        stdout_eof: supervision.stdout_eof,
+        stderr_eof: supervision.stderr_eof,
+        leader_reaped: child.reaped,
+        owned_group_signal_sent: supervision.owned_group_signal_sent,
         stdout: log_proof(&stdout_path)?,
         stderr: log_proof(&stderr_path)?,
     };
@@ -616,6 +801,32 @@ fn execute(
         proof.success, proof.stdout.bytes, proof.stderr.bytes
     );
     Ok(proof)
+}
+
+fn execute(
+    checkout: &Path,
+    target: &Path,
+    output: &Path,
+    stem: &str,
+    argv: &[String],
+    timeout: Duration,
+    total_bytes: &AtomicU64,
+) -> Result<ProcessProof> {
+    #[cfg(target_os = "linux")]
+    {
+        let mut command = Command::new(argv.first().context("missing program")?);
+        command
+            .args(argv.get(1..).context("missing argv")?)
+            .current_dir(checkout)
+            .env("CARGO_TARGET_DIR", target)
+            .env("CARGO_TERM_COLOR", "never");
+        supervise(command, output, stem, argv, timeout, total_bytes)
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _inputs = (checkout, target, output, stem, argv, timeout, total_bytes);
+        bail!("named process supervision requires the Linux isolated worker")
+    }
 }
 
 fn compile_argv(case: &Case) -> Vec<String> {
@@ -785,7 +996,7 @@ fn verify_runtime(
     case: &Case,
 ) -> Result<TestSummary> {
     ensure!(
-        process.success,
+        process.success && process.stdout_eof && process.stderr_eof && process.leader_reaped,
         "exact Cargo command failed or was interrupted"
     );
     let stdout = verify_log(output, &process.stdout)?;
@@ -826,6 +1037,37 @@ fn write_report(output: &Path, report: &Report) -> Result<()> {
     Ok(())
 }
 
+fn prepare_directories(
+    checkout: &Path,
+    target: &Path,
+    output: &Path,
+) -> Result<(PathBuf, PathBuf)> {
+    let fresh_path = |path: &Path| -> Result<PathBuf> {
+        ensure!(
+            !path.exists(),
+            "target/output directory must be fresh and absent"
+        );
+        let parent = path
+            .parent()
+            .context("capture parent missing")?
+            .canonicalize()?;
+        let name = path.file_name().context("capture directory name missing")?;
+        Ok(parent.join(name))
+    };
+    let target = fresh_path(target)?;
+    let output = fresh_path(output)?;
+    ensure!(
+        !target.starts_with(checkout)
+            && !output.starts_with(checkout)
+            && !target.starts_with(&output)
+            && !output.starts_with(&target),
+        "target/log output must be separate from tested source and each other"
+    );
+    fs::create_dir(&target)?;
+    fs::create_dir(&output)?;
+    Ok((target, output))
+}
+
 pub fn run(args: AndroidReferenceRunsArgs) -> Result<()> {
     ensure!(
         cfg!(target_os = "linux"),
@@ -840,21 +1082,7 @@ pub fn run(args: AndroidReferenceRunsArgs) -> Result<()> {
         .find(|source| source.label == args.source)
         .context("unknown selected source label")?;
     let checkout = args.checkout.canonicalize()?;
-    ensure!(
-        !args.target_dir.exists() && !args.output_dir.exists(),
-        "target/output directories must be fresh and absent"
-    );
-    fs::create_dir_all(&args.target_dir)?;
-    fs::create_dir_all(&args.output_dir)?;
-    let target = args.target_dir.canonicalize()?;
-    let output = args.output_dir.canonicalize()?;
-    ensure!(
-        !target.starts_with(&checkout)
-            && !output.starts_with(&checkout)
-            && !target.starts_with(&output)
-            && !output.starts_with(&target),
-        "target/log output must be separate from tested source and each other"
-    );
+    let (target, output) = prepare_directories(&checkout, &args.target_dir, &args.output_dir)?;
     let runner_checkout = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("../..")
         .canonicalize()?;
@@ -1110,6 +1338,20 @@ mod tests {
     }
 
     #[test]
+    fn rejects_capture_inside_tested_source_before_creating_directories() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let checkout = directory.path().join("tested");
+        fs::create_dir(&checkout)?;
+        let target = checkout.join("target");
+        let output = directory.path().join("output");
+        assert!(prepare_directories(&checkout, &target, &output).is_err());
+        assert!(!target.exists() && !output.exists());
+        assert!(prepare_directories(&checkout, &output, &output).is_err());
+        assert!(!output.exists());
+        Ok(())
+    }
+
+    #[test]
     fn rejects_changed_or_missing_materialized_source() -> Result<()> {
         let directory = tempfile::tempdir()?;
         let path = directory.path().join("source.rs");
@@ -1189,6 +1431,290 @@ mod tests {
             .pointer_mut("/sources/0/cases/1")
             .context("case missing")? = first;
         assert!(validate_manifest(&serde_json::from_value(duplicate)?).is_err());
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn process_lifetime_fixture() -> Result<()> {
+        match std::env::var("KODA_REFERENCE_PROCESS_FIXTURE")
+            .ok()
+            .as_deref()
+        {
+            Some("hold") => {
+                println!("writer ready");
+                std::io::stdout().flush()?;
+                std::thread::sleep(Duration::from_secs(30));
+            }
+            Some("descendant") => {
+                let descendant = fixture_command("hold")?
+                    .stdout(Stdio::inherit())
+                    .stderr(Stdio::inherit())
+                    .spawn()?;
+                println!("descendant spawned: {}", descendant.id());
+                std::io::stdout().flush()?;
+                // Deliberately leave inherited pipes open to reproduce the supervisor regression.
+                drop(descendant);
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    fn fixture_command(mode: &str) -> Result<Command> {
+        let mut command = Command::new(std::env::current_exe()?);
+        command
+            .args([
+                "--exact",
+                "android_reference_runs::tests::process_lifetime_fixture",
+                "--nocapture",
+            ])
+            .env("KODA_REFERENCE_PROCESS_FIXTURE", mode);
+        Ok(command)
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn descendant_pipe_deadline_survives_parent_exit() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let started = Instant::now();
+        let proof = supervise(
+            fixture_command("descendant")?,
+            directory.path(),
+            "descendant",
+            &["fixture".to_owned()],
+            Duration::from_secs(1),
+            &AtomicU64::new(0),
+        )?;
+        assert!(!proof.success);
+        assert!(
+            proof
+                .stopped_reason
+                .as_deref()
+                .is_some_and(|reason| reason.contains("deadline"))
+        );
+        assert!(proof.stdout_eof && proof.stderr_eof && proof.leader_reaped);
+        assert!(proof.owned_group_signal_sent);
+        assert!(started.elapsed() < Duration::from_secs(4));
+        let stdout = verify_log(directory.path(), &proof.stdout)?;
+        assert!(std::str::from_utf8(&stdout)?.contains("descendant spawned:"));
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn deadline_kills_and_reaps_owned_leader() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let proof = supervise(
+            fixture_command("hold")?,
+            directory.path(),
+            "timeout",
+            &["fixture".to_owned()],
+            Duration::from_secs(1),
+            &AtomicU64::new(0),
+        )?;
+        assert!(!proof.success && proof.leader_reaped && proof.owned_group_signal_sent);
+        assert!(proof.stdout_eof && proof.stderr_eof);
+        assert!(proof.stopped_reason.is_some());
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn output_error_guard_kills_and_reaps_reserved_leader() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let mut output = OpenOptions::new().write(true).open("/dev/full")?;
+        let mut stderr = File::create(directory.path().join("stderr.log"))?;
+        let mut child = OwnedChild::spawn(fixture_command("hold")?)?;
+        let leader = child.group;
+        let started = Instant::now();
+        let result = monitor(
+            &mut child,
+            &mut output,
+            &mut stderr,
+            Duration::from_secs(2),
+            &AtomicU64::new(0),
+        );
+        assert!(result.is_err());
+        drop(child);
+        assert!(matches!(
+            waitid(Id::Pid(leader), WaitPidFlag::WEXITED | WaitPidFlag::WNOHANG),
+            Err(Errno::ECHILD)
+        ));
+        assert!(started.elapsed() < Duration::from_secs(4));
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    fn artifact_fixture() -> Result<(tempfile::TempDir, Case, PathBuf, Value)> {
+        let directory = tempfile::tempdir()?;
+        let manifest: Manifest = serde_json::from_slice(include_bytes!(
+            "../../../docs/android-studio/reference-named-tests.json"
+        ))?;
+        let case = manifest
+            .sources
+            .into_iter()
+            .next()
+            .context("source fixture missing")?
+            .cases
+            .into_iter()
+            .next()
+            .context("case fixture missing")?;
+        let manifest_path = directory.path().join(&case.manifest.path);
+        let crate_directory = manifest_path.parent().context("fixture crate missing")?;
+        fs::create_dir_all(crate_directory.join("src"))?;
+        fs::write(&manifest_path, "[lib]\npath = \"src/android_tools.rs\"\n")?;
+        let src_path = crate_directory.join("src/android_tools.rs");
+        fs::write(&src_path, "pub fn fixture() {}\n")?;
+        let target = directory.path().join("target");
+        fs::create_dir_all(target.join("debug/deps"))?;
+        let executable = target.join("debug/deps/android_tools-fixture");
+        // This protocol fixture is never executed or recorded as real compiler evidence.
+        fs::write(&executable, b"\x7fELFprotocol fixture")?;
+        let value = serde_json::json!({
+            "reason": "compiler-artifact", "manifest_path": manifest_path,
+            "target": {"name": "android_tools", "kind": ["lib"], "src_path": src_path},
+            "profile": {"test": true, "opt_level": "0", "debug_assertions": true},
+            "features": [], "fresh": false, "executable": executable,
+        });
+        Ok((directory, case, target, value))
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn rejects_wrong_compiler_source_profile_freshness_and_duplicates() -> Result<()> {
+        let (directory, case, target, value) = artifact_fixture()?;
+        let bytes = serde_json::to_vec(&value)?;
+        compiler_artifact(&bytes, directory.path(), &target, &case)?;
+        for (pointer, replacement) in [
+            (
+                "/manifest_path",
+                Value::String("/different/Cargo.toml".to_owned()),
+            ),
+            (
+                "/target/src_path",
+                Value::String("/different/src.rs".to_owned()),
+            ),
+            ("/target/name", Value::String("different_target".to_owned())),
+            ("/target/kind", serde_json::json!(["bin"])),
+            ("/profile/test", Value::Bool(false)),
+            ("/profile/opt_level", Value::String("3".to_owned())),
+            ("/profile/debug_assertions", Value::Bool(false)),
+            ("/fresh", Value::Bool(true)),
+            ("/executable", Value::Null),
+        ] {
+            let mut changed = value.clone();
+            *changed
+                .pointer_mut(pointer)
+                .context("artifact fixture pointer missing")? = replacement;
+            assert!(
+                compiler_artifact(
+                    &serde_json::to_vec(&changed)?,
+                    directory.path(),
+                    &target,
+                    &case
+                )
+                .is_err(),
+                "accepted altered {pointer}"
+            );
+        }
+        let text = String::from_utf8(bytes)?;
+        assert!(
+            compiler_artifact(
+                format!("{text}\n{text}\n").as_bytes(),
+                directory.path(),
+                &target,
+                &case
+            )
+            .is_err()
+        );
+        let executable = Path::new(
+            value["executable"]
+                .as_str()
+                .context("fixture executable missing")?,
+        );
+        fs::write(executable, b"BAD!invalid executable")?;
+        assert!(compiler_artifact(text.as_bytes(), directory.path(), &target, &case).is_err());
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn rejects_compiler_executable_outside_fresh_target() -> Result<()> {
+        let (directory, case, target, mut value) = artifact_fixture()?;
+        let outside = directory.path().join("outside");
+        fs::write(&outside, b"\x7fELFprotocol fixture")?;
+        value["executable"] = serde_json::to_value(outside)?;
+        assert!(
+            compiler_artifact(
+                &serde_json::to_vec(&value)?,
+                directory.path(),
+                &target,
+                &case
+            )
+            .is_err()
+        );
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn rejects_wrong_runtime_executable_or_changed_bytes_and_incomplete_capture() -> Result<()> {
+        let (directory, case, target, value) = artifact_fixture()?;
+        let artifact = compiler_artifact(
+            &serde_json::to_vec(&value)?,
+            directory.path(),
+            &target,
+            &case,
+        )?;
+        let stdout = directory.path().join("stdout.log");
+        let stderr = directory.path().join("stderr.log");
+        fs::write(
+            &stdout,
+            VALID.replace("module::case", &case.fully_qualified_name),
+        )?;
+        fs::write(
+            &stderr,
+            format!(
+                "     Running unittests {} ({})\n",
+                artifact.src_path.display(),
+                artifact.executable.display()
+            ),
+        )?;
+        let mut proof = ProcessProof {
+            argv: planned_argv(&case),
+            success: true,
+            exit_code: Some(0),
+            elapsed_ms: 1,
+            stopped_reason: None,
+            stdout_eof: true,
+            stderr_eof: true,
+            leader_reaped: true,
+            owned_group_signal_sent: false,
+            stdout: log_proof(&stdout)?,
+            stderr: log_proof(&stderr)?,
+        };
+        verify_runtime(directory.path(), &proof, &artifact, &case)?;
+        proof.stdout_eof = false;
+        assert!(verify_runtime(directory.path(), &proof, &artifact, &case).is_err());
+        proof.stdout_eof = true;
+        fs::write(
+            &stderr,
+            "     Running unittests source.rs (/different/executable)\n",
+        )?;
+        proof.stderr = log_proof(&stderr)?;
+        assert!(verify_runtime(directory.path(), &proof, &artifact, &case).is_err());
+        fs::write(
+            &stderr,
+            format!(
+                "     Running unittests source.rs ({})\n",
+                artifact.executable.display()
+            ),
+        )?;
+        proof.stderr = log_proof(&stderr)?;
+        fs::write(&artifact.executable, b"\x7fELFchanged fixture")?;
+        assert!(verify_runtime(directory.path(), &proof, &artifact, &case).is_err());
         Ok(())
     }
 }
