@@ -57,6 +57,7 @@ const UNAVAILABLE_BUILD_VARIANT_STATUS: &str =
     "The previous build variant is unavailable. Select a build variant to continue.";
 
 struct BuildVariantTablePresentation {
+    context: android_tools::project_context::ActiveProjectToken,
     token: android_tools::project_model::ModelToken,
     selected: Arc<android_tools::project_model::SelectedProject>,
     table: Result<Arc<android_tools::build_variant_table::BuildVariantTableModel>, SharedString>,
@@ -1914,17 +1915,29 @@ impl AndroidPanel {
 
     fn render_build_variant_table(&mut self, cx: &App) -> Option<AnyElement> {
         use android_tools::build_variant_table::BuildVariantTableModel;
+        let owner = project_context::for_workspace(&self.workspace, cx)
+            .and_then(|controller| controller.read(cx).project_token(cx));
+        let Some(owner) = owner.filter(|_| self.operation_permitted(AndroidOperation::Build, cx))
+        else {
+            self.variant_table = None;
+            return None;
+        };
         let state = self.project.read(cx).android_model();
-        let Some(selected) = state.selected.clone() else {
+        let Some(selected) = state.selected.clone().filter(|selected| {
+            state
+                .model
+                .as_ref()
+                .is_some_and(|model| Arc::ptr_eq(model, &selected.model))
+        }) else {
             self.variant_table = None;
             return None;
         };
         let token = state.token();
-        if self
-            .variant_table
-            .as_ref()
-            .is_none_or(|cached| cached.token != token || !Arc::ptr_eq(&cached.selected, &selected))
-        {
+        if self.variant_table.as_ref().is_none_or(|cached| {
+            cached.context != owner
+                || cached.token != token
+                || !Arc::ptr_eq(&cached.selected, &selected)
+        }) {
             let table = BuildVariantTableModel::from_selected_project(
                 &selected,
                 &self.variant_table_locale,
@@ -1932,6 +1945,7 @@ impl AndroidPanel {
             .map(Arc::new)
             .map_err(|error| SharedString::from(error.to_string()));
             self.variant_table = Some(BuildVariantTablePresentation {
+                context: owner,
                 token,
                 selected,
                 table,
@@ -8858,6 +8872,364 @@ fi
         }
         .await;
         result.expect("Build variant table projection fixture must complete");
+    }
+
+    #[gpui::test]
+    async fn build_variant_table_follows_evaluated_active_editor_roots(cx: &mut TestAppContext) {
+        let result: Result<()> = async {
+            cx.update(|cx| {
+                let state = AppState::test(cx);
+                editor::init(cx);
+                workspace::init(state, cx);
+                trusted_worktrees::init(Default::default(), cx);
+            });
+            let a = PathBuf::from("/variant-table-context-a");
+            let b = PathBuf::from("/variant-table-context-b");
+            let generic = PathBuf::from("/variant-table-context-generic");
+            let filesystem = FakeFs::new(cx.executor());
+            for root in [&a, &b, &generic] {
+                filesystem
+                    .insert_tree(
+                        root,
+                        json!({
+                            "settings.gradle.kts": "",
+                            "app": {"Main.kt": "fun main() {}"},
+                            "main.py": "print(1)"
+                        }),
+                    )
+                    .await;
+            }
+            let project = Project::test_with_worktree_trust(
+                filesystem,
+                [a.as_path(), b.as_path(), generic.as_path()],
+                cx,
+            )
+            .await;
+            let (workspace, visual) =
+                cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let panel = new_test_android_panel(&workspace, project.clone(), visual);
+            visual.update(|_, cx| {
+                publish_picker_catalogue(&project, &a, cx)?;
+                publish_picker_catalogue(&project, &b, cx)?;
+                project_surfaces::tests::publish_catalogue(&project, &generic, &[], &[], true, cx)
+            })?;
+            workspace
+                .update_in(visual, |workspace, window, cx| {
+                    workspace.open_abs_path(a.join("app/Main.kt"), Default::default(), window, cx)
+                })
+                .await?;
+            visual.run_until_parked();
+            let item_a = workspace.read_with(visual, |workspace, cx| {
+                workspace.active_item(cx).context("Root A editor")
+            })?;
+            let controller = visual
+                .update(|_, cx| project_context::for_workspace(&workspace.downgrade(), cx))
+                .context("Table context controller")?;
+            let (first, selected_a) = panel.update(visual, |panel, cx| -> Result<_> {
+                panel.context_operations_changed(cx);
+                assert_eq!(panel.root.as_deref(), Some(a.as_path()));
+                panel.refreshing_devices = true;
+                publish_picker_model(panel, &["debug", "release"], &[], "first", cx)?;
+                assert!(panel.render_build_variant_table(cx).is_some());
+                let cached = panel.variant_table.as_ref().context("Root A table")?;
+                Ok((
+                    cached
+                        .table
+                        .as_ref()
+                        .map_err(|error| anyhow::anyhow!("{error}"))?
+                        .clone(),
+                    cached.selected.clone(),
+                ))
+            })?;
+            workspace
+                .update_in(visual, |workspace, window, cx| {
+                    workspace.open_abs_path(b.join("app/Main.kt"), Default::default(), window, cx)
+                })
+                .await?;
+            visual.run_until_parked();
+            let item_b = workspace.read_with(visual, |workspace, cx| {
+                workspace.active_item(cx).context("Root B editor")
+            })?;
+            panel.update(visual, |panel, cx| {
+                panel.context_operations_changed(cx);
+                assert_eq!(panel.root.as_deref(), Some(b.as_path()));
+                assert!(panel.android_context_capabilities(cx).android_sync);
+                let model = panel.project.read(cx).android_model();
+                assert_eq!(model.root(), Some(a.as_path()));
+                assert!(Arc::ptr_eq(
+                    model.selected.as_ref().expect("Retained A selection"),
+                    &selected_a
+                ));
+                assert!(panel.render_build_variant_table(cx).is_none());
+                assert!(panel.variant_table.is_none());
+            });
+            workspace.update_in(visual, |workspace, window, cx| {
+                assert!(workspace.activate_item(item_a.as_ref(), false, false, window, cx));
+            });
+            visual.run_until_parked();
+            panel.update(visual, |panel, cx| -> Result<()> {
+                panel.context_operations_changed(cx);
+                assert!(panel.render_build_variant_table(cx).is_some());
+                let cached = panel.variant_table.as_ref().context("Returned A table")?;
+                assert!(Arc::ptr_eq(&cached.selected, &selected_a));
+                assert!(!Arc::ptr_eq(
+                    cached
+                        .table
+                        .as_ref()
+                        .map_err(|error| anyhow::anyhow!("{error}"))?,
+                    &first
+                ));
+                panel.refreshing_devices = true;
+                publish_picker_model(panel, &["debug", "release"], &[], "rapid", cx)?;
+                Ok(())
+            })?;
+            let captured =
+                visual.update(|window, cx| AndroidPanel::target_menu(panel.clone(), window, cx));
+            captured.update_in(visual, |menu, window, cx| {
+                menu.select_first(&Default::default(), window, cx);
+                menu.select_next(&Default::default(), window, cx);
+                assert_eq!(menu.selected_index(), Some(1));
+            });
+            let old_owner = controller.read_with(visual, |controller, cx| {
+                controller.project_token(cx).context("Captured A owner")
+            })?;
+            let (rapid_table, rapid_model) = panel.update(visual, |panel, cx| -> Result<_> {
+                assert!(panel.render_build_variant_table(cx).is_some());
+                let cached = panel
+                    .variant_table
+                    .as_ref()
+                    .context("Pre-transition table")?;
+                Ok((
+                    cached
+                        .table
+                        .as_ref()
+                        .map_err(|error| anyhow::anyhow!("{error}"))?
+                        .clone(),
+                    cached.selected.clone(),
+                ))
+            })?;
+            let model_token =
+                project.read_with(visual, |project, _| project.android_model().token());
+            workspace.update_in(visual, |workspace, window, cx| {
+                assert!(workspace.activate_item(item_b.as_ref(), false, false, window, cx));
+                assert!(workspace.activate_item(item_a.as_ref(), false, false, window, cx));
+            });
+            controller.read_with(visual, |controller, cx| {
+                assert_eq!(controller.root(cx), Some(a.clone()));
+                assert!(!controller.project_is_current(&old_owner, cx));
+            });
+            captured.update_in(visual, |menu, window, cx| {
+                menu.confirm(&Default::default(), window, cx)
+            });
+            panel.update(visual, |panel, cx| -> Result<()> {
+                assert_eq!(panel.project.read(cx).android_model().token(), model_token);
+                assert!(panel.render_build_variant_table(cx).is_some());
+                let cached = panel
+                    .variant_table
+                    .as_ref()
+                    .context("Current A owner table")?;
+                assert_ne!(cached.context, old_owner);
+                assert!(Arc::ptr_eq(&cached.selected, &rapid_model));
+                assert!(!Arc::ptr_eq(
+                    cached
+                        .table
+                        .as_ref()
+                        .map_err(|error| anyhow::anyhow!("{error}"))?,
+                    &rapid_table
+                ));
+                assert_eq!(cached.selected.selected.variant, "debug");
+                Ok(())
+            })?;
+            workspace
+                .update_in(visual, |workspace, window, cx| {
+                    workspace.open_abs_path(generic.join("main.py"), Default::default(), window, cx)
+                })
+                .await?;
+            visual.run_until_parked();
+            panel.update(visual, |panel, cx| {
+                assert!(
+                    !panel
+                        .android_context_capabilities(cx)
+                        .ecosystems
+                        .qualifies()
+                );
+                assert!(Arc::ptr_eq(
+                    panel
+                        .project
+                        .read(cx)
+                        .android_model()
+                        .selected
+                        .as_ref()
+                        .expect("A retained in generic context"),
+                    &rapid_model
+                ));
+                assert!(panel.render_build_variant_table(cx).is_none());
+                assert!(panel.variant_table.is_none());
+            });
+            workspace.update_in(visual, |workspace, window, cx| {
+                assert!(workspace.activate_item(item_b.as_ref(), false, false, window, cx));
+            });
+            visual.run_until_parked();
+            panel.update(visual, |panel, cx| -> Result<()> {
+                panel.context_operations_changed(cx);
+                panel.refreshing_devices = true;
+                publish_picker_model(panel, &["release"], &[], "fresh-b", cx)?;
+                assert!(panel.render_build_variant_table(cx).is_some());
+                let selected = &panel
+                    .variant_table
+                    .as_ref()
+                    .context("Fresh B table")?
+                    .selected;
+                assert_eq!(selected.model.root, b);
+                assert_eq!(selected.selected.variant, "release");
+                assert_eq!(
+                    first.rows.first().context("Preserved A row")?.variant,
+                    "debug"
+                );
+                Ok(())
+            })?;
+            workspace.update_in(visual, |workspace, window, cx| {
+                assert!(workspace.activate_item(item_a.as_ref(), false, false, window, cx));
+            });
+            visual.run_until_parked();
+            panel.update(visual, |panel, cx| {
+                assert!(panel.render_build_variant_table(cx).is_none());
+                assert!(panel.variant_table.is_none());
+            });
+            panel.update(visual, |panel, cx| -> Result<()> {
+                panel.context_operations_changed(cx);
+                panel.refreshing_devices = true;
+                publish_picker_model(panel, &["debug"], &[], "before-restriction", cx)?;
+                assert!(panel.render_build_variant_table(cx).is_some());
+                Ok(())
+            })?;
+            let (worktree, store) = project.read_with(visual, |project, cx| {
+                Ok::<_, anyhow::Error>((
+                    project
+                        .find_worktree(&a, cx)
+                        .context("Restricted worktree")?
+                        .0
+                        .read(cx)
+                        .id(),
+                    project.worktree_store(),
+                ))
+            })?;
+            let trust = visual
+                .update(|_, cx| TrustedWorktrees::try_get_global(cx))
+                .context("Trust store")?;
+            trust.update(visual, |trust, cx| {
+                trust.restrict(
+                    store.downgrade(),
+                    [trusted_worktrees::PathTrust::Worktree(worktree)]
+                        .into_iter()
+                        .collect(),
+                    cx,
+                );
+            });
+            visual.run_until_parked();
+            panel.update(visual, |panel, cx| {
+                assert!(!panel.android_context_capabilities(cx).android_sync);
+                assert!(panel.render_build_variant_table(cx).is_none());
+                assert!(panel.variant_table.is_none());
+            });
+            Ok(())
+        }
+        .await;
+        result.expect("Build variant table active-editor ownership fixture must complete");
+    }
+
+    #[gpui::test]
+    async fn build_variant_tables_keep_window_local_evaluated_roots(cx: &mut TestAppContext) {
+        let result: Result<()> = async {
+            cx.update(|cx| {
+                let state = AppState::test(cx);
+                editor::init(cx);
+                workspace::init(state, cx);
+                trusted_worktrees::init(Default::default(), cx);
+            });
+            let a = PathBuf::from("/variant-table-window-a");
+            let b = PathBuf::from("/variant-table-window-b");
+            let filesystem = FakeFs::new(cx.executor());
+            for root in [&a, &b] {
+                filesystem
+                    .insert_tree(root, json!({"app":{"Main.kt":"fun main() {}"}}))
+                    .await;
+            }
+            let project =
+                Project::test_with_worktree_trust(filesystem, [a.as_path(), b.as_path()], cx).await;
+            let (workspace_a, visual_a) =
+                cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), window, cx));
+            let panel_a = new_test_android_panel(&workspace_a, project.clone(), visual_a);
+            let window_a = visual_a.update(|window, _| window.window_handle());
+            let app_state =
+                workspace_a.read_with(visual_a, |workspace, _| workspace.app_state().clone());
+            let (workspace_b, visual_b) = cx.add_window_view(|window, cx| {
+                window.activate_window();
+                Workspace::new(None, project.clone(), app_state, window, cx)
+            });
+            let panel_b = new_test_android_panel(&workspace_b, project.clone(), visual_b);
+            let window_b = visual_b.update(|window, _| window.window_handle());
+            let mut context_a = gpui::VisualTestContext::from_window(window_a, cx);
+            let mut context_b = gpui::VisualTestContext::from_window(window_b, cx);
+            let visual_a = &mut context_a;
+            let visual_b = &mut context_b;
+            visual_a.update(|_, cx| {
+                publish_picker_catalogue(&project, &a, cx)?;
+                publish_picker_catalogue(&project, &b, cx)
+            })?;
+            workspace_a
+                .update_in(visual_a, |workspace, window, cx| {
+                    workspace.open_abs_path(a.join("app/Main.kt"), Default::default(), window, cx)
+                })
+                .await?;
+            workspace_b
+                .update_in(visual_b, |workspace, window, cx| {
+                    workspace.open_abs_path(b.join("app/Main.kt"), Default::default(), window, cx)
+                })
+                .await?;
+            visual_a.run_until_parked();
+            visual_b.run_until_parked();
+            panel_a.update(visual_a, |panel, cx| -> Result<()> {
+                panel.context_operations_changed(cx);
+                panel.refreshing_devices = true;
+                assert_eq!(panel.root.as_deref(), Some(a.as_path()));
+                publish_picker_model(panel, &["debug"], &[], "window-a", cx)?;
+                assert!(panel.render_build_variant_table(cx).is_some());
+                Ok(())
+            })?;
+            panel_b.update(visual_b, |panel, cx| {
+                panel.context_operations_changed(cx);
+                assert_eq!(panel.root.as_deref(), Some(b.as_path()));
+                assert!(panel.android_context_capabilities(cx).android_sync);
+                assert!(panel.render_build_variant_table(cx).is_none());
+                assert!(panel.variant_table.is_none());
+            });
+            panel_b.update(visual_b, |panel, cx| -> Result<()> {
+                panel.refreshing_devices = true;
+                publish_picker_model(panel, &["release"], &[], "window-b", cx)?;
+                assert!(panel.render_build_variant_table(cx).is_some());
+                assert_eq!(
+                    panel
+                        .variant_table
+                        .as_ref()
+                        .context("B window table")?
+                        .selected
+                        .model
+                        .root,
+                    b
+                );
+                Ok(())
+            })?;
+            panel_a.update(visual_a, |panel, cx| {
+                assert_eq!(panel.root.as_deref(), Some(a.as_path()));
+                assert!(panel.android_context_capabilities(cx).android_sync);
+                assert!(panel.render_build_variant_table(cx).is_none());
+                assert!(panel.variant_table.is_none());
+            });
+            Ok(())
+        }
+        .await;
+        result.expect("Build variant table window-local ownership fixture must complete");
     }
 
     #[gpui::test]

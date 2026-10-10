@@ -67,6 +67,21 @@
       ],
       "existing_rust_contract": "android_ui::tests::build_variant_menu_recovers_from_removed_selection and removed_library_variant_never_falls_back_to_the_previous_application; apply_targets only restores a matching remembered identity",
       "parity_credit": "Supplemental fixture correction only; the bounded 27 original reference cases remain UNPORTED pending applicable execution and integration gates."
+    },
+    {
+      "rust_test": "android_ui::tests::build_variant_table_follows_evaluated_active_editor_roots",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "behavior": "Activate actual workspace editors for evaluated Android A and B while retaining A's selected model; hide A rows in B and a generic root containing Gradle filenames. Return to A, reject a captured A menu after rapid A-B-A ownership changes, confirm fresh B publication, and hide rows after actual trust-store restriction.",
+      "finding": "CODE-ef073-1 and UI-ef073-1: previous renderer checked Android sync capability without matching the selected model to the active evaluated root. The renderer now uses existing build/root authority and the current model identity, and keys cached projection by the active project token.",
+      "parity_credit": "Supplemental GPUI ownership regression, not an original Android Studio case or evaluated Gradle integration proof."
+    },
+    {
+      "rust_test": "android_ui::tests::build_variant_tables_keep_window_local_evaluated_roots",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "behavior": "Two actual workspace windows share one project model while activating different evaluated Android root editors; only the window whose root owns the current model can project a table, before and after model replacement.",
+      "parity_credit": "Supplemental GPUI window-isolation regression; current full-app/native validation and original reference parity remain pending."
     }
   ],
   "deferred": [
