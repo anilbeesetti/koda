@@ -4801,6 +4801,229 @@ mod tests {
         assert_eq!(group_none.state.sidebar_open, false);
     }
 
+    struct PersistenceTestSidebar {
+        focus_handle: gpui::FocusHandle,
+        state: String,
+    }
+
+    impl gpui::EventEmitter<crate::multi_workspace::SidebarEvent> for PersistenceTestSidebar {}
+
+    impl gpui::Focusable for PersistenceTestSidebar {
+        fn focus_handle(&self, _cx: &App) -> gpui::FocusHandle {
+            self.focus_handle.clone()
+        }
+    }
+
+    impl gpui::Render for PersistenceTestSidebar {
+        fn render(
+            &mut self,
+            _window: &mut gpui::Window,
+            _cx: &mut gpui::Context<Self>,
+        ) -> impl gpui::IntoElement {
+            gpui::Empty
+        }
+    }
+
+    impl crate::multi_workspace::Sidebar for PersistenceTestSidebar {
+        fn width(&self, _cx: &App) -> gpui::Pixels {
+            px(200.0)
+        }
+
+        fn set_width(&mut self, _width: Option<gpui::Pixels>, _cx: &mut gpui::Context<Self>) {}
+
+        fn has_notifications(&self, _cx: &App) -> bool {
+            false
+        }
+
+        fn side(&self, _cx: &App) -> settings::SidebarSide {
+            settings::SidebarSide::Left
+        }
+
+        fn serialized_state(&self, _cx: &App) -> Option<String> {
+            Some(self.state.clone())
+        }
+    }
+
+    fn finish_multi_workspace_flush_on_background(
+        task: Task<()>,
+        dispatcher: &gpui::TestDispatcher,
+    ) {
+        use std::future::Future as _;
+
+        let mut task = std::pin::pin!(task);
+        let mut poll_context = std::task::Context::from_waker(futures::task::noop_waker_ref());
+        for _ in 0..10_000 {
+            if task.as_mut().poll(&mut poll_context).is_ready() {
+                return;
+            }
+            if !dispatcher.tick(true) {
+                assert!(
+                    task.as_mut().poll(&mut poll_context).is_ready(),
+                    "multi-workspace persistence must complete without foreground dispatch"
+                );
+                return;
+            }
+        }
+        assert!(
+            task.as_mut().poll(&mut poll_context).is_ready(),
+            "multi-workspace persistence exceeded the background task limit"
+        );
+    }
+
+    async fn assert_multi_workspace_flush_preserves_latest_state(
+        cx: &mut gpui::TestAppContext,
+        cancel_older_flush: bool,
+    ) {
+        use crate::multi_workspace::SerializedProjectGroupState;
+        use std::sync::atomic::{AtomicBool, Ordering};
+
+        crate::tests::init_test(cx);
+        let fs = fs::FakeFs::new(cx.executor());
+        let dir1 = unique_test_dir(&fs, "background-flush-first").await;
+        let dir2 = unique_test_dir(&fs, "background-flush-second").await;
+        let project1 = Project::test(fs.clone(), [dir1.as_path()], cx).await;
+        let project2 = Project::test(fs.clone(), [dir2.as_path()], cx).await;
+        let db = cx.update(|cx| WorkspaceDb::global(cx));
+        let workspace1_id = db.next_id().await.unwrap();
+        let workspace2_id = db.next_id().await.unwrap();
+        let dispatcher = cx.dispatcher.clone();
+        let (multi_workspace, cx) =
+            cx.add_window_view(|window, cx| MultiWorkspace::test_new(project1.clone(), window, cx));
+        let workspace1 = multi_workspace.read_with(cx, |mw, _| mw.workspace().clone());
+        workspace1.update(cx, |workspace, _cx| {
+            workspace.set_database_id(workspace1_id)
+        });
+        let workspace2 = multi_workspace.update_in(cx, |_mw, window, cx| {
+            cx.new(|cx| crate::Workspace::test_new(project2.clone(), window, cx))
+        });
+        workspace2.update(cx, |workspace, _cx| {
+            workspace.set_database_id(workspace2_id)
+        });
+        let sidebar = cx.new(|cx| PersistenceTestSidebar {
+            focus_handle: cx.focus_handle(),
+            state: r#"{"selection":"older"}"#.to_string(),
+        });
+        let first_key = ProjectGroupKey::new(None, PathList::new(&[dir1.as_path()]));
+        let second_key = ProjectGroupKey::new(None, PathList::new(&[dir2.as_path()]));
+        let window_id =
+            multi_workspace.update_in(cx, |_, window, _cx| window.window_handle().window_id());
+        cx.run_until_parked();
+
+        // A foreground witness makes accidental UI dispatch observable while flushing.
+        let foreground_ran = Arc::new(AtomicBool::new(false));
+        let foreground_witness = cx.foreground_executor().spawn({
+            let foreground_ran = foreground_ran.clone();
+            async move { foreground_ran.store(true, Ordering::SeqCst) }
+        });
+        let older_flush = multi_workspace.update_in(cx, |mw, _, cx| {
+            mw.register_sidebar(sidebar.clone(), cx);
+            mw.open_sidebar(cx);
+            mw.restore_project_groups(
+                vec![
+                    SerializedProjectGroupState {
+                        key: first_key.clone(),
+                        expanded: true,
+                    },
+                    SerializedProjectGroupState {
+                        key: second_key.clone(),
+                        expanded: false,
+                    },
+                ],
+                cx,
+            );
+            mw.serialize(cx);
+            mw.flush_serialization(cx)
+        });
+        assert!(
+            !older_flush.is_ready(),
+            "the first capture must still be pending"
+        );
+        let older_flush = if cancel_older_flush {
+            drop(older_flush);
+            None
+        } else {
+            Some(older_flush)
+        };
+        sidebar.update(cx, |sidebar, _cx| {
+            sidebar.state = r#"{"selection":"newer"}"#.to_string();
+        });
+        let newer_flush = multi_workspace.update_in(cx, |mw, window, cx| {
+            mw.activate(workspace2.clone(), None, window, cx);
+            mw.close_sidebar(window, cx);
+            mw.restore_project_groups(
+                vec![
+                    SerializedProjectGroupState {
+                        key: second_key.clone(),
+                        expanded: true,
+                    },
+                    SerializedProjectGroupState {
+                        key: first_key.clone(),
+                        expanded: false,
+                    },
+                ],
+                cx,
+            );
+            mw.serialize(cx);
+            mw.flush_serialization(cx)
+        });
+        assert!(
+            !newer_flush.is_ready(),
+            "both captures must precede background dispatch"
+        );
+
+        // Unrequested edits expose a late recapture or an uncancelled deferred save.
+        sidebar.update(cx, |sidebar, _cx| {
+            sidebar.state = r#"{"selection":"unrequested"}"#.to_string();
+        });
+        multi_workspace.update(cx, |mw, _cx| mw.set_all_groups_expanded(false));
+        finish_multi_workspace_flush_on_background(newer_flush, &dispatcher);
+        if let Some(older_flush) = older_flush {
+            finish_multi_workspace_flush_on_background(older_flush, &dispatcher);
+        }
+        let assert_saved_state = |state: model::MultiWorkspaceState| {
+            assert_eq!(state.active_workspace_id, Some(workspace2_id));
+            assert!(!state.sidebar_open);
+            assert_eq!(
+                state.sidebar_state.as_deref(),
+                Some(r#"{"selection":"newer"}"#)
+            );
+            let groups = state
+                .project_groups
+                .into_iter()
+                .map(|group| {
+                    let restored = group.into_restored_state();
+                    (restored.key, restored.expanded)
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(
+                groups,
+                vec![(second_key.clone(), true), (first_key.clone(), false)]
+            );
+        };
+        assert_saved_state(cx.update(|_, cx| read_multi_workspace_state(window_id, cx)));
+        assert!(
+            !foreground_ran.load(Ordering::SeqCst),
+            "saved state must be verified before any foreground work runs"
+        );
+        drop(foreground_witness);
+        cx.run_until_parked();
+        assert_saved_state(cx.update(|_, cx| read_multi_workspace_state(window_id, cx)));
+    }
+
+    #[gpui::test]
+    async fn test_multi_workspace_flush_completes_without_foreground_dispatch(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        assert_multi_workspace_flush_preserves_latest_state(cx, false).await;
+    }
+
+    #[gpui::test]
+    async fn test_multi_workspace_flush_survives_cancelled_predecessor(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        assert_multi_workspace_flush_preserves_latest_state(cx, true).await;
+    }
+
     #[gpui::test]
     async fn test_flush_serialization_completes_before_quit(cx: &mut gpui::TestAppContext) {
         crate::tests::init_test(cx);
