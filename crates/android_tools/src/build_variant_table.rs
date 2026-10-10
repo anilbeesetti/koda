@@ -26,9 +26,21 @@ const MAXIMUM_MODULES: usize = 16_384;
 const MAXIMUM_VARIANT_ITEMS: usize = 262_144;
 const MAXIMUM_TEXT_BYTES: usize = 64 * 1024 * 1024;
 
-/// The UI locale is explicit input to projection, rather than a byte-order fallback.
+/// Unix providers can return `C` rather than a BCP 47 tag. Missing or invalid
+/// system preferences use ICU's root locale so they do not disable the table.
 pub fn system_collation_locale() -> String {
-    sys_locale::get_locale().unwrap_or_else(|| "und".into())
+    collation_locale_from_system(sys_locale::get_locale().as_deref()).to_string()
+}
+
+fn collation_locale_from_system(locale: Option<&str>) -> Locale {
+    match locale {
+        Some(locale)
+            if !locale.eq_ignore_ascii_case("C") && !locale.eq_ignore_ascii_case("POSIX") =>
+        {
+            locale.parse().unwrap_or(Locale::UNKNOWN)
+        }
+        _ => Locale::UNKNOWN,
+    }
 }
 
 /// Ordinal order from `IdeAndroidProjectType`, including the distinct legacy feature type.
@@ -353,4 +365,103 @@ fn add_budget(total: &mut usize, added: usize, maximum: usize) -> Result<()> {
         .context("Build variant table is too large")?;
     ensure!(*total <= maximum, "Build variant table is too large");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn system_locale_uses_root_for_posix_defaults() -> Result<()> {
+        for system_locale in ["C", "c", "POSIX", "posix"] {
+            let locale = collation_locale_from_system(Some(system_locale)).to_string();
+            assert_eq!(locale, "und");
+            assert!(
+                BuildVariantTableModel::create(&[], &locale)?
+                    .rows
+                    .is_empty()
+            );
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn system_locale_uses_root_for_missing_or_invalid_preferences() {
+        for system_locale in [
+            None,
+            Some(""),
+            Some("en--US"),
+            Some("not a locale"),
+            Some("en-US.UTF-8"),
+        ] {
+            assert_eq!(
+                collation_locale_from_system(system_locale).to_string(),
+                "und"
+            );
+        }
+    }
+
+    #[test]
+    fn system_locale_preserves_valid_language_and_collation_preferences() {
+        for (system_locale, expected) in [
+            ("de", "de"),
+            ("sV-se", "sv-SE"),
+            ("zh-Hant-TW", "zh-Hant-TW"),
+            ("de-u-co-phonebk", "de-u-co-phonebk"),
+        ] {
+            assert_eq!(
+                collation_locale_from_system(Some(system_locale)).to_string(),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn system_locale_root_fallback_keeps_icu_name_collation() -> Result<()> {
+        let modules = ["z", "ä"].map(|name| BuildVariantModule {
+            module: ModuleIdentity {
+                path: format!(":{name}"),
+                name: name.into(),
+            },
+            project_type: AndroidProjectType::Application,
+            selected_variant: Some("debug".into()),
+            default_variant: None,
+            variants: vec!["debug".into()],
+            dynamic_features: Vec::new(),
+        });
+        let locale = collation_locale_from_system(Some("C")).to_string();
+        let model = BuildVariantTableModel::create(&modules, &locale)?;
+        assert_eq!(
+            model
+                .rows
+                .iter()
+                .map(|row| row.module.name.as_str())
+                .collect::<Vec<_>>(),
+            vec!["ä", "z"]
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn explicit_invalid_collation_locale_remains_an_error() -> Result<()> {
+        for locale in ["C", "en--US", "en-US.UTF-8"] {
+            let error = BuildVariantTableModel::create(&[], locale)
+                .err()
+                .context("Invalid explicit locale must still fail projection")?;
+            assert_eq!(error.to_string(), "Invalid module-name collation locale");
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn system_locale_boundary_constructs_a_table_without_environment_changes() -> Result<()> {
+        let locale = system_collation_locale();
+        locale.parse::<Locale>()?;
+        assert!(
+            BuildVariantTableModel::create(&[], &locale)?
+                .rows
+                .is_empty()
+        );
+        Ok(())
+    }
 }
