@@ -29,6 +29,14 @@ names are case-insensitive, continuation bytes fold before UTF-8 replacement
 decoding, and duplicate main attributes retain the last value with a diagnostic.
 Named sections are parsed for syntax and never contribute their Class-Path.
 
+Absolute file URI and absolute-path references retain ordinary `.` and `..`
+segments, as Java `URI.resolve` does. Their decoded lexical paths are checked
+directly and queued without canonicalization; a symlink followed by `..` can
+therefore identify a different file from a normalized path. Relative references
+continue to normalize ordinary dot segments against the wrapper's parent.
+Supplemental real-JAR tests cover both symlink existence directions and exact
+queue text; the complete original cases and their assertions remain unchanged.
+
 This bounded ZIP profile supports stored/deflated manifests. It rejects ZIP64,
 multidisk, encrypted entries, duplicate manifest members and encoded dot path
 segments with explicit errors. WHATWG URL parsing would otherwise normalize the

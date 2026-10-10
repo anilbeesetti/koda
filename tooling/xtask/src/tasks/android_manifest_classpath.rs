@@ -514,31 +514,35 @@ fn resolve_file_reference(base_uri: &Url, reference: &str) -> Result<PathBuf> {
         "invalid URI character in Class-Path reference"
     );
     validate_percent_encoding(reference.as_bytes())?;
-    let authority_candidate =
-        if let Some((scheme, remainder)) = reference.split_once(':') {
-            if !scheme.contains('/') {
-                ensure!(
-                    scheme
-                        .as_bytes()
-                        .first()
-                        .is_some_and(u8::is_ascii_alphabetic)
-                        && scheme.bytes().all(|byte| byte.is_ascii_alphanumeric()
-                            || matches!(byte, b'+' | b'-' | b'.')),
-                    "invalid URI scheme in Class-Path reference"
-                );
-                if scheme.eq_ignore_ascii_case("file") {
-                    ensure!(remainder.starts_with('/'), "opaque file URI is unsupported");
-                    remainder
-                } else {
-                    reference
-                }
-            } else {
-                reference
-            }
+    ensure!(
+        !reference.contains(['?', '#']),
+        "file URI query or fragment is unsupported"
+    );
+    let absolute_file_path = if let Some((scheme, remainder)) = reference.split_once(':') {
+        if !scheme.contains('/') {
+            ensure!(
+                scheme
+                    .as_bytes()
+                    .first()
+                    .is_some_and(u8::is_ascii_alphabetic)
+                    && scheme.bytes().all(|byte| {
+                        byte.is_ascii_alphanumeric() || matches!(byte, b'+' | b'-' | b'.')
+                    }),
+                "invalid URI scheme in Class-Path reference"
+            );
+            ensure!(
+                scheme.eq_ignore_ascii_case("file"),
+                "Class-Path reference is not a file URI"
+            );
+            ensure!(remainder.starts_with('/'), "opaque file URI is unsupported");
+            Some(remainder)
         } else {
-            reference
-        };
-    if let Some(authority) = authority_candidate.strip_prefix("//") {
+            reference.starts_with('/').then_some(reference)
+        }
+    } else {
+        reference.starts_with('/').then_some(reference)
+    };
+    if let Some(authority) = absolute_file_path.unwrap_or(reference).strip_prefix("//") {
         ensure!(
             authority.starts_with('/'),
             "file URI authority is unsupported"
@@ -552,6 +556,12 @@ fn resolve_file_reference(base_uri: &Url, reference: &str) -> Result<PathBuf> {
             !(segment.contains('%') && (decoded == b"." || decoded == b"..")),
             "encoded dot segment is unsupported"
         );
+    }
+    if let Some(path) = absolute_file_path {
+        // URI.resolve returns an absolute URI or absolute-path reference without
+        // normalizing its dot segments. URL parsing/joining would change both
+        // the queue text and which file a symlink/../ path addresses.
+        return absolute_file_uri_path(path.strip_prefix("//").unwrap_or(path));
     }
     let resolved = base_uri
         .join(reference)
@@ -577,6 +587,46 @@ fn resolve_file_reference(base_uri: &Url, reference: &str) -> Result<PathBuf> {
     resolved
         .to_file_path()
         .map_err(|()| anyhow::anyhow!("file URI has no absolute filesystem path"))
+}
+
+fn absolute_file_uri_path(raw_path: &str) -> Result<PathBuf> {
+    let path_bytes = decode_percent_encoding(raw_path.as_bytes())?;
+    let decoded_path =
+        std::str::from_utf8(&path_bytes).context("non-UTF-8 URI path is unsupported")?;
+    ensure!(!path_bytes.contains(&0), "file URI path contains NUL");
+    #[cfg(windows)]
+    let path = {
+        let mut segments = decoded_path
+            .strip_prefix('/')
+            .context("file URI has no absolute filesystem path")?
+            .split('/');
+        let drive = segments.next().context("file URI has no drive letter")?;
+        ensure!(
+            drive.len() == 2
+                && drive
+                    .as_bytes()
+                    .first()
+                    .is_some_and(u8::is_ascii_alphabetic)
+                && drive.as_bytes().get(1) == Some(&b':'),
+            "file URI has no absolute filesystem path"
+        );
+        let mut path = drive.to_owned();
+        for segment in segments {
+            path.push('\\');
+            path.push_str(segment);
+        }
+        if path.len() == 2 {
+            path.push('\\');
+        }
+        PathBuf::from(path)
+    };
+    #[cfg(not(windows))]
+    let path = PathBuf::from(decoded_path);
+    ensure!(
+        path.is_absolute(),
+        "file URI has no absolute filesystem path"
+    );
+    Ok(path)
 }
 
 fn validate_percent_encoding(bytes: &[u8]) -> Result<()> {

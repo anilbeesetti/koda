@@ -775,3 +775,168 @@ fn test_existing_symlink_target_keeps_lexical_path() -> Result<()> {
     assert_eq!(paths, VecDeque::from([lexical]));
     Ok(())
 }
+
+#[test]
+fn test_absolute_file_uri_preserves_dot_segments_and_percent_decoding() -> Result<()> {
+    let temporary = TempDir::new()?;
+    fs::create_dir(temporary.path().join("sub"))?;
+    let target = temporary.path().join("space and λ.jar");
+    create_target(&target)?;
+    let lexical = temporary
+        .path()
+        .join("sub")
+        .join("..")
+        .join(".")
+        .join("space and λ.jar");
+    let directory_uri = Url::from_directory_path(temporary.path())
+        .map_err(|()| anyhow::anyhow!("absolute fixture directory URI"))?;
+    let remainder = directory_uri
+        .as_str()
+        .strip_prefix("file:")
+        .context("fixture file URI scheme")?;
+    let without_authority = remainder
+        .strip_prefix("//")
+        .context("fixture empty file URI authority")?;
+    let wrapper = temporary.path().join("wrapper.jar");
+    for reference in [
+        format!("{directory_uri}sub/.././space%20and%20%CE%BB.jar"),
+        format!("FILE:{remainder}sub/.././space%20and%20%CE%BB.jar"),
+        format!("file:{without_authority}sub/.././space%20and%20%CE%BB.jar"),
+        format!("{without_authority}sub/.././space%20and%20%CE%BB.jar"),
+    ] {
+        create_jar_with_class_path(&wrapper, &reference)?;
+        let mut paths = VecDeque::new();
+        let result = add_manifest_class_path(&wrapper, &mut paths, Limits::default())?;
+        assert_eq!(result.appended, 1);
+        assert!(result.diagnostics.is_empty());
+        assert_eq!(paths, VecDeque::from([lexical.clone()]));
+        // Path equality ignores ordinary '.' components, so compare OS text too.
+        assert_eq!(
+            paths.front().context("queued absolute target")?.as_os_str(),
+            lexical.as_os_str()
+        );
+    }
+    Ok(())
+}
+
+#[cfg(unix)]
+#[test]
+fn test_absolute_symlink_parent_existing_target_keeps_lexical_queue_path() -> Result<()> {
+    let temporary = TempDir::new()?;
+    let physical_parent = temporary.path().join("physical");
+    let physical_directory = physical_parent.join("nested");
+    fs::create_dir_all(&physical_directory)?;
+    let link = temporary.path().join("linked");
+    std::os::unix::fs::symlink(&physical_directory, &link)?;
+    let physical_target = physical_parent.join("target.jar");
+    create_target(&physical_target)?;
+    let lexical = link.join("..").join("target.jar");
+    let normalized = temporary.path().join("target.jar");
+    assert!(fs::metadata(&lexical)?.is_file());
+    assert!(!normalized.exists());
+    let directory_uri = Url::from_directory_path(temporary.path())
+        .map_err(|()| anyhow::anyhow!("absolute fixture directory URI"))?;
+    let reference = format!("{directory_uri}linked/../target.jar");
+    let wrapper = temporary.path().join("wrapper.jar");
+    create_jar_with_class_path(&wrapper, &reference)?;
+    let mut paths = VecDeque::new();
+    let result = add_manifest_class_path(&wrapper, &mut paths, Limits::default())?;
+    assert_eq!(result.appended, 1);
+    assert!(result.diagnostics.is_empty());
+    assert_eq!(paths, VecDeque::from([lexical.clone()]));
+    let queued = paths.front().context("queued symlink-parent target")?;
+    assert_eq!(queued.as_os_str(), lexical.as_os_str());
+    assert_eq!(
+        fs::canonicalize(queued)?,
+        fs::canonicalize(physical_target)?
+    );
+    Ok(())
+}
+
+#[cfg(unix)]
+#[test]
+fn test_absolute_symlink_parent_missing_target_ignores_normalized_file() -> Result<()> {
+    let temporary = TempDir::new()?;
+    let physical_directory = temporary.path().join("physical").join("nested");
+    fs::create_dir_all(&physical_directory)?;
+    let link = temporary.path().join("linked");
+    std::os::unix::fs::symlink(&physical_directory, &link)?;
+    let lexical = link.join("..").join("target.jar");
+    let normalized = temporary.path().join("target.jar");
+    create_target(&normalized)?;
+    assert!(!lexical.exists());
+    assert!(fs::metadata(&normalized)?.is_file());
+    let directory_uri = Url::from_directory_path(temporary.path())
+        .map_err(|()| anyhow::anyhow!("absolute fixture directory URI"))?;
+    let reference = format!("{directory_uri}linked/../target.jar");
+    let wrapper = temporary.path().join("wrapper.jar");
+    create_jar_with_class_path(&wrapper, &reference)?;
+    let seed = PathBuf::from("seed.jar");
+    let mut paths = VecDeque::from([seed.clone()]);
+    let result = add_manifest_class_path(&wrapper, &mut paths, Limits::default())?;
+    assert_eq!(result.appended, 0);
+    assert_eq!(paths, VecDeque::from([seed]));
+    assert_eq!(
+        result.diagnostics,
+        vec![Diagnostic::MissingReferencedFile {
+            reference,
+            wrapper_name: "wrapper.jar".to_owned(),
+        }]
+    );
+    Ok(())
+}
+
+#[cfg(unix)]
+#[test]
+fn test_relative_symlink_parent_reference_still_normalizes_before_file_lookup() -> Result<()> {
+    let temporary = TempDir::new()?;
+    let physical_directory = temporary.path().join("physical").join("nested");
+    fs::create_dir_all(&physical_directory)?;
+    let link = temporary.path().join("linked");
+    std::os::unix::fs::symlink(&physical_directory, &link)?;
+    let lexical = link.join("..").join("target.jar");
+    let normalized = temporary.path().join("target.jar");
+    create_target(&normalized)?;
+    assert!(!lexical.exists());
+    let wrapper = temporary.path().join("wrapper.jar");
+    create_jar_with_class_path(&wrapper, "linked/../target.jar")?;
+    let mut paths = VecDeque::new();
+    let result = add_manifest_class_path(&wrapper, &mut paths, Limits::default())?;
+    assert_eq!(result.appended, 1);
+    assert!(result.diagnostics.is_empty());
+    assert_eq!(paths, VecDeque::from([normalized]));
+    Ok(())
+}
+
+#[test]
+fn test_absolute_file_uri_fast_path_retains_syntax_rejections() -> Result<()> {
+    let temporary = TempDir::new()?;
+    let target = temporary.path().join("target.jar");
+    create_target(&target)?;
+    let directory_uri = Url::from_directory_path(temporary.path())
+        .map_err(|()| anyhow::anyhow!("absolute fixture directory URI"))?;
+    let wrapper = temporary.path().join("wrapper.jar");
+    let seed = PathBuf::from("seed.jar");
+    for suffix in [
+        "target.jar?query",
+        "target.jar#fragment",
+        "%FF.jar",
+        "%00.jar",
+        "%GG.jar",
+        "%2.jar",
+        "%2e/target.jar",
+        "%2e%2e/target.jar",
+        "bad[bracket].jar",
+        "back\\slash.jar",
+    ] {
+        let reference = format!("{directory_uri}{suffix}");
+        create_jar_with_class_path(&wrapper, &reference)?;
+        let mut paths = VecDeque::from([seed.clone()]);
+        assert!(
+            add_manifest_class_path(&wrapper, &mut paths, Limits::default()).is_err(),
+            "absolute URI must be rejected: {reference}"
+        );
+        assert_eq!(paths, VecDeque::from([seed.clone()]));
+    }
+    Ok(())
+}
