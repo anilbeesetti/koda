@@ -197,6 +197,36 @@ impl AcpDebugLog {
         lines.reverse();
         Some(lines.join("\n"))
     }
+
+    /// Retain the most recent stderr block when reporting this process's exit.
+    /// Protocol and stderr readers are independent, so a protocol message logged
+    /// later does not mean the process's diagnostic is stale.
+    pub(super) fn stderr_for_exit(&self) -> Option<String> {
+        if let Some(stderr) = self.trailing_stderr() {
+            return Some(stderr);
+        }
+
+        let state = self.state.lock().ok()?;
+        let mut lines = state
+            .messages
+            .iter()
+            .rev()
+            .skip_while(|message| {
+                !matches!(&message.message, AcpDebugMessageContent::Stderr { .. })
+            })
+            .take_while(|message| matches!(&message.message, AcpDebugMessageContent::Stderr { .. }))
+            .filter_map(|message| match &message.message {
+                AcpDebugMessageContent::Stderr { line } if !line.is_empty() => Some(line.as_ref()),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+
+        if lines.is_empty() {
+            return None;
+        }
+        lines.reverse();
+        Some(lines.join("\n"))
+    }
 }
 
 #[cfg(test)]
@@ -218,6 +248,67 @@ mod tests {
         assert_eq!(
             debug_log.trailing_stderr().as_deref(),
             Some("recent stderr")
+        );
+    }
+
+    #[test]
+    fn exit_stderr_survives_later_protocol_traffic() {
+        let debug_log = AcpDebugLog::default();
+        debug_log.record_line(AcpDebugMessageDirection::Stderr, "previous diagnostic");
+        debug_log.record_line(
+            AcpDebugMessageDirection::Incoming,
+            r#"{"jsonrpc":"2.0","method":"session/update"}"#,
+        );
+        debug_log.record_line(AcpDebugMessageDirection::Stderr, "final diagnostic one");
+        debug_log.record_line(AcpDebugMessageDirection::Stderr, "final diagnostic two");
+        debug_log.record_line(
+            AcpDebugMessageDirection::Incoming,
+            r#"{"jsonrpc":"2.0","id":1,"result":{}}"#,
+        );
+        debug_log.record_line(
+            AcpDebugMessageDirection::Outgoing,
+            r#"{"jsonrpc":"2.0","id":2,"method":"initialize"}"#,
+        );
+
+        assert_eq!(debug_log.trailing_stderr(), None);
+        assert_eq!(
+            debug_log.stderr_for_exit().as_deref(),
+            Some("final diagnostic one\nfinal diagnostic two")
+        );
+    }
+
+    #[test]
+    fn exit_stderr_does_not_reuse_an_older_block_when_the_latest_is_empty() {
+        let debug_log = AcpDebugLog::default();
+        debug_log.record_line(AcpDebugMessageDirection::Stderr, "previous diagnostic");
+        debug_log.record_line(
+            AcpDebugMessageDirection::Incoming,
+            r#"{"jsonrpc":"2.0","method":"session/update"}"#,
+        );
+        debug_log.record_line(AcpDebugMessageDirection::Stderr, "");
+        debug_log.record_line(
+            AcpDebugMessageDirection::Outgoing,
+            r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#,
+        );
+        assert_eq!(debug_log.stderr_for_exit(), None);
+    }
+
+    #[test]
+    fn exit_stderr_only_uses_retained_process_messages() {
+        let debug_log = AcpDebugLog::default();
+        assert_eq!(debug_log.stderr_for_exit(), None);
+        debug_log.record_line(AcpDebugMessageDirection::Stderr, "evicted diagnostic");
+        for id in 0..MAX_DEBUG_BACKLOG_MESSAGES {
+            debug_log.record_line(
+                AcpDebugMessageDirection::Outgoing,
+                &format!(r#"{{"jsonrpc":"2.0","id":{id},"method":"initialize"}}"#),
+            );
+        }
+        assert_eq!(debug_log.stderr_for_exit(), None);
+        debug_log.record_line(AcpDebugMessageDirection::Stderr, "current diagnostic");
+        assert_eq!(
+            debug_log.stderr_for_exit().as_deref(),
+            Some("current diagnostic")
         );
     }
 

@@ -68,7 +68,7 @@ async fn exited_load_error_after_drain(
 
     LoadError::Exited {
         status,
-        stderr: debug_log.trailing_stderr().map(SharedString::from),
+        stderr: debug_log.stderr_for_exit().map(SharedString::from),
     }
 }
 
@@ -3618,6 +3618,44 @@ mod tests {
                 .lock()
                 .expect("deleted sessions lock should not be poisoned")
                 .is_empty()
+        );
+    }
+
+    #[cfg(unix)]
+    #[gpui::test]
+    async fn exited_load_error_retains_stderr_after_protocol_logging(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        use std::os::unix::process::ExitStatusExt as _;
+
+        let debug_log = AcpDebugLog::default();
+        debug_log.record_line(AcpDebugMessageDirection::Stderr, "npm error code ETARGET");
+        debug_log.record_line(
+            AcpDebugMessageDirection::Stderr,
+            "npm error notarget unavailable",
+        );
+        // A separate protocol writer can run after the stderr reader, even when
+        // the agent exits before replying to initialization.
+        debug_log.record_line(
+            AcpDebugMessageDirection::Outgoing,
+            r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#,
+        );
+        assert_eq!(debug_log.trailing_stderr(), None);
+
+        let load_error = exited_load_error_after_drain(
+            ExitStatus::from_raw(1 << 8),
+            futures::future::ready(()),
+            &debug_log,
+            &cx.to_async(),
+        )
+        .await;
+        let LoadError::Exited { status, stderr } = load_error else {
+            panic!("expected the typed process exit error");
+        };
+        assert_eq!(status.code(), Some(1));
+        assert_eq!(
+            stderr.as_deref(),
+            Some("npm error code ETARGET\nnpm error notarget unavailable")
         );
     }
 
