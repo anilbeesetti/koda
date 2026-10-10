@@ -1,0 +1,99 @@
+{
+  "_attribution": "Copyright (C) 2022 The Android Open Source Project. Licensed under the Apache License, Version 2.0; http://www.apache.org/licenses/LICENSE-2.0. The original full copyright and license notice is retained in crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt.",
+  "_license": "Apache-2.0",
+  "all_original_assertions": [
+    "rows.len == 4",
+    "four original per-index project-qualified module names: <project>.appA, appB, appC, appD"
+  ],
+  "constructor": "android_tools::build_variant_table::BuildVariantTableModel::create(&modules, \"en\")",
+  "constructor_locale": "en; explicit Rust fixture locale. Original uses process-default Java collation, so no exhaustive locale parity claim.",
+  "current_exact_Rust_test": "same_type_rows_are_sorted",
+  "expected_count": 4,
+  "expected_qualified_names": [
+    "testProject.appA",
+    "testProject.appB",
+    "testProject.appC",
+    "testProject.appD"
+  ],
+  "modules": [
+    {
+      "default_variant": null,
+      "dynamic_features": [],
+      "module": {
+        "name": "testProject.appB",
+        "path": ":appB"
+      },
+      "project_type": "Application",
+      "selected_variant": "debug",
+      "variants": [
+        "release",
+        "debug"
+      ]
+    },
+    {
+      "default_variant": null,
+      "dynamic_features": [],
+      "module": {
+        "name": "testProject.appA",
+        "path": ":appA"
+      },
+      "project_type": "Application",
+      "selected_variant": "debug",
+      "variants": [
+        "release",
+        "debug"
+      ]
+    },
+    {
+      "default_variant": null,
+      "dynamic_features": [],
+      "module": {
+        "name": "testProject.appD",
+        "path": ":appD"
+      },
+      "project_type": "Application",
+      "selected_variant": "debug",
+      "variants": [
+        "release",
+        "debug"
+      ]
+    },
+    {
+      "default_variant": null,
+      "dynamic_features": [],
+      "module": {
+        "name": "testProject.appC",
+        "path": ":appC"
+      },
+      "project_type": "Application",
+      "selected_variant": "debug",
+      "variants": [
+        "release",
+        "debug"
+      ]
+    }
+  ],
+  "ordinary_app_dependency_note": "An original app\u2192lib debug dependency prepares selected module identities. Table projection consumes the independently selected row identities, so explicit constructor inputs do not claim dependency switching behavior.",
+  "original_assertion_outcomes": 5,
+  "original_jvm_root": {
+    "adaptation": "Excluded from Android projection inputs because the original Java root has no Android facet/model; source retained unchanged.",
+    "buildable": false,
+    "builder": "JavaModuleModelBuilder.rootModuleBuilder",
+    "gradle_path": ":"
+  },
+  "original_method": "Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+  "original_project_name_variable": "projectRule.project.name; normalized to testProject for the explicit Rust fixture identity",
+  "original_source": {
+    "end_line": 170,
+    "file_sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0",
+    "license": "Apache-2.0 original full source header retained",
+    "method_span_sha256": "5aa0db210bc9d76f1cb88c55574a60cfde893fc90b3ed485435d3b1c5f1b89d3",
+    "path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt",
+    "retained_path": "crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt",
+    "start_line": 150
+  },
+  "original_variant_builder": "AndroidGradleTestUtils.kt:1360-1388 buildVariantStubs iterates debug/release build types; Rust inputs deliberately reverse order to preserve and exercise the original sorted-output assertion.",
+  "schema": 1,
+  "status": "SOURCE_PRESENT_MATCHING_RUNTIME_PENDING_NO_PASSING_PARITY_CREDIT",
+  "tests_executed": 0
+}

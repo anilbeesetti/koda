@@ -2181,6 +2181,51 @@
       "run_blocker": null,
       "rust_targets": [],
       "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.withoutAbi",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The existing Rust constructor adaptation and exact fixture/source/outcome bindings are recorded in docs/android-studio/ports/build-variant-table-constructors.json. Matching-revision named runtime evidence and task completion gates remain pending; source presence grants no passing parity credit.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.testDefaultVariantIndicator",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The existing Rust constructor adaptation and exact fixture/source/outcome bindings are recorded in docs/android-studio/ports/build-variant-table-constructors.json. Matching-revision named runtime evidence and task completion gates remain pending; source presence grants no passing parity credit.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.withAbi",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "User deferred NDK/C++ support. This original ABI case remains unported; all ABI/native-model expectations are retained in the original source and must be implemented if NDK scope resumes.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The existing Rust constructor adaptation and exact fixture/source/outcome bindings are recorded in docs/android-studio/ports/build-variant-table-constructors.json. Matching-revision named runtime evidence and task completion gates remain pending; source presence grants no passing parity credit.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The existing Rust constructor adaptation and exact fixture/source/outcome bindings are recorded in docs/android-studio/ports/build-variant-table-constructors.json. Matching-revision named runtime evidence and task completion gates remain pending; source presence grants no passing parity credit.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
     }
   ]
 }

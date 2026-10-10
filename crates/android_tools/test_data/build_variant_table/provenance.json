@@ -25,35 +25,303 @@
       "retained": "IdeAndroidProjectType.kt",
       "bytes": 938,
       "sha256": "8c83a8430a1d05f2a85e8688a2425d5a11ee409f166429bb5805257ba3324950"
+    },
+    {
+      "path": "android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTestUtils.kt",
+      "retained": "AndroidGradleTestUtils.kt",
+      "bytes": 131023,
+      "sha256": "35dfe03ce1ffafa7e94750580fcfdaf95f41debdb31cd682eb88721571095ff4"
     }
   ],
   "cases": [
     {
       "original_method": "withoutAbi",
       "rust_test": "tests/build_variant_table.rs::without_abi",
-      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
-      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+      "status": "UNPORTED_SOURCE_ADAPTATION_PRESENT_MATCHING_RUNTIME_PENDING",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct.",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.withoutAbi",
+      "source_method": {
+        "start_line": 42,
+        "end_line": 76,
+        "method_span_sha256": "9d7b14d6c54421f9a713b94276cb2712295234ae0b60bef05a73f16838295a29",
+        "hash_convention": "UTF-8 exact retained inclusive line span with its one final LF excluded; no trimming or other normalization."
+      },
+      "original_assertion_outcomes": 3,
+      "all_original_expectations": [
+        "rows.len == 2",
+        "row0 full equality app: selected debug, ABI None, choices debug/release with neither default, ABI choices empty",
+        "row1 full equality lib: selected debug, ABI None, choices debug/release with neither default, ABI choices empty"
+      ],
+      "fixture": {
+        "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/without_abi.json",
+        "bytes": 4111,
+        "sha256": "1356308f038ef85469c966eed8906d0941e1636ebf04208af8ea7540037ef72f"
+      },
+      "fixture_preparation_input": {
+        "bytes": 4316,
+        "sha256": "1048ee75061e7402d3a63aebdf67d6b294d6fd6730ca47196c15d1f3652706a1"
+      },
+      "fixture_transformations": [
+        {
+          "property": "_attribution",
+          "change": "Point the attribution to the retained repository-local source."
+        },
+        {
+          "property": "original_source.retained_path",
+          "change": "Replace the preparation-machine absolute path with the repository-local retained source path."
+        },
+        {
+          "property": "status",
+          "change": "Record that the source adaptation exists but matching execution and passing parity credit remain pending."
+        }
+      ],
+      "planned_rust_target": {
+        "package": "android_tools",
+        "integration_target": "build_variant_table",
+        "test_name": "without_abi",
+        "manifest": {
+          "path": "crates/android_tools/Cargo.toml",
+          "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
+        },
+        "source": {
+          "path": "crates/android_tools/tests/build_variant_table.rs",
+          "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199"
+        },
+        "run": null
+      },
+      "exact_planned_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_tools/Cargo.toml",
+        "-p",
+        "android_tools",
+        "--test",
+        "build_variant_table",
+        "without_abi",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "runtime_evidence": "PENDING; one matching-revision named test must run, pass exactly once, fail zero times, and ignore zero tests. A list or aggregate CI count is insufficient."
     },
     {
       "original_method": "testDefaultVariantIndicator",
       "rust_test": "tests/build_variant_table.rs::test_default_variant_indicator",
-      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
-      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+      "status": "UNPORTED_SOURCE_ADAPTATION_PRESENT_MATCHING_RUNTIME_PENDING",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct.",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.testDefaultVariantIndicator",
+      "source_method": {
+        "start_line": 78,
+        "end_line": 112,
+        "method_span_sha256": "3b281dea182392792465bf1c4625af74e42897b3fdc89c9229e5e0fc52c13647",
+        "hash_convention": "UTF-8 exact retained inclusive line span with its one final LF excluded; no trimming or other normalization."
+      },
+      "original_assertion_outcomes": 3,
+      "all_original_expectations": [
+        "rows.len == 2",
+        "row0 full equality app selected debug: debug default=false, release default=true; ABI None and choices empty",
+        "row1 full equality lib selected debug: debug default=true, release default=false; ABI None and choices empty"
+      ],
+      "fixture": {
+        "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/test_default_variant_indicator.json",
+        "bytes": 4148,
+        "sha256": "ca8c1ded3e5f1f0dc606a5181737ec05234887eef4790291c26100908fa691fe"
+      },
+      "fixture_preparation_input": {
+        "bytes": 4353,
+        "sha256": "a84b3c8d21757878d172f81f81127076f6f42c1ddd7e99a462b16a21398a6625"
+      },
+      "fixture_transformations": [
+        {
+          "property": "_attribution",
+          "change": "Point the attribution to the retained repository-local source."
+        },
+        {
+          "property": "original_source.retained_path",
+          "change": "Replace the preparation-machine absolute path with the repository-local retained source path."
+        },
+        {
+          "property": "status",
+          "change": "Record that the source adaptation exists but matching execution and passing parity credit remain pending."
+        }
+      ],
+      "planned_rust_target": {
+        "package": "android_tools",
+        "integration_target": "build_variant_table",
+        "test_name": "test_default_variant_indicator",
+        "manifest": {
+          "path": "crates/android_tools/Cargo.toml",
+          "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
+        },
+        "source": {
+          "path": "crates/android_tools/tests/build_variant_table.rs",
+          "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199"
+        },
+        "run": null
+      },
+      "exact_planned_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_tools/Cargo.toml",
+        "-p",
+        "android_tools",
+        "--test",
+        "build_variant_table",
+        "test_default_variant_indicator",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "runtime_evidence": "PENDING; one matching-revision named test must run, pass exactly once, fail zero times, and ignore zero tests. A list or aggregate CI count is insufficient."
     },
     {
       "original_method": "Given project modules with same type When create VariantTableModel Then TableRows is sorted",
       "rust_test": "tests/build_variant_table.rs::same_type_rows_are_sorted",
-      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
-      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+      "status": "UNPORTED_SOURCE_ADAPTATION_PRESENT_MATCHING_RUNTIME_PENDING",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct.",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+      "source_method": {
+        "start_line": 150,
+        "end_line": 170,
+        "method_span_sha256": "5aa0db210bc9d76f1cb88c55574a60cfde893fc90b3ed485435d3b1c5f1b89d3",
+        "hash_convention": "UTF-8 exact retained inclusive line span with its one final LF excluded; no trimming or other normalization."
+      },
+      "original_assertion_outcomes": 5,
+      "all_original_expectations": [
+        "rows.len == 4",
+        "four original per-index project-qualified module names: <project>.appA, appB, appC, appD"
+      ],
+      "fixture": {
+        "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/same_type_rows_are_sorted.json",
+        "bytes": 3867,
+        "sha256": "205a7169f52b7395c60f70ab3d06e4eb4feec04d9c04dfab717a5a6086a6e47d"
+      },
+      "fixture_preparation_input": {
+        "bytes": 4072,
+        "sha256": "7f9e53ae4065925fe1fb3c835771feb5968932faaa9e33d3223cf2a5b276de56"
+      },
+      "fixture_transformations": [
+        {
+          "property": "_attribution",
+          "change": "Point the attribution to the retained repository-local source."
+        },
+        {
+          "property": "original_source.retained_path",
+          "change": "Replace the preparation-machine absolute path with the repository-local retained source path."
+        },
+        {
+          "property": "status",
+          "change": "Record that the source adaptation exists but matching execution and passing parity credit remain pending."
+        }
+      ],
+      "planned_rust_target": {
+        "package": "android_tools",
+        "integration_target": "build_variant_table",
+        "test_name": "same_type_rows_are_sorted",
+        "manifest": {
+          "path": "crates/android_tools/Cargo.toml",
+          "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
+        },
+        "source": {
+          "path": "crates/android_tools/tests/build_variant_table.rs",
+          "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199"
+        },
+        "run": null
+      },
+      "exact_planned_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_tools/Cargo.toml",
+        "-p",
+        "android_tools",
+        "--test",
+        "build_variant_table",
+        "same_type_rows_are_sorted",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "runtime_evidence": "PENDING; one matching-revision named test must run, pass exactly once, fail zero times, and ignore zero tests. A list or aggregate CI count is insufficient."
     },
     {
       "original_method": "Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
       "rust_test": "tests/build_variant_table.rs::different_type_rows_are_sorted_by_android_project_type",
-      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
-      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+      "status": "UNPORTED_SOURCE_ADAPTATION_PRESENT_MATCHING_RUNTIME_PENDING",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct.",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
+      "source_method": {
+        "start_line": 172,
+        "end_line": 195,
+        "method_span_sha256": "0b8b1b8f291f67d720e61e8274081bf9b00441280201887c2f9717eef56574b6",
+        "hash_convention": "UTF-8 exact retained inclusive line span with its one final LF excluded; no trimming or other normalization."
+      },
+      "original_assertion_outcomes": 8,
+      "all_original_expectations": [
+        "rows.len == 7",
+        "seven original per-index qualified names: <project>.appA, appB, xappC, alibA, libB, test, feature; legacy Feature distinct from DynamicFeature"
+      ],
+      "fixture": {
+        "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/different_type_rows_are_sorted_by_android_project_type.json",
+        "bytes": 4936,
+        "sha256": "ecf60007640d5dfb024313d011a63da3bd982434c3c2c967d7d0517eebe64602"
+      },
+      "fixture_preparation_input": {
+        "bytes": 5141,
+        "sha256": "5deb46b6ae9b479ff43812cd8214c87e57ae68a5a32c4d682f49efa29e6f7a08"
+      },
+      "fixture_transformations": [
+        {
+          "property": "_attribution",
+          "change": "Point the attribution to the retained repository-local source."
+        },
+        {
+          "property": "original_source.retained_path",
+          "change": "Replace the preparation-machine absolute path with the repository-local retained source path."
+        },
+        {
+          "property": "status",
+          "change": "Record that the source adaptation exists but matching execution and passing parity credit remain pending."
+        }
+      ],
+      "planned_rust_target": {
+        "package": "android_tools",
+        "integration_target": "build_variant_table",
+        "test_name": "different_type_rows_are_sorted_by_android_project_type",
+        "manifest": {
+          "path": "crates/android_tools/Cargo.toml",
+          "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
+        },
+        "source": {
+          "path": "crates/android_tools/tests/build_variant_table.rs",
+          "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199"
+        },
+        "run": null
+      },
+      "exact_planned_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_tools/Cargo.toml",
+        "-p",
+        "android_tools",
+        "--test",
+        "build_variant_table",
+        "different_type_rows_are_sorted_by_android_project_type",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "runtime_evidence": "PENDING; one matching-revision named test must run, pass exactly once, fail zero times, and ignore zero tests. A list or aggregate CI count is insufficient."
     }
   ],
-  "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED; zero passing parity credit",
+  "status": "UNPORTED; four source adaptations present with nineteen original outcomes, matching-revision named execution and all task completion gates pending; zero passing parity credit",
   "supplemental_regressions": [
     {
       "rust_test": "android_ui::tests::build_variant_table_reuses_rows_and_rejects_incomplete_module_selection",
@@ -189,5 +457,60 @@
     "immutable_Root_raw_path": "/workspace/android-studio-artifacts/project-context-gating/foundation-build-variant-table-model-20261009/Root-13461-CI224-Linux-114096943481-EXACT-RAW.log",
     "immutable_Root_raw_sha256": "cef1420570bd314b75436ad514b94080fc9abb1668e9f60e8a6a67a6e2cac52b",
     "diagnosis": "sys-locale 0.3.2 Unix conversion can return C rather than a valid BCP 47 language tag. The original system boundary passed the provider string unchanged into strict ICU parsing. CI did not record locale variables; C is a source-established failing input, not a captured CI environment value. Missing, malformed and POSIX preferences now use ICU root; valid locale preferences remain canonicalized, and explicit projection locales remain strict."
+  },
+  "source_notices": [
+    {
+      "retained": "BuildVariantTableModelTest.kt",
+      "copyright_lines": [
+        " * Copyright (C) 2022 The Android Open Source Project\n"
+      ],
+      "first14_notice_lines_sha256": "d4b6f4ac7133333e47ae5fdfa09717788a06212f5f3a8345996598b358cf4b34",
+      "original_bytes_modified": false
+    },
+    {
+      "retained": "BuildVariantTableModel.kt",
+      "copyright_lines": [
+        " * Copyright (C) 2022 The Android Open Source Project\n"
+      ],
+      "first14_notice_lines_sha256": "d4b6f4ac7133333e47ae5fdfa09717788a06212f5f3a8345996598b358cf4b34",
+      "original_bytes_modified": false
+    },
+    {
+      "retained": "ModuleTypeComparator.java",
+      "copyright_lines": [
+        " * Copyright (C) 2014 The Android Open Source Project\n"
+      ],
+      "first14_notice_lines_sha256": "83bb54c5f03565a445de9ffb39ffa7ecaf5f5fcbc7d1ba29923e294c82b442d1",
+      "original_bytes_modified": false
+    },
+    {
+      "retained": "IdeAndroidProjectType.kt",
+      "copyright_lines": [
+        " * Copyright (C) 2021 The Android Open Source Project\n"
+      ],
+      "first14_notice_lines_sha256": "8b5bf997026b4bf38551e6630a4724e7c0c69bb90b31c7baad7584752e290a54",
+      "original_bytes_modified": false
+    },
+    {
+      "retained": "AndroidGradleTestUtils.kt",
+      "copyright_lines": [
+        " * Copyright (C) 2019 The Android Open Source Project\n"
+      ],
+      "first14_notice_lines_sha256": "08af8a5053c5f31decf28c94028aa455813fb92eebc5b7798fc031f4eb763744",
+      "original_bytes_modified": false
+    }
+  ],
+  "license_file": {
+    "path": "LICENSE-APACHE",
+    "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a"
+  },
+  "constructor_fixture_adaptations": {
+    "intellij_module_builders": "Replaced with typed Rust inputs for table projection; no Gradle dependency switching or sync parity inferred.",
+    "non_android_jvm_root": "The original Java root has no Android facet/model and is omitted from Android projection inputs.",
+    "project_name": "projectRule.project.name becomes testProject in the typed identities.",
+    "variant_order": "Original buildVariantStubs yields debug/release. Rust input is deliberately reversed to release/debug while preserving the original sorted output assertions.",
+    "locale": "Explicit en for ASCII constructor fixtures replaces process-default Java collation; exhaustive locale equivalence remains unverified.",
+    "helper_source": "AndroidGradleTestUtils.kt:1360-1388 buildVariantStubs; full original helper and notice retained.",
+    "records_are_descriptive": "The JSON records describe inputs already embedded in the existing Rust test bodies. They are provenance records, not a newly loaded fixture path or duplicate test implementation."
   }
 }

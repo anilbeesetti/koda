@@ -14,7 +14,7 @@
         "sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84"
       },
       "coverage": "canonical",
-      "coverage_reason": "96 individually identified reference entries in ten bounded inspected suite scopes, including all three original ModelVersionsTest methods, 57 toolbar/attached-workbench cases and one directly inspected NonComposeProjectTest declaration. Bounded runner/target/helper-fixture evidence is recorded in ports/model-sync-inventory.json and ports/window-inventory.json. Effective runtime descriptions for the added preview declaration, global suite discovery, SDK dependency equivalence and other runner expansions remain incomplete.",
+      "coverage_reason": "96 individually identified reference entries in ten bounded inspected suite scopes, including all three original ModelVersionsTest methods, 57 toolbar/attached-workbench cases and one directly inspected NonComposeProjectTest declaration. Bounded runner/target/helper-fixture evidence is recorded in ports/model-sync-inventory.json and ports/window-inventory.json. Effective runtime descriptions for the added preview declaration, global suite discovery, SDK dependency equivalence and other runner expansions remain incomplete. Five directly inspected declarations in BuildVariantTableModelTest are also retained, with four non-NDK constructor adaptations awaiting matching named execution and the ABI case deferred as unported. This bounded addition does not establish effective runner closure or global census completeness.",
       "coverage_evidence": null,
       "census_complete": false,
       "census_evidence": null
@@ -2748,6 +2748,86 @@
       "copyright": "Copyright (C) 2020 The Android Open Source Project",
       "fixtures": [],
       "fixture_reason": "The inspected JUnit4 declaration creates Main.kt from an inline Kotlin string in AndroidProjectRule.inMemory(); it loads no external project fixture files. Harness initialization and effective runtime runner descriptions remain unresolved, so this declaration does not close the suite census."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.withoutAbi",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest",
+      "method": "withoutAbi",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt",
+        "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0"
+      },
+      "line": 43,
+      "declaration": "fun withoutAbi() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original test constructs module and variant models inline using helpers in BuildVariantTableModelTest.kt and AndroidGradleTestUtils.kt; it uses no external project fixture files. Full helper bytes and individual input/expectation adaptations are retained under crates/android_tools/test_data/build_variant_table."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.testDefaultVariantIndicator",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest",
+      "method": "testDefaultVariantIndicator",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt",
+        "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0"
+      },
+      "line": 79,
+      "declaration": "fun testDefaultVariantIndicator() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original test constructs module and variant models inline using helpers in BuildVariantTableModelTest.kt and AndroidGradleTestUtils.kt; it uses no external project fixture files. Full helper bytes and individual input/expectation adaptations are retained under crates/android_tools/test_data/build_variant_table."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.withAbi",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest",
+      "method": "withAbi",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt",
+        "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0"
+      },
+      "line": 115,
+      "declaration": "fun withAbi() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original test constructs module and variant models inline using helpers in BuildVariantTableModelTest.kt and AndroidGradleTestUtils.kt; it uses no external project fixture files. Full helper bytes and individual input/expectation adaptations are retained under crates/android_tools/test_data/build_variant_table."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest",
+      "method": "Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt",
+        "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0"
+      },
+      "line": 151,
+      "declaration": "fun `Given project modules with same type When create VariantTableModel Then TableRows is sorted`() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original test constructs module and variant models inline using helpers in BuildVariantTableModelTest.kt and AndroidGradleTestUtils.kt; it uses no external project fixture files. Full helper bytes and individual input/expectation adaptations are retained under crates/android_tools/test_data/build_variant_table."
+    },
+    {
+      "id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
+      "source": "idea",
+      "suite": "com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest",
+      "method": "Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
+      "case": null,
+      "file": {
+        "path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt",
+        "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0"
+      },
+      "line": 173,
+      "declaration": "fun `Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType`() {",
+      "copyright": "Copyright (C) 2022 The Android Open Source Project",
+      "fixtures": [],
+      "fixture_reason": "The original test constructs module and variant models inline using helpers in BuildVariantTableModelTest.kt and AndroidGradleTestUtils.kt; it uses no external project fixture files. Full helper bytes and individual input/expectation adaptations are retained under crates/android_tools/test_data/build_variant_table."
     }
   ]
 }
