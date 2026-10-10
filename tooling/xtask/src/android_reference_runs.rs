@@ -1207,8 +1207,12 @@ fn verify_unfiltered_xtask(text: &str) -> Result<()> {
 }
 
 fn verify_classpath_help(text: &str) -> Result<()> {
+    let usage: Vec<_> = text
+        .lines()
+        .filter(|line| line.starts_with("Usage:"))
+        .collect();
     ensure!(
-        text.contains("Usage: cargo xtask android-reference-class-path"),
+        usage == ["Usage: xtask android-reference-class-path [OPTIONS] --jar <JAR>"],
         "wrong classpath CLI help"
     );
     for option in [
@@ -1769,7 +1773,8 @@ mod tests {
 
     #[test]
     fn classpath_help_rejects_wrong_subcommand_and_missing_bounded_options() -> Result<()> {
-        let help = "Usage: cargo xtask android-reference-class-path --jar <JAR>\n--jar\n--max-archive-bytes\n--max-manifest-bytes\n--max-archive-entries\n--max-references\n";
+        let help =
+            include_str!("../test_data/reference_classpath/ci-help/source51f-CI1.stdout.log");
         verify_classpath_help(help)?;
         assert!(
             verify_classpath_help(&help.replace("android-reference-class-path", "android-parity"))
@@ -1784,6 +1789,47 @@ mod tests {
             assert!(verify_classpath_help(&help.replace(option, "")).is_err());
         }
         Ok(())
+    }
+
+    #[test]
+    fn classpath_help_matches_actual_clap_rendering_and_retained_ci_capture() -> Result<()> {
+        let Err(help) = <crate::Args as clap::Parser>::try_parse_from([
+            "xtask",
+            "android-reference-class-path",
+            "--help",
+        ]) else {
+            bail!("help invocation unexpectedly parsed without displaying help");
+        };
+        assert_eq!(help.kind(), clap::error::ErrorKind::DisplayHelp);
+        let rendered = help.to_string();
+        verify_classpath_help(&rendered)?;
+        let captured =
+            include_str!("../test_data/reference_classpath/ci-help/source51f-CI1.stdout.log");
+        assert_eq!(
+            digest(captured.as_bytes()),
+            "3c09fce1c54e5f7a03a4e303b28a6850b96cfdbbccfd18d27994b59f02aa3b9a"
+        );
+        assert_eq!(rendered, captured);
+        Ok(())
+    }
+
+    #[test]
+    fn classpath_help_rejects_wrong_binary_duplicate_or_missing_required_usage() {
+        let captured =
+            include_str!("../test_data/reference_classpath/ci-help/source51f-CI1.stdout.log");
+        for changed in [
+            captured.replace("Usage: xtask ", "Usage: cargo xtask "),
+            captured.replace("Usage: xtask ", "Usage: other "),
+            captured.replace(
+                "Usage: xtask android-reference-class-path [OPTIONS] --jar <JAR>",
+                "Usage: xtask android-reference-class-path [OPTIONS]",
+            ),
+            format!(
+                "{captured}\nUsage: xtask android-reference-class-path [OPTIONS] --jar <JAR>\n"
+            ),
+        ] {
+            assert!(verify_classpath_help(&changed).is_err());
+        }
     }
 
     #[cfg(target_os = "linux")]

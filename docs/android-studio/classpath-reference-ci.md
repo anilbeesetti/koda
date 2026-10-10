@@ -70,3 +70,22 @@ actual source and runner compilation occur in isolated CI. Static review does
 not establish runtime success. Windows native path behavior remains not run;
 Linux spelling assertions do not establish Windows execution. Deferred features
 remain unported, and the parity matrix is unchanged by this task.
+
+## Retained first CI failure
+
+Run `38037414452` tested the pinned source with successful formatting, strict
+Clippy, all 131 unfiltered xtask tests, and both separate exact reference cases.
+The help process also exited successfully, but its verification failed: Clap
+uses the actual binary argument `xtask` in `Usage:`, while the verifier expected
+the configured descriptive name `cargo xtask`. The overall job correctly failed;
+these individual results do not make that run an overall PASS.
+
+The runner now checks exactly one complete runtime usage line, including the
+required JAR argument, and all existing bounded options. Its regression fixture
+retains the actual 571-byte help capture with its SHA-256 and failed-run
+provenance. A new test derives help from the real Clap parser with the same
+binary argument and compares its complete output to that capture. Negative
+fixtures additionally reject the wrong binary, duplicate usage, and a missing
+required JAR argument. Every prior negative assertion and original reference
+assertion remains in place. The first failed run stays preserved; the successor
+still requires new isolated CI, all five reviews, and full integration checks.

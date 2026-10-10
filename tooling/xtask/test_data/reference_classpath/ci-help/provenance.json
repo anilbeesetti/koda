@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "kind": "actual_rust_cli_help_capture_regression_fixture",
+  "repository": "anilbeesetti/koda",
+  "workflow_run": "https://github.com/anilbeesetti/koda/actions/runs/38037414452",
+  "job_id": 114170645035,
+  "runner_commit": "025d4fc4da34615a29e7c6aa1b5d1e86fcd88951",
+  "tested_commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+  "tested_tree": "7c1a872c64a32c576d9f580b01ed6f223cf82435",
+  "argv": ["cargo", "run", "--locked", "-p", "xtask", "--", "android-reference-class-path", "--help"],
+  "process_exit": 0,
+  "overall_workflow_status": "FAIL",
+  "failure": "The runner expected Usage: cargo xtask; actual Clap derives Usage: xtask from the Cargo-invoked binary argv[0].",
+  "artifact_zip_sha256": "c2254d48347341258d26b50b64fcccef113de22324f2279e6929260054e038fb",
+  "archive_member": "classpath2-proof/check-classpath-help.stdout.log",
+  "fixture": {
+    "path": "tooling/xtask/test_data/reference_classpath/ci-help/source51f-CI1.stdout.log",
+    "bytes": 571,
+    "sha256": "3c09fce1c54e5f7a03a4e303b28a6850b96cfdbbccfd18d27994b59f02aa3b9a"
+  },
+  "no_original_JVM_runner_census_reference_or_final_credit": true,
+  "scope": "Generated Rust CLI output from a failed retained CI run, not adapted upstream source or independent reference-suite membership evidence."
+}

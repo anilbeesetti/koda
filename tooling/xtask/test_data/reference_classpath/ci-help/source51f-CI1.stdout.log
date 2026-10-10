@@ -1,0 +1,17 @@
+Inspect bounded wrapper manifest references without claiming test-suite membership
+
+Usage: xtask android-reference-class-path [OPTIONS] --jar <JAR>
+
+Options:
+      --jar <JAR>
+          Wrapper JAR whose main manifest Class-Path is inspected
+      --max-archive-bytes <MAX_ARCHIVE_BYTES>
+          [default: 33554432]
+      --max-manifest-bytes <MAX_MANIFEST_BYTES>
+          [default: 1048576]
+      --max-archive-entries <MAX_ARCHIVE_ENTRIES>
+          [default: 4096]
+      --max-references <MAX_REFERENCES>
+          [default: 4096]
+  -h, --help
+          Print help
