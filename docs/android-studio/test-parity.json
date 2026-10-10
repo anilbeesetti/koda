@@ -2172,6 +2172,15 @@
         }
       ],
       "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:compose-designer/testSrc/com/android/tools/idea/compose/preview/NonComposeProjectTest.kt#com.android.tools.idea.compose.preview.NonComposeProjectTest.compose preview not available",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The inspected upstream behavior rejects a Kotlin file in a non-Compose project through ComposePreviewRepresentationProvider.accept. A Rust candidate exists, but no reference port or run credit is assigned until the production preview provider and a Compose-enabled positive control execute and pass under the normal bundled feature graph. Effective upstream runtime case descriptions remain unresolved.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
     }
   ]
 }
