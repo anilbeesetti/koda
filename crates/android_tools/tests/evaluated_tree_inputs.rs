@@ -1305,6 +1305,82 @@ fn actual_live_exporter_fixtures()
 }
 
 #[test]
+fn actual_provider_unsigned_version_boundaries_remain_incompatible_with_supported_generated_models()
+-> Result<()> {
+    for (raw, _, kotlin, _) in actual_live_exporter_fixtures() {
+        for component in ["major", "minor"] {
+            let directory = tempfile::tempdir()?;
+            let root = directory.path().canonicalize()?;
+            fs::create_dir_all(root.join("app"))?;
+            let raw = raw.replace(
+                "/workspace/android-studio-artifacts/source-providers-smoke/project",
+                root.to_str().context("Temporary root must be UTF-8")?,
+            );
+            let mut state = ModelState::default();
+            let token = state.invalidate(Some(root.clone()));
+            let original = EvaluatedTreeInputs::decode_sync(&raw, &root, None, &token)?;
+            let mut value: Value = serde_json::from_str(
+                original
+                    .raw_record()
+                    .strip_prefix("KODA_ANDROID_PROJECT_MODEL=")
+                    .context("Actual model prefix")?,
+            )?;
+            let original_generated = value["generatedArtifacts"].clone();
+            let original_kotlin = value["kotlinCapabilities"].clone();
+            state.publish_evaluated(&token, original)?;
+            let selected = VariantId {
+                module: ":app".into(),
+                variant: "demoDebug".into(),
+            };
+            state.select(Some(selected.clone()))?;
+            let proven = prepare_live_module_plan(&state, &state.token(), selected.clone(), false)?;
+            proven.ensure_current(&state)?;
+            // Only the provider sidecar is fault-injected; immutable captured
+            // Gradle output and its generated/Kotlin observations stay intact.
+            value["modules"][0]["evaluatedProviders"]["value"]["modelProducer"][component] =
+                json!(u32::MAX);
+            assert_eq!(value["generatedArtifacts"], original_generated);
+            assert_eq!(value["kotlinCapabilities"], original_kotlin);
+            let replacement = state.invalidate(Some(root.clone()));
+            let capture =
+                EvaluatedTreeInputs::decode_sync(&record(&value), &root, None, &replacement)?;
+            assert_eq!(capture.kotlin_capability(":app")?, kotlin);
+            state.publish_evaluated(&replacement, capture)?;
+            state.select(Some(selected.clone()))?;
+            let module = state
+                .model
+                .as_ref()
+                .context("Unsigned provider metadata retains the physical model")?
+                .modules
+                .iter()
+                .find(|module| module.path == ":app")
+                .context("Captured app module")?;
+            let providers = match module.evaluated_providers.as_ref() {
+                Some(android_tools::project_model::EvaluatedProviderMetadata::Available(
+                    providers,
+                )) => providers,
+                _ => anyhow::bail!("Unsigned boundary must decode as available provider metadata"),
+            };
+            let observed = match component {
+                "major" => providers.model_producer.major,
+                "minor" => providers.model_producer.minor,
+                _ => anyhow::bail!("Unexpected producer version component"),
+            };
+            assert_eq!(observed, u32::MAX);
+            let failure = prepare_live_module_plan(&state, &state.token(), selected, false)
+                .expect_err("A representable unsigned provider version cannot borrow the supported generated profile");
+            assert_eq!(
+                failure.reason,
+                AdapterUnavailableReason::Provider(FactsUnavailableReason::Stale)
+            );
+            assert!(state.model.is_some());
+            assert!(proven.ensure_current(&state).is_err());
+        }
+    }
+    Ok(())
+}
+
+#[test]
 fn actual_supported_export_with_independently_mismatched_provider_versions_is_unavailable()
 -> Result<()> {
     for (raw, _, kotlin, _) in actual_live_exporter_fixtures() {

@@ -684,9 +684,12 @@ pub fn prepare_live_module_plan(
         }
         if providers.agp_version != versions.agp
             || (
-                providers.model_producer.major,
-                providers.model_producer.minor,
-            ) != (versions.producer.major, versions.producer.minor)
+                i64::from(providers.model_producer.major),
+                i64::from(providers.model_producer.minor),
+            ) != (
+                i64::from(versions.producer.major),
+                i64::from(versions.producer.minor),
+            )
         {
             return Err(unavailable(
                 FactsUnavailableReason::Stale,
