@@ -3096,7 +3096,7 @@ mod tests {
         let joined = [first.as_slice(), first.as_slice()].concat();
         let joined_binding = CompressedBinding {
             file: write_binding(root.path(), "joined.gz", &joined)?,
-            ..binding.clone()
+            ..binding
         };
         assert!(
             compressed_stream::<Value>(root.path(), &joined_binding, |_, _, _| Ok(())).is_err()
