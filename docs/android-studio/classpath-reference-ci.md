@@ -48,20 +48,21 @@ xtask`, and every unfiltered xtask test in isolated CI. New fixtures reject
 
 ## Bounds and evidence
 
-The existing Linux Rust supervisor retains both complete output streams, waits
-for the owned process group and pipe EOF, and records actual exit status. It
-fails explicitly on deadlines, incomplete pipes, source mismatch, or output
-limits. Each process allows 16 MiB of successful output, each archive allows
-128 MiB, and a further 8 MiB is a failure drain allowance; hitting a ceiling
-never produces a truncated PASS.
+PASS requires complete capture of both output streams, owned process-group
+cleanup, pipe EOF, and a successful actual exit status. The existing Linux Rust
+supervisor fails explicitly on deadlines, incomplete pipes, source mismatch, or
+output limits. Each process allows 16 MiB of successful output, each archive
+allows 128 MiB, and a further 8 MiB is a failure drain allowance. Bounded failures
+retain the observed prefixes and failure details; incomplete capture or a hit
+ceiling never produces PASS.
 
 Pinned source checks have deadlines of 300 seconds for formatting, 1,800 seconds
 for strict Clippy, 1,200 seconds for whole xtask tests, and 600 seconds for CLI
 help. Named compilation retains the existing 3,600-second deadline and each
 exact test retains 600 seconds. The isolated job has a 180-minute limit and
-always uploads any receipts, complete retained raw logs, and worker output,
-including failures. Receipts explicitly record that no parity ledger was
-changed.
+always uploads any receipts, retained raw logs, and worker output, including
+observed prefixes and incomplete-capture details on failures. Receipts explicitly
+record that no parity ledger was changed.
 
 Local compilation was not admitted because the new ZIP dependency cache reuse
 and resource fit were unproven. Local formatting is a Root-owned scoped check;
