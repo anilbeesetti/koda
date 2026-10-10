@@ -28,16 +28,20 @@ restored build cache. Its workflow commit and checked-out source commit/tree are
 recorded separately because the strict target can differ from the dispatch ref.
 
 The task-branch PR route always checks out commit
-`594bf18526b3d7197315c82f5c6c3860cfb7bf5a`, tree
-`dd2bb2ae16a43fd0a0dbee35bae3615a5fbe26f1`, independently of the workflow-only PR
+`28d91557bfac6bb1578dde30412bfb4bda56efc8`, tree
+`0400facfa4b95ae45b31d5e232f628ca785c1931`, independently of the workflow-only PR
 changes. The workflow's ordinary jobs validate their PR merge or dispatch
 revision, while the strict job validates its explicit source. Each result must
 be attributed to its actual checkout. Creating the task's draft PR can trigger
 this route without assuming workflow-dispatch API access or changing `main`.
 
-The local strict attempt for this source stopped at its shared-memory resource
-guard before a compiler verdict. Its failure remains recorded; an isolated CI
-result does not turn that attempt into a pass or alter its caps. This job runs
+The earlier local strict attempt for Source `594bf185` stopped at its shared-memory
+resource guard before a compiler verdict. Its isolated CI229 run then failed
+`clippy::cloned_ref_to_slice_refs` in `crates/android_tools/tests/project_model.rs:184`.
+Both failures remain recorded. The new pinned source changes only that assertion's
+expected singleton to a borrowed slice; its strict result must be observed.
+An isolated CI result does not turn the local attempt into a pass or alter its
+caps. This job runs
 Clippy and does not execute tests, establish native/UI validation, or prove
 individual reference-test parity. The separate exact reference-test manifest
 must be supplied and validated before claiming those assertions passed.
