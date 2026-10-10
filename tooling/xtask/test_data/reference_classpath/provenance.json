@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "source_inputs": [
+    {
+      "repository": "platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "retained_path": "sources/base/testutils/src/main/java/com/android/testutils/TestGroup.java",
+      "bytes": 10390,
+      "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+      "license": "Apache-2.0",
+      "original_complete_and_unchanged": true
+    },
+    {
+      "repository": "platform/tools/base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+      "retained_path": "sources/base/testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+      "bytes": 3006,
+      "sha256": "0f6a26754d7afa899e37e82936450f33fbad2339aa907924468c8c31dddf4743",
+      "license": "Apache-2.0",
+      "original_complete_and_unchanged": true
+    }
+  ],
+  "license_file_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+  "original_behavior_attribution": "AOSP Apache-2.0; full unchanged originals retained",
+  "new_identities": "UNPORTED",
+  "applicability": "UNREVIEWED",
+  "configured_suite_membership_verified": false,
+  "actual_runtime_receipt": null
+}

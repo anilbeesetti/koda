@@ -17,6 +17,8 @@ enum CliCommand {
     AndroidParity(tasks::android_parity::AndroidParityArgs),
     /// Discover review candidates in pinned Android reference archives.
     AndroidReferenceCensus(tasks::android_reference_census::AndroidReferenceCensusArgs),
+    /// Inspect bounded wrapper manifest references without claiming test-suite membership.
+    AndroidReferenceClassPath(tasks::android_reference_classpath::AndroidReferenceClassPathArgs),
     /// Record bounded, hash-bound source JUnit4 annotation declarations.
     AndroidJunit4Declarations(tasks::android_junit4_declarations::AndroidJunit4DeclarationsArgs),
     /// Runs `cargo clippy`.
@@ -46,6 +48,9 @@ fn main() -> Result<()> {
     match args.command {
         CliCommand::AndroidParity(args) => tasks::android_parity::run(args),
         CliCommand::AndroidReferenceCensus(args) => tasks::android_reference_census::run(args),
+        CliCommand::AndroidReferenceClassPath(args) => {
+            tasks::android_reference_classpath::run(args)
+        }
         CliCommand::AndroidJunit4Declarations(args) => {
             tasks::android_junit4_declarations::run(args)
         }
