@@ -60,7 +60,7 @@ jobs:
           printf 'source_commit=%s\nsource_tree=%s\n' "$source_commit" "$source_tree" >> "$GITHUB_OUTPUT"
           jq -n \
             --arg commit "$(git rev-parse HEAD)" \
-            --arg tree "$(git rev-parse HEAD^{tree})" \
+            --arg tree "$(git rev-parse 'HEAD^{tree}')" \
             --arg request_sha256 "$(sha256sum "$KODA_ARTIFACT_DIRECTORY/request.json" | cut -d ' ' -f 1)" \
             --arg workflow_sha256 "$(sha256sum .github/workflows/native_app_artifact.yml | cut -d ' ' -f 1)" \
             '{commit: $commit, tree: $tree, request_sha256: $request_sha256, workflow_sha256: $workflow_sha256}' \
@@ -76,7 +76,7 @@ jobs:
           REQUESTED_TREE: ${{ steps.request.outputs.source_tree }}
         run: |
           test "$(git rev-parse HEAD)" = "$REQUESTED_COMMIT"
-          test "$(git rev-parse HEAD^{tree})" = "$REQUESTED_TREE"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$REQUESTED_TREE"
           test -z "$(git status --porcelain --untracked-files=no)"
           for variable in RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER ZED_COMMIT_SHA; do
             if [[ -v "$variable" ]]; then
@@ -85,7 +85,7 @@ jobs:
             fi
           done
           cp Cargo.lock rust-toolchain.toml "$KODA_ARTIFACT_DIRECTORY/"
-          git rev-parse HEAD HEAD^{tree} > "$KODA_ARTIFACT_DIRECTORY/source-identity.txt"
+          git rev-parse HEAD 'HEAD^{tree}' > "$KODA_ARTIFACT_DIRECTORY/source-identity.txt"
       - name: Select runner concurrency
         run: python3 script/ci-run resources --github-env "$GITHUB_ENV"
       - name: Free runner disk space
@@ -183,7 +183,7 @@ jobs:
           test -x target/debug/koda
           test -z "$(git status --porcelain --untracked-files=no)"
           test "$(git rev-parse HEAD)" = "$REQUESTED_COMMIT"
-          test "$(git rev-parse HEAD^{tree})" = "$REQUESTED_TREE"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$REQUESTED_TREE"
           cmp Cargo.lock "$KODA_ARTIFACT_DIRECTORY/Cargo.lock"
           target/debug/koda --system-specs > "$KODA_ARTIFACT_DIRECTORY/system-specs.txt"
           grep -F "$REQUESTED_COMMIT" "$KODA_ARTIFACT_DIRECTORY/system-specs.txt"
@@ -197,7 +197,7 @@ jobs:
             | gzip -1 > "$KODA_ARTIFACT_DIRECTORY/koda.tar.gz"
           jq -n \
             --arg source_commit "$(git rev-parse HEAD)" \
-            --arg source_tree "$(git rev-parse HEAD^{tree})" \
+            --arg source_tree "$(git rev-parse 'HEAD^{tree}')" \
             --arg binary_sha256 "$(sha256sum target/debug/koda | cut -d ' ' -f 1)" \
             --argjson binary_bytes "$(stat -c '%s' target/debug/koda)" \
             --arg binary_mode "$(stat -c '%a' target/debug/koda)" \
@@ -215,8 +215,10 @@ jobs:
               ci: {repository: $repository, workflow_ref: $workflow_ref, workflow_sha: $workflow_sha,
                 run_id: $run_id, run_attempt: $run_attempt}, control: $control[0]}' \
             > "$KODA_ARTIFACT_DIRECTORY/provenance.json"
+          checksum_file="$(mktemp "$RUNNER_TEMP/koda-native-app-checksums.XXXXXX")"
           (cd "$KODA_ARTIFACT_DIRECTORY" && find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 \
-            | sort -z | xargs -0 sha256sum > SHA256SUMS)
+            | sort -z | xargs -0 sha256sum > "$checksum_file")
+          mv "$checksum_file" "$KODA_ARTIFACT_DIRECTORY/SHA256SUMS"
       - name: Upload verified app artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
