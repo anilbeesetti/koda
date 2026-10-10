@@ -22642,6 +22642,7 @@ dependencies = [
  "indexmap 2.14.0",
  "indoc",
  "itertools 0.14.0",
+ "nix",
  "regex",
  "serde",
  "serde_json",
@@ -22655,6 +22656,7 @@ dependencies = [
  "toml 0.8.23",
  "toml_edit 0.22.27",
  "url",
+ "zip",
 ]
 
 [[package]]

@@ -1,0 +1,91 @@
+# Classpath reference validation
+
+This independent Foundation task executes the two adapted AOSP `TestGroupTest`
+behaviors against exact source `51fcb1b53b244cf35b914676de6c283fe310b2bb`, tree
+`7c1a872c64a32c576d9f580b01ed6f223cf82435`. The complete Java/Kotlin originals,
+Apache 2.0 license, notice, Rust implementation, declarations, manifests, and
+build configuration are bound in `reference-classpath-named-tests.json`. Neither
+these receipts nor the source task establish a complete configured reference
+suite census or execute the original JVM runner.
+
+## Task and dependencies
+
+The task branch combines the reviewed classpath source with the reviewed Rust
+exact-reference runner. It adds an explicit `--bin xtask` selector, a separate
+two-case manifest, the isolated workflow, and protocol regression tests. The
+existing forty-case manifest and ordinary CI remain unchanged. It depends on
+the source task and exact-runner baseline; it touches
+`tooling/xtask/src/android_reference_runs.rs`, the new manifest, this document,
+and `.github/workflows/android_reference_classpath_exact.yml`.
+
+The selected test compiler artifact must be an ELF `bin` test for `xtask`, with
+the pinned `tooling/xtask/src/main.rs` source, normal dev test profile, and default
+feature set. The actual Cargo runtime executable must have the same absolute
+path, size, and SHA-256 before and after each exact run. A library or integration
+target cannot stand in for the binary.
+
+## Acceptance criteria
+
+- All five independent reviewers pass on one frozen packet and close their read
+  holds before mutation or execution.
+- The runner passes repository formatting, strict `./script/clippy --locked -p
+xtask`, and every unfiltered xtask test in isolated CI. New fixtures reject
+  mixed or absent selectors, wrong compiler source/kind/features, partial
+  original manifests, and missing, ignored, filtered, or duplicated test output.
+- The pinned tested checkout passes full formatting, the same repository strict
+  xtask invocation, every unfiltered xtask test, and callable classpath CLI help
+  with its JAR argument and bounded options. Every one of the seventeen Linux
+  classpath cases must appear as passing in the whole-test raw output.
+- Each original behavior runs separately using literal Cargo `--bin xtask`
+  commands with the full name, `--exact`, and `--show-output`: exactly one
+  selected, one passed, zero failed, zero ignored, and zero measured. Zero-test
+  successes receive no credit. The five original assertions remain unchanged.
+- Source checks use their own fresh target so the subsequent named compiler
+  artifact cannot inherit a previous build. Full checkout/index and fixture
+  bindings match before and after execution.
+- The normal full-app build, full workspace test suite, lead integration checks,
+  and any required app validation still pass before a protected-branch merge.
+
+## Bounds and evidence
+
+PASS requires complete capture of both output streams, owned process-group
+cleanup, pipe EOF, and a successful actual exit status. The existing Linux Rust
+supervisor fails explicitly on deadlines, incomplete pipes, source mismatch, or
+output limits. Each process allows 16 MiB of successful output, each archive
+allows 128 MiB, and a further 8 MiB is a failure drain allowance. Bounded failures
+retain the observed prefixes and failure details; incomplete capture or a hit
+ceiling never produces PASS.
+
+Pinned source checks have deadlines of 300 seconds for formatting, 1,800 seconds
+for strict Clippy, 1,200 seconds for whole xtask tests, and 600 seconds for CLI
+help. Named compilation retains the existing 3,600-second deadline and each
+exact test retains 600 seconds. The isolated job has a 180-minute limit and
+always uploads any receipts, retained raw logs, and worker output, including
+observed prefixes and incomplete-capture details on failures. Receipts explicitly
+record that no parity ledger was changed.
+
+Local compilation was not admitted because the new ZIP dependency cache reuse
+and resource fit were unproven. Local formatting is a Root-owned scoped check;
+actual source and runner compilation occur in isolated CI. Static review does
+not establish runtime success. Windows native path behavior remains not run;
+Linux spelling assertions do not establish Windows execution. Deferred features
+remain unported, and the parity matrix is unchanged by this task.
+
+## Retained first CI failure
+
+Run `38037414452` tested the pinned source with successful formatting, strict
+Clippy, all 131 unfiltered xtask tests, and both separate exact reference cases.
+The help process also exited successfully, but its verification failed: Clap
+uses the actual binary argument `xtask` in `Usage:`, while the verifier expected
+the configured descriptive name `cargo xtask`. The overall job correctly failed;
+these individual results do not make that run an overall PASS.
+
+The runner now checks exactly one complete runtime usage line, including the
+required JAR argument, and all existing bounded options. Its regression fixture
+retains the actual 571-byte help capture with its SHA-256 and failed-run
+provenance. A new test derives help from the real Clap parser with the same
+binary argument and compares its complete output to that capture. Negative
+fixtures additionally reject the wrong binary, duplicate usage, and a missing
+required JAR argument. Every prior negative assertion and original reference
+assertion remains in place. The first failed run stays preserved; the successor
+still requires new isolated CI, all five reviews, and full integration checks.
