@@ -1,0 +1,14 @@
+Android Studio build-variant table constructor test adaptations
+
+Copyright (C) 2014, 2019, 2021, 2022 The Android Open Source Project.
+Licensed under the Apache License, Version 2.0; see LICENSE-APACHE.
+
+Original source and helper files retain their complete copyright and license
+headers. Their upstream paths, pinned revision, and byte hashes are recorded
+in provenance.json. Typed Rust constructor fixtures replace IntelliJ module
+builders; their transformations and all nineteen original assertion outcomes
+are recorded individually.
+
+The existing Rust test adaptations are in ../../tests/build_variant_table.rs.
+Their bodies are unchanged by this provenance-binding task. No runtime pass
+or complete Android Studio parity is claimed by these fixture records.

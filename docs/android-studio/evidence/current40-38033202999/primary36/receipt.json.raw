@@ -1,0 +1,2576 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "label": "primary36",
+  "tested_commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+  "tested_tree": "dd2bb2ae16a43fd0a0dbee35bae3615a5fbe26f1",
+  "runner_commit": "1a1927e2fa59949233386391bc8bc534305a711c",
+  "manifest_sha256": "61c460e6a01e45fb28e56e9620c3a95f868749b80669a5520a28a205f2db1ce7",
+  "environment": {
+    "CARGO_BUILD_JOBS": "4",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CC": "clang",
+    "CXX": "clang++",
+    "RUSTC_WRAPPER": null,
+    "RUSTFLAGS": null,
+    "VK_DRIVER_FILES": "/usr/share/vulkan/icd.d/lvp_icd.json",
+    "WGPU_BACKEND": null
+  },
+  "source_before": {
+    "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+    "tree": "dd2bb2ae16a43fd0a0dbee35bae3615a5fbe26f1",
+    "index_sha256": "baeba3a7f7c5aadf1d6fdfa3ef7c10be470f56b5731880c6e9a06941cb835ddd",
+    "tracked_files": 7153,
+    "bound_files": 56,
+    "full_materialization": true
+  },
+  "source_after": {
+    "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+    "tree": "dd2bb2ae16a43fd0a0dbee35bae3615a5fbe26f1",
+    "index_sha256": "baeba3a7f7c5aadf1d6fdfa3ef7c10be470f56b5731880c6e9a06941cb835ddd",
+    "tracked_files": 7153,
+    "bound_files": 56,
+    "full_materialization": true
+  },
+  "source_error": null,
+  "groups": [
+    {
+      "package": "android_tools",
+      "integration_target": null,
+      "error": null,
+      "compilation": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 14581,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "group-00.stdout.log",
+          "bytes": 46927,
+          "sha256": "5cc5d2ee97e145f5b0baf308d21cd156b1b523796ed807c35508526f67bd4bd5"
+        },
+        "stderr": {
+          "path": "group-00.stderr.log",
+          "bytes": 1234,
+          "sha256": "34d1c6d0d6c93135c1bb71d7701039508e8cc4880e163349a17e2830516ea577"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+        "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+        "executable_bytes": 13432648,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/src/android_tools.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "generated_artifacts",
+      "error": null,
+      "compilation": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "generated_artifacts",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 4031,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "group-01.stdout.log",
+          "bytes": 47684,
+          "sha256": "4ac195e8ce9700471f6fef654f6797024fef5a0e391683c711a7758d84df4820"
+        },
+        "stderr": {
+          "path": "group-01.stderr.log",
+          "bytes": 153,
+          "sha256": "74c39fe7e5a7878c14d641282f5d20d0172cbaa19a88b574299ef5cc6f97f3bf"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/generated_artifacts-a8cb0ab117142344",
+        "executable_sha256": "2c51cda64aa2a2c0636740813b7407d6ef2e3b6ae66283d6604d4f4822ed415a",
+        "executable_bytes": 6151296,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/generated_artifacts.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "error": null,
+      "compilation": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 758,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "group-02.stdout.log",
+          "bytes": 47699,
+          "sha256": "85c447f055dd1e0c227cfb608e6ba7cc2ed67de8538fa607b6073b11c52b1a47"
+        },
+        "stderr": {
+          "path": "group-02.stderr.log",
+          "bytes": 153,
+          "sha256": "47b93c6a93bf962678de8973c1e2c0860225eee7b6376a2e2bc6ccfb44b0330d"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+        "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+        "executable_bytes": 3095736,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "parallel_sync",
+      "error": null,
+      "compilation": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "parallel_sync",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 649,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "group-03.stdout.log",
+          "bytes": 47659,
+          "sha256": "a537c64bc3b0aee2e6180bf41098c494d75679c559a27cb7c1eb9f32d1da5d60"
+        },
+        "stderr": {
+          "path": "group-03.stderr.log",
+          "bytes": 153,
+          "sha256": "fb1b96d1cc58a81cb5a1af4c1943a8aa6f18707561c60bf1299cb3b598f22c20"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/parallel_sync-426af02f93fcc41f",
+        "executable_sha256": "eff0b98579578a184cee3de49db17f5ba6ca72ca98af6c54ba7c666964bbbbb4",
+        "executable_bytes": 1803752,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/parallel_sync.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "project_view_preferences_reference",
+      "error": null,
+      "compilation": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 685,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "group-04.stdout.log",
+          "bytes": 47743,
+          "sha256": "6bd67cb79164255b46474f703079b8f5eb79d2beb294b6722b96475b6a011372"
+        },
+        "stderr": {
+          "path": "group-04.stderr.log",
+          "bytes": 153,
+          "sha256": "2d92b4f37696e962780fd18fcdcc3904650ab745d4da50313e4fd67bbdc8cb7a"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+        "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+        "executable_bytes": 2729136,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "package": "android_ui",
+      "integration_target": null,
+      "error": null,
+      "compilation": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 296739,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "group-05.stdout.log",
+          "bytes": 787787,
+          "sha256": "8c968cfe6d1858c566a97cc37faceb5fbcc6a180db5ca9ab9ac3f58b552acf14"
+        },
+        "stderr": {
+          "path": "group-05.stderr.log",
+          "bytes": 30829,
+          "sha256": "07891ad7192998747ddf02cd06cd4a5289475eb82d54d155349ea97684442309"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+        "executable_bytes": 469892192,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_ui/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_ui/src/android_ui.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    }
+  ],
+  "cases": [
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+      "name": "project_model::tests::default_variants_one_variant",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_one_variant",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 517,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-00.stdout.log",
+          "bytes": 255,
+          "sha256": "618d388f1ed9a973b5e4c953d47d322840e0764043ee5e47fd3b5fd978a325ce"
+        },
+        "stderr": {
+          "path": "case-00.stderr.log",
+          "bytes": 195,
+          "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+        "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+        "executable_bytes": 13432648,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/src/android_tools.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+      "name": "project_model::tests::default_variants_debug_preferred",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_debug_preferred",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 503,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-01.stdout.log",
+          "bytes": 263,
+          "sha256": "0278d4d3170f42150768cb132947e7111749c6c0b6abf8931fc3e22764728fa1"
+        },
+        "stderr": {
+          "path": "case-01.stderr.log",
+          "bytes": 195,
+          "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+        "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+        "executable_bytes": 13432648,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/src/android_tools.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+      "name": "project_model::tests::default_variants_preferred_build_type",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_build_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 503,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-02.stdout.log",
+          "bytes": 273,
+          "sha256": "6c30c4c69c3af1500519e552757b284aabb7794f1ca4fb874cb9fa115077a2fd"
+        },
+        "stderr": {
+          "path": "case-02.stderr.log",
+          "bytes": 195,
+          "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+        "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+        "executable_bytes": 13432648,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/src/android_tools.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+      "name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 503,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-03.stdout.log",
+          "bytes": 325,
+          "sha256": "38aa391dbd6f3e293d0aae623fba031bdeba4fd7cbad91725ed59da02db16869"
+        },
+        "stderr": {
+          "path": "case-03.stderr.log",
+          "bytes": 195,
+          "sha256": "20464ea21d3673a9a6ffd78415b8eb917476299ee61eaff328e6d8a6097df924"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+        "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+        "executable_bytes": 13432648,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/src/android_tools.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+      "name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 493,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-04.stdout.log",
+          "bytes": 303,
+          "sha256": "ce50e0d375bd1f1567f48c333a55ce712782e058907c7884590fa5295d7a1074"
+        },
+        "stderr": {
+          "path": "case-04.stderr.log",
+          "bytes": 195,
+          "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+        "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+        "executable_bytes": 13432648,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/src/android_tools.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+      "name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 491,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-05.stdout.log",
+          "bytes": 315,
+          "sha256": "45a13a39d051bfeecf4c4411f32259af35b9805a71ad47dbb3431c60eec5b510"
+        },
+        "stderr": {
+          "path": "case-05.stderr.log",
+          "bytes": 195,
+          "sha256": "29491933acb23bd76ae836afb66326e20f52aca853f9f411b84042b918d12cc3"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+        "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+        "executable_bytes": 13432648,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/src/android_tools.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+      "name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_mismatched_product_flavour_length",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 506,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-06.stdout.log",
+          "bytes": 299,
+          "sha256": "ef40df33cf2b5edeca4c25e5b1e485c176c0654191c5b17bd8909a21b1b5e94a"
+        },
+        "stderr": {
+          "path": "case-06.stderr.log",
+          "bytes": 195,
+          "sha256": "20464ea21d3673a9a6ffd78415b8eb917476299ee61eaff328e6d8a6097df924"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+        "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+        "executable_bytes": 13432648,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/src/android_tools.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+      "name": "project_model::tests::default_variants_on_empty",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_on_empty",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 505,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-07.stdout.log",
+          "bytes": 249,
+          "sha256": "ad88a06a71a52917410017369eadfd474c8f78b45752eef570f3dae49c239df7"
+        },
+        "stderr": {
+          "path": "case-07.stderr.log",
+          "bytes": 195,
+          "sha256": "20464ea21d3673a9a6ffd78415b8eb917476299ee61eaff328e6d8a6097df924"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+        "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+        "executable_bytes": 13432648,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/src/android_tools.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+      "name": "import_simple_gradle_project",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_simple_gradle_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 487,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-08.stdout.log",
+          "bytes": 211,
+          "sha256": "cfd480b1c435f6c982e776bdcee3339714e0212c803030cdb9ac92d81d212903"
+        },
+        "stderr": {
+          "path": "case-08.stderr.log",
+          "bytes": 207,
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+        "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+        "executable_bytes": 3095736,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+      "name": "import_subprojects",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subprojects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 491,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-09.stdout.log",
+          "bytes": 191,
+          "sha256": "a51863981ea06b5e938476b2a1fb553dad35c49be69be0b715abeed3c8cb12c5"
+        },
+        "stderr": {
+          "path": "case-09.stderr.log",
+          "bytes": 207,
+          "sha256": "428f1bc6d3df38374cc144c227b13a4241102fc2b2d4f07c5ab9d6e623c49ef2"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+        "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+        "executable_bytes": 3095736,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+      "name": "import_subprojects_with_missing_submodule",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subprojects_with_missing_submodule",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 482,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-10.stdout.log",
+          "bytes": 237,
+          "sha256": "805cc31c1b84d769700c38112fd64a2f6acc00ed79c38731fabe4c53876d4596"
+        },
+        "stderr": {
+          "path": "case-10.stderr.log",
+          "bytes": 207,
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+        "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+        "executable_bytes": 3095736,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+      "name": "import_subproject_with_custom_location",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subproject_with_custom_location",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 571,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-11.stdout.log",
+          "bytes": 231,
+          "sha256": "fd1e3a20822ca1ee90ba3f8065a067e986f5297984766dc7c2ce617c8964911a"
+        },
+        "stderr": {
+          "path": "case-11.stderr.log",
+          "bytes": 207,
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+        "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+        "executable_bytes": 3095736,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+      "name": "required_projects",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "required_projects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 598,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-12.stdout.log",
+          "bytes": 189,
+          "sha256": "50fb8e5244a18ea3798d802d530fd7516b41ae7dec7a66f0f860866adda9e835"
+        },
+        "stderr": {
+          "path": "case-12.stderr.log",
+          "bytes": 207,
+          "sha256": "428f1bc6d3df38374cc144c227b13a4241102fc2b2d4f07c5ab9d6e623c49ef2"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+        "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+        "executable_bytes": 3095736,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+      "name": "missing_required_projects",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "missing_required_projects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 578,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-13.stdout.log",
+          "bytes": 205,
+          "sha256": "64995b882a58f16613c4ab152977070f316d0b3b8795f9697ecb29483489d625"
+        },
+        "stderr": {
+          "path": "case-13.stderr.log",
+          "bytes": 207,
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+        "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+        "executable_bytes": 3095736,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+      "name": "missing_enclosing_project",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "missing_enclosing_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 799,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-14.stdout.log",
+          "bytes": 205,
+          "sha256": "e3e8296e8c708efec18600fe49511be2342cc72ace8033312818761c38d0ec2f"
+        },
+        "stderr": {
+          "path": "case-14.stderr.log",
+          "bytes": 207,
+          "sha256": "428f1bc6d3df38374cc144c227b13a4241102fc2b2d4f07c5ab9d6e623c49ef2"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+        "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+        "executable_bytes": 3095736,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+      "name": "transitive_dependencies",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "transitive_dependencies",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 568,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-15.stdout.log",
+          "bytes": 201,
+          "sha256": "bae7429704fc5e2b8b3fefedea0d03e02b23e83545dfd3a617cd1ff2d186cf27"
+        },
+        "stderr": {
+          "path": "case-15.stderr.log",
+          "bytes": 207,
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+        "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+        "executable_bytes": 3095736,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+      "name": "circular_dependencies",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "circular_dependencies",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 577,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-16.stdout.log",
+          "bytes": 197,
+          "sha256": "a33f90e237e9c68812c1a25be37806bd16c7cf55c1deb520bc4e874d96cc60cd"
+        },
+        "stderr": {
+          "path": "case-16.stderr.log",
+          "bytes": 207,
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+        "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+        "executable_bytes": 3095736,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+      "name": "test_show_visibility_icons_when_option_is_selected",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_show_visibility_icons_when_option_is_selected",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 480,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-17.stdout.log",
+          "bytes": 255,
+          "sha256": "d552194c7b0e74ac1681dd86c0c7cfd071b43861f1002ea9d93de6318963b8e3"
+        },
+        "stderr": {
+          "path": "case-17.stderr.log",
+          "bytes": 229,
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+        "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+        "executable_bytes": 2729136,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+      "name": "test_show_visibility_icons_when_option_is_unselected",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_show_visibility_icons_when_option_is_unselected",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 483,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-18.stdout.log",
+          "bytes": 259,
+          "sha256": "b85b3a92d67ab58da4feaeab05cd067d66d171ab678165c42a92d7784a6c591d"
+        },
+        "stderr": {
+          "path": "case-18.stderr.log",
+          "bytes": 229,
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+        "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+        "executable_bytes": 2729136,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+      "name": "test_android_view_is_default",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 488,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-19.stdout.log",
+          "bytes": 211,
+          "sha256": "933467b883a333c63715317d3bde66301ecc10c08920ca49cd5cd62cb8b48d26"
+        },
+        "stderr": {
+          "path": "case-19.stderr.log",
+          "bytes": 229,
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+        "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+        "executable_bytes": 2729136,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "name": "test_android_view_not_visible_in_unsupported_project_system",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_not_visible_in_unsupported_project_system",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 485,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-20.stdout.log",
+          "bytes": 273,
+          "sha256": "e3509d499a3490188d4f0f113aac0fa588c60e56e1a5b7e24d10c1df5974821c"
+        },
+        "stderr": {
+          "path": "case-20.stderr.log",
+          "bytes": 229,
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+        "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+        "executable_bytes": 2729136,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+      "name": "test_android_view_not_visible_in_non_android_project",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_not_visible_in_non_android_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 490,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-21.stdout.log",
+          "bytes": 259,
+          "sha256": "d849d960fc987c521452e53a50f063df76ff1382b2ee553197b5ef52a77b7d9a"
+        },
+        "stderr": {
+          "path": "case-21.stderr.log",
+          "bytes": 229,
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+        "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+        "executable_bytes": 2729136,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+      "name": "test_android_view_is_default_custom_property_handling",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_custom_property_handling",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 487,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-22.stdout.log",
+          "bytes": 261,
+          "sha256": "de51e02af5f07169ec7e09a2133be91cebc2055cf29ce610ccdf9fa5d8ac8378"
+        },
+        "stderr": {
+          "path": "case-22.stderr.log",
+          "bytes": 229,
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+        "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+        "executable_bytes": 2729136,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 490,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-23.stdout.log",
+          "bytes": 317,
+          "sha256": "967b96802e2d2178c85720a410dcf6623c0acdaa3ab961470d40fe8a402ecf2e"
+        },
+        "stderr": {
+          "path": "case-23.stderr.log",
+          "bytes": 229,
+          "sha256": "4ab3bd9b92cd20a91931b871df44b6459723762fd357eb5b61591b59d0ca888c"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+        "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+        "executable_bytes": 2729136,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 538,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-24.stdout.log",
+          "bytes": 323,
+          "sha256": "cd450d21c1ebb1ce30866fcabb1e53b303787acfcee123feac9e1de4aaf1da07"
+        },
+        "stderr": {
+          "path": "case-24.stderr.log",
+          "bytes": 229,
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+        "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+        "executable_bytes": 2729136,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+      "name": "test_android_view_is_default_metrics",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_metrics",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 497,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-25.stdout.log",
+          "bytes": 227,
+          "sha256": "de215e7fda819270eb073be42fffbc27547f8c4c22bfaab27cc4c11f8231a748"
+        },
+        "stderr": {
+          "path": "case-25.stderr.log",
+          "bytes": 229,
+          "sha256": "4ab3bd9b92cd20a91931b871df44b6459723762fd357eb5b61591b59d0ca888c"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+        "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+        "executable_bytes": 2729136,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+      "name": "tabbed_toolbar::tests::component_is_added_element",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::component_is_added_element",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 834,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-26.stdout.log",
+          "bytes": 254,
+          "sha256": "6c2e73bb81def6f3794b1b19e58e5b69317b8c16a09efb3382cf2e71a458fdca"
+        },
+        "stderr": {
+          "path": "case-26.stderr.log",
+          "bytes": 189,
+          "sha256": "ac7148cbe27418e0fb7dc73e03a06fe000c128df197ff84c63847d2f45daa6b9"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+        "executable_bytes": 469892192,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_ui/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_ui/src/android_ui.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+      "name": "tabbed_toolbar::tests::tab_is_added",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::tab_is_added",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 809,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-27.stdout.log",
+          "bytes": 226,
+          "sha256": "da4295cbe11554dd7f0e75a6676df333dd459e6941f86fb08d9c1b7a5cfc0009"
+        },
+        "stderr": {
+          "path": "case-27.stderr.log",
+          "bytes": 189,
+          "sha256": "6f71cff5c831fcde5c538b172b9b623f032b13414420bfc4dd31176cb91c2efe"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+        "executable_bytes": 469892192,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_ui/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_ui/src/android_ui.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+      "name": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::closed_is_called_when_clicked",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 793,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-28.stdout.log",
+          "bytes": 260,
+          "sha256": "5d41e83ce08ced183ee413faabeb8c4e75c33d32972ce9c9d8b517a9f9993b84"
+        },
+        "stderr": {
+          "path": "case-28.stderr.log",
+          "bytes": 189,
+          "sha256": "6d6c2a51361439af7ea379db88b2a7744ff9305247d94b728177c984e38be4dc"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+        "executable_bytes": 469892192,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_ui/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_ui/src/android_ui.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+      "name": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::no_close_button_when_no_listener",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 833,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-29.stdout.log",
+          "bytes": 266,
+          "sha256": "d90ddc6abadddde4faa33247d04b053225091c820e785e247324fa384a12f94f"
+        },
+        "stderr": {
+          "path": "case-29.stderr.log",
+          "bytes": 189,
+          "sha256": "404bdb2baa4b146492bdb9a128d3852154eff7d1ef8dc0c6eb63e3637a80d89a"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+        "executable_bytes": 469892192,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_ui/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_ui/src/android_ui.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+      "name": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 799,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-30.stdout.log",
+          "bytes": 270,
+          "sha256": "248e474ff57fbca23ef266924468ee6e96df5b2cabcb7bad53356599162bca71"
+        },
+        "stderr": {
+          "path": "case-30.stderr.log",
+          "bytes": 189,
+          "sha256": "eb7037cd41955cbeefe5d38968f75e1f98ba51157f5748b534f43877ccaec240"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+        "executable_bytes": 469892192,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_ui/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_ui/src/android_ui.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+      "name": "tabbed_toolbar::tests::can_select_tab_by_index",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::can_select_tab_by_index",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 792,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-31.stdout.log",
+          "bytes": 248,
+          "sha256": "4a78529e2c780b34eb3a8655ec9f2b9108d854a20f6aae972f523b80468aa773"
+        },
+        "stderr": {
+          "path": "case-31.stderr.log",
+          "bytes": 189,
+          "sha256": "6d6c2a51361439af7ea379db88b2a7744ff9305247d94b728177c984e38be4dc"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+        "executable_bytes": 469892192,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_ui/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_ui/src/android_ui.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+      "name": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 807,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-32.stdout.log",
+          "bytes": 292,
+          "sha256": "bd98294e34936ae4513ecf0f6271b65840d61aba2900e5bcd466c9927badf6e9"
+        },
+        "stderr": {
+          "path": "case-32.stderr.log",
+          "bytes": 189,
+          "sha256": "6f71cff5c831fcde5c538b172b9b623f032b13414420bfc4dd31176cb91c2efe"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+        "executable_bytes": 469892192,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_ui/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_ui/src/android_ui.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+      "name": "check_model_consumer_version_ordering",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "generated_artifacts",
+          "check_model_consumer_version_ordering",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 495,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-33.stdout.log",
+          "bytes": 229,
+          "sha256": "24bee923b798d11f5b49cd918378e6ad364d89f809bbeee73a475a1452a967af"
+        },
+        "stderr": {
+          "path": "case-33.stderr.log",
+          "bytes": 199,
+          "sha256": "ae063afa5f18ea96229e46fd9924f0b26569fb11f629d8e3884be3b11b205808"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/generated_artifacts-a8cb0ab117142344",
+        "executable_sha256": "2c51cda64aa2a2c0636740813b7407d6ef2e3b6ae66283d6604d4f4822ed415a",
+        "executable_bytes": 6151296,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/generated_artifacts.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+      "name": "check_model_version_ordering",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "generated_artifacts",
+          "check_model_version_ordering",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 502,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-34.stdout.log",
+          "bytes": 211,
+          "sha256": "5c234497b271397dc1d67452ae6cb549790df405d0eeb3818bf02a4c2422b426"
+        },
+        "stderr": {
+          "path": "case-34.stderr.log",
+          "bytes": 199,
+          "sha256": "313d953fc604018c56600084e653c3a2e4efbfd61147b9e5919d2bbbc87b9c4f"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/generated_artifacts-a8cb0ab117142344",
+        "executable_sha256": "2c51cda64aa2a2c0636740813b7407d6ef2e3b6ae66283d6604d4f4822ed415a",
+        "executable_bytes": 6151296,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/generated_artifacts.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+      "name": "check_supports_parallel_sync",
+      "status": "PASS",
+      "error": null,
+      "summary": {
+        "selected": 1,
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      },
+      "process": {
+        "argv": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "parallel_sync",
+          "check_supports_parallel_sync",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "success": true,
+        "exit_code": 0,
+        "elapsed_ms": 483,
+        "stopped_reason": null,
+        "stdout_eof": true,
+        "stderr_eof": true,
+        "leader_reaped": true,
+        "owned_group_signal_sent": true,
+        "stdout": {
+          "path": "case-35.stdout.log",
+          "bytes": 210,
+          "sha256": "2af40f67f388a9b8cc1ae1d92eda6d8ba1cd26d42d4bde48bd9dc48c2cd332c2"
+        },
+        "stderr": {
+          "path": "case-35.stderr.log",
+          "bytes": 187,
+          "sha256": "b6b80af5c5f5d1f844f67e7916a9d5024384bbcebdb05f3e03105917c80ac872"
+        }
+      },
+      "artifact": {
+        "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/parallel_sync-426af02f93fcc41f",
+        "executable_sha256": "eff0b98579578a184cee3de49db17f5ba6ca72ca98af6c54ba7c666964bbbbb4",
+        "executable_bytes": 1803752,
+        "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+        "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/parallel_sync.rs",
+        "profile": {
+          "opt_level": "0",
+          "debuginfo": 0,
+          "debug_assertions": true,
+          "overflow_checks": true,
+          "test": true
+        },
+        "features": []
+      }
+    }
+  ],
+  "no_reference_credit_added": true
+}

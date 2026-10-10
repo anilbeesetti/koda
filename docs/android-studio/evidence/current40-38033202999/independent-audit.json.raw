@@ -1,0 +1,3827 @@
+{
+  "audit": "Independent actual named40 uploaded artifact audit",
+  "failed": 0,
+  "findings": [],
+  "github_writes": false,
+  "ignored": 0,
+  "independently_checked_pinned_source_bindings": {
+    "/tmp/koda-table-reference-binding/.cargo/config.toml": {
+      "bytes": 1140,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "8ed5893b99ed318f9953acf0467a26f94a720347",
+      "materialized": false,
+      "repository_path": ".cargo/config.toml",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "bac3a152624488a520b492297901f8190a5acfc9dacb4cdda14b4c471fdca9ca"
+    },
+    "/tmp/koda-table-reference-binding/.github/workflows/fork_ci.yml": {
+      "bytes": 17660,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "302de98ccc9cdd20e64e239b1016e004ffd399a3",
+      "materialized": false,
+      "repository_path": ".github/workflows/fork_ci.yml",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "11005939b92801ef10997c247281b2026a95ee9632d8c3ac838585000c8fd2af"
+    },
+    "/tmp/koda-table-reference-binding/Cargo.lock": {
+      "bytes": 502629,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "ef6a16ec9d35bb369f7b09caf9ae29491c74b435",
+      "materialized": true,
+      "repository_path": "Cargo.lock",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "63d4df0b09f81a71ff2fd0bd877cdf4320241ae3793a892194165674268d5b29"
+    },
+    "/tmp/koda-table-reference-binding/Cargo.toml": {
+      "bytes": 41556,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "d50bcbe6128930eae1bcb232dd27c8ed04364bfc",
+      "materialized": true,
+      "repository_path": "Cargo.toml",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "b790b8de721d0849783583a2d1a7d21542488fc7d8d06ca3cc642271f297c782"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/Cargo.toml": {
+      "bytes": 1244,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "018b1004abb457cc6055a4ae2e9be797fbbeeaf6",
+      "materialized": true,
+      "repository_path": "crates/android_tools/Cargo.toml",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/src/build_variant_table.rs": {
+      "bytes": 17476,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "f211865e6e8d845aa4bb48a262a20c58dcfba219",
+      "materialized": true,
+      "repository_path": "crates/android_tools/src/build_variant_table.rs",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "6c925e082fdcccc81c43943bc0d251b8d6b8675d81053e9cd5530a7c691fc908"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/AndroidGradleTestUtils.kt": {
+      "bytes": 131023,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "a6f5f1e654bf0c71f499218bcf87fc2372127d9d",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/AndroidGradleTestUtils.kt",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "35dfe03ce1ffafa7e94750580fcfdaf95f41debdb31cd682eb88721571095ff4"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/BuildVariantTableModel.kt": {
+      "bytes": 6913,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "92c7b01af53d7b8dcf137386bd3f7e7e909ebcb1",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/BuildVariantTableModel.kt",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "f9a0da240e5f2ae43f7a0aeece2a7fc825a63b8d4ce0b5aa71e67966bf899b03"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt": {
+      "bytes": 8413,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "e24f500ca72c21060b690c8be9d37768b79533f0",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/IdeAndroidProjectType.kt": {
+      "bytes": 938,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "df01ce423f4ab8b92587310abe6624093876b7c0",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/IdeAndroidProjectType.kt",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "8c83a8430a1d05f2a85e8688a2425d5a11ee409f166429bb5805257ba3324950"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/LICENSE-APACHE": {
+      "bytes": 10768,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/LICENSE-APACHE",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/ModuleTypeComparator.java": {
+      "bytes": 1973,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "568b77d640d39ff3975b1b9c9c0bfc38cae9edca",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/ModuleTypeComparator.java",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "b4d93ad4075e6edba187de4899a5ee097f4ffd9cbe87c50e9494c6696c5939fe"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/NOTICE": {
+      "bytes": 764,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "c7dc797e7ec33749ccf0388c66999dc3cba22e42",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/NOTICE",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "b8f1ab2ac04781ecd917f3b91be421b0915dfde2dfde57d882617a5f5743cd88"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/different_type_rows_are_sorted_by_android_project_type.json": {
+      "bytes": 4921,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "b15430781e456f9e84499aa4d573026eb951af4d",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/different_type_rows_are_sorted_by_android_project_type.json",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "fbe58d3bfee413a0aedc710392c7be8769569d714d958d823d96ab81f0e8279c"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/same_type_rows_are_sorted.json": {
+      "bytes": 3852,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "365a9ed316c964c880595fccea367e993d2959f4",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/same_type_rows_are_sorted.json",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "5679f0f958805d7f8d08e34b51bd0d74bc88ef25b1b119ab36bbc9d2ed5500bb"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/test_default_variant_indicator.json": {
+      "bytes": 4148,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "1a51d8efdb68a39471e717b3707fab83e2091c3f",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/test_default_variant_indicator.json",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "ca8c1ded3e5f1f0dc606a5181737ec05234887eef4790291c26100908fa691fe"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/without_abi.json": {
+      "bytes": 4111,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "906747b1cedbf2576a02ae10aafa14d161b14443",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/without_abi.json",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "1356308f038ef85469c966eed8906d0941e1636ebf04208af8ea7540037ef72f"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/provenance.json": {
+      "bytes": 29544,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "e7dc98444cf9ca65ae38b311eff270897ba39f35",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/build_variant_table/provenance.json",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "e39b74477261877f6f6e7ea60e503b211f4736e06cd3319acb7c0316297ec08a"
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/tests/build_variant_table.rs": {
+      "bytes": 18907,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "914d04a293f86078fcf41c11080a82dd75e5a4b0",
+      "materialized": true,
+      "repository_path": "crates/android_tools/tests/build_variant_table.rs",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199"
+    },
+    "/tmp/koda-table-reference-binding/docs/android-studio/ports/build-variant-table-constructors.json": {
+      "bytes": 17599,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "522a28a207960cfb4c65d365cd22a4bc6a618026",
+      "materialized": true,
+      "repository_path": "docs/android-studio/ports/build-variant-table-constructors.json",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "bed58845cd2c746e4c8b06297d8b5ed3260ddd10f497f3609be766c6c206d3fa"
+    },
+    "/tmp/koda-table-reference-binding/docs/android-studio/test-parity.json": {
+      "bytes": 112613,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "54cc9e81ee66a019fff0597bf4a7ecd7dd510ae3",
+      "materialized": true,
+      "repository_path": "docs/android-studio/test-parity.json",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "b1d765a8d940ce0573a9ff20d1e97853a2b21787f7c5ac657cff3709290b2765"
+    },
+    "/tmp/koda-table-reference-binding/rust-toolchain.toml": {
+      "bytes": 262,
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "git_blob_oid": "0d6cb315024714f86ede7360d76a2e04bd5de0fd",
+      "materialized": true,
+      "repository_path": "rust-toolchain.toml",
+      "root": "/tmp/koda-table-reference-binding",
+      "sha256": "3d9002e97d5c3de93d49a1a36649153da4f40c29b061d0f2e09ea84ee143ba3e"
+    },
+    "/workspace/android-studio-project-context/.cargo/config.toml": {
+      "bytes": 1140,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "8ed5893b99ed318f9953acf0467a26f94a720347",
+      "materialized": true,
+      "repository_path": ".cargo/config.toml",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "bac3a152624488a520b492297901f8190a5acfc9dacb4cdda14b4c471fdca9ca"
+    },
+    "/workspace/android-studio-project-context/.github/workflows/fork_ci.yml": {
+      "bytes": 17660,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "302de98ccc9cdd20e64e239b1016e004ffd399a3",
+      "materialized": true,
+      "repository_path": ".github/workflows/fork_ci.yml",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "11005939b92801ef10997c247281b2026a95ee9632d8c3ac838585000c8fd2af"
+    },
+    "/workspace/android-studio-project-context/Cargo.lock": {
+      "bytes": 502577,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "ca2f763cef9ee6c3f00be71decd348f06b72daa9",
+      "materialized": true,
+      "repository_path": "Cargo.lock",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "fa8b5e7ac95efb90768bdb6fbc0a4b5cac0a30f773d243d7e2d4402c25a8bbd3"
+    },
+    "/workspace/android-studio-project-context/Cargo.toml": {
+      "bytes": 41556,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "d50bcbe6128930eae1bcb232dd27c8ed04364bfc",
+      "materialized": true,
+      "repository_path": "Cargo.toml",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "b790b8de721d0849783583a2d1a7d21542488fc7d8d06ca3cc642271f297c782"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/Cargo.toml": {
+      "bytes": 1167,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+      "materialized": true,
+      "repository_path": "crates/android_tools/Cargo.toml",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/generated_artifacts.rs": {
+      "bytes": 29465,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "4eda76e20ae905018e93b5f838a787d587f675f4",
+      "materialized": true,
+      "repository_path": "crates/android_tools/src/generated_artifacts.rs",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/gradle_import.rs": {
+      "bytes": 34562,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+      "materialized": true,
+      "repository_path": "crates/android_tools/src/gradle_import.rs",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/parallel_sync.rs": {
+      "bytes": 5096,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "044064055653b644ce90bd6d25c6f05fb581dcaf",
+      "materialized": true,
+      "repository_path": "crates/android_tools/src/parallel_sync.rs",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "943e61b9d6e3256275b38750a7f8595cc4aa270a099093f6df8404f6270998e7"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/project_model.gradle": {
+      "bytes": 36402,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "6e061e11ad2e19b7adfbb8a2efad6fabfa5e4c31",
+      "materialized": true,
+      "repository_path": "crates/android_tools/src/project_model.gradle",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/project_model.rs": {
+      "bytes": 74215,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+      "materialized": true,
+      "repository_path": "crates/android_tools/src/project_model.rs",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/project_view_preferences.rs": {
+      "bytes": 17160,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+      "materialized": true,
+      "repository_path": "crates/android_tools/src/project_view_preferences.rs",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/default_variants/DefaultVariants.kt": {
+      "bytes": 3474,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "6c9dfca1693ddb4901d34d82c69a9df71fa8c5c6",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/default_variants/DefaultVariants.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "afff0c6eac2817edd0887458dd4a942e952897e562cd61aa75f0a2d544d8c143"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json": {
+      "bytes": 7125,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "bc00eda5ec4a79748c251f9836150fcb9edc7463",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/default_variants/DefaultVariantsTest.kt": {
+      "bytes": 4006,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "7085783041ae55a7dc8733a5835e86edec3a88a9",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/default_variants/LICENSE-APACHE": {
+      "bytes": 10768,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/default_variants/LICENSE-APACHE",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/AGP-VERSION-NOTICE.md": {
+      "bytes": 700,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "04cccd32ef8c1e212d32d2d924604732392e0521",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/generated_artifacts/AGP-VERSION-NOTICE.md",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "8433d749e6d56e4e16df936c1086210342deb077eac7d0c5fce83b698933d794"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/AgpVersion.kt": {
+      "bytes": 11692,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "9ee78f3b5a6150c9d9a1c8316bd831f051daf83e",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/generated_artifacts/AgpVersion.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/BasicModules.kt": {
+      "bytes": 20824,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "05fa31f3d6ca8b1d9a93fa79a2e3906d7bc31328",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/generated_artifacts/BasicModules.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/LICENSE-APACHE": {
+      "bytes": 10768,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/generated_artifacts/LICENSE-APACHE",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt": {
+      "bytes": 3273,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "5651e9306772265e2a9bee919e546b3b8333067a",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/NOTICE": {
+      "bytes": 829,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "8aa8562ec535cd31c2aeb9b59d2d79b238a55477",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/generated_artifacts/NOTICE",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "bfee2f15cfeccecbf0ea05f503b6138398459e43dc59fb1da59c5944ae146111"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/GradleModuleImportTest.java": {
+      "bytes": 16649,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "2766dbb03741743c3aa44c897ea915df9b49ca62",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/gradle_import/GradleModuleImportTest.java",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/GradleModuleImporter.java": {
+      "bytes": 13457,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "489966f7b88fc6979a6646e517421a7ce44567fc",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/gradle_import/GradleModuleImporter.java",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "c43eea268ff7b08d2f24887a26ab5fb9f1130b34252d2c58128c8332a4156f10"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/GradleProjectDependencyParser.java": {
+      "bytes": 2657,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "6064694a4d8573fcfa3f4a348f900f97d3b5fb4d",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/gradle_import/GradleProjectDependencyParser.java",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "74bb668b43f9079e5da97e623c26810c20a93d02b05e3970f2557eace070b617"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/GradleSiblingLookup.java": {
+      "bytes": 2962,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "297e0f74c050a23360b4ccdca1ed7a0602d7efab",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/gradle_import/GradleSiblingLookup.java",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "2d58da04c171343dc4780967cb40ffcf623a9762f9f0f178f876fde4aa754509"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/LICENSE-APACHE": {
+      "bytes": 11358,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/build.gradle.template": {
+      "bytes": 433,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/AndroidProjectViewPane.java": {
+      "bytes": 22453,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "36b11d0994e18d2b1f223926e1792afb12101b51",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewPane.java",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "b48e40148e50ef8181985b042fea4a443c02e6435fe8ad469a9d2faa149c899b"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/AndroidProjectViewSettings.kt": {
+      "bytes": 1540,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "b2411f80891438e37ab88a0096db07e3024675ca",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewSettings.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "da5c27a8dbd12cf1aac96b310bad4c2ab17cba62c807e5ae0a7412ac98553051"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/AndroidProjectViewSettingsImpl.kt": {
+      "bytes": 3245,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "d5f36b071c9babff722d3c8dc1ac59f740db7443",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewSettingsImpl.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "365f0ab95b5e34c4f778778deddc6b33c84f932154e76472f123fdb9f6ec2013"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/AndroidProjectViewTest.java": {
+      "bytes": 34018,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "2c832cca092a41444a973451eeeb3710491d9bea",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewTest.java",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE": {
+      "bytes": 11358,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/README.md": {
+      "bytes": 1552,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "24584857adc341379ff276e3231193efe4d89fd5",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/project_view_preferences/README.md",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "2e7c9bcbf12571d225e9de62394644ea092ae7d795111847c8072c4e5befbee0"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/VMOptions.java": {
+      "bytes": 12076,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "f5fe6dcd34f291379f5e35fe2e253670d865d711",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/project_view_preferences/VMOptions.java",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "1912cf74d84f9c841de5b0eff2930445dcbeeb561685b568a96591e79d8fd487"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json": {
+      "bytes": 54329,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "d144a6aea19c8140a431ecbf7dd0d57b81b28ff9",
+      "materialized": true,
+      "repository_path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/tests/generated_artifacts.rs": {
+      "bytes": 29856,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "96c2485c44a9494094abe95b9a239ddf9b2c2efe",
+      "materialized": true,
+      "repository_path": "crates/android_tools/tests/generated_artifacts.rs",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/tests/gradle_import_reference.rs": {
+      "bytes": 23343,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+      "materialized": true,
+      "repository_path": "crates/android_tools/tests/gradle_import_reference.rs",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/tests/parallel_sync.rs": {
+      "bytes": 7401,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "c5ade43e183d198c686181d0a7e95dbb63d4be77",
+      "materialized": true,
+      "repository_path": "crates/android_tools/tests/parallel_sync.rs",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77"
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/tests/project_view_preferences_reference.rs": {
+      "bytes": 21493,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+      "materialized": true,
+      "repository_path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/Cargo.toml": {
+      "bytes": 1298,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "14c8ea55d804b1bfa8c5f0b6cf8aa17b233c37cd",
+      "materialized": true,
+      "repository_path": "crates/android_ui/Cargo.toml",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/src/tabbed_toolbar.rs": {
+      "bytes": 70278,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+      "materialized": true,
+      "repository_path": "crates/android_ui/src/tabbed_toolbar.rs",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/CommonButton.java": {
+      "bytes": 1239,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "9fcb8d37c39c7a13a9989f29b53d6bf31c703009",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/CommonButton.java",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "045a1a33fab2d4b122c61c8ec14a6421a10918b0f00124e487e76b1ac7f20070"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/CommonButtonUI.java": {
+      "bytes": 2402,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "a1816d402a1a45025a2ba4f98d0b6ba6b74bf707",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/CommonButtonUI.java",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "21608dbf7fcb189f9ab509521a18f337cccbe04899e4c85302386431f3ef0d3c"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/HorizontalScrollView.kt": {
+      "bytes": 2588,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "110adfa9e7ad9412aa8d6221a207598183e7dc22",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/HorizontalScrollView.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "61a532527f1f2588354d253958183781c43bfff819a78fb4b96f26b4cc394628"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE": {
+      "bytes": 11358,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/StudioColors.kt": {
+      "bytes": 6359,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "bf07531fe5baa75f3acd682d18a4f7d5c76441e4",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/StudioColors.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "67c76be7769a1738235034bb8d5e3fc1c6d516d884fb8ba54d2a6b6c498aaff3"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/TabbedToolbar.java": {
+      "bytes": 8195,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "ed7cdeab178cba7a214e122fc353e3b8fd5e4f85",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/TabbedToolbar.java",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "7e9b312394b5419b446880151f83cfb04f01f9acb7364b1ab3e01baa93c4e59f"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/TabbedToolbarTest.kt": {
+      "bytes": 4201,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "9baa48e84c96efdd83b8dcd3a609035255f9315e",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/TabbedToolbarTest.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/TabularLayout.kt": {
+      "bytes": 19117,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "cb67c484aceaaf4545adba885325068a3f9ad4a4",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/TabularLayout.kt",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "e37ba39e6331a828d2d01a7ad1d23657c65772ced5d3c683e5faf52d354c528e"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/add.svg": {
+      "bytes": 939,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "d1338c821bc60bac4a38dabfdb237db3988fc2c8",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/add.svg",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "90ea35fe93f58db441ccf12778af7b56f91897b3d44651b3801ec530a9dd9ba8"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/add_dark.svg": {
+      "bytes": 813,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "bba2d97e2463c03c8cb7af3867d4c759edf3f079",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/add_dark.svg",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "0869e8a2e80878011514360353b0d9e845a865bb65e30fce5a6bab57623043b9"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/close.svg": {
+      "bytes": 961,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "bcbc70c4169f088d6a61046c52472721eecaa1cc",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/close.svg",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "b720c5641b67d33efb0ef3feb5c11a7c49f9d89d26909776ae99a28358c6194a"
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/close_dark.svg": {
+      "bytes": 961,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "dedddd13ab25319b3cf7da119527e382a1696c1b",
+      "materialized": true,
+      "repository_path": "crates/android_ui/test_data/tabbed_toolbar/close_dark.svg",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "d9b4cdec69b34c7f88e07f701b37da02def1b59a5a455592cb85052e343c7716"
+    },
+    "/workspace/android-studio-project-context/docs/android-studio/reference-manifest.json": {
+      "bytes": 166821,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "1477b816668aeedc29e9786584b29a570077dea5",
+      "materialized": true,
+      "repository_path": "docs/android-studio/reference-manifest.json",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "e66d830a49f28541affba651148eed9c943aa85e16e42c1db651594bdce08b3b"
+    },
+    "/workspace/android-studio-project-context/docs/android-studio/test-parity.json": {
+      "bytes": 108910,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "aab919f0a9fd47c6a3c23f37ba2d06ebbadadbea",
+      "materialized": true,
+      "repository_path": "docs/android-studio/test-parity.json",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "74459a228dc19e395b937dbc6ecafd7d4c4dc7214993caf62625878a7438736e"
+    },
+    "/workspace/android-studio-project-context/rust-toolchain.toml": {
+      "bytes": 262,
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "git_blob_oid": "0d6cb315024714f86ede7360d76a2e04bd5de0fd",
+      "materialized": true,
+      "repository_path": "rust-toolchain.toml",
+      "root": "/workspace/android-studio-project-context",
+      "sha256": "3d9002e97d5c3de93d49a1a36649153da4f40c29b061d0f2e09ea84ee143ba3e"
+    }
+  },
+  "limits": [
+    "The uploaded ZIPs contain full raw compiler/test logs and receipts, but no ELF bytes. Remote ELF SHA-256 and byte counts are recorded by the reviewed runner and remain consistent across compilation and each exact run; this audit cannot independently rehash remote ELF bytes.",
+    "Only the 36 tests on exact source 594bf18526b3d7197315c82f5c6c3860cfb7bf5a and four on exact source 0d155a5fb869df3f10837db92e252e946687f7ae are covered. No Source17, combined source, native performance, full reference census, phase completion, or final merge credit.",
+    "The input manifest intentionally remains NOT_RUN. Historical parity matrix entries and eight stale whole-file ledger bindings require a separate reviewed additive evidence update; this audit edits neither.",
+    "Runner formatting, strict Clippy, all xtask tests, GitHub job status and ordinary full-app CI are outside the uploaded named-case ZIPs and require their own exact full job logs/status evidence.",
+    "Source snapshot assertions were produced by the runner on full remote materialization. Local materialized bytes or pinned Git blob bytes, SHA-256/blob/declaration bindings, and logical index are independently checked. Missing local sparse paths are explicitly listed; no local full materialization claim is made, without attempting to change local sparse checkout configuration."
+  ],
+  "manifest": {
+    "bytes": 195995,
+    "path": "/tmp/koda-current40-reference-ci/docs/android-studio/reference-named-tests.json",
+    "sha256": "61c460e6a01e45fb28e56e9620c3a95f868749b80669a5520a28a205f2db1ce7"
+  },
+  "old_evidence_mutations": false,
+  "passed": 40,
+  "preserved_input_physical_metadata": {
+    "/tmp/koda-current40-reference-ci/.github/workflows/android_reference_exact.yml": {
+      "atime_ns": 1791612218249838609,
+      "blocks": 16,
+      "bytes": 4805,
+      "ctime_ns": 1791612060619225582,
+      "device": 33,
+      "gid": 1000,
+      "inode": 346135,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791612060619225582,
+      "uid": 1000
+    },
+    "/tmp/koda-current40-reference-ci/docs/android-studio/reference-named-tests.json": {
+      "atime_ns": 1791612218249838609,
+      "blocks": 384,
+      "bytes": 195995,
+      "ctime_ns": 1791612191694832272,
+      "device": 33,
+      "gid": 1000,
+      "inode": 346131,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791612191694832272,
+      "uid": 1000
+    },
+    "/tmp/koda-current40-reference-ci/tooling/xtask/src/android_reference_runs.rs": {
+      "atime_ns": 1791614905001887481,
+      "blocks": 128,
+      "bytes": 63004,
+      "ctime_ns": 1791614904973887021,
+      "device": 33,
+      "gid": 1000,
+      "inode": 346132,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791614904973887021,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/Cargo.lock": {
+      "atime_ns": 1791605583510078496,
+      "blocks": 984,
+      "bytes": 502629,
+      "ctime_ns": 1791605289393304008,
+      "device": 33,
+      "gid": 1000,
+      "inode": 334191,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605289393304008,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/Cargo.toml": {
+      "atime_ns": 1791605583506078417,
+      "blocks": 88,
+      "bytes": 41556,
+      "ctime_ns": 1791605289393304008,
+      "device": 33,
+      "gid": 1000,
+      "inode": 334192,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605289393304008,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/Cargo.toml": {
+      "atime_ns": 1791605526219400112,
+      "blocks": 8,
+      "bytes": 1244,
+      "ctime_ns": 1791605289398122675,
+      "device": 33,
+      "gid": 1000,
+      "inode": 334210,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605289398122675,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/src/build_variant_table.rs": {
+      "atime_ns": 1791605583502078338,
+      "blocks": 40,
+      "bytes": 17476,
+      "ctime_ns": 1791605289398521155,
+      "device": 33,
+      "gid": 1000,
+      "inode": 334217,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605289398521155,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/AndroidGradleTestUtils.kt": {
+      "atime_ns": 1791605583518078653,
+      "blocks": 256,
+      "bytes": 131023,
+      "ctime_ns": 1791605526219309235,
+      "device": 33,
+      "gid": 1000,
+      "inode": 337373,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605526219309235,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/BuildVariantTableModel.kt": {
+      "atime_ns": 1791605526217141027,
+      "blocks": 16,
+      "bytes": 6913,
+      "ctime_ns": 1791605289401766501,
+      "device": 33,
+      "gid": 1000,
+      "inode": 334239,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605289401766501,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt": {
+      "atime_ns": 1791605325809881363,
+      "blocks": 24,
+      "bytes": 8413,
+      "ctime_ns": 1791605289401827984,
+      "device": 33,
+      "gid": 1000,
+      "inode": 334240,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605289401827984,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/IdeAndroidProjectType.kt": {
+      "atime_ns": 1791605526217141027,
+      "blocks": 8,
+      "bytes": 938,
+      "ctime_ns": 1791605289401827984,
+      "device": 33,
+      "gid": 1000,
+      "inode": 334241,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605289401827984,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/LICENSE-APACHE": {
+      "atime_ns": 1791605526220477845,
+      "blocks": 24,
+      "bytes": 10768,
+      "ctime_ns": 1791605526219369686,
+      "device": 33,
+      "gid": 1000,
+      "inode": 337374,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605526219369686,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/ModuleTypeComparator.java": {
+      "atime_ns": 1791605526217141027,
+      "blocks": 8,
+      "bytes": 1973,
+      "ctime_ns": 1791605289401827984,
+      "device": 33,
+      "gid": 1000,
+      "inode": 334242,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605289401827984,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/NOTICE": {
+      "atime_ns": 1791605625802786945,
+      "blocks": 8,
+      "bytes": 764,
+      "ctime_ns": 1791605526219400112,
+      "device": 33,
+      "gid": 1000,
+      "inode": 337375,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605526219400112,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/different_type_rows_are_sorted_by_android_project_type.json": {
+      "atime_ns": 1791606419077847913,
+      "blocks": 16,
+      "bytes": 4921,
+      "ctime_ns": 1791606419077835324,
+      "device": 33,
+      "gid": 1000,
+      "inode": 337380,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791606419077835324,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/same_type_rows_are_sorted.json": {
+      "atime_ns": 1791606419077459558,
+      "blocks": 8,
+      "bytes": 3852,
+      "ctime_ns": 1791606419077446419,
+      "device": 33,
+      "gid": 1000,
+      "inode": 337379,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791606419077446419,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/test_default_variant_indicator.json": {
+      "atime_ns": 1791605526220132275,
+      "blocks": 16,
+      "bytes": 4148,
+      "ctime_ns": 1791605526220067347,
+      "device": 33,
+      "gid": 1000,
+      "inode": 337378,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605526220067347,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/without_abi.json": {
+      "atime_ns": 1791605526219830530,
+      "blocks": 16,
+      "bytes": 4111,
+      "ctime_ns": 1791605526219721226,
+      "device": 33,
+      "gid": 1000,
+      "inode": 337377,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605526219721226,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/test_data/build_variant_table/provenance.json": {
+      "atime_ns": 1791606419083559934,
+      "blocks": 64,
+      "bytes": 29544,
+      "ctime_ns": 1791606419078422789,
+      "device": 33,
+      "gid": 1000,
+      "inode": 334243,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791606419078422789,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/crates/android_tools/tests/build_variant_table.rs": {
+      "atime_ns": 1791605305537559128,
+      "blocks": 40,
+      "bytes": 18907,
+      "ctime_ns": 1791605289419606629,
+      "device": 33,
+      "gid": 1000,
+      "inode": 334733,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605289419606629,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/docs/android-studio/ports/build-variant-table-constructors.json": {
+      "atime_ns": 1791606419083559934,
+      "blocks": 40,
+      "bytes": 17599,
+      "ctime_ns": 1791606419078628198,
+      "device": 33,
+      "gid": 1000,
+      "inode": 337381,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791606419078628198,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/docs/android-studio/test-parity.json": {
+      "atime_ns": 1791605561697718756,
+      "blocks": 224,
+      "bytes": 112613,
+      "ctime_ns": 1791605561689866901,
+      "device": 33,
+      "gid": 1000,
+      "inode": 337361,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605561689866901,
+      "uid": 1000
+    },
+    "/tmp/koda-table-reference-binding/rust-toolchain.toml": {
+      "atime_ns": 1791605299289459760,
+      "blocks": 8,
+      "bytes": 262,
+      "ctime_ns": 1791605290333318670,
+      "device": 33,
+      "gid": 1000,
+      "inode": 337370,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791605290333318670,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/.cargo/config.toml": {
+      "atime_ns": 1791566451954344162,
+      "blocks": 8,
+      "bytes": 1140,
+      "ctime_ns": 1791478592258566642,
+      "device": 27,
+      "gid": 1000,
+      "inode": 137479,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592258566642,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/.github/workflows/fork_ci.yml": {
+      "atime_ns": 1791589222512740097,
+      "blocks": 40,
+      "bytes": 17660,
+      "ctime_ns": 1791589222440738903,
+      "device": 27,
+      "gid": 1000,
+      "inode": 137529,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791589222440738903,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/Cargo.lock": {
+      "atime_ns": 1791566451958344231,
+      "blocks": 984,
+      "bytes": 502577,
+      "ctime_ns": 1791478592262256839,
+      "device": 27,
+      "gid": 1000,
+      "inode": 137558,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592262256839,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/Cargo.toml": {
+      "atime_ns": 1791566451958344231,
+      "blocks": 88,
+      "bytes": 41556,
+      "ctime_ns": 1791478592262256839,
+      "device": 27,
+      "gid": 1000,
+      "inode": 137559,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592262256839,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/Cargo.toml": {
+      "atime_ns": 1791565649500707985,
+      "blocks": 8,
+      "bytes": 1167,
+      "ctime_ns": 1791478592332550557,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138317,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592332550557,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/generated_artifacts.rs": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 64,
+      "bytes": 29465,
+      "ctime_ns": 1791478592333108608,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138327,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592333108608,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/gradle_import.rs": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 72,
+      "bytes": 34562,
+      "ctime_ns": 1791478592333108608,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138328,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592333108608,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/parallel_sync.rs": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 16,
+      "bytes": 5096,
+      "ctime_ns": 1791478592333108608,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138335,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592333108608,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/project_model.gradle": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 72,
+      "bytes": 36402,
+      "ctime_ns": 1791478592334258044,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138338,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592334258044,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/project_model.rs": {
+      "atime_ns": 1791592634813421376,
+      "blocks": 152,
+      "bytes": 74215,
+      "ctime_ns": 1791505937135271829,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138339,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791505937135271829,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/src/project_view_preferences.rs": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 40,
+      "bytes": 17160,
+      "ctime_ns": 1791478592334258044,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138343,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592334258044,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/default_variants/DefaultVariants.kt": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 8,
+      "bytes": 3474,
+      "ctime_ns": 1791478592335678650,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138346,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592335678650,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 16,
+      "bytes": 7125,
+      "ctime_ns": 1791478592335797869,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138347,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592335797869,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/default_variants/DefaultVariantsTest.kt": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 8,
+      "bytes": 4006,
+      "ctime_ns": 1791478592335797869,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138348,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592335797869,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/default_variants/LICENSE-APACHE": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 24,
+      "bytes": 10768,
+      "ctime_ns": 1791478592335797869,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138349,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592335797869,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/AGP-VERSION-NOTICE.md": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 8,
+      "bytes": 700,
+      "ctime_ns": 1791478592335797869,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138351,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592335797869,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/AgpVersion.kt": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 24,
+      "bytes": 11692,
+      "ctime_ns": 1791478592336005602,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138352,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336005602,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/BasicModules.kt": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 48,
+      "bytes": 20824,
+      "ctime_ns": 1791478592336005602,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138353,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336005602,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/LICENSE-APACHE": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 24,
+      "bytes": 10768,
+      "ctime_ns": 1791478592336005602,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138354,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336005602,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 8,
+      "bytes": 3273,
+      "ctime_ns": 1791478592336005602,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138355,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336005602,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/generated_artifacts/NOTICE": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 8,
+      "bytes": 829,
+      "ctime_ns": 1791478592336005602,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138356,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336005602,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/GradleModuleImportTest.java": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 40,
+      "bytes": 16649,
+      "ctime_ns": 1791478592336005602,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138358,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336005602,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/GradleModuleImporter.java": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 32,
+      "bytes": 13457,
+      "ctime_ns": 1791478592336401529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138359,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336401529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/GradleProjectDependencyParser.java": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 8,
+      "bytes": 2657,
+      "ctime_ns": 1791478592336401529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138360,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336401529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/GradleSiblingLookup.java": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 8,
+      "bytes": 2962,
+      "ctime_ns": 1791478592336401529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138361,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336401529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/LICENSE-APACHE": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 24,
+      "bytes": 11358,
+      "ctime_ns": 1791478592336401529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138362,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336401529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/gradle_import/build.gradle.template": {
+      "atime_ns": 1791566451986344714,
+      "blocks": 8,
+      "bytes": 433,
+      "ctime_ns": 1791478592336401529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138363,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592336401529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/AndroidProjectViewPane.java": {
+      "atime_ns": 1791566451990344782,
+      "blocks": 48,
+      "bytes": 22453,
+      "ctime_ns": 1791478592348714640,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138715,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592348714640,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/AndroidProjectViewSettings.kt": {
+      "atime_ns": 1791566451990344782,
+      "blocks": 8,
+      "bytes": 1540,
+      "ctime_ns": 1791478592348966529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138716,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592348966529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/AndroidProjectViewSettingsImpl.kt": {
+      "atime_ns": 1791566451990344782,
+      "blocks": 8,
+      "bytes": 3245,
+      "ctime_ns": 1791478592348966529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138717,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592348966529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/AndroidProjectViewTest.java": {
+      "atime_ns": 1791566451990344782,
+      "blocks": 72,
+      "bytes": 34018,
+      "ctime_ns": 1791478592348966529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138718,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592348966529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE": {
+      "atime_ns": 1791566451990344782,
+      "blocks": 24,
+      "bytes": 11358,
+      "ctime_ns": 1791478592348966529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138719,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592348966529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/README.md": {
+      "atime_ns": 1791566451990344782,
+      "blocks": 8,
+      "bytes": 1552,
+      "ctime_ns": 1791478592348966529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138720,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592348966529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/project_view_preferences/VMOptions.java": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 24,
+      "bytes": 12076,
+      "ctime_ns": 1791478592348966529,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138721,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592348966529,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 112,
+      "bytes": 54329,
+      "ctime_ns": 1791478592349727806,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138743,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592349727806,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/tests/generated_artifacts.rs": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 64,
+      "bytes": 29856,
+      "ctime_ns": 1791478592350290233,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138765,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592350290233,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/tests/gradle_import_reference.rs": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 48,
+      "bytes": 23343,
+      "ctime_ns": 1791478592350611157,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138766,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592350611157,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/tests/parallel_sync.rs": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 16,
+      "bytes": 7401,
+      "ctime_ns": 1791478592350611157,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138769,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592350611157,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_tools/tests/project_view_preferences_reference.rs": {
+      "atime_ns": 1791566097496076073,
+      "blocks": 48,
+      "bytes": 21493,
+      "ctime_ns": 1791478592350611157,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138773,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592350611157,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/Cargo.toml": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 8,
+      "bytes": 1298,
+      "ctime_ns": 1791478592350611157,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138775,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592350611157,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/src/tabbed_toolbar.rs": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 144,
+      "bytes": 70278,
+      "ctime_ns": 1791478592354258378,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138786,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354258378,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/CommonButton.java": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 8,
+      "bytes": 1239,
+      "ctime_ns": 1791478592354798586,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138789,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354798586,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/CommonButtonUI.java": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 8,
+      "bytes": 2402,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138790,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/HorizontalScrollView.kt": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 8,
+      "bytes": 2588,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138791,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 24,
+      "bytes": 11358,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138792,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/StudioColors.kt": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 16,
+      "bytes": 6359,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138793,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/TabbedToolbar.java": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 24,
+      "bytes": 8195,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138794,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/TabbedToolbarTest.kt": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 16,
+      "bytes": 4201,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138795,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/TabularLayout.kt": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 40,
+      "bytes": 19117,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138796,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/add.svg": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 8,
+      "bytes": 939,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138797,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/add_dark.svg": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 8,
+      "bytes": 813,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138798,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/close.svg": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 8,
+      "bytes": 961,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138799,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/crates/android_ui/test_data/tabbed_toolbar/close_dark.svg": {
+      "atime_ns": 1791566451994344851,
+      "blocks": 8,
+      "bytes": 961,
+      "ctime_ns": 1791478592354861290,
+      "device": 27,
+      "gid": 1000,
+      "inode": 138800,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478592354861290,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/docs/android-studio/reference-manifest.json": {
+      "atime_ns": 1791505869432607719,
+      "blocks": 328,
+      "bytes": 166821,
+      "ctime_ns": 1791505869432189689,
+      "device": 27,
+      "gid": 1000,
+      "inode": 145070,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791505869432189689,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/docs/android-studio/test-parity.json": {
+      "atime_ns": 1791592452382375233,
+      "blocks": 216,
+      "bytes": 108910,
+      "ctime_ns": 1791505869432368719,
+      "device": 27,
+      "gid": 1000,
+      "inode": 145213,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791505869432368719,
+      "uid": 1000
+    },
+    "/workspace/android-studio-project-context/rust-toolchain.toml": {
+      "atime_ns": 1791565649712711540,
+      "blocks": 8,
+      "bytes": 262,
+      "ctime_ns": 1791478593112321808,
+      "device": 27,
+      "gid": 1000,
+      "inode": 145603,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791478593112321808,
+      "uid": 1000
+    },
+    "/workspace/attachments/7ef7bf47-ee24-43f1-ae51-8097dad918c3/android-reference-table4-38033202999-1.zip": {
+      "atime_ns": 1791617602370428104,
+      "blocks": 24,
+      "bytes": 11784,
+      "ctime_ns": 1791617048432755282,
+      "device": 27,
+      "gid": 1000,
+      "inode": 146146,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791617048432755282,
+      "uid": 1000
+    },
+    "/workspace/attachments/ea5d9329-73fd-4662-b7bc-e67ee09cc628/android-reference-primary36-38033202999-1.zip": {
+      "atime_ns": 1791617602378285422,
+      "blocks": 232,
+      "bytes": 117068,
+      "ctime_ns": 1791617049180090990,
+      "device": 27,
+      "gid": 1000,
+      "inode": 146148,
+      "links": 1,
+      "mode": 33152,
+      "mtime_ns": 1791617049180090990,
+      "uid": 1000
+    }
+  },
+  "readonly_holds": "CLOSED0; all opened files and ZIP members closed; no spawned compiler/app/Gradle/SDK/GitHub actor",
+  "reports": [
+    {
+      "archive_inventory": [
+        {
+          "bytes": 199,
+          "crc32": "9240cd7e",
+          "path": "current40-proof/case-00.stderr.log",
+          "sha256": "d2ad108cf5e23bb491459e15300f92cc1ca605dcade8f96a2fbe08d10a307f0b"
+        },
+        {
+          "bytes": 177,
+          "crc32": "b487ee9a",
+          "path": "current40-proof/case-00.stdout.log",
+          "sha256": "78e1474fd5818f2f1ebf774b4fd7580ec80ea3d06ff2fa62c323921aef254b80"
+        },
+        {
+          "bytes": 199,
+          "crc32": "9240cd7e",
+          "path": "current40-proof/case-01.stderr.log",
+          "sha256": "d2ad108cf5e23bb491459e15300f92cc1ca605dcade8f96a2fbe08d10a307f0b"
+        },
+        {
+          "bytes": 215,
+          "crc32": "92b6bd03",
+          "path": "current40-proof/case-01.stdout.log",
+          "sha256": "aed993860df9716dd124bb1f41d32b709da447ce62772328907d32a4d2703118"
+        },
+        {
+          "bytes": 199,
+          "crc32": "9240cd7e",
+          "path": "current40-proof/case-02.stderr.log",
+          "sha256": "d2ad108cf5e23bb491459e15300f92cc1ca605dcade8f96a2fbe08d10a307f0b"
+        },
+        {
+          "bytes": 205,
+          "crc32": "eb7f7582",
+          "path": "current40-proof/case-02.stdout.log",
+          "sha256": "9f117cb042b72b97f10cd7428a07dc4f1cf1706a9967ef9883b762c1a924dc3d"
+        },
+        {
+          "bytes": 199,
+          "crc32": "48961da3",
+          "path": "current40-proof/case-03.stderr.log",
+          "sha256": "bc5b4a3a95ff87fab304ac1509957685df66e4addbfed48e2849bfa8c0cd55d9"
+        },
+        {
+          "bytes": 263,
+          "crc32": "0da122ce",
+          "path": "current40-proof/case-03.stdout.log",
+          "sha256": "109686d4d1a669143571b6445b6af850935801e1a127e0e09b3fd835dedd173b"
+        },
+        {
+          "bytes": 2221,
+          "crc32": "2c135e75",
+          "path": "current40-proof/group-00.stderr.log",
+          "sha256": "ca3c0c6b2c794e42888a7b72d7717c0e45c2b0df3ee8f0fab53e00c5b5704238"
+        },
+        {
+          "bytes": 75807,
+          "crc32": "4b3e173c",
+          "path": "current40-proof/group-00.stdout.log",
+          "sha256": "e8fc3d9ec9fe208fb276366da1fd83d3c0519faf33247db55d2cb1cb1326baf8"
+        },
+        {
+          "bytes": 11992,
+          "crc32": "79868f58",
+          "path": "current40-proof/receipt.json",
+          "sha256": "1a787041a2bb27ff6c15e5f0ab98de59b60847acb71161e771e47efe26a7950e"
+        },
+        {
+          "bytes": 987,
+          "crc32": "3061bb88",
+          "path": "current40-worker.log",
+          "sha256": "0d351fc76f0cf2ede594705b4c05c70434add8cb3570828e2f36c3f675465b7c"
+        }
+      ],
+      "cases": [
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 6789152,
+          "executable_sha256": "0539f9aeaf26485e56ecfb8344e7a5cc6f6771aed38b0e149333876928c377f3",
+          "name": "without_abi",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.withoutAbi",
+          "source_named_declaration_sha256": "fba0f464bf57837bddf341e1e91a9df0fd1afe5a73351414df0dfadf1060f873",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 199,
+            "path": "case-00.stderr.log",
+            "sha256": "d2ad108cf5e23bb491459e15300f92cc1ca605dcade8f96a2fbe08d10a307f0b"
+          },
+          "stdout": {
+            "bytes": 177,
+            "path": "case-00.stdout.log",
+            "sha256": "78e1474fd5818f2f1ebf774b4fd7580ec80ea3d06ff2fa62c323921aef254b80"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 6789152,
+          "executable_sha256": "0539f9aeaf26485e56ecfb8344e7a5cc6f6771aed38b0e149333876928c377f3",
+          "name": "test_default_variant_indicator",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.testDefaultVariantIndicator",
+          "source_named_declaration_sha256": "5ebe7786265c50501c45eabf09f48bc37135d14ade2dd4c57b1757cf31a0e432",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 199,
+            "path": "case-01.stderr.log",
+            "sha256": "d2ad108cf5e23bb491459e15300f92cc1ca605dcade8f96a2fbe08d10a307f0b"
+          },
+          "stdout": {
+            "bytes": 215,
+            "path": "case-01.stdout.log",
+            "sha256": "aed993860df9716dd124bb1f41d32b709da447ce62772328907d32a4d2703118"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 6789152,
+          "executable_sha256": "0539f9aeaf26485e56ecfb8344e7a5cc6f6771aed38b0e149333876928c377f3",
+          "name": "same_type_rows_are_sorted",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+          "source_named_declaration_sha256": "d00624c59d9d57e4851cc30073b6eba87eda868a43c240fc15783945ecbafd98",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 199,
+            "path": "case-02.stderr.log",
+            "sha256": "d2ad108cf5e23bb491459e15300f92cc1ca605dcade8f96a2fbe08d10a307f0b"
+          },
+          "stdout": {
+            "bytes": 205,
+            "path": "case-02.stdout.log",
+            "sha256": "9f117cb042b72b97f10cd7428a07dc4f1cf1706a9967ef9883b762c1a924dc3d"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 6789152,
+          "executable_sha256": "0539f9aeaf26485e56ecfb8344e7a5cc6f6771aed38b0e149333876928c377f3",
+          "name": "different_type_rows_are_sorted_by_android_project_type",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
+          "source_named_declaration_sha256": "8206814040194a381271ae6e69d1aa3a7373098291628d471a362885f2b55fb4",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 199,
+            "path": "case-03.stderr.log",
+            "sha256": "bc5b4a3a95ff87fab304ac1509957685df66e4addbfed48e2849bfa8c0cd55d9"
+          },
+          "stdout": {
+            "bytes": 263,
+            "path": "case-03.stdout.log",
+            "sha256": "109686d4d1a669143571b6445b6af850935801e1a127e0e09b3fd835dedd173b"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        }
+      ],
+      "groups": [
+        {
+          "artifact": {
+            "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/build_variant_table-5b81d4a2c88dd804",
+            "executable_bytes": 6789152,
+            "executable_sha256": "0539f9aeaf26485e56ecfb8344e7a5cc6f6771aed38b0e149333876928c377f3",
+            "features": [],
+            "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+            "profile": {
+              "debug_assertions": true,
+              "debuginfo": 0,
+              "opt_level": "0",
+              "overflow_checks": true,
+              "test": true
+            },
+            "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/build_variant_table.rs"
+          },
+          "compiler_and_receipt_identity_equal": true,
+          "compiler_process": {
+            "argv": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "build_variant_table",
+              "--no-run",
+              "--message-format=json"
+            ],
+            "elapsed_ms": 17587,
+            "exit_code": 0,
+            "leader_reaped": true,
+            "owned_group_signal_sent": true,
+            "stderr": {
+              "bytes": 2221,
+              "path": "group-00.stderr.log",
+              "sha256": "ca3c0c6b2c794e42888a7b72d7717c0e45c2b0df3ee8f0fab53e00c5b5704238"
+            },
+            "stderr_eof": true,
+            "stdout": {
+              "bytes": 75807,
+              "path": "group-00.stdout.log",
+              "sha256": "e8fc3d9ec9fe208fb276366da1fd83d3c0519faf33247db55d2cb1cb1326baf8"
+            },
+            "stdout_eof": true,
+            "stopped_reason": null,
+            "success": true
+          },
+          "integration_target": "build_variant_table",
+          "package": "android_tools"
+        }
+      ],
+      "inflated_bytes": 92663,
+      "input_zip": {
+        "artifact_id": 11662913280,
+        "bytes": 11784,
+        "file_count": 12,
+        "job_id": 114158219053,
+        "label": "table4",
+        "local_root": "/tmp/koda-table-reference-binding",
+        "path": "/workspace/attachments/7ef7bf47-ee24-43f1-ae51-8097dad918c3/android-reference-table4-38033202999-1.zip",
+        "sha256": "dedac14d457eaad1263134dfd3fd5dca913406d29b87c836ecec3f7bd76b4229",
+        "tracked_count": 7168
+      },
+      "label": "table4",
+      "local_binding_count": 22,
+      "local_git_blob_only_paths": [
+        ".github/workflows/fork_ci.yml",
+        ".cargo/config.toml"
+      ],
+      "receipt_sha256": "1a787041a2bb27ff6c15e5f0ab98de59b60847acb71161e771e47efe26a7950e",
+      "source_before_after_equal": {
+        "bound_files": 22,
+        "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+        "full_materialization": true,
+        "index_sha256": "0f8b551f385956dc748c48737c20614b787c9c7cec7261be266c2421b981aa82",
+        "tracked_files": 7168,
+        "tree": "c5306d1dc5714e629eb0dd658fd230f77af84f52"
+      },
+      "source_binding_bytes": 938454,
+      "status": "PASS",
+      "worker_named_pass_count": 4,
+      "zip_crc_paths_regular_files_and_bounds_pass": true
+    },
+    {
+      "archive_inventory": [
+        {
+          "bytes": 195,
+          "crc32": "b7192375",
+          "path": "current40-proof/case-00.stderr.log",
+          "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+        },
+        {
+          "bytes": 195,
+          "crc32": "b7192375",
+          "path": "current40-proof/case-01.stderr.log",
+          "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+        },
+        {
+          "bytes": 255,
+          "crc32": "b121e121",
+          "path": "current40-proof/case-00.stdout.log",
+          "sha256": "618d388f1ed9a973b5e4c953d47d322840e0764043ee5e47fd3b5fd978a325ce"
+        },
+        {
+          "bytes": 263,
+          "crc32": "7e1d6ac4",
+          "path": "current40-proof/case-01.stdout.log",
+          "sha256": "0278d4d3170f42150768cb132947e7111749c6c0b6abf8931fc3e22764728fa1"
+        },
+        {
+          "bytes": 195,
+          "crc32": "b7192375",
+          "path": "current40-proof/case-02.stderr.log",
+          "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+        },
+        {
+          "bytes": 273,
+          "crc32": "8acbdf77",
+          "path": "current40-proof/case-02.stdout.log",
+          "sha256": "6c30c4c69c3af1500519e552757b284aabb7794f1ca4fb874cb9fa115077a2fd"
+        },
+        {
+          "bytes": 195,
+          "crc32": "07f6fa7f",
+          "path": "current40-proof/case-03.stderr.log",
+          "sha256": "20464ea21d3673a9a6ffd78415b8eb917476299ee61eaff328e6d8a6097df924"
+        },
+        {
+          "bytes": 325,
+          "crc32": "b3a45f3d",
+          "path": "current40-proof/case-03.stdout.log",
+          "sha256": "38aa391dbd6f3e293d0aae623fba031bdeba4fd7cbad91725ed59da02db16869"
+        },
+        {
+          "bytes": 195,
+          "crc32": "b7192375",
+          "path": "current40-proof/case-04.stderr.log",
+          "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+        },
+        {
+          "bytes": 303,
+          "crc32": "3621f73e",
+          "path": "current40-proof/case-04.stdout.log",
+          "sha256": "ce50e0d375bd1f1567f48c333a55ce712782e058907c7884590fa5295d7a1074"
+        },
+        {
+          "bytes": 195,
+          "crc32": "bd584e2a",
+          "path": "current40-proof/case-05.stderr.log",
+          "sha256": "29491933acb23bd76ae836afb66326e20f52aca853f9f411b84042b918d12cc3"
+        },
+        {
+          "bytes": 315,
+          "crc32": "bb86676b",
+          "path": "current40-proof/case-05.stdout.log",
+          "sha256": "45a13a39d051bfeecf4c4411f32259af35b9805a71ad47dbb3431c60eec5b510"
+        },
+        {
+          "bytes": 195,
+          "crc32": "07f6fa7f",
+          "path": "current40-proof/case-06.stderr.log",
+          "sha256": "20464ea21d3673a9a6ffd78415b8eb917476299ee61eaff328e6d8a6097df924"
+        },
+        {
+          "bytes": 299,
+          "crc32": "9e4939b5",
+          "path": "current40-proof/case-06.stdout.log",
+          "sha256": "ef40df33cf2b5edeca4c25e5b1e485c176c0654191c5b17bd8909a21b1b5e94a"
+        },
+        {
+          "bytes": 195,
+          "crc32": "07f6fa7f",
+          "path": "current40-proof/case-07.stderr.log",
+          "sha256": "20464ea21d3673a9a6ffd78415b8eb917476299ee61eaff328e6d8a6097df924"
+        },
+        {
+          "bytes": 249,
+          "crc32": "8eeb2041",
+          "path": "current40-proof/case-07.stdout.log",
+          "sha256": "ad88a06a71a52917410017369eadfd474c8f78b45752eef570f3dae49c239df7"
+        },
+        {
+          "bytes": 207,
+          "crc32": "50d6482c",
+          "path": "current40-proof/case-08.stderr.log",
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        },
+        {
+          "bytes": 211,
+          "crc32": "09fa29e4",
+          "path": "current40-proof/case-08.stdout.log",
+          "sha256": "cfd480b1c435f6c982e776bdcee3339714e0212c803030cdb9ac92d81d212903"
+        },
+        {
+          "bytes": 207,
+          "crc32": "612fb06e",
+          "path": "current40-proof/case-09.stderr.log",
+          "sha256": "428f1bc6d3df38374cc144c227b13a4241102fc2b2d4f07c5ab9d6e623c49ef2"
+        },
+        {
+          "bytes": 191,
+          "crc32": "3a2f691f",
+          "path": "current40-proof/case-09.stdout.log",
+          "sha256": "a51863981ea06b5e938476b2a1fb553dad35c49be69be0b715abeed3c8cb12c5"
+        },
+        {
+          "bytes": 207,
+          "crc32": "50d6482c",
+          "path": "current40-proof/case-10.stderr.log",
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        },
+        {
+          "bytes": 207,
+          "crc32": "50d6482c",
+          "path": "current40-proof/case-11.stderr.log",
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        },
+        {
+          "bytes": 237,
+          "crc32": "b7a0b76d",
+          "path": "current40-proof/case-10.stdout.log",
+          "sha256": "805cc31c1b84d769700c38112fd64a2f6acc00ed79c38731fabe4c53876d4596"
+        },
+        {
+          "bytes": 231,
+          "crc32": "d551d40c",
+          "path": "current40-proof/case-11.stdout.log",
+          "sha256": "fd1e3a20822ca1ee90ba3f8065a067e986f5297984766dc7c2ce617c8964911a"
+        },
+        {
+          "bytes": 207,
+          "crc32": "612fb06e",
+          "path": "current40-proof/case-12.stderr.log",
+          "sha256": "428f1bc6d3df38374cc144c227b13a4241102fc2b2d4f07c5ab9d6e623c49ef2"
+        },
+        {
+          "bytes": 189,
+          "crc32": "a2c3811f",
+          "path": "current40-proof/case-12.stdout.log",
+          "sha256": "50fb8e5244a18ea3798d802d530fd7516b41ae7dec7a66f0f860866adda9e835"
+        },
+        {
+          "bytes": 207,
+          "crc32": "50d6482c",
+          "path": "current40-proof/case-13.stderr.log",
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        },
+        {
+          "bytes": 205,
+          "crc32": "d0e4272d",
+          "path": "current40-proof/case-13.stdout.log",
+          "sha256": "64995b882a58f16613c4ab152977070f316d0b3b8795f9697ecb29483489d625"
+        },
+        {
+          "bytes": 207,
+          "crc32": "612fb06e",
+          "path": "current40-proof/case-14.stderr.log",
+          "sha256": "428f1bc6d3df38374cc144c227b13a4241102fc2b2d4f07c5ab9d6e623c49ef2"
+        },
+        {
+          "bytes": 205,
+          "crc32": "a4aa9861",
+          "path": "current40-proof/case-14.stdout.log",
+          "sha256": "e3e8296e8c708efec18600fe49511be2342cc72ace8033312818761c38d0ec2f"
+        },
+        {
+          "bytes": 207,
+          "crc32": "50d6482c",
+          "path": "current40-proof/case-15.stderr.log",
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        },
+        {
+          "bytes": 201,
+          "crc32": "c9232407",
+          "path": "current40-proof/case-15.stdout.log",
+          "sha256": "bae7429704fc5e2b8b3fefedea0d03e02b23e83545dfd3a617cd1ff2d186cf27"
+        },
+        {
+          "bytes": 207,
+          "crc32": "50d6482c",
+          "path": "current40-proof/case-16.stderr.log",
+          "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+        },
+        {
+          "bytes": 197,
+          "crc32": "00a2a64a",
+          "path": "current40-proof/case-16.stdout.log",
+          "sha256": "a33f90e237e9c68812c1a25be37806bd16c7cf55c1deb520bc4e874d96cc60cd"
+        },
+        {
+          "bytes": 229,
+          "crc32": "3655560d",
+          "path": "current40-proof/case-17.stderr.log",
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        },
+        {
+          "bytes": 229,
+          "crc32": "3655560d",
+          "path": "current40-proof/case-18.stderr.log",
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        },
+        {
+          "bytes": 255,
+          "crc32": "7c10801e",
+          "path": "current40-proof/case-17.stdout.log",
+          "sha256": "d552194c7b0e74ac1681dd86c0c7cfd071b43861f1002ea9d93de6318963b8e3"
+        },
+        {
+          "bytes": 259,
+          "crc32": "cad2f55c",
+          "path": "current40-proof/case-18.stdout.log",
+          "sha256": "b85b3a92d67ab58da4feaeab05cd067d66d171ab678165c42a92d7784a6c591d"
+        },
+        {
+          "bytes": 229,
+          "crc32": "3655560d",
+          "path": "current40-proof/case-19.stderr.log",
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        },
+        {
+          "bytes": 229,
+          "crc32": "3655560d",
+          "path": "current40-proof/case-20.stderr.log",
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        },
+        {
+          "bytes": 211,
+          "crc32": "e90e0f5e",
+          "path": "current40-proof/case-19.stdout.log",
+          "sha256": "933467b883a333c63715317d3bde66301ecc10c08920ca49cd5cd62cb8b48d26"
+        },
+        {
+          "bytes": 273,
+          "crc32": "3fab3b5c",
+          "path": "current40-proof/case-20.stdout.log",
+          "sha256": "e3509d499a3490188d4f0f113aac0fa588c60e56e1a5b7e24d10c1df5974821c"
+        },
+        {
+          "bytes": 229,
+          "crc32": "3655560d",
+          "path": "current40-proof/case-21.stderr.log",
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        },
+        {
+          "bytes": 259,
+          "crc32": "6f77d451",
+          "path": "current40-proof/case-21.stdout.log",
+          "sha256": "d849d960fc987c521452e53a50f063df76ff1382b2ee553197b5ef52a77b7d9a"
+        },
+        {
+          "bytes": 229,
+          "crc32": "3655560d",
+          "path": "current40-proof/case-22.stderr.log",
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        },
+        {
+          "bytes": 261,
+          "crc32": "d4773fe0",
+          "path": "current40-proof/case-22.stdout.log",
+          "sha256": "de51e02af5f07169ec7e09a2133be91cebc2055cf29ce610ccdf9fa5d8ac8378"
+        },
+        {
+          "bytes": 229,
+          "crc32": "536c69fc",
+          "path": "current40-proof/case-23.stderr.log",
+          "sha256": "4ab3bd9b92cd20a91931b871df44b6459723762fd357eb5b61591b59d0ca888c"
+        },
+        {
+          "bytes": 317,
+          "crc32": "ba16150c",
+          "path": "current40-proof/case-23.stdout.log",
+          "sha256": "967b96802e2d2178c85720a410dcf6623c0acdaa3ab961470d40fe8a402ecf2e"
+        },
+        {
+          "bytes": 229,
+          "crc32": "3655560d",
+          "path": "current40-proof/case-24.stderr.log",
+          "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+        },
+        {
+          "bytes": 323,
+          "crc32": "c429ceb5",
+          "path": "current40-proof/case-24.stdout.log",
+          "sha256": "cd450d21c1ebb1ce30866fcabb1e53b303787acfcee123feac9e1de4aaf1da07"
+        },
+        {
+          "bytes": 229,
+          "crc32": "536c69fc",
+          "path": "current40-proof/case-25.stderr.log",
+          "sha256": "4ab3bd9b92cd20a91931b871df44b6459723762fd357eb5b61591b59d0ca888c"
+        },
+        {
+          "bytes": 227,
+          "crc32": "7a062160",
+          "path": "current40-proof/case-25.stdout.log",
+          "sha256": "de215e7fda819270eb073be42fffbc27547f8c4c22bfaab27cc4c11f8231a748"
+        },
+        {
+          "bytes": 189,
+          "crc32": "0ce656e3",
+          "path": "current40-proof/case-26.stderr.log",
+          "sha256": "ac7148cbe27418e0fb7dc73e03a06fe000c128df197ff84c63847d2f45daa6b9"
+        },
+        {
+          "bytes": 254,
+          "crc32": "6fa611af",
+          "path": "current40-proof/case-26.stdout.log",
+          "sha256": "6c2e73bb81def6f3794b1b19e58e5b69317b8c16a09efb3382cf2e71a458fdca"
+        },
+        {
+          "bytes": 189,
+          "crc32": "6e02f76c",
+          "path": "current40-proof/case-27.stderr.log",
+          "sha256": "6f71cff5c831fcde5c538b172b9b623f032b13414420bfc4dd31176cb91c2efe"
+        },
+        {
+          "bytes": 226,
+          "crc32": "7d94852a",
+          "path": "current40-proof/case-27.stdout.log",
+          "sha256": "da4295cbe11554dd7f0e75a6676df333dd459e6941f86fb08d9c1b7a5cfc0009"
+        },
+        {
+          "bytes": 189,
+          "crc32": "d0442c09",
+          "path": "current40-proof/case-28.stderr.log",
+          "sha256": "6d6c2a51361439af7ea379db88b2a7744ff9305247d94b728177c984e38be4dc"
+        },
+        {
+          "bytes": 260,
+          "crc32": "15c8cc2b",
+          "path": "current40-proof/case-28.stdout.log",
+          "sha256": "5d41e83ce08ced183ee413faabeb8c4e75c33d32972ce9c9d8b517a9f9993b84"
+        },
+        {
+          "bytes": 189,
+          "crc32": "c92f15fd",
+          "path": "current40-proof/case-29.stderr.log",
+          "sha256": "404bdb2baa4b146492bdb9a128d3852154eff7d1ef8dc0c6eb63e3637a80d89a"
+        },
+        {
+          "bytes": 266,
+          "crc32": "b8f4b8c0",
+          "path": "current40-proof/case-29.stdout.log",
+          "sha256": "d90ddc6abadddde4faa33247d04b053225091c820e785e247324fa384a12f94f"
+        },
+        {
+          "bytes": 189,
+          "crc32": "e4a9ef90",
+          "path": "current40-proof/case-30.stderr.log",
+          "sha256": "eb7037cd41955cbeefe5d38968f75e1f98ba51157f5748b534f43877ccaec240"
+        },
+        {
+          "bytes": 270,
+          "crc32": "136584c1",
+          "path": "current40-proof/case-30.stdout.log",
+          "sha256": "248e474ff57fbca23ef266924468ee6e96df5b2cabcb7bad53356599162bca71"
+        },
+        {
+          "bytes": 189,
+          "crc32": "d0442c09",
+          "path": "current40-proof/case-31.stderr.log",
+          "sha256": "6d6c2a51361439af7ea379db88b2a7744ff9305247d94b728177c984e38be4dc"
+        },
+        {
+          "bytes": 248,
+          "crc32": "ba51b015",
+          "path": "current40-proof/case-31.stdout.log",
+          "sha256": "4a78529e2c780b34eb3a8655ec9f2b9108d854a20f6aae972f523b80468aa773"
+        },
+        {
+          "bytes": 189,
+          "crc32": "6e02f76c",
+          "path": "current40-proof/case-32.stderr.log",
+          "sha256": "6f71cff5c831fcde5c538b172b9b623f032b13414420bfc4dd31176cb91c2efe"
+        },
+        {
+          "bytes": 292,
+          "crc32": "b2c3c34d",
+          "path": "current40-proof/case-32.stdout.log",
+          "sha256": "bd98294e34936ae4513ecf0f6271b65840d61aba2900e5bcd466c9927badf6e9"
+        },
+        {
+          "bytes": 199,
+          "crc32": "d61a10ae",
+          "path": "current40-proof/case-33.stderr.log",
+          "sha256": "ae063afa5f18ea96229e46fd9924f0b26569fb11f629d8e3884be3b11b205808"
+        },
+        {
+          "bytes": 229,
+          "crc32": "da71260c",
+          "path": "current40-proof/case-33.stdout.log",
+          "sha256": "24bee923b798d11f5b49cd918378e6ad364d89f809bbeee73a475a1452a967af"
+        },
+        {
+          "bytes": 199,
+          "crc32": "2978a2da",
+          "path": "current40-proof/case-34.stderr.log",
+          "sha256": "313d953fc604018c56600084e653c3a2e4efbfd61147b9e5919d2bbbc87b9c4f"
+        },
+        {
+          "bytes": 211,
+          "crc32": "a021698e",
+          "path": "current40-proof/case-34.stdout.log",
+          "sha256": "5c234497b271397dc1d67452ae6cb549790df405d0eeb3818bf02a4c2422b426"
+        },
+        {
+          "bytes": 187,
+          "crc32": "f4b728b2",
+          "path": "current40-proof/case-35.stderr.log",
+          "sha256": "b6b80af5c5f5d1f844f67e7916a9d5024384bbcebdb05f3e03105917c80ac872"
+        },
+        {
+          "bytes": 210,
+          "crc32": "8c9dd11b",
+          "path": "current40-proof/case-35.stdout.log",
+          "sha256": "2af40f67f388a9b8cc1ae1d92eda6d8ba1cd26d42d4bde48bd9dc48c2cd332c2"
+        },
+        {
+          "bytes": 1234,
+          "crc32": "95297d60",
+          "path": "current40-proof/group-00.stderr.log",
+          "sha256": "34d1c6d0d6c93135c1bb71d7701039508e8cc4880e163349a17e2830516ea577"
+        },
+        {
+          "bytes": 46927,
+          "crc32": "2ad39677",
+          "path": "current40-proof/group-00.stdout.log",
+          "sha256": "5cc5d2ee97e145f5b0baf308d21cd156b1b523796ed807c35508526f67bd4bd5"
+        },
+        {
+          "bytes": 153,
+          "crc32": "fc921766",
+          "path": "current40-proof/group-01.stderr.log",
+          "sha256": "74c39fe7e5a7878c14d641282f5d20d0172cbaa19a88b574299ef5cc6f97f3bf"
+        },
+        {
+          "bytes": 47684,
+          "crc32": "79b9b156",
+          "path": "current40-proof/group-01.stdout.log",
+          "sha256": "4ac195e8ce9700471f6fef654f6797024fef5a0e391683c711a7758d84df4820"
+        },
+        {
+          "bytes": 153,
+          "crc32": "95082974",
+          "path": "current40-proof/group-02.stderr.log",
+          "sha256": "47b93c6a93bf962678de8973c1e2c0860225eee7b6376a2e2bc6ccfb44b0330d"
+        },
+        {
+          "bytes": 153,
+          "crc32": "2c762426",
+          "path": "current40-proof/group-03.stderr.log",
+          "sha256": "fb1b96d1cc58a81cb5a1af4c1943a8aa6f18707561c60bf1299cb3b598f22c20"
+        },
+        {
+          "bytes": 47699,
+          "crc32": "24172cea",
+          "path": "current40-proof/group-02.stdout.log",
+          "sha256": "85c447f055dd1e0c227cfb608e6ba7cc2ed67de8538fa607b6073b11c52b1a47"
+        },
+        {
+          "bytes": 47659,
+          "crc32": "f44c47f0",
+          "path": "current40-proof/group-03.stdout.log",
+          "sha256": "a537c64bc3b0aee2e6180bf41098c494d75679c559a27cb7c1eb9f32d1da5d60"
+        },
+        {
+          "bytes": 153,
+          "crc32": "2b7f8cfa",
+          "path": "current40-proof/group-04.stderr.log",
+          "sha256": "2d92b4f37696e962780fd18fcdcc3904650ab745d4da50313e4fd67bbdc8cb7a"
+        },
+        {
+          "bytes": 47743,
+          "crc32": "ebed14f7",
+          "path": "current40-proof/group-04.stdout.log",
+          "sha256": "6bd67cb79164255b46474f703079b8f5eb79d2beb294b6722b96475b6a011372"
+        },
+        {
+          "bytes": 30829,
+          "crc32": "9344d84b",
+          "path": "current40-proof/group-05.stderr.log",
+          "sha256": "07891ad7192998747ddf02cd06cd4a5289475eb82d54d155349ea97684442309"
+        },
+        {
+          "bytes": 787787,
+          "crc32": "6ad950f5",
+          "path": "current40-proof/group-05.stdout.log",
+          "sha256": "8c968cfe6d1858c566a97cc37faceb5fbcc6a180db5ca9ab9ac3f58b552acf14"
+        },
+        {
+          "bytes": 90053,
+          "crc32": "628b8509",
+          "path": "current40-proof/receipt.json",
+          "sha256": "4a5361861d7aa1dfeae03e2f97b57ae347a9be45b4102771084dada2c477d9a2"
+        },
+        {
+          "bytes": 4861,
+          "crc32": "b66f415e",
+          "path": "current40-worker.log",
+          "sha256": "fb0e3bb985c3313f48fef4b0e7c0ec0a44217436bffc9cc599626ae14403b916"
+        }
+      ],
+      "cases": [
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 13432648,
+          "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+          "name": "project_model::tests::default_variants_one_variant",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+          "source_named_declaration_sha256": "c4ef34265e79a4a6393d2e3b99f53fc03550a5cd44e66440a5895955563007a2",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 195,
+            "path": "case-00.stderr.log",
+            "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+          },
+          "stdout": {
+            "bytes": 255,
+            "path": "case-00.stdout.log",
+            "sha256": "618d388f1ed9a973b5e4c953d47d322840e0764043ee5e47fd3b5fd978a325ce"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 13432648,
+          "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+          "name": "project_model::tests::default_variants_debug_preferred",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+          "source_named_declaration_sha256": "8758709ef4556fad1f44cbb5fafe1a6af6b43ad69cbc25f67cd1ffff29d5f10c",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 195,
+            "path": "case-01.stderr.log",
+            "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+          },
+          "stdout": {
+            "bytes": 263,
+            "path": "case-01.stdout.log",
+            "sha256": "0278d4d3170f42150768cb132947e7111749c6c0b6abf8931fc3e22764728fa1"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 13432648,
+          "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+          "name": "project_model::tests::default_variants_preferred_build_type",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+          "source_named_declaration_sha256": "70b69c8584feaa71cce2b98bc4965b9d5ca90aa29caea231a3a6e351d4800301",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 195,
+            "path": "case-02.stderr.log",
+            "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+          },
+          "stdout": {
+            "bytes": 273,
+            "path": "case-02.stdout.log",
+            "sha256": "6c30c4c69c3af1500519e552757b284aabb7794f1ca4fb874cb9fa115077a2fd"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 13432648,
+          "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+          "name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+          "source_named_declaration_sha256": "8167a486b1a2955868c6f732e09b9e1871ec10f3686d30e20e68ecfda510c873",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 195,
+            "path": "case-03.stderr.log",
+            "sha256": "20464ea21d3673a9a6ffd78415b8eb917476299ee61eaff328e6d8a6097df924"
+          },
+          "stdout": {
+            "bytes": 325,
+            "path": "case-03.stdout.log",
+            "sha256": "38aa391dbd6f3e293d0aae623fba031bdeba4fd7cbad91725ed59da02db16869"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 13432648,
+          "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+          "name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+          "source_named_declaration_sha256": "3e0ec4a98c03ca655bc91ca2dd0254f32002ef28872eed1e4b66da1e1f8569e9",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 195,
+            "path": "case-04.stderr.log",
+            "sha256": "306da3092a72ccf27963dfc0edd2ce682d590e02ecbea70843bfe04bd4d7e55e"
+          },
+          "stdout": {
+            "bytes": 303,
+            "path": "case-04.stdout.log",
+            "sha256": "ce50e0d375bd1f1567f48c333a55ce712782e058907c7884590fa5295d7a1074"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 13432648,
+          "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+          "name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+          "source_named_declaration_sha256": "d3dccfa5e0c6bc8d47bd40340156ec477b46d8d8168c4078b56a73100501096b",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 195,
+            "path": "case-05.stderr.log",
+            "sha256": "29491933acb23bd76ae836afb66326e20f52aca853f9f411b84042b918d12cc3"
+          },
+          "stdout": {
+            "bytes": 315,
+            "path": "case-05.stdout.log",
+            "sha256": "45a13a39d051bfeecf4c4411f32259af35b9805a71ad47dbb3431c60eec5b510"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 13432648,
+          "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+          "name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+          "source_named_declaration_sha256": "d2d3a363a36ddb2b9b8b31369b958c1529a02d9c453ef2a6b78baf14fe685327",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 195,
+            "path": "case-06.stderr.log",
+            "sha256": "20464ea21d3673a9a6ffd78415b8eb917476299ee61eaff328e6d8a6097df924"
+          },
+          "stdout": {
+            "bytes": 299,
+            "path": "case-06.stdout.log",
+            "sha256": "ef40df33cf2b5edeca4c25e5b1e485c176c0654191c5b17bd8909a21b1b5e94a"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 13432648,
+          "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+          "name": "project_model::tests::default_variants_on_empty",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+          "source_named_declaration_sha256": "10d13e19340f36a6180a25b23c86daadd1753556229f52abd59b706208f824f9",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 195,
+            "path": "case-07.stderr.log",
+            "sha256": "20464ea21d3673a9a6ffd78415b8eb917476299ee61eaff328e6d8a6097df924"
+          },
+          "stdout": {
+            "bytes": 249,
+            "path": "case-07.stdout.log",
+            "sha256": "ad88a06a71a52917410017369eadfd474c8f78b45752eef570f3dae49c239df7"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 3095736,
+          "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+          "name": "import_simple_gradle_project",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+          "source_named_declaration_sha256": "b8332f834afaac63e9d510bdacaec7a2e6ecb5a39d1c6596afe98914b85d0e6f",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 207,
+            "path": "case-08.stderr.log",
+            "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+          },
+          "stdout": {
+            "bytes": 211,
+            "path": "case-08.stdout.log",
+            "sha256": "cfd480b1c435f6c982e776bdcee3339714e0212c803030cdb9ac92d81d212903"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 3095736,
+          "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+          "name": "import_subprojects",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+          "source_named_declaration_sha256": "2f79688d740c64f552da79e9736de20ebd348a7ef52ae8ebfadc92103d10723b",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 207,
+            "path": "case-09.stderr.log",
+            "sha256": "428f1bc6d3df38374cc144c227b13a4241102fc2b2d4f07c5ab9d6e623c49ef2"
+          },
+          "stdout": {
+            "bytes": 191,
+            "path": "case-09.stdout.log",
+            "sha256": "a51863981ea06b5e938476b2a1fb553dad35c49be69be0b715abeed3c8cb12c5"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 3095736,
+          "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+          "name": "import_subprojects_with_missing_submodule",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+          "source_named_declaration_sha256": "7038c9a0c4d583cf612eccda7209598124f67f954fd97dada9aab229f5c55d63",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 207,
+            "path": "case-10.stderr.log",
+            "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+          },
+          "stdout": {
+            "bytes": 237,
+            "path": "case-10.stdout.log",
+            "sha256": "805cc31c1b84d769700c38112fd64a2f6acc00ed79c38731fabe4c53876d4596"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 3095736,
+          "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+          "name": "import_subproject_with_custom_location",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+          "source_named_declaration_sha256": "b941335b640a16f0dc16c8dc149a07a378b8ff19f4498952fd77a6c8a301319b",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 207,
+            "path": "case-11.stderr.log",
+            "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+          },
+          "stdout": {
+            "bytes": 231,
+            "path": "case-11.stdout.log",
+            "sha256": "fd1e3a20822ca1ee90ba3f8065a067e986f5297984766dc7c2ce617c8964911a"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 3095736,
+          "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+          "name": "required_projects",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+          "source_named_declaration_sha256": "302211faa3924b8660207cf839d03c46333f40efde92109040eb3480e988228d",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 207,
+            "path": "case-12.stderr.log",
+            "sha256": "428f1bc6d3df38374cc144c227b13a4241102fc2b2d4f07c5ab9d6e623c49ef2"
+          },
+          "stdout": {
+            "bytes": 189,
+            "path": "case-12.stdout.log",
+            "sha256": "50fb8e5244a18ea3798d802d530fd7516b41ae7dec7a66f0f860866adda9e835"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 3095736,
+          "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+          "name": "missing_required_projects",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+          "source_named_declaration_sha256": "4dc0d911c5122815e5441c8a78bbf59f40fd52c65a3bc239f5916c8287b61258",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 207,
+            "path": "case-13.stderr.log",
+            "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+          },
+          "stdout": {
+            "bytes": 205,
+            "path": "case-13.stdout.log",
+            "sha256": "64995b882a58f16613c4ab152977070f316d0b3b8795f9697ecb29483489d625"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 3095736,
+          "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+          "name": "missing_enclosing_project",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+          "source_named_declaration_sha256": "32758f74478c781245ce7eea45d1dd859bb91bebab0691c5c16910d2af4be68b",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 207,
+            "path": "case-14.stderr.log",
+            "sha256": "428f1bc6d3df38374cc144c227b13a4241102fc2b2d4f07c5ab9d6e623c49ef2"
+          },
+          "stdout": {
+            "bytes": 205,
+            "path": "case-14.stdout.log",
+            "sha256": "e3e8296e8c708efec18600fe49511be2342cc72ace8033312818761c38d0ec2f"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 3095736,
+          "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+          "name": "transitive_dependencies",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+          "source_named_declaration_sha256": "ce8283d58f4882621a48f28be7f16edf1be9abe585a048faea864b5711a5532c",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 207,
+            "path": "case-15.stderr.log",
+            "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+          },
+          "stdout": {
+            "bytes": 201,
+            "path": "case-15.stdout.log",
+            "sha256": "bae7429704fc5e2b8b3fefedea0d03e02b23e83545dfd3a617cd1ff2d186cf27"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 3095736,
+          "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+          "name": "circular_dependencies",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+          "source_named_declaration_sha256": "4b8bb5bb150cf51997212b15d75e1769b62c434490cf7d69c46c232ca69dfc80",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 207,
+            "path": "case-16.stderr.log",
+            "sha256": "546fcb8b26c49db8e5c0b4e1b713a6ebbfef4a37ca27a63afedbf81b0d34a068"
+          },
+          "stdout": {
+            "bytes": 197,
+            "path": "case-16.stdout.log",
+            "sha256": "a33f90e237e9c68812c1a25be37806bd16c7cf55c1deb520bc4e874d96cc60cd"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 2729136,
+          "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+          "name": "test_show_visibility_icons_when_option_is_selected",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+          "source_named_declaration_sha256": "e4dc3543c5c8b947a46ba0619a9dea65bf339c4ebef4d198943cddd42e3b42b0",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 229,
+            "path": "case-17.stderr.log",
+            "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+          },
+          "stdout": {
+            "bytes": 255,
+            "path": "case-17.stdout.log",
+            "sha256": "d552194c7b0e74ac1681dd86c0c7cfd071b43861f1002ea9d93de6318963b8e3"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 2729136,
+          "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+          "name": "test_show_visibility_icons_when_option_is_unselected",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+          "source_named_declaration_sha256": "216981a8905b80e82a23d563110f48c7b2d888e94b1a0d50b2efc6c840a1336e",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 229,
+            "path": "case-18.stderr.log",
+            "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+          },
+          "stdout": {
+            "bytes": 259,
+            "path": "case-18.stdout.log",
+            "sha256": "b85b3a92d67ab58da4feaeab05cd067d66d171ab678165c42a92d7784a6c591d"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 2729136,
+          "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+          "name": "test_android_view_is_default",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+          "source_named_declaration_sha256": "6fbb7d18912a06dabe5af82c3b7280a864c8633cc2c3a1f0ccaad0adfaa7103e",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 229,
+            "path": "case-19.stderr.log",
+            "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+          },
+          "stdout": {
+            "bytes": 211,
+            "path": "case-19.stdout.log",
+            "sha256": "933467b883a333c63715317d3bde66301ecc10c08920ca49cd5cd62cb8b48d26"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 2729136,
+          "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+          "name": "test_android_view_not_visible_in_unsupported_project_system",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+          "source_named_declaration_sha256": "3a26537c90a0bc2d18435b1007954c87967f02180f45788c6d7faf1f27d3be07",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 229,
+            "path": "case-20.stderr.log",
+            "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+          },
+          "stdout": {
+            "bytes": 273,
+            "path": "case-20.stdout.log",
+            "sha256": "e3509d499a3490188d4f0f113aac0fa588c60e56e1a5b7e24d10c1df5974821c"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 2729136,
+          "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+          "name": "test_android_view_not_visible_in_non_android_project",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+          "source_named_declaration_sha256": "3043b76fa406d1ef02b17f4acc12572ba55e680333a15cf5bb4aa8d2d05f48f9",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 229,
+            "path": "case-21.stderr.log",
+            "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+          },
+          "stdout": {
+            "bytes": 259,
+            "path": "case-21.stdout.log",
+            "sha256": "d849d960fc987c521452e53a50f063df76ff1382b2ee553197b5ef52a77b7d9a"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 2729136,
+          "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+          "name": "test_android_view_is_default_custom_property_handling",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+          "source_named_declaration_sha256": "958428bfed4f013d6bb4b42010931403428d413d4749fccfef11ba1ad7aabe6f",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 229,
+            "path": "case-22.stderr.log",
+            "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+          },
+          "stdout": {
+            "bytes": 261,
+            "path": "case-22.stdout.log",
+            "sha256": "de51e02af5f07169ec7e09a2133be91cebc2055cf29ce610ccdf9fa5d8ac8378"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 2729136,
+          "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+          "name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+          "source_named_declaration_sha256": "f62ce20d49b59bf6d898ad25fb6d3b2dd6e1bb8f007338f5dc5de8211871a207",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 229,
+            "path": "case-23.stderr.log",
+            "sha256": "4ab3bd9b92cd20a91931b871df44b6459723762fd357eb5b61591b59d0ca888c"
+          },
+          "stdout": {
+            "bytes": 317,
+            "path": "case-23.stdout.log",
+            "sha256": "967b96802e2d2178c85720a410dcf6623c0acdaa3ab961470d40fe8a402ecf2e"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 2729136,
+          "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+          "name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+          "source_named_declaration_sha256": "6cd367c316461f51052d378616fd5d57401c78abfc2ea4f21de935261e7b1c67",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 229,
+            "path": "case-24.stderr.log",
+            "sha256": "fc5a76225b05859237ec396dfe6215246947d59f3057030fdc40558a6d4d587a"
+          },
+          "stdout": {
+            "bytes": 323,
+            "path": "case-24.stdout.log",
+            "sha256": "cd450d21c1ebb1ce30866fcabb1e53b303787acfcee123feac9e1de4aaf1da07"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 2729136,
+          "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+          "name": "test_android_view_is_default_metrics",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+          "source_named_declaration_sha256": "2172d0907a3d532488d3f7ef1d957fc2ddc90113cafb4dd367322228e1ad42b0",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 229,
+            "path": "case-25.stderr.log",
+            "sha256": "4ab3bd9b92cd20a91931b871df44b6459723762fd357eb5b61591b59d0ca888c"
+          },
+          "stdout": {
+            "bytes": 227,
+            "path": "case-25.stdout.log",
+            "sha256": "de215e7fda819270eb073be42fffbc27547f8c4c22bfaab27cc4c11f8231a748"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 469892192,
+          "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+          "name": "tabbed_toolbar::tests::component_is_added_element",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+          "source_named_declaration_sha256": "ee79f8d2e9f426c8dd727e2ffa78be005fe48ce1021ac64cf0f9ec295011050d",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 189,
+            "path": "case-26.stderr.log",
+            "sha256": "ac7148cbe27418e0fb7dc73e03a06fe000c128df197ff84c63847d2f45daa6b9"
+          },
+          "stdout": {
+            "bytes": 254,
+            "path": "case-26.stdout.log",
+            "sha256": "6c2e73bb81def6f3794b1b19e58e5b69317b8c16a09efb3382cf2e71a458fdca"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 469892192,
+          "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+          "name": "tabbed_toolbar::tests::tab_is_added",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+          "source_named_declaration_sha256": "3dec46b4910ee6506320f03f665db40c7b792ccbf4509d4b3219953cc187edf0",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 189,
+            "path": "case-27.stderr.log",
+            "sha256": "6f71cff5c831fcde5c538b172b9b623f032b13414420bfc4dd31176cb91c2efe"
+          },
+          "stdout": {
+            "bytes": 226,
+            "path": "case-27.stdout.log",
+            "sha256": "da4295cbe11554dd7f0e75a6676df333dd459e6941f86fb08d9c1b7a5cfc0009"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 469892192,
+          "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+          "name": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+          "source_named_declaration_sha256": "150971aeaed1916e1ad3ca51b32495fdc027c6750dc9c3599aed8cd290962265",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 189,
+            "path": "case-28.stderr.log",
+            "sha256": "6d6c2a51361439af7ea379db88b2a7744ff9305247d94b728177c984e38be4dc"
+          },
+          "stdout": {
+            "bytes": 260,
+            "path": "case-28.stdout.log",
+            "sha256": "5d41e83ce08ced183ee413faabeb8c4e75c33d32972ce9c9d8b517a9f9993b84"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 469892192,
+          "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+          "name": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+          "source_named_declaration_sha256": "14179fe9d7ad0175bbb602340d793fdb6edd0a510506d961a91b96de30e11f43",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 189,
+            "path": "case-29.stderr.log",
+            "sha256": "404bdb2baa4b146492bdb9a128d3852154eff7d1ef8dc0c6eb63e3637a80d89a"
+          },
+          "stdout": {
+            "bytes": 266,
+            "path": "case-29.stdout.log",
+            "sha256": "d90ddc6abadddde4faa33247d04b053225091c820e785e247324fa384a12f94f"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 469892192,
+          "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+          "name": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+          "source_named_declaration_sha256": "9288ccb529bbcc8ffbaf9bfd56b52027bc610f72ca2ead42d71bf450ce0bc948",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 189,
+            "path": "case-30.stderr.log",
+            "sha256": "eb7037cd41955cbeefe5d38968f75e1f98ba51157f5748b534f43877ccaec240"
+          },
+          "stdout": {
+            "bytes": 270,
+            "path": "case-30.stdout.log",
+            "sha256": "248e474ff57fbca23ef266924468ee6e96df5b2cabcb7bad53356599162bca71"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 469892192,
+          "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+          "name": "tabbed_toolbar::tests::can_select_tab_by_index",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+          "source_named_declaration_sha256": "78c45cc80322d41b4c6cecc54ea45a4817af3d28f5e038db21ccc02b7df58b61",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 189,
+            "path": "case-31.stderr.log",
+            "sha256": "6d6c2a51361439af7ea379db88b2a7744ff9305247d94b728177c984e38be4dc"
+          },
+          "stdout": {
+            "bytes": 248,
+            "path": "case-31.stdout.log",
+            "sha256": "4a78529e2c780b34eb3a8655ec9f2b9108d854a20f6aae972f523b80468aa773"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 469892192,
+          "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+          "name": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+          "source_named_declaration_sha256": "49dcd65969be1c8564211469db6f260a61b588552e25ecc8089f33a5410b4fd3",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 189,
+            "path": "case-32.stderr.log",
+            "sha256": "6f71cff5c831fcde5c538b172b9b623f032b13414420bfc4dd31176cb91c2efe"
+          },
+          "stdout": {
+            "bytes": 292,
+            "path": "case-32.stdout.log",
+            "sha256": "bd98294e34936ae4513ecf0f6271b65840d61aba2900e5bcd466c9927badf6e9"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 6151296,
+          "executable_sha256": "2c51cda64aa2a2c0636740813b7407d6ef2e3b6ae66283d6604d4f4822ed415a",
+          "name": "check_model_consumer_version_ordering",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+          "source_named_declaration_sha256": "8d31b3fe87fdab0a2908c701c01f60f7d583a6bc3f78b6aa2391d289bdedb6ca",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 199,
+            "path": "case-33.stderr.log",
+            "sha256": "ae063afa5f18ea96229e46fd9924f0b26569fb11f629d8e3884be3b11b205808"
+          },
+          "stdout": {
+            "bytes": 229,
+            "path": "case-33.stdout.log",
+            "sha256": "24bee923b798d11f5b49cd918378e6ad364d89f809bbeee73a475a1452a967af"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 6151296,
+          "executable_sha256": "2c51cda64aa2a2c0636740813b7407d6ef2e3b6ae66283d6604d4f4822ed415a",
+          "name": "check_model_version_ordering",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+          "source_named_declaration_sha256": "2833bde968264c111864974bf812cab85ff5a9d7737c4c97708bd7bb51f84485",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 199,
+            "path": "case-34.stderr.log",
+            "sha256": "313d953fc604018c56600084e653c3a2e4efbfd61147b9e5919d2bbbc87b9c4f"
+          },
+          "stdout": {
+            "bytes": 211,
+            "path": "case-34.stdout.log",
+            "sha256": "5c234497b271397dc1d67452ae6cb549790df405d0eeb3818bf02a4c2422b426"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        },
+        {
+          "exact_argv_equal": true,
+          "executable_bytes": 1803752,
+          "executable_sha256": "eff0b98579578a184cee3de49db17f5ba6ca72ca98af6c54ba7c666964bbbbb4",
+          "name": "check_supports_parallel_sync",
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+          "source_named_declaration_sha256": "5ad15ef84ed0a20b005a380fd4d9e33592a90ed3f9882bf027a52b0b102e9f74",
+          "status": "PASS",
+          "stderr": {
+            "bytes": 187,
+            "path": "case-35.stderr.log",
+            "sha256": "b6b80af5c5f5d1f844f67e7916a9d5024384bbcebdb05f3e03105917c80ac872"
+          },
+          "stdout": {
+            "bytes": 210,
+            "path": "case-35.stdout.log",
+            "sha256": "2af40f67f388a9b8cc1ae1d92eda6d8ba1cd26d42d4bde48bd9dc48c2cd332c2"
+          },
+          "summary": {
+            "failed": 0,
+            "ignored": 0,
+            "passed": 1,
+            "selected": 1
+          }
+        }
+      ],
+      "groups": [
+        {
+          "artifact": {
+            "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_tools-fb2c5fb7656d5f8d",
+            "executable_bytes": 13432648,
+            "executable_sha256": "ba6efab4fc36733a256c85d76e7b6a10ef00dddb18bec640b0dddb24b19c7f2d",
+            "features": [],
+            "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+            "profile": {
+              "debug_assertions": true,
+              "debuginfo": 0,
+              "opt_level": "0",
+              "overflow_checks": true,
+              "test": true
+            },
+            "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/src/android_tools.rs"
+          },
+          "compiler_and_receipt_identity_equal": true,
+          "compiler_process": {
+            "argv": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "--no-run",
+              "--message-format=json"
+            ],
+            "elapsed_ms": 14581,
+            "exit_code": 0,
+            "leader_reaped": true,
+            "owned_group_signal_sent": true,
+            "stderr": {
+              "bytes": 1234,
+              "path": "group-00.stderr.log",
+              "sha256": "34d1c6d0d6c93135c1bb71d7701039508e8cc4880e163349a17e2830516ea577"
+            },
+            "stderr_eof": true,
+            "stdout": {
+              "bytes": 46927,
+              "path": "group-00.stdout.log",
+              "sha256": "5cc5d2ee97e145f5b0baf308d21cd156b1b523796ed807c35508526f67bd4bd5"
+            },
+            "stdout_eof": true,
+            "stopped_reason": null,
+            "success": true
+          },
+          "integration_target": null,
+          "package": "android_tools"
+        },
+        {
+          "artifact": {
+            "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/generated_artifacts-a8cb0ab117142344",
+            "executable_bytes": 6151296,
+            "executable_sha256": "2c51cda64aa2a2c0636740813b7407d6ef2e3b6ae66283d6604d4f4822ed415a",
+            "features": [],
+            "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+            "profile": {
+              "debug_assertions": true,
+              "debuginfo": 0,
+              "opt_level": "0",
+              "overflow_checks": true,
+              "test": true
+            },
+            "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/generated_artifacts.rs"
+          },
+          "compiler_and_receipt_identity_equal": true,
+          "compiler_process": {
+            "argv": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "generated_artifacts",
+              "--no-run",
+              "--message-format=json"
+            ],
+            "elapsed_ms": 4031,
+            "exit_code": 0,
+            "leader_reaped": true,
+            "owned_group_signal_sent": true,
+            "stderr": {
+              "bytes": 153,
+              "path": "group-01.stderr.log",
+              "sha256": "74c39fe7e5a7878c14d641282f5d20d0172cbaa19a88b574299ef5cc6f97f3bf"
+            },
+            "stderr_eof": true,
+            "stdout": {
+              "bytes": 47684,
+              "path": "group-01.stdout.log",
+              "sha256": "4ac195e8ce9700471f6fef654f6797024fef5a0e391683c711a7758d84df4820"
+            },
+            "stdout_eof": true,
+            "stopped_reason": null,
+            "success": true
+          },
+          "integration_target": "generated_artifacts",
+          "package": "android_tools"
+        },
+        {
+          "artifact": {
+            "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/gradle_import_reference-2c85c020c03fddd8",
+            "executable_bytes": 3095736,
+            "executable_sha256": "8a4c2c8e1411407325ae5db8c28d39a21cd696febbe97fe1b92d545faa8fc9b4",
+            "features": [],
+            "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+            "profile": {
+              "debug_assertions": true,
+              "debuginfo": 0,
+              "opt_level": "0",
+              "overflow_checks": true,
+              "test": true
+            },
+            "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/gradle_import_reference.rs"
+          },
+          "compiler_and_receipt_identity_equal": true,
+          "compiler_process": {
+            "argv": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "gradle_import_reference",
+              "--no-run",
+              "--message-format=json"
+            ],
+            "elapsed_ms": 758,
+            "exit_code": 0,
+            "leader_reaped": true,
+            "owned_group_signal_sent": true,
+            "stderr": {
+              "bytes": 153,
+              "path": "group-02.stderr.log",
+              "sha256": "47b93c6a93bf962678de8973c1e2c0860225eee7b6376a2e2bc6ccfb44b0330d"
+            },
+            "stderr_eof": true,
+            "stdout": {
+              "bytes": 47699,
+              "path": "group-02.stdout.log",
+              "sha256": "85c447f055dd1e0c227cfb608e6ba7cc2ed67de8538fa607b6073b11c52b1a47"
+            },
+            "stdout_eof": true,
+            "stopped_reason": null,
+            "success": true
+          },
+          "integration_target": "gradle_import_reference",
+          "package": "android_tools"
+        },
+        {
+          "artifact": {
+            "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/parallel_sync-426af02f93fcc41f",
+            "executable_bytes": 1803752,
+            "executable_sha256": "eff0b98579578a184cee3de49db17f5ba6ca72ca98af6c54ba7c666964bbbbb4",
+            "features": [],
+            "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+            "profile": {
+              "debug_assertions": true,
+              "debuginfo": 0,
+              "opt_level": "0",
+              "overflow_checks": true,
+              "test": true
+            },
+            "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/parallel_sync.rs"
+          },
+          "compiler_and_receipt_identity_equal": true,
+          "compiler_process": {
+            "argv": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "parallel_sync",
+              "--no-run",
+              "--message-format=json"
+            ],
+            "elapsed_ms": 649,
+            "exit_code": 0,
+            "leader_reaped": true,
+            "owned_group_signal_sent": true,
+            "stderr": {
+              "bytes": 153,
+              "path": "group-03.stderr.log",
+              "sha256": "fb1b96d1cc58a81cb5a1af4c1943a8aa6f18707561c60bf1299cb3b598f22c20"
+            },
+            "stderr_eof": true,
+            "stdout": {
+              "bytes": 47659,
+              "path": "group-03.stdout.log",
+              "sha256": "a537c64bc3b0aee2e6180bf41098c494d75679c559a27cb7c1eb9f32d1da5d60"
+            },
+            "stdout_eof": true,
+            "stopped_reason": null,
+            "success": true
+          },
+          "integration_target": "parallel_sync",
+          "package": "android_tools"
+        },
+        {
+          "artifact": {
+            "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+            "executable_bytes": 2729136,
+            "executable_sha256": "df755b36581dbd9e49534b86815a5b724059e8a1e5ca7bed69d4b190bc55c886",
+            "features": [],
+            "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_tools/Cargo.toml",
+            "profile": {
+              "debug_assertions": true,
+              "debuginfo": 0,
+              "opt_level": "0",
+              "overflow_checks": true,
+              "test": true
+            },
+            "src_path": "/home/runner/work/koda/koda/tested/crates/android_tools/tests/project_view_preferences_reference.rs"
+          },
+          "compiler_and_receipt_identity_equal": true,
+          "compiler_process": {
+            "argv": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--test",
+              "project_view_preferences_reference",
+              "--no-run",
+              "--message-format=json"
+            ],
+            "elapsed_ms": 685,
+            "exit_code": 0,
+            "leader_reaped": true,
+            "owned_group_signal_sent": true,
+            "stderr": {
+              "bytes": 153,
+              "path": "group-04.stderr.log",
+              "sha256": "2d92b4f37696e962780fd18fcdcc3904650ab745d4da50313e4fd67bbdc8cb7a"
+            },
+            "stderr_eof": true,
+            "stdout": {
+              "bytes": 47743,
+              "path": "group-04.stdout.log",
+              "sha256": "6bd67cb79164255b46474f703079b8f5eb79d2beb294b6722b96475b6a011372"
+            },
+            "stdout_eof": true,
+            "stopped_reason": null,
+            "success": true
+          },
+          "integration_target": "project_view_preferences_reference",
+          "package": "android_tools"
+        },
+        {
+          "artifact": {
+            "executable": "/home/runner/work/_temp/current40-test-target/debug/deps/android_ui-0a1e421ffc75c4cf",
+            "executable_bytes": 469892192,
+            "executable_sha256": "208ae231caef579228646f0c2b6ba38a05c9c57af054e1efc9d6ecf86f6e985b",
+            "features": [],
+            "manifest_path": "/home/runner/work/koda/koda/tested/crates/android_ui/Cargo.toml",
+            "profile": {
+              "debug_assertions": true,
+              "debuginfo": 0,
+              "opt_level": "0",
+              "overflow_checks": true,
+              "test": true
+            },
+            "src_path": "/home/runner/work/koda/koda/tested/crates/android_ui/src/android_ui.rs"
+          },
+          "compiler_and_receipt_identity_equal": true,
+          "compiler_process": {
+            "argv": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_ui/Cargo.toml",
+              "-p",
+              "android_ui",
+              "--lib",
+              "--no-run",
+              "--message-format=json"
+            ],
+            "elapsed_ms": 296739,
+            "exit_code": 0,
+            "leader_reaped": true,
+            "owned_group_signal_sent": true,
+            "stderr": {
+              "bytes": 30829,
+              "path": "group-05.stderr.log",
+              "sha256": "07891ad7192998747ddf02cd06cd4a5289475eb82d54d155349ea97684442309"
+            },
+            "stderr_eof": true,
+            "stdout": {
+              "bytes": 787787,
+              "path": "group-05.stdout.log",
+              "sha256": "8c968cfe6d1858c566a97cc37faceb5fbcc6a180db5ca9ab9ac3f58b552acf14"
+            },
+            "stdout_eof": true,
+            "stopped_reason": null,
+            "success": true
+          },
+          "integration_target": null,
+          "package": "android_ui"
+        }
+      ],
+      "inflated_bytes": 1169480,
+      "input_zip": {
+        "artifact_id": 11662184071,
+        "bytes": 117068,
+        "file_count": 86,
+        "job_id": 114158219136,
+        "label": "primary36",
+        "local_root": "/workspace/android-studio-project-context",
+        "path": "/workspace/attachments/ea5d9329-73fd-4662-b7bc-e67ee09cc628/android-reference-primary36-38033202999-1.zip",
+        "sha256": "1783dc009cbcdd36ec2af578f5448abfaac23ceb418d27bb63c6e9e714db32a5",
+        "tracked_count": 7153
+      },
+      "label": "primary36",
+      "local_binding_count": 56,
+      "local_git_blob_only_paths": [],
+      "receipt_sha256": "4a5361861d7aa1dfeae03e2f97b57ae347a9be45b4102771084dada2c477d9a2",
+      "source_before_after_equal": {
+        "bound_files": 56,
+        "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+        "full_materialization": true,
+        "index_sha256": "baeba3a7f7c5aadf1d6fdfa3ef7c10be470f56b5731880c6e9a06941cb835ddd",
+        "tracked_files": 7153,
+        "tree": "dd2bb2ae16a43fd0a0dbee35bae3615a5fbe26f1"
+      },
+      "source_binding_bytes": 1511341,
+      "status": "PASS",
+      "worker_named_pass_count": 36,
+      "zip_crc_paths_regular_files_and_bounds_pass": true
+    }
+  ],
+  "run_id": 38033202999,
+  "runner_commit": "1a1927e2fa59949233386391bc8bc534305a711c",
+  "runner_module_sha256": "8155e309e79b3a669f8612459dc6aa6ae42af53eed9342d16b672b583da5cca7",
+  "runner_tree": "c5cd5b2770a9cf38077857ccc7dd681975070559",
+  "schema_version": 1,
+  "selected": 40,
+  "source_mutations": false,
+  "state": "PASS_ACTUAL_ARTIFACT_CONSISTENCY_CLOSED0",
+  "timestamp_utc": "2026-10-10T07:34:46.188167+00:00",
+  "total_cases": 40,
+  "verdict": "PASS",
+  "workflow_sha256": "134af620ddf700f2ac62e090527a829262445eb6962a82cd24de233848d90ac0"
+}

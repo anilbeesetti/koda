@@ -1,0 +1,113 @@
+{
+  "_attribution": "Copyright (C) 2022 The Android Open Source Project. Licensed under the Apache License, Version 2.0; http://www.apache.org/licenses/LICENSE-2.0. The original full copyright and license notice is retained in crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt.",
+  "_license": "Apache-2.0",
+  "all_original_assertions": [
+    "rows.len == 2",
+    "row0 full equality app selected debug: debug default=false, release default=true; ABI None and choices empty",
+    "row1 full equality lib selected debug: debug default=true, release default=false; ABI None and choices empty"
+  ],
+  "constructor": "android_tools::build_variant_table::BuildVariantTableModel::create(&modules, \"en\")",
+  "constructor_locale": "en; explicit Rust fixture locale. Original uses process-default Java collation, so no exhaustive locale parity claim.",
+  "current_exact_Rust_test": "test_default_variant_indicator",
+  "expected_rows": [
+    {
+      "abi": null,
+      "abis": [],
+      "build_variants": [
+        {
+          "build_variant_name": "debug",
+          "is_default": false
+        },
+        {
+          "build_variant_name": "release",
+          "is_default": true
+        }
+      ],
+      "is_dynamic_feature": false,
+      "module": {
+        "name": "testProject.app",
+        "path": ":app"
+      },
+      "variant": "debug"
+    },
+    {
+      "abi": null,
+      "abis": [],
+      "build_variants": [
+        {
+          "build_variant_name": "debug",
+          "is_default": true
+        },
+        {
+          "build_variant_name": "release",
+          "is_default": false
+        }
+      ],
+      "is_dynamic_feature": false,
+      "module": {
+        "name": "testProject.lib",
+        "path": ":lib"
+      },
+      "variant": "debug"
+    }
+  ],
+  "modules": [
+    {
+      "default_variant": "release",
+      "dynamic_features": [],
+      "module": {
+        "name": "testProject.app",
+        "path": ":app"
+      },
+      "project_type": "Application",
+      "selected_variant": "debug",
+      "variants": [
+        "release",
+        "debug"
+      ]
+    },
+    {
+      "default_variant": "debug",
+      "dynamic_features": [],
+      "module": {
+        "name": "testProject.lib",
+        "path": ":lib"
+      },
+      "project_type": "Library",
+      "selected_variant": "debug",
+      "variants": [
+        "release",
+        "debug"
+      ]
+    }
+  ],
+  "ordinary_app_dependency_note": "An original app\u2192lib debug dependency prepares selected module identities. Table projection consumes the independently selected row identities, so explicit constructor inputs do not claim dependency switching behavior.",
+  "original_app_dependencies": [
+    {
+      "module": ":lib",
+      "variant": "debug"
+    }
+  ],
+  "original_assertion_outcomes": 3,
+  "original_jvm_root": {
+    "adaptation": "Excluded from Android projection inputs because the original Java root has no Android facet/model; source retained unchanged.",
+    "buildable": false,
+    "builder": "JavaModuleModelBuilder.rootModuleBuilder",
+    "gradle_path": ":"
+  },
+  "original_method": "testDefaultVariantIndicator",
+  "original_project_name_variable": "projectRule.project.name; normalized to testProject for the explicit Rust fixture identity",
+  "original_source": {
+    "end_line": 112,
+    "file_sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0",
+    "license": "Apache-2.0 original full source header retained",
+    "method_span_sha256": "3b281dea182392792465bf1c4625af74e42897b3fdc89c9229e5e0fc52c13647",
+    "path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt",
+    "retained_path": "crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt",
+    "start_line": 78
+  },
+  "original_variant_builder": "AndroidGradleTestUtils.kt:1360-1388 buildVariantStubs iterates debug/release build types; Rust inputs deliberately reverse order to preserve and exercise the original sorted-output assertion.",
+  "schema": 1,
+  "status": "SOURCE_PRESENT_MATCHING_RUNTIME_PENDING_NO_PASSING_PARITY_CREDIT",
+  "tests_executed": 0
+}
