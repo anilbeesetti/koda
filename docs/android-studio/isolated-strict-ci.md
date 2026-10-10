@@ -3,7 +3,10 @@
 Fork CI has an **Isolated Android IDE strict Clippy** job on a separate Ubuntu
 24.04 worker. It runs automatically only for pull requests whose head branch is
 `android-studio-task/1-source15-isolated-strict-ci`, or through the optional manual
-inputs below. Other pull requests keep their existing workload. The existing
+inputs below. A small eligibility job checks that branch spelling in Bash because
+GitHub expression comparisons ignore case. A differently cased branch can start
+only that gate; it skips the strict checkout, bootstrap and compiler. Unrelated
+branch names keep their existing workload. The existing
 formatting, Linux workspace test/build, and macOS check jobs keep their existing
 commands and selection rules.
 
@@ -40,5 +43,6 @@ individual reference-test parity. The separate exact reference-test manifest
 must be supplied and validated before claiming those assertions passed.
 
 The workflow change is prepared for review. Completion requires the actual
-manual strict run, all existing Fork CI jobs on the task head, five independent
-reviews and lead validation. No CI success is inferred from this document.
+isolated strict run through the task-branch PR route or manual route, all existing
+Fork CI jobs on the task head, five independent reviews and lead validation.
+No CI success is inferred from this document.
