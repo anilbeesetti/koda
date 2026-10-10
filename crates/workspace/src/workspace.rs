@@ -1426,7 +1426,7 @@ impl AppState {
         let client = Client::new(clock, http_client, cx);
         let session = cx.new(|cx| AppSession::new(Session::test(), cx));
         let user_store = cx.new(|cx| UserStore::new(client.clone(), cx));
-        let workspace_store = cx.new(|cx| WorkspaceStore::new(client.clone(), cx));
+        let workspace_store = WorkspaceStore::test(client.clone(), cx);
 
         theme_settings::init(theme::LoadThemes::JustBase, cx);
         client::init(&client, cx);
@@ -8583,7 +8583,7 @@ impl Workspace {
 
         let client = project.read(cx).client();
         let user_store = project.read(cx).user_store();
-        let workspace_store = cx.new(|cx| WorkspaceStore::new(client.clone(), cx));
+        let workspace_store = WorkspaceStore::test(client.clone(), cx);
         let session = cx.new(|cx| AppSession::new(Session::test(), cx));
         window.activate_window();
         let app_state = Arc::new(AppState {
@@ -10216,6 +10216,36 @@ impl Render for Workspace {
 }
 
 impl WorkspaceStore {
+    #[cfg(any(test, feature = "test-support"))]
+    fn test(client: Arc<Client>, cx: &mut App) -> Entity<Self> {
+        #[derive(Default)]
+        struct TestWorkspaceStores(Vec<(std::sync::Weak<Client>, WeakEntity<WorkspaceStore>)>);
+        impl Global for TestWorkspaceStores {}
+
+        // Follow handlers belong to one store per client. Keep both cache handles
+        // weak and scoped to this App so fixtures cannot retain or cross App entities.
+        let existing = cx.try_global::<TestWorkspaceStores>().and_then(|stores| {
+            stores.0.iter().find_map(|(cached_client, store)| {
+                let cached_client = cached_client.upgrade()?;
+                if Arc::ptr_eq(&cached_client, &client) {
+                    store.upgrade()
+                } else {
+                    None
+                }
+            })
+        });
+        if let Some(store) = existing {
+            return store;
+        }
+
+        let cached_client = Arc::downgrade(&client);
+        let store = cx.new(|cx| Self::new(client, cx));
+        let stores = cx.default_global::<TestWorkspaceStores>();
+        stores.0.retain(|(_, store)| store.is_upgradable());
+        stores.0.push((cached_client, store.downgrade()));
+        store
+    }
+
     pub fn new(client: Arc<Client>, cx: &mut Context<Self>) -> Self {
         Self {
             workspaces: Default::default(),
@@ -20694,5 +20724,36 @@ mod tests {
         fn set_zoomed(&mut self, zoomed: bool, _: &mut Window, _: &mut Context<Self>) {
             self.zoomed = zoomed;
         }
+    }
+}
+
+#[cfg(test)]
+mod workspace_store_fixture_tests {
+    use super::{AppState, WorkspaceStore};
+    use gpui::TestAppContext;
+
+    #[gpui::test]
+    fn fixture_workspace_stores_share_a_client_and_isolate_other_clients(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            let first = AppState::test(cx);
+            let same_client = WorkspaceStore::test(first.client.clone(), cx);
+            let other = AppState::test(cx);
+            assert_eq!(same_client.entity_id(), first.workspace_store.entity_id());
+            assert_ne!(same_client.entity_id(), other.workspace_store.entity_id());
+            assert_eq!(
+                WorkspaceStore::test(other.client.clone(), cx).entity_id(),
+                other.workspace_store.entity_id()
+            );
+        });
+    }
+
+    #[gpui::test]
+    fn fixture_workspace_store_cache_does_not_retain_released_stores(cx: &mut TestAppContext) {
+        let store = cx.update(|cx| {
+            let state = AppState::test(cx);
+            state.workspace_store.downgrade()
+        });
+        cx.run_until_parked();
+        assert!(store.upgrade().is_none());
     }
 }
