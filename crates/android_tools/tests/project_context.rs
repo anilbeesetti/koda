@@ -149,7 +149,7 @@ fn context_transport_accepts_only_exact_bounded_consistent_records() -> Result<(
         )
         .is_err()
     );
-    let mut partial = complete.clone();
+    let mut partial = complete;
     partial["phase"] = json!("partial");
     for module in partial["modules"].as_array_mut().context("Modules")? {
         module["plugins"]
@@ -810,7 +810,7 @@ fn protocol_rejects_duplicate_missing_and_contradictory_evaluated_facts() -> Res
     let mut no_plugin = value.clone();
     no_plugin["modules"][1]["plugins"][0]["applied"] = json!(false);
     assert!(decode(&root, &no_plugin).is_err());
-    let mut invalid_platform = value.clone();
+    let mut invalid_platform = value;
     invalid_platform["modules"][1]["targets"]["value"][0]["platform"] =
         json!("futureAndroidPlatform");
     assert!(decode(&root, &invalid_platform).is_err());
@@ -840,7 +840,7 @@ fn protocol_rejects_invalid_paths_module_names_and_collection_limits() -> Result
     let mut invalid_root = value.clone();
     invalid_root["modules"][0]["directory"] = json!(root.join("wrong"));
     assert!(decode(&root, &invalid_root).is_err());
-    let mut too_many_targets = value.clone();
+    let mut too_many_targets = value;
     too_many_targets["modules"][1]["targets"]["value"] = json!(
         (0..257)
             .map(|number| json!({"name": number.to_string(), "platform": "androidJvm"}))
@@ -1207,7 +1207,7 @@ fn sibling_invalidation_retains_only_explicit_reimport_and_never_operational_tok
     assert!(active.discovery_token(&store).is_none());
     store.set_trusted(handle, true)?;
     store.remove_root(handle);
-    let replacement = store.add_root(1, root.clone(), true)?;
+    let replacement = store.add_root(1, root, true)?;
     active.select_evaluated_owner(Some(replacement), Some(file), &store)?;
     assert!(active.discovery_token(&store).is_none());
     Ok(())
@@ -1391,6 +1391,7 @@ fn observer_folder_limit_applies_after_deduplication_without_rejecting_decode() 
         .context("Source directories")?;
     last_sources.push(json!(root.join("sources/0")));
     let at_limit = decode(&root, &value)?;
+    let cloned_at_limit = at_limit.clone();
     let observers = at_limit.observer_directories()?;
     assert_eq!(observers.len(), 4096);
     assert!(observers.contains(&root));
@@ -1398,7 +1399,7 @@ fn observer_folder_limit_applies_after_deduplication_without_rejecting_decode() 
     assert!(observers.contains(&root.join("sources/4094")));
     assert!(at_limit.is_input(&root.join("sources/4094/Convention.kt")));
     assert!(!at_limit.is_input(&root.join("outputs/15/Convention.kt")));
-    assert_eq!(at_limit.clone().observer_directories()?, observers);
+    assert_eq!(cloned_at_limit.observer_directories()?, observers);
     let last_source = value["buildLayouts"]
         .as_array_mut()
         .context("Build layouts")?
@@ -1410,6 +1411,7 @@ fn observer_folder_limit_applies_after_deduplication_without_rejecting_decode() 
         .context("Last source directory")?;
     *last_source = json!(root.join("sources/4095"));
     let overflow = decode(&root, &value)?;
+    let cloned_overflow = overflow.clone();
     assert!(overflow.is_input(&root.join("sources/4095/Convention.kt")));
     let error = overflow
         .observer_directories()
@@ -1417,8 +1419,7 @@ fn observer_folder_limit_applies_after_deduplication_without_rejecting_decode() 
         .context("Observer folder overflow")?;
     assert_eq!(error.to_string(), "Too many evaluated Gradle input folders");
     assert_eq!(
-        overflow
-            .clone()
+        cloned_overflow
             .observer_directories()
             .err()
             .context("Cloned observer folder overflow")?
