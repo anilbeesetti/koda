@@ -1,6 +1,7 @@
 use anyhow::{Context as _, Result};
 use fs::Fs;
 use futures::{FutureExt as _, future::Shared};
+use parking_lot::Mutex;
 
 use gpui::{
     AnyView, App, Context, DragMoveEvent, Entity, EntityId, EventEmitter, FocusHandle, Focusable,
@@ -15,6 +16,7 @@ pub use settings::SidebarSide;
 use std::cell::Cell;
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::sync::Arc;
 use ui::prelude::*;
 use util::ResultExt;
 use util::path_list::PathList;
@@ -303,6 +305,43 @@ struct HeldWorkspace {
     activated_at: Option<u64>,
 }
 
+struct MultiWorkspaceCapture {
+    active_workspace_id: Option<WorkspaceId>,
+    project_groups: Vec<ProjectGroupState>,
+    sidebar_open: bool,
+    sidebar_state: Option<String>,
+}
+
+impl MultiWorkspaceCapture {
+    fn into_state(self) -> MultiWorkspaceState {
+        MultiWorkspaceState {
+            active_workspace_id: self.active_workspace_id,
+            project_groups: self
+                .project_groups
+                .into_iter()
+                .map(|group| {
+                    crate::persistence::model::SerializedProjectGroup::from_group(
+                        &group.key,
+                        group.expanded,
+                    )
+                })
+                .collect(),
+            sidebar_open: self.sidebar_open,
+            sidebar_state: self.sidebar_state,
+        }
+    }
+}
+
+struct MultiWorkspaceSerializationQueue {
+    active: bool,
+    latest: Option<MultiWorkspaceCapture>,
+}
+
+struct MultiWorkspaceSerialization {
+    queue: Arc<Mutex<MultiWorkspaceSerializationQueue>>,
+    task: Shared<Task<()>>,
+}
+
 pub struct MultiWorkspace {
     window_id: WindowId,
     held: Vec<HeldWorkspace>,
@@ -319,7 +358,7 @@ pub struct MultiWorkspace {
     sidebar_overlay: Option<AnyView>,
     pending_removal_tasks: Vec<Task<()>>,
     _serialize_task: Option<Task<()>>,
-    pending_serialization: Option<Shared<Task<()>>>,
+    pending_serialization: Option<MultiWorkspaceSerialization>,
     _subscriptions: Vec<Subscription>,
     previous_focus_handle: Option<FocusHandle>,
 }
@@ -342,11 +381,13 @@ impl MultiWorkspace {
 
     pub fn new(workspace: Entity<Workspace>, window: &mut Window, cx: &mut Context<Self>) -> Self {
         let release_subscription = cx.on_release(|this: &mut MultiWorkspace, cx| {
-            if let Some(task) = this._serialize_task.take() {
-                task.detach();
+            // A deferred save can no longer recapture through the released weak entity.
+            // Capture it while the window's workspace and sidebar fields still exist.
+            if this._serialize_task.take().is_some() {
+                drop(this.serialize_now(cx));
             }
             if let Some(serialization) = this.pending_serialization.take() {
-                cx.background_spawn(serialization).detach();
+                cx.background_spawn(serialization.task).detach();
             }
             for task in std::mem::take(&mut this.pending_removal_tasks) {
                 task.detach();
@@ -1447,7 +1488,16 @@ impl MultiWorkspace {
     }
 
     pub fn serialize(&mut self, cx: &mut Context<Self>) {
+        let previous = self
+            .pending_serialization
+            .as_ref()
+            .map(|serialization| serialization.task.clone());
         self._serialize_task = Some(cx.spawn(async move |this, cx| {
+            // Coalesce UI requests before cloning groups or the sidebar's state.
+            // A blocked database writer must not retain a snapshot per UI change.
+            if let Some(previous) = previous {
+                previous.await;
+            }
             let Ok(task) = this.update(cx, |this, cx| this.serialize_now(cx)) else {
                 return;
             };
@@ -1455,44 +1505,65 @@ impl MultiWorkspace {
         }));
     }
 
-    fn serialize_now(&mut self, cx: &mut Context<Self>) -> Shared<Task<()>> {
-        let state = MultiWorkspaceState {
+    fn serialize_now(&mut self, cx: &App) -> Shared<Task<()>> {
+        let capture = MultiWorkspaceCapture {
             active_workspace_id: self.workspace().read(cx).database_id(),
-            project_groups: self
-                .project_groups
-                .iter()
-                .map(|group| {
-                    crate::persistence::model::SerializedProjectGroup::from_group(
-                        &group.key,
-                        group.expanded,
-                    )
-                })
-                .collect::<Vec<_>>(),
+            project_groups: self.project_groups.clone(),
             sidebar_open: self.sidebar_open,
             sidebar_state: self.sidebar.as_ref().and_then(|s| s.serialized_state(cx)),
         };
+        if let Some(serialization) = self.pending_serialization.as_ref() {
+            let mut queue = serialization.queue.lock();
+            if queue.active {
+                let previous = queue.latest.replace(capture);
+                let task = serialization.task.clone();
+                drop(queue);
+                drop(previous);
+                return task;
+            }
+        }
+
+        let queue = Arc::new(Mutex::new(MultiWorkspaceSerializationQueue {
+            active: true,
+            latest: Some(capture),
+        }));
         let window_id = self.window_id;
         let kvp = db::kvp::KeyValueStore::global(cx);
-        // Captures are made on the UI thread, but shutdown cannot dispatch UI tasks.
-        // Only the captured state and database handles may reach this background task.
-        let previous = self
-            .pending_serialization
-            .take()
-            .filter(|serialization| serialization.peek().is_none());
-        let serialization = cx
-            .background_spawn(async move {
-                // Background scheduling can reorder captures. Keep pending writes in
-                // capture order so an older state cannot overwrite a newer flush.
-                if let Some(previous) = previous {
-                    previous.await;
+        let task = cx
+            .background_executor()
+            .spawn({
+                let queue = queue.clone();
+                async move {
+                    loop {
+                        let capture = {
+                            let mut queue = queue.lock();
+                            match queue.latest.take() {
+                                Some(capture) => capture,
+                                None => {
+                                    // Mark the epoch idle only after its final write finishes.
+                                    // A later UI capture can then safely start another worker.
+                                    queue.active = false;
+                                    return;
+                                }
+                            }
+                        };
+                        crate::persistence::write_multi_workspace_state(
+                            &kvp,
+                            window_id,
+                            capture.into_state(),
+                        )
+                        .await;
+                    }
                 }
-                crate::persistence::write_multi_workspace_state(&kvp, window_id, state).await;
             })
             .shared();
-        // Owning the tail keeps a newer write's predecessor alive if its caller cancels.
-        // Completed predecessors are discarded; only still-pending writes are chained.
-        self.pending_serialization = Some(serialization.clone());
-        serialization
+        // All captures in this epoch await the same worker. Coalesced captures are
+        // satisfied by a newer persisted state; cancelling a caller cannot cancel it.
+        self.pending_serialization = Some(MultiWorkspaceSerialization {
+            queue,
+            task: task.clone(),
+        });
+        task
     }
 
     /// Used by the quit handler to ensure pending DB writes
