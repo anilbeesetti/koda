@@ -1,0 +1,3924 @@
+{
+  "schema_version": 1,
+  "state": "CURRENT_SOURCE_EXECUTION_INPUT_ONLY_NOT_RUN",
+  "sources": [
+    {
+      "label": "primary36",
+      "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+      "tree": "dd2bb2ae16a43fd0a0dbee35bae3615a5fbe26f1",
+      "case_count": 36,
+      "cases": [
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+          "package": "android_tools",
+          "integration_target": null,
+          "fully_qualified_name": "project_model::tests::default_variants_one_variant",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/src/project_model.rs",
+            "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+            "bytes": 74215
+          },
+          "named_declaration": {
+            "start_line": 1105,
+            "end_line": 1107,
+            "sha256": "c4ef34265e79a4a6393d2e3b99f53fc03550a5cd44e66440a5895955563007a2",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--lib",
+            "project_model::tests::default_variants_one_variant",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.gradle",
+                "git_blob_oid": "6e061e11ad2e19b7adfbb8a2efad6fabfa5e4c31",
+                "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+                "bytes": 36402
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+                "git_blob_oid": "bc00eda5ec4a79748c251f9836150fcb9edc7463",
+                "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02",
+                "bytes": 7125
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+                "git_blob_oid": "d144a6aea19c8140a431ecbf7dd0d57b81b28ff9",
+                "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+                "bytes": 54329
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.rs",
+                "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+                "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+                "bytes": 74215
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": true,
+            "declared_sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c",
+            "actual_sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+          "package": "android_tools",
+          "integration_target": null,
+          "fully_qualified_name": "project_model::tests::default_variants_debug_preferred",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/src/project_model.rs",
+            "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+            "bytes": 74215
+          },
+          "named_declaration": {
+            "start_line": 1110,
+            "end_line": 1112,
+            "sha256": "8758709ef4556fad1f44cbb5fafe1a6af6b43ad69cbc25f67cd1ffff29d5f10c",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--lib",
+            "project_model::tests::default_variants_debug_preferred",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.gradle",
+                "git_blob_oid": "6e061e11ad2e19b7adfbb8a2efad6fabfa5e4c31",
+                "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+                "bytes": 36402
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+                "git_blob_oid": "bc00eda5ec4a79748c251f9836150fcb9edc7463",
+                "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02",
+                "bytes": 7125
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+                "git_blob_oid": "d144a6aea19c8140a431ecbf7dd0d57b81b28ff9",
+                "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+                "bytes": 54329
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.rs",
+                "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+                "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+                "bytes": 74215
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": true,
+            "declared_sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c",
+            "actual_sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+          "package": "android_tools",
+          "integration_target": null,
+          "fully_qualified_name": "project_model::tests::default_variants_preferred_build_type",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/src/project_model.rs",
+            "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+            "bytes": 74215
+          },
+          "named_declaration": {
+            "start_line": 1115,
+            "end_line": 1117,
+            "sha256": "70b69c8584feaa71cce2b98bc4965b9d5ca90aa29caea231a3a6e351d4800301",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--lib",
+            "project_model::tests::default_variants_preferred_build_type",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.gradle",
+                "git_blob_oid": "6e061e11ad2e19b7adfbb8a2efad6fabfa5e4c31",
+                "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+                "bytes": 36402
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+                "git_blob_oid": "bc00eda5ec4a79748c251f9836150fcb9edc7463",
+                "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02",
+                "bytes": 7125
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+                "git_blob_oid": "d144a6aea19c8140a431ecbf7dd0d57b81b28ff9",
+                "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+                "bytes": 54329
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.rs",
+                "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+                "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+                "bytes": 74215
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": true,
+            "declared_sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c",
+            "actual_sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+          "package": "android_tools",
+          "integration_target": null,
+          "fully_qualified_name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/src/project_model.rs",
+            "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+            "bytes": 74215
+          },
+          "named_declaration": {
+            "start_line": 1120,
+            "end_line": 1122,
+            "sha256": "8167a486b1a2955868c6f732e09b9e1871ec10f3686d30e20e68ecfda510c873",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--lib",
+            "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.gradle",
+                "git_blob_oid": "6e061e11ad2e19b7adfbb8a2efad6fabfa5e4c31",
+                "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+                "bytes": 36402
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+                "git_blob_oid": "bc00eda5ec4a79748c251f9836150fcb9edc7463",
+                "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02",
+                "bytes": 7125
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+                "git_blob_oid": "d144a6aea19c8140a431ecbf7dd0d57b81b28ff9",
+                "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+                "bytes": 54329
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.rs",
+                "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+                "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+                "bytes": 74215
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": true,
+            "declared_sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c",
+            "actual_sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+          "package": "android_tools",
+          "integration_target": null,
+          "fully_qualified_name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/src/project_model.rs",
+            "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+            "bytes": 74215
+          },
+          "named_declaration": {
+            "start_line": 1125,
+            "end_line": 1127,
+            "sha256": "3e0ec4a98c03ca655bc91ca2dd0254f32002ef28872eed1e4b66da1e1f8569e9",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--lib",
+            "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.gradle",
+                "git_blob_oid": "6e061e11ad2e19b7adfbb8a2efad6fabfa5e4c31",
+                "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+                "bytes": 36402
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+                "git_blob_oid": "bc00eda5ec4a79748c251f9836150fcb9edc7463",
+                "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02",
+                "bytes": 7125
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+                "git_blob_oid": "d144a6aea19c8140a431ecbf7dd0d57b81b28ff9",
+                "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+                "bytes": 54329
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.rs",
+                "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+                "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+                "bytes": 74215
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": true,
+            "declared_sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c",
+            "actual_sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+          "package": "android_tools",
+          "integration_target": null,
+          "fully_qualified_name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/src/project_model.rs",
+            "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+            "bytes": 74215
+          },
+          "named_declaration": {
+            "start_line": 1130,
+            "end_line": 1132,
+            "sha256": "d3dccfa5e0c6bc8d47bd40340156ec477b46d8d8168c4078b56a73100501096b",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--lib",
+            "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.gradle",
+                "git_blob_oid": "6e061e11ad2e19b7adfbb8a2efad6fabfa5e4c31",
+                "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+                "bytes": 36402
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+                "git_blob_oid": "bc00eda5ec4a79748c251f9836150fcb9edc7463",
+                "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02",
+                "bytes": 7125
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+                "git_blob_oid": "d144a6aea19c8140a431ecbf7dd0d57b81b28ff9",
+                "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+                "bytes": 54329
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.rs",
+                "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+                "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+                "bytes": 74215
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": true,
+            "declared_sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c",
+            "actual_sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+          "package": "android_tools",
+          "integration_target": null,
+          "fully_qualified_name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/src/project_model.rs",
+            "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+            "bytes": 74215
+          },
+          "named_declaration": {
+            "start_line": 1135,
+            "end_line": 1137,
+            "sha256": "d2d3a363a36ddb2b9b8b31369b958c1529a02d9c453ef2a6b78baf14fe685327",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--lib",
+            "project_model::tests::default_variants_mismatched_product_flavour_length",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.gradle",
+                "git_blob_oid": "6e061e11ad2e19b7adfbb8a2efad6fabfa5e4c31",
+                "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+                "bytes": 36402
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+                "git_blob_oid": "bc00eda5ec4a79748c251f9836150fcb9edc7463",
+                "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02",
+                "bytes": 7125
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+                "git_blob_oid": "d144a6aea19c8140a431ecbf7dd0d57b81b28ff9",
+                "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+                "bytes": 54329
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.rs",
+                "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+                "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+                "bytes": 74215
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": true,
+            "declared_sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c",
+            "actual_sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+          "package": "android_tools",
+          "integration_target": null,
+          "fully_qualified_name": "project_model::tests::default_variants_on_empty",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/src/project_model.rs",
+            "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+            "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+            "bytes": 74215
+          },
+          "named_declaration": {
+            "start_line": 1140,
+            "end_line": 1142,
+            "sha256": "10d13e19340f36a6180a25b23c86daadd1753556229f52abd59b706208f824f9",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--lib",
+            "project_model::tests::default_variants_on_empty",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.gradle",
+                "git_blob_oid": "6e061e11ad2e19b7adfbb8a2efad6fabfa5e4c31",
+                "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+                "bytes": 36402
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+                "git_blob_oid": "bc00eda5ec4a79748c251f9836150fcb9edc7463",
+                "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02",
+                "bytes": 7125
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+                "git_blob_oid": "d144a6aea19c8140a431ecbf7dd0d57b81b28ff9",
+                "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+                "bytes": 54329
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/default_variants/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_model.rs",
+                "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+                "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+                "bytes": 74215
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": true,
+            "declared_sha256": "107973f652e4cb304b80ef33d8ac8e635fec7daf3dd54b11e306858206746e2c",
+            "actual_sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "fully_qualified_name": "import_simple_gradle_project",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "bytes": 23343
+          },
+          "named_declaration": {
+            "start_line": 125,
+            "end_line": 134,
+            "sha256": "b8332f834afaac63e9d510bdacaec7a2e6ecb5a39d1c6596afe98914b85d0e6f",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "gradle_import_reference",
+            "import_simple_gradle_project",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/gradle_import.rs",
+                "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+                "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+                "bytes": 34562
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "actual_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "fully_qualified_name": "import_subprojects",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "bytes": 23343
+          },
+          "named_declaration": {
+            "start_line": 137,
+            "end_line": 174,
+            "sha256": "2f79688d740c64f552da79e9736de20ebd348a7ef52ae8ebfadc92103d10723b",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "gradle_import_reference",
+            "import_subprojects",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/gradle_import.rs",
+                "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+                "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+                "bytes": 34562
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "actual_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "fully_qualified_name": "import_subprojects_with_missing_submodule",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "bytes": 23343
+          },
+          "named_declaration": {
+            "start_line": 177,
+            "end_line": 195,
+            "sha256": "7038c9a0c4d583cf612eccda7209598124f67f954fd97dada9aab229f5c55d63",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "gradle_import_reference",
+            "import_subprojects_with_missing_submodule",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/gradle_import.rs",
+                "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+                "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+                "bytes": 34562
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "actual_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "fully_qualified_name": "import_subproject_with_custom_location",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "bytes": 23343
+          },
+          "named_declaration": {
+            "start_line": 198,
+            "end_line": 214,
+            "sha256": "b941335b640a16f0dc16c8dc149a07a378b8ff19f4498952fd77a6c8a301319b",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "gradle_import_reference",
+            "import_subproject_with_custom_location",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/gradle_import.rs",
+                "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+                "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+                "bytes": 34562
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "actual_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "fully_qualified_name": "required_projects",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "bytes": 23343
+          },
+          "named_declaration": {
+            "start_line": 217,
+            "end_line": 235,
+            "sha256": "302211faa3924b8660207cf839d03c46333f40efde92109040eb3480e988228d",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "gradle_import_reference",
+            "required_projects",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/gradle_import.rs",
+                "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+                "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+                "bytes": 34562
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "actual_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "fully_qualified_name": "missing_required_projects",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "bytes": 23343
+          },
+          "named_declaration": {
+            "start_line": 238,
+            "end_line": 252,
+            "sha256": "4dc0d911c5122815e5441c8a78bbf59f40fd52c65a3bc239f5916c8287b61258",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "gradle_import_reference",
+            "missing_required_projects",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/gradle_import.rs",
+                "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+                "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+                "bytes": 34562
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "actual_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "fully_qualified_name": "missing_enclosing_project",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "bytes": 23343
+          },
+          "named_declaration": {
+            "start_line": 255,
+            "end_line": 265,
+            "sha256": "32758f74478c781245ce7eea45d1dd859bb91bebab0691c5c16910d2af4be68b",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "gradle_import_reference",
+            "missing_enclosing_project",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/gradle_import.rs",
+                "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+                "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+                "bytes": 34562
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "actual_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "fully_qualified_name": "transitive_dependencies",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "bytes": 23343
+          },
+          "named_declaration": {
+            "start_line": 268,
+            "end_line": 292,
+            "sha256": "ce8283d58f4882621a48f28be7f16edf1be9abe585a048faea864b5711a5532c",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "gradle_import_reference",
+            "transitive_dependencies",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/gradle_import.rs",
+                "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+                "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+                "bytes": 34562
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "actual_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+          "package": "android_tools",
+          "integration_target": "gradle_import_reference",
+          "fully_qualified_name": "circular_dependencies",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/gradle_import_reference.rs",
+            "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+            "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "bytes": 23343
+          },
+          "named_declaration": {
+            "start_line": 295,
+            "end_line": 319,
+            "sha256": "4b8bb5bb150cf51997212b15d75e1769b62c434490cf7d69c46c232ca69dfc80",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "gradle_import_reference",
+            "circular_dependencies",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+                "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+                "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+                "bytes": 433
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/gradle_import.rs",
+                "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+                "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+                "bytes": 34562
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+            "actual_sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "fully_qualified_name": "test_show_visibility_icons_when_option_is_selected",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "bytes": 21493
+          },
+          "named_declaration": {
+            "start_line": 52,
+            "end_line": 56,
+            "sha256": "e4dc3543c5c8b947a46ba0619a9dea65bf339c4ebef4d198943cddd42e3b42b0",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "project_view_preferences_reference",
+            "test_show_visibility_icons_when_option_is_selected",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_view_preferences.rs",
+                "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+                "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+                "bytes": 17160
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "actual_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "fully_qualified_name": "test_show_visibility_icons_when_option_is_unselected",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "bytes": 21493
+          },
+          "named_declaration": {
+            "start_line": 59,
+            "end_line": 63,
+            "sha256": "216981a8905b80e82a23d563110f48c7b2d888e94b1a0d50b2efc6c840a1336e",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "project_view_preferences_reference",
+            "test_show_visibility_icons_when_option_is_unselected",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_view_preferences.rs",
+                "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+                "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+                "bytes": 17160
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "actual_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "fully_qualified_name": "test_android_view_is_default",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "bytes": 21493
+          },
+          "named_declaration": {
+            "start_line": 66,
+            "end_line": 97,
+            "sha256": "6fbb7d18912a06dabe5af82c3b7280a864c8633cc2c3a1f0ccaad0adfaa7103e",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "project_view_preferences_reference",
+            "test_android_view_is_default",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_view_preferences.rs",
+                "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+                "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+                "bytes": 17160
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "actual_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "fully_qualified_name": "test_android_view_not_visible_in_unsupported_project_system",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "bytes": 21493
+          },
+          "named_declaration": {
+            "start_line": 100,
+            "end_line": 113,
+            "sha256": "3a26537c90a0bc2d18435b1007954c87967f02180f45788c6d7faf1f27d3be07",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "project_view_preferences_reference",
+            "test_android_view_not_visible_in_unsupported_project_system",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_view_preferences.rs",
+                "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+                "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+                "bytes": 17160
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "actual_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "fully_qualified_name": "test_android_view_not_visible_in_non_android_project",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "bytes": 21493
+          },
+          "named_declaration": {
+            "start_line": 116,
+            "end_line": 129,
+            "sha256": "3043b76fa406d1ef02b17f4acc12572ba55e680333a15cf5bb4aa8d2d05f48f9",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "project_view_preferences_reference",
+            "test_android_view_not_visible_in_non_android_project",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_view_preferences.rs",
+                "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+                "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+                "bytes": 17160
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "actual_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "fully_qualified_name": "test_android_view_is_default_custom_property_handling",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "bytes": 21493
+          },
+          "named_declaration": {
+            "start_line": 132,
+            "end_line": 157,
+            "sha256": "958428bfed4f013d6bb4b42010931403428d413d4749fccfef11ba1ad7aabe6f",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "project_view_preferences_reference",
+            "test_android_view_is_default_custom_property_handling",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_view_preferences.rs",
+                "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+                "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+                "bytes": 17160
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "actual_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "fully_qualified_name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "bytes": 21493
+          },
+          "named_declaration": {
+            "start_line": 160,
+            "end_line": 187,
+            "sha256": "f62ce20d49b59bf6d898ad25fb6d3b2dd6e1bb8f007338f5dc5de8211871a207",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "project_view_preferences_reference",
+            "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_view_preferences.rs",
+                "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+                "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+                "bytes": 17160
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "actual_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "fully_qualified_name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "bytes": 21493
+          },
+          "named_declaration": {
+            "start_line": 190,
+            "end_line": 216,
+            "sha256": "6cd367c316461f51052d378616fd5d57401c78abfc2ea4f21de935261e7b1c67",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "project_view_preferences_reference",
+            "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_view_preferences.rs",
+                "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+                "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+                "bytes": 17160
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "actual_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+          "package": "android_tools",
+          "integration_target": "project_view_preferences_reference",
+          "fully_qualified_name": "test_android_view_is_default_metrics",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+            "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+            "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "bytes": 21493
+          },
+          "named_declaration": {
+            "start_line": 219,
+            "end_line": 257,
+            "sha256": "2172d0907a3d532488d3f7ef1d957fc2ddc90113cafb4dd367322228e1ad42b0",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "project_view_preferences_reference",
+            "test_android_view_is_default_metrics",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/project_view_preferences.rs",
+                "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+                "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+                "bytes": 17160
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+            "actual_sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+          "package": "android_ui",
+          "integration_target": null,
+          "fully_qualified_name": "tabbed_toolbar::tests::component_is_added_element",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/Cargo.toml",
+            "git_blob_oid": "14c8ea55d804b1bfa8c5f0b6cf8aa17b233c37cd",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe",
+            "bytes": 1298
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "bytes": 70278
+          },
+          "named_declaration": {
+            "start_line": 724,
+            "end_line": 737,
+            "sha256": "ee79f8d2e9f426c8dd727e2ffa78be005fe48ce1021ac64cf0f9ec295011050d",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_ui/Cargo.toml",
+            "-p",
+            "android_ui",
+            "--lib",
+            "tabbed_toolbar::tests::component_is_added_element",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/src/tabbed_toolbar.rs",
+                "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+                "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+                "bytes": 70278
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "actual_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+          "package": "android_ui",
+          "integration_target": null,
+          "fully_qualified_name": "tabbed_toolbar::tests::tab_is_added",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/Cargo.toml",
+            "git_blob_oid": "14c8ea55d804b1bfa8c5f0b6cf8aa17b233c37cd",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe",
+            "bytes": 1298
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "bytes": 70278
+          },
+          "named_declaration": {
+            "start_line": 740,
+            "end_line": 754,
+            "sha256": "3dec46b4910ee6506320f03f665db40c7b792ccbf4509d4b3219953cc187edf0",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_ui/Cargo.toml",
+            "-p",
+            "android_ui",
+            "--lib",
+            "tabbed_toolbar::tests::tab_is_added",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/src/tabbed_toolbar.rs",
+                "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+                "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+                "bytes": 70278
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "actual_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+          "package": "android_ui",
+          "integration_target": null,
+          "fully_qualified_name": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/Cargo.toml",
+            "git_blob_oid": "14c8ea55d804b1bfa8c5f0b6cf8aa17b233c37cd",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe",
+            "bytes": 1298
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "bytes": 70278
+          },
+          "named_declaration": {
+            "start_line": 757,
+            "end_line": 777,
+            "sha256": "150971aeaed1916e1ad3ca51b32495fdc027c6750dc9c3599aed8cd290962265",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_ui/Cargo.toml",
+            "-p",
+            "android_ui",
+            "--lib",
+            "tabbed_toolbar::tests::closed_is_called_when_clicked",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/src/tabbed_toolbar.rs",
+                "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+                "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+                "bytes": 70278
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "actual_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+          "package": "android_ui",
+          "integration_target": null,
+          "fully_qualified_name": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/Cargo.toml",
+            "git_blob_oid": "14c8ea55d804b1bfa8c5f0b6cf8aa17b233c37cd",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe",
+            "bytes": 1298
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "bytes": 70278
+          },
+          "named_declaration": {
+            "start_line": 780,
+            "end_line": 790,
+            "sha256": "14179fe9d7ad0175bbb602340d793fdb6edd0a510506d961a91b96de30e11f43",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_ui/Cargo.toml",
+            "-p",
+            "android_ui",
+            "--lib",
+            "tabbed_toolbar::tests::no_close_button_when_no_listener",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/src/tabbed_toolbar.rs",
+                "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+                "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+                "bytes": 70278
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "actual_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+          "package": "android_ui",
+          "integration_target": null,
+          "fully_qualified_name": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/Cargo.toml",
+            "git_blob_oid": "14c8ea55d804b1bfa8c5f0b6cf8aa17b233c37cd",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe",
+            "bytes": 1298
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "bytes": 70278
+          },
+          "named_declaration": {
+            "start_line": 793,
+            "end_line": 813,
+            "sha256": "9288ccb529bbcc8ffbaf9bfd56b52027bc610f72ca2ead42d71bf450ce0bc948",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_ui/Cargo.toml",
+            "-p",
+            "android_ui",
+            "--lib",
+            "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/src/tabbed_toolbar.rs",
+                "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+                "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+                "bytes": 70278
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "actual_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+          "package": "android_ui",
+          "integration_target": null,
+          "fully_qualified_name": "tabbed_toolbar::tests::can_select_tab_by_index",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/Cargo.toml",
+            "git_blob_oid": "14c8ea55d804b1bfa8c5f0b6cf8aa17b233c37cd",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe",
+            "bytes": 1298
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "bytes": 70278
+          },
+          "named_declaration": {
+            "start_line": 816,
+            "end_line": 848,
+            "sha256": "78c45cc80322d41b4c6cecc54ea45a4817af3d28f5e038db21ccc02b7df58b61",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_ui/Cargo.toml",
+            "-p",
+            "android_ui",
+            "--lib",
+            "tabbed_toolbar::tests::can_select_tab_by_index",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/src/tabbed_toolbar.rs",
+                "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+                "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+                "bytes": 70278
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "actual_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+          "package": "android_ui",
+          "integration_target": null,
+          "fully_qualified_name": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/Cargo.toml",
+            "git_blob_oid": "14c8ea55d804b1bfa8c5f0b6cf8aa17b233c37cd",
+            "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe",
+            "bytes": 1298
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_ui/src/tabbed_toolbar.rs",
+            "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+            "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "bytes": 70278
+          },
+          "named_declaration": {
+            "start_line": 851,
+            "end_line": 868,
+            "sha256": "49dcd65969be1c8564211469db6f260a61b588552e25ecc8089f33a5410b4fd3",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_ui/Cargo.toml",
+            "-p",
+            "android_ui",
+            "--lib",
+            "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+                "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+                "bytes": 11358
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_ui/src/tabbed_toolbar.rs",
+                "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+                "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+                "bytes": 70278
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+            "actual_sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+          },
+          "existing_port_status": "adapted"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+          "package": "android_tools",
+          "integration_target": "generated_artifacts",
+          "fully_qualified_name": "check_model_consumer_version_ordering",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/generated_artifacts.rs",
+            "git_blob_oid": "96c2485c44a9494094abe95b9a239ddf9b2c2efe",
+            "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c",
+            "bytes": 29856
+          },
+          "named_declaration": {
+            "start_line": 53,
+            "end_line": 73,
+            "sha256": "8d31b3fe87fdab0a2908c701c01f60f7d583a6bc3f78b6aa2391d289bdedb6ca",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "generated_artifacts",
+            "check_model_consumer_version_ordering",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/generated_artifacts/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/generated_artifacts/NOTICE",
+                "git_blob_oid": "8aa8562ec535cd31c2aeb9b59d2d79b238a55477",
+                "sha256": "bfee2f15cfeccecbf0ea05f503b6138398459e43dc59fb1da59c5944ae146111",
+                "bytes": 829
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/generated_artifacts.rs",
+                "git_blob_oid": "4eda76e20ae905018e93b5f838a787d587f675f4",
+                "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+                "bytes": 29465
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c",
+            "actual_sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+          "package": "android_tools",
+          "integration_target": "generated_artifacts",
+          "fully_qualified_name": "check_model_version_ordering",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/generated_artifacts.rs",
+            "git_blob_oid": "96c2485c44a9494094abe95b9a239ddf9b2c2efe",
+            "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c",
+            "bytes": 29856
+          },
+          "named_declaration": {
+            "start_line": 30,
+            "end_line": 50,
+            "sha256": "2833bde968264c111864974bf812cab85ff5a9d7737c4c97708bd7bb51f84485",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "generated_artifacts",
+            "check_model_version_ordering",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/generated_artifacts/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/generated_artifacts/NOTICE",
+                "git_blob_oid": "8aa8562ec535cd31c2aeb9b59d2d79b238a55477",
+                "sha256": "bfee2f15cfeccecbf0ea05f503b6138398459e43dc59fb1da59c5944ae146111",
+                "bytes": 829
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/generated_artifacts.rs",
+                "git_blob_oid": "4eda76e20ae905018e93b5f838a787d587f675f4",
+                "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+                "bytes": 29465
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c",
+            "actual_sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
+          },
+          "existing_port_status": "ported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+          "package": "android_tools",
+          "integration_target": "parallel_sync",
+          "fully_qualified_name": "check_supports_parallel_sync",
+          "manifest": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+            "bytes": 1167
+          },
+          "source": {
+            "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+            "path": "crates/android_tools/tests/parallel_sync.rs",
+            "git_blob_oid": "c5ade43e183d198c686181d0a7e95dbb63d4be77",
+            "sha256": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77",
+            "bytes": 7401
+          },
+          "named_declaration": {
+            "start_line": 52,
+            "end_line": 68,
+            "sha256": "5ad15ef84ed0a20b005a380fd4d9e33592a90ed3f9882bf027a52b0b102e9f74",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "parallel_sync",
+            "check_supports_parallel_sync",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture_and_check_sources": {
+            "canonical_fixture_entries": [],
+            "whole_test_source_compile_includes": [],
+            "retained_provenance_or_license_or_template": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/generated_artifacts/LICENSE-APACHE",
+                "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+                "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+                "bytes": 10768
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/test_data/generated_artifacts/NOTICE",
+                "git_blob_oid": "8aa8562ec535cd31c2aeb9b59d2d79b238a55477",
+                "sha256": "bfee2f15cfeccecbf0ea05f503b6138398459e43dc59fb1da59c5944ae146111",
+                "bytes": 829
+              }
+            ],
+            "implementation_sources": [
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/parallel_sync.rs",
+                "git_blob_oid": "044064055653b644ce90bd6d25c6f05fb581dcaf",
+                "sha256": "943e61b9d6e3256275b38750a7f8595cc4aa270a099093f6df8404f6270998e7",
+                "bytes": 5096
+              },
+              {
+                "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+                "path": "crates/android_tools/src/generated_artifacts.rs",
+                "git_blob_oid": "4eda76e20ae905018e93b5f838a787d587f675f4",
+                "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+                "bytes": 29465
+              }
+            ],
+            "includes_note": "Includes bind complete test-source compilation; a named ordering test may use only inline values while other functions in that file use includes."
+          },
+          "ledger_source_diagnostic": {
+            "stale": false,
+            "declared_sha256": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77",
+            "actual_sha256": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77"
+          },
+          "existing_port_status": "ported"
+        }
+      ],
+      "source_check_bindings": [
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/src/project_model.rs",
+          "git_blob_oid": "1c57e737b04b4e0c7be25f24fa6efc7ab407ad6d",
+          "sha256": "a611bd0e36cb2624aa9e52e7153fc7f7fc01a3449e528a75c49dde61dc294490",
+          "bytes": 74215
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/Cargo.toml",
+          "git_blob_oid": "7a3e77f72d98906c37bfac3dc94ea539a00d1c86",
+          "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7",
+          "bytes": 1167
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.kt",
+          "git_blob_oid": "7085783041ae55a7dc8733a5835e86edec3a88a9",
+          "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15",
+          "bytes": 4006
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/src/project_model.gradle",
+          "git_blob_oid": "6e061e11ad2e19b7adfbb8a2efad6fabfa5e4c31",
+          "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+          "bytes": 36402
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+          "git_blob_oid": "bc00eda5ec4a79748c251f9836150fcb9edc7463",
+          "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02",
+          "bytes": 7125
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+          "git_blob_oid": "d144a6aea19c8140a431ecbf7dd0d57b81b28ff9",
+          "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+          "bytes": 54329
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/default_variants/LICENSE-APACHE",
+          "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+          "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+          "bytes": 10768
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/tests/gradle_import_reference.rs",
+          "git_blob_oid": "8c3c0954c7be2a0f4ca3daa8e61f1f498e00f704",
+          "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+          "bytes": 23343
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/gradle_import/GradleModuleImportTest.java",
+          "git_blob_oid": "2766dbb03741743c3aa44c897ea915df9b49ca62",
+          "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+          "bytes": 16649
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/gradle_import/build.gradle.template",
+          "git_blob_oid": "9da86b97793579958f0b1ae064b5f8ac4fc189a4",
+          "sha256": "c300ef7b2117cfd05583902d10165d4c651d7c33f87f18c55e984640c3113fb7",
+          "bytes": 433
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/gradle_import/LICENSE-APACHE",
+          "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/src/gradle_import.rs",
+          "git_blob_oid": "a9fb22edfecf6dd2ea354b0c3b2001942658467b",
+          "sha256": "d94b0330b0f7687d7161af7c895252d31bb589fca7105e601703a30e0607067a",
+          "bytes": 34562
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+          "git_blob_oid": "621473843cb34116c11edbe0d673d45272284cd5",
+          "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+          "bytes": 21493
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewTest.java",
+          "git_blob_oid": "2c832cca092a41444a973451eeeb3710491d9bea",
+          "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+          "bytes": 34018
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/project_view_preferences/LICENSE-APACHE",
+          "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/src/project_view_preferences.rs",
+          "git_blob_oid": "4e7bae9eadc79d221237c53873fa47a5698e5549",
+          "sha256": "6a24eafaa9dba908ad5490f19600fc174fb03a453e807e606cd1b4a139881ac0",
+          "bytes": 17160
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/src/tabbed_toolbar.rs",
+          "git_blob_oid": "0618e6f7b1a8c8014810a21f4e17ec60899dde01",
+          "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1",
+          "bytes": 70278
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/Cargo.toml",
+          "git_blob_oid": "14c8ea55d804b1bfa8c5f0b6cf8aa17b233c37cd",
+          "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe",
+          "bytes": 1298
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/TabbedToolbarTest.kt",
+          "git_blob_oid": "9baa48e84c96efdd83b8dcd3a609035255f9315e",
+          "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+          "bytes": 4201
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/LICENSE-APACHE",
+          "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/tests/generated_artifacts.rs",
+          "git_blob_oid": "96c2485c44a9494094abe95b9a239ddf9b2c2efe",
+          "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c",
+          "bytes": 29856
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt",
+          "git_blob_oid": "5651e9306772265e2a9bee919e546b3b8333067a",
+          "sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+          "bytes": 3273
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/generated_artifacts/LICENSE-APACHE",
+          "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+          "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+          "bytes": 10768
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/generated_artifacts/NOTICE",
+          "git_blob_oid": "8aa8562ec535cd31c2aeb9b59d2d79b238a55477",
+          "sha256": "bfee2f15cfeccecbf0ea05f503b6138398459e43dc59fb1da59c5944ae146111",
+          "bytes": 829
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/src/generated_artifacts.rs",
+          "git_blob_oid": "4eda76e20ae905018e93b5f838a787d587f675f4",
+          "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+          "bytes": 29465
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/tests/parallel_sync.rs",
+          "git_blob_oid": "c5ade43e183d198c686181d0a7e95dbb63d4be77",
+          "sha256": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77",
+          "bytes": 7401
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/src/parallel_sync.rs",
+          "git_blob_oid": "044064055653b644ce90bd6d25c6f05fb581dcaf",
+          "sha256": "943e61b9d6e3256275b38750a7f8595cc4aa270a099093f6df8404f6270998e7",
+          "bytes": 5096
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "docs/android-studio/test-parity.json",
+          "git_blob_oid": "aab919f0a9fd47c6a3c23f37ba2d06ebbadadbea",
+          "sha256": "74459a228dc19e395b937dbc6ecafd7d4c4dc7214993caf62625878a7438736e",
+          "bytes": 108910
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "docs/android-studio/reference-manifest.json",
+          "git_blob_oid": "1477b816668aeedc29e9786584b29a570077dea5",
+          "sha256": "e66d830a49f28541affba651148eed9c943aa85e16e42c1db651594bdce08b3b",
+          "bytes": 166821
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "Cargo.toml",
+          "git_blob_oid": "d50bcbe6128930eae1bcb232dd27c8ed04364bfc",
+          "sha256": "b790b8de721d0849783583a2d1a7d21542488fc7d8d06ca3cc642271f297c782",
+          "bytes": 41556
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "Cargo.lock",
+          "git_blob_oid": "ca2f763cef9ee6c3f00be71decd348f06b72daa9",
+          "sha256": "fa8b5e7ac95efb90768bdb6fbc0a4b5cac0a30f773d243d7e2d4402c25a8bbd3",
+          "bytes": 502577
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "rust-toolchain.toml",
+          "git_blob_oid": "0d6cb315024714f86ede7360d76a2e04bd5de0fd",
+          "sha256": "3d9002e97d5c3de93d49a1a36649153da4f40c29b061d0f2e09ea84ee143ba3e",
+          "bytes": 262
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": ".github/workflows/fork_ci.yml",
+          "git_blob_oid": "302de98ccc9cdd20e64e239b1016e004ffd399a3",
+          "sha256": "11005939b92801ef10997c247281b2026a95ee9632d8c3ac838585000c8fd2af",
+          "bytes": 17660
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/default_variants/DefaultVariants.kt",
+          "git_blob_oid": "6c9dfca1693ddb4901d34d82c69a9df71fa8c5c6",
+          "sha256": "afff0c6eac2817edd0887458dd4a942e952897e562cd61aa75f0a2d544d8c143",
+          "bytes": 3474,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/generated_artifacts/AGP-VERSION-NOTICE.md",
+          "git_blob_oid": "04cccd32ef8c1e212d32d2d924604732392e0521",
+          "sha256": "8433d749e6d56e4e16df936c1086210342deb077eac7d0c5fce83b698933d794",
+          "bytes": 700,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/generated_artifacts/AgpVersion.kt",
+          "git_blob_oid": "9ee78f3b5a6150c9d9a1c8316bd831f051daf83e",
+          "sha256": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb",
+          "bytes": 11692,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/generated_artifacts/BasicModules.kt",
+          "git_blob_oid": "05fa31f3d6ca8b1d9a93fa79a2e3906d7bc31328",
+          "sha256": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed",
+          "bytes": 20824,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/gradle_import/GradleModuleImporter.java",
+          "git_blob_oid": "489966f7b88fc6979a6646e517421a7ce44567fc",
+          "sha256": "c43eea268ff7b08d2f24887a26ab5fb9f1130b34252d2c58128c8332a4156f10",
+          "bytes": 13457,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/gradle_import/GradleProjectDependencyParser.java",
+          "git_blob_oid": "6064694a4d8573fcfa3f4a348f900f97d3b5fb4d",
+          "sha256": "74bb668b43f9079e5da97e623c26810c20a93d02b05e3970f2557eace070b617",
+          "bytes": 2657,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/gradle_import/GradleSiblingLookup.java",
+          "git_blob_oid": "297e0f74c050a23360b4ccdca1ed7a0602d7efab",
+          "sha256": "2d58da04c171343dc4780967cb40ffcf623a9762f9f0f178f876fde4aa754509",
+          "bytes": 2962,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewPane.java",
+          "git_blob_oid": "36b11d0994e18d2b1f223926e1792afb12101b51",
+          "sha256": "b48e40148e50ef8181985b042fea4a443c02e6435fe8ad469a9d2faa149c899b",
+          "bytes": 22453,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewSettings.kt",
+          "git_blob_oid": "b2411f80891438e37ab88a0096db07e3024675ca",
+          "sha256": "da5c27a8dbd12cf1aac96b310bad4c2ab17cba62c807e5ae0a7412ac98553051",
+          "bytes": 1540,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/project_view_preferences/AndroidProjectViewSettingsImpl.kt",
+          "git_blob_oid": "d5f36b071c9babff722d3c8dc1ac59f740db7443",
+          "sha256": "365f0ab95b5e34c4f778778deddc6b33c84f932154e76472f123fdb9f6ec2013",
+          "bytes": 3245,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/project_view_preferences/README.md",
+          "git_blob_oid": "24584857adc341379ff276e3231193efe4d89fd5",
+          "sha256": "2e7c9bcbf12571d225e9de62394644ea092ae7d795111847c8072c4e5befbee0",
+          "bytes": 1552,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_tools/test_data/project_view_preferences/VMOptions.java",
+          "git_blob_oid": "f5fe6dcd34f291379f5e35fe2e253670d865d711",
+          "sha256": "1912cf74d84f9c841de5b0eff2930445dcbeeb561685b568a96591e79d8fd487",
+          "bytes": 12076,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/CommonButton.java",
+          "git_blob_oid": "9fcb8d37c39c7a13a9989f29b53d6bf31c703009",
+          "sha256": "045a1a33fab2d4b122c61c8ec14a6421a10918b0f00124e487e76b1ac7f20070",
+          "bytes": 1239,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/CommonButtonUI.java",
+          "git_blob_oid": "a1816d402a1a45025a2ba4f98d0b6ba6b74bf707",
+          "sha256": "21608dbf7fcb189f9ab509521a18f337cccbe04899e4c85302386431f3ef0d3c",
+          "bytes": 2402,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/HorizontalScrollView.kt",
+          "git_blob_oid": "110adfa9e7ad9412aa8d6221a207598183e7dc22",
+          "sha256": "61a532527f1f2588354d253958183781c43bfff819a78fb4b96f26b4cc394628",
+          "bytes": 2588,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/StudioColors.kt",
+          "git_blob_oid": "bf07531fe5baa75f3acd682d18a4f7d5c76441e4",
+          "sha256": "67c76be7769a1738235034bb8d5e3fc1c6d516d884fb8ba54d2a6b6c498aaff3",
+          "bytes": 6359,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/TabbedToolbar.java",
+          "git_blob_oid": "ed7cdeab178cba7a214e122fc353e3b8fd5e4f85",
+          "sha256": "7e9b312394b5419b446880151f83cfb04f01f9acb7364b1ab3e01baa93c4e59f",
+          "bytes": 8195,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/TabularLayout.kt",
+          "git_blob_oid": "cb67c484aceaaf4545adba885325068a3f9ad4a4",
+          "sha256": "e37ba39e6331a828d2d01a7ad1d23657c65772ced5d3c683e5faf52d354c528e",
+          "bytes": 19117,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/add.svg",
+          "git_blob_oid": "d1338c821bc60bac4a38dabfdb237db3988fc2c8",
+          "sha256": "90ea35fe93f58db441ccf12778af7b56f91897b3d44651b3801ec530a9dd9ba8",
+          "bytes": 939,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/add_dark.svg",
+          "git_blob_oid": "bba2d97e2463c03c8cb7af3867d4c759edf3f079",
+          "sha256": "0869e8a2e80878011514360353b0d9e845a865bb65e30fce5a6bab57623043b9",
+          "bytes": 813,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/close.svg",
+          "git_blob_oid": "bcbc70c4169f088d6a61046c52472721eecaa1cc",
+          "sha256": "b720c5641b67d33efb0ef3feb5c11a7c49f9d89d26909776ae99a28358c6194a",
+          "bytes": 961,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": "crates/android_ui/test_data/tabbed_toolbar/close_dark.svg",
+          "git_blob_oid": "dedddd13ab25319b3cf7da119527e382a1696c1b",
+          "sha256": "d9b4cdec69b34c7f88e07f701b37da02def1b59a5a455592cb85052e343c7716",
+          "bytes": 961,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "594bf18526b3d7197315c82f5c6c3860cfb7bf5a",
+          "path": ".cargo/config.toml",
+          "git_blob_oid": "8ed5893b99ed318f9953acf0467a26f94a720347",
+          "sha256": "bac3a152624488a520b492297901f8190a5acfc9dacb4cdda14b4c471fdca9ca",
+          "bytes": 1140
+        }
+      ],
+      "optional": false,
+      "runtime_result": null
+    },
+    {
+      "label": "table4",
+      "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+      "tree": "c5306d1dc5714e629eb0dd658fd230f77af84f52",
+      "case_count": 4,
+      "cases": [
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.withoutAbi",
+          "package": "android_tools",
+          "integration_target": "build_variant_table",
+          "fully_qualified_name": "without_abi",
+          "manifest": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "018b1004abb457cc6055a4ae2e9be797fbbeeaf6",
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b",
+            "bytes": 1244
+          },
+          "source": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/tests/build_variant_table.rs",
+            "git_blob_oid": "914d04a293f86078fcf41c11080a82dd75e5a4b0",
+            "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199",
+            "bytes": 18907
+          },
+          "named_declaration": {
+            "start_line": 66,
+            "end_line": 78,
+            "sha256": "fba0f464bf57837bddf341e1e91a9df0fd1afe5a73351414df0dfadf1060f873",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "build_variant_table",
+            "without_abi",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/without_abi.json",
+            "git_blob_oid": "906747b1cedbf2576a02ae10aafa14d161b14443",
+            "sha256": "1356308f038ef85469c966eed8906d0941e1636ebf04208af8ea7540037ef72f",
+            "bytes": 4111
+          },
+          "fixture_runtime_use": "Documented source-derived JSON expectations; tests construct inline Rust module()/expected_row() inputs and do not load this JSON.",
+          "original_source": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt",
+            "git_blob_oid": "e24f500ca72c21060b690c8be9d37768b79533f0",
+            "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0",
+            "bytes": 8413
+          },
+          "original_method_span": {
+            "start_line": 42,
+            "end_line": 76,
+            "method_span_sha256": "9d7b14d6c54421f9a713b94276cb2712295234ae0b60bef05a73f16838295a29",
+            "hash_convention": "UTF-8 exact retained inclusive line span with its one final LF excluded; no trimming or other normalization."
+          },
+          "original_outcomes": 3,
+          "all_original_expectations": [
+            "rows.len == 2",
+            "row0 full equality app: selected debug, ABI None, choices debug/release with neither default, ABI choices empty",
+            "row1 full equality lib: selected debug, ABI None, choices debug/release with neither default, ABI choices empty"
+          ],
+          "existing_port_status": "unported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.testDefaultVariantIndicator",
+          "package": "android_tools",
+          "integration_target": "build_variant_table",
+          "fully_qualified_name": "test_default_variant_indicator",
+          "manifest": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "018b1004abb457cc6055a4ae2e9be797fbbeeaf6",
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b",
+            "bytes": 1244
+          },
+          "source": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/tests/build_variant_table.rs",
+            "git_blob_oid": "914d04a293f86078fcf41c11080a82dd75e5a4b0",
+            "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199",
+            "bytes": 18907
+          },
+          "named_declaration": {
+            "start_line": 81,
+            "end_line": 99,
+            "sha256": "5ebe7786265c50501c45eabf09f48bc37135d14ade2dd4c57b1757cf31a0e432",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "build_variant_table",
+            "test_default_variant_indicator",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/test_default_variant_indicator.json",
+            "git_blob_oid": "1a51d8efdb68a39471e717b3707fab83e2091c3f",
+            "sha256": "ca8c1ded3e5f1f0dc606a5181737ec05234887eef4790291c26100908fa691fe",
+            "bytes": 4148
+          },
+          "fixture_runtime_use": "Documented source-derived JSON expectations; tests construct inline Rust module()/expected_row() inputs and do not load this JSON.",
+          "original_source": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt",
+            "git_blob_oid": "e24f500ca72c21060b690c8be9d37768b79533f0",
+            "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0",
+            "bytes": 8413
+          },
+          "original_method_span": {
+            "start_line": 78,
+            "end_line": 112,
+            "method_span_sha256": "3b281dea182392792465bf1c4625af74e42897b3fdc89c9229e5e0fc52c13647",
+            "hash_convention": "UTF-8 exact retained inclusive line span with its one final LF excluded; no trimming or other normalization."
+          },
+          "original_outcomes": 3,
+          "all_original_expectations": [
+            "rows.len == 2",
+            "row0 full equality app selected debug: debug default=false, release default=true; ABI None and choices empty",
+            "row1 full equality lib selected debug: debug default=true, release default=false; ABI None and choices empty"
+          ],
+          "existing_port_status": "unported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+          "package": "android_tools",
+          "integration_target": "build_variant_table",
+          "fully_qualified_name": "same_type_rows_are_sorted",
+          "manifest": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "018b1004abb457cc6055a4ae2e9be797fbbeeaf6",
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b",
+            "bytes": 1244
+          },
+          "source": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/tests/build_variant_table.rs",
+            "git_blob_oid": "914d04a293f86078fcf41c11080a82dd75e5a4b0",
+            "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199",
+            "bytes": 18907
+          },
+          "named_declaration": {
+            "start_line": 102,
+            "end_line": 116,
+            "sha256": "d00624c59d9d57e4851cc30073b6eba87eda868a43c240fc15783945ecbafd98",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "build_variant_table",
+            "same_type_rows_are_sorted",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/same_type_rows_are_sorted.json",
+            "git_blob_oid": "365a9ed316c964c880595fccea367e993d2959f4",
+            "sha256": "5679f0f958805d7f8d08e34b51bd0d74bc88ef25b1b119ab36bbc9d2ed5500bb",
+            "bytes": 3852
+          },
+          "fixture_runtime_use": "Documented source-derived JSON expectations; tests construct inline Rust module()/expected_row() inputs and do not load this JSON.",
+          "original_source": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt",
+            "git_blob_oid": "e24f500ca72c21060b690c8be9d37768b79533f0",
+            "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0",
+            "bytes": 8413
+          },
+          "original_method_span": {
+            "start_line": 150,
+            "end_line": 170,
+            "method_span_sha256": "5aa0db210bc9d76f1cb88c55574a60cfde893fc90b3ed485435d3b1c5f1b89d3",
+            "hash_convention": "UTF-8 exact retained inclusive line span with its one final LF excluded; no trimming or other normalization."
+          },
+          "original_outcomes": 5,
+          "all_original_expectations": [
+            "rows.len == 4",
+            "four original per-index project-qualified module names: <project>.appA, appB, appC, appD"
+          ],
+          "existing_port_status": "unported"
+        },
+        {
+          "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt#com.android.tools.idea.gradle.variant.view.BuildVariantTableModelTest.Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
+          "package": "android_tools",
+          "integration_target": "build_variant_table",
+          "fully_qualified_name": "different_type_rows_are_sorted_by_android_project_type",
+          "manifest": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/Cargo.toml",
+            "git_blob_oid": "018b1004abb457cc6055a4ae2e9be797fbbeeaf6",
+            "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b",
+            "bytes": 1244
+          },
+          "source": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/tests/build_variant_table.rs",
+            "git_blob_oid": "914d04a293f86078fcf41c11080a82dd75e5a4b0",
+            "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199",
+            "bytes": 18907
+          },
+          "named_declaration": {
+            "start_line": 119,
+            "end_line": 143,
+            "sha256": "8206814040194a381271ae6e69d1aa3a7373098291628d471a362885f2b55fb4",
+            "locator": "Exact fn declaration through first same-indent closing brace, no final LF. Source declaration locator, not runtime registration."
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "crates/android_tools/Cargo.toml",
+            "-p",
+            "android_tools",
+            "--test",
+            "build_variant_table",
+            "different_type_rows_are_sorted_by_android_project_type",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "fixture": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/different_type_rows_are_sorted_by_android_project_type.json",
+            "git_blob_oid": "b15430781e456f9e84499aa4d573026eb951af4d",
+            "sha256": "fbe58d3bfee413a0aedc710392c7be8769569d714d958d823d96ab81f0e8279c",
+            "bytes": 4921
+          },
+          "fixture_runtime_use": "Documented source-derived JSON expectations; tests construct inline Rust module()/expected_row() inputs and do not load this JSON.",
+          "original_source": {
+            "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+            "path": "crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt",
+            "git_blob_oid": "e24f500ca72c21060b690c8be9d37768b79533f0",
+            "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0",
+            "bytes": 8413
+          },
+          "original_method_span": {
+            "start_line": 172,
+            "end_line": 195,
+            "method_span_sha256": "0b8b1b8f291f67d720e61e8274081bf9b00441280201887c2f9717eef56574b6",
+            "hash_convention": "UTF-8 exact retained inclusive line span with its one final LF excluded; no trimming or other normalization."
+          },
+          "original_outcomes": 8,
+          "all_original_expectations": [
+            "rows.len == 7",
+            "seven original per-index qualified names: <project>.appA, appB, xappC, alibA, libB, test, feature; legacy Feature distinct from DynamicFeature"
+          ],
+          "existing_port_status": "unported"
+        }
+      ],
+      "source_check_bindings": [
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/tests/build_variant_table.rs",
+          "git_blob_oid": "914d04a293f86078fcf41c11080a82dd75e5a4b0",
+          "sha256": "eea50f8c5da37d0801f71910a58f6c0dbd62e1dfa8e4c347ac81862ca2349199",
+          "bytes": 18907
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/Cargo.toml",
+          "git_blob_oid": "018b1004abb457cc6055a4ae2e9be797fbbeeaf6",
+          "sha256": "15f4b34b19e4ca788bf421e1acd1277d2afa676bb25d89c29a246c5367a4843b",
+          "bytes": 1244
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/without_abi.json",
+          "git_blob_oid": "906747b1cedbf2576a02ae10aafa14d161b14443",
+          "sha256": "1356308f038ef85469c966eed8906d0941e1636ebf04208af8ea7540037ef72f",
+          "bytes": 4111
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/BuildVariantTableModelTest.kt",
+          "git_blob_oid": "e24f500ca72c21060b690c8be9d37768b79533f0",
+          "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0",
+          "bytes": 8413
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/test_default_variant_indicator.json",
+          "git_blob_oid": "1a51d8efdb68a39471e717b3707fab83e2091c3f",
+          "sha256": "ca8c1ded3e5f1f0dc606a5181737ec05234887eef4790291c26100908fa691fe",
+          "bytes": 4148
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/same_type_rows_are_sorted.json",
+          "git_blob_oid": "365a9ed316c964c880595fccea367e993d2959f4",
+          "sha256": "5679f0f958805d7f8d08e34b51bd0d74bc88ef25b1b119ab36bbc9d2ed5500bb",
+          "bytes": 3852
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/inline_constructor_fixtures/different_type_rows_are_sorted_by_android_project_type.json",
+          "git_blob_oid": "b15430781e456f9e84499aa4d573026eb951af4d",
+          "sha256": "fbe58d3bfee413a0aedc710392c7be8769569d714d958d823d96ab81f0e8279c",
+          "bytes": 4921
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "Cargo.toml",
+          "git_blob_oid": "d50bcbe6128930eae1bcb232dd27c8ed04364bfc",
+          "sha256": "b790b8de721d0849783583a2d1a7d21542488fc7d8d06ca3cc642271f297c782",
+          "bytes": 41556
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "Cargo.lock",
+          "git_blob_oid": "ef6a16ec9d35bb369f7b09caf9ae29491c74b435",
+          "sha256": "63d4df0b09f81a71ff2fd0bd877cdf4320241ae3793a892194165674268d5b29",
+          "bytes": 502629
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "rust-toolchain.toml",
+          "git_blob_oid": "0d6cb315024714f86ede7360d76a2e04bd5de0fd",
+          "sha256": "3d9002e97d5c3de93d49a1a36649153da4f40c29b061d0f2e09ea84ee143ba3e",
+          "bytes": 262
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": ".github/workflows/fork_ci.yml",
+          "git_blob_oid": "302de98ccc9cdd20e64e239b1016e004ffd399a3",
+          "sha256": "11005939b92801ef10997c247281b2026a95ee9632d8c3ac838585000c8fd2af",
+          "bytes": 17660
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/src/build_variant_table.rs",
+          "git_blob_oid": "f211865e6e8d845aa4bb48a262a20c58dcfba219",
+          "sha256": "6c925e082fdcccc81c43943bc0d251b8d6b8675d81053e9cd5530a7c691fc908",
+          "bytes": 17476
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/AndroidGradleTestUtils.kt",
+          "git_blob_oid": "a6f5f1e654bf0c71f499218bcf87fc2372127d9d",
+          "sha256": "35dfe03ce1ffafa7e94750580fcfdaf95f41debdb31cd682eb88721571095ff4",
+          "bytes": 131023
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/provenance.json",
+          "git_blob_oid": "e7dc98444cf9ca65ae38b311eff270897ba39f35",
+          "sha256": "e39b74477261877f6f6e7ea60e503b211f4736e06cd3319acb7c0316297ec08a",
+          "bytes": 29544
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/LICENSE-APACHE",
+          "git_blob_oid": "461a0fe5ba20a096c281a2686da08fef79f534a3",
+          "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+          "bytes": 10768
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/NOTICE",
+          "git_blob_oid": "c7dc797e7ec33749ccf0388c66999dc3cba22e42",
+          "sha256": "b8f1ab2ac04781ecd917f3b91be421b0915dfde2dfde57d882617a5f5743cd88",
+          "bytes": 764
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "docs/android-studio/ports/build-variant-table-constructors.json",
+          "git_blob_oid": "522a28a207960cfb4c65d365cd22a4bc6a618026",
+          "sha256": "bed58845cd2c746e4c8b06297d8b5ed3260ddd10f497f3609be766c6c206d3fa",
+          "bytes": 17599
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "docs/android-studio/test-parity.json",
+          "git_blob_oid": "54cc9e81ee66a019fff0597bf4a7ecd7dd510ae3",
+          "sha256": "b1d765a8d940ce0573a9ff20d1e97853a2b21787f7c5ac657cff3709290b2765",
+          "bytes": 112613
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/BuildVariantTableModel.kt",
+          "git_blob_oid": "92c7b01af53d7b8dcf137386bd3f7e7e909ebcb1",
+          "sha256": "f9a0da240e5f2ae43f7a0aeece2a7fc825a63b8d4ce0b5aa71e67966bf899b03",
+          "bytes": 6913,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/IdeAndroidProjectType.kt",
+          "git_blob_oid": "df01ce423f4ab8b92587310abe6624093876b7c0",
+          "sha256": "8c83a8430a1d05f2a85e8688a2425d5a11ee409f166429bb5805257ba3324950",
+          "bytes": 938,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": "crates/android_tools/test_data/build_variant_table/ModuleTypeComparator.java",
+          "git_blob_oid": "568b77d640d39ff3975b1b9c9c0bfc38cae9edca",
+          "sha256": "b4d93ad4075e6edba187de4899a5ee097f4ffd9cbe87c50e9494c6696c5939fe",
+          "bytes": 1973,
+          "role": "Retained source/helper/fixture/license/provenance input; not proof this named case consumes every file at runtime."
+        },
+        {
+          "commit": "0d155a5fb869df3f10837db92e252e946687f7ae",
+          "path": ".cargo/config.toml",
+          "git_blob_oid": "8ed5893b99ed318f9953acf0467a26f94a720347",
+          "sha256": "bac3a152624488a520b492297901f8190a5acfc9dacb4cdda14b4c471fdca9ca",
+          "bytes": 1140
+        }
+      ],
+      "optional": true,
+      "runtime_result": null
+    }
+  ],
+  "historical_run_evidence_included": false,
+  "ordinary_jobs_unchanged_required": true,
+  "unported_are_not_na": true,
+  "zero_test_or_ignored_success_is_rejected": true,
+  "no_reference_credit_added": true
+}
