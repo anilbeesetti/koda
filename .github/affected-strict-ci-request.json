@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "profile": "acp",
-  "source_commit": "bc9e48e0372407be6f8620c7d2fe8ed29beef7a6",
-  "source_tree": "f195ba68f2311afda6d9e2e618c746d447c182b3"
+  "profile": "gpui",
+  "source_commit": "1e258459b27b68a9c5fea47eb2530afbb7a7724a",
+  "source_tree": "12daa87ab45eeccd3f758946427011d11d02bac2"
 }
