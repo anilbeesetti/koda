@@ -73,7 +73,8 @@ def androidApi = { project ->
         if (components == null) throw new GradleException('No evaluated AndroidComponents extension')
         // Public AGP AndroidComponentsExtension.getPluginVersion(), not a
         // synthesized Kotlin target for Java-only Android projects.
-        [pluginVersion: text(components.getPluginVersion())]
+        // AndroidPluginVersion.toString() includes a descriptive prefix.
+        [pluginVersion: text(components.getPluginVersion().getVersion())]
     }
 }
 def layouts = { projects ->
