@@ -16,6 +16,7 @@ use android_tools::{
 use anyhow::{Context as _, Result, ensure};
 use fs::{Fs, MTime, Metadata};
 use futures::{
+    StreamExt as _,
     channel::oneshot,
     future::{Either, select},
 };
