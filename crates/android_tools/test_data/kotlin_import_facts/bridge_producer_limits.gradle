@@ -1,0 +1,171 @@
+// Supplemental JVM resource-boundary tests. These execute the unchanged
+// production bridge/encoder and are not Kotlin/KAPT reference parity.
+gradle.projectsEvaluated {
+    def cases = []
+    def makeBridge = {
+        def output = new ByteArrayOutputStream()
+        def bridge = new KodaKotlinGetterBridge(gradle,
+            [inputStream: new ByteArrayInputStream(new byte[0]), outputStream: output])
+        return [bridge: bridge, output: output]
+    }
+    def rejected = { operation ->
+        try { operation.call() }
+        catch (IOException expected) { return expected.message }
+        throw new AssertionError('Expected a producer resource rejection')
+    }
+    def fixture = makeBridge()
+    def bridge = fixture.bridge
+    def output = fixture.output
+    def request = [project: ':first', returnShape: [kind: 'strings']]
+    long visited = 0
+    def lazyStrings = new AbstractList() {
+        int size() { Integer.MAX_VALUE }
+        Object get(int index) { visited++; return '-Xbounded' }
+    }
+    def beforeObjects = bridge.objectRows.size()
+    def reason = rejected { bridge.decode(request, lazyStrings) }
+    assert reason.contains('value-node budget')
+    assert visited == bridge.maximumValueNodes - 1
+    assert bridge.objectRows.size() == beforeObjects
+    assert output.size() == 0
+    cases.add([name: 'lazyStrings', visited: visited, limit: bridge.maximumValueNodes,
+        reason: reason, outputBytes: output.size(), newObjects: bridge.objectRows.size() - beforeObjects])
+    if (System.getProperty('koda.kotlin.fixture.producer.uncaught') == 'true')
+        bridge.decode(request, lazyStrings)
+
+    visited = 0
+    def element = new ThreadLocal()
+    def iterator = [hasNext: { true }, next: { visited++; element }, remove: { throw new UnsupportedOperationException() }] as Iterator
+    def iterable = java.lang.reflect.Proxy.newProxyInstance(Iterable.classLoader, [Iterable] as Class[],
+        { proxy, method, arguments ->
+            if (method.name == 'iterator') return iterator
+            if (method.name == 'hashCode') return 1
+            if (method.name == 'equals') return proxy.is(arguments[0])
+            if (method.name == 'toString') return 'bounded-fixture-iterable'
+            throw new UnsupportedOperationException(method.name)
+        } as java.lang.reflect.InvocationHandler)
+    reason = rejected { bridge.decode([project: ':first', returnShape: [kind: 'objects', objectKind: 'extension']], iterable) }
+    assert reason.contains('value-node budget')
+    assert visited == bridge.maximumValueNodes - 1
+    assert output.size() == 0
+    cases.add([name: 'lazyObjects', visited: visited, limit: bridge.maximumValueNodes,
+        reason: reason, outputBytes: output.size()])
+
+    fixture = makeBridge(); bridge = fixture.bridge; output = fixture.output
+    String giant = 'x' * ((int) bridge.maximumScalarBytes + 1)
+    reason = rejected { bridge.send('event', giant) }
+    assert reason.contains('scalar budget')
+    assert output.size() == 0
+    cases.add([name: 'giantScalar', inputCharacters: giant.length(), limit: bridge.maximumScalarBytes,
+        reason: reason, outputBytes: output.size()])
+    giant = null
+    String escaped = ('\u0000' * 5000)
+    bridge.maximumFrameBytes = 10000
+    def encoded = new KodaKotlinBoundedJson(bridge.maximumFrameBytes, bridge.maximumValueNodes,
+        bridge.maximumScalarBytes, { bridge.health() }, true)
+    reason = rejected { encoded.value([kind: 'event', value: escaped]) }
+    assert reason.contains('serialized-byte budget')
+    assert encoded.bytes == bridge.maximumFrameBytes
+    assert encoded.chunks.sum { it.length } <= bridge.maximumFrameBytes
+    assert output.size() == 0
+    cases.add([name: 'escapedOversize', reason: reason, outputBytes: output.size(),
+        inputCharacters: escaped.length(), encodedBytes: encoded.bytes,
+        allocatedBytes: encoded.chunks.sum { it.length }, limit: bridge.maximumFrameBytes])
+
+    fixture = makeBridge(); bridge = fixture.bridge; output = fixture.output
+    def cyclic = new LinkedHashMap()
+    cyclic.self = cyclic
+    reason = rejected { bridge.send('event', cyclic) }
+    assert reason.contains('Cyclic')
+    assert output.size() == 0
+    cases.add([name: 'cyclic', reason: reason, outputBytes: output.size()])
+
+    def legal = 'quote:" slash:\\ control:\u0000 euro:\u20ac emoji:\uD83D\uDE00'
+    def frame = bridge.prepare('event', [ordered: [legal, '', 'last']])
+    frame.writeTo(output)
+    def raw = output.toByteArray()
+    def parsed = new JsonSlurper().parseText(new String(raw, StandardCharsets.UTF_8))
+    assert parsed.value.ordered == [legal, '', 'last']
+    assert raw.length == frame.bytes
+    long exactBytes = frame.bytes
+    long exactNodes = frame.nodes
+    bridge.maximumFrameBytes = exactBytes
+    bridge.maximumValueNodes = exactNodes
+    assert bridge.prepare('event', [ordered: [legal, '', 'last']]).bytes == exactBytes
+    bridge.maximumFrameBytes = exactBytes - 1
+    assert rejected { bridge.prepare('event', [ordered: [legal, '', 'last']]) }.contains('serialized-byte budget')
+    bridge.maximumFrameBytes = exactBytes
+    bridge.maximumValueNodes = exactNodes - 1
+    assert rejected { bridge.prepare('event', [ordered: [legal, '', 'last']]) }.contains('value-node budget')
+    cases.add([name: 'exactBoundaryAndUnicode', bytes: exactBytes, nodes: exactNodes,
+        raw: new String(raw, StandardCharsets.UTF_8), ordered: parsed.value.ordered,
+        oneByteLowerRejected: true, oneNodeLowerRejected: true])
+
+    fixture = makeBridge(); bridge = fixture.bridge; output = fixture.output
+    bridge.object(new ThreadLocal(), 'extension', ':first')
+    long rowNodes = bridge.measure(bridge.objectRows.last()).nodes
+    long beforeNodes = bridge.retainedNodes
+    beforeObjects = bridge.objectRows.size()
+    bridge.maximumValueNodes = beforeNodes + 3 * rowNodes
+    3.times { bridge.object(new ThreadLocal(), 'extension', ':first') }
+    reason = rejected { bridge.object(new ThreadLocal(), 'extension', ':first') }
+    assert reason.contains('cumulative observation budget')
+    assert bridge.objectRows.size() == beforeObjects + 3
+    assert bridge.retainedNodes == bridge.maximumValueNodes
+    assert bridge.measure(bridge.inventory()).nodes == bridge.retainedNodes
+    assert bridge.measure(bridge.inventory()).bytes == bridge.retainedBytes
+    assert output.size() == 0
+    cases.add([name: 'cumulativeObservations', beforeNodes: beforeNodes, rowNodes: rowNodes,
+        afterNodes: bridge.retainedNodes, limit: bridge.maximumValueNodes, newObjects: 3,
+        reason: reason, outputBytes: output.size()])
+
+    fixture = makeBridge(); bridge = fixture.bridge; output = fixture.output
+    def owner = new ThreadLocal()
+    owner.set('x' * 10000)
+    def ownerId = bridge.object(owner, 'extension', ':first')
+    def catalogue = bridge.catalogue(ThreadLocal)
+    def method = bridge.catalogueRows.find { it.id == catalogue }.methods.find {
+        it.name == 'get' && it.descriptor == '()Ljava/lang/Object;' && !it.isStatic
+    }
+    bridge.session = 'independent-producer-fixture'
+    bridge.cursor = bridge.position()
+    bridge.maximumFrameBytes = 2000
+    reason = rejected { bridge.invoke([id: 'bounded-event', project: ':first', owner: ownerId,
+        catalogue: catalogue, method: [kind: 'selected', value: method.id], arguments: [],
+        returnShape: [kind: 'string']]) }
+    assert reason.contains('scalar budget') || reason.contains('serialized-byte budget')
+    assert output.size() == 0
+    cases.add([name: 'noPartialDeltaEvent', reason: reason, outputBytes: output.size()])
+
+    fixture = makeBridge(); bridge = fixture.bridge; output = fixture.output
+    visited = 0
+    def cancelling = new AbstractList() {
+        int size() { Integer.MAX_VALUE }
+        Object get(int index) {
+            visited++
+            if (visited == 64) bridge.deadline = System.nanoTime() - 1
+            return 'bounded'
+        }
+    }
+    reason = rejected { bridge.decode(request, cancelling) }
+    assert visited == 64
+    assert reason.contains('deadline elapsed')
+    assert output.size() == 0
+    cases.add([name: 'deadlineDuringIteration', visited: visited, reason: reason, outputBytes: output.size()])
+
+    fixture = makeBridge(); bridge = fixture.bridge; output = fixture.output
+    bridge.deadline = System.nanoTime() - 1
+    reason = rejected { bridge.prepare('event', 'deadline') }
+    assert reason.contains('deadline elapsed')
+    assert output.size() == 0
+    cases.add([name: 'deadline', reason: reason, outputBytes: output.size()])
+    bridge.deadline = System.nanoTime() + 1000000000L
+    Thread.currentThread().interrupt()
+    try {
+        reason = rejected { bridge.prepare('event', 'cancelled') }
+        assert reason.contains('interrupted')
+        assert output.size() == 0
+        cases.add([name: 'interruption', reason: reason, outputBytes: output.size()])
+    } finally { Thread.interrupted() }
+    println('KODA_KOTLIN_PRODUCER_LIMITS_FIXTURE=' + JsonOutput.toJson([cases: cases]))
+}

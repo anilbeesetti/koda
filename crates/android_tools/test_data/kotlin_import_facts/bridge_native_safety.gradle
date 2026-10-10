@@ -1,0 +1,90 @@
+// Supplemental actual JNI safety regressions; no original reference parity.
+// The original eleven producer cases remain in bridge_producer_limits.gradle.
+class KodaKotlinRejectPublication extends KodaKotlinBoundedJson {
+    KodaKotlinRejectPublication(long bytes, long nodes, long scalar, monitor) {
+        super(bytes, nodes, scalar, monitor, true)
+    }
+
+    @Override
+    void acceptNativeState(long bytes, long nodes, Object chunks) {
+        throw new OutOfMemoryError('fixture diagnostic publication failure')
+    }
+}
+
+gradle.projectsEvaluated {
+    def propertyNames = ['maximumFrameBytes', 'maximumValueNodes', 'maximumScalarBytes',
+        'timeoutMillis', 'nativeLibrary'].collect { 'koda.kotlin.capture.' + it }
+    def settings = propertyNames.collectEntries { [(it): System.getProperty(it)] }
+    def projectSettings = new LinkedHashMap(gradle.startParameter.projectProperties)
+    def locale = Locale.getDefault()
+    def output = new ByteArrayOutputStream()
+    def bridge = new KodaKotlinGetterBridge(gradle,
+        [inputStream: new ByteArrayInputStream(new byte[0]), outputStream: output])
+    def cases = []
+    def rejected = { operation ->
+        try { operation.call() }
+        catch (IOException expected) { return expected }
+        throw new AssertionError('Expected typed IOException from actual JNI')
+    }
+    def invalid = new LinkedHashMap()
+    invalid.put(null, 'value')
+    def failure = rejected { bridge.send('event', invalid) }
+    assert failure.message.contains('Raw observation key is not a String')
+    assert output.size() == 0
+    cases.add([name: 'nullMapKey', passed: true, outputBytes: output.size()])
+
+    failure = rejected { bridge.send('event', [nested: [invalid]]) }
+    assert failure.message.contains('Raw observation key is not a String')
+    assert output.size() == 0
+    cases.add([name: 'nestedNullMapKey', passed: true, outputBytes: output.size()])
+
+    invalid = new LinkedHashMap()
+    invalid.put(1, 'value')
+    failure = rejected { bridge.send('event', invalid) }
+    assert failure.message.contains('Raw observation key is not a String')
+    assert output.size() == 0
+    cases.add([name: 'nonStringMapKey', passed: true, outputBytes: output.size()])
+
+    def frame = new KodaKotlinBoundedJson(bridge.maximumFrameBytes, bridge.maximumValueNodes,
+        bridge.maximumScalarBytes, { bridge.health() }, true)
+    frame.value(null)
+    def raw = new ByteArrayOutputStream()
+    frame.writeTo(raw)
+    assert new String(raw.toByteArray(), StandardCharsets.UTF_8) == 'null'
+    assert frame.bytes == 4
+    assert frame.nodes == 1
+    assert output.size() == 0
+    cases.add([name: 'nullRootValue', passed: true, outputBytes: output.size()])
+
+    invalid = new LinkedHashMap()
+    invalid.put(null, 'value')
+    frame = new KodaKotlinRejectPublication(bridge.maximumFrameBytes, bridge.maximumValueNodes,
+        bridge.maximumScalarBytes, { bridge.health() })
+    failure = rejected { frame.value(invalid) }
+    assert failure.message.contains('Raw observation key is not a String')
+    assert failure.suppressed.length == 1
+    assert failure.suppressed[0] instanceof OutOfMemoryError
+    assert failure.suppressed[0].message == 'fixture diagnostic publication failure'
+    assert output.size() == 0
+    cases.add([name: 'primaryRustErrorAndPublicationFailure', passed: true,
+        suppressed: failure.suppressed[0].class.name, outputBytes: output.size()])
+
+    def primary = new IOException('fixture original JVM health failure')
+    frame = new KodaKotlinRejectPublication(bridge.maximumFrameBytes, bridge.maximumValueNodes,
+        bridge.maximumScalarBytes, { throw primary })
+    failure = rejected { frame.value('unused') }
+    assert failure.is(primary)
+    assert failure.message == 'fixture original JVM health failure'
+    assert failure.suppressed.length == 1
+    assert failure.suppressed[0] instanceof OutOfMemoryError
+    assert failure.suppressed[0].message == 'fixture diagnostic publication failure'
+    assert output.size() == 0
+    cases.add([name: 'primaryJvmErrorAndPublicationFailure', passed: true,
+        suppressed: failure.suppressed[0].class.name, outputBytes: output.size()])
+
+    assert propertyNames.collectEntries { [(it): System.getProperty(it)] } == settings
+    assert gradle.startParameter.projectProperties == projectSettings
+    assert Locale.getDefault() == locale
+    println('KODA_KOTLIN_NATIVE_SAFETY_FIXTURE=' + JsonOutput.toJson(
+        [cases: cases, unchangedSettings: true]))
+}

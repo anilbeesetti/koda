@@ -20,12 +20,19 @@ anyhow.workspace = true
 chrono.workspace = true
 dirs.workspace = true
 fs2 = { version = "0.4.3", optional = true }
+kotlin_jvm_guardian.workspace = true
+log.workspace = true
+rand.workspace = true
 regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha2.workspace = true
 tempfile.workspace = true
 which.workspace = true
 zip = { version = "0.6.6", default-features = false, features = ["deflate"], optional = true }
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
 
 [build-dependencies]
 anyhow.workspace = true

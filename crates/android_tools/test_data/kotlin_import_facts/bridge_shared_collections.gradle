@@ -1,0 +1,74 @@
+// Supplemental runtime fixture for the Rust-owned reflection transport. Assemble
+// the production bridge class before this file; do not copy or modify that class.
+gradle.projectsEvaluated {
+    def output = new ByteArrayOutputStream()
+    def socket = [inputStream: new ByteArrayInputStream(new byte[0]), outputStream: output]
+    def bridge = new KodaKotlinGetterBridge(gradle, socket)
+    bridge.session = 'independently-issued-shared-list-fixture'
+    [':first', ':second'].each { path ->
+        def project = gradle.rootProject.findProject(path)
+        assert project != null
+        bridge.addProject(path, bridge.object(project, 'project', path))
+    }
+    def empty = Collections.emptyList()
+    def ordered = Collections.unmodifiableList(['-Xfirst', '-Xsecond'])
+    def rows = []
+    [empty, ordered].eachWithIndex { shared, position ->
+        def owner = new ThreadLocal()
+        owner.set(shared)
+        def first = bridge.object(owner, 'extension', ':first')
+        def second = bridge.object(owner, 'extension', ':second')
+        assert first != second
+        assert bridge.object(owner, 'extension', ':first') == first
+        def catalogue = bridge.catalogue(ThreadLocal)
+        def method = bridge.catalogueRows.find { it.id == catalogue }.methods.find {
+            it.name == 'get' && it.descriptor == '()Ljava/lang/Object;' && !it.isStatic
+        }
+        assert method != null
+        bridge.cursor = bridge.position()
+        def decoded = []
+        [':first', ':first', ':second'].eachWithIndex { project, iteration ->
+            def offset = output.size()
+            bridge.invoke([id: 'fixture-request:' + position + ':' + iteration,
+                project: project, owner: project == ':first' ? first : second,
+                catalogue: catalogue, method: [kind: 'selected', value: method.id], arguments: [],
+                returnShape: [kind: 'strings']])
+            def lines = new String(output.toByteArray(), offset, output.size() - offset, StandardCharsets.UTF_8)
+                .readLines().collect { new JsonSlurper().parseText(it) }
+            assert lines.size() == 2
+            assert lines[0].kind == 'discoveryDelta'
+            assert lines[1].kind == 'event'
+            assert lines[1].value.outcome.status == 'available'
+            assert lines[1].value.outcome.value.kind == 'strings'
+            assert lines[1].value.outcome.value.value == shared
+            decoded.add(lines[1].value.container)
+            if (iteration == 1) assert lines[0].value.objects.isEmpty()
+        }
+        assert decoded[0] == decoded[1]
+        assert decoded[0] != decoded[2]
+        assert bridge.objectValues[decoded[0]].is(shared)
+        assert bridge.objectValues[decoded[2]].is(shared)
+        def a = bridge.objectRowsById[decoded[0]]
+        def b = bridge.objectRowsById[decoded[2]]
+        assert a.kind == 'container' && b.kind == 'container'
+        assert a.project == ':first' && b.project == ':second'
+        assert a.classId == b.classId
+        boolean wrongKindRejected = false
+        try { bridge.object(shared, 'extension', ':first') }
+        catch (IOException expected) { wrongKindRejected = true }
+        assert wrongKindRejected
+        boolean foreignReceiverRejected = false
+        try {
+            bridge.invoke([id: 'foreign-owner', project: ':second', owner: first,
+                catalogue: catalogue, method: [kind: 'selected', value: method.id], arguments: [],
+                returnShape: [kind: 'strings']])
+        } catch (IOException expected) { foreignReceiverRejected = true }
+        assert foreignReceiverRejected
+        def actualClass = bridge.classRows.find { it.id == a.classId }
+        def actualLoader = bridge.loaderRowsById[actualClass.loader]
+        rows.add([first: a, second: b, repeated: decoded[1], runtimeClass: actualClass, classLoader: actualLoader,
+            values: shared, exactPhysicalIdentity: true, wrongKindRejected: true, foreignReceiverRejected: true])
+    }
+    println('KODA_KOTLIN_SHARED_COLLECTIONS_FIXTURE=' + JsonOutput.toJson([
+        cases: rows, sequence: bridge.sequence, events: bridge.events]))
+}

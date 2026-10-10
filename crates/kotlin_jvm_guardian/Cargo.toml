@@ -1,0 +1,33 @@
+[package]
+name = "kotlin_jvm_guardian"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+license = "GPL-3.0-or-later"
+
+[lints]
+workspace = true
+
+[lib]
+path = "src/kotlin_jvm_guardian.rs"
+crate-type = ["rlib", "cdylib"]
+
+[[bin]]
+name = "kotlin_jvm_guardian"
+path = "src/launcher.rs"
+
+[[bin]]
+name = "kotlin_jvm_guardian_process_fixture"
+path = "tests/fixtures/process_child.rs"
+test = false
+bench = false
+
+[dependencies]
+jni = "0.21.1"
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+
+[dev-dependencies]
+android_tools = { path = "../android_tools" }
+tempfile.workspace = true
