@@ -181,7 +181,7 @@ fn library_variants_without_apk_metadata_have_build_test_and_lint_task_identitie
     let variant = parsed
         .default_library_variant()
         .context("Library variant")?;
-    assert_eq!(parsed.library_variants(), [variant.clone()]);
+    assert_eq!(parsed.library_variants(), std::slice::from_ref(&variant));
     assert_eq!(variant.label(), ":lib · debug");
     assert_eq!(variant.gradle_task("assemble", ""), ":lib:assembleDebug");
     assert_eq!(
