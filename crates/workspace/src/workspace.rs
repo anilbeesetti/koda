@@ -10218,17 +10218,22 @@ impl Render for Workspace {
 impl WorkspaceStore {
     #[cfg(any(test, feature = "test-support"))]
     fn test(client: Arc<Client>, cx: &mut App) -> Entity<Self> {
+        struct TestWorkspaceStore {
+            client: std::sync::Weak<Client>,
+            store: WeakEntity<WorkspaceStore>,
+            _subscriptions: Vec<client::Subscription>,
+        }
         #[derive(Default)]
-        struct TestWorkspaceStores(Vec<(std::sync::Weak<Client>, WeakEntity<WorkspaceStore>)>);
+        struct TestWorkspaceStores(Vec<TestWorkspaceStore>);
         impl Global for TestWorkspaceStores {}
 
         // Follow handlers belong to one store per client. Keep both cache handles
         // weak and scoped to this App so fixtures cannot retain or cross App entities.
         let existing = cx.try_global::<TestWorkspaceStores>().and_then(|stores| {
-            stores.0.iter().find_map(|(cached_client, store)| {
-                let cached_client = cached_client.upgrade()?;
+            stores.0.iter().find_map(|cached| {
+                let cached_client = cached.client.upgrade()?;
                 if Arc::ptr_eq(&cached_client, &client) {
-                    store.upgrade()
+                    cached.store.upgrade()
                 } else {
                     None
                 }
@@ -10238,12 +10243,32 @@ impl WorkspaceStore {
             return store;
         }
 
+        // GPUI defers entity destruction until the outer update finishes. Owning
+        // fixture subscriptions here lets replacement unregister expired handlers
+        // before their old entity body is dropped. Subscriptions hold clients weakly.
+        cx.default_global::<TestWorkspaceStores>()
+            .0
+            .retain(|cached| cached.store.is_upgradable());
         let cached_client = Arc::downgrade(&client);
-        let store = cx.new(|cx| Self::new(client, cx));
-        let stores = cx.default_global::<TestWorkspaceStores>();
-        stores.0.retain(|(_, store)| store.is_upgradable());
-        stores.0.push((cached_client, store.downgrade()));
-        store
+        cx.new(|cx| {
+            let mut store = Self::new(client, cx);
+            let cached = TestWorkspaceStore {
+                client: cached_client,
+                store: cx.weak_entity(),
+                _subscriptions: std::mem::take(&mut store._subscriptions),
+            };
+            let store_id = cached.store.entity_id();
+            cx.default_global::<TestWorkspaceStores>().0.push(cached);
+            cx.on_release(move |_, cx| {
+                if cx.has_global::<TestWorkspaceStores>() {
+                    cx.global_mut::<TestWorkspaceStores>()
+                        .0
+                        .retain(|cached| cached.store.entity_id() != store_id);
+                }
+            })
+            .detach();
+            store
+        })
     }
 
     pub fn new(client: Arc<Client>, cx: &mut Context<Self>) -> Self {
@@ -20755,5 +20780,59 @@ mod workspace_store_fixture_tests {
         });
         cx.run_until_parked();
         assert!(store.upgrade().is_none());
+    }
+
+    #[gpui::test]
+    fn fixture_workspace_store_can_be_recreated_before_update_finishes(cx: &mut TestAppContext) {
+        let (client, store) = cx.update(|cx| {
+            let state = AppState::test(cx);
+            (state.client.clone(), state.workspace_store.clone())
+        });
+        let old_store = store.downgrade();
+        let old_store_id = store.entity_id();
+        let replacement = cx.update(|cx| {
+            drop(store);
+            assert!(old_store.upgrade().is_none());
+            let replacement = WorkspaceStore::test(client.clone(), cx);
+            assert_ne!(replacement.entity_id(), old_store_id);
+            assert_eq!(
+                WorkspaceStore::test(client.clone(), cx).entity_id(),
+                replacement.entity_id()
+            );
+            replacement
+        });
+        cx.update(|cx| {
+            assert_eq!(
+                WorkspaceStore::test(client, cx).entity_id(),
+                replacement.entity_id()
+            );
+        });
+    }
+
+    #[gpui::test]
+    fn fixture_workspace_store_can_be_recreated_from_a_release_callback(cx: &mut TestAppContext) {
+        let (client, store) = cx.update(|cx| {
+            let state = AppState::test(cx);
+            (state.client.clone(), state.workspace_store.clone())
+        });
+        let old_store = store.downgrade();
+        let replacement = std::rc::Rc::new(std::cell::RefCell::new(None));
+        cx.update(|cx| {
+            let replacement = replacement.clone();
+            let client = client.clone();
+            cx.observe_release(&store, move |_, cx| {
+                *replacement.borrow_mut() = Some(WorkspaceStore::test(client, cx));
+            })
+            .detach();
+            drop(store);
+        });
+        assert!(old_store.upgrade().is_none());
+        assert!(replacement.borrow().is_some());
+        cx.update(|cx| {
+            assert_eq!(
+                replacement.borrow().as_ref().map(|store| store.entity_id()),
+                Some(WorkspaceStore::test(client, cx).entity_id())
+            );
+        });
     }
 }
