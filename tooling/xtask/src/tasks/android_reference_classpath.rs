@@ -5,8 +5,8 @@
 use anyhow::{Context, Result, ensure};
 use clap::Args;
 use serde::Serialize;
-use std::fs::{self, File};
-use std::io::{Read, Seek, SeekFrom};
+use std::fs::File;
+use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 
 #[derive(Args)]
@@ -98,9 +98,8 @@ pub fn read_manifest_classpath(
     limits: &ManifestLimits,
 ) -> Result<ManifestClassPath> {
     limits.validate()?;
-    let mut result = ManifestClassPath::default();
     if !wrapper.is_file() {
-        return Ok(result);
+        return Ok(ManifestClassPath::default());
     }
     let mut file = File::open(wrapper).with_context(|| format!("Open {}", wrapper.display()))?;
     let file_size = file.metadata()?.len();
@@ -108,8 +107,43 @@ pub fn read_manifest_classpath(
         file_size <= limits.archive_bytes,
         "Wrapper JAR exceeds archive byte limit"
     );
-    let entry_count = bounded_directory_count(&mut file, file_size, limits.archive_entries)?;
-    let mut archive = zip::ZipArchive::new(file).context("Read wrapper JAR directory")?;
+    let snapshot = bounded_archive_snapshot(&mut file, limits.archive_bytes)?;
+    drop(file);
+    read_manifest_classpath_snapshot(wrapper, &snapshot, limits)
+}
+
+fn bounded_archive_snapshot(reader: impl Read, maximum: u64) -> Result<Vec<u8>> {
+    let mut snapshot = Vec::new();
+    reader
+        .take(
+            maximum
+                .checked_add(1)
+                .context("Archive snapshot byte limit overflow")?,
+        )
+        .read_to_end(&mut snapshot)
+        .context("Read bounded wrapper JAR snapshot")?;
+    ensure!(
+        snapshot.len() as u64 <= maximum,
+        "Wrapper JAR exceeds archive byte limit"
+    );
+    Ok(snapshot)
+}
+
+fn read_manifest_classpath_snapshot(
+    wrapper: &Path,
+    snapshot: &[u8],
+    limits: &ManifestLimits,
+) -> Result<ManifestClassPath> {
+    let mut result = ManifestClassPath::default();
+    let file_size = snapshot.len() as u64;
+    ensure!(
+        file_size <= limits.archive_bytes,
+        "Wrapper JAR exceeds archive byte limit"
+    );
+    // The allocation guard and ZIP parser must see identical bytes even if a producer rewrites the JAR.
+    let mut cursor = Cursor::new(snapshot);
+    let entry_count = bounded_directory_count(&mut cursor, file_size, limits.archive_entries)?;
+    let mut archive = zip::ZipArchive::new(cursor).context("Read wrapper JAR directory")?;
     ensure!(
         archive.len() as u64 <= entry_count,
         "ZIP directory entry count mismatch"
@@ -184,7 +218,7 @@ fn integer<const N: usize>(bytes: &[u8], offset: usize) -> Result<[u8; N]> {
         .context("Invalid ZIP directory field width")
 }
 
-fn bounded_directory_count(file: &mut File, size: u64, maximum: u64) -> Result<u64> {
+fn bounded_directory_count(file: &mut (impl Read + Seek), size: u64, maximum: u64) -> Result<u64> {
     // Check the declared count before ZipArchive allocates its directory table.
     let tail_size = size.min(65557);
     file.seek(SeekFrom::Start(size - tail_size))?;
@@ -517,6 +551,7 @@ fn resolve_file_reference(base_path: &str, reference: &str) -> Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use std::io::Write;
     use tempfile::TempDir;
     use zip::write::FileOptions;
@@ -920,6 +955,63 @@ mod tests {
             resolve_file_reference("/C:/tmp/wrapper.jar", "file:////server/share/target.jar")?,
             PathBuf::from("\\\\server\\share\\target.jar")
         );
+        Ok(())
+    }
+
+    #[test]
+    fn archive_growth_is_rejected_while_snapshotting() -> Result<()> {
+        let directory = TempDir::new()?;
+        let path = wrapper(directory.path(), "target.jar")?;
+        let original = fs::read(&path)?;
+        let maximum = original.len() as u64;
+        let reader = Cursor::new(original.as_slice()).chain(Cursor::new(b"appended ZIP directory"));
+        let error = bounded_archive_snapshot(reader, maximum)
+            .expect_err("Growth must exceed the snapshot cap");
+        assert!(error.to_string().contains("archive byte limit"));
+        assert_eq!(
+            bounded_archive_snapshot(Cursor::new(original.as_slice()), maximum)?,
+            original
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn archive_mutation_after_preflight_cannot_change_the_immutable_parser_input() -> Result<()> {
+        let directory = TempDir::new()?;
+        let target = directory.path().join("target.jar");
+        File::create(&target)?;
+        let path = wrapper(directory.path(), "target.jar")?;
+        let limits = ManifestLimits::default();
+        let snapshot = bounded_archive_snapshot(File::open(&path)?, limits.archive_bytes)?;
+        assert_eq!(
+            bounded_directory_count(
+                &mut Cursor::new(snapshot.as_slice()),
+                snapshot.len() as u64,
+                limits.archive_entries
+            )?,
+            2
+        );
+        let mut rewritten = snapshot.clone();
+        let end = rewritten
+            .len()
+            .checked_sub(22)
+            .context("Missing fixture ZIP end")?;
+        for offset in [end + 8, end + 10] {
+            rewritten
+                .get_mut(offset..offset + 2)
+                .context("Missing fixture count")?
+                .copy_from_slice(&5000u16.to_le_bytes());
+        }
+        fs::write(&path, &rewritten)?;
+        assert_eq!(rewritten.len(), snapshot.len());
+        assert_ne!(fs::read(&path)?, snapshot);
+        assert_eq!(
+            read_manifest_classpath_snapshot(&path, &snapshot, &limits)?.paths,
+            vec![target]
+        );
+        let error = read_manifest_classpath(&path, &limits)
+            .expect_err("The rewritten live JAR exceeds the entry cap");
+        assert!(error.to_string().contains("directory entry limit"));
         Ok(())
     }
 }
