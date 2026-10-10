@@ -1688,3 +1688,143 @@ fn actual_supported_wire_with_inaccessible_effective_getter_retains_capability_f
     assert!(state.model.is_some());
     Ok(())
 }
+
+#[test]
+fn nullable_sdk_version_failures_retain_core_model_and_original_capability_detail() -> Result<()> {
+    for getter in ["getPluginVersion", "getVersion"] {
+        for failure_class in [
+            "java.lang.IllegalStateException",
+            "java.lang.NoClassDefFoundError",
+        ] {
+            let mut fixture = live_plan_fixture()?;
+            let detail = format!("{failure_class}: Fixture {getter} failure");
+            fixture.value["kotlinCapabilities"]["modules"][0]["agpVersion"] = Value::Null;
+            failed_observation(&mut fixture.value, "sdkPluginVersion", &detail);
+            if getter == "getPluginVersion" {
+                let sdk =
+                    &mut fixture.value["kotlinCapabilities"]["modules"][0]["sdkPluginVersion"];
+                sdk["getter"] = json!(
+                    "com.android.build.api.variant.AndroidComponentsExtension.getPluginVersion()"
+                );
+                sdk["result"]["value"]["capability"] = sdk["getter"].clone();
+            }
+            failed_observation(&mut fixture.value, "builtInKotlin", &detail);
+            let physical_model = fixture.value["modules"].clone();
+            let mut state = ModelState::default();
+            let token = state.invalidate(Some(fixture.root().to_path_buf()));
+            let capture = EvaluatedTreeInputs::decode_sync(
+                &record(&fixture.value),
+                fixture.root(),
+                None,
+                &token,
+            )?;
+            let original_model = capture.model().clone();
+            let failure = capture
+                .kotlin_capability(":app")
+                .expect_err("Failed SDK observation");
+            assert_eq!(failure.reason, FactsUnavailableReason::Capability);
+            assert!(failure.detail.contains(&detail));
+            assert_eq!(capture.token(), &token);
+            assert_eq!(capture.raw_record(), record(&fixture.value));
+            assert_eq!(fixture.value["modules"], physical_model);
+            state.publish_evaluated(&token, capture)?;
+            assert!(Arc::ptr_eq(
+                state
+                    .model
+                    .as_ref()
+                    .context("Core physical model retained")?,
+                &original_model,
+            ));
+            state.select(Some(id("debug")))?;
+            let failure = prepare_live_module_plan(&state, &state.token(), id("debug"), false)
+                .expect_err("Unavailable version cannot supply an Android logical plan");
+            assert_eq!(
+                failure.reason,
+                AdapterUnavailableReason::Provider(FactsUnavailableReason::Capability)
+            );
+            assert!(failure.detail.contains(&detail));
+            assert!(state.model.is_some());
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn null_or_missing_agp_version_requires_an_explicit_valid_failed_sdk_getter() -> Result<()> {
+    for alteration in [
+        "available",
+        "missing_sdk",
+        "missing_agp",
+        "numeric_agp",
+        "wrong_getter",
+        "wrong_capability",
+        "available_acquisition",
+    ] {
+        let mut fixture = live_plan_fixture()?;
+        fixture.value["kotlinCapabilities"]["modules"][0]["agpVersion"] = Value::Null;
+        failed_observation(
+            &mut fixture.value,
+            "sdkPluginVersion",
+            "Original SDK failure",
+        );
+        let module = fixture.value["kotlinCapabilities"]["modules"][0]
+            .as_object_mut()
+            .context("Kotlin observation")?;
+        match alteration {
+            "available" => {
+                module
+                    .get_mut("sdkPluginVersion")
+                    .context("SDK observation")?["result"] = available(json!({
+                    "major":9,"minor":4,"micro":0,"preview":0,"previewType":null,"version":"9.4.0"
+                }));
+            }
+            "missing_sdk" => {
+                module.remove("sdkPluginVersion");
+            }
+            "missing_agp" => {
+                module.remove("agpVersion");
+            }
+            "numeric_agp" => {
+                module.insert("agpVersion".into(), json!(94));
+            }
+            "wrong_getter" => {
+                module
+                    .get_mut("sdkPluginVersion")
+                    .context("SDK observation")?["getter"] = json!("guessed version");
+            }
+            "wrong_capability" => {
+                module
+                    .get_mut("sdkPluginVersion")
+                    .context("SDK observation")?["result"]["value"]["capability"] =
+                    json!("unrelated getter");
+            }
+            "available_acquisition" => {
+                module.insert("agpVersion".into(), json!("9.4.0"));
+                let sdk = module
+                    .get_mut("sdkPluginVersion")
+                    .context("SDK observation")?;
+                sdk["getter"] = json!(
+                    "com.android.build.api.variant.AndroidComponentsExtension.getPluginVersion()"
+                );
+                sdk["result"] = available(json!({
+                    "major":9,"minor":4,"micro":0,"preview":0,"previewType":null,"version":"9.4.0"
+                }));
+            }
+            _ => anyhow::bail!("Unknown SDK version alteration"),
+        }
+        let mut state = ModelState::default();
+        fixture.publish(&mut state)?;
+        let failure = state
+            .evaluated_inputs()
+            .context("Core capture retained")?
+            .kotlin_capability(":app")
+            .expect_err("Invalid missing version evidence");
+        assert_eq!(
+            failure.reason,
+            FactsUnavailableReason::Malformed,
+            "{alteration}"
+        );
+        assert!(state.model.is_some());
+    }
+    Ok(())
+}

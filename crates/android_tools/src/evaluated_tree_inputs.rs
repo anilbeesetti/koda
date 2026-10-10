@@ -328,6 +328,8 @@ fn filter_generated_java(folders: &[PathBuf], build_folder: &Path) -> Vec<PathBu
 }
 
 const SDK_PLUGIN_VERSION_GETTER: &str = "com.android.build.api.AndroidPluginVersion.getMajor/getMinor/getMicro/getPreview/getPreviewType/getVersion";
+const SDK_COMPONENTS_VERSION_GETTER: &str =
+    "com.android.build.api.variant.AndroidComponentsExtension.getPluginVersion()";
 const KOTLIN_ANDROID_GETTER: &str =
     "org.gradle.api.plugins.PluginManager.hasPlugin(org.jetbrains.kotlin.android)";
 const KOTLIN_MULTIPLATFORM_GETTER: &str =
@@ -354,7 +356,7 @@ struct SdkPluginVersionObservation {
 struct KotlinModuleObservation {
     module: String,
     directory: PathBuf,
-    agp_version: String,
+    agp_version: Option<String>,
     #[serde(default)]
     sdk_plugin_version: Option<GetterObservation<SdkPluginVersionObservation>>,
     kotlin_android: GetterObservation<bool>,
@@ -391,7 +393,7 @@ impl KotlinModuleObservation {
             .available()?;
         if (sdk.major, sdk.minor, sdk.micro, sdk.preview) != (9, 4, 0, 0)
             || sdk.version != "9.4.0"
-            || self.agp_version != sdk.version
+            || self.agp_version.as_deref() != Some(sdk.version.as_str())
         {
             return Err(unavailable(
                 FactsUnavailableReason::Capability,
@@ -457,6 +459,18 @@ fn decode_kotlin_capabilities(
     if value["modules"].as_array().is_some_and(|modules| {
         modules.iter().any(|module| {
             module
+                .get("agpVersion")
+                .is_none_or(|version| !version.is_string() && !version.is_null())
+        })
+    }) {
+        return Err(unavailable(
+            FactsUnavailableReason::Malformed,
+            "Kotlin capability AGP version must be an explicit string or null",
+        ));
+    }
+    if value["modules"].as_array().is_some_and(|modules| {
+        modules.iter().any(|module| {
+            module
                 .get("sdkPluginVersion")
                 .and_then(|observation| observation.get("result"))
                 .is_some_and(|result| {
@@ -505,22 +519,31 @@ fn decode_kotlin_capabilities(
                 "Kotlin capability is not bound to the observed Android module directory",
             ));
         }
-        if observation.agp_version.is_empty()
-            || observation.agp_version.len() > 4096
-            || observation.agp_version.trim() != observation.agp_version
-        {
+        if observation.agp_version.as_ref().is_some_and(|version| {
+            version.is_empty() || version.len() > 4096 || version.trim() != version.as_str()
+        }) {
             return Err(unavailable(
                 FactsUnavailableReason::Malformed,
                 "Invalid Kotlin capability AGP version",
             ));
         }
         if let Some(sdk) = &observation.sdk_plugin_version {
-            validate_observation(sdk, SDK_PLUGIN_VERSION_GETTER)?;
+            if sdk.getter == SDK_COMPONENTS_VERSION_GETTER {
+                validate_observation(sdk, SDK_COMPONENTS_VERSION_GETTER)?;
+                if !matches!(sdk.result, CapturedField::Unavailable(_)) {
+                    return Err(unavailable(
+                        FactsUnavailableReason::Malformed,
+                        "SDK object acquisition cannot supply structured version getters",
+                    ));
+                }
+            } else {
+                validate_observation(sdk, SDK_PLUGIN_VERSION_GETTER)?;
+            }
             if let CapturedField::Available(sdk) = &sdk.result {
                 if [sdk.major, sdk.minor, sdk.micro, sdk.preview]
                     .iter()
                     .any(|value| *value < 0)
-                    || sdk.version != observation.agp_version
+                    || observation.agp_version.as_deref() != Some(sdk.version.as_str())
                     || sdk
                         .preview_type
                         .as_ref()
@@ -532,6 +555,17 @@ fn decode_kotlin_capabilities(
                     ));
                 }
             }
+        }
+        if observation.agp_version.is_none()
+            && !observation
+                .sdk_plugin_version
+                .as_ref()
+                .is_some_and(|sdk| matches!(sdk.result, CapturedField::Unavailable(_)))
+        {
+            return Err(unavailable(
+                FactsUnavailableReason::Malformed,
+                "Null AGP version requires an explicit unavailable SDK getter",
+            ));
         }
         validate_observation(&observation.kotlin_android, KOTLIN_ANDROID_GETTER)?;
         validate_observation(
@@ -707,7 +741,19 @@ pub fn prepare_live_module_plan(
                 "Selected Kotlin capability is absent",
             )
         })?;
-    if kotlin_module.agp_version != versions.agp {
+    if kotlin_module.agp_version.is_none() {
+        kotlin_module
+            .sdk_plugin_version
+            .as_ref()
+            .ok_or_else(|| {
+                unavailable(
+                    FactsUnavailableReason::Capability,
+                    "SDK plugin version was not observed",
+                )
+            })?
+            .available()?;
+    }
+    if kotlin_module.agp_version.as_deref() != Some(versions.agp.as_str()) {
         return Err(unavailable(
             FactsUnavailableReason::Stale,
             "Kotlin capability and generated models report different AGP versions",
