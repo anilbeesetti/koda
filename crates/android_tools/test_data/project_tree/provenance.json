@@ -512,6 +512,14 @@
       "sha256": "7342fdc1b7fadf14dfe757bf305be329ab4286da4bd291432668c87f3e78ee83",
       "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTestCase.java",
       "preservation": "Unchanged original bytes and source notices"
+    },
+    {
+      "source_path": "android/navigator/testSrc/com/android/tools/idea/navigator/nodes/android/AndroidSourceTypeNodeTest.kt",
+      "local_path": "reference/android/navigator/testSrc/com/android/tools/idea/navigator/nodes/android/AndroidSourceTypeNodeTest.kt",
+      "bytes": 3186,
+      "sha256": "f1f2b39ee16a27f548080accfcf2a8778e046c3646fdd2dfeaacf2288ce29303",
+      "source_url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/android/navigator/testSrc/com/android/tools/idea/navigator/nodes/android/AndroidSourceTypeNodeTest.kt",
+      "preservation": "Unchanged original bytes and source notices; original Gradle-backed test remains UNPORTED"
     }
   ],
   "fixture_preparation": "Upstream defaultPatchPreparedProject resolves AGP_CURRENT, patches the temporary fixture, and performs package migration when required. Raw AGP 1.5 fixture is never edited in this component.",
