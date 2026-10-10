@@ -7,6 +7,7 @@ on:
       - .github/workflows/affected_strict_ci.yml
       - .github/affected-strict-ci-request.json
       - .github/affected-strict-ci.md
+      - script/tests/test_ci_affected_strict.py
   workflow_dispatch:
 
 permissions:
@@ -47,14 +48,21 @@ jobs:
         env:
           CI_EVENT_NAME: ${{ github.event_name }}
           CI_HEAD_REF: ${{ github.head_ref }}
+          CI_REPOSITORY: ${{ github.repository }}
         run: |
+          if [[ "$CI_REPOSITORY" != 'anilbeesetti/koda' ]]; then
+            printf 'eligible=false\n' >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          profile_family=''
           case "$CI_EVENT_NAME:$CI_HEAD_REF" in
             pull_request:android-studio-task/1-acp-isolated-strict-ci) expected_profile=acp ;;
             pull_request:android-studio-task/1-software-adapter-isolated-strict-ci) expected_profile=gpui ;;
+            pull_request:android-studio-task/1-context-reference-strict-ci) expected_profile=''; profile_family=context-reference ;;
             workflow_dispatch:*) expected_profile='' ;;
             *) printf 'eligible=false\n' >> "$GITHUB_OUTPUT"; exit 0 ;;
           esac
           printf 'eligible=true\nexpected_profile=%s\n' "$expected_profile" >> "$GITHUB_OUTPUT"
+          printf 'profile_family=%s\n' "$profile_family" >> "$GITHUB_OUTPUT"
       - name: Checkout exact request controls
         if: steps.eligibility.outputs.eligible == 'true'
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
@@ -66,16 +74,23 @@ jobs:
         if: steps.eligibility.outputs.eligible == 'true'
         env:
           EXPECTED_PROFILE: ${{ steps.eligibility.outputs.expected_profile }}
+          PROFILE_FAMILY: ${{ steps.eligibility.outputs.profile_family }}
         run: |
           jq -e '
             (keys == ["profile", "schema_version", "source_commit", "source_tree"]) and
             (.schema_version == 1) and
-            (.profile == "acp" or .profile == "gpui") and
+            (.profile == "acp" or .profile == "gpui" or .profile == "android-context" or .profile == "reference-tools") and
             (.source_commit | type == "string" and test("^[0-9a-f]{40}$")) and
             (.source_tree | type == "string" and test("^[0-9a-f]{40}$"))
           ' .github/affected-strict-ci-request.json
           profile=$(jq -r .profile .github/affected-strict-ci-request.json)
           if [[ -n "$EXPECTED_PROFILE" ]]; then test "$profile" = "$EXPECTED_PROFILE"; fi
+          if [[ "$PROFILE_FAMILY" == 'context-reference' ]]; then
+            case "$profile" in
+              android-context|reference-tools) ;;
+              *) printf 'Profile does not match task branch\n' >&2; exit 1 ;;
+            esac
+          fi
           printf 'selected=true\nprofile=%s\nsource_commit=%s\nsource_tree=%s\n' \
             "$profile" "$(jq -r .source_commit .github/affected-strict-ci-request.json)" \
             "$(jq -r .source_tree .github/affected-strict-ci-request.json)" >> "$GITHUB_OUTPUT"
@@ -181,6 +196,8 @@ jobs:
           case "$STRICT_PROFILE" in
             acp) command=(./script/clippy --locked -p agent_servers -p acp_thread -p project -p gpui -p fs) ;;
             gpui) command=(./script/clippy --locked -p android_tools -p android_ui -p command_palette -p fs -p gpui -p project -p title_bar -p workspace -p zed) ;;
+            android-context) command=(./script/clippy --locked -p android_tools -p android_ui -p command_palette -p fs -p gpui -p project -p title_bar -p workspace -p zed -p project_panel) ;;
+            reference-tools) command=(./script/clippy --locked -p xtask) ;;
             *) printf 'Unknown strict profile\n' >&2; exit 1 ;;
           esac
           jq -n --args '$ARGS.positional' -- "${command[@]}" > "$STRICT_EVIDENCE/command.json"
