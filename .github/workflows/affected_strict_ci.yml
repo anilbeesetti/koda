@@ -183,7 +183,7 @@ jobs:
             gpui) command=(./script/clippy --locked -p android_tools -p android_ui -p command_palette -p fs -p gpui -p project -p title_bar -p workspace -p zed) ;;
             *) printf 'Unknown strict profile\n' >&2; exit 1 ;;
           esac
-          jq -n --args '$ARGS.positional' "${command[@]}" > "$STRICT_EVIDENCE/command.json"
+          jq -n --args '$ARGS.positional' -- "${command[@]}" > "$STRICT_EVIDENCE/command.json"
           set +e
           timeout --signal=TERM --kill-after=30s 165m "${command[@]}" 2>&1 \
             | (ulimit -f 65536; exec tee "$STRICT_EVIDENCE/strict.log")
