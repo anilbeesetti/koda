@@ -26,8 +26,11 @@
 //! the host remains responsible for binding that revision to real file scans.
 
 use crate::{
+    evaluated_tree_inputs::SelectedMainGeneratedRoots,
     java_class_facts::{JavaFactsError, MAX_JAVA_FACT_BYTES, discover_top_level_java_classes},
-    project_model::{Module, ModuleKind, SourceKind, SourceProviderRootKind},
+    project_model::{
+        ModelState, Module, ModuleKind, SourceKind, SourceProviderRootKind, SourceScope,
+    },
     project_tree::{
         FileFact, FileKind, SourceGroup, SourceProvider, TreeFiles, TreeModel, TreeModule,
         TreeSnapshot, TreeSourceRoot, project_tree_with_facts,
@@ -184,6 +187,43 @@ pub fn prepare_module_roots(
     model_revision: u64,
     presentation: Option<&CapturedModulePresentation>,
 ) -> AdapterResult<ModuleRootPlan> {
+    prepare_module_roots_inner(module, variant, model_revision, presentation, None)
+}
+
+/// Authoritative V2 MAIN lists replace native MAIN generation flags. Other
+/// artifact roles retain the old adapter policy and do not gain V2 parity.
+pub fn prepare_module_roots_with_generated(
+    generated: &SelectedMainGeneratedRoots,
+    state: &ModelState,
+    presentation: Option<&CapturedModulePresentation>,
+) -> AdapterResult<ModuleRootPlan> {
+    generated.ensure_current(state)?;
+    let (module, _) = generated
+        .model()
+        .variant(generated.selected())
+        .ok_or_else(|| {
+            unavailable(
+                AdapterUnavailableReason::StaleCapture,
+                "Selected generated module/variant is unavailable",
+                None,
+            )
+        })?;
+    prepare_module_roots_inner(
+        module,
+        &generated.selected().variant,
+        generated.selection_revision(),
+        presentation,
+        Some(generated),
+    )
+}
+
+fn prepare_module_roots_inner(
+    module: &Module,
+    variant: &str,
+    model_revision: u64,
+    presentation: Option<&CapturedModulePresentation>,
+    generated: Option<&SelectedMainGeneratedRoots>,
+) -> AdapterResult<ModuleRootPlan> {
     if module.kind == ModuleKind::Jvm {
         return Err(unavailable(
             AdapterUnavailableReason::UnsupportedModule,
@@ -270,7 +310,24 @@ pub fn prepare_module_roots(
         }
     }
     for component in &selected.components {
+        if component.scope == SourceScope::Main
+            && let Some(generated) = generated
+        {
+            for (group, paths) in [
+                (SourceGroup::GeneratedJava, generated.java()?),
+                (SourceGroup::GeneratedResources, generated.resources()?),
+                (SourceGroup::GeneratedAssets, generated.assets()?),
+            ] {
+                by_group.entry(group).or_default().extend_from_slice(paths);
+            }
+        }
         for root in component.sources.iter().filter(|root| root.generated) {
+            if generated.is_some()
+                && component.scope == SourceScope::Main
+                && root.kind != SourceKind::Manifest
+            {
+                continue;
+            }
             validate_path(&root.path)?;
             let group = match root.kind {
                 SourceKind::Java | SourceKind::Kotlin => Some(SourceGroup::GeneratedJava),
