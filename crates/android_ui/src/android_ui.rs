@@ -1224,6 +1224,7 @@ impl AndroidPanel {
         self.sync_task = Some(cx.spawn_in(window, async move |panel, cx| {
             let expected_root = root.clone();
             let parse_paths = path_policy.clone();
+            let parse_token = model_token.clone();
             let result = async {
                 panel.update(cx, |panel, cx| {
                     panel.verify_operation_owner(&owner, AndroidOperation::Sync, cx)?;
@@ -1271,10 +1272,11 @@ impl AndroidPanel {
                     .await?
                     {
                         ProcessOutput::Success(output) => {
-                            android_tools::project_model::parse_model_with_context(
+                            android_tools::evaluated_tree_inputs::EvaluatedTreeInputs::decode_sync(
                                 &output,
                                 &root,
-                                &parse_paths,
+                                Some(&parse_paths),
+                                &parse_token,
                             )
                             .map(Some)
                         }
@@ -1321,11 +1323,12 @@ impl AndroidPanel {
                         Ok(Some(targets)) => {
                             let mut message = format!(
                                 "Sync successful: {} build variants discovered",
-                                targets.targets().len() + targets.library_variants().len()
+                                targets.model().targets().len()
+                                    + targets.model().library_variants().len()
                             );
-                            if !targets.diagnostics.is_empty() {
+                            if !targets.model().diagnostics.is_empty() {
                                 message.push('\n');
-                                message.push_str(&targets.diagnostics.join("\n"));
+                                message.push_str(&targets.model().diagnostics.join("\n"));
                             }
                             message
                         }
@@ -1337,10 +1340,10 @@ impl AndroidPanel {
                     });
                     match result {
                         Ok(Some(model)) => {
-                            let diagnostics = model.diagnostics.join("\n");
-                            let targets = model.targets();
+                            let diagnostics = model.model().diagnostics.join("\n");
+                            let targets = model.model().targets();
                             if let Err(error) = panel.project.update(cx, |project, cx| {
-                                project.publish_android_model(&model_token, model, cx)
+                                project.publish_evaluated_android_model(&model_token, model, cx)
                             }) {
                                 panel.fail_for_owner(&owner, error, window, cx);
                                 return;
@@ -4988,6 +4991,77 @@ mod tests {
     use serde_json::json;
 
     #[gpui::test]
+    async fn evaluated_model_project_handoff_notifies_and_rejects_root_aba(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            use android_tools::evaluated_tree_inputs::EvaluatedTreeInputs;
+            use android_tools::project_tree_facts::FactsUnavailableReason;
+            struct Observer {
+                capture_present: bool,
+                revision: Option<u64>,
+                _subscription: gpui::Subscription,
+            }
+            cx.update(|cx| {
+                AppState::test(cx);
+                trusted_worktrees::init(Default::default(), cx);
+            });
+            let a = tempfile::tempdir()?;
+            let b = tempfile::tempdir()?;
+            let root = a.path().canonicalize()?;
+            let other = b.path().canonicalize()?;
+            let filesystem = FakeFs::new(cx.executor());
+            filesystem.insert_tree(&root, json!({"settings.gradle.kts":""})).await;
+            filesystem.insert_tree(&other, json!({"settings.gradle.kts":""})).await;
+            let project = Project::test_with_worktree_trust(filesystem, [root.as_path(), other.as_path()], cx).await;
+            let observer = cx.new(|cx| Observer {
+                capture_present: false,
+                revision: None,
+                _subscription: cx.observe(&project, |observer, project, cx| {
+                    let state = project.read(cx).android_model();
+                    observer.capture_present = state.evaluated_inputs().is_some();
+                    observer.revision = state.model_revision();
+                }),
+            });
+            let exported = json!({"version":1,"root":root,"diagnostics":[],"modules":[{
+                "path":":app","directory":root,"namespace":"example","kind":"application",
+                "variants":[{"name":"debug","outputListing":null,"components":[{
+                    "name":"debug","scope":"main","sources":[],"dependencies":[]}]}]}], "generatedArtifacts":null});
+            let output = format!("{}{exported}", android_tools::project_model::MODEL_OUTPUT_PREFIX);
+            let token = project.update(cx, |project, cx| project.invalidate_android_model(Some(root.clone()), cx));
+            let stale = EvaluatedTreeInputs::decode_sync(&output, &root, None, &token)?;
+            let current = stale.clone();
+            project.update(cx, |project, cx| project.publish_evaluated_android_model(&token, current, cx))?;
+            cx.run_until_parked();
+            assert!(observer.read_with(cx, |observer, _| observer.capture_present));
+            let revision = project.read_with(cx, |project, _| project.android_model().model_revision());
+            assert_eq!(observer.read_with(cx, |observer, _| observer.revision), revision);
+            project.update(cx, |project, cx| project.select_android_variant(Some(android_tools::project_model::VariantId {
+                module: ":app".into(), variant: "debug".into(),
+            }), cx))?;
+            project.read_with(cx, |project, _| {
+                let state = project.android_model();
+                assert_eq!(state.model_revision(), revision);
+                let capture = state.evaluated_inputs().context("Evaluated handoff")?;
+                assert_eq!(capture.raw_record(), output);
+                assert_eq!(capture.generated_artifacts(None).expect_err("Null sidecar preserved").reason, FactsUnavailableReason::Malformed);
+                Ok::<_, anyhow::Error>(())
+            })?;
+            project.update(cx, |project, cx| {
+                project.invalidate_android_model(Some(other), cx);
+                project.invalidate_android_model(Some(root), cx);
+                assert!(project.publish_evaluated_android_model(&token, stale, cx).is_err());
+                assert!(project.android_model().model.is_none());
+            });
+            cx.run_until_parked();
+            assert!(!observer.read_with(cx, |observer, _| observer.capture_present));
+            assert_eq!(observer.read_with(cx, |observer, _| observer.revision), None);
+            Ok(())
+        }.await;
+        result.expect("Evaluated Project handoff must complete");
+    }
+
+    #[gpui::test]
     async fn queued_partial_sync_rejection_preserves_the_new_context_and_generic_dock(
         cx: &mut TestAppContext,
     ) {
@@ -5512,6 +5586,15 @@ mod tests {
                 std::fs::write(root.join("model-release"), "continue")?;
                 visual.condition(&project, |project, _| project.android_model().model.is_some()).await;
                 visual.condition(&panel, |panel, _| !panel.syncing).await;
+                project.read_with(visual, |project, _| {
+                    let capture = project.android_model().evaluated_inputs().context("Actual sync must publish evaluated inputs")?;
+                    assert_eq!(capture.model().root, root);
+                    assert_eq!(capture.import_facts().expect_err("Legacy process fixture has no import facts").reason,
+                        android_tools::project_tree_facts::FactsUnavailableReason::MissingMetadata);
+                    assert_eq!(capture.generated_artifacts(None).expect_err("Legacy process fixture has no generated sidecar").reason,
+                        android_tools::project_tree_facts::FactsUnavailableReason::MissingMetadata);
+                    Ok::<_, anyhow::Error>(())
+                })?;
                 if android_api_available {
                     visual.condition(&panel, |panel, _| panel.startup_settings_ready).await;
                 }

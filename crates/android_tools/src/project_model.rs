@@ -669,15 +669,33 @@ pub struct ModelToken {
     root: Option<PathBuf>,
 }
 
+impl ModelToken {
+    pub(crate) fn revision(&self) -> u64 {
+        self.generation
+    }
+}
+
 #[derive(Default)]
 pub struct ModelState {
     generation: u64,
     root: Option<PathBuf>,
     pub model: Option<Arc<ProjectModel>>,
     pub selected: Option<Arc<SelectedProject>>,
+    model_revision: Option<u64>,
+    evaluated_inputs: Option<Arc<crate::evaluated_tree_inputs::EvaluatedTreeInputs>>,
 }
 
 impl ModelState {
+    pub fn model_revision(&self) -> Option<u64> {
+        self.model_revision
+    }
+
+    pub fn evaluated_inputs(
+        &self,
+    ) -> Option<&Arc<crate::evaluated_tree_inputs::EvaluatedTreeInputs>> {
+        self.evaluated_inputs.as_ref()
+    }
+
     pub fn root(&self) -> Option<&Path> {
         self.root.as_deref()
     }
@@ -696,6 +714,8 @@ impl ModelState {
         self.root = root;
         self.model = None;
         self.selected = None;
+        self.model_revision = None;
+        self.evaluated_inputs = None;
         self.token()
     }
     pub fn publish(&mut self, token: &ModelToken, model: ProjectModel) -> Result<()> {
@@ -706,6 +726,32 @@ impl ModelState {
             "Discarded an outdated Android sync result"
         );
         self.model = Some(Arc::new(model));
+        self.model_revision = Some(token.revision());
+        self.evaluated_inputs = None;
+        Ok(())
+    }
+
+    pub fn publish_evaluated(
+        &mut self,
+        token: &ModelToken,
+        capture: crate::evaluated_tree_inputs::EvaluatedTreeInputs,
+    ) -> Result<()> {
+        ensure!(
+            self.is_current(token)
+                && capture.token() == token
+                && self
+                    .root
+                    .as_ref()
+                    .is_some_and(|root| root == &capture.model().root
+                        || root
+                            .canonicalize()
+                            .is_ok_and(|root| root == capture.model().root)),
+            "Discarded an outdated evaluated Android sync result"
+        );
+        self.model = Some(capture.model().clone());
+        self.selected = None;
+        self.model_revision = Some(token.revision());
+        self.evaluated_inputs = Some(Arc::new(capture));
         Ok(())
     }
     pub fn select(&mut self, id: Option<VariantId>) -> Result<()> {
