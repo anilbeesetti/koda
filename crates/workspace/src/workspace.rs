@@ -1504,6 +1504,7 @@ pub enum Event {
         item: Box<dyn ItemHandle>,
     },
     ActiveItemChanged,
+    ActiveProjectPathChanged(Option<ProjectPath>),
     ItemRemoved {
         item_id: EntityId,
     },
@@ -4607,17 +4608,18 @@ impl Workspace {
 
         let dock = self.dock_at_position(dock_side);
         dock.update(cx, |dock, cx| {
-            dock.set_open(!was_visible, window, cx);
-
-            if dock.active_panel().is_none() {
+            if dock.active_panel().is_none_or(|panel| !panel.enabled(cx)) {
                 let Some(panel_ix) = dock
                     .first_enabled_panel_idx(cx)
                     .log_with_level(log::Level::Info)
                 else {
+                    dock.set_open(false, window, cx);
                     return;
                 };
                 dock.activate_panel(panel_ix, window, cx);
             }
+
+            dock.set_open(!was_visible, window, cx);
 
             if let Some(active_panel) = dock.active_panel() {
                 if was_visible {
@@ -4759,6 +4761,12 @@ impl Workspace {
         cx: &mut Context<Self>,
     ) -> bool {
         let mut did_focus_panel = false;
+        if self
+            .panel::<T>(cx)
+            .is_none_or(|panel| !panel.read(cx).enabled(cx))
+        {
+            return false;
+        }
         self.focus_or_unfocus_panel::<T>(window, cx, &mut |panel, window, cx| {
             did_focus_panel = !panel.panel_focus_handle(cx).contains_focused(window, cx);
             did_focus_panel
@@ -4794,6 +4802,9 @@ impl Workspace {
         let mut panel = None;
         for dock in self.all_docks() {
             if let Some(panel_index) = dock.read(cx).panel_index_for_proto_id(panel_id) {
+                if !dock.read(cx).is_panel_enabled(panel_index, cx) {
+                    return None;
+                }
                 panel = dock.update(cx, |dock, cx| {
                     dock.activate_panel(panel_index, window, cx);
                     dock.set_open(true, window, cx);
@@ -4818,6 +4829,12 @@ impl Workspace {
         cx: &mut Context<Self>,
         should_focus: &mut dyn FnMut(&dyn PanelHandle, &mut Window, &mut Context<Dock>) -> bool,
     ) -> Option<Arc<dyn PanelHandle>> {
+        if self
+            .panel::<T>(cx)
+            .is_none_or(|panel| !panel.read(cx).enabled(cx))
+        {
+            return None;
+        }
         let mut result_panel = None;
         let mut serialize = false;
         for dock in self.all_docks() {
@@ -4861,6 +4878,9 @@ impl Workspace {
     pub fn open_panel<T: Panel>(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         for dock in self.all_docks() {
             if let Some(panel_index) = dock.read(cx).panel_index_for_type::<T>() {
+                if !dock.read(cx).is_panel_enabled(panel_index, cx) {
+                    continue;
+                }
                 dock.update(cx, |dock, cx| {
                     dock.activate_panel(panel_index, window, cx);
                     dock.set_open(true, window, cx);
@@ -4874,16 +4894,24 @@ impl Workspace {
     pub fn reveal_panel<T: Panel>(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let dock_position = self.all_docks().iter().find_map(|dock| {
             let dock = dock.read(cx);
-            dock.panel_index_for_type::<T>().map(|_| dock.position())
+            dock.panel_index_for_type::<T>()
+                .filter(|index| dock.is_panel_enabled(*index, cx))
+                .map(|_| dock.position())
         });
-        self.dismiss_zoomed_items_to_reveal(dock_position, window, cx);
+        let Some(dock_position) = dock_position else {
+            return;
+        };
+        self.dismiss_zoomed_items_to_reveal(Some(dock_position), window, cx);
         self.open_panel::<T>(window, cx);
     }
 
     pub fn close_panel<T: Panel>(&self, window: &mut Window, cx: &mut Context<Self>) {
         for dock in self.all_docks().iter() {
             dock.update(cx, |dock, cx| {
-                if dock.panel::<T>().is_some() {
+                if dock
+                    .panel::<T>()
+                    .is_some_and(|panel| panel.read(cx).enabled(cx))
+                {
                     dock.set_open(false, window, cx)
                 }
             })
@@ -6161,6 +6189,12 @@ impl Workspace {
     ) {
         let mut serialize_workspace = true;
         match event {
+            pane::Event::ActivateProjectPath { path, local } => {
+                if pane == self.active_pane() || *local {
+                    cx.emit(Event::ActiveProjectPathChanged(path.clone()));
+                }
+                serialize_workspace = false;
+            }
             pane::Event::AddItem { item } => {
                 item.added_to_pane(self, pane.clone(), window, cx);
                 cx.emit(Event::ItemAdded {
@@ -6226,6 +6260,12 @@ impl Workspace {
                 serialize_workspace = false;
             }
             pane::Event::RemovedItem { item } => {
+                // Surviving items already emit their captured activation path.
+                // Re-emitting it on background removal would invalidate an
+                // unchanged source owner; the last active item still loses it.
+                if pane == self.active_pane() && pane.read(cx).active_item().is_none() {
+                    cx.emit(Event::ActiveProjectPathChanged(None));
+                }
                 cx.emit(Event::ActiveItemChanged);
                 self.update_window_edited(window, cx);
                 if let hash_map::Entry::Occupied(entry) = self.panes_by_item.entry(item.item_id())
@@ -6693,8 +6733,9 @@ impl Workspace {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        cx.emit(Event::ActiveItemChanged);
         let active_entry = self.active_project_path(cx);
+        cx.emit(Event::ActiveProjectPathChanged(active_entry.clone()));
+        cx.emit(Event::ActiveItemChanged);
         let active_project_path_changed =
             self.last_active_project_path.as_ref() != active_entry.as_ref();
         self.project.update(cx, |project, cx| {
