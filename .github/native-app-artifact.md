@@ -20,6 +20,32 @@ no deployment, signing, or publication credentials. This YAML and the standard
 shell, Git, jq, tar, ELF inspection, and GitHub Actions commands are CI
 infrastructure; IDE functionality remains Rust.
 
+## Software adapter candidate request
+
+The current request selects software-adapter cached presentation source commit
+`f279ec17c50d81e163769069d54fef7d0114edc2` and Git tree
+`9190f72e87c9281cf19b54c72fe8c6589e6ba92d`. All five independent static source
+reviews passed after the frame-demand fixture correction. The earlier `d1088df`
+fixture failure and QA9 CPU failure remain recorded; current tests, fresh native
+checks, and measured CPU improvement are pending.
+
+This task changes only the request's `source_commit` and `source_tree` values and
+this documentation, based on artifact controls commit
+`049c1a547e534ac417fb9a186dcc712762ca753e`. The complete native artifact workflow
+remains byte-for-byte unchanged, including its normal dev/default-feature build,
+C++ WebRTC, bootstrap, caches, identity guards, time limit, and failure evidence.
+No production source, reference tests, fixtures, or ordinary CI checks change.
+
+The control task requires five independent code, UI, UX, performance, and code
+quality reviews of these exact files before publication. Root must publish the
+requested source commit first, then run the existing artifact workflow and verify
+its executable, source/tree identity, and provenance. Source acceptance separately
+requires current strict Clippy, the full test suite, the affected GPUI tests, live
+redraw/cursor/animation/recovery checks, and the unchanged QA9 five-cycle CPU/RSS
+and responsiveness checks. The CPU ceiling remains 50 percent. A prepared request
+or static review does not establish any of these runtime results, reference-test
+parity, or readiness to merge.
+
 Before a live check, verify the requested commit and tree against the exact
 local checkout, the workflow/run identity against GitHub, and every artifact
 digest. Inspect the tar member list before extracting into an isolated directory;
