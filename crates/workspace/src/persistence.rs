@@ -6854,7 +6854,7 @@ mod tests {
         assert_eq!(queued_writes.load(Ordering::SeqCst), 1);
 
         let first_write = held_writes.lock().pop_front().unwrap();
-        let first_write = cx.background_executor().spawn(async move {
+        let first_write = cx.background_executor.spawn(async move {
             first_write();
         });
         finish_multi_workspace_flush_on_background(first_write, &dispatcher);
@@ -6869,7 +6869,7 @@ mod tests {
             );
         }
         let latest_write = held_writes.lock().pop_front().unwrap();
-        let latest_write = cx.background_executor().spawn(async move {
+        let latest_write = cx.background_executor.spawn(async move {
             latest_write();
         });
         finish_multi_workspace_flush_on_background(latest_write, &dispatcher);
@@ -6992,7 +6992,7 @@ mod tests {
         assert!(!foreground_ran.load(Ordering::SeqCst));
 
         let first_write = held_writes.lock().pop_front().unwrap();
-        let first_write = cx.background_executor().spawn(async move {
+        let first_write = cx.background_executor.spawn(async move {
             first_write();
         });
         finish_multi_workspace_flush_on_background(first_write, &dispatcher);
@@ -7000,7 +7000,7 @@ mod tests {
         assert_eq!(queued_writes.load(Ordering::SeqCst), 2);
         assert_eq!(held_writes.lock().len(), 1);
         let latest_write = held_writes.lock().pop_front().unwrap();
-        let latest_write = cx.background_executor().spawn(async move {
+        let latest_write = cx.background_executor.spawn(async move {
             latest_write();
         });
         finish_multi_workspace_flush_on_background(latest_write, &dispatcher);
