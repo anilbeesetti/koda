@@ -1,0 +1,225 @@
+name: Affected crate strict Clippy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - .github/workflows/affected_strict_ci.yml
+      - .github/affected-strict-ci-request.json
+      - .github/affected-strict-ci.md
+      - script/tests/test_ci_affected_strict.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: affected-strict-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: '0'
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+  RUST_BACKTRACE: '1'
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  select:
+    name: Select affected strict source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      selected: ${{ steps.request.outputs.selected }}
+      profile: ${{ steps.request.outputs.profile }}
+      source_commit: ${{ steps.request.outputs.source_commit }}
+      source_tree: ${{ steps.request.outputs.source_tree }}
+      control_commit: ${{ steps.request.outputs.control_commit }}
+      control_tree: ${{ steps.request.outputs.control_tree }}
+      request_sha256: ${{ steps.request.outputs.request_sha256 }}
+      workflow_sha256: ${{ steps.request.outputs.workflow_sha256 }}
+    steps:
+      - name: Select exact task branch
+        id: eligibility
+        env:
+          CI_EVENT_NAME: ${{ github.event_name }}
+          CI_HEAD_REF: ${{ github.head_ref }}
+          CI_REPOSITORY: ${{ github.repository }}
+        run: |
+          if [[ "$CI_REPOSITORY" != 'anilbeesetti/koda' ]]; then
+            printf 'eligible=false\n' >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          profile_family=''
+          case "$CI_EVENT_NAME:$CI_HEAD_REF" in
+            pull_request:android-studio-task/1-acp-isolated-strict-ci) expected_profile=acp ;;
+            pull_request:android-studio-task/1-software-adapter-isolated-strict-ci) expected_profile=gpui ;;
+            pull_request:android-studio-task/1-context-reference-strict-ci) expected_profile=''; profile_family=context-reference ;;
+            workflow_dispatch:*) expected_profile='' ;;
+            *) printf 'eligible=false\n' >> "$GITHUB_OUTPUT"; exit 0 ;;
+          esac
+          printf 'eligible=true\nexpected_profile=%s\n' "$expected_profile" >> "$GITHUB_OUTPUT"
+          printf 'profile_family=%s\n' "$profile_family" >> "$GITHUB_OUTPUT"
+      - name: Checkout exact request controls
+        if: steps.eligibility.outputs.eligible == 'true'
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Validate fixed profile and immutable source
+        id: request
+        if: steps.eligibility.outputs.eligible == 'true'
+        env:
+          EXPECTED_PROFILE: ${{ steps.eligibility.outputs.expected_profile }}
+          PROFILE_FAMILY: ${{ steps.eligibility.outputs.profile_family }}
+        run: |
+          jq -e '
+            (keys == ["profile", "schema_version", "source_commit", "source_tree"]) and
+            (.schema_version == 1) and
+            (.profile == "acp" or .profile == "gpui" or .profile == "android-context" or .profile == "reference-tools") and
+            (.source_commit | type == "string" and test("^[0-9a-f]{40}$")) and
+            (.source_tree | type == "string" and test("^[0-9a-f]{40}$"))
+          ' .github/affected-strict-ci-request.json
+          profile=$(jq -r .profile .github/affected-strict-ci-request.json)
+          if [[ -n "$EXPECTED_PROFILE" ]]; then test "$profile" = "$EXPECTED_PROFILE"; fi
+          if [[ "$PROFILE_FAMILY" == 'context-reference' ]]; then
+            case "$profile" in
+              android-context|reference-tools) ;;
+              *) printf 'Profile does not match task branch\n' >&2; exit 1 ;;
+            esac
+          fi
+          printf 'selected=true\nprofile=%s\nsource_commit=%s\nsource_tree=%s\n' \
+            "$profile" "$(jq -r .source_commit .github/affected-strict-ci-request.json)" \
+            "$(jq -r .source_tree .github/affected-strict-ci-request.json)" >> "$GITHUB_OUTPUT"
+          printf 'control_commit=%s\ncontrol_tree=%s\nrequest_sha256=%s\nworkflow_sha256=%s\n' \
+            "$(git rev-parse HEAD)" "$(git rev-parse 'HEAD^{tree}')" \
+            "$(sha256sum .github/affected-strict-ci-request.json | cut -d ' ' -f 1)" \
+            "$(sha256sum .github/workflows/affected_strict_ci.yml | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
+  strict:
+    name: Affected strict Clippy (${{ needs.select.outputs.profile }})
+    needs: select
+    if: needs.select.outputs.selected == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      CC: clang
+      CXX: clang++
+      STRICT_PROFILE: ${{ needs.select.outputs.profile }}
+      STRICT_SOURCE_SHA: ${{ needs.select.outputs.source_commit }}
+      STRICT_SOURCE_TREE: ${{ needs.select.outputs.source_tree }}
+      CONTROL_SHA: ${{ needs.select.outputs.control_commit }}
+      CONTROL_TREE: ${{ needs.select.outputs.control_tree }}
+      REQUEST_SHA256: ${{ needs.select.outputs.request_sha256 }}
+      CONTROL_WORKFLOW_SHA256: ${{ needs.select.outputs.workflow_sha256 }}
+      CI_WORKFLOW_REF: ${{ github.workflow_ref }}
+      CI_WORKFLOW_SHA: ${{ github.workflow_sha }}
+    steps:
+      - name: Prepare evidence directory
+        run: |
+          evidence="$RUNNER_TEMP/koda-affected-strict"
+          mkdir -p "$evidence"
+          printf 'STRICT_EVIDENCE=%s\n' "$evidence" >> "$GITHUB_ENV"
+          jq -n --arg profile "$STRICT_PROFILE" --arg source "$STRICT_SOURCE_SHA" \
+            --arg tree "$STRICT_SOURCE_TREE" --arg control "$CONTROL_SHA" \
+            --arg workflow_ref "$CI_WORKFLOW_REF" --arg workflow_sha "$CI_WORKFLOW_SHA" \
+            --arg run "$GITHUB_RUN_ID" --arg attempt "$GITHUB_RUN_ATTEMPT" \
+            '{profile:$profile, requested_source:$source, requested_tree:$tree,
+              control_commit:$control, workflow_ref:$workflow_ref, workflow_sha:$workflow_sha,
+              run_id:$run, run_attempt:$attempt, kind:"strict-clippy-no-tests-executed"}' \
+            > "$evidence/context.json"
+      - name: Checkout immutable controls
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ env.CONTROL_SHA }}
+      - name: Preserve and verify request controls
+        run: |
+          test "$(git rev-parse HEAD)" = "$CONTROL_SHA"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$CONTROL_TREE"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          printf '%s  .github/affected-strict-ci-request.json\n' "$REQUEST_SHA256" | sha256sum --check --strict
+          printf '%s  .github/workflows/affected_strict_ci.yml\n' "$CONTROL_WORKFLOW_SHA256" | sha256sum --check --strict
+          cp .github/affected-strict-ci-request.json "$STRICT_EVIDENCE/request.json"
+          cp .github/workflows/affected_strict_ci.yml "$STRICT_EVIDENCE/control-workflow.yml"
+          test "$(jq -r .profile "$STRICT_EVIDENCE/request.json")" = "$STRICT_PROFILE"
+          test "$(jq -r .source_commit "$STRICT_EVIDENCE/request.json")" = "$STRICT_SOURCE_SHA"
+          test "$(jq -r .source_tree "$STRICT_EVIDENCE/request.json")" = "$STRICT_SOURCE_TREE"
+      - name: Checkout exact strict source
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ env.STRICT_SOURCE_SHA }}
+      - name: Verify source before bootstrap
+        run: |
+          [[ "$STRICT_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$STRICT_SOURCE_TREE" =~ ^[0-9a-f]{40}$ ]]
+          git rev-parse HEAD 'HEAD^{tree}' > "$STRICT_EVIDENCE/observed-source.txt"
+          git status --porcelain --untracked-files=no > "$STRICT_EVIDENCE/tracked-status.txt"
+          test "$(git rev-parse HEAD)" = "$STRICT_SOURCE_SHA"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$STRICT_SOURCE_TREE"
+          test ! -s "$STRICT_EVIDENCE/tracked-status.txt"
+          echo '0a2fa62c186e472ed7eb70f066d93d5b1e880d9d7e2c40b81f2a9e15544cfdb8  script/clippy' | sha256sum --check --strict
+          for variable in CARGO RUSTFLAGS CARGO_ENCODED_RUSTFLAGS RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER; do
+            if [[ -v "$variable" ]]; then printf 'Unexpected strict override: %s\n' "$variable" >&2; exit 1; fi
+          done
+          cp Cargo.lock rust-toolchain.toml "$STRICT_EVIDENCE/"
+      - name: Select runner concurrency
+        run: python3 script/ci-run resources --github-env "$GITHUB_ENV"
+      - name: Free runner disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+      - name: Install Linux dependencies
+        run: ./script/linux
+      - name: Record repository Rust toolchain
+        run: |
+          rustup show active-toolchain > "$STRICT_EVIDENCE/rustup.txt"
+          rustc -Vv > "$STRICT_EVIDENCE/rustc.txt"
+          cargo -V > "$STRICT_EVIDENCE/cargo.txt"
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install WASI SDK
+        run: ./script/download-wasi-sdk
+      - name: Verify source before compiler
+        run: |
+          test "$(git rev-parse HEAD)" = "$STRICT_SOURCE_SHA"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$STRICT_SOURCE_TREE"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          echo '0a2fa62c186e472ed7eb70f066d93d5b1e880d9d7e2c40b81f2a9e15544cfdb8  script/clippy' | sha256sum --check --strict
+          cmp Cargo.lock "$STRICT_EVIDENCE/Cargo.lock"
+      - name: Run fixed affected strict profile
+        run: |
+          case "$STRICT_PROFILE" in
+            acp) command=(./script/clippy --locked -p agent_servers -p acp_thread -p project -p gpui -p fs) ;;
+            gpui) command=(./script/clippy --locked -p android_tools -p android_ui -p command_palette -p fs -p gpui -p project -p title_bar -p workspace -p zed) ;;
+            android-context) command=(./script/clippy --locked -p android_tools -p android_ui -p command_palette -p fs -p gpui -p project -p title_bar -p workspace -p zed -p project_panel) ;;
+            reference-tools) command=(./script/clippy --locked -p xtask) ;;
+            *) printf 'Unknown strict profile\n' >&2; exit 1 ;;
+          esac
+          jq -n --args '$ARGS.positional' -- "${command[@]}" > "$STRICT_EVIDENCE/command.json"
+          set +e
+          timeout --signal=TERM --kill-after=30s 165m "${command[@]}" 2>&1 \
+            | (ulimit -f 65536; exec tee "$STRICT_EVIDENCE/strict.log")
+          statuses=("${PIPESTATUS[@]}")
+          set -e
+          jq -n --argjson compiler "${statuses[0]}" --argjson capture "${statuses[1]}" \
+            '{strict_process_exit:$compiler, log_capture_exit:$capture,
+              command_timeout_seconds:9900, maximum_log_bytes:67108864,
+              tests_executed:false}' > "$STRICT_EVIDENCE/exit.json"
+          test "$(git rev-parse HEAD)" = "$STRICT_SOURCE_SHA"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$STRICT_SOURCE_TREE"
+          test -z "$(git status --porcelain --untracked-files=no)"
+          if (( statuses[0] != 0 )); then exit "${statuses[0]}"; fi
+          if (( statuses[1] != 0 )); then exit "${statuses[1]}"; fi
+      - name: Preserve available strict evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: affected-strict-${{ needs.select.outputs.profile }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.STRICT_EVIDENCE }}/
+          if-no-files-found: error
+          retention-days: 7
