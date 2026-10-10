@@ -1,0 +1,127 @@
+name: Exact Android reference tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - .github/workflows/android_reference_exact.yml
+      - docs/android-studio/reference-named-tests.json
+      - tooling/xtask/src/main.rs
+      - tooling/xtask/src/android_reference_runs.rs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-reference-exact-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: '0'
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+  RUST_BACKTRACE: '1'
+  CC: clang
+  CXX: clang++
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  named_reference:
+    name: Named reference proof (${{ matrix.source }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - source: primary36
+            commit: 594bf18526b3d7197315c82f5c6c3860cfb7bf5a
+            tree: dd2bb2ae16a43fd0a0dbee35bae3615a5fbe26f1
+          - source: table4
+            commit: 0d155a5fb869df3f10837db92e252e946687f7ae
+            tree: c5306d1dc5714e629eb0dd658fd230f77af84f52
+    steps:
+      - name: Check out runner source
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: runner
+      - name: Check out exact tested source
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
+          ref: ${{ matrix.commit }}
+          path: tested
+      - name: Verify pinned tested checkout
+        working-directory: tested
+        env:
+          REFERENCE_SOURCE_COMMIT: ${{ matrix.commit }}
+          REFERENCE_SOURCE_TREE: ${{ matrix.tree }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$REFERENCE_SOURCE_COMMIT"
+          test "$(git rev-parse 'HEAD^{tree}')" = "$REFERENCE_SOURCE_TREE"
+          test -z "$(git status --porcelain --untracked-files=no)"
+      - name: Select normal Linux runner concurrency
+        working-directory: tested
+        run: python3 script/ci-run resources --github-env "$GITHUB_ENV"
+      - name: Free runner disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+      - name: Install normal Linux dependencies
+        working-directory: tested
+        run: ./script/linux
+      - name: Install normal software graphics driver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan1 mesa-vulkan-drivers
+          vulkan_icd="$(find /usr/share/vulkan/icd.d -name 'lvp_icd*.json' -print -quit)"
+          test -n "$vulkan_icd"
+          echo "VK_DRIVER_FILES=$vulkan_icd" >> "$GITHUB_ENV"
+      - name: Install pinned Rust toolchains
+        run: |
+          (cd tested && rustup show active-toolchain)
+          (cd runner && rustup show active-toolchain)
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v4
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install normal WASI SDK
+        working-directory: tested
+        run: ./script/download-wasi-sdk
+      - name: Validate runner formatting, strict Clippy, and all xtask tests
+        working-directory: runner
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/current40-runner-target
+        run: |
+          cargo fmt --all -- --check
+          ./script/clippy --locked -p xtask
+          cargo test --locked -p xtask -- --show-output
+      - name: Run every exact named reference case
+        working-directory: runner
+        env:
+          REFERENCE_SOURCE_LABEL: ${{ matrix.source }}
+          CARGO_TARGET_DIR: ${{ runner.temp }}/current40-runner-target
+        run: |
+          cargo run --locked -p xtask -- android-reference-runs \
+            --manifest docs/android-studio/reference-named-tests.json \
+            --source "$REFERENCE_SOURCE_LABEL" \
+            --checkout "$GITHUB_WORKSPACE/tested" \
+            --target-dir "$RUNNER_TEMP/current40-test-target" \
+            --output-dir "$RUNNER_TEMP/current40-proof" \
+            2>&1 | tee "$RUNNER_TEMP/current40-worker.log"
+      - name: Preserve named receipts and raw logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: android-reference-${{ matrix.source }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/current40-proof
+            ${{ runner.temp }}/current40-worker.log
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 6
