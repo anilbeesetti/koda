@@ -36,8 +36,9 @@ jobs:
       CC: clang
       CXX: clang++
       WGPU_BACKEND: vulkan
-      KODA_ARTIFACT_DIRECTORY: ${{ runner.temp }}/koda-native-app
     steps:
+      - name: Set artifact directory
+        run: printf 'KODA_ARTIFACT_DIRECTORY=%s/koda-native-app\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - name: Checkout artifact controls
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
