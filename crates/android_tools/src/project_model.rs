@@ -860,10 +860,84 @@ pub fn parse_model_with_context(
     parse_model_with_paths(output, root, Some(paths))
 }
 
+trait ModelPathResolver {
+    fn canonicalize(&self, path: &Path) -> Result<PathBuf>;
+    fn exists(&self, path: &Path) -> bool;
+}
+
+struct HostModelPathResolver;
+
+impl ModelPathResolver for HostModelPathResolver {
+    fn canonicalize(&self, path: &Path) -> Result<PathBuf> {
+        Ok(path.canonicalize()?)
+    }
+
+    fn exists(&self, path: &Path) -> bool {
+        path.exists()
+    }
+}
+
+#[cfg(any(test, feature = "test-support"))]
+struct FixtureModelPathResolver<'a> {
+    directories: &'a BTreeMap<PathBuf, PathBuf>,
+}
+
+#[cfg(any(test, feature = "test-support"))]
+impl ModelPathResolver for FixtureModelPathResolver<'_> {
+    fn canonicalize(&self, path: &Path) -> Result<PathBuf> {
+        self.directories
+            .get(path)
+            .cloned()
+            .with_context(|| format!("No captured FakeFs directory for {}", path.display()))
+    }
+
+    fn exists(&self, path: &Path) -> bool {
+        self.directories.contains_key(path)
+    }
+}
+
+#[cfg(any(test, feature = "test-support"))]
+pub(crate) fn parse_model_fixture(
+    output: &str,
+    root: &Path,
+    directories: &BTreeMap<PathBuf, PathBuf>,
+) -> Result<ProjectModel> {
+    // FakeFs directories cannot be observed through std::fs. Explicit canonical
+    // observations keep host paths out of fixtures without bypassing model checks.
+    for (path, canonical) in directories {
+        for directory in [path, canonical] {
+            ensure!(
+                directory.is_absolute()
+                    && !directory.components().any(|component| {
+                        matches!(component, PathComponent::ParentDir | PathComponent::CurDir)
+                    })
+                    && directory.as_os_str()
+                        == directory.components().collect::<PathBuf>().as_os_str(),
+                "FakeFs directory observations must be absolute normalized paths"
+            );
+        }
+    }
+    parse_model_with_resolver(
+        output,
+        root,
+        None,
+        &FixtureModelPathResolver { directories },
+    )
+}
+
 fn parse_model_with_paths(
     output: &str,
     root: &Path,
     paths: Option<&EvaluatedModelPaths>,
+) -> Result<ProjectModel> {
+    parse_model_with_resolver(output, root, paths, &HostModelPathResolver)
+}
+
+fn parse_model_with_resolver(
+    output: &str,
+    root: &Path,
+    paths: Option<&EvaluatedModelPaths>,
+    resolver: &impl ModelPathResolver,
 ) -> Result<ProjectModel> {
     let mut records = output.lines().filter_map(|line| line.strip_prefix(OUTPUT));
     let exported: ExportedProjectModel = serde_json::from_str(
@@ -890,7 +964,7 @@ fn parse_model_with_paths(
         "Unsupported Android project model version {}",
         model.version
     );
-    let root = root.canonicalize()?;
+    let root = resolver.canonicalize(root)?;
     ensure!(
         model.root == root,
         "The Android model belongs to a different project"
@@ -910,7 +984,7 @@ fn parse_model_with_paths(
             ensure!(
                 module.directory == *directory
                     && directory.is_absolute()
-                    && directory.canonicalize()? == *directory,
+                    && resolver.canonicalize(directory)? == *directory,
                 "Android model module {} does not match its evaluated canonical directory",
                 module.path
             );
@@ -922,7 +996,7 @@ fn parse_model_with_paths(
         } else {
             ensure!(
                 module.directory.is_absolute()
-                    && module.directory.canonicalize()?.starts_with(&root),
+                    && resolver.canonicalize(&module.directory)?.starts_with(&root),
                 "Module {} is outside the selected build; included builds and external project directories are unsupported",
                 module.path
             );
@@ -939,7 +1013,7 @@ fn parse_model_with_paths(
                     module.path
                 );
                 for source in &provider.roots {
-                    validate_project_path(&source.path, boundary)?;
+                    validate_project_path(&source.path, boundary, resolver)?;
                 }
             }
         }
@@ -978,7 +1052,7 @@ fn parse_model_with_paths(
                     component.name
                 );
                 for source in &component.sources {
-                    validate_project_path(&source.path, boundary)?;
+                    validate_project_path(&source.path, boundary, resolver)?;
                 }
                 for dependency in &component.dependencies {
                     if let Dependency::Project { module, variant } = dependency {
@@ -995,7 +1069,7 @@ fn parse_model_with_paths(
                 }
             }
             if let Some(path) = &variant.output_listing {
-                validate_project_path(path, boundary)?;
+                validate_project_path(path, boundary, resolver)?;
             }
         }
     }
@@ -1009,7 +1083,11 @@ fn parse_model_with_paths(
     Ok(model)
 }
 
-fn validate_project_path(path: &Path, root: &Path) -> Result<()> {
+fn validate_project_path(
+    path: &Path,
+    root: &Path,
+    resolver: &impl ModelPathResolver,
+) -> Result<()> {
     ensure!(
         path.is_absolute()
             && path.starts_with(root)
@@ -1023,10 +1101,10 @@ fn validate_project_path(path: &Path, root: &Path) -> Result<()> {
     // existing ancestor so missing paths cannot bypass the symlink boundary check.
     let ancestor = path
         .ancestors()
-        .find(|ancestor| ancestor.exists())
+        .find(|ancestor| resolver.exists(ancestor))
         .context("Android model path has no existing ancestor")?;
     ensure!(
-        ancestor.canonicalize()?.starts_with(root),
+        resolver.canonicalize(ancestor)?.starts_with(root),
         "Android model path escapes the project through a symlink: {}",
         path.display()
     );

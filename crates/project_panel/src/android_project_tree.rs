@@ -669,7 +669,7 @@ mod tests {
         "../../android_tools/test_data/evaluated_tree_inputs/attempt2-default-complete-wire-model.json"
     );
 
-    // Supplemental host-race fixtures use the production wire decoder and live
+    // Supplemental host-race fixtures use shared model/sidecar decoding and live
     // FakeFs worktree scans. They do not run Gradle or port the six original tests.
     async fn fixture(cx: &mut TestAppContext) -> Result<(Entity<Project>, Arc<FakeFs>)> {
         cx.update(|cx| {
@@ -784,7 +784,14 @@ mod tests {
                 "{MODEL_OUTPUT_PREFIX}{}",
                 EXPORTED_MODEL.replace(ORIGINAL_ROOT, ROOT)
             );
-            let capture = EvaluatedTreeInputs::decode_sync(&record, Path::new(ROOT), None, &token)?;
+            // These fixture directories exist in FakeFs and contain no symlinks;
+            // std::fs cannot canonicalize them during model decoding.
+            let root = Path::new(ROOT);
+            let directories = [root.to_path_buf(), root.join("app")]
+                .into_iter()
+                .map(|path| (path.clone(), path))
+                .collect();
+            let capture = EvaluatedTreeInputs::decode_fixture(&record, root, &directories, &token)?;
             project.publish_evaluated_android_model(&token, capture, cx)?;
             project.select_android_variant(
                 Some(VariantId {

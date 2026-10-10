@@ -79,6 +79,36 @@ impl EvaluatedTreeInputs {
         paths: Option<&EvaluatedModelPaths>,
         token: &ModelToken,
     ) -> Result<Self> {
+        Self::decode_with_model(output, token, |record| match paths {
+            Some(paths) => parse_model_with_context(record, root, paths),
+            None => parse_model(record, root),
+        })
+    }
+
+    /// Decode a self-contained FakeFs fixture using captured canonical directories.
+    ///
+    /// The observations map each existing directory to its canonical target.
+    /// Unobserved descendants must contain no symlinks; missing generated paths
+    /// resolve through their nearest observed ancestor. Production imports always
+    /// use `decode_sync`, which observes the host filesystem instead. Both paths
+    /// retain the same model validation and sidecar decoding.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn decode_fixture(
+        output: &str,
+        root: &Path,
+        directories: &BTreeMap<PathBuf, PathBuf>,
+        token: &ModelToken,
+    ) -> Result<Self> {
+        Self::decode_with_model(output, token, |record| {
+            crate::project_model::parse_model_fixture(record, root, directories)
+        })
+    }
+
+    fn decode_with_model(
+        output: &str,
+        token: &ModelToken,
+        decode_model: impl FnOnce(&str) -> Result<ProjectModel>,
+    ) -> Result<Self> {
         let mut records = output
             .lines()
             .filter(|line| line.starts_with(MODEL_OUTPUT_PREFIX));
@@ -93,10 +123,7 @@ impl EvaluatedTreeInputs {
             record.len() <= MAX_RECORD_BYTES,
             "Android project model exceeds the 16 MiB decoding limit"
         );
-        let model = Arc::new(match paths {
-            Some(paths) => parse_model_with_context(record, root, paths)?,
-            None => parse_model(record, root)?,
-        });
+        let model = Arc::new(decode_model(record)?);
         let import_facts = parse_import_facts(
             record,
             &model,
@@ -864,4 +891,114 @@ pub fn prepare_live_module_plan(
         plan,
         imported_identity,
     })
+}
+
+#[cfg(test)]
+mod fixture_tests {
+    use super::*;
+    use serde_json::json;
+
+    const ORIGINAL_ROOT: &str =
+        "/workspace/android-studio-artifacts/source-providers-smoke/project";
+    const EXPORTED_MODEL: &str = include_str!(
+        "../test_data/evaluated_tree_inputs/attempt2-default-complete-wire-model.json"
+    );
+
+    fn fixture_record(root: &Path) -> Result<String> {
+        let root = root.to_str().context("Fixture path must be UTF-8")?;
+        Ok(format!(
+            "{MODEL_OUTPUT_PREFIX}{}",
+            EXPORTED_MODEL.replace(ORIGINAL_ROOT, root)
+        ))
+    }
+
+    fn fixture_directories(root: &Path) -> BTreeMap<PathBuf, PathBuf> {
+        [root.to_path_buf(), root.join("app")]
+            .into_iter()
+            .map(|path| (path.clone(), path))
+            .collect()
+    }
+
+    #[test]
+    fn fake_directory_decode_retains_default_variant_and_sidecar_validation() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("only-in-fake-fs");
+        let mut state = ModelState::default();
+        let token = state.invalidate(Some(root.clone()));
+        let record = fixture_record(&root)?;
+        let directories = fixture_directories(&root);
+        assert!(EvaluatedTreeInputs::decode_sync(&record, &root, None, &token).is_err());
+        let capture = EvaluatedTreeInputs::decode_fixture(&record, &root, &directories, &token)?;
+        let module = capture.model().modules.first().context("Fixture module")?;
+        assert_eq!(module.default_variant.as_deref(), Some("demoDebug"));
+        assert!(capture.import_facts().is_ok());
+        assert!(
+            capture
+                .generated_artifacts(Some(&rust_v2_tree_consumer()))
+                .is_ok()
+        );
+        assert!(capture.kotlin_capability(":app").is_ok());
+
+        let mut malformed: serde_json::Value = serde_json::from_str(
+            record
+                .strip_prefix(MODEL_OUTPUT_PREFIX)
+                .context("Fixture record")?,
+        )?;
+        malformed["version"] = json!(2);
+        let malformed = format!("{MODEL_OUTPUT_PREFIX}{malformed}");
+        assert!(
+            EvaluatedTreeInputs::decode_fixture(&malformed, &root, &directories, &token).is_err()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn fake_directory_observations_retain_absolute_escape_and_symlink_checks() -> Result<()> {
+        let temporary = tempfile::tempdir()?;
+        let root = temporary.path().join("only-in-fake-fs");
+        let outside = temporary.path().join("outside");
+        let mut state = ModelState::default();
+        let token = state.invalidate(Some(root.clone()));
+        let record = fixture_record(&root)?;
+        let directories = fixture_directories(&root);
+
+        let mut missing = directories.clone();
+        missing.remove(&root.join("app"));
+        assert!(EvaluatedTreeInputs::decode_fixture(&record, &root, &missing, &token).is_err());
+
+        let mut relative = directories.clone();
+        relative.insert(root.join("app"), PathBuf::from("relative/app"));
+        assert!(EvaluatedTreeInputs::decode_fixture(&record, &root, &relative, &token).is_err());
+
+        let mut symlinked_module = directories.clone();
+        symlinked_module.insert(root.join("app"), outside.clone());
+        assert!(
+            EvaluatedTreeInputs::decode_fixture(&record, &root, &symlinked_module, &token).is_err()
+        );
+
+        for source_path in [
+            PathBuf::from("relative/Source.java"),
+            root.join("../outside/Source.java"),
+            root.join("app/linked/missing/Source.java"),
+        ] {
+            let mut wire: serde_json::Value = serde_json::from_str(
+                record
+                    .strip_prefix(MODEL_OUTPUT_PREFIX)
+                    .context("Fixture record")?,
+            )?;
+            wire["modules"][0]["variants"][0]["components"][0]["sources"]
+                .as_array_mut()
+                .context("Fixture sources")?
+                .push(json!({"path": source_path, "kind": "java", "generated": false}));
+            let record = format!("{MODEL_OUTPUT_PREFIX}{wire}");
+            let mut observed = directories.clone();
+            observed.insert(root.join("app/linked"), outside.clone());
+            assert!(
+                EvaluatedTreeInputs::decode_fixture(&record, &root, &observed, &token).is_err(),
+                "An observed escape must fail shared path validation: {}",
+                source_path.display()
+            );
+        }
+        Ok(())
+    }
 }
