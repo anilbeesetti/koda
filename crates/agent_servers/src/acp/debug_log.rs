@@ -177,6 +177,7 @@ impl AcpDebugLog {
         }
     }
 
+    #[cfg(test)]
     pub(super) fn trailing_stderr(&self) -> Option<String> {
         let state = self.state.lock().ok()?;
         let mut lines = state
@@ -199,18 +200,15 @@ impl AcpDebugLog {
     }
 
     /// Retain the most recent stderr block when reporting this process's exit.
-    /// Protocol and stderr readers are independent, so a protocol message logged
-    /// later does not mean the process's diagnostic is stale.
+    /// Outgoing protocol writes run independently of stderr reads and must not
+    /// split the diagnostic. Incoming replies still delimit diagnostic blocks.
     pub(super) fn stderr_for_exit(&self) -> Option<String> {
-        if let Some(stderr) = self.trailing_stderr() {
-            return Some(stderr);
-        }
-
         let state = self.state.lock().ok()?;
         let mut lines = state
             .messages
             .iter()
             .rev()
+            .filter(|message| message.direction != AcpDebugMessageDirection::Outgoing)
             .skip_while(|message| {
                 !matches!(&message.message, AcpDebugMessageContent::Stderr { .. })
             })
