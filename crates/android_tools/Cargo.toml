@@ -9,6 +9,7 @@ license = "GPL-3.0-or-later"
 workspace = true
 
 [features]
+test-support = []
 bundled-preview = ["dep:fs2", "dep:sha2", "dep:zip", "dep:flate2", "dep:reqwest", "dep:tar"]
 
 [lib]

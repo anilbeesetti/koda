@@ -14266,6 +14266,8 @@ dependencies = [
 name = "project_panel"
 version = "0.1.0"
 dependencies = [
+ "android_tools",
+ "android_ui",
  "anyhow",
  "client",
  "collections",

@@ -1,0 +1,240 @@
+{
+  "schema": 1,
+  "source_path": "/workspace/android-studio-artifacts/source-providers-smoke/app-sync-model.json",
+  "bytes": 38392,
+  "sha256": "1ce52c98622fe64673d0a3132d4fe2d13adbf21b0bd66987553991aee1fa88c9",
+  "kind": "actual legacy Basic-model-only Android smoke exporter output",
+  "tuple": {
+    "jdk": 21,
+    "gradle": "9.6.1",
+    "agp": "9.4.0",
+    "platform": 37
+  },
+  "test_adaptation": "Only replace the literal evaluated root prefix with the fresh temporary test root. Preserve all observed module, source-provider, variant, source and dependency facts.",
+  "actual_raw_log": {
+    "path": "/workspace/android-studio-artifacts/source-providers-smoke/app-sync-output.log",
+    "bytes": 39680,
+    "sha256": "cf13eb7346ad167cfc25a7c073cade8361857e1382af9fdbf8d81d1532906b3d",
+    "wire_record": "truncated near 16 KiB; JSON decode fails; do not reconstruct it as a complete authoritative record"
+  },
+  "live_plan_credit": 0,
+  "reference_method_credit": 0,
+  "original_six_workflows": "UNPORTED/NOT_RUN",
+  "retained_actual_unavailable_attempt1": {
+    "receipt": {
+      "path": "/dev/shm/koda-Root-live-tree-B-exporter-attempt1-ACTUAL/receipt.json",
+      "bytes": 7677,
+      "sha256": "39b7f57c5a29867eb84abd96dd2cd277607ad575505b4d6b203fd2dbedda348d"
+    },
+    "fixtures": [
+      {
+        "fixture": "attempt1-default-full-stdout-stderr.log",
+        "source": {
+          "path": "/dev/shm/koda-Root-live-tree-B-exporter-attempt1-ACTUAL/default-full-stdout-stderr.log",
+          "bytes": 66685,
+          "sha256": "d0a6c4fc2625e17710602cf64d1a5b6d06ba83231ec006cb795a1d134b983e93"
+        },
+        "command": [
+          "./gradlew",
+          "--no-daemon",
+          "--console=plain",
+          "--init-script",
+          "/tmp/koda-live-android-tree-plans/crates/android_tools/src/project_model.gradle",
+          "kodaAndroidProjectModel"
+        ],
+        "cwd": "/workspace/android-studio-artifacts/source-providers-smoke/project",
+        "actual_exit": 0,
+        "classification": "ACTUAL_UNAVAILABLE_NOT_PASS: decorated SDK toString prevented effective getter; explicit consumer1.0 also rejected minimum66.1",
+        "reference_method_credit": 0
+      },
+      {
+        "fixture": "attempt1-default-complete-wire-model.json",
+        "source": {
+          "path": "/dev/shm/koda-Root-live-tree-B-exporter-attempt1-ACTUAL/default-complete-wire-model.json",
+          "bytes": 65058,
+          "sha256": "5fa9de4008121e5d412cc5650298af9d16a22a522538b89015fd5524f1f58d87"
+        },
+        "command": [
+          "./gradlew",
+          "--no-daemon",
+          "--console=plain",
+          "--init-script",
+          "/tmp/koda-live-android-tree-plans/crates/android_tools/src/project_model.gradle",
+          "kodaAndroidProjectModel"
+        ],
+        "cwd": "/workspace/android-studio-artifacts/source-providers-smoke/project",
+        "actual_exit": 0,
+        "classification": "ACTUAL_UNAVAILABLE_NOT_PASS: decorated SDK toString prevented effective getter; explicit consumer1.0 also rejected minimum66.1",
+        "reference_method_credit": 0
+      },
+      {
+        "fixture": "attempt1-built-in-disabled-full-stdout-stderr.log",
+        "source": {
+          "path": "/dev/shm/koda-Root-live-tree-B-exporter-attempt1-ACTUAL/built-in-disabled-full-stdout-stderr.log",
+          "bytes": 65789,
+          "sha256": "75abcaea46d172c42f99f7181579222116d608861d36c6b804c05cdd7a70733c"
+        },
+        "command": [
+          "./gradlew",
+          "--no-daemon",
+          "--console=plain",
+          "--init-script",
+          "/tmp/koda-live-android-tree-plans/crates/android_tools/src/project_model.gradle",
+          "-Pandroid.builtInKotlin=false",
+          "kodaAndroidProjectModel"
+        ],
+        "cwd": "/workspace/android-studio-artifacts/source-providers-smoke/project",
+        "actual_exit": 0,
+        "classification": "ACTUAL_UNAVAILABLE_NOT_PASS: decorated SDK toString prevented effective getter; explicit consumer1.0 also rejected minimum66.1",
+        "reference_method_credit": 0
+      },
+      {
+        "fixture": "attempt1-built-in-disabled-complete-wire-model.json",
+        "source": {
+          "path": "/dev/shm/koda-Root-live-tree-B-exporter-attempt1-ACTUAL/built-in-disabled-complete-wire-model.json",
+          "bytes": 63843,
+          "sha256": "b1f74ea6e100857a9bbf60efcb816cdeb095c9505bc64c088210f941d669fa44"
+        },
+        "command": [
+          "./gradlew",
+          "--no-daemon",
+          "--console=plain",
+          "--init-script",
+          "/tmp/koda-live-android-tree-plans/crates/android_tools/src/project_model.gradle",
+          "-Pandroid.builtInKotlin=false",
+          "kodaAndroidProjectModel"
+        ],
+        "cwd": "/workspace/android-studio-artifacts/source-providers-smoke/project",
+        "actual_exit": 0,
+        "classification": "ACTUAL_UNAVAILABLE_NOT_PASS: decorated SDK toString prevented effective getter; explicit consumer1.0 also rejected minimum66.1",
+        "reference_method_credit": 0
+      }
+    ]
+  },
+  "live_subset_compatibility_matrix": [
+    {
+      "wire_schema": 1,
+      "agp": "9.4.0",
+      "producer": [
+        23,
+        0
+      ],
+      "android_project_schema": [
+        0,
+        1
+      ],
+      "static_sdk_consumer_ordinal": [
+        66,
+        1
+      ],
+      "scope": "Rust Android tree getters only; no full Studio compatibility",
+      "ordinal_contract": "Pinned Apache2 ModelBuilder.kt270\u2013283 and actual9.4 ModelBuilder class / full Versions capture",
+      "higher_minimum_or_other_tuple": "unavailable",
+      "actual_positive_capture": "ActualRootattempt2effectiveKotlintrue/false and completewire; RusttestsNOT_RUN"
+    }
+  ],
+  "actual_effective_getter_attempt2": {
+    "receipt": {
+      "path": "/dev/shm/koda-Root-live-tree-B-exporter-attempt2-ACTUAL/receipt.json",
+      "bytes": 8078,
+      "sha256": "af1276ab1f62158ebd771e80aa52da37872469b39de9c62f4ccd07288336b359"
+    },
+    "fixtures": [
+      {
+        "fixture": "attempt2-default-full-stdout-stderr.log",
+        "source": {
+          "path": "/dev/shm/koda-Root-live-tree-B-exporter-attempt2-ACTUAL/default-full-stdout-stderr.log",
+          "bytes": 66695,
+          "sha256": "babe6f234ea4d8a81a59d05132841ee486766d165558c0ddf36e85a08587f765"
+        },
+        "command": [
+          "./gradlew",
+          "--no-daemon",
+          "--console=plain",
+          "--init-script",
+          "/tmp/koda-live-android-tree-plans/crates/android_tools/src/project_model.gradle",
+          "kodaAndroidProjectModel"
+        ],
+        "cwd": "/workspace/android-studio-artifacts/source-providers-smoke/project",
+        "actual_exit": 0,
+        "classification": "ACTUAL_EFFECTIVE_GETTER_AVAILABLE: defaulttrue/explicitdisabledfalse; Rust plan/test/build/current reviews pending",
+        "reference_method_credit": 0
+      },
+      {
+        "fixture": "attempt2-default-complete-wire-model.json",
+        "source": {
+          "path": "/dev/shm/koda-Root-live-tree-B-exporter-attempt2-ACTUAL/default-complete-wire-model.json",
+          "bytes": 65068,
+          "sha256": "90294193ef23ea3ced94771a058bb6e29a4905d39b7a236e21e38da1eb7b8372"
+        },
+        "command": [
+          "./gradlew",
+          "--no-daemon",
+          "--console=plain",
+          "--init-script",
+          "/tmp/koda-live-android-tree-plans/crates/android_tools/src/project_model.gradle",
+          "kodaAndroidProjectModel"
+        ],
+        "cwd": "/workspace/android-studio-artifacts/source-providers-smoke/project",
+        "actual_exit": 0,
+        "classification": "ACTUAL_EFFECTIVE_GETTER_AVAILABLE: defaulttrue/explicitdisabledfalse; Rust plan/test/build/current reviews pending",
+        "reference_method_credit": 0
+      },
+      {
+        "fixture": "attempt2-built-in-disabled-full-stdout-stderr.log",
+        "source": {
+          "path": "/dev/shm/koda-Root-live-tree-B-exporter-attempt2-ACTUAL/built-in-disabled-full-stdout-stderr.log",
+          "bytes": 65800,
+          "sha256": "ffd385455f245252a9d60f58c2c0e422e6c4293e84bad2d54f444bf611b3caed"
+        },
+        "command": [
+          "./gradlew",
+          "--no-daemon",
+          "--console=plain",
+          "--init-script",
+          "/tmp/koda-live-android-tree-plans/crates/android_tools/src/project_model.gradle",
+          "-Pandroid.builtInKotlin=false",
+          "kodaAndroidProjectModel"
+        ],
+        "cwd": "/workspace/android-studio-artifacts/source-providers-smoke/project",
+        "actual_exit": 0,
+        "classification": "ACTUAL_EFFECTIVE_GETTER_AVAILABLE: defaulttrue/explicitdisabledfalse; Rust plan/test/build/current reviews pending",
+        "reference_method_credit": 0
+      },
+      {
+        "fixture": "attempt2-built-in-disabled-complete-wire-model.json",
+        "source": {
+          "path": "/dev/shm/koda-Root-live-tree-B-exporter-attempt2-ACTUAL/built-in-disabled-complete-wire-model.json",
+          "bytes": 63854,
+          "sha256": "22f9453ce4e3c7be3bb1c85330c48a6721fa8078e073c6cce92c1cc6f4029694"
+        },
+        "command": [
+          "./gradlew",
+          "--no-daemon",
+          "--console=plain",
+          "--init-script",
+          "/tmp/koda-live-android-tree-plans/crates/android_tools/src/project_model.gradle",
+          "-Pandroid.builtInKotlin=false",
+          "kodaAndroidProjectModel"
+        ],
+        "cwd": "/workspace/android-studio-artifacts/source-providers-smoke/project",
+        "actual_exit": 0,
+        "classification": "ACTUAL_EFFECTIVE_GETTER_AVAILABLE: defaulttrue/explicitdisabledfalse; Rust plan/test/build/current reviews pending",
+        "reference_method_credit": 0
+      }
+    ],
+    "structured_stable_sdk_version": {
+      "major": 9,
+      "minor": 4,
+      "micro": 0,
+      "preview": 0,
+      "previewType": null,
+      "version": "9.4.0"
+    },
+    "default_effective_kotlin": true,
+    "explicit_disabled_effective_kotlin": false,
+    "positive_KMP_target": "PENDING",
+    "Rust_tests": "NOT_RUN",
+    "build_native_UI_reference_credit": 0
+  }
+}

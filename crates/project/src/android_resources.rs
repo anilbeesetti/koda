@@ -54,6 +54,17 @@ impl Project {
         result
     }
 
+    pub fn publish_evaluated_android_model(
+        &mut self,
+        token: &android_tools::project_model::ModelToken,
+        capture: android_tools::evaluated_tree_inputs::EvaluatedTreeInputs,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
+        self.android_model.publish_evaluated(token, capture)?;
+        cx.notify();
+        Ok(())
+    }
+
     pub(crate) fn android_resource_definitions(
         &mut self,
         buffer: &Entity<Buffer>,

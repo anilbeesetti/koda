@@ -139,8 +139,10 @@ gradle.projectsEvaluated {
             [kind: 'external', coordinate: id.displayName]
         }.findAll { it != null }.unique()
     }
+    def sourceVersionFailures = new java.util.concurrent.ConcurrentHashMap()
     def sources = { project, component, declaredAssetPaths ->
         def result = []
+        def sdkMajor = null
         def kotlin = project.extensions.findByName('kotlin')
         def compilation = multiplatformPaths.contains(project.path) ?
             kotlin.targets.getByName('android').compilations.find { it.defaultSourceSet.name == component.name } :
@@ -159,13 +161,18 @@ gradle.projectsEvaluated {
                     }.findAll { !new File(it).toPath().startsWith(buildPath) })
                 }
             }
-            def legacy = project.extensions.getByName('androidComponents').pluginVersion.major < 9
-            if (legacy && staticProvider != null && !multiplatformPaths.contains(project.path) && property != 'assets') {
-                // Older AGP omits variant-only static roots and includes res-value producers.
-                staticPaths = staticPaths.findAll { !new File(it).toPath().startsWith(buildPath) } as Set
-                project.extensions.getByName('android').sourceSets.each { sourceSet ->
-                    def conventional = optional(sourceSet, property)
-                    if (conventional != null) staticPaths.addAll(conventional.srcDirs.collect { it.canonicalPath })
+            if (staticProvider != null && !multiplatformPaths.contains(project.path) && property != 'assets') {
+                if (sdkMajor == null) sdkMajor = importGetter('AndroidComponentsExtension.getPluginVersion().getMajor()') {
+                    project.extensions.getByName('androidComponents').getPluginVersion().getMajor()
+                }
+                if (sdkMajor.result.status == 'unavailable') sourceVersionFailures[project.path] = sdkMajor
+                if (sdkMajor.result.status == 'available' && sdkMajor.result.value < 9) {
+                    // Older AGP omits variant-only static roots and includes res-value producers.
+                    staticPaths = staticPaths.findAll { !new File(it).toPath().startsWith(buildPath) } as Set
+                    project.extensions.getByName('android').sourceSets.each { sourceSet ->
+                        def conventional = optional(sourceSet, property)
+                        if (conventional != null) staticPaths.addAll(conventional.srcDirs.collect { it.canonicalPath })
+                    }
                 }
             }
             def declaredAssets = property == 'assets' && declaredAssetPaths != null
@@ -324,7 +331,76 @@ gradle.projectsEvaluated {
         } catch (Exception failure) {
             [status: 'unavailable', value: [capability: capability,
                 detail: failure.class.name + ': ' + (failure.message ?: 'Tooling model capture failed')]]
+        } catch (LinkageError failure) {
+            [status: 'unavailable', value: [capability: capability,
+                detail: failure.class.name + ': ' + (failure.message ?: 'Tooling model capture failed')]]
         }
+    }
+    def kotlinModels = new java.util.concurrent.ConcurrentHashMap()
+    def kotlinCapabilities = { project, query ->
+        def observed = { getter, action -> importGetter(getter, action) }
+        def sdkObject = observed('com.android.build.api.variant.AndroidComponentsExtension.getPluginVersion()') {
+            project.extensions.getByName('androidComponents').getPluginVersion()
+        }
+        def sdkPluginVersion = sdkObject.result.status == 'unavailable' ? sdkObject :
+            observed('com.android.build.api.AndroidPluginVersion.getMajor/getMinor/getMicro/getPreview/getPreviewType/getVersion') {
+            def version = sdkObject.result.value
+            [major: version.getMajor(), minor: version.getMinor(), micro: version.getMicro(),
+             preview: version.getPreview(), previewType: version.getPreviewType(), version: version.getVersion()]
+        }
+        def agpVersion = sdkPluginVersion.result.status == 'available' ? sdkPluginVersion.result.value.version : null
+        def plugin = { id -> observed('org.gradle.api.plugins.PluginManager.hasPlugin(' + id + ')') {
+            project.pluginManager.hasPlugin(id)
+        } }
+        [module: project.path, directory: project.projectDir.canonicalPath, agpVersion: agpVersion,
+         sdkPluginVersion: sdkPluginVersion,
+         kotlinAndroid: plugin('org.jetbrains.kotlin.android'),
+         kotlinMultiplatform: plugin('org.jetbrains.kotlin.multiplatform'),
+         kotlinMultiplatformAndroidTarget: observed('KotlinMultiplatformExtension.getTargets().getPlatformType(androidJvm)') {
+             if (!project.pluginManager.hasPlugin('org.jetbrains.kotlin.multiplatform')) return false
+             def kotlin = project.extensions.getByName('kotlin')
+             kotlin.getTargets().any { target -> target.getPlatformType().toString() == 'androidJvm' }
+         },
+         builtInKotlin: observed('AGP9.4.0:BuiltInKotlinServicesKt.builtInKotlinEnabledForProject(ProjectServices,CommonExtension)') {
+             // The default flag omits per-module enableKotlin. Call the real
+             // effective SDK getter only for the adapter version inspected here.
+             if (sdkPluginVersion.result.status != 'available') {
+                 throw new UnsupportedOperationException('SDK plugin version is unavailable: ' + sdkPluginVersion.result.value.detail)
+             }
+             def version = sdkPluginVersion.result.value
+             if (version.major != 9 || version.minor != 4 ||
+                 version.micro != 0 || version.preview != 0 || agpVersion != '9.4.0') {
+                 throw new UnsupportedOperationException('Effective built-in Kotlin adapter supports stable AGP9.4.0 only')
+             }
+             if (multiplatformPaths.contains(project.path)) throw new UnsupportedOperationException('Android KMP uses its applied Kotlin Multiplatform plugin, not built-in Kotlin')
+             def loader = project.extensions.getByName('androidComponents').class.classLoader
+             def servicesType = loader.loadClass('com.android.build.gradle.internal.plugins.AndroidPluginBaseServices')
+             def servicesPlugins = project.plugins.findAll { servicesType.isInstance(it) }
+             if (servicesPlugins.size() != 1) throw new UnsupportedOperationException('Expected one actual AndroidPluginBaseServices plugin')
+             // AGP9.4 declares this accessor protected final, not public.
+             // Reflection access failure remains unavailable under stricter JVMs.
+             def servicesGetter = servicesType.getDeclaredMethod('getProjectServices')
+             if (!servicesGetter.trySetAccessible()) throw new UnsupportedOperationException('AGP ProjectServices getter is inaccessible')
+             def services = servicesGetter.invoke(servicesPlugins.first())
+             def dsl = project.extensions.getByName('android')
+             def implementation = loader.loadClass('com.android.build.gradle.internal.services.BuiltInKotlinServicesKt')
+             def methods = implementation.methods.findAll { method ->
+                 method.name == 'builtInKotlinEnabledForProject' && method.parameterTypes*.name == [
+                     'com.android.build.gradle.internal.services.ProjectServices', 'com.android.build.api.dsl.CommonExtension']
+             }
+             if (methods.size() != 1 || !methods.first().parameterTypes[0].isInstance(services) ||
+                 !methods.first().parameterTypes[1].isInstance(dsl)) {
+                 throw new UnsupportedOperationException('Effective built-in Kotlin getter has an unsupported signature or DSL type')
+             }
+             methods.first().invoke(null, services, dsl)
+         },
+         builtInKotlinDefault: observed('AndroidProject.flags.getFlagValue(BUILT_IN_KOTLIN_DEFAULT_ENABLED)') {
+             def model = query('com.android.builder.model.v2.models.AndroidProject')
+             def flags = model.flags
+             def value = flags.getFlagValue('BUILT_IN_KOTLIN_DEFAULT_ENABLED')
+             if (!(value instanceof Boolean)) throw new UnsupportedOperationException('V2 built-in Kotlin default flag was not observed')
+             value
+         }]
     }
     def generatedArtifacts = { project ->
         def required = { object, name ->
@@ -339,12 +415,20 @@ gradle.projectsEvaluated {
             } catch (Exception failure) {
                 [status: 'unavailable', value: [capability: capability,
                     detail: failure.class.name + ': ' + (failure.message ?: 'Tooling-model getter failed')]]
+            } catch (LinkageError failure) {
+                [status: 'unavailable', value: [capability: capability,
+                    detail: failure.class.name + ': ' + (failure.message ?: 'Tooling-model getter failed')]]
             }
         }
+        def queriedModels = [:]
         def query = { name ->
-            def registry = project.services.get(org.gradle.tooling.provider.model.ToolingModelBuilderRegistry)
-            registry.getBuilder(name).buildAll(name, project)
+            if (!queriedModels.containsKey(name)) {
+                def registry = project.services.get(org.gradle.tooling.provider.model.ToolingModelBuilderRegistry)
+                queriedModels[name] = registry.getBuilder(name).buildAll(name, project)
+            }
+            queriedModels[name]
         }
+        kotlinModels[project.path] = kotlinCapabilities(project, query)
         def version = { value ->
             [major: required(value, 'major'), minor: required(value, 'minor'),
              description: required(value, 'humanReadable')]
@@ -511,8 +595,16 @@ gradle.projectsEvaluated {
             modules.findAll { it.evaluatedProviders?.status == 'available' && it.evaluatedProviders.value.nativeMembership == null }.each { module ->
                 diagnostics.add('Native provider membership is unavailable for ' + module.path + '; Studio ordering remains a separate captured capability.')
             }
+            sourceVersionFailures.entrySet().sort { it.key }.each { entry ->
+                diagnostics.add('Legacy source-root augmentation is unavailable for ' + entry.key + '; direct source-provider roots were retained: ' + entry.value.result.value.detail)
+            }
+            modules.findAll { it.kind != 'jvm' }.each { module ->
+                def version = kotlinModels[module.path].sdkPluginVersion
+                if (version.result.status == 'unavailable') diagnostics.add('Kotlin SDK version is unavailable for ' + module.path + ': ' + version.result.value.detail)
+            }
             println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics,
                 generatedArtifacts: [schema: 1, root: root.projectDir.canonicalPath, modules: modules.findAll { it.kind != 'jvm' }.collect { artifactModels[it.path] }],
+                kotlinCapabilities: [schema: 1, root: root.projectDir.canonicalPath, modules: modules.findAll { it.kind != 'jvm' }.collect { kotlinModels[it.path] }],
                 importFacts: [schema: 1, root: root.projectDir.canonicalPath, gradleVersion: gradle.getGradleVersion(),
                     modules: modules.collect { [module: it.path, directory: it.directory, kind: it.kind, variants: it.variants*.name] },
                     buildIdentity: importBuildIdentity, projectCatalogue: importCatalogue]]))
