@@ -1,0 +1,13 @@
+plugins { id 'java-gradle-plugin' }
+repositories { google(); mavenCentral() }
+dependencies { implementation 'com.android.tools.build:gradle:9.4.0' }
+layout.buildDirectory = layout.projectDirectory.dir('../convention-generated')
+sourceSets.main.java.setSrcDirs(['../custom-source'])
+gradlePlugin {
+    plugins {
+        includedAndroidLibrary {
+            id = 'dev.koda.context.included-android-library'
+            implementationClass = 'IncludedAndroidLibraryConvention'
+        }
+    }
+}
