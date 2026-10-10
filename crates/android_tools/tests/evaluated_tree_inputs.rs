@@ -2,7 +2,8 @@
 
 use android_tools::{
     evaluated_tree_inputs::{
-        EvaluatedTreeInputs, SelectedMainGeneratedRoots, prepare_selected_main_generated_roots,
+        EvaluatedTreeInputs, SelectedMainGeneratedRoots, prepare_live_module_plan,
+        prepare_selected_main_generated_roots,
     },
     generated_artifacts::ModelConsumerVersion,
     project_model::{ModelState, ModelToken, VariantId},
@@ -594,5 +595,839 @@ fn unknown_linked_kotlin_keeps_shared_root_projection_unavailable() -> Result<()
             .reason,
         AdapterUnavailableReason::MissingKotlinCapability
     );
+    Ok(())
+}
+
+// These fault-injection records test supported decoder/plan boundaries, not
+// observations of a Gradle runtime or original navigator-method parity.
+fn live_plan_fixture() -> Result<Fixture> {
+    let mut fixture = Fixture::new()?;
+    let root = fixture.root().to_path_buf();
+    let observation =
+        |getter: &str, value: Value| json!({"getter":getter,"result":available(value)});
+    let project = |path: &str, name: &str, parent: Value| {
+        json!({
+            "projectName":observation("org.gradle.api.Project.getName()",json!(name)),
+            "projectPath":observation("org.gradle.api.Project.getPath()",json!(path)),
+            "projectDirectory":observation("org.gradle.api.Project.getProjectDir().getCanonicalPath()",json!(root)),
+            "rootName":observation("org.gradle.api.Project.getRootProject().getName()",json!("rust-root")),
+            "rootDirectory":observation("org.gradle.api.Project.getRootDir().getCanonicalPath()",json!(root)),
+            "parentProjectPath":observation("org.gradle.api.Project.getParent()?.getPath()",parent),
+            "buildTreePath":observation("org.gradle.api.Project.getBuildTreePath()",json!(path))
+        })
+    };
+    let root_project = project(":", "rust-root", Value::Null);
+    fixture.value["importFacts"] = json!({"schema":1,"root":root,"gradleVersion":"9.6.1",
+        "modules":[{"module":":app","directory":root,"kind":"application","variants":["debug","release"]}],
+        "buildIdentity":{"rootName":root_project["rootName"],"rootDirectory":root_project["rootDirectory"],
+            "projectPath":root_project["projectPath"],"buildTreePath":root_project["buildTreePath"]},
+        "projectCatalogue":observation("org.gradle.api.Project.getAllprojects()",json!([
+            root_project, project(":app","arbitrary-directory-name",json!(":"))]))});
+    fixture.value["kotlinCapabilities"] = json!({"schema":1,"root":root,"modules":[{
+        "module":":app","directory":root,"agpVersion":"9.4.0",
+        "sdkPluginVersion":observation("com.android.build.api.AndroidPluginVersion.getMajor/getMinor/getMicro/getPreview/getPreviewType/getVersion",
+            json!({"major":9,"minor":4,"micro":0,"preview":0,"previewType":null,"version":"9.4.0"})),
+        "kotlinAndroid":observation("org.gradle.api.plugins.PluginManager.hasPlugin(org.jetbrains.kotlin.android)",json!(false)),
+        "kotlinMultiplatform":observation("org.gradle.api.plugins.PluginManager.hasPlugin(org.jetbrains.kotlin.multiplatform)",json!(false)),
+        "kotlinMultiplatformAndroidTarget":observation("KotlinMultiplatformExtension.getTargets().getPlatformType(androidJvm)",json!(false)),
+        "builtInKotlin":observation("AGP9.4.0:BuiltInKotlinServicesKt.builtInKotlinEnabledForProject(ProjectServices,CommonExtension)",json!(true)),
+        "builtInKotlinDefault":observation("AndroidProject.flags.getFlagValue(BUILT_IN_KOTLIN_DEFAULT_ENABLED)",json!(true))
+    }]});
+    let shared = root.join("src/main/shared");
+    fixture.value["modules"][0]["evaluatedProviders"]["value"]["defaultSourceSet"]["main"]["roots"] = json!([
+        {"path":shared,"kind":"java"},{"path":shared,"kind":"kotlin"}]);
+    Ok(fixture)
+}
+
+fn failed_observation(value: &mut Value, field: &str, detail: &str) {
+    let observation = &mut value["kotlinCapabilities"]["modules"][0][field];
+    observation["result"] = json!({"status":"unavailable","value":{
+        "capability":observation["getter"],"detail":detail}});
+}
+
+#[test]
+fn actual_legacy_exporter_model_keeps_physical_fallback_without_authoritative_live_facts()
+-> Result<()> {
+    let directory = tempfile::tempdir()?;
+    let root = directory.path().canonicalize()?;
+    fs::create_dir_all(root.join("app"))?;
+    let original =
+        include_str!("../test_data/evaluated_tree_inputs/source-providers-smoke-model.json");
+    let value: Value = serde_json::from_str(&original.replace(
+        "/workspace/android-studio-artifacts/source-providers-smoke/project",
+        root.to_str().context("Temporary root must be UTF-8")?,
+    ))?;
+    let mut state = ModelState::default();
+    let token = state.invalidate(Some(root.clone()));
+    let capture = EvaluatedTreeInputs::decode_sync(&record(&value), &root, None, &token)?;
+    assert_eq!(capture.model().modules.len(), 1);
+    assert!(capture.model().modules[0].source_providers.is_some());
+    assert_eq!(
+        capture
+            .kotlin_capability(":app")
+            .expect_err("Legacy Kotlin unknown")
+            .reason,
+        FactsUnavailableReason::MissingMetadata
+    );
+    state.publish_evaluated(&token, capture)?;
+    let variant = state
+        .model
+        .as_ref()
+        .context("Basic model retained")?
+        .modules[0]
+        .default_variant
+        .clone()
+        .context("Actual exported default variant")?;
+    state.select(Some(id(&variant)))?;
+    let error = prepare_live_module_plan(&state, &state.token(), id(&variant), false)
+        .expect_err("Legacy export cannot produce authoritative live groups");
+    assert_eq!(
+        error.reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::MissingMetadata)
+    );
+    assert!(state.model.is_some());
+    Ok(())
+}
+
+#[test]
+fn live_plan_uses_effective_builtin_kotlin_and_explicit_rust_importer_identity() -> Result<()> {
+    let fixture = live_plan_fixture()?;
+    let mut state = ModelState::default();
+    fixture.publish(&mut state)?;
+    state.select(Some(id("debug")))?;
+    let plan = prepare_live_module_plan(&state, &state.token(), id("debug"), true)?;
+    assert_eq!(plan.imported_identity().internal_name, "rust-root:app");
+    assert_eq!(
+        plan.imported_identity().holder_internal_name,
+        "rust-root:app"
+    );
+    assert_eq!(plan.imported_identity().external_project_id, ":app");
+    assert_eq!(plan.plan().binding().variant, "debug");
+    assert_eq!(plan.selected(), &id("debug"));
+    assert_eq!(plan.model_token(), &state.token());
+    assert!(
+        plan.plan()
+            .source_roots()
+            .iter()
+            .any(|root| root.group == SourceGroup::KotlinAndJava)
+    );
+    assert!(
+        plan.plan()
+            .source_roots()
+            .iter()
+            .filter(|root| root.group == SourceGroup::GeneratedJava)
+            .all(|root| root.path.ends_with("debug"))
+    );
+    plan.ensure_current(&state)?;
+    Ok(())
+}
+
+#[test]
+fn disabled_per_module_kotlin_moves_shared_roots_even_when_builtin_default_is_enabled() -> Result<()>
+{
+    let mut fixture = live_plan_fixture()?;
+    fixture.value["kotlinCapabilities"]["modules"][0]["builtInKotlin"]["result"] =
+        available(json!(false));
+    let mut state = ModelState::default();
+    fixture.publish(&mut state)?;
+    state.select(Some(id("debug")))?;
+    let plan = prepare_live_module_plan(&state, &state.token(), id("debug"), false)?;
+    assert!(
+        plan.plan()
+            .source_roots()
+            .iter()
+            .any(|root| root.group == SourceGroup::Java)
+    );
+    assert!(
+        !plan
+            .plan()
+            .source_roots()
+            .iter()
+            .any(|root| root.group == SourceGroup::KotlinAndJava)
+    );
+    assert_eq!(
+        state
+            .evaluated_inputs()
+            .context("Capture")?
+            .kotlin_capability(":app")?,
+        KotlinCapability::Disabled
+    );
+    Ok(())
+}
+
+#[test]
+fn effective_getter_failure_is_not_replaced_by_default_flag_or_configured_kotlin_roots()
+-> Result<()> {
+    let mut fixture = live_plan_fixture()?;
+    failed_observation(
+        &mut fixture.value,
+        "builtInKotlin",
+        "CommonExtension getter is absent",
+    );
+    let mut state = ModelState::default();
+    fixture.publish(&mut state)?;
+    state.select(Some(id("debug")))?;
+    let error = prepare_live_module_plan(&state, &state.token(), id("debug"), false)
+        .expect_err("Default true is not effective support");
+    assert_eq!(
+        error.reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::Capability)
+    );
+    assert!(error.detail.contains("CommonExtension getter is absent"));
+    assert!(state.model.is_some());
+    Ok(())
+}
+
+#[test]
+fn observed_android_kgp_plugin_survives_unsupported_builtin_adapter() -> Result<()> {
+    for field in ["kotlinAndroid", "kotlinMultiplatform"] {
+        let mut fixture = live_plan_fixture()?;
+        fixture.value["kotlinCapabilities"]["modules"][0][field]["result"] = available(json!(true));
+        fixture.value["kotlinCapabilities"]["modules"][0]["kotlinMultiplatformAndroidTarget"]["result"] =
+            available(json!(field == "kotlinMultiplatform"));
+        failed_observation(
+            &mut fixture.value,
+            "builtInKotlin",
+            "Android KMP has no CommonExtension",
+        );
+        let mut state = ModelState::default();
+        fixture.publish(&mut state)?;
+        state.select(Some(id("debug")))?;
+        let plan = prepare_live_module_plan(&state, &state.token(), id("debug"), false)?;
+        assert!(
+            plan.plan()
+                .source_roots()
+                .iter()
+                .any(|root| root.group == SourceGroup::KotlinAndJava)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn live_plan_rejects_unproven_v2_schema_and_producer_minimum_never_expands_support() -> Result<()> {
+    let mut fixture = live_plan_fixture()?;
+    fixture.value["generatedArtifacts"]["modules"][0]["versions"]["value"]["models"][1]["version"]
+        ["minor"] = json!(2);
+    let mut state = ModelState::default();
+    fixture.publish(&mut state)?;
+    state.select(Some(id("debug")))?;
+    let error = prepare_live_module_plan(&state, &state.token(), id("debug"), false)
+        .expect_err("A minimum consumer below ours does not prove this schema");
+    assert_eq!(
+        error.reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::UnsupportedSchema)
+    );
+    Ok(())
+}
+
+#[test]
+fn live_plan_preserves_unsupported_selected_suite_instead_of_omitting_it() -> Result<()> {
+    let mut fixture = live_plan_fixture()?;
+    fixture.value["modules"][0]["evaluatedProviders"]["value"]["variants"][0]["testSuites"] =
+        json!(["integration"]);
+    fixture.value["modules"][0]["evaluatedProviders"]["value"]["testSuites"] = json!([
+        {"name":"integration","providers":null}]);
+    let mut state = ModelState::default();
+    fixture.publish(&mut state)?;
+    state.select(Some(id("debug")))?;
+    let error = prepare_live_module_plan(&state, &state.token(), id("debug"), false)
+        .expect_err("Selected integration suite cannot be treated as an empty collection");
+    assert_eq!(
+        error.reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::UnsupportedShape)
+    );
+    assert!(error.detail.contains("integration"));
+    Ok(())
+}
+
+#[test]
+fn live_plan_keeps_selection_aba_and_failed_sync_stale() -> Result<()> {
+    let fixture = live_plan_fixture()?;
+    let mut state = ModelState::default();
+    fixture.publish(&mut state)?;
+    state.select(Some(id("debug")))?;
+    let old = prepare_live_module_plan(&state, &state.token(), id("debug"), false)?;
+    state.select(Some(id("release")))?;
+    assert!(old.ensure_current(&state).is_err());
+    let release = prepare_live_module_plan(&state, &state.token(), id("release"), false)?;
+    assert!(
+        release
+            .plan()
+            .source_roots()
+            .iter()
+            .filter(|root| root.group == SourceGroup::GeneratedJava)
+            .all(|root| root.path.ends_with("release"))
+    );
+    assert!(prepare_live_module_plan(&state, &state.token(), id("debug"), false).is_err());
+    state.select(Some(id("debug")))?;
+    assert!(old.ensure_current(&state).is_err());
+    state.invalidate(Some(fixture.root().to_path_buf()));
+    assert!(release.ensure_current(&state).is_err());
+    assert!(prepare_live_module_plan(&state, &state.token(), id("debug"), false).is_err());
+    Ok(())
+}
+
+#[test]
+fn kotlin_sidecar_rejects_wrong_root_directory_getter_and_positional_modules() -> Result<()> {
+    let fixture = live_plan_fixture()?;
+    let mut mutations = Vec::new();
+    let mut value = fixture.value.clone();
+    value["kotlinCapabilities"]["root"] = json!(fixture.root().join("other"));
+    mutations.push((value, FactsUnavailableReason::Stale));
+    let mut value = fixture.value.clone();
+    value["kotlinCapabilities"]["modules"][0]["directory"] = json!(fixture.root().join("other"));
+    mutations.push((value, FactsUnavailableReason::Stale));
+    let mut value = fixture.value.clone();
+    value["kotlinCapabilities"]["modules"][0]["builtInKotlin"]["getter"] =
+        json!("guessed from .kt extension");
+    mutations.push((value, FactsUnavailableReason::Malformed));
+    let mut value = fixture.value.clone();
+    value["kotlinCapabilities"]["modules"][0] = json!([":app", fixture.root(), "9.4.0"]);
+    mutations.push((value, FactsUnavailableReason::Malformed));
+    let mut value = fixture.value.clone();
+    value["kotlinCapabilities"]["modules"][0]["unexpected"] = json!(true);
+    mutations.push((value, FactsUnavailableReason::Malformed));
+    for (value, expected) in mutations {
+        let mut state = ModelState::default();
+        let token = state.invalidate(Some(fixture.root().to_path_buf()));
+        let capture =
+            EvaluatedTreeInputs::decode_sync(&record(&value), fixture.root(), None, &token)?;
+        assert_eq!(
+            capture
+                .kotlin_capability(":app")
+                .expect_err("Unavailable capability")
+                .reason,
+            expected
+        );
+        state.publish_evaluated(&token, capture)?;
+        assert!(
+            state.model.is_some(),
+            "Capability failure cannot erase the physical model"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn kotlin_plugin_on_jvm_only_model_never_creates_android_groups() -> Result<()> {
+    let mut fixture = live_plan_fixture()?;
+    fixture.value["modules"][0]["kind"] = json!("jvm");
+    fixture.value["importFacts"]["modules"][0]["kind"] = json!("jvm");
+    fixture.value["generatedArtifacts"]["modules"] = json!([]);
+    fixture.value["kotlinCapabilities"]["modules"][0]["kotlinMultiplatform"]["result"] =
+        available(json!(true));
+    let mut state = ModelState::default();
+    fixture.publish(&mut state)?;
+    assert_eq!(
+        state
+            .evaluated_inputs()
+            .context("Capture")?
+            .kotlin_capability(":app")
+            .expect_err("JVM module is not Android")
+            .reason,
+        FactsUnavailableReason::Stale
+    );
+    state.select(Some(id("debug")))?;
+    assert!(prepare_live_module_plan(&state, &state.token(), id("debug"), false).is_err());
+    assert!(state.model.is_some());
+    Ok(())
+}
+
+#[test]
+fn applied_kmp_without_observed_android_target_cannot_supply_kotlin_enablement() -> Result<()> {
+    for target in [
+        available(json!(false)),
+        unsupported("Android target getter failed"),
+    ] {
+        let mut fixture = live_plan_fixture()?;
+        fixture.value["kotlinCapabilities"]["modules"][0]["kotlinMultiplatform"]["result"] =
+            available(json!(true));
+        let target_getter = fixture.value["kotlinCapabilities"]["modules"][0]["kotlinMultiplatformAndroidTarget"]["getter"].clone();
+        let mut target = target;
+        if target["status"] == "unavailable" {
+            target["value"]["capability"] = target_getter;
+        }
+        fixture.value["kotlinCapabilities"]["modules"][0]["kotlinMultiplatformAndroidTarget"]["result"] =
+            target;
+        failed_observation(
+            &mut fixture.value,
+            "builtInKotlin",
+            "Built-in Kotlin is not applicable to this KMP module",
+        );
+        let mut state = ModelState::default();
+        fixture.publish(&mut state)?;
+        state.select(Some(id("debug")))?;
+        let failure = prepare_live_module_plan(&state, &state.token(), id("debug"), false)
+            .expect_err("KMP ecosystem observation cannot create Android Kotlin groups");
+        assert_eq!(
+            failure.reason,
+            AdapterUnavailableReason::Provider(FactsUnavailableReason::Capability)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn actual_unavailable_exporter_attempt_retains_effective_getter_and_consumer_failures() -> Result<()>
+{
+    for (raw, expected_default) in [
+        (
+            include_str!(
+                "../test_data/evaluated_tree_inputs/attempt1-default-full-stdout-stderr.log"
+            ),
+            true,
+        ),
+        (
+            include_str!(
+                "../test_data/evaluated_tree_inputs/attempt1-built-in-disabled-full-stdout-stderr.log"
+            ),
+            false,
+        ),
+    ] {
+        let directory = tempfile::tempdir()?;
+        let root = directory.path().canonicalize()?;
+        fs::create_dir_all(root.join("app"))?;
+        let raw = raw.replace(
+            "/workspace/android-studio-artifacts/source-providers-smoke/project",
+            root.to_str().context("Temporary root must be UTF-8")?,
+        );
+        let mut state = ModelState::default();
+        let token = state.invalidate(Some(root.clone()));
+        let capture = EvaluatedTreeInputs::decode_sync(&raw, &root, None, &token)?;
+        let wire: Value = serde_json::from_str(
+            capture
+                .raw_record()
+                .strip_prefix("KODA_ANDROID_PROJECT_MODEL=")
+                .context("Actual model prefix")?,
+        )?;
+        let kotlin = &wire["kotlinCapabilities"]["modules"][0];
+        assert_eq!(kotlin["agpVersion"], "Android Gradle Plugin version 9.4.0");
+        assert_eq!(kotlin["builtInKotlin"]["result"]["status"], "unavailable");
+        assert!(
+            kotlin["builtInKotlin"]["result"]["value"]["detail"]
+                .as_str()
+                .context("Retained actual getter failure")?
+                .contains("adapter supports AGP9.4.0 only")
+        );
+        assert_eq!(
+            kotlin["builtInKotlinDefault"]["result"]["value"],
+            expected_default
+        );
+        assert_eq!(
+            capture
+                .kotlin_capability(":app")
+                .expect_err("No effective getter observation")
+                .reason,
+            FactsUnavailableReason::Capability
+        );
+        assert_eq!(
+            capture
+                .generated_artifacts(Some(&consumer()))
+                .expect_err("Historical explicit1.0 consumer remains incompatible")
+                .reason,
+            FactsUnavailableReason::UnsupportedSchema
+        );
+        let generated = capture.generated_artifacts(Some(
+            &android_tools::evaluated_tree_inputs::rust_v2_tree_consumer(),
+        ))?;
+        let module = generated
+            .modules()
+            .first()
+            .context("Actual generated module")?;
+        assert_eq!(
+            module
+                .versions
+                .available()?
+                .minimum_consumer
+                .available()?
+                .major,
+            66
+        );
+        assert_eq!(
+            module
+                .versions
+                .available()?
+                .minimum_consumer
+                .available()?
+                .minor,
+            1
+        );
+        let variant = generated.variant(":app", "demoDebug")?;
+        let android_tools::generated_artifacts::ArtifactSlot::Present(main) =
+            variant.main.available()?
+        else {
+            anyhow::bail!("Actual MAIN artifact is absent");
+        };
+        assert_eq!(
+            main.generated_source_folders.available()?,
+            &[root.join("app/build/generated/ap_generated_sources/demoDebug/out")]
+        );
+        assert!(
+            main.generated_resource_folders.available()?.is_empty(),
+            "The actual smoke model reports an available empty generated-resource collection"
+        );
+        assert_eq!(
+            main.generated_assets(module.versions.available()?)?,
+            &[root.join("app/build/generated/assets/createAssets")]
+        );
+        let imports = capture.import_facts()?;
+        imports.ensure_current(capture.model(), imports.binding())?;
+        assert_eq!(
+            imports
+                .project(":app")?
+                .project_directory
+                .as_ref()
+                .context("Actual project directory observation")?
+                .available()?,
+            &root.join("app")
+        );
+        state.publish_evaluated(&token, capture)?;
+        state.select(Some(VariantId {
+            module: ":app".into(),
+            variant: "demoDebug".into(),
+        }))?;
+        assert!(
+            prepare_live_module_plan(
+                &state,
+                &state.token(),
+                VariantId {
+                    module: ":app".into(),
+                    variant: "demoDebug".into()
+                },
+                false
+            )
+            .is_err(),
+            "This actual failed attempt cannot become a positive live-plan fixture"
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn pinned_live_subset_rejects_higher_minimum_and_other_agp_or_producer_tuples() -> Result<()> {
+    for alteration in ["minimum", "agp", "producer"] {
+        let mut fixture = live_plan_fixture()?;
+        let versions = &mut fixture.value["generatedArtifacts"]["modules"][0]["versions"]["value"];
+        match alteration {
+            "minimum" => {
+                versions["minimumConsumer"]["value"]["major"] = json!(67);
+                versions["minimumConsumer"]["value"]["minor"] = json!(0);
+                versions["models"][2]["version"]["major"] = json!(67);
+                versions["models"][2]["version"]["minor"] = json!(0);
+            }
+            "agp" => versions["agp"] = json!("9.5.0"),
+            "producer" => {
+                versions["producer"]["minor"] = json!(1);
+                versions["models"][0]["version"]["minor"] = json!(1);
+            }
+            _ => anyhow::bail!("Unexpected alteration"),
+        }
+        let mut state = ModelState::default();
+        fixture.publish(&mut state)?;
+        state.select(Some(id("debug")))?;
+        let failure = prepare_live_module_plan(&state, &state.token(), id("debug"), false)
+            .expect_err("A producer's declared minimum cannot expand this supported Rust subset");
+        assert_eq!(
+            failure.reason,
+            AdapterUnavailableReason::Provider(FactsUnavailableReason::UnsupportedSchema)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn structured_sdk_version_rejects_contradictory_or_positional_values_and_unproven_previews()
+-> Result<()> {
+    for (value, expected) in [
+        (
+            json!({"major":9,"minor":4,"micro":0,"preview":0,"previewType":null,"version":"9.5.0"}),
+            FactsUnavailableReason::Malformed,
+        ),
+        (
+            json!([9, 4, 0, 0, null, "9.4.0"]),
+            FactsUnavailableReason::Malformed,
+        ),
+        (
+            json!({"major":9,"minor":4,"micro":0,"preview":1,"previewType":"alpha","version":"9.4.0"}),
+            FactsUnavailableReason::Capability,
+        ),
+    ] {
+        let mut fixture = live_plan_fixture()?;
+        fixture.value["kotlinCapabilities"]["modules"][0]["sdkPluginVersion"]["result"] =
+            available(value);
+        let mut state = ModelState::default();
+        fixture.publish(&mut state)?;
+        assert_eq!(
+            state
+                .evaluated_inputs()
+                .context("Capture")?
+                .kotlin_capability(":app")
+                .expect_err("Only the observed supported stable SDK contract may be used")
+                .reason,
+            expected
+        );
+    }
+    Ok(())
+}
+
+fn actual_live_exporter_fixtures()
+-> [(&'static str, &'static str, KotlinCapability, SourceGroup); 2] {
+    [
+        (
+            include_str!(
+                "../test_data/evaluated_tree_inputs/attempt2-default-full-stdout-stderr.log"
+            ),
+            include_str!(
+                "../test_data/evaluated_tree_inputs/attempt2-default-complete-wire-model.json"
+            ),
+            KotlinCapability::Enabled,
+            SourceGroup::KotlinAndJava,
+        ),
+        (
+            include_str!(
+                "../test_data/evaluated_tree_inputs/attempt2-built-in-disabled-full-stdout-stderr.log"
+            ),
+            include_str!(
+                "../test_data/evaluated_tree_inputs/attempt2-built-in-disabled-complete-wire-model.json"
+            ),
+            KotlinCapability::Disabled,
+            SourceGroup::Java,
+        ),
+    ]
+}
+
+#[test]
+fn actual_exporter_live_plans_bind_effective_kotlin_imported_identity_and_exact_generated_roots()
+-> Result<()> {
+    for (raw, model, kotlin, shared_group) in actual_live_exporter_fixtures() {
+        let directory = tempfile::tempdir()?;
+        let root = directory.path().canonicalize()?;
+        fs::create_dir_all(root.join("app"))?;
+        let actual_prefix = "/workspace/android-studio-artifacts/source-providers-smoke/project";
+        let root_text = root.to_str().context("Temporary root must be UTF-8")?;
+        let raw = raw.replace(actual_prefix, root_text);
+        let model: Value = serde_json::from_str(&model.replace(actual_prefix, root_text))?;
+        let mut state = ModelState::default();
+        let token = state.invalidate(Some(root.clone()));
+        let capture = EvaluatedTreeInputs::decode_sync(&raw, &root, None, &token)?;
+        let decoded: Value = serde_json::from_str(
+            capture
+                .raw_record()
+                .strip_prefix("KODA_ANDROID_PROJECT_MODEL=")
+                .context("Actual model prefix")?,
+        )?;
+        assert_eq!(
+            decoded, model,
+            "Full wire and copied complete model preserve the same actual observations"
+        );
+        assert_eq!(capture.kotlin_capability(":app")?, kotlin);
+        assert_eq!(
+            capture
+                .import_facts()?
+                .project(":app")?
+                .build_tree_path
+                .as_ref()
+                .context("Actual build-tree identity observation")?
+                .available()?,
+            ":app"
+        );
+        let original_import_binding = capture.import_facts()?.binding().clone();
+        state.publish_evaluated(&token, capture)?;
+        state.select(Some(VariantId {
+            module: ":app".into(),
+            variant: "demoDebug".into(),
+        }))?;
+        let plan = prepare_live_module_plan(
+            &state,
+            &state.token(),
+            VariantId {
+                module: ":app".into(),
+                variant: "demoDebug".into(),
+            },
+            false,
+        )?;
+        assert_eq!(
+            plan.imported_identity().internal_name,
+            "SourceProvidersSmoke:app"
+        );
+        assert_eq!(plan.imported_identity().external_project_id, ":app");
+        assert_eq!(
+            plan.imported_identity().external_project_path,
+            root.join("app")
+        );
+        assert_eq!(plan.imported_identity().external_root_project_path, root);
+        assert_eq!(plan.plan().binding().module, ":app");
+        assert_eq!(plan.plan().binding().variant, "demoDebug");
+        let shared = root.join("app/src/main/java");
+        assert!(
+            plan.plan()
+                .source_roots()
+                .iter()
+                .any(|source| source.path == shared && source.group == shared_group)
+        );
+        assert!(
+            !plan
+                .plan()
+                .source_roots()
+                .iter()
+                .any(|source| source.path == shared && source.group != shared_group),
+            "Actual effective capability must choose the source group for the surviving shared root"
+        );
+        let generated_sources = plan
+            .plan()
+            .source_roots()
+            .iter()
+            .filter(|source| source.group == SourceGroup::GeneratedJava)
+            .map(|source| source.path.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            generated_sources,
+            [root.join("app/build/generated/ap_generated_sources/demoDebug/out")]
+        );
+        let generated_assets = plan
+            .plan()
+            .source_roots()
+            .iter()
+            .filter(|source| source.group == SourceGroup::GeneratedAssets)
+            .map(|source| source.path.clone())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            generated_assets,
+            [root.join("app/build/generated/assets/createAssets")]
+        );
+        assert!(
+            !plan
+                .plan()
+                .source_roots()
+                .iter()
+                .any(|source| source.group == SourceGroup::GeneratedResources),
+            "Actual available empty generated-resource getter remains empty"
+        );
+        assert!(
+            plan.plan()
+                .required_presence_paths()
+                .contains(&root.join("app/build/generated/assets/createAssets"))
+        );
+        assert_eq!(
+            state
+                .evaluated_inputs()
+                .context("Current capture")?
+                .import_facts()?
+                .binding(),
+            &original_import_binding,
+            "Plan preparation cannot restamp the original import snapshot as a new selection"
+        );
+        assert_eq!(plan.model_token(), &state.token());
+        plan.ensure_current(&state)?;
+    }
+    Ok(())
+}
+
+#[test]
+fn actual_live_plan_variant_changes_and_sync_replacement_reject_original_owner() -> Result<()> {
+    for (raw, _, _, _) in actual_live_exporter_fixtures() {
+        let directory = tempfile::tempdir()?;
+        let root = directory.path().canonicalize()?;
+        fs::create_dir_all(root.join("app"))?;
+        let raw = raw.replace(
+            "/workspace/android-studio-artifacts/source-providers-smoke/project",
+            root.to_str().context("Temporary root must be UTF-8")?,
+        );
+        let mut state = ModelState::default();
+        let token = state.invalidate(Some(root.clone()));
+        state.publish_evaluated(
+            &token,
+            EvaluatedTreeInputs::decode_sync(&raw, &root, None, &token)?,
+        )?;
+        let variant = |name: &str| VariantId {
+            module: ":app".into(),
+            variant: name.into(),
+        };
+        state.select(Some(variant("demoDebug")))?;
+        let old = prepare_live_module_plan(&state, &state.token(), variant("demoDebug"), true)?;
+        state.select(Some(variant("demoRelease")))?;
+        assert!(old.ensure_current(&state).is_err());
+        let release =
+            prepare_live_module_plan(&state, &state.token(), variant("demoRelease"), true)?;
+        assert_eq!(release.plan().binding().variant, "demoRelease");
+        assert_eq!(
+            release
+                .plan()
+                .source_roots()
+                .iter()
+                .filter(|source| source.group == SourceGroup::GeneratedJava)
+                .map(|source| source.path.clone())
+                .collect::<Vec<_>>(),
+            [root.join("app/build/generated/ap_generated_sources/demoRelease/out")]
+        );
+        state.select(Some(variant("demoDebug")))?;
+        assert!(
+            old.ensure_current(&state).is_err(),
+            "Actual variant A-B-A retains original-token staleness"
+        );
+        let replacement = state.invalidate(Some(root.clone()));
+        state.publish_evaluated(
+            &replacement,
+            EvaluatedTreeInputs::decode_sync(&raw, &root, None, &replacement)?,
+        )?;
+        assert!(old.ensure_current(&state).is_err());
+        assert!(release.ensure_current(&state).is_err());
+    }
+    Ok(())
+}
+
+#[test]
+fn actual_supported_wire_with_inaccessible_effective_getter_retains_capability_failure()
+-> Result<()> {
+    let (raw, _, _, _) = actual_live_exporter_fixtures()
+        .into_iter()
+        .next()
+        .context("Actual default exporter fixture")?;
+    let directory = tempfile::tempdir()?;
+    let root = directory.path().canonicalize()?;
+    fs::create_dir_all(root.join("app"))?;
+    let raw = raw.replace(
+        "/workspace/android-studio-artifacts/source-providers-smoke/project",
+        root.to_str().context("Temporary root must be UTF-8")?,
+    );
+    let mut state = ModelState::default();
+    let token = state.invalidate(Some(root.clone()));
+    let original = EvaluatedTreeInputs::decode_sync(&raw, &root, None, &token)?;
+    let mut value: Value = serde_json::from_str(
+        original
+            .raw_record()
+            .strip_prefix("KODA_ANDROID_PROJECT_MODEL=")
+            .context("Actual model prefix")?,
+    )?;
+    failed_observation(
+        &mut value,
+        "builtInKotlin",
+        "AGP ProjectServices getter is inaccessible",
+    );
+    state.publish_evaluated(
+        &token,
+        EvaluatedTreeInputs::decode_sync(&record(&value), &root, None, &token)?,
+    )?;
+    state.select(Some(VariantId {
+        module: ":app".into(),
+        variant: "demoDebug".into(),
+    }))?;
+    let failure = prepare_live_module_plan(
+        &state,
+        &state.token(),
+        VariantId {
+            module: ":app".into(),
+            variant: "demoDebug".into(),
+        },
+        false,
+    )
+    .expect_err("Fault injected into actual successful wire cannot borrow the default flag");
+    assert_eq!(
+        failure.reason,
+        AdapterUnavailableReason::Provider(FactsUnavailableReason::Capability)
+    );
+    assert!(failure.detail.contains("getter is inaccessible"));
+    assert!(state.model.is_some());
     Ok(())
 }
