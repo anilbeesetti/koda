@@ -5,11 +5,12 @@ use android_tools::{
 use android_ui::{AndroidTreeContext, AndroidTreeOwner};
 use anyhow::{Context as _, Result, ensure};
 use gpui::{
-    AnyWindowHandle, App, AppContext as _, BackgroundExecutor, Context, Entity, Subscription, Task,
-    WeakEntity, Window,
+    AnyWindowHandle, App, BackgroundExecutor, Context, Entity, Subscription, Task, WeakEntity,
+    Window,
 };
 use project::{
-    AndroidTreeCaptureRequest, CapturedAndroidModuleTree, Project,
+    Project,
+    android_project_tree::{AndroidTreeCaptureRequest, CapturedAndroidModuleTree},
     trusted_worktrees::{PathTrust, TrustedWorktrees, TrustedWorktreesEvent},
 };
 use std::sync::Arc;
