@@ -20,7 +20,7 @@ use command_palette_settings::CommandPaletteSettings;
 use fuzzy_nucleo::{StringMatch, StringMatchCandidate};
 use gpui::{
     Action, App, Context, DismissEvent, Entity, EventEmitter, FocusHandle, Focusable, MouseButton,
-    ParentElement, Render, Styled, Task, TaskExt, WeakEntity, Window, actions,
+    ParentElement, Render, Styled, Subscription, Task, TaskExt, WeakEntity, Window, actions,
 };
 use persistence::CommandPaletteDB;
 use picker::Direction;
@@ -47,6 +47,8 @@ impl ModalView for CommandPalette {}
 
 pub struct CommandPalette {
     picker: Entity<Picker<CommandPaletteDelegate>>,
+    availability_refresh_pending: bool,
+    _workspace_subscription: Option<Subscription>,
 }
 
 /// Removes subsequent whitespace characters and double colons from the query, and converts
@@ -137,6 +139,7 @@ impl CommandPalette {
             })
             .collect();
 
+        let workspace = entity.upgrade();
         let delegate = CommandPaletteDelegate::new(
             cx.entity().downgrade(),
             entity,
@@ -153,7 +156,69 @@ impl CommandPalette {
             picker.set_query(query, window, cx);
             picker
         });
-        Self { picker }
+        let workspace_subscription = workspace.map(|workspace| {
+            cx.observe_in(&workspace, window, |palette, _, _, cx| {
+                if palette.availability_refresh_pending {
+                    return;
+                }
+                palette.availability_refresh_pending = true;
+                cx.notify();
+            })
+        });
+        Self {
+            picker,
+            availability_refresh_pending: false,
+            _workspace_subscription: workspace_subscription,
+        }
+    }
+
+    fn refresh_available_actions(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let filter = CommandPaletteFilter::try_global(cx);
+        let previous_focus_handle = self.picker.read(cx).delegate.previous_focus_handle.clone();
+        let actions = window
+            .available_actions_in(&previous_focus_handle, cx)
+            .into_iter()
+            .filter(|action| !filter.is_some_and(|filter| filter.is_hidden(action.as_ref())))
+            .collect::<Vec<_>>();
+        self.picker.update(cx, |picker, cx| {
+            let delegate = &mut picker.delegate;
+            if actions.len() == delegate.all_commands.len()
+                && actions
+                    .iter()
+                    .zip(&delegate.all_commands)
+                    .all(|(action, command)| command.action.partial_eq(action.as_ref()))
+            {
+                return;
+            }
+            delegate.pending_selection = delegate
+                .selected_command()
+                .map(|command| command.action.boxed_clone());
+            delegate.available_commands_generation =
+                delegate.available_commands_generation.wrapping_add(1);
+            delegate.all_commands = actions
+                .into_iter()
+                .map(|action| Command {
+                    name: SharedString::from(humanize_action_name(action.name())),
+                    action,
+                    usage: None,
+                })
+                .collect();
+            delegate.matches.retain(|matched| {
+                delegate
+                    .commands
+                    .get(matched.candidate_id)
+                    .is_some_and(|command| {
+                        delegate
+                            .all_commands
+                            .iter()
+                            .any(|available| available.action.partial_eq(command.action.as_ref()))
+                    })
+            });
+            delegate.selected_ix = delegate
+                .selected_ix
+                .min(delegate.matches.len().saturating_sub(1));
+            picker.refresh(window, cx);
+        });
     }
 
     pub fn set_query(&mut self, query: &str, window: &mut Window, cx: &mut Context<Self>) {
@@ -187,7 +252,19 @@ impl Focusable for CommandPalette {
 }
 
 impl Render for CommandPalette {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        if std::mem::take(&mut self.availability_refresh_pending) {
+            let palette = cx.weak_entity();
+            // Frame callbacks run before drawing dirty windows. Scheduling from
+            // this draw lets the next callback inspect its completed dispatch tree.
+            window.on_next_frame(move |window, cx| {
+                palette
+                    .update(cx, |palette, cx| {
+                        palette.refresh_available_actions(window, cx);
+                    })
+                    .log_err();
+            });
+        }
         v_flex()
             .key_context("CommandPalette")
             .on_action(cx.listener(Self::remove_selected))
@@ -200,6 +277,8 @@ pub struct CommandPaletteDelegate {
     command_palette: WeakEntity<CommandPalette>,
     workspace: WeakEntity<Workspace>,
     all_commands: Vec<Command>,
+    available_commands_generation: u64,
+    pending_selection: Option<Box<dyn Action>>,
     commands: Vec<Command>,
     matches: Vec<StringMatch>,
     selected_ix: usize,
@@ -329,6 +408,8 @@ impl CommandPaletteDelegate {
             command_palette,
             workspace,
             all_commands: commands.clone(),
+            available_commands_generation: 0,
+            pending_selection: None,
             matches: Vec::new(),
             commands,
             selected_ix: 0,
@@ -382,6 +463,15 @@ impl CommandPaletteDelegate {
         }
         self.commands = commands;
         self.matches = new_matches;
+        if let Some(selected) = self.pending_selection.take()
+            && let Some(index) = self.matches.iter().position(|matched| {
+                self.commands
+                    .get(matched.candidate_id)
+                    .is_some_and(|command| command.action.partial_eq(selected.as_ref()))
+            })
+        {
+            self.selected_ix = index;
+        }
         if self.matches.is_empty() {
             self.selected_ix = 0;
         } else {
@@ -591,6 +681,7 @@ impl PickerDelegate for CommandPaletteDelegate {
         }
 
         let workspace = self.workspace.clone();
+        let available_commands_generation = self.available_commands_generation;
 
         let intercept_task = GlobalCommandPaletteInterceptor::intercept(&query, workspace, cx);
 
@@ -673,9 +764,17 @@ impl PickerDelegate for CommandPaletteDelegate {
 
             picker
                 .update(cx, |picker, cx| {
-                    picker
-                        .delegate
-                        .matches_updated(query, commands, matches, intercept_result, cx)
+                    if picker.delegate.available_commands_generation
+                        == available_commands_generation
+                    {
+                        picker.delegate.matches_updated(
+                            query,
+                            commands,
+                            matches,
+                            intercept_result,
+                            cx,
+                        );
+                    }
                 })
                 .ok();
         })
@@ -953,6 +1052,138 @@ mod tests {
     use project::Project;
     use settings::KeymapFile;
     use workspace::{AppState, MultiWorkspace, Workspace};
+
+    actions!(palette_test, [ContextualCommand]);
+
+    #[gpui::test]
+    async fn open_palette_refresh_preserves_editor_query_selection_and_custom_actions(
+        cx: &mut TestAppContext,
+    ) {
+        let app_state = init_test(cx);
+        let project = Project::test(app_state.fs.clone(), [], cx).await;
+        let (multi, visual) =
+            cx.add_window_view(|window, cx| MultiWorkspace::test_new(project, window, cx));
+        let workspace = multi.read_with(visual, |multi, _| multi.workspace().clone());
+        let editor = visual.new_window_entity(|window, cx| {
+            let mut editor = Editor::single_line(window, cx);
+            editor.set_text("abc", window, cx);
+            editor
+        });
+        let enabled = std::rc::Rc::new(std::cell::Cell::new(true));
+        let enabled_for_renderer = enabled.clone();
+        workspace.update_in(visual, |workspace, window, cx| {
+            workspace.register_action_renderer(move |element, _, _, cx| {
+                if enabled_for_renderer.get() {
+                    element.on_action(cx.listener(|_, _: &ContextualCommand, _, _| {}))
+                } else {
+                    element
+                }
+            });
+            workspace.add_item_to_active_pane(Box::new(editor.clone()), None, true, window, cx);
+            editor.update(cx, |editor, cx| window.focus(&editor.focus_handle(cx), cx));
+        });
+        visual.run_until_parked();
+        visual.dispatch_action(Toggle);
+        visual.update(|window, cx| {
+            window.simulate_next_frame(cx);
+        });
+        visual.run_until_parked();
+        let palette = workspace.read_with(visual, |workspace, cx| {
+            workspace
+                .active_modal::<CommandPalette>(cx)
+                .expect("Open palette")
+        });
+        let picker = palette.read_with(visual, |palette, _| palette.picker.clone());
+        picker.read_with(visual, |picker, _| {
+            assert!(
+                picker.delegate.all_commands.iter().any(|command| command
+                    .action
+                    .as_any()
+                    .is::<editor::actions::Backspace>(
+                ))
+            );
+            assert!(
+                picker
+                    .delegate
+                    .all_commands
+                    .iter()
+                    .any(|command| command.action.as_any().is::<ContextualCommand>())
+            );
+        });
+        palette.update_in(visual, |palette, window, cx| {
+            palette.set_query("bcksp", window, cx)
+        });
+        visual.run_until_parked();
+        let selected = picker.read_with(visual, |picker, _| {
+            picker
+                .delegate
+                .selected_command()
+                .expect("Selected editor command")
+                .action
+                .boxed_clone()
+        });
+        enabled.set(false);
+        workspace.update(visual, |_, cx| cx.notify());
+        visual.update(|window, cx| {
+            window.simulate_next_frame(cx);
+        });
+        visual.run_until_parked();
+        picker.read_with(visual, |picker, cx| {
+            assert_eq!(picker.query(cx), "bcksp");
+            assert!(
+                picker
+                    .delegate
+                    .selected_command()
+                    .is_some_and(|command| command.action.partial_eq(selected.as_ref()))
+            );
+            assert!(
+                !picker
+                    .delegate
+                    .all_commands
+                    .iter()
+                    .any(|command| command.action.as_any().is::<ContextualCommand>())
+            );
+            assert!(
+                picker.delegate.all_commands.iter().any(|command| command
+                    .action
+                    .as_any()
+                    .is::<editor::actions::Backspace>(
+                ))
+            );
+            assert!(
+                picker.delegate.all_commands.iter().any(|command| command
+                    .action
+                    .as_any()
+                    .is::<workspace::ToggleBottomDock>(
+                ))
+            );
+        });
+        enabled.set(true);
+        workspace.update(visual, |_, cx| cx.notify());
+        visual.update(|window, cx| {
+            window.simulate_next_frame(cx);
+        });
+        visual.run_until_parked();
+        picker.read_with(visual, |picker, cx| {
+            assert_eq!(picker.query(cx), "bcksp");
+            assert!(
+                picker
+                    .delegate
+                    .all_commands
+                    .iter()
+                    .any(|command| command.action.as_any().is::<ContextualCommand>())
+            );
+            assert!(
+                picker
+                    .delegate
+                    .selected_command()
+                    .is_some_and(|command| command.action.partial_eq(selected.as_ref()))
+            );
+        });
+        visual.dispatch_action(menu::Confirm);
+        visual.run_until_parked();
+        assert_eq!(editor.read_with(visual, |editor, cx| editor.text(cx)), "ab");
+    }
 
     #[test]
     fn test_humanize_action_name() {
