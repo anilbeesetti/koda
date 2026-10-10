@@ -22,6 +22,7 @@
 use crate::{
     generated_artifacts::{
         ArtifactSlot, GeneratedArtifactSnapshot, ModelConsumerVersion, parse_generated_artifacts,
+        parse_generated_artifacts_with_consumer,
     },
     import_facts::{ImportFactsBinding, ImportFactsSnapshot, parse_import_facts},
     project_model::{
@@ -53,6 +54,7 @@ pub struct EvaluatedTreeInputs {
     model: Arc<ProjectModel>,
     record: Arc<str>,
     import_facts: FactsResult<ImportFactsSnapshot>,
+    generated_artifacts: FactsResult<GeneratedArtifactSnapshot>,
     raw_generated_artifacts: FactsResult<serde_json::Value>,
 }
 
@@ -91,6 +93,8 @@ impl EvaluatedTreeInputs {
                 selected_variants: Vec::new(),
             },
         );
+        let generated_artifacts =
+            parse_generated_artifacts_with_consumer(record, &model, token.revision(), None);
         let wire: serde_json::Value = serde_json::from_str(
             record
                 .strip_prefix(MODEL_OUTPUT_PREFIX)
@@ -112,6 +116,7 @@ impl EvaluatedTreeInputs {
             model,
             record: Arc::from(record),
             import_facts,
+            generated_artifacts,
             raw_generated_artifacts,
         })
     }
@@ -138,10 +143,15 @@ impl EvaluatedTreeInputs {
         &self,
         consumer: Option<&ModelConsumerVersion>,
     ) -> FactsResult<GeneratedArtifactSnapshot> {
-        self.raw_generated_artifacts()?;
-        let consumer = consumer.ok_or_else(|| unavailable(FactsUnavailableReason::Capability,
-            "Rust generated-artifact model consumer identity is unavailable; evaluated raw record retained"))?;
-        parse_generated_artifacts(&self.record, &self.model, self.token.revision(), consumer)
+        match consumer {
+            Some(consumer) => parse_generated_artifacts(
+                &self.record,
+                &self.model,
+                self.token.revision(),
+                consumer,
+            ),
+            None => self.generated_artifacts.clone(),
+        }
     }
 }
 

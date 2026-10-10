@@ -310,6 +310,17 @@ fn prepare_module_roots_inner(
         }
     }
     for component in &selected.components {
+        if component.scope == SourceScope::Main
+            && let Some(generated) = generated
+        {
+            for (group, paths) in [
+                (SourceGroup::GeneratedJava, generated.java()?),
+                (SourceGroup::GeneratedResources, generated.resources()?),
+                (SourceGroup::GeneratedAssets, generated.assets()?),
+            ] {
+                by_group.entry(group).or_default().extend_from_slice(paths);
+            }
+        }
         for root in component.sources.iter().filter(|root| root.generated) {
             if generated.is_some()
                 && component.scope == SourceScope::Main
@@ -333,15 +344,6 @@ fn prepare_module_roots_inner(
             if let Some(group) = group {
                 by_group.entry(group).or_default().push(root.path.clone());
             }
-        }
-    }
-    if let Some(generated) = generated {
-        for (group, paths) in [
-            (SourceGroup::GeneratedJava, generated.java()?),
-            (SourceGroup::GeneratedResources, generated.resources()?),
-            (SourceGroup::GeneratedAssets, generated.assets()?),
-        ] {
-            by_group.entry(group).or_default().extend_from_slice(paths);
         }
     }
     // Unsupported built-in types still participate in the pinned shared-root

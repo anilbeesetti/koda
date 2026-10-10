@@ -45,7 +45,8 @@ fn record(value: &Value) -> String {
 }
 
 struct Fixture {
-    directory: tempfile::TempDir,
+    _directory: tempfile::TempDir,
+    root: PathBuf,
     value: Value,
 }
 impl Fixture {
@@ -80,10 +81,14 @@ impl Fixture {
                 "buildFolder":available(json!(root.join("custom-build"))),"variants":available(json!([
                     {"name":"debug","main":available(artifact("debug")),"hostTests":available(json!([])),"deviceTests":available(json!([])),"fixtures":available(json!({"status":"absent"}))},
                     {"name":"release","main":available(artifact("release")),"hostTests":available(json!([])),"deviceTests":available(json!([])),"fixtures":available(json!({"status":"absent"}))}]))}]}});
-        Ok(Self { directory, value })
+        Ok(Self {
+            _directory: directory,
+            root,
+            value,
+        })
     }
     fn root(&self) -> &Path {
-        self.directory.path()
+        &self.root
     }
     fn publish(&self, state: &mut ModelState) -> Result<ModelToken> {
         let token = state.invalidate(Some(self.root().to_path_buf()));
@@ -354,6 +359,15 @@ fn stale_sidecar_and_invalid_variant_are_explicit_and_do_not_reuse_prior_facts()
         state
             .evaluated_inputs()
             .context("Capture")?
+            .generated_artifacts(None)
+            .expect_err("Live unknown consumer cannot hide stale sidecar")
+            .reason,
+        FactsUnavailableReason::Stale
+    );
+    assert_eq!(
+        state
+            .evaluated_inputs()
+            .context("Capture")?
             .generated_artifacts(Some(&consumer()))
             .expect_err("Different sidecar root")
             .reason,
@@ -515,5 +529,70 @@ fn legacy_publication_clears_evaluated_facts_and_retained_capture_cannot_overrid
     fixture.publish(&mut state)?;
     assert!(state.publish_evaluated(&obsolete, capture).is_err());
     assert!(state.evaluated_inputs().is_some() && state.model.is_some());
+    Ok(())
+}
+
+#[test]
+fn other_artifact_generation_and_unsupported_manifest_keep_existing_adapter_policy() -> Result<()> {
+    let mut fixture = Fixture::new()?;
+    let test_root = fixture.root().join("native-test-generated");
+    let manifest = fixture
+        .root()
+        .join("native-main-manifest/AndroidManifest.xml");
+    let components = fixture.value["modules"][0]["variants"][0]["components"]
+        .as_array_mut()
+        .context("Components")?;
+    components[0]["sources"]
+        .as_array_mut()
+        .context("Sources")?
+        .push(json!({"path":manifest,"kind":"manifest","generated":true}));
+    components.push(
+        json!({"name":"debugAndroidTest","scope":"androidTest","sources":[
+        {"path":test_root,"kind":"java","generated":true}],"dependencies":[]}),
+    );
+    let (state, roots) = fixture.selected()?;
+    let presentation = CapturedModulePresentation {
+        display_name: Some("app".into()),
+        kotlin: KotlinCapability::Unknown,
+        compact_packages: false,
+    };
+    let plan = prepare_module_roots_with_generated(&roots, &state, Some(&presentation))?;
+    assert!(
+        plan.source_roots()
+            .iter()
+            .any(|root| root.group == SourceGroup::GeneratedJava && root.path == test_root)
+    );
+    assert!(
+        plan.unsupported_roots()
+            .iter()
+            .any(|root| root.path == manifest)
+    );
+    assert!(
+        !plan
+            .source_roots()
+            .iter()
+            .any(|root| root.path == fixture.root().join("native-main-only"))
+    );
+    Ok(())
+}
+
+#[test]
+fn unknown_linked_kotlin_keeps_shared_root_projection_unavailable() -> Result<()> {
+    let mut fixture = Fixture::new()?;
+    let shared = fixture.root().join("src/main/shared");
+    fixture.value["modules"][0]["evaluatedProviders"]["value"]["defaultSourceSet"]["main"]["roots"] = json!([
+        {"path":shared,"kind":"java"},{"path":shared,"kind":"kotlin"}]);
+    let (state, roots) = fixture.selected()?;
+    let presentation = CapturedModulePresentation {
+        display_name: Some("app".into()),
+        kotlin: KotlinCapability::Unknown,
+        compact_packages: false,
+    };
+    assert_eq!(
+        prepare_module_roots_with_generated(&roots, &state, Some(&presentation))
+            .expect_err("No Disabled guess for linked Kotlin")
+            .reason,
+        AdapterUnavailableReason::MissingKotlinCapability
+    );
     Ok(())
 }
