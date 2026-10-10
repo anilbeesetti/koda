@@ -1,0 +1,193 @@
+{
+  "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+  "license": "Apache-2.0; full original headers retained",
+  "sources": [
+    {
+      "path": "project-system-gradle/src/com/android/tools/idea/gradle/variant/view/BuildVariantTableModel.kt",
+      "retained": "BuildVariantTableModel.kt",
+      "bytes": 6913,
+      "sha256": "f9a0da240e5f2ae43f7a0aeece2a7fc825a63b8d4ce0b5aa71e67966bf899b03"
+    },
+    {
+      "path": "project-system-gradle/testSrc/com/android/tools/idea/gradle/variant/view/BuildVariantTableModelTest.kt",
+      "retained": "BuildVariantTableModelTest.kt",
+      "bytes": 8413,
+      "sha256": "2fa1a2654304dfab4550aeda89f2b76c33cd60a1b672a914833b8ebe61272be0"
+    },
+    {
+      "path": "project-system-gradle/src/com/android/tools/idea/gradle/util/ModuleTypeComparator.java",
+      "retained": "ModuleTypeComparator.java",
+      "bytes": 1973,
+      "sha256": "b4d93ad4075e6edba187de4899a5ee097f4ffd9cbe87c50e9494c6696c5939fe"
+    },
+    {
+      "path": "project-system-gradle-models/src/com/android/tools/idea/gradle/model/IdeAndroidProjectType.kt",
+      "retained": "IdeAndroidProjectType.kt",
+      "bytes": 938,
+      "sha256": "8c83a8430a1d05f2a85e8688a2425d5a11ee409f166429bb5805257ba3324950"
+    }
+  ],
+  "cases": [
+    {
+      "original_method": "withoutAbi",
+      "rust_test": "tests/build_variant_table.rs::without_abi",
+      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+    },
+    {
+      "original_method": "testDefaultVariantIndicator",
+      "rust_test": "tests/build_variant_table.rs::test_default_variant_indicator",
+      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+    },
+    {
+      "original_method": "Given project modules with same type When create VariantTableModel Then TableRows is sorted",
+      "rust_test": "tests/build_variant_table.rs::same_type_rows_are_sorted",
+      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+    },
+    {
+      "original_method": "Given project modules with different type When create VariantTableModel Then TableRows is sorted by IdeAndroidProjectType",
+      "rust_test": "tests/build_variant_table.rs::different_type_rows_are_sorted_by_android_project_type",
+      "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED",
+      "adaptation": "IntelliJ modules/Gradle test builders replaced by explicit evaluated Rust module inputs; all original row count/equality/order/default/empty ABI expectations retained. Original independent selections/default values, qualified names and legacy feature type remain distinct."
+    }
+  ],
+  "status": "ADAPTED_SOURCE_PRESENT_NOT_EXECUTED; zero passing parity credit",
+  "supplemental_regressions": [
+    {
+      "rust_test": "android_ui::tests::build_variant_table_reuses_rows_and_rejects_incomplete_module_selection",
+      "status": "CI210_FAILED; corrected fixture awaits execution",
+      "original_reference_case": null,
+      "fixture_correction": "CI210 failed because the supplemental fixture expected release to replace the removed remembered app/debug identity automatically. Existing apply_targets/publish_selection behavior keeps the missing identity unavailable. The fixture now asserts that unavailable state and confirms the single evaluated app/release menu entry before exercising the production picker confirmation. Every earlier table assertion is preserved.",
+      "reference_scope": "BuildVariantTableModel.kt derives row.variant from getVariantAndAbi, labels defaults separately, and variantItem fails when the selected identity is absent; it does not select a replacement. This supports separating selection setup from table projection, but does not establish Android Studio sync fallback parity.",
+      "reference_lines": [
+        "BuildVariantTableModel.kt:63 variantItem",
+        "BuildVariantTableModel.kt:115-116 independently selected variant and available variant items"
+      ],
+      "existing_rust_contract": "android_ui::tests::build_variant_menu_recovers_from_removed_selection and removed_library_variant_never_falls_back_to_the_previous_application; apply_targets only restores a matching remembered identity",
+      "parity_credit": "Supplemental fixture correction only; the bounded 27 original reference cases remain UNPORTED pending applicable execution and integration gates."
+    },
+    {
+      "rust_test": "android_ui::tests::build_variant_table_follows_evaluated_active_editor_roots",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "behavior": "Activate actual workspace editors for evaluated Android A and B while retaining A's selected model; hide A rows in B and a generic root containing Gradle filenames. Return to A, reject a captured A menu after rapid A-B-A ownership changes, confirm fresh B publication, and hide rows after actual trust-store restriction.",
+      "finding": "CODE-ef073-1 and UI-ef073-1: previous renderer checked Android sync capability without matching the selected model to the active evaluated root. The renderer now uses existing build/root authority and the current model identity, and keys cached projection by the active project token.",
+      "parity_credit": "Supplemental GPUI ownership regression, not an original Android Studio case or evaluated Gradle integration proof."
+    },
+    {
+      "rust_test": "android_ui::tests::build_variant_tables_keep_window_local_evaluated_roots",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "behavior": "Two actual workspace windows share one project model while activating different evaluated Android root editors; only the window whose root owns the current model can project a table, before and after model replacement.",
+      "parity_credit": "Supplemental GPUI window-isolation regression; current full-app/native validation and original reference parity remain pending."
+    },
+    {
+      "rust_test": "src/build_variant_table.rs::tests::system_locale_uses_root_for_posix_defaults",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "CI224-system-locale",
+      "behavior": "C/POSIX host sentinels, including case variations, select ICU root and construct a table.",
+      "parity_credit": "New supplemental Rust host-locale regression; original bounded 27 reference cases remain UNPORTED."
+    },
+    {
+      "rust_test": "src/build_variant_table.rs::tests::system_locale_uses_root_for_missing_or_invalid_preferences",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "CI224-system-locale",
+      "behavior": "Missing and malformed host preferences select ICU root without global environment mutation.",
+      "parity_credit": "New supplemental Rust host-locale regression; original bounded 27 reference cases remain UNPORTED."
+    },
+    {
+      "rust_test": "src/build_variant_table.rs::tests::system_locale_preserves_valid_language_and_collation_preferences",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "CI224-system-locale",
+      "behavior": "Valid BCP 47 language/script/region/collation preferences survive canonicalization.",
+      "parity_credit": "New supplemental Rust host-locale regression; original bounded 27 reference cases remain UNPORTED."
+    },
+    {
+      "rust_test": "src/build_variant_table.rs::tests::system_locale_root_fallback_keeps_icu_name_collation",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "CI224-system-locale",
+      "behavior": "The C fallback retains ICU collation of accented names rather than UTF-8 byte order.",
+      "parity_credit": "New supplemental Rust host-locale regression; original bounded 27 reference cases remain UNPORTED."
+    },
+    {
+      "rust_test": "src/build_variant_table.rs::tests::explicit_invalid_collation_locale_remains_an_error",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "CI224-system-locale",
+      "behavior": "Explicit invalid projection locales remain rejected; only the system preference boundary falls back.",
+      "parity_credit": "New supplemental Rust host-locale regression; original bounded 27 reference cases remain UNPORTED."
+    },
+    {
+      "rust_test": "src/build_variant_table.rs::tests::system_locale_boundary_constructs_a_table_without_environment_changes",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "CI224-system-locale",
+      "behavior": "The actual host-locale boundary parses and constructs a table without setting process locale variables.",
+      "parity_credit": "New supplemental Rust host-locale regression; original bounded 27 reference cases remain UNPORTED."
+    }
+  ],
+  "supplemental_limit_regressions": [
+    {
+      "rust_test": "tests/build_variant_table.rs::dynamic_feature_reference_limit_is_checked_before_reference_contents",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "PERF-418460-1",
+      "behavior": "At the 16,384-reference limit, empty references reach invalid-ownership rejection. One additional reference is rejected by the size limit before scanning its contents."
+    },
+    {
+      "rust_test": "tests/build_variant_table.rs::dynamic_feature_reference_limit_is_shared_across_modules",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "PERF-418460-1",
+      "behavior": "Two individually smaller ownership-reference lists exceed the shared project reference budget and receive early size rejection."
+    },
+    {
+      "rust_test": "tests/build_variant_table.rs::adapter_rejects_oversized_selected_and_default_names_before_cloning",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "PERF-418460-2",
+      "behavior": "Oversized public typed selected/default names receive adapter size rejection rather than later membership errors after owned-string cloning."
+    },
+    {
+      "rust_test": "tests/build_variant_table.rs::adapter_budgets_repeated_selected_default_and_variant_names_together",
+      "status": "SUPPLEMENTAL_SOURCE_PRESENT_NOT_EXECUTED",
+      "original_reference_case": null,
+      "finding": "PERF-418460-2",
+      "behavior": "Individually valid 22 MiB selected/default/variant names are counted as three owned copies, exceeding the 64 MiB aggregate adapter budget."
+    }
+  ],
+  "limit_failure_semantics": "Oversized typed input leaves selection and project data untouched and returns an unavailable projection through the existing error presentation. Missing selections remain unavailable; no first/default variant is guessed. These are supplemental bounded-input regressions, with no original-reference passing parity or measured performance credit.",
+  "deferred": [
+    {
+      "original_method": "withAbi",
+      "status": "DEFERRED_UNPORTED",
+      "reason": "User deferred NDK/C++ support; not not-applicable."
+    }
+  ],
+  "remaining_dependencies": [
+    "Root actual Rust test execution/build/fullsuite/native UI/five FINAL reviews",
+    "Java Collator versus ICU differential locale edge-case evidence",
+    "General producer integration: independent module selections, qualified imported names, legacy-feature type and typed dynamic-feature ownership",
+    "Per-module variant editing and propagation"
+  ],
+  "current_CI224_failure_retained": {
+    "run": 38012911330,
+    "Linux_job": 114096943481,
+    "passed": 10680,
+    "run_tests": 10681,
+    "failed": 1,
+    "inherited_skips": 23,
+    "failed_test": "android_ui::tests::build_variant_table_follows_evaluated_active_editor_roots",
+    "failure": "Invalid module-name collation locale",
+    "full_app_build": "PASS reported by Root; current successor has not executed",
+    "immutable_Root_raw_path": "/workspace/android-studio-artifacts/project-context-gating/foundation-build-variant-table-model-20261009/Root-13461-CI224-Linux-114096943481-EXACT-RAW.log",
+    "immutable_Root_raw_sha256": "cef1420570bd314b75436ad514b94080fc9abb1668e9f60e8a6a67a6e2cac52b",
+    "diagnosis": "sys-locale 0.3.2 Unix conversion can return C rather than a valid BCP 47 language tag. The original system boundary passed the provider string unchanged into strict ICU parsing. CI did not record locale variables; C is a source-established failing input, not a captured CI environment value. Missing, malformed and POSIX preferences now use ICU root; valid locale preferences remain canonicalized, and explicit projection locales remain strict."
+  }
+}
