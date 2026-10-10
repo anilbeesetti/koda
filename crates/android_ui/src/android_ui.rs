@@ -5017,7 +5017,7 @@ mod tests {
             let observer = cx.new(|cx| Observer {
                 capture_present: false,
                 revision: None,
-                _subscription: cx.observe(&project, |observer, project, cx| {
+                _subscription: cx.observe(&project, |observer: &mut Observer, project, cx| {
                     let state = project.read(cx).android_model();
                     observer.capture_present = state.evaluated_inputs().is_some();
                     observer.revision = state.model_revision();
