@@ -29,11 +29,20 @@ Ubuntu 24.04 x86_64; runtime compatibility with a different distribution must be
 checked, rather than inferred from the filename. Match the recorded embedded
 application commit from `--system-specs` to the requested source commit.
 
-Activate the checkout's `.agents/skills/koda-app-validation/SKILL.md` environment.
-Use an isolated Cargo target directory containing the verified executable as
-`debug/koda`, and launch the matching checkout with `run-app.sh` in a PTY without
-`--build`. Its `target/cloud-app` link provides debug asset discovery from that
-checkout. Preserve any existing app links and profiles before using that path.
+Activate the matching checkout's
+`.agents/skills/koda-app-validation/SKILL.md` environment. Place a verified hard
+link or copy of the extracted executable at that checkout's ignored
+`target/cloud-app/koda`, preserving any existing app links and profiles first.
+Launch that explicit absolute executable path in a PTY with stdout attached and
+an isolated `--user-data-dir`; follow the skill's SDK, Xvfb/software Vulkan,
+profile, screenshot, and owned-process cleanup requirements. This location
+provides debug asset discovery from the matching checkout. Verify the launched
+process's executable identity and embedded commit again before UI checks.
+
+`run-app.sh` selects the standard build-cache executable: it sources `env.sh`,
+which resets `CARGO_TARGET_DIR`, and replaces `target/cloud-app/koda`. It cannot
+select this downloaded artifact through an isolated `CARGO_TARGET_DIR` override.
+Use the explicit artifact launch above without replacing the retained cache app.
 Inspect the live app and affected flows, capture screenshots, and verify process
 cleanup as required by the skill. A build artifact does not establish native UI
 success, reference-test parity, or hardware GPU performance.
