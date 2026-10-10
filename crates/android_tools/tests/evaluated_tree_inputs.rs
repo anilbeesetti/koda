@@ -910,11 +910,54 @@ fn kotlin_sidecar_rejects_wrong_root_directory_getter_and_positional_modules() -
 }
 
 #[test]
-fn kotlin_plugin_on_jvm_only_model_never_creates_android_groups() -> Result<()> {
+fn kotlin_plugin_on_jvm_only_module_never_creates_android_groups_in_mixed_project() -> Result<()> {
     let mut fixture = live_plan_fixture()?;
+    // The Android importer requires an Android module. Keep that admission
+    // anchor separate from the JVM module whose Android facts must be rejected.
+    let anchor_directory = fixture.root().join("android-anchor");
+    fs::create_dir_all(&anchor_directory)?;
+    let mut anchor = fixture.value["modules"][0].clone();
+    anchor["path"] = json!(":androidAnchor");
+    anchor["directory"] = json!(anchor_directory);
+    let mut anchor_generated = fixture.value["generatedArtifacts"]["modules"][0].clone();
+    anchor_generated["module"] = json!(":androidAnchor");
+    anchor_generated["directory"] = json!(anchor_directory);
+    let mut anchor_kotlin = fixture.value["kotlinCapabilities"]["modules"][0].clone();
+    anchor_kotlin["module"] = json!(":androidAnchor");
+    anchor_kotlin["directory"] = json!(anchor_directory);
+    fixture.value["modules"]
+        .as_array_mut()
+        .context("Basic module catalogue")?
+        .push(anchor);
+    let mut anchor_import = fixture.value["importFacts"]["modules"][0].clone();
+    anchor_import["module"] = json!(":androidAnchor");
+    anchor_import["directory"] = json!(anchor_directory);
+    fixture.value["importFacts"]["modules"]
+        .as_array_mut()
+        .context("Import module catalogue")?
+        .push(anchor_import);
+    let mut anchor_project =
+        fixture.value["importFacts"]["projectCatalogue"]["result"]["value"][1].clone();
+    for field in ["projectPath", "buildTreePath"] {
+        anchor_project[field]["result"] = available(json!(":androidAnchor"));
+    }
+    anchor_project["projectName"]["result"] = available(json!("android-anchor"));
+    anchor_project["projectDirectory"]["result"] = available(json!(anchor_directory));
+    fixture.value["importFacts"]["projectCatalogue"]["result"]["value"]
+        .as_array_mut()
+        .context("Observed project catalogue")?
+        .push(anchor_project);
     fixture.value["modules"][0]["kind"] = json!("jvm");
     fixture.value["importFacts"]["modules"][0]["kind"] = json!("jvm");
     fixture.value["generatedArtifacts"]["modules"] = json!([]);
+    fixture.value["generatedArtifacts"]["modules"]
+        .as_array_mut()
+        .context("Generated Android module catalogue")?
+        .push(anchor_generated);
+    fixture.value["kotlinCapabilities"]["modules"]
+        .as_array_mut()
+        .context("Kotlin module catalogue")?
+        .push(anchor_kotlin);
     fixture.value["kotlinCapabilities"]["modules"][0]["kotlinMultiplatform"]["result"] =
         available(json!(true));
     let mut state = ModelState::default();
@@ -931,6 +974,70 @@ fn kotlin_plugin_on_jvm_only_model_never_creates_android_groups() -> Result<()> 
     state.select(Some(id("debug")))?;
     assert!(prepare_live_module_plan(&state, &state.token(), id("debug"), false).is_err());
     assert!(state.model.is_some());
+    let current = state
+        .model
+        .as_ref()
+        .context("Supported mixed physical model")?;
+    assert_eq!(current.modules.len(), 2);
+    assert_eq!(
+        current
+            .variant(&id("debug"))
+            .context("JVM variant retained")?
+            .0
+            .path,
+        ":app"
+    );
+    // Removing the forged JVM capability row restores authoritative facts for
+    // the Android anchor, while the JVM module still cannot get Android groups.
+    let removed_capability = fixture.value["kotlinCapabilities"]["modules"]
+        .as_array_mut()
+        .context("Kotlin module catalogue")?
+        .remove(0);
+    assert_eq!(removed_capability["module"], ":app");
+    fixture.publish(&mut state)?;
+    state.select(Some(id("debug")))?;
+    assert!(prepare_live_module_plan(&state, &state.token(), id("debug"), false).is_err());
+    let anchor = VariantId {
+        module: ":androidAnchor".into(),
+        variant: "debug".into(),
+    };
+    state.select(Some(anchor.clone()))?;
+    let plan = prepare_live_module_plan(&state, &state.token(), anchor, false)?;
+    assert_eq!(plan.plan().binding().module, ":androidAnchor");
+    assert_eq!(
+        plan.imported_identity().external_project_path,
+        anchor_directory
+    );
+    plan.ensure_current(&state)?;
+    Ok(())
+}
+
+#[test]
+fn all_jvm_kmp_sync_is_rejected_without_publishing_android_groups_or_losing_physical_files()
+-> Result<()> {
+    let mut fixture = live_plan_fixture()?;
+    fixture.value["modules"][0]["kind"] = json!("jvm");
+    fixture.value["importFacts"]["modules"][0]["kind"] = json!("jvm");
+    fixture.value["generatedArtifacts"]["modules"] = json!([]);
+    fixture.value["kotlinCapabilities"]["modules"][0]["kotlinMultiplatform"]["result"] =
+        available(json!(true));
+    let physical_file = fixture.root().join("GenericEdit.py");
+    let contents = "print('physical project remains available')\n";
+    fs::write(&physical_file, contents)?;
+    let mut state = ModelState::default();
+    let failure = fixture
+        .publish(&mut state)
+        .expect_err("All-JVM records are outside Android importer admission");
+    assert_eq!(
+        failure.to_string(),
+        "No supported Android modules were found"
+    );
+    assert!(state.model.is_none());
+    assert!(state.selected.is_none());
+    assert!(state.evaluated_inputs().is_none());
+    assert!(prepare_live_module_plan(&state, &state.token(), id("debug"), false).is_err());
+    assert_eq!(fs::read_to_string(&physical_file)?, contents);
+    assert_eq!(physical_file.parent(), Some(fixture.root()));
     Ok(())
 }
 
@@ -1195,6 +1302,80 @@ fn actual_live_exporter_fixtures()
             SourceGroup::Java,
         ),
     ]
+}
+
+#[test]
+fn actual_supported_export_with_independently_mismatched_provider_versions_is_unavailable()
+-> Result<()> {
+    for (raw, _, kotlin, _) in actual_live_exporter_fixtures() {
+        for alteration in ["agp", "producer_major", "producer_minor", "schema"] {
+            let directory = tempfile::tempdir()?;
+            let root = directory.path().canonicalize()?;
+            fs::create_dir_all(root.join("app"))?;
+            let raw = raw.replace(
+                "/workspace/android-studio-artifacts/source-providers-smoke/project",
+                root.to_str().context("Temporary root must be UTF-8")?,
+            );
+            let mut state = ModelState::default();
+            let token = state.invalidate(Some(root.clone()));
+            let original = EvaluatedTreeInputs::decode_sync(&raw, &root, None, &token)?;
+            let mut value: Value = serde_json::from_str(
+                original
+                    .raw_record()
+                    .strip_prefix("KODA_ANDROID_PROJECT_MODEL=")
+                    .context("Actual model prefix")?,
+            )?;
+            let original_generated = value["generatedArtifacts"].clone();
+            let original_kotlin = value["kotlinCapabilities"].clone();
+            state.publish_evaluated(&token, original)?;
+            let selected = VariantId {
+                module: ":app".into(),
+                variant: "demoDebug".into(),
+            };
+            state.select(Some(selected.clone()))?;
+            let proven = prepare_live_module_plan(&state, &state.token(), selected.clone(), false)?;
+            proven.ensure_current(&state)?;
+            // Alter only the independent provider sidecar of the actual export;
+            // no fixture or claimed Gradle observation is rewritten.
+            let providers = &mut value["modules"][0]["evaluatedProviders"]["value"];
+            let expected = match alteration {
+                "agp" => {
+                    providers["agpVersion"] = json!("9.5.0");
+                    FactsUnavailableReason::Stale
+                }
+                "producer_major" => {
+                    providers["modelProducer"]["major"] = json!(24);
+                    FactsUnavailableReason::Stale
+                }
+                "producer_minor" => {
+                    providers["modelProducer"]["minor"] = json!(1);
+                    FactsUnavailableReason::Stale
+                }
+                "schema" => {
+                    providers["version"] = json!(2);
+                    FactsUnavailableReason::UnsupportedSchema
+                }
+                _ => anyhow::bail!("Unexpected provider alteration"),
+            };
+            assert_eq!(value["generatedArtifacts"], original_generated);
+            assert_eq!(value["kotlinCapabilities"], original_kotlin);
+            let replacement = state.invalidate(Some(root.clone()));
+            let capture =
+                EvaluatedTreeInputs::decode_sync(&record(&value), &root, None, &replacement)?;
+            assert_eq!(capture.kotlin_capability(":app")?, kotlin);
+            state.publish_evaluated(&replacement, capture)?;
+            state.select(Some(selected.clone()))?;
+            let failure = prepare_live_module_plan(&state, &state.token(), selected, false)
+                .expect_err("Unproven active-provider versions cannot borrow supported generated/Kotlin versions");
+            assert_eq!(failure.reason, AdapterUnavailableReason::Provider(expected));
+            assert!(
+                state.model.is_some(),
+                "Provider incompatibility retains the physical model"
+            );
+            assert!(proven.ensure_current(&state).is_err());
+        }
+    }
+    Ok(())
 }
 
 #[test]

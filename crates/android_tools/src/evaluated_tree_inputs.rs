@@ -32,8 +32,8 @@ use crate::{
         ImportedGradleModuleType, resolve_module_presentation,
     },
     project_model::{
-        EvaluatedModelPaths, MODEL_OUTPUT_PREFIX, ModelState, ModelToken, ModuleKind, ProjectModel,
-        VariantId, parse_model, parse_model_with_context,
+        EvaluatedModelPaths, EvaluatedProviderMetadata, MODEL_OUTPUT_PREFIX, ModelState,
+        ModelToken, ModuleKind, ProjectModel, VariantId, parse_model, parse_model_with_context,
     },
     project_tree_adapter::{
         AdapterUnavailable, CapturedModulePresentation, KotlinCapability, ModuleRootPlan,
@@ -250,6 +250,19 @@ pub fn prepare_selected_main_generated_roots(
     selected: VariantId,
     consumer: &ModelConsumerVersion,
 ) -> FactsResult<SelectedMainGeneratedRoots> {
+    let (roots, _) =
+        prepare_selected_main_generated_roots_with_snapshot(state, selection, selected, consumer)?;
+    Ok(roots)
+}
+
+// The live adapter needs the same validated versions as the selected roots,
+// without retaining the complete catalogue in the public roots object.
+fn prepare_selected_main_generated_roots_with_snapshot(
+    state: &ModelState,
+    selection: &ModelToken,
+    selected: VariantId,
+    consumer: &ModelConsumerVersion,
+) -> FactsResult<(SelectedMainGeneratedRoots, GeneratedArtifactSnapshot)> {
     let capture = state
         .evaluated_inputs()
         .ok_or_else(|| {
@@ -296,7 +309,7 @@ pub fn prepare_selected_main_generated_roots(
     });
     roots.resources = artifact.generated_resource_folders.available().cloned();
     roots.assets = artifact.generated_assets(versions).map(<[PathBuf]>::to_vec);
-    Ok(roots)
+    Ok((roots, snapshot))
 }
 
 fn filter_generated_java(folders: &[PathBuf], build_folder: &Path) -> Vec<PathBuf> {
@@ -616,14 +629,13 @@ pub fn prepare_live_module_plan(
     selected: VariantId,
     compact_packages: bool,
 ) -> std::result::Result<PreparedLiveModulePlan, AdapterUnavailable> {
-    let generated = prepare_selected_main_generated_roots(
+    let (generated, snapshot) = prepare_selected_main_generated_roots_with_snapshot(
         state,
         selection,
         selected,
         &rust_v2_tree_consumer(),
     )?;
     let capture = &generated.capture;
-    let snapshot = capture.generated_artifacts(Some(&rust_v2_tree_consumer()))?;
     let generated_module = snapshot
         .modules()
         .iter()
@@ -648,6 +660,40 @@ pub fn prepare_live_module_plan(
             "Rust live tree supports AGP9.4.0/producer23.0/AndroidProject0.1 only",
         )
         .into());
+    }
+    let module = capture
+        .model
+        .modules
+        .iter()
+        .find(|module| module.path == generated.selected.module)
+        .ok_or_else(|| {
+            unavailable(
+                FactsUnavailableReason::MissingMetadata,
+                "Selected evaluated module is absent",
+            )
+        })?;
+    // These catalogues are captured independently; the consumer profile must
+    // bind their versions before combining generated and active-provider roots.
+    if let Some(EvaluatedProviderMetadata::Available(providers)) = &module.evaluated_providers {
+        if providers.version != 1 {
+            return Err(unavailable(
+                FactsUnavailableReason::UnsupportedSchema,
+                "Rust live tree supports evaluated provider schema 1 only",
+            )
+            .into());
+        }
+        if providers.agp_version != versions.agp
+            || (
+                providers.model_producer.major,
+                providers.model_producer.minor,
+            ) != (versions.producer.major, versions.producer.minor)
+        {
+            return Err(unavailable(
+                FactsUnavailableReason::Stale,
+                "Active providers and generated models report different AGP/producer versions",
+            )
+            .into());
+        }
     }
     let kotlin_modules = capture.kotlin_capabilities.as_ref().map_err(Clone::clone)?;
     let kotlin_module = kotlin_modules
