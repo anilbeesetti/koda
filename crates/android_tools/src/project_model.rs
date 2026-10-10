@@ -675,7 +675,7 @@ impl ModelToken {
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ModelState {
     generation: u64,
     root: Option<PathBuf>,

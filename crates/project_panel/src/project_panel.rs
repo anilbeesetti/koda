@@ -1,3 +1,4 @@
+mod android_project_tree;
 pub mod project_panel_settings;
 mod undo;
 mod utils;
@@ -173,6 +174,8 @@ pub struct ProjectPanel {
     update_visible_entries_task: UpdateVisibleEntriesTask,
     undo_manager: UndoManager,
     state: State,
+    _android_tree: Entity<android_project_tree::AndroidProjectTree>,
+    _android_tree_subscription: Subscription,
 }
 
 struct UpdateVisibleEntriesTask {
@@ -883,8 +886,19 @@ impl ProjectPanel {
 
             let scroll_handle = UniformListScrollHandle::new();
             let weak_project_panel = cx.weak_entity();
+            let android_tree = cx.new(|cx| {
+                android_project_tree::AndroidProjectTree::new(
+                    workspace.weak_handle(),
+                    project.clone(),
+                    window,
+                    cx,
+                )
+            });
+            let android_tree_subscription = cx.observe(&android_tree, |_, _, cx| cx.notify());
             let mut this = Self {
                 project: project.clone(),
+                _android_tree: android_tree,
+                _android_tree_subscription: android_tree_subscription,
                 hover_scroll_task: None,
                 fs: workspace.app_state().fs.clone(),
                 focus_handle,

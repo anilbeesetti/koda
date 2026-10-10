@@ -27,7 +27,7 @@ use gpui::{
     Subscription, Task, WeakEntity, actions,
 };
 use project::{Project, TaskSourceKind, WorktreeId, trusted_worktrees::TrustedWorktrees};
-pub use project_context::ImportGradleProject;
+pub use project_context::{AndroidTreeContext, AndroidTreeOwner, ImportGradleProject};
 pub use project_surfaces::{
     ApplicationMenuTemplates, action_available, application_menus, install_application_menus,
 };

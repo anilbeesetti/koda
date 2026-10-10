@@ -3,7 +3,7 @@ use crate::android_build::{
 };
 use android_tools::project_context::{
     ActiveContext, ActiveContextToken, ActiveProjectToken, ContextCapabilities, ContextSnapshot,
-    DiscoveryToken, ModuleOwner, ObservationPhase, OperationalReadiness, RootHandle,
+    DiscoveryToken, ModuleOwner, ObservationPhase, OperationalReadiness, RootHandle, RootToken,
     decode_context_output,
 };
 use anyhow::{Context as _, Result, ensure};
@@ -24,6 +24,7 @@ use project::{
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
+    sync::Arc,
     time::Duration,
 };
 use util::{ResultExt as _, rel_path::RelPath};
@@ -49,6 +50,139 @@ pub(crate) fn for_workspace(
         .0
         .get(&workspace.entity_id())?
         .upgrade()
+}
+
+/// Read-only observation of the context chosen by this workspace's controller.
+pub struct AndroidTreeContext {
+    controller: WeakEntity<ProjectContextController>,
+    revision: u64,
+    _subscription: Subscription,
+}
+
+/// An immutable owner obtained from evaluated context and current worktree trust.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct AndroidTreeOwner {
+    workspace: EntityId,
+    project: EntityId,
+    controller: EntityId,
+    root: RootHandle,
+    source_worktree: Option<WorktreeId>,
+    root_path: Arc<Path>,
+    context_token: RootToken,
+    project_token: ActiveProjectToken,
+    capabilities: ContextCapabilities,
+}
+
+impl AndroidTreeOwner {
+    pub fn workspace(&self) -> EntityId {
+        self.workspace
+    }
+
+    pub fn project(&self) -> EntityId {
+        self.project
+    }
+
+    pub fn root(&self) -> RootHandle {
+        self.root
+    }
+
+    pub fn root_path(&self) -> &Path {
+        &self.root_path
+    }
+
+    pub fn context_token(&self) -> &RootToken {
+        &self.context_token
+    }
+
+    pub fn project_token(&self) -> &ActiveProjectToken {
+        &self.project_token
+    }
+
+    pub fn capabilities(&self) -> ContextCapabilities {
+        self.capabilities
+    }
+
+    pub fn source_worktree(&self) -> Option<WorktreeId> {
+        self.source_worktree
+    }
+}
+
+impl AndroidTreeContext {
+    pub fn for_workspace(workspace: &WeakEntity<Workspace>, cx: &App) -> Option<Entity<Self>> {
+        for_workspace(workspace, cx)?.read(cx).tree_context.clone()
+    }
+
+    fn new(controller: &Entity<ProjectContextController>, cx: &mut Context<Self>) -> Self {
+        let subscription = cx.observe(controller, |this, _, cx| {
+            if let Some(revision) = this.revision.checked_add(1) {
+                this.revision = revision;
+            } else {
+                log::error!("Android tree context observation revision exhausted");
+            }
+            cx.notify();
+        });
+        Self {
+            controller: controller.downgrade(),
+            revision: 0,
+            _subscription: subscription,
+        }
+    }
+
+    /// Observation revisions are notification hints; ownership uses original tokens.
+    pub fn revision(&self) -> u64 {
+        self.revision
+    }
+
+    pub fn checked_owner(&self, cx: &App) -> Option<AndroidTreeOwner> {
+        let controller = self.controller.upgrade()?;
+        let controller_id = controller.entity_id();
+        let controller = controller.read(cx);
+        controller.workspace.upgrade()?;
+        let project = controller.project.read(cx);
+        if !project.is_local() {
+            return None;
+        }
+        let root = controller.active.root()?;
+        let root_worktree = WorktreeId::from_proto(root.worktree());
+        let worktree = project.worktree_for_id(root_worktree, cx)?;
+        let worktree = worktree.read(cx);
+        let trust = TrustedWorktrees::try_get_global(cx)?;
+        if !worktree.is_visible()
+            || trust
+                .read(cx)
+                .is_worktree_restricted(&project.worktree_store(), root_worktree)
+        {
+            return None;
+        }
+        let store = project.android_context();
+        let snapshot = store.snapshot(root)?;
+        if snapshot.phase() != ObservationPhase::Complete {
+            return None;
+        }
+        let root_path = controller.root(cx)?;
+        if worktree.abs_path().as_ref() != root_path.as_path() {
+            return None;
+        }
+        let capabilities = controller.capabilities(Default::default(), cx);
+        if !capabilities.ecosystems.qualifies() {
+            return None;
+        }
+        Some(AndroidTreeOwner {
+            workspace: controller.workspace.entity_id(),
+            project: controller.project.entity_id(),
+            controller: controller_id,
+            root,
+            source_worktree: controller.source_worktree,
+            root_path: Arc::from(root_path),
+            context_token: store.token(root)?,
+            project_token: controller.project_token(cx)?,
+            capabilities,
+        })
+    }
+
+    pub fn is_current(&self, owner: &AndroidTreeOwner, cx: &App) -> bool {
+        self.checked_owner(cx).as_ref() == Some(owner)
+    }
 }
 
 #[cfg(test)]
@@ -944,6 +1078,10 @@ pub(crate) fn register(
     cx.global_mut::<Controllers>()
         .0
         .insert(weak_workspace.entity_id(), controller.downgrade());
+    let tree_context = cx.new(|cx| AndroidTreeContext::new(&controller, cx));
+    controller.update(cx, |controller, _| {
+        controller.tree_context = Some(tree_context);
+    });
     workspace.register_action_renderer(move |element, _, _, cx| {
         if controller.read(cx).import_candidate(cx).is_some() {
             let controller = controller.clone();
@@ -1047,6 +1185,7 @@ pub(crate) struct ProjectContextController {
     cancel: Option<oneshot::Sender<()>>,
     task: Option<Task<()>>,
     reconcile_scheduled: bool,
+    tree_context: Option<Entity<AndroidTreeContext>>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -1213,6 +1352,7 @@ impl ProjectContextController {
             cancel: None,
             task: None,
             reconcile_scheduled: false,
+            tree_context: None,
             _subscriptions: subscriptions,
         };
         // The Workspace is still borrowed by observe_new. Read it only after that
