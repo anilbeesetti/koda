@@ -1,6 +1,7 @@
 #![allow(clippy::format_collect)]
 
 mod agent_registry_store;
+mod android_context;
 mod bookmark_store;
 mod color_extractor;
 mod context_server_store;
