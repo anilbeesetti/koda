@@ -976,11 +976,14 @@ async fn observe_worktree_capture(
         project.update(cx, |_, cx| {
             cx.subscribe(&scope.worktree, {
             let changed = changed.clone();
-            move |_, _, event, _| {
-                if matches!(event, worktree::Event::UpdatedEntries(entries) if !entries.is_empty())
-                    || matches!(event, worktree::Event::DeletedEntry(_) | worktree::Event::Deleted)
+            move |_, _, event, cx| {
+                if (matches!(event, worktree::Event::UpdatedEntries(entries) if !entries.is_empty())
+                    || matches!(event, worktree::Event::DeletedEntry(_) | worktree::Event::Deleted))
+                    && !changed.swap(true, Ordering::AcqRel)
                 {
-                    changed.store(true, Ordering::Release);
+                    // Consumers observe the Project, not the private dirty
+                    // flag. Wake them once when this capture becomes stale.
+                    cx.notify();
                 }
             }
         })
@@ -1149,7 +1152,7 @@ fn collect_entries(
             "Android source directory has not completed scanning"
         );
         ensure!(!entry.is_fifo, "Android source root contains a FIFO");
-        let absolute = captured.snapshot.abs_path().join(entry.path.as_std_path());
+        let absolute = captured.snapshot.absolutize(&entry.path);
         let value = (
             ProjectPath {
                 worktree_id: captured.id,
@@ -1711,6 +1714,10 @@ mod tests {
             "Dropping the owner task must cancel its pending read gate"
         );
         cx.executor().run_until_parked();
+        // Entity release is a GPUI App effect, not an executor task. Flush
+        // that effect before draining the cancelled scanner and its watcher.
+        cx.update(|_| {});
+        cx.executor().run_until_parked();
         assert!(
             !filesystem.watched_paths().contains(&external),
             "A cancelled capture must release its invisible worktree watcher"
@@ -1995,6 +2002,9 @@ mod tests {
                 );
             }
             cx.executor().run_until_parked();
+            // Process the released GPUI entity before draining its scanner.
+            cx.update(|_| {});
+            cx.executor().run_until_parked();
             assert!(!filesystem.watched_paths().contains(&external));
         }
         Ok(())
@@ -2147,6 +2157,9 @@ mod tests {
         assert!(error.to_string().contains("cancelled"));
         assert!(resume.send(()).is_err());
         cx.executor().run_until_parked();
+        // Process the released GPUI entity before draining its scanner.
+        cx.update(|_| {});
+        cx.executor().run_until_parked();
         assert!(!filesystem.watched_paths().contains(&external));
         assert_eq!(
             project.read_with(cx, |project, cx| project.visible_worktrees(cx).count()),
@@ -2206,6 +2219,9 @@ mod tests {
         };
         assert!(error.to_string().contains("removed"));
         filesystem.unpause_events_and_flush();
+        cx.executor().run_until_parked();
+        // Process the released GPUI entity before draining its scanner.
+        cx.update(|_| {});
         cx.executor().run_until_parked();
         assert!(!filesystem.watched_paths().contains(&external));
         assert_eq!(
