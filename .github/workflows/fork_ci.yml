@@ -317,8 +317,8 @@ jobs:
     env:
       CC: clang
       CXX: clang++
-      STRICT_SOURCE_SHA: ${{ github.event_name == 'pull_request' && 'd7b80774528b895829a18963e61761d73205febe' || inputs.strict_source_sha }}
-      STRICT_SOURCE_TREE: ${{ github.event_name == 'pull_request' && '54689ee1530f0dfbccdf8cdd7f4731fcfb4b536c' || inputs.strict_source_tree }}
+      STRICT_SOURCE_SHA: ${{ github.event_name == 'pull_request' && 'bf7a2f4f1494985c941f7602ca719d9d7612c559' || inputs.strict_source_sha }}
+      STRICT_SOURCE_TREE: ${{ github.event_name == 'pull_request' && 'bd6b6fd6612a520c39115fc69201e77d41fdbaf0' || inputs.strict_source_tree }}
     steps:
       - name: Validate exact source inputs
         run: |

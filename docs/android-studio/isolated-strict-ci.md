@@ -28,8 +28,8 @@ restored build cache. Its workflow commit and checked-out source commit/tree are
 recorded separately because the strict target can differ from the dispatch ref.
 
 The task-branch PR route always checks out commit
-`d7b80774528b895829a18963e61761d73205febe`, tree
-`54689ee1530f0dfbccdf8cdd7f4731fcfb4b536c`, independently of the workflow-only PR
+`bf7a2f4f1494985c941f7602ca719d9d7612c559`, tree
+`bd6b6fd6612a520c39115fc69201e77d41fdbaf0`, independently of the workflow-only PR
 changes. The workflow's ordinary jobs validate their PR merge or dispatch
 revision, while the strict job validates its explicit source. Each result must
 be attributed to its actual checkout. Creating the task's draft PR can trigger
@@ -48,8 +48,12 @@ jobs separately passed formatting/scripts, the Linux build with 10,653 passing
 tests and 23 inherited skips, and the macOS check for workflow task
 `2f29b86d52b8a2f4c2bea4487cc6cc2095164b3d` and PR merge
 `b8a927e8a2e104d2e5294e0f5f0119ce90d85d3d`. Those results remain bound to their
-actual checkouts. All previous failures remain recorded; the evaluated-tree
-source's new strict result is pending.
+actual checkouts. CI240 run `38045319878` then failed with `E0282` in the
+previous evaluated-tree source `d7b80774528b895829a18963e61761d73205febe` at
+`android_ui.rs:5020`. Source `bf7a2f4f` adds the explicit observer type in that
+new test, preserving production code and every assertion and event. Five fresh
+source reviews passed; normal forward publication completed. Its fresh strict
+result remains pending. All earlier failures and complete logs remain recorded.
 An isolated CI result does not turn the local attempt into a pass or alter its
 caps. This job runs
 Clippy and does not execute tests, establish native/UI validation, or prove
@@ -63,15 +67,15 @@ No CI success is inferred from this document.
 
 ## Evaluated-tree validation task
 
-This task changes only the exact PR head-branch selector and its strict source
-commit/tree binding in `.github/workflows/fork_ci.yml`, plus this document. It
-uses the reviewed workflow revision `2f29b86d52b8a2f4c2bea4487cc6cc2095164b3d` as
-its base. Its dependency is normal publication of the evaluated-tree source
-`d7b80774528b895829a18963e61761d73205febe`; its five source reviews are static
-passes, with runtime validation pending.
+This correction changes only the two strict source commit/tree literals in `.github/workflows/fork_ci.yml`, plus this document. It
+uses the reviewed, normally published workflow revision
+`e2e148342acb43ae90bb78bfb4850bbfd1c7b416` as its base and preserves its exact
+branch selector and every other workflow byte. Its dependency is normal publication of the evaluated-tree source
+`bf7a2f4f1494985c941f7602ca719d9d7612c559`; its five fresh source reviews are static passes, with new actual
+compilation, full tests and runtime validation pending (source CI242 running).
 
-Acceptance requires the branch selector and both source IDs to match this
-worktree's task and the frozen evaluated-tree source, with every other workflow
+Acceptance requires the unchanged branch selector and both new source IDs to
+match this worktree's task and the frozen evaluated-tree source, with every other workflow
 byte unchanged, followed by all five independent infrastructure reviews. Root
 then publishes this task branch normally and runs the exact isolated strict
 command against the pinned source. The ordinary jobs retain every test, filter,
