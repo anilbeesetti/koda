@@ -25,7 +25,6 @@ use gpui::{
     Task, WeakEntity,
 };
 use parking_lot::Mutex;
-use postage::stream::Stream as _;
 use std::{
     collections::{BTreeMap, BTreeSet},
     io::Read as _,
