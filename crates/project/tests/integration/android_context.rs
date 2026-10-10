@@ -45,7 +45,7 @@ async fn context_input_observers_preserve_outputs_and_invalidate_real_external_i
         .insert_tree(root, json!({"build.gradle":"", "main.py":"print(1)"}))
         .await;
     filesystem.insert_tree(logic, json!({"src":{"Convention.kt":"original"}, "custom-output":{"plugin.properties":"original"}})).await;
-    let project = Project::test(filesystem.clone(), [root.as_ref()], cx).await;
+    let project = Project::test(filesystem.clone(), [root], cx).await;
     let worktree = project
         .read_with(cx, |project, cx| {
             project
@@ -412,7 +412,7 @@ async fn input_observers_are_reused_and_pending_source_edits_reject_publication_
     filesystem
         .insert_tree(logic, json!({"src":{"Convention.kt":"original"}}))
         .await;
-    let project = Project::test(filesystem.clone(), [root.as_ref()], cx).await;
+    let project = Project::test(filesystem.clone(), [root], cx).await;
     let worktree = project
         .read_with(cx, |project, cx| {
             project
@@ -509,7 +509,7 @@ async fn selected_root_observer_detects_later_buildsrc_creation_without_new_work
     filesystem
         .insert_tree(root, json!({"build.gradle":""}))
         .await;
-    let project = Project::test(filesystem.clone(), [root.as_ref()], cx).await;
+    let project = Project::test(filesystem.clone(), [root], cx).await;
     let worktree = project
         .read_with(cx, |project, cx| {
             project
@@ -603,7 +603,7 @@ async fn external_linked_git_observer_tracks_actual_head_without_cancelling_on_u
         "worktrees":{"logic":{"HEAD":"ref: refs/heads/external\n", "commondir":"../..\n"}},
         "refs":{"heads":{}}, "packed-refs":format!("# pack-refs with: peeled\n{original} refs/heads/external\n")
     })).await;
-    let project = Project::test(filesystem.clone(), [root.as_ref()], cx).await;
+    let project = Project::test(filesystem.clone(), [root], cx).await;
     let worktree = project
         .read_with(cx, |project, cx| {
             project
@@ -765,7 +765,7 @@ async fn recursive_inputs_track_nested_and_enclosing_git_owners_without_extra_wo
             .insert_tree(&logic, json!({"src":{"deep":{"Convention.kt":"original"}}}))
             .await;
         filesystem.insert_tree(owner.join(".git"), json!({"HEAD":"ref: refs/heads/current\n", "refs":{"heads":{"current":format!("{}\n", "1".repeat(40))}}})).await;
-        let project = Project::test(filesystem.clone(), [root.as_ref()], cx).await;
+        let project = Project::test(filesystem.clone(), [root], cx).await;
         let worktree = project
             .read_with(cx, |project, cx| {
                 project
@@ -879,7 +879,7 @@ async fn root_removal_releases_only_owned_inputs_and_keeps_other_worktrees_case(
             .insert_tree(logic, json!({"src":{"Convention.kt":"original"}}))
             .await;
     }
-    let project = Project::test(filesystem.clone(), [root_a.as_ref(), root_b.as_ref()], cx).await;
+    let project = Project::test(filesystem.clone(), [root_a, root_b], cx).await;
     let worktree_a = project
         .read_with(cx, |project, cx| {
             project
