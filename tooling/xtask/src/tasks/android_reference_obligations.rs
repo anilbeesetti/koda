@@ -2464,9 +2464,21 @@ mod tests {
                     attribution["license_proof"] == expected_proof,
                     "missing or incorrect pinned inherited license proof"
                 );
-                let binding: Binding = serde_json::from_value(expected_proof["fixture"].clone())?;
-                let license_bytes =
-                    bound_bytes(&root.join(&binding.path), &binding, MAX_RECORD_BYTES as u64)?;
+                let proof_binding: Binding =
+                    serde_json::from_value(expected_proof["fixture"].clone())?;
+                let license_root = root
+                    .parent()
+                    .context("reference obligation fixtures need a sibling license directory")?
+                    .join("reference_declarations");
+                let binding = Binding {
+                    path: "LICENSE-APACHE-2.0.txt".to_owned(),
+                    ..proof_binding
+                };
+                let license_bytes = bound_bytes(
+                    &license_root.join(&binding.path),
+                    &binding,
+                    MAX_RECORD_BYTES as u64,
+                )?;
                 ensure!(
                     license_bytes
                         .starts_with(b"\n                                 Apache License\n"),
