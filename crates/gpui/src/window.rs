@@ -1812,7 +1812,18 @@ impl Window {
                     })
                 } else if needs_present {
                     handle
-                        .update(&mut cx, |_, window, _| window.present())
+                        .update(&mut cx, |_, window, _| {
+                            // CPU adapters have no GPU clock to sustain with redundant frames.
+                            // Query the current adapter so recovery can change this capability.
+                            if request_frame_options.require_presentation
+                                || window.needs_present.get()
+                                || window
+                                    .gpu_specs()
+                                    .is_none_or(|specs| !specs.is_software_emulated)
+                            {
+                                window.present();
+                            }
+                        })
                         .log_err();
                 }
 
@@ -8153,6 +8164,262 @@ mod tests {
 
         assert!(test_window.simulate_scheduled_frame());
         assert!(callback_ran.get());
+    }
+
+    struct CachedPresentationView {
+        renders: Rc<Cell<usize>>,
+        cursor: crate::CursorStyle,
+    }
+
+    impl Render for CachedPresentationView {
+        fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            self.renders.set(self.renders.get() + 1);
+            let cursor = self.cursor;
+            div()
+                .size_full()
+                .on_mouse_move(cx.listener(|this, _, _, cx| {
+                    this.cursor = crate::CursorStyle::IBeam;
+                    cx.notify();
+                }))
+                .child(canvas(
+                    |_, _, _| {},
+                    move |_, _, window, _| window.set_window_cursor_style(cursor),
+                ))
+        }
+    }
+
+    fn sustain_high_input_rate(window: &mut Window) {
+        // The frame-policy tests need a detected burst that cannot expire while
+        // a slow test worker is paused. Input timing itself is not under test.
+        window.input_rate_tracker.borrow_mut().sustain_until =
+            scheduler::Instant::now() + Duration::from_secs(3600);
+        window.active.set(true);
+    }
+
+    #[gpui::test]
+    fn cached_presentation_respects_selected_adapter(cx: &mut TestAppContext) {
+        for software in [Some(true), Some(false), None] {
+            let renders = Rc::new(Cell::new(0));
+            let window = cx.add_window({
+                let renders = renders.clone();
+                move |_, _| CachedPresentationView {
+                    renders,
+                    cursor: crate::CursorStyle::Arrow,
+                }
+            });
+            let test_window = cx.test_window(window.into());
+            test_window.set_gpu_specs(software.map(|is_software_emulated| crate::GpuSpecs {
+                is_software_emulated,
+                ..Default::default()
+            }));
+            test_window.simulate_frame_request(RequestFrameOptions::default());
+            window
+                .update(cx, |_, window, _| sustain_high_input_rate(window))
+                .unwrap();
+            let presentations = test_window.presentation_count();
+            let render_count = renders.get();
+            for _ in 0..10 {
+                test_window.simulate_frame_request(RequestFrameOptions::default());
+            }
+            assert_eq!(
+                test_window.presentation_count() - presentations,
+                if software == Some(true) { 0 } else { 10 },
+                "cached presentation policy for adapter {software:?}"
+            );
+            assert_eq!(
+                renders.get(),
+                render_count,
+                "cached frames must not rebuild views"
+            );
+            window
+                .update(cx, |_, window, _| {
+                    window.input_rate_tracker.borrow_mut().sustain_until =
+                        scheduler::Instant::now();
+                })
+                .unwrap();
+            let presentations = test_window.presentation_count();
+            test_window.simulate_frame_request(RequestFrameOptions::default());
+            assert_eq!(
+                test_window.presentation_count(),
+                presentations,
+                "idle adapters must stop presenting"
+            );
+        }
+    }
+
+    #[gpui::test]
+    fn software_adapter_preserves_frame_demand(cx: &mut TestAppContext) {
+        let renders = Rc::new(Cell::new(0));
+        let window = cx.add_window({
+            let renders = renders.clone();
+            move |_, _| CachedPresentationView {
+                renders,
+                cursor: crate::CursorStyle::Arrow,
+            }
+        });
+        let mut test_window = cx.test_window(window.into());
+        test_window.set_gpu_specs(Some(crate::GpuSpecs {
+            is_software_emulated: true,
+            ..Default::default()
+        }));
+        test_window.simulate_frame_request(RequestFrameOptions::default());
+        window
+            .update(cx, |_, window, _| sustain_high_input_rate(window))
+            .unwrap();
+        let mut presentations = test_window.presentation_count();
+        let render_count = renders.get();
+        test_window.simulate_frame_request(RequestFrameOptions {
+            require_presentation: true,
+            ..Default::default()
+        });
+        presentations += 1;
+        assert_eq!(test_window.presentation_count(), presentations);
+        assert_eq!(
+            renders.get(),
+            render_count,
+            "platform-required presentation reuses the scene"
+        );
+
+        window
+            .update(cx, |_, window, cx| window.draw(cx).clear(cx))
+            .unwrap();
+        let render_count = renders.get();
+        test_window.simulate_frame_request(RequestFrameOptions::default());
+        presentations += 1;
+        assert_eq!(
+            test_window.presentation_count(),
+            presentations,
+            "a newly drawn scene must be presented"
+        );
+        assert_eq!(
+            renders.get(),
+            render_count,
+            "pending presentation must not draw twice"
+        );
+
+        test_window.simulate_input(
+            MouseMoveEvent {
+                position: point(px(20.), px(20.)),
+                pressed_button: None,
+                modifiers: Default::default(),
+            }
+            .to_platform_input(),
+        );
+        window
+            .update(cx, |_, window, _| assert!(window.invalidator.is_dirty()))
+            .unwrap();
+        test_window.simulate_frame_request(RequestFrameOptions::default());
+        presentations += 1;
+        assert_eq!(
+            test_window.presentation_count(),
+            presentations,
+            "input invalidation must draw and present"
+        );
+        assert!(renders.get() > render_count);
+        window
+            .update(cx, |_, window, _| {
+                assert_eq!(
+                    window.rendered_frame.cursor_style(window),
+                    Some(crate::CursorStyle::IBeam)
+                );
+            })
+            .unwrap();
+
+        let callbacks = Rc::new(Cell::new(0));
+        window
+            .update(cx, {
+                let callbacks = callbacks.clone();
+                move |_, window, _| {
+                    window.on_next_frame(move |window, _| {
+                        callbacks.set(callbacks.get() + 1);
+                        window.refresh();
+                        window.on_next_frame(move |window, _| {
+                            callbacks.set(callbacks.get() + 1);
+                            window.refresh();
+                        });
+                    })
+                }
+            })
+            .unwrap();
+        let wakes = test_window.frame_wake_count();
+        test_window.simulate_frame_request(RequestFrameOptions::default());
+        presentations += 1;
+        assert_eq!(callbacks.get(), 1);
+        assert_eq!(test_window.presentation_count(), presentations);
+        assert!(
+            test_window.frame_wake_count() > wakes,
+            "a follow-up animation must wake the platform"
+        );
+        test_window.simulate_frame_request(RequestFrameOptions::default());
+        presentations += 1;
+        assert_eq!(callbacks.get(), 2);
+        assert_eq!(test_window.presentation_count(), presentations);
+        test_window.simulate_frame_request(RequestFrameOptions::default());
+        assert_eq!(
+            test_window.presentation_count(),
+            presentations,
+            "served demand must return to idle"
+        );
+    }
+
+    struct CachedPresentationRoot(crate::Entity<CachedPresentationView>);
+
+    impl Render for CachedPresentationRoot {
+        fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+            self.0
+                .clone()
+                .cached(crate::StyleRefinement::default().size_full())
+        }
+    }
+
+    #[gpui::test]
+    fn software_adapter_recovery_preserves_forced_render(cx: &mut TestAppContext) {
+        let renders = Rc::new(Cell::new(0));
+        let window = cx.add_window({
+            let renders = renders.clone();
+            move |_, cx| {
+                CachedPresentationRoot(cx.new(|_| CachedPresentationView {
+                    renders,
+                    cursor: crate::CursorStyle::Arrow,
+                }))
+            }
+        });
+        let test_window = cx.test_window(window.into());
+        test_window.simulate_frame_request(RequestFrameOptions::default());
+        window
+            .update(cx, |_, window, _| sustain_high_input_rate(window))
+            .unwrap();
+        let mut presentations = test_window.presentation_count();
+        let render_count = renders.get();
+        for software in [Some(true), None, Some(false), Some(true)] {
+            test_window.set_gpu_specs(software.map(|is_software_emulated| crate::GpuSpecs {
+                is_software_emulated,
+                ..Default::default()
+            }));
+            test_window.simulate_frame_request(RequestFrameOptions::default());
+            if software != Some(true) {
+                presentations += 1;
+            }
+            assert_eq!(
+                test_window.presentation_count(),
+                presentations,
+                "adapter recovery capability {software:?}"
+            );
+            assert_eq!(renders.get(), render_count);
+        }
+        test_window.simulate_frame_request(RequestFrameOptions {
+            force_render: true,
+            ..Default::default()
+        });
+        presentations += 1;
+        assert_eq!(test_window.presentation_count(), presentations);
+        assert_eq!(
+            renders.get(),
+            render_count + 1,
+            "forced recovery must bypass cached child views"
+        );
+        test_window.simulate_frame_request(RequestFrameOptions::default());
+        assert_eq!(test_window.presentation_count(), presentations);
     }
 
     struct RootView {
