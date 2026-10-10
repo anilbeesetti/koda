@@ -217,12 +217,41 @@
       "source": "idea"
     }
   ],
-  "license": "Apache-2.0; complete original file headers retained. Rust index/discovery regression assertions add no behavior-port credit.",
+  "license": "Apache-2.0; fifteen complete original AOSP headers retained. Precisely two exact pinned headerless BUILD originals retain inherited repository-license attribution with full license text and pinned origin proof. Rust index/discovery regression assertions add no behavior-port credit.",
   "original_behavior_credit": 0,
   "original_sources": [
     {
       "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/base/testutils/BUILD",
       "archive_record_ordinal": 15744,
+      "attribution": {
+        "license": "Apache-2.0",
+        "license_proof": {
+          "archive_sha256": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4",
+          "fixture": {
+            "bytes": 11358,
+            "path": "../reference_declarations/LICENSE-APACHE-2.0.txt",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          },
+          "member_record_ordinal": 991,
+          "member_record_sha256": "ca47f0e5e51049ce22c8d17dfb8539fe7108c60187b09cce11854540ca73b4ab",
+          "members_inventory": {
+            "decompressed_bytes": 11234145,
+            "decompressed_sha256": "c30bd69ecc3391916bbc97b6a2deb801ad108fb598b003262f35e77ea444df34",
+            "file": {
+              "bytes": 1295243,
+              "path": "base-members.jsonl.gz",
+              "sha256": "67645f1b568eababc853798f02fb52e1674b6030f9aec638f7659d8a292dcfad"
+            }
+          },
+          "original_license_path": "apkparser/binary-resources/LICENSE",
+          "repository": "https://android.googlesource.com/platform/tools/base",
+          "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+          "scope": "Canonical repository Apache-2.0 declaration; full license text matches a pinned repository member. The license member's module is evidence of the text, not a claim of module-wide scope over another directory.",
+          "source": "base"
+        },
+        "mode": "inherited_repository_license",
+        "repository": "https://android.googlesource.com/platform/tools/base"
+      },
       "bytes": 4107,
       "original_hash_matches_authenticated_inventory": true,
       "path": "testutils/BUILD",
@@ -233,6 +262,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/base/testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
       "archive_record_ordinal": 15767,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/base"
+      },
       "bytes": 10038,
       "original_hash_matches_authenticated_inventory": true,
       "path": "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
@@ -243,6 +277,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/base/testutils/src/main/java/com/android/testutils/TestGroup.java",
       "archive_record_ordinal": 15781,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/base"
+      },
       "bytes": 10390,
       "original_hash_matches_authenticated_inventory": true,
       "path": "testutils/src/main/java/com/android/testutils/TestGroup.java",
@@ -253,6 +292,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/base/testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
       "archive_record_ordinal": 15865,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/base"
+      },
       "bytes": 3006,
       "original_hash_matches_authenticated_inventory": true,
       "path": "testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
@@ -263,6 +307,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/idea/adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
       "archive_record_ordinal": 495,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 9419,
       "original_hash_matches_authenticated_inventory": true,
       "path": "adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
@@ -273,6 +322,11 @@
     {
       "actual_path": "/workspace/android-studio-references/samples/idea/adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
       "archive_record_ordinal": 496,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 2053,
       "original_hash_matches_authenticated_inventory": true,
       "path": "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
@@ -283,6 +337,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
       "archive_record_ordinal": 941,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 879,
       "original_hash_matches_authenticated_inventory": true,
       "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
@@ -293,6 +352,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
       "archive_record_ordinal": 982,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 5447,
       "original_hash_matches_authenticated_inventory": true,
       "path": "adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
@@ -303,6 +367,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/idea/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
       "archive_record_ordinal": 7208,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 16649,
       "original_hash_matches_authenticated_inventory": true,
       "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
@@ -313,6 +382,35 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/exhaustive-census-next-preflight/sources/idea/project-system-gradle-sync/BUILD",
       "archive_record_ordinal": 41726,
+      "attribution": {
+        "license": "Apache-2.0",
+        "license_proof": {
+          "archive_sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+          "fixture": {
+            "bytes": 11358,
+            "path": "../reference_declarations/LICENSE-APACHE-2.0.txt",
+            "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+          },
+          "member_record_ordinal": 56599,
+          "member_record_sha256": "ec59cf331ea5a8558f3eda6e309c307d56a1889c73e92109558b4e08b0f0a001",
+          "members_inventory": {
+            "decompressed_bytes": 29442713,
+            "decompressed_sha256": "425511c489f57e32065c185441007ba8d9656521c7e2df4fe8e25e58988a9d0d",
+            "file": {
+              "bytes": 3286690,
+              "path": "idea-members.jsonl.gz",
+              "sha256": "c2f5ec02bf26d5254322b284eb67cfd797058679a30958a5dde22f5858632f9a"
+            }
+          },
+          "original_license_path": "aswb/LICENSE",
+          "repository": "https://android.googlesource.com/platform/tools/adt/idea",
+          "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+          "scope": "Canonical repository Apache-2.0 declaration; full license text matches a pinned repository member. The license member's module is evidence of the text, not a claim of module-wide scope over another directory.",
+          "source": "idea"
+        },
+        "mode": "inherited_repository_license",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 3721,
       "original_hash_matches_authenticated_inventory": true,
       "path": "project-system-gradle-sync/BUILD",
@@ -323,6 +421,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
       "archive_record_ordinal": 41776,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 4006,
       "original_hash_matches_authenticated_inventory": true,
       "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
@@ -333,6 +436,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/InternedModelsTest.kt",
       "archive_record_ordinal": 41777,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 15928,
       "original_hash_matches_authenticated_inventory": true,
       "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/InternedModelsTest.kt",
@@ -343,6 +451,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelResultTest.kt",
       "archive_record_ordinal": 41778,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 3246,
       "original_hash_matches_authenticated_inventory": true,
       "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelResultTest.kt",
@@ -353,6 +466,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
       "archive_record_ordinal": 41779,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 3273,
       "original_hash_matches_authenticated_inventory": true,
       "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
@@ -363,6 +481,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/PhasedSyncVariantNameResolutionTest.kt",
       "archive_record_ordinal": 41780,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 61975,
       "original_hash_matches_authenticated_inventory": true,
       "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/PhasedSyncVariantNameResolutionTest.kt",
@@ -373,6 +496,11 @@
     {
       "actual_path": "/workspace/android-studio-artifacts/reference-runner-closure-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/VariantNameResolutionTest.kt",
       "archive_record_ordinal": 41781,
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 3924,
       "original_hash_matches_authenticated_inventory": true,
       "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/VariantNameResolutionTest.kt",
@@ -382,6 +510,11 @@
     },
     {
       "actual_path": "/workspace/android-studio-artifacts/canonical-reference-refresh-20261008/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/projectsystem/gradle/sync/GradleProjectSystemSyncTestSuite.java",
+      "attribution": {
+        "license": "Apache-2.0",
+        "mode": "retained_aosp_header",
+        "repository": "https://android.googlesource.com/platform/tools/adt/idea"
+      },
       "bytes": 1319,
       "original_hash_matches_authenticated_inventory": true,
       "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/projectsystem/gradle/sync/GradleProjectSystemSyncTestSuite.java",
@@ -391,5 +524,30 @@
     }
   ],
   "schema_version": 1,
-  "scope": "Complete unmodified pinned originals and exact discovery-record slices; synthetic gzip/physical transport in Rust tests is not upstream runner evidence."
+  "scope": "Complete unmodified pinned originals and exact discovery-record slices; synthetic gzip/physical transport in Rust tests is not upstream runner evidence.",
+  "test_corrections": [
+    {
+      "canonical_ledger_change": "none",
+      "historical_failure": {
+        "assertion_line": 2263,
+        "inherited_skipped_tests": 23,
+        "source": "Root-retained exact terminal CI log; failing named assertion preserved.",
+        "source_head": "04fa958931ea3f113d1155dba1e8c037cbf16d11",
+        "source_tree": "ac3e5379484e16253e983fa44974dd42cad5fe65",
+        "terminal_log_bytes": 334660,
+        "terminal_log_sha256": "5d7b552001abbb9b4c08b65c8e06d7111a2ee925a7c763bf93f8519e33f29b81",
+        "tests_failed": 1,
+        "tests_passed": 10688,
+        "tests_run": 10689,
+        "workflow_job": 114262619725,
+        "workflow_run": 38068982699
+      },
+      "incorrect_assertion": "All seventeen complete upstream originals contain the literal Apache license header.",
+      "original_behavior_credit": 0,
+      "reason": "The pristine pinned base/testutils/BUILD and idea/project-system-gradle-sync/BUILD have no embedded copyright/license header. The other fifteen must retain the complete AOSP header; these two require exact original identity, canonical inherited repository-license declaration and full pinned license proof instead. No filename-wide exemption applies.",
+      "status": "adapted_own_integrity_assertion",
+      "superseding_test_execution": "not_run",
+      "test": "android_reference_obligations::tests::complete_original_sources_and_scanner_slices_keep_exact_hashes_and_attribution"
+    }
+  ]
 }

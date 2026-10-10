@@ -176,12 +176,32 @@ obligations. Inputs are not truncated to satisfy a bound.
 ## Regression evidence and remaining work
 
 `tooling/xtask/test_data/reference_obligations/` retains seventeen complete,
-unmodified Apache-2.0 originals with their copyright/license notices: the
-base TestGroup tests, helper, runner and build definition; IDEA runner/finalizer,
-parameterized and Gradle module import sources; six complete Gradle sync test
-sources; a zero-method suite; and its build definition. `provenance.json` binds
-each complete original and four exact retained scanner-record slices to pinned
-revisions, original paths, full hashes and original record ordinals.
+unmodified Apache-2.0 originals: the base TestGroup tests, helper, runner and build
+definition; IDEA runner/finalizer, parameterized and Gradle module import sources;
+six complete Gradle sync test sources; a zero-method suite; and its build
+definition. Fifteen originals retain their complete AOSP copyright/license header.
+The exact pinned `base/testutils/BUILD` and
+`idea/project-system-gradle-sync/BUILD` originally have no embedded header. Their
+per-file attribution requires the canonical pinned repository's Apache-2.0
+declaration and the complete retained Apache license, whose bytes match an
+authenticated member of each pinned repository. Those license members prove the
+license text; their own module scope does not establish another directory's
+license. `provenance.json` binds all seventeen exact original identities and four
+retained scanner-record slices to pinned revisions, paths, hashes and ordinals.
+
+The integrity test
+`complete_original_sources_and_scanner_slices_keep_exact_hashes_and_attribution`
+incorrectly required an embedded Apache header in every original. The named test
+failed on source `04fa958931ea3f113d1155dba1e8c037cbf16d11` in workflow
+`38068982699`, job `114262619725`; the terminal report retained 10,688 passing tests,
+one failing assertion and 23 inherited skips. The provenance's `test_corrections`
+entry flags this own assertion as adapted and retains the exact log binding. The
+correction preserves all original bytes, complete header checks for the other
+fifteen files and every scanner-slice/hash check. A new regression rejects missing
+or corrupt inherited license text, incorrect origin or hashes, arbitrary BUILD
+exemptions and removed or truncated headers. Fresh execution remains `not_run`;
+the canonical 96-row matrix and all original behavioral port/run statuses are
+unchanged.
 
 The Rust regressions exercise discovery and integrity only. They distinguish the
 nine DefaultVariants lexical candidates from its eight named `@Test` declarations

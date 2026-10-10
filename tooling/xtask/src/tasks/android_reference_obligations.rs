@@ -2238,6 +2238,269 @@ mod tests {
         }
     }
 
+    const ORIGINAL_ATTRIBUTION_BINDINGS: [(&str, &str, u64, &str); 17] = [
+        (
+            "base",
+            "testutils/BUILD",
+            4107,
+            "c1c78be6ae712f5c346525a5cb4318d2fd55d8da99b4fad7c7271f17fc5617f1",
+        ),
+        (
+            "base",
+            "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java",
+            10038,
+            "da503cfd8096ae4be970e29f5a96d882bbc6eeb31f0c1ec8a47bed9a7d2abc3a",
+        ),
+        (
+            "base",
+            "testutils/src/main/java/com/android/testutils/TestGroup.java",
+            10390,
+            "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+        ),
+        (
+            "base",
+            "testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+            3006,
+            "0f6a26754d7afa899e37e82936450f33fbad2339aa907924468c8c31dddf4743",
+        ),
+        (
+            "idea",
+            "adt-testutils/src/main/java/com/android/tools/tests/IdeaTestSuiteBase.java",
+            9419,
+            "26cd53f9592d29bc21f531c7e22c142e29922b412a31bd3937a71d720b0614c4",
+        ),
+        (
+            "idea",
+            "adt-testutils/src/main/java/com/android/tools/tests/LastInIdeaTestSuite.kt",
+            2053,
+            "67b883002362195992b7111d0e8d88cda30ccfeeae355a2ada761bb83f95c274",
+        ),
+        (
+            "idea",
+            "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+            879,
+            "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5",
+        ),
+        (
+            "idea",
+            "adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+            5447,
+            "33d296249b80ad61a7de3dd25abdf44779cd2bd6ade5847024d0b30b2cb6d09e",
+        ),
+        (
+            "idea",
+            "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+            16649,
+            "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+        ),
+        (
+            "idea",
+            "project-system-gradle-sync/BUILD",
+            3721,
+            "5c82bd87f7cabac58ef3752e4062d03faeab4f0f9b20e88399b50207c197ff26",
+        ),
+        (
+            "idea",
+            "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+            4006,
+            "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15",
+        ),
+        (
+            "idea",
+            "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/InternedModelsTest.kt",
+            15928,
+            "550d9f4399f7d0c50c7d7b2b4120d9bc246555ac816daed16e2db2c43865634f",
+        ),
+        (
+            "idea",
+            "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelResultTest.kt",
+            3246,
+            "cee8d470ed6d0ca5027a8be2fe83d63952a7f1da4ff0855d1c82b3072f85754a",
+        ),
+        (
+            "idea",
+            "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt",
+            3273,
+            "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+        ),
+        (
+            "idea",
+            "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/PhasedSyncVariantNameResolutionTest.kt",
+            61975,
+            "d0d75603108b990ec8b803d68128c23d65fed32b35abfc246fd8e30296125e7d",
+        ),
+        (
+            "idea",
+            "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/VariantNameResolutionTest.kt",
+            3924,
+            "5fcb2361a523b78e4b2df65fb6d480b2a145aaaad88a8347d0b26e65ca3a7dfe",
+        ),
+        (
+            "idea",
+            "project-system-gradle-sync/testSrc/com/android/tools/idea/projectsystem/gradle/sync/GradleProjectSystemSyncTestSuite.java",
+            1319,
+            "419a1a1dcda7e59c0a145439117680df5fc378d31dd89e972cf9c338d935518b",
+        ),
+    ];
+
+    const COMPLETE_AOSP_LICENSE_HEADER: &str = concat!(
+        " *\n",
+        " * Licensed under the Apache License, Version 2.0 (the \"License\");\n",
+        " * you may not use this file except in compliance with the License.\n",
+        " * You may obtain a copy of the License at\n",
+        " *\n",
+        " *      http://www.apache.org/licenses/LICENSE-2.0\n",
+        " *\n",
+        " * Unless required by applicable law or agreed to in writing, software\n",
+        " * distributed under the License is distributed on an \"AS IS\" BASIS,\n",
+        " * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n",
+        " * See the License for the specific language governing permissions and\n",
+        " * limitations under the License.\n",
+        " */\n",
+    );
+
+    fn inherited_license_proof(source: &str) -> Result<Value> {
+        let pin = PINS
+            .iter()
+            .find(|pin| pin.0 == source)
+            .context("license source pin")?;
+        let (
+            path,
+            ordinal,
+            record_hash,
+            inventory_bytes,
+            inventory_hash,
+            compressed_bytes,
+            compressed_hash,
+        ) = match source {
+            "base" => (
+                "apkparser/binary-resources/LICENSE",
+                991_u64,
+                "ca47f0e5e51049ce22c8d17dfb8539fe7108c60187b09cce11854540ca73b4ab",
+                11_234_145_u64,
+                "c30bd69ecc3391916bbc97b6a2deb801ad108fb598b003262f35e77ea444df34",
+                1_295_243_u64,
+                "67645f1b568eababc853798f02fb52e1674b6030f9aec638f7659d8a292dcfad",
+            ),
+            "idea" => (
+                "aswb/LICENSE",
+                56_599_u64,
+                "ec59cf331ea5a8558f3eda6e309c307d56a1889c73e92109558b4e08b0f0a001",
+                29_442_713_u64,
+                "425511c489f57e32065c185441007ba8d9656521c7e2df4fe8e25e58988a9d0d",
+                3_286_690_u64,
+                "c2f5ec02bf26d5254322b284eb67cfd797058679a30958a5dde22f5858632f9a",
+            ),
+            _ => bail!("no inherited license proof for this original source"),
+        };
+        Ok(json!({
+            "source": source,
+            "repository": pin.2,
+            "revision": pin.1,
+            "archive_sha256": pin.3,
+            "original_license_path": path,
+            "member_record_ordinal": ordinal,
+            "member_record_sha256": record_hash,
+            "members_inventory": {
+                "file": {"path": format!("{source}-members.jsonl.gz"), "bytes": compressed_bytes, "sha256": compressed_hash},
+                "decompressed_bytes": inventory_bytes,
+                "decompressed_sha256": inventory_hash,
+            },
+            "fixture": {
+                "path": "../reference_declarations/LICENSE-APACHE-2.0.txt",
+                "bytes": 11_358,
+                "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+            },
+            "scope": "Canonical repository Apache-2.0 declaration; full license text matches a pinned repository member. The license member's module is evidence of the text, not a claim of module-wide scope over another directory.",
+        }))
+    }
+
+    fn verify_original_license_attribution(
+        root: &Path,
+        sources: &[MatrixSource],
+        original: &Value,
+        bytes: &[u8],
+    ) -> Result<()> {
+        let source = original["source"].as_str().context("attribution source")?;
+        let path = original["path"].as_str().context("attribution path")?;
+        let expected = ORIGINAL_ATTRIBUTION_BINDINGS
+            .iter()
+            .find(|expected| expected.0 == source && expected.1 == path)
+            .context("no exact pinned original attribution identity")?;
+        let pin = PINS
+            .iter()
+            .find(|pin| pin.0 == source)
+            .context("attribution pin")?;
+        let canonical = sources
+            .iter()
+            .find(|candidate| candidate.id == source)
+            .context("canonical attribution source")?;
+        ensure!(
+            canonical.repository == pin.2
+                && canonical.revision == pin.1
+                && canonical.archive.sha256 == pin.3
+                && canonical.license == "Apache-2.0",
+            "canonical inherited repository license or origin changed"
+        );
+        ensure!(
+            original["revision"] == pin.1
+                && original["bytes"] == expected.2
+                && original["sha256"] == expected.3,
+            "exact original attribution revision, length or hash changed"
+        );
+        let attribution = &original["attribution"];
+        ensure!(
+            attribution["repository"] == pin.2 && attribution["license"] == "Apache-2.0",
+            "original attribution repository or license changed"
+        );
+        match (source, path) {
+            ("base", "testutils/BUILD") | ("idea", "project-system-gradle-sync/BUILD") => {
+                ensure!(
+                    attribution["mode"] == "inherited_repository_license",
+                    "headerless pinned original requires inherited license attribution"
+                );
+                let expected_proof = inherited_license_proof(source)?;
+                ensure!(
+                    attribution["license_proof"] == expected_proof,
+                    "missing or incorrect pinned inherited license proof"
+                );
+                let binding: Binding = serde_json::from_value(expected_proof["fixture"].clone())?;
+                let license_bytes =
+                    bound_bytes(&root.join(&binding.path), &binding, MAX_RECORD_BYTES as u64)?;
+                ensure!(
+                    license_bytes
+                        .starts_with(b"\n                                 Apache License\n"),
+                    "inherited license text is not the complete pinned Apache license"
+                );
+            }
+            _ => {
+                ensure!(
+                    attribution["mode"] == "retained_aosp_header"
+                        && attribution["license_proof"].is_null(),
+                    "only the two exact pinned headerless originals may inherit attribution"
+                );
+                let text = std::str::from_utf8(bytes)?;
+                let header = text
+                    .strip_prefix("/*\n * Copyright (C) ")
+                    .and_then(|header| header.split_once(" The Android Open Source Project\n"));
+                let complete_header = header.is_some_and(|(year, remainder)| {
+                    year.len() == 4
+                        && year.bytes().all(|byte| byte.is_ascii_digit())
+                        && remainder.starts_with(COMPLETE_AOSP_LICENSE_HEADER)
+                });
+                ensure!(
+                    complete_header,
+                    "complete AOSP copyright and license header is missing"
+                );
+            }
+        }
+        ensure!(
+            bytes.len() as u64 == expected.2 && digest(bytes) == expected.3,
+            "complete original bytes changed during attribution verification"
+        );
+        Ok(())
+    }
+
     #[test]
     fn complete_original_sources_and_scanner_slices_keep_exact_hashes_and_attribution() -> Result<()>
     {
@@ -2251,16 +2514,24 @@ mod tests {
             .context("original provenance")?;
         assert_eq!(originals.len(), 17);
         assert_eq!(provenance["original_behavior_credit"], 0);
+        let matrix: Matrix = serde_json::from_slice(include_bytes!(
+            "../../../../docs/android-studio/reference-manifest.json"
+        ))?;
+        let mut identities = BTreeSet::new();
         for original in originals {
             let source = original["source"].as_str().context("source")?;
             let path = original["path"].as_str().context("path")?;
+            assert!(
+                identities.insert((source, path)),
+                "duplicate complete original attribution"
+            );
             let binding = Binding {
                 path: format!("sources/{source}/{path}"),
                 bytes: original["bytes"].as_u64().context("bytes")?,
                 sha256: original["sha256"].as_str().context("hash")?.to_owned(),
             };
             let bytes = bound_bytes(&root.join(&binding.path), &binding, MAX_RECORD_BYTES as u64)?;
-            assert!(std::str::from_utf8(&bytes)?.contains("Licensed under the Apache License"));
+            verify_original_license_attribution(&root, &matrix.sources, original, &bytes)?;
         }
         assert_eq!(
             digest(include_bytes!(
@@ -2295,6 +2566,206 @@ mod tests {
             );
             assert_eq!(physical_state(&file.metadata()?), state);
         }
+        Ok(())
+    }
+
+    #[test]
+    fn original_attribution_rejects_missing_license_wrong_origin_and_removed_headers() -> Result<()>
+    {
+        let root =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test_data/reference_obligations");
+        let provenance: Value = serde_json::from_slice(include_bytes!(
+            "../../test_data/reference_obligations/provenance.json"
+        ))?;
+        let matrix: Matrix = serde_json::from_slice(include_bytes!(
+            "../../../../docs/android-studio/reference-manifest.json"
+        ))?;
+        let originals = provenance["original_sources"]
+            .as_array()
+            .context("attribution originals")?;
+        for (source, path) in [
+            ("base", "testutils/BUILD"),
+            ("idea", "project-system-gradle-sync/BUILD"),
+        ] {
+            let original = originals
+                .iter()
+                .find(|original| original["source"] == source && original["path"] == path)
+                .context("headerless pinned original")?;
+            let binding = Binding {
+                path: format!("sources/{source}/{path}"),
+                bytes: original["bytes"].as_u64().context("original bytes")?,
+                sha256: original["sha256"]
+                    .as_str()
+                    .context("original hash")?
+                    .to_owned(),
+            };
+            let bytes = bound_bytes(&root.join(&binding.path), &binding, MAX_RECORD_BYTES as u64)?;
+            verify_original_license_attribution(&root, &matrix.sources, original, &bytes)?;
+
+            let mut missing_proof = original.clone();
+            missing_proof["attribution"]
+                .as_object_mut()
+                .context("attribution object")?
+                .remove("license_proof");
+            assert!(
+                verify_original_license_attribution(&root, &matrix.sources, &missing_proof, &bytes)
+                    .is_err()
+            );
+            let mut wrong_license_hash = original.clone();
+            wrong_license_hash["attribution"]["license_proof"]["fixture"]["sha256"] =
+                json!("0".repeat(64));
+            assert!(
+                verify_original_license_attribution(
+                    &root,
+                    &matrix.sources,
+                    &wrong_license_hash,
+                    &bytes
+                )
+                .is_err()
+            );
+            let mut wrong_license_revision = original.clone();
+            wrong_license_revision["attribution"]["license_proof"]["revision"] =
+                json!("0".repeat(40));
+            assert!(
+                verify_original_license_attribution(
+                    &root,
+                    &matrix.sources,
+                    &wrong_license_revision,
+                    &bytes
+                )
+                .is_err()
+            );
+            let mut wrong_original_hash = original.clone();
+            wrong_original_hash["sha256"] = json!("0".repeat(64));
+            assert!(
+                verify_original_license_attribution(
+                    &root,
+                    &matrix.sources,
+                    &wrong_original_hash,
+                    &bytes
+                )
+                .is_err()
+            );
+            let mut unrelated_build = original.clone();
+            unrelated_build["path"] = json!("another-module/BUILD");
+            assert!(
+                verify_original_license_attribution(
+                    &root,
+                    &matrix.sources,
+                    &unrelated_build,
+                    &bytes
+                )
+                .is_err()
+            );
+
+            let temporary = TempDir::new()?;
+            let missing_license_root = temporary.path().join("reference_obligations");
+            fs::create_dir_all(&missing_license_root)?;
+            assert!(
+                verify_original_license_attribution(
+                    &missing_license_root,
+                    &matrix.sources,
+                    original,
+                    &bytes
+                )
+                .is_err()
+            );
+            let mut corrupt_license =
+                include_bytes!("../../test_data/reference_declarations/LICENSE-APACHE-2.0.txt")
+                    .to_vec();
+            *corrupt_license.first_mut().context("full license bytes")? = b'X';
+            write_binding(
+                &temporary.path().join("reference_declarations"),
+                "LICENSE-APACHE-2.0.txt",
+                &corrupt_license,
+            )?;
+            assert!(
+                verify_original_license_attribution(
+                    &missing_license_root,
+                    &matrix.sources,
+                    original,
+                    &bytes
+                )
+                .is_err()
+            );
+        }
+
+        let original = originals
+            .iter()
+            .find(|original| {
+                original["source"] == "base"
+                    && original["path"]
+                        == "testutils/src/main/java/com/android/testutils/JarTestSuiteRunner.java"
+            })
+            .context("header-bearing original")?;
+        let binding = Binding {
+            path: format!(
+                "sources/base/{}",
+                original["path"].as_str().context("original path")?
+            ),
+            bytes: original["bytes"].as_u64().context("original bytes")?,
+            sha256: original["sha256"]
+                .as_str()
+                .context("original hash")?
+                .to_owned(),
+        };
+        let bytes = bound_bytes(&root.join(&binding.path), &binding, MAX_RECORD_BYTES as u64)?;
+        verify_original_license_attribution(&root, &matrix.sources, original, &bytes)?;
+        let text = std::str::from_utf8(&bytes)?;
+        let header_end = text.find(" */\n").context("complete original header")? + " */\n".len();
+        let missing_header = verify_original_license_attribution(
+            &root,
+            &matrix.sources,
+            original,
+            &bytes[header_end..],
+        )
+        .err()
+        .context("removed original header must fail")?;
+        assert!(
+            missing_header
+                .to_string()
+                .contains("complete AOSP copyright and license header")
+        );
+        let incomplete_header = text.replacen(" * limitations under the License.\n", "", 1);
+        assert!(incomplete_header.contains("Licensed under the Apache License"));
+        let truncated_header = verify_original_license_attribution(
+            &root,
+            &matrix.sources,
+            original,
+            incomplete_header.as_bytes(),
+        )
+        .err()
+        .context("incomplete original header must fail")?;
+        assert!(
+            truncated_header
+                .to_string()
+                .contains("complete AOSP copyright and license header")
+        );
+        let mut forged_header_exemption = original.clone();
+        forged_header_exemption["attribution"]["mode"] = json!("inherited_repository_license");
+        forged_header_exemption["attribution"]["license_proof"] = inherited_license_proof("base")?;
+        assert!(
+            verify_original_license_attribution(
+                &root,
+                &matrix.sources,
+                &forged_header_exemption,
+                &bytes
+            )
+            .is_err()
+        );
+        let mut wrong_canonical: Matrix = serde_json::from_slice(include_bytes!(
+            "../../../../docs/android-studio/reference-manifest.json"
+        ))?;
+        wrong_canonical
+            .sources
+            .iter_mut()
+            .find(|source| source.id == "base")
+            .context("canonical base source")?
+            .license = "wrong-license".to_owned();
+        assert!(
+            verify_original_license_attribution(&root, &wrong_canonical.sources, original, &bytes)
+                .is_err()
+        );
         Ok(())
     }
 
