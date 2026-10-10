@@ -1208,11 +1208,19 @@ fn decode_response_monitored(
         offset: usize,
         checked_at: usize,
         monitor: F,
+        failure: Option<anyhow::Error>,
     }
     impl<F: FnMut() -> Result<()>> Read for MonitoredBytes<'_, F> {
         fn read(&mut self, output: &mut [u8]) -> std::io::Result<usize> {
+            // Deserializer error recovery can read again after a failed health check.
+            if self.failure.is_some() {
+                return Err(std::io::Error::other("Response decoder monitoring failed"));
+            }
             if self.offset == 0 || self.offset - self.checked_at >= 64 * 1024 {
-                (self.monitor)().map_err(std::io::Error::other)?;
+                if let Err(error) = (self.monitor)() {
+                    self.failure = Some(error);
+                    return Err(std::io::Error::other("Response decoder monitoring failed"));
+                }
                 self.checked_at = self.offset;
             }
             let remaining = self
@@ -1228,13 +1236,18 @@ fn decode_response_monitored(
             Ok(length)
         }
     }
-    let response = serde_json::from_reader(MonitoredBytes {
+    let mut reader = MonitoredBytes {
         bytes,
         offset: 0,
         checked_at: 0,
         monitor: &mut *monitor,
-    })
-    .context("Decode owned getter response frame")?;
+        failure: None,
+    };
+    let response = serde_json::from_reader(&mut reader);
+    if let Some(error) = reader.failure {
+        return Err(error).context("Decode owned getter response frame");
+    }
+    let response = response.context("Decode owned getter response frame")?;
     monitor()?;
     Ok(response)
 }
@@ -4737,6 +4750,40 @@ mod tests {
                 .contains_key(&("positive-return".into(), "controlled.AbsentTarget".into()))
         );
         assert!(capture.events.is_empty());
+        Ok(())
+    }
+
+    #[test]
+    fn response_decoding_retains_one_shot_monitor_failure_without_retrying() -> Result<()> {
+        let bytes = serde_json::to_vec(&Response::Hello("x".repeat(3 * 64 * 1024)))?;
+        let scanning_checks = bytes.len().div_ceil(64 * 1024);
+        for decoding_check in [1, 2] {
+            let mut checks = 0;
+            let fail_at = scanning_checks + decoding_check;
+            let error = decode_response_monitored(&bytes, &mut || {
+                checks += 1;
+                if checks == fail_at {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::PermissionDenied,
+                        "One-shot decoder health failure",
+                    )
+                    .into());
+                }
+                Ok(())
+            })
+            .err()
+            .context("A one-shot monitoring failure must stop decoding")?;
+            assert_eq!(checks, fail_at);
+            assert!(format!("{error:#}").contains("One-shot decoder health failure"));
+            assert!(format!("{error:#}").contains("Decode owned getter response frame"));
+            assert_eq!(
+                error
+                    .downcast_ref::<std::io::Error>()
+                    .context("Original typed monitor error")?
+                    .kind(),
+                std::io::ErrorKind::PermissionDenied
+            );
+        }
         Ok(())
     }
 }
