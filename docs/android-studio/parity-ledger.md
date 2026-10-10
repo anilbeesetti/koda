@@ -8,6 +8,29 @@ eight inspected `DefaultVariantsTest` methods, all `unported/not_run`. That
 historical seed is preserved separately for validator regression tests. Archive
 file totals must never be presented as reference-test totals.
 
+The project-context accounting update adds the inspected
+`NonComposeProjectTest` declaration, `compose preview not available`. The current
+matrix now contains **96 identified entries: 20 ported, 16 adapted and 60
+unported**, across ten inspected suite scopes. Its 36 passing statuses are
+existing recorded evidence; they do not verify the project-context changes or the
+preview provider. The exhaustive baseline total and effective runtime description
+of the added declaration remain unresolved. Global census completeness stays
+false.
+
+The preview row remains `unported/not_run`, with no Rust mapping or run evidence.
+The Rust preview-availability candidate and a Compose-enabled positive control
+must execute through the production provider under the normal bundled feature
+graph before it receives port credit. The original source is
+`compose-designer/testSrc/com/android/tools/idea/compose/preview/NonComposeProjectTest.kt`
+at AOSP `tools/adt/idea` revision
+`a84efec3ba9542d9bfa1255103f0dc94833a3796`, SHA-256
+`654e78faad5c7b16e172d1f4c276d8e699c9f7a7c0bb7918a648d90ef93a7006`.
+The unchanged copy in
+`crates/android_ui/test_data/project_context/NonComposeProjectTest.kt` retains
+Copyright (C) 2020 The Android Open Source Project and its Apache 2.0 header. The
+method creates `Main.kt` from an inline string and has no external project fixture
+files. The earlier foundation counts below describe historical checkpoints.
+
 The inspected foundation slice catalogs eight `DefaultVariantsTest` methods,
 nine `GradleModuleImportTest` methods, fourteen `AndroidProjectViewTest`
 methods, three selected model-sync methods, one separate resource-conversion
