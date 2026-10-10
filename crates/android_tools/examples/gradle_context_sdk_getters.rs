@@ -4,9 +4,10 @@ use android_tools::project_context::{
 use anyhow::{Context as _, Result, ensure};
 use serde_json::{Value, json};
 use std::{
+    borrow::Cow,
     fs::{self, File, OpenOptions},
     io::{Read as _, Write as _},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 const MAX_LOG_BYTES: u64 = 16 * 1024 * 1024;
@@ -109,8 +110,39 @@ fn read_bounded(path: &Path) -> Result<String> {
     Ok(String::from_utf8(contents)?)
 }
 
+fn ordinary_windows_canonical_path(path: &str) -> Cow<'_, str> {
+    let Some(verbatim) = path.strip_prefix(r"\\?\") else {
+        return Cow::Borrowed(path);
+    };
+    if let Some(unc) = verbatim.strip_prefix(r"UNC\") {
+        if unc.split_once('\\').is_some_and(|(server, share)| {
+            !server.is_empty() && !share.is_empty() && !share.starts_with('\\')
+        }) {
+            return Cow::Owned(format!(r"\\{unc}"));
+        }
+    } else if verbatim
+        .as_bytes()
+        .first()
+        .is_some_and(u8::is_ascii_alphabetic)
+        && verbatim.as_bytes().get(1) == Some(&b':')
+        && verbatim.as_bytes().get(2) == Some(&b'\\')
+    {
+        return Cow::Borrowed(verbatim);
+    }
+    Cow::Borrowed(path)
+}
+
+fn gradle_canonical_root(path: &Path) -> PathBuf {
+    let Some(path_text) = path.to_str() else {
+        return path.to_path_buf();
+    };
+    // Java emits ordinary drive/UNC paths while Rust canonicalizes Windows
+    // paths with a verbatim prefix. Keep the independently resolved owner.
+    PathBuf::from(ordinary_windows_canonical_path(path_text).as_ref())
+}
+
 fn verify(output: &Path) -> Result<()> {
-    let root = output.join("project").canonicalize()?;
+    let root = gradle_canonical_root(&output.join("project").canonicalize()?);
     let mut reports = Vec::new();
     for (name, getter, failure, version) in CASES {
         ensure!(
@@ -257,5 +289,69 @@ fn main() -> Result<()> {
         Some("prepare") => prepare(output),
         Some("verify") => verify(output),
         _ => anyhow::bail!("Expected prepare or verify"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::gradle_canonical_root;
+    use std::path::{Path, PathBuf};
+
+    #[test]
+    fn canonical_drive_roots_match_gradles_ordinary_spelling() {
+        for (canonical, ordinary) in [
+            (r"\\?\C:\", r"C:\"),
+            (r"\\?\c:\projects\fixture", r"c:\projects\fixture"),
+            (r"\\?\D:\项目\café\🦀", r"D:\项目\café\🦀"),
+        ] {
+            assert_eq!(
+                gradle_canonical_root(Path::new(canonical)),
+                PathBuf::from(ordinary)
+            );
+        }
+    }
+
+    #[test]
+    fn canonical_unc_roots_match_gradles_ordinary_spelling() {
+        for (canonical, ordinary) in [
+            (r"\\?\UNC\server\share", r"\\server\share"),
+            (r"\\?\UNC\server\share\", r"\\server\share\"),
+            (
+                r"\\?\UNC\服务器\共有\项目\café\🦀",
+                r"\\服务器\共有\项目\café\🦀",
+            ),
+        ] {
+            assert_eq!(
+                gradle_canonical_root(Path::new(canonical)),
+                PathBuf::from(ordinary)
+            );
+        }
+    }
+
+    #[test]
+    fn ordinary_roots_and_other_windows_namespaces_keep_their_spelling() {
+        for ordinary in [
+            "/tmp/项目/café/🦀",
+            r"C:\projects\fixture",
+            r"\\服务器\共有\项目",
+            r"\\?\Volume{identifier}\fixture",
+            r"\\.\device",
+            r"\\?\C:relative",
+            r"\\?\UNC\server",
+            r"\\?\UNC\\share",
+        ] {
+            assert_eq!(
+                gradle_canonical_root(Path::new(ordinary)),
+                PathBuf::from(ordinary)
+            );
+        }
+    }
+
+    #[test]
+    fn normalization_is_idempotent_for_drive_unc_and_unicode_roots() {
+        for canonical in [r"\\?\C:\项目", r"\\?\UNC\server\share\café", "/tmp/🦀"] {
+            let normalized = gradle_canonical_root(Path::new(canonical));
+            assert_eq!(gradle_canonical_root(&normalized), normalized);
+        }
     }
 }
