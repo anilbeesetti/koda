@@ -43,6 +43,25 @@ const MAX_PROCESS_LOG_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_ARCHIVE_LOG_BYTES: u64 = 128 * 1024 * 1024;
 const MAX_DRAIN_LOG_BYTES: u64 = 8 * 1024 * 1024;
 const MAX_RECEIPT_BYTES: usize = 2 * 1024 * 1024;
+const CLASSPATH_LINUX_TESTS: [&str; 17] = [
+    "test_valid_absolute_path",
+    "test_valid_relative_path",
+    "continuation_escapes_parent_paths_order_and_duplicates",
+    "missing_files_keep_order_and_upstream_diagnostics",
+    "missing_wrapper_and_missing_manifest_return_empty",
+    "main_attributes_ignore_named_class_path_and_last_duplicate_wins",
+    "malformed_manifest_and_uri_references_fail_explicitly",
+    "malformed_zip_and_archive_entry_limits_fail_before_manifest_intake",
+    "decoded_compressed_line_attribute_and_reference_limits_fail",
+    "huge_classic_and_zip64_counts_are_rejected_before_directory_allocation",
+    "oversized_declared_manifest_is_rejected_before_decoding",
+    "utf8_continuation_bytes_are_joined_before_decoding",
+    "percent_encoded_dot_segments_preserve_java_uri_resolution",
+    "empty_uri_authority_is_separate_from_the_native_path",
+    "windows_drive_and_unc_uri_paths_have_native_spellings",
+    "archive_growth_is_rejected_while_snapshotting",
+    "archive_mutation_after_preflight_cannot_change_the_immutable_parser_input",
+];
 
 #[derive(Parser)]
 pub struct AndroidReferenceRunsArgs {
@@ -98,6 +117,7 @@ struct Case {
     reference_id: String,
     package: String,
     integration_target: Option<String>,
+    binary_target: Option<String>,
     fully_qualified_name: String,
     manifest: Binding,
     source: Binding,
@@ -176,6 +196,8 @@ struct CaseProof {
 struct GroupProof {
     package: String,
     integration_target: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    binary_target: Option<String>,
     error: Option<String>,
     compilation: Option<ProcessProof>,
     artifact: Option<ArtifactProof>,
@@ -195,8 +217,17 @@ struct Report {
     source_after: Option<CheckoutProof>,
     source_error: Option<String>,
     groups: Vec<GroupProof>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    checks: Vec<CheckProof>,
     cases: Vec<CaseProof>,
     no_reference_credit_added: bool,
+}
+
+#[derive(Serialize)]
+struct CheckProof {
+    name: String,
+    error: Option<String>,
+    process: Option<ProcessProof>,
 }
 
 fn digest(bytes: &[u8]) -> String {
@@ -284,9 +315,10 @@ fn planned_argv(case: &Case) -> Vec<String> {
         "-p".to_owned(),
         case.package.clone(),
     ];
-    match &case.integration_target {
-        Some(target) => arguments.extend(["--test".to_owned(), target.clone()]),
-        None => arguments.push("--lib".to_owned()),
+    match (&case.integration_target, &case.binary_target) {
+        (Some(target), _) => arguments.extend(["--test".to_owned(), target.clone()]),
+        (None, Some(target)) => arguments.extend(["--bin".to_owned(), target.clone()]),
+        (None, None) => arguments.push("--lib".to_owned()),
     }
     arguments.extend([
         case.fully_qualified_name.clone(),
@@ -305,8 +337,8 @@ fn validate_manifest(manifest: &Manifest) -> Result<()> {
         "execution-only schema required"
     );
     ensure!(
-        manifest.sources.len() == 2,
-        "both finite source groups required"
+        manifest.sources.len() == 2 || manifest.sources.len() == 1,
+        "original forty-case or separate two-case manifest required"
     );
     let mut labels = BTreeSet::new();
     for source in &manifest.sources {
@@ -324,6 +356,11 @@ fn validate_manifest(manifest: &Manifest) -> Result<()> {
                 "0d155a5fb869df3f10837db92e252e946687f7ae",
                 "c5306d1dc5714e629eb0dd658fd230f77af84f52",
                 4,
+            ),
+            "classpath2" => (
+                "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+                "7c1a872c64a32c576d9f580b01ed6f223cf82435",
+                2,
             ),
             _ => bail!("unknown source group"),
         };
@@ -345,6 +382,7 @@ fn validate_manifest(manifest: &Manifest) -> Result<()> {
                 names.insert((
                     &case.package,
                     &case.integration_target,
+                    &case.binary_target,
                     &case.fully_qualified_name
                 )) && references.insert(&case.reference_id),
                 "duplicate case/reference binding"
@@ -365,8 +403,20 @@ fn validate_manifest(manifest: &Manifest) -> Result<()> {
                 "Cargo argv differs from exact normal test command"
             );
             ensure!(
-                matches!(case.package.as_str(), "android_tools" | "android_ui"),
-                "unexpected package"
+                if source.label == "classpath2" {
+                    case.package == "xtask"
+                        && case.integration_target.is_none()
+                        && case.binary_target.as_deref() == Some("xtask")
+                        && matches!(
+                            case.fully_qualified_name.as_str(),
+                            "tasks::android_reference_classpath::tests::test_valid_absolute_path"
+                                | "tasks::android_reference_classpath::tests::test_valid_relative_path"
+                        )
+                } else {
+                    matches!(case.package.as_str(), "android_tools" | "android_ui")
+                        && case.binary_target.is_none()
+                },
+                "unexpected package, selector, or classpath reference name"
             );
             ensure!(
                 case.fully_qualified_name
@@ -393,6 +443,11 @@ fn validate_manifest(manifest: &Manifest) -> Result<()> {
             }
         }
     }
+    ensure!(
+        labels == BTreeSet::from(["primary36", "table4"])
+            || labels == BTreeSet::from(["classpath2"]),
+        "manifest must retain both original groups or the separate classpath pair"
+    );
     Ok(())
 }
 
@@ -855,9 +910,17 @@ fn expected_target_source(checkout: &Path, case: &Case) -> Result<PathBuf> {
     let directory = manifest_path
         .parent()
         .context("manifest directory missing")?;
-    let path = match &case.integration_target {
-        Some(target) => directory.join("tests").join(format!("{target}.rs")),
-        None => {
+    let path = match (&case.integration_target, &case.binary_target) {
+        (Some(_), Some(_)) => bail!("integration and binary selectors cannot be combined"),
+        (Some(target), None) => directory.join("tests").join(format!("{target}.rs")),
+        (None, Some(target)) => {
+            ensure!(
+                case.package == "xtask" && target == "xtask",
+                "unsupported binary target"
+            );
+            directory.join("src/main.rs")
+        }
+        (None, None) => {
             let manifest: toml::Value = toml::from_str(&fs::read_to_string(&manifest_path)?)?;
             directory.join(
                 manifest
@@ -879,9 +942,15 @@ fn compiler_artifact(
 ) -> Result<ArtifactProof> {
     let expected_manifest = checkout.join(&case.manifest.path).canonicalize()?;
     let expected_source = expected_target_source(checkout, case)?;
-    let expected_name = case.integration_target.as_deref().unwrap_or(&case.package);
+    let expected_name = case
+        .integration_target
+        .as_deref()
+        .or(case.binary_target.as_deref())
+        .unwrap_or(&case.package);
     let expected_kind = if case.integration_target.is_some() {
         "test"
+    } else if case.binary_target.is_some() {
+        "bin"
     } else {
         "lib"
     };
@@ -920,6 +989,12 @@ fn compiler_artifact(
                 && value["profile"]["debug_assertions"].as_bool() == Some(true),
             "selected artifact is not normal dev test profile"
         );
+        if case.binary_target.is_some() {
+            ensure!(
+                value["features"].as_array().is_some_and(Vec::is_empty),
+                "xtask named binary requires its normal default feature set"
+            );
+        }
         let executable = PathBuf::from(
             value["executable"]
                 .as_str()
@@ -1082,6 +1157,178 @@ fn prepare_directories(
     Ok((target, output))
 }
 
+fn verify_unfiltered_xtask(text: &str) -> Result<()> {
+    let selected = Regex::new(r"^running ([0-9]+) tests?$")?;
+    let summary = Regex::new(
+        r"^test result: ok\. ([0-9]+) passed; 0 failed; 0 ignored; 0 measured; 0 filtered out;.*$",
+    )?;
+    let selected: Vec<_> = text
+        .lines()
+        .filter_map(|line| selected.captures(line))
+        .collect();
+    let summaries: Vec<_> = text
+        .lines()
+        .filter_map(|line| summary.captures(line))
+        .collect();
+    ensure!(
+        selected.len() == 1 && summaries.len() == 1,
+        "one unfiltered xtask run required"
+    );
+    let count = |capture: &regex::Captures<'_>| -> Result<usize> {
+        Ok(capture
+            .get(1)
+            .context("test count missing")?
+            .as_str()
+            .parse()?)
+    };
+    let selected = count(selected.first().context("selected count missing")?)?;
+    ensure!(
+        selected > 0 && selected == count(summaries.first().context("summary missing")?)?,
+        "unfiltered xtask tests did not all pass"
+    );
+    let passed = Regex::new(r"^test ([A-Za-z0-9_:]+) \.\.\. ok$")?;
+    let names: Vec<_> = text
+        .lines()
+        .filter_map(|line| passed.captures(line))
+        .filter_map(|capture| capture.get(1).map(|name| name.as_str()))
+        .collect();
+    ensure!(
+        names.len() == selected && names.iter().collect::<BTreeSet<_>>().len() == selected,
+        "passing test names missing or duplicated"
+    );
+    for name in CLASSPATH_LINUX_TESTS {
+        let expected = format!("tasks::android_reference_classpath::tests::{name}");
+        ensure!(
+            names.contains(&expected.as_str()),
+            "required Linux classpath test missing: {name}"
+        );
+    }
+    Ok(())
+}
+
+fn verify_classpath_help(text: &str) -> Result<()> {
+    ensure!(
+        text.contains("Usage: cargo xtask android-reference-class-path"),
+        "wrong classpath CLI help"
+    );
+    for option in [
+        "--jar",
+        "--max-archive-bytes",
+        "--max-manifest-bytes",
+        "--max-archive-entries",
+        "--max-references",
+    ] {
+        ensure!(
+            text.contains(option),
+            "classpath CLI option missing: {option}"
+        );
+    }
+    Ok(())
+}
+
+fn run_classpath_checks(
+    checkout: &Path,
+    named_target: &Path,
+    output: &Path,
+    total_bytes: &AtomicU64,
+    report: &mut Report,
+) -> Result<()> {
+    // Whole-unit and strict checks must not make the separate named compiler artifact Fresh.
+    let name = named_target
+        .file_name()
+        .context("named target filename missing")?
+        .to_str()
+        .context("named target filename is not UTF-8")?;
+    let target = named_target.with_file_name(format!("{name}-checks"));
+    ensure!(
+        !target.exists(),
+        "source checks target must be fresh and absent"
+    );
+    fs::create_dir(&target)?;
+    for (name, arguments, seconds) in [
+        (
+            "format",
+            vec!["cargo", "fmt", "--all", "--", "--check"],
+            300,
+        ),
+        (
+            "strict",
+            vec!["./script/clippy", "--locked", "-p", "xtask"],
+            1800,
+        ),
+        (
+            "whole-xtask",
+            vec![
+                "cargo",
+                "test",
+                "--locked",
+                "-p",
+                "xtask",
+                "--",
+                "--show-output",
+            ],
+            1200,
+        ),
+        (
+            "classpath-help",
+            vec![
+                "cargo",
+                "run",
+                "--locked",
+                "-p",
+                "xtask",
+                "--",
+                "android-reference-class-path",
+                "--help",
+            ],
+            600,
+        ),
+    ] {
+        let arguments: Vec<_> = arguments.into_iter().map(str::to_owned).collect();
+        let mut check = CheckProof {
+            name: name.to_owned(),
+            error: None,
+            process: None,
+        };
+        let result = execute(
+            checkout,
+            &target,
+            output,
+            &format!("check-{name}"),
+            &arguments,
+            Duration::from_secs(seconds),
+            total_bytes,
+        )
+        .and_then(|process| {
+            check.process = Some(process);
+            let process = check
+                .process
+                .as_ref()
+                .context("source check process missing")?;
+            ensure!(
+                process.success
+                    && process.stdout_eof
+                    && process.stderr_eof
+                    && process.leader_reaped,
+                "source check failed or was interrupted"
+            );
+            let stdout = verify_log(output, &process.stdout)?;
+            verify_log(output, &process.stderr)?;
+            match name {
+                "whole-xtask" => verify_unfiltered_xtask(std::str::from_utf8(&stdout)?),
+                "classpath-help" => verify_classpath_help(std::str::from_utf8(&stdout)?),
+                _ => Ok(()),
+            }
+        });
+        if let Err(error) = result {
+            check.error = Some(format!("{error:#}"));
+        }
+        report.checks.push(check);
+        write_report(output, report)?;
+    }
+    Ok(())
+}
+
 pub fn run(args: AndroidReferenceRunsArgs) -> Result<()> {
     ensure!(
         cfg!(target_os = "linux"),
@@ -1128,6 +1375,7 @@ pub fn run(args: AndroidReferenceRunsArgs) -> Result<()> {
         source_after: None,
         source_error: None,
         groups: Vec::new(),
+        checks: Vec::new(),
         cases: source
             .cases
             .iter()
@@ -1153,20 +1401,30 @@ pub fn run(args: AndroidReferenceRunsArgs) -> Result<()> {
             return Err(error);
         }
     }
-    let mut groups: BTreeMap<(&str, Option<&str>), Vec<usize>> = BTreeMap::new();
+    let total_bytes = AtomicU64::new(0);
+    if source.label == "classpath2" {
+        run_classpath_checks(&checkout, &target, &output, &total_bytes, &mut report)?;
+    }
+    let mut groups: BTreeMap<(&str, Option<&str>, Option<&str>), Vec<usize>> = BTreeMap::new();
     for (index, case) in source.cases.iter().enumerate() {
         groups
-            .entry((&case.package, case.integration_target.as_deref()))
+            .entry((
+                &case.package,
+                case.integration_target.as_deref(),
+                case.binary_target.as_deref(),
+            ))
             .or_default()
             .push(index);
     }
-    let total_bytes = AtomicU64::new(0);
-    for (group_index, ((package, integration_target), indexes)) in groups.into_iter().enumerate() {
+    for (group_index, ((package, integration_target, binary_target), indexes)) in
+        groups.into_iter().enumerate()
+    {
         let first = *indexes.first().context("empty compile group")?;
         let case = source.cases.get(first).context("group case missing")?;
         let mut group = GroupProof {
             package: package.to_owned(),
             integration_target: integration_target.map(str::to_owned),
+            binary_target: binary_target.map(str::to_owned),
             error: None,
             compilation: None,
             artifact: None,
@@ -1260,6 +1518,7 @@ pub fn run(args: AndroidReferenceRunsArgs) -> Result<()> {
         .count();
     let success = passed == source.case_count
         && report.source_error.is_none()
+        && report.checks.iter().all(|check| check.error.is_none())
         && total_bytes.load(Ordering::Relaxed) <= MAX_ARCHIVE_LOG_BYTES;
     report.status = if success { "PASS" } else { "FAIL" }.to_owned();
     write_report(&output, &report)?;
@@ -1407,6 +1666,194 @@ mod tests {
                 );
                 assert!(!argv.contains(&case.fully_qualified_name));
             }
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn separate_classpath_manifest_selects_two_exact_xtask_binary_cases() -> Result<()> {
+        let manifest: Manifest = serde_json::from_slice(include_bytes!(
+            "../../../docs/android-studio/reference-classpath-named-tests.json"
+        ))?;
+        validate_manifest(&manifest)?;
+        assert_eq!(manifest.sources.len(), 1);
+        let source = manifest
+            .sources
+            .first()
+            .context("classpath source missing")?;
+        assert_eq!(source.cases.len(), 2);
+        for case in &source.cases {
+            assert_eq!(case.binary_target.as_deref(), Some("xtask"));
+            assert!(case.integration_target.is_none());
+            let argv = compile_argv(case);
+            assert!(argv.windows(2).any(|pair| pair == ["--bin", "xtask"]));
+            assert!(!argv.contains(&"--lib".to_owned()));
+            assert!(!argv.contains(&case.fully_qualified_name));
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn rejects_mixed_or_missing_binary_selectors_and_partial_original_groups() -> Result<()> {
+        let value: Value = serde_json::from_slice(include_bytes!(
+            "../../../docs/android-studio/reference-classpath-named-tests.json"
+        ))?;
+        for (pointer, replacement) in [
+            ("/sources/0/cases/0/binary_target", Value::Null),
+            (
+                "/sources/0/cases/0/binary_target",
+                Value::String("other".to_owned()),
+            ),
+            (
+                "/sources/0/cases/0/integration_target",
+                Value::String("xtask".to_owned()),
+            ),
+            (
+                "/sources/0/cases/0/package",
+                Value::String("android_tools".to_owned()),
+            ),
+        ] {
+            let mut changed = value.clone();
+            *changed
+                .pointer_mut(pointer)
+                .context("selector fixture pointer missing")? = replacement;
+            assert!(validate_manifest(&serde_json::from_value(changed)?).is_err());
+        }
+        let mut original: Value = serde_json::from_slice(include_bytes!(
+            "../../../docs/android-studio/reference-named-tests.json"
+        ))?;
+        assert!(
+            original["sources"]
+                .as_array_mut()
+                .context("original groups missing")?
+                .pop()
+                .is_some()
+        );
+        assert!(validate_manifest(&serde_json::from_value(original)?).is_err());
+        let mut original: Value = serde_json::from_slice(include_bytes!(
+            "../../../docs/android-studio/reference-named-tests.json"
+        ))?;
+        original["sources"][0]["cases"][0]["binary_target"] = Value::String("xtask".to_owned());
+        assert!(validate_manifest(&serde_json::from_value(original)?).is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn whole_xtask_checks_reject_ignored_filtered_missing_and_duplicate_tests() -> Result<()> {
+        let mut valid = format!("running {} tests\n", CLASSPATH_LINUX_TESTS.len());
+        for name in CLASSPATH_LINUX_TESTS {
+            valid.push_str(&format!(
+                "test tasks::android_reference_classpath::tests::{name} ... ok\n"
+            ));
+        }
+        valid.push_str(&format!("test result: ok. {} passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s\n", CLASSPATH_LINUX_TESTS.len()));
+        verify_unfiltered_xtask(&valid)?;
+        for changed in [
+            valid.replace("0 ignored", "1 ignored"),
+            valid.replace("0 filtered out", "1 filtered out"),
+            valid.replace("running 17 tests", "running 0 tests"),
+            valid.replace(
+                "test_valid_absolute_path ... ok",
+                "wrong_absolute_path ... ok",
+            ),
+            valid.replace(
+                "test_valid_absolute_path ... ok",
+                "test_valid_relative_path ... ok",
+            ),
+            format!("{valid}{valid}"),
+        ] {
+            assert!(verify_unfiltered_xtask(&changed).is_err());
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn classpath_help_rejects_wrong_subcommand_and_missing_bounded_options() -> Result<()> {
+        let help = "Usage: cargo xtask android-reference-class-path --jar <JAR>\n--jar\n--max-archive-bytes\n--max-manifest-bytes\n--max-archive-entries\n--max-references\n";
+        verify_classpath_help(help)?;
+        assert!(
+            verify_classpath_help(&help.replace("android-reference-class-path", "android-parity"))
+                .is_err()
+        );
+        for option in [
+            "--max-archive-bytes",
+            "--max-manifest-bytes",
+            "--max-archive-entries",
+            "--max-references",
+        ] {
+            assert!(verify_classpath_help(&help.replace(option, "")).is_err());
+        }
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn binary_artifact_requires_xtask_main_source_kind_and_default_features() -> Result<()> {
+        let directory = tempfile::tempdir()?;
+        let manifest: Manifest = serde_json::from_slice(include_bytes!(
+            "../../../docs/android-studio/reference-classpath-named-tests.json"
+        ))?;
+        let case = manifest
+            .sources
+            .into_iter()
+            .next()
+            .context("classpath source missing")?
+            .cases
+            .into_iter()
+            .next()
+            .context("classpath case missing")?;
+        let manifest_path = directory.path().join(&case.manifest.path);
+        let crate_directory = manifest_path.parent().context("fixture crate missing")?;
+        fs::create_dir_all(crate_directory.join("src"))?;
+        fs::write(
+            &manifest_path,
+            "[package]\nname = \"xtask\"\nversion = \"0.1.0\"\n",
+        )?;
+        let src_path = crate_directory.join("src/main.rs");
+        fs::write(&src_path, "fn main() {}\n")?;
+        let target = directory.path().join("target");
+        fs::create_dir_all(target.join("debug/deps"))?;
+        let executable = target.join("debug/deps/xtask-fixture");
+        // This protocol fixture is never executed or recorded as real compiler evidence.
+        fs::write(&executable, b"\x7fELFprotocol fixture")?;
+        let value = serde_json::json!({
+            "reason": "compiler-artifact", "manifest_path": manifest_path,
+            "target": {"name": "xtask", "kind": ["bin"], "src_path": src_path},
+            "profile": {"test": true, "opt_level": "0", "debug_assertions": true},
+            "features": [], "fresh": false, "executable": executable,
+        });
+        let artifact = compiler_artifact(
+            &serde_json::to_vec(&value)?,
+            directory.path(),
+            &target,
+            &case,
+        )?;
+        assert_eq!(artifact.src_path, src_path);
+        assert_eq!(artifact.executable, executable);
+        for (pointer, replacement) in [
+            ("/target/kind", serde_json::json!(["lib"])),
+            ("/target/kind", serde_json::json!(["test"])),
+            ("/target/name", Value::String("different".to_owned())),
+            (
+                "/target/src_path",
+                Value::String("/different/main.rs".to_owned()),
+            ),
+            ("/features", serde_json::json!(["unexpected"])),
+            ("/profile/test", Value::Bool(false)),
+        ] {
+            let mut changed = value.clone();
+            *changed
+                .pointer_mut(pointer)
+                .context("binary fixture pointer missing")? = replacement;
+            assert!(
+                compiler_artifact(
+                    &serde_json::to_vec(&changed)?,
+                    directory.path(),
+                    &target,
+                    &case
+                )
+                .is_err()
+            );
         }
         Ok(())
     }

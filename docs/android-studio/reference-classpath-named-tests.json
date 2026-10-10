@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "sources": [
+    {
+      "label": "classpath2",
+      "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+      "tree": "7c1a872c64a32c576d9f580b01ed6f223cf82435",
+      "case_count": 2,
+      "cases": [
+        {
+          "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:testutils/src/test/java/com/android/testutils/TestGroupTest.kt#com.android.testutils.TestGroupTest.testValidAbsolutePath",
+          "package": "xtask",
+          "integration_target": null,
+          "binary_target": "xtask",
+          "fully_qualified_name": "tasks::android_reference_classpath::tests::test_valid_absolute_path",
+          "manifest": {
+            "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+            "path": "tooling/xtask/Cargo.toml",
+            "git_blob_oid": "789db239f8fac16fe045e3db930c191ab5ce1c77",
+            "sha256": "76da72c39639fa412c9459661f2558619f6729fed61f3fe6693cd0869d45b79f",
+            "bytes": 998
+          },
+          "source": {
+            "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+            "path": "tooling/xtask/src/tasks/android_reference_classpath.rs",
+            "git_blob_oid": "3f51c1d1ea94a71b41d83c0c07eb504f4b52016b",
+            "sha256": "8a37f1d2cd8475961fe9dbd596972114bfb2e0f31465efbbd51e44b94edf65f1",
+            "bytes": 37014
+          },
+          "named_declaration": {
+            "start_line": 581,
+            "end_line": 593,
+            "sha256": "b758308a2616d62c9f2d624291b4ae9670172a265a1f51e658b89515b24e8aad"
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "tooling/xtask/Cargo.toml",
+            "-p",
+            "xtask",
+            "--bin",
+            "xtask",
+            "tasks::android_reference_classpath::tests::test_valid_absolute_path",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "original_assertions": 2,
+          "fixture_note": "The original tests create temporary JARs inline. Rust preserves those constructor and path assertions; complete original Java/Kotlin sources and Apache attribution are bound in source_check_bindings."
+        },
+        {
+          "reference_id": "base@4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:testutils/src/test/java/com/android/testutils/TestGroupTest.kt#com.android.testutils.TestGroupTest.testValidRelativePath",
+          "package": "xtask",
+          "integration_target": null,
+          "binary_target": "xtask",
+          "fully_qualified_name": "tasks::android_reference_classpath::tests::test_valid_relative_path",
+          "manifest": {
+            "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+            "path": "tooling/xtask/Cargo.toml",
+            "git_blob_oid": "789db239f8fac16fe045e3db930c191ab5ce1c77",
+            "sha256": "76da72c39639fa412c9459661f2558619f6729fed61f3fe6693cd0869d45b79f",
+            "bytes": 998
+          },
+          "source": {
+            "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+            "path": "tooling/xtask/src/tasks/android_reference_classpath.rs",
+            "git_blob_oid": "3f51c1d1ea94a71b41d83c0c07eb504f4b52016b",
+            "sha256": "8a37f1d2cd8475961fe9dbd596972114bfb2e0f31465efbbd51e44b94edf65f1",
+            "bytes": 37014
+          },
+          "named_declaration": {
+            "start_line": 596,
+            "end_line": 618,
+            "sha256": "68942abe797435e83a8772e87a41e8081da12c6424176a09c1a51bc2ff6d9182"
+          },
+          "exact_planned_argv": [
+            "cargo",
+            "test",
+            "--locked",
+            "--manifest-path",
+            "tooling/xtask/Cargo.toml",
+            "-p",
+            "xtask",
+            "--bin",
+            "xtask",
+            "tasks::android_reference_classpath::tests::test_valid_relative_path",
+            "--",
+            "--exact",
+            "--show-output"
+          ],
+          "expected_selected": 1,
+          "expected_passed": 1,
+          "expected_failed": 0,
+          "expected_ignored": 0,
+          "runtime_result": null,
+          "original_assertions": 3,
+          "fixture_note": "The original tests create temporary JARs inline. Rust preserves those constructor and path assertions; complete original Java/Kotlin sources and Apache attribution are bound in source_check_bindings."
+        }
+      ],
+      "source_check_bindings": [
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "Cargo.toml",
+          "git_blob_oid": "d50bcbe6128930eae1bcb232dd27c8ed04364bfc",
+          "sha256": "b790b8de721d0849783583a2d1a7d21542488fc7d8d06ca3cc642271f297c782",
+          "bytes": 41556
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "Cargo.lock",
+          "git_blob_oid": "bcf2fab88c2bbbf4f03283a48e6a5014ac2295ff",
+          "sha256": "1c628e88a9f3bad34197dc133e825db39624b323a365c8c4f9e7a49a51c74742",
+          "bytes": 502585
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "rust-toolchain.toml",
+          "git_blob_oid": "0d6cb315024714f86ede7360d76a2e04bd5de0fd",
+          "sha256": "3d9002e97d5c3de93d49a1a36649153da4f40c29b061d0f2e09ea84ee143ba3e",
+          "bytes": 262
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": ".cargo/config.toml",
+          "git_blob_oid": "8ed5893b99ed318f9953acf0467a26f94a720347",
+          "sha256": "bac3a152624488a520b492297901f8190a5acfc9dacb4cdda14b4c471fdca9ca",
+          "bytes": 1140
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "script/clippy",
+          "git_blob_oid": "a43168dea6c00dac1ce295a26b9b4a11b47f4647",
+          "sha256": "0a2fa62c186e472ed7eb70f066d93d5b1e880d9d7e2c40b81f2a9e15544cfdb8",
+          "bytes": 635
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "tooling/xtask/Cargo.toml",
+          "git_blob_oid": "789db239f8fac16fe045e3db930c191ab5ce1c77",
+          "sha256": "76da72c39639fa412c9459661f2558619f6729fed61f3fe6693cd0869d45b79f",
+          "bytes": 998
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "tooling/xtask/src/main.rs",
+          "git_blob_oid": "2598b727318884ba23689c06eee0fe4bc748366f",
+          "sha256": "931223397f40d040578519298b0fdefa1a67c7d55e495afd109c9b97f92d25fa",
+          "bytes": 3399
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "tooling/xtask/src/tasks.rs",
+          "git_blob_oid": "a8be7be60e7663a1385a866a8fc64556b94707a6",
+          "sha256": "4fb6dc268f900ba4ad12bb29d1d6cbb711dff92e3d0bced07fb4b73be2f755ae",
+          "bytes": 366
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "tooling/xtask/src/tasks/android_reference_classpath.rs",
+          "git_blob_oid": "3f51c1d1ea94a71b41d83c0c07eb504f4b52016b",
+          "sha256": "8a37f1d2cd8475961fe9dbd596972114bfb2e0f31465efbbd51e44b94edf65f1",
+          "bytes": 37014
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "docs/android-studio/ports/reference-classpath.json",
+          "git_blob_oid": "800c08000a7d245cccae73d139b1f5157c2aed5b",
+          "sha256": "187816c8d2cd0d1c2b7f5a4b971aaa1d3b6647aaa32b64aef7d7c0f0c7530922",
+          "bytes": 3321
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "tooling/xtask/test_data/reference_classpath/LICENSE-APACHE-2.0.txt",
+          "git_blob_oid": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "bytes": 11358
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "tooling/xtask/test_data/reference_classpath/NOTICE.md",
+          "git_blob_oid": "5e92ceae40fb65811e06fbf924df1e890f092215",
+          "sha256": "8847e0a665af1745276ac89c9bc805ab18f63d9a57692933fc53c9bc29811c60",
+          "bytes": 945
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "tooling/xtask/test_data/reference_classpath/provenance.json",
+          "git_blob_oid": "70fa6bd1797cd6ecf2bf9e20a9b13e47ea211811",
+          "sha256": "81ba8c08fefc30e4cfa901b8f468967188f8e1b7d1d04f9eeae17b8dcf7046a8",
+          "bytes": 1342
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "tooling/xtask/test_data/reference_classpath/sources/base/testutils/src/main/java/com/android/testutils/TestGroup.java",
+          "git_blob_oid": "4aef9a02ae58f7771372519ab397b839b7a23ae5",
+          "sha256": "6d384e55511e1208a6a1c2e950f02acfef4f12f6b059d4e0f76c149db7cc415a",
+          "bytes": 10390
+        },
+        {
+          "commit": "51fcb1b53b244cf35b914676de6c283fe310b2bb",
+          "path": "tooling/xtask/test_data/reference_classpath/sources/base/testutils/src/test/java/com/android/testutils/TestGroupTest.kt",
+          "git_blob_oid": "20d49b3a87ce572b413c43a21686f71ef9237456",
+          "sha256": "0f6a26754d7afa899e37e82936450f33fbad2339aa907924468c8c31dddf4743",
+          "bytes": 3006
+        }
+      ],
+      "runtime_result": null
+    }
+  ],
+  "historical_run_evidence_included": false,
+  "no_reference_credit_added": true,
+  "scope_note": "Separate exact bin-target execution for two AOSP TestGroupTest behaviors. The original forty-case manifest remains byte-exact. No effective configured reference-suite membership, Java runner execution, Windows native execution, or complete-census credit."
+}
