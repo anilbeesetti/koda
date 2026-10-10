@@ -142,7 +142,13 @@ struct WorktreeCapture {
     id: WorktreeId,
     scan_id: usize,
     completed_scan_id: usize,
+    changed: Arc<AtomicBool>,
     snapshot: Snapshot,
+}
+
+struct ScannedWorktrees {
+    captures: Vec<WorktreeCapture>,
+    observers: Vec<Subscription>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -232,6 +238,7 @@ pub struct CapturedAndroidModuleTree {
     tree: BackgroundDrop<AdaptedModuleTree>,
     read_limits: BackgroundDrop<Vec<AndroidTreeReadLimit>>,
     _trust_observer: Option<Subscription>,
+    _worktree_observers: Vec<Subscription>,
 }
 
 impl CapturedAndroidModuleTree {
@@ -360,7 +367,7 @@ impl Project {
 
                 let entries = cx
                     .background_spawn({
-                        let scanned = scanned.clone();
+                        let scanned = scanned.captures.clone();
                         let request = request.clone();
                         let release_executor = release_executor.clone();
                         async move {
@@ -391,7 +398,7 @@ impl Project {
                         .await?;
                 let final_entries = cx
                     .background_spawn({
-                        let worktrees = worktrees.clone();
+                        let worktrees = worktrees.captures.clone();
                         let request = request.clone();
                         let initial_entries = entries;
                         let release_executor = release_executor.clone();
@@ -428,7 +435,7 @@ impl Project {
                     })
                     .await?;
                 check_owner(&project, &owner, &request, cx)?;
-                check_worktrees(&project, &worktrees, cx)?;
+                check_worktrees(&project, &owner, &request, &worktrees.captures, cx).await?;
 
                 let file_revision = NEXT_FILE_REVISION
                     .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |revision| {
@@ -500,16 +507,17 @@ impl Project {
                     })
                     .await?;
                 check_owner(&project, &owner, &request, cx)?;
-                check_worktrees(&project, &worktrees, cx)?;
+                check_worktrees(&project, &owner, &request, &worktrees.captures, cx).await?;
                 Ok(CapturedAndroidModuleTree {
                     request,
                     owner,
-                    worktrees,
+                    worktrees: worktrees.captures,
                     entries: final_entries,
                     java_sources,
                     tree,
                     read_limits,
                     _trust_observer: trust_observer,
+                    _worktree_observers: worktrees.observers,
                 })
             };
             let stop = async move {
@@ -537,15 +545,10 @@ impl Project {
         cx: &App,
     ) -> bool {
         self.android_tree_owner_is_current(&capture.owner, &capture.request, cx)
-            && capture.worktrees.iter().all(|captured| {
-                self.worktree_for_id(captured.id, cx)
-                    .is_some_and(|worktree| {
-                        worktree == captured.scope.worktree
-                            && !worktree_is_restricted(self, captured.id, cx)
-                            && worktree.read(cx).scan_id() == captured.scan_id
-                            && worktree.read(cx).completed_scan_id() == captured.completed_scan_id
-                    })
-            })
+            && capture
+                .worktrees
+                .iter()
+                .all(|captured| worktree_capture_is_current(self, captured, cx))
     }
 
     /// Resolves only actual captured entries; virtual groups have no filesystem ID.
@@ -833,7 +836,7 @@ async fn scan_worktrees(
     filesystem: &Arc<dyn Fs>,
     expand: bool,
     cx: &mut AsyncApp,
-) -> Result<Vec<WorktreeCapture>> {
+) -> Result<ScannedWorktrees> {
     let mut additional_prefixes = BTreeMap::<WorktreeId, BTreeSet<Arc<RelPath>>>::new();
     let mut expansion_count = 0usize;
     let mut first_pass = true;
@@ -882,6 +885,7 @@ async fn scan_worktrees(
             pending.push((scope.clone(), next_scan, barriers));
         }
         let mut captured = Vec::new();
+        let mut observers = Vec::new();
         for (scope, next_scan, barriers) in pending {
             for mut barrier in barriers {
                 barrier.next().await;
@@ -908,29 +912,16 @@ async fn scan_worktrees(
                 .update(cx, |worktree, _| worktree.wait_for_snapshot(next_scan))?
                 .await?;
             check_owner(project, owner, request, cx)?;
-            let (id, scan_id, completed_scan_id, snapshot) =
-                scope.worktree.downgrade().read_with(cx, |worktree, _| {
-                    ensure!(
-                        worktree.completed_scan_id() >= worktree.scan_id(),
-                        "Android worktree changed while its scan was captured"
-                    );
-                    Ok::<_, anyhow::Error>((
-                        worktree.id(),
-                        worktree.scan_id(),
-                        worktree.completed_scan_id(),
-                        worktree.snapshot(),
-                    ))
-                })??;
-            captured.push(WorktreeCapture {
-                scope,
-                id,
-                scan_id,
-                completed_scan_id,
-                snapshot,
-            });
+            let (capture, observer) =
+                observe_worktree_capture(project, owner, request, scope, cx).await?;
+            captured.push(capture);
+            observers.push(observer);
         }
         if !expand {
-            return Ok(captured);
+            return Ok(ScannedWorktrees {
+                captures: captured,
+                observers,
+            });
         }
         let unloaded = cx
             .background_spawn({
@@ -952,7 +943,10 @@ async fn scan_worktrees(
             })
             .await?;
         if unloaded.is_empty() {
-            return Ok(captured);
+            return Ok(ScannedWorktrees {
+                captures: captured,
+                observers,
+            });
         }
         for prefixes in unloaded.values() {
             expansion_count = expansion_count
@@ -970,27 +964,124 @@ async fn scan_worktrees(
     }
 }
 
-fn check_worktrees(
+async fn observe_worktree_capture(
     project: &WeakEntity<Project>,
+    owner: &CaptureOwner,
+    request: &AndroidTreeCaptureRequest,
+    scope: WorktreeScope,
+    cx: &mut AsyncApp,
+) -> Result<(WorktreeCapture, Subscription)> {
+    let changed = Arc::new(AtomicBool::new(false));
+    let observer =
+        project.update(cx, |_, cx| {
+            cx.subscribe(&scope.worktree, {
+            let changed = changed.clone();
+            move |_, _, event, _| {
+                if matches!(event, worktree::Event::UpdatedEntries(entries) if !entries.is_empty())
+                    || matches!(event, worktree::Event::DeletedEntry(_) | worktree::Event::Deleted)
+                {
+                    changed.store(true, Ordering::Release);
+                }
+            }
+        })
+        })?;
+    loop {
+        check_owner(project, owner, request, cx)?;
+        let wait = scope.worktree.downgrade().update(cx, |worktree, _| {
+            worktree.wait_for_snapshot(worktree.scan_id())
+        })?;
+        wait.await?;
+        let (ready, snapshot) = oneshot::channel();
+        project.update(cx, |_, cx| {
+            let scope = scope.clone();
+            let changed = changed.clone();
+            // GPUI activates subscriptions via a deferred effect. Queue the
+            // snapshot after activation so no content change can fall between
+            // taking the snapshot and observing its events.
+            cx.defer(move |cx| {
+                let worktree = scope.worktree.read(cx);
+                let capture = if worktree.completed_scan_id() >= worktree.scan_id() {
+                    // Changes before this turn belong to the new snapshot;
+                    // this flag has not been exposed to any capture yet.
+                    changed.store(false, Ordering::Release);
+                    Some(WorktreeCapture {
+                        scope: scope.clone(),
+                        id: worktree.id(),
+                        scan_id: worktree.scan_id(),
+                        completed_scan_id: worktree.completed_scan_id(),
+                        changed,
+                        snapshot: worktree.snapshot(),
+                    })
+                } else {
+                    None
+                };
+                match ready.send(capture) {
+                    Ok(()) | Err(_) => {}
+                }
+            });
+        })?;
+        if let Some(capture) = snapshot.await? {
+            check_owner(project, owner, request, cx)?;
+            return Ok((capture, observer));
+        }
+        // Another window can begin a refresh after the wait completes. Wait
+        // for it without issuing more scans, within the capture's deadline.
+    }
+}
+
+fn unchanged_worktree(
+    project: &Project,
+    captured: &WorktreeCapture,
+    cx: &App,
+) -> Option<Entity<Worktree>> {
+    if captured.changed.load(Ordering::Acquire) {
+        return None;
+    }
+    let worktree = project.worktree_for_id(captured.id, cx)?;
+    if worktree != captured.scope.worktree || worktree_is_restricted(project, captured.id, cx) {
+        return None;
+    }
+    let current = worktree.read(cx);
+    (current.abs_path().as_ref() == captured.snapshot.abs_path().as_ref()
+        && current.scan_id() >= captured.scan_id
+        && current.completed_scan_id() >= captured.completed_scan_id)
+        .then_some(worktree)
+}
+
+fn worktree_capture_is_current(project: &Project, captured: &WorktreeCapture, cx: &App) -> bool {
+    unchanged_worktree(project, captured, cx).is_some_and(|worktree| {
+        // Pending scans have unknown contents; completed no-op scans retain
+        // the same content snapshot despite advancing the scheduling IDs.
+        let worktree = worktree.read(cx);
+        worktree.completed_scan_id() >= worktree.scan_id()
+    })
+}
+
+async fn check_worktrees(
+    project: &WeakEntity<Project>,
+    owner: &CaptureOwner,
+    request: &AndroidTreeCaptureRequest,
     worktrees: &[WorktreeCapture],
-    cx: &AsyncApp,
+    cx: &mut AsyncApp,
 ) -> Result<()> {
     for captured in worktrees {
-        ensure!(
-            project.read_with(cx, |project, cx| {
-                project
-                    .worktree_for_id(captured.id, cx)
-                    .is_some_and(|worktree| {
-                        worktree == captured.scope.worktree
-                            && !worktree_is_restricted(project, captured.id, cx)
-                            && worktree.read(cx).scan_id() == captured.scan_id
-                            && worktree.read(cx).completed_scan_id() == captured.completed_scan_id
-                    })
-            })?,
-            "Android source worktree changed during capture"
-        );
+        loop {
+            check_owner(project, owner, request, cx)?;
+            let worktree = project
+                .read_with(cx, |project, cx| unchanged_worktree(project, captured, cx))?
+                .context("Android source worktree changed during capture")?;
+            if worktree.read_with(cx, |worktree, _| {
+                worktree.completed_scan_id() >= worktree.scan_id()
+            }) {
+                break;
+            }
+            let wait = worktree.downgrade().update(cx, |worktree, _| {
+                worktree.wait_for_snapshot(worktree.scan_id())
+            })?;
+            wait.await?;
+        }
     }
-    Ok(())
+    check_owner(project, owner, request, cx)
 }
 
 fn visit_scoped_entries(
@@ -2239,5 +2330,132 @@ mod tests {
         assert!(resume.send(()).is_err());
         assert!(!pending_release.await?);
         Ok(())
+    }
+
+    #[gpui::test]
+    async fn unchanged_refresh_preserves_independent_captures_but_content_changes_do_not(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            let (filesystem, project, root) = fake_project(cx).await;
+            let original_request = request(&project, &root, None, cx).await?;
+            let source = root.join("app/src/main/java/example/Different.java");
+            let generated = root.join("app/build/generated/source/config/BuildConfig.java");
+            let first = project
+                .update(cx, |project, cx| {
+                    project.capture_android_module_tree(original_request.clone(), cx)
+                })
+                .await?;
+            let independent_request = AndroidTreeCaptureRequest::new(
+                original_request.root,
+                original_request.context_token.clone(),
+                original_request.model_token.clone(),
+                original_request.plan.clone(),
+                18,
+                24,
+            );
+            let second = project
+                .update(cx, |project, cx| {
+                    project.capture_android_module_tree(independent_request, cx)
+                })
+                .await?;
+            assert!(
+                project.read_with(cx, |project, cx| {
+                    project.is_android_tree_capture_current(&first, cx)
+                        && project.is_android_tree_capture_current(&second, cx)
+                }),
+                "An independent unchanged refresh must leave both captures usable"
+            );
+            assert!(
+                first.worktrees.iter().all(|captured| {
+                    captured.scope.worktree.read_with(cx, |worktree, _| {
+                        worktree.scan_id() > captured.scan_id
+                            && worktree.completed_scan_id() >= worktree.scan_id()
+                    })
+                }),
+                "The regression must exercise real additional scans, not avoid refreshing"
+            );
+            for capture in [&first, &second] {
+                for path in [&source, &generated] {
+                    project.read_with(cx, |project, cx| {
+                        project.android_tree_project_path(capture, path, cx)
+                    })?;
+                }
+            }
+            let replacement = b"class ChangedBySecondWindow {}";
+            filesystem
+                .insert_file(source.clone(), replacement.to_vec())
+                .await;
+            cx.condition(&project, |project, cx| {
+                !project.is_android_tree_capture_current(&first, cx)
+                    && !project.is_android_tree_capture_current(&second, cx)
+            })
+            .await;
+            for capture in [&first, &second] {
+                assert!(
+                    project
+                        .read_with(cx, |project, cx| {
+                            project.android_tree_project_path(capture, &source, cx)
+                        })
+                        .is_err()
+                );
+                assert_eq!(
+                    capture
+                        .java_source(&source)
+                        .context("Original bytes")?
+                        .as_ref(),
+                    JAVA.as_bytes()
+                );
+            }
+            let changed = project
+                .update(cx, |project, cx| {
+                    project.capture_android_module_tree(original_request.clone(), cx)
+                })
+                .await?;
+            assert_eq!(
+                changed
+                    .java_source(&source)
+                    .context("Replacement bytes")?
+                    .as_ref(),
+                replacement
+            );
+            filesystem
+                .insert_file(source.clone(), JAVA.as_bytes().to_vec())
+                .await;
+            cx.executor().run_until_parked();
+            assert!(
+                project.read_with(cx, |project, cx| {
+                    !project.is_android_tree_capture_current(&first, cx)
+                        && !project.is_android_tree_capture_current(&second, cx)
+                }),
+                "Restoring file contents must not revive obsolete snapshots"
+            );
+            let restored = project
+                .update(cx, |project, cx| {
+                    project.capture_android_module_tree(original_request, cx)
+                })
+                .await?;
+            project.read_with(cx, |project, cx| {
+                project.android_tree_project_path(&restored, &generated, cx)
+            })?;
+            filesystem
+                .remove_file(&generated, Default::default())
+                .await?;
+            cx.condition(&project, |project, cx| {
+                !project.is_android_tree_capture_current(&restored, cx)
+            })
+            .await;
+            assert!(
+                project
+                    .read_with(cx, |project, cx| {
+                        project.android_tree_project_path(&restored, &generated, cx)
+                    })
+                    .is_err(),
+                "A deleted generated file must invalidate the captured navigation target"
+            );
+            Ok(())
+        }
+        .await;
+        result.expect("Independent no-op scans and content-change capture fixture must complete");
     }
 }

@@ -1218,4 +1218,154 @@ mod tests {
         .await;
         result.expect("Generic/multiple-window live capture fixture must complete");
     }
+
+    #[gpui::test]
+    async fn two_android_windows_share_content_freshness_without_sharing_owners(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            let (project, filesystem) = fixture(cx).await?;
+            let mut first = TestWindow::new(&project, cx)?;
+            first.open(Path::new(MAIN)).await?;
+            first.ready().await;
+            let first_owner = first.published_owner()?;
+            let first_revision = first.current_file_revision()?;
+            let mut second = TestWindow::new(&project, cx)?;
+            second.open(Path::new(MAIN)).await?;
+            second.ready().await;
+            let second_owner = second.published_owner()?;
+            let second_revision = second.current_file_revision()?;
+            assert_ne!(first.workspace.entity_id(), second.workspace.entity_id());
+            assert_ne!(first.tree().entity_id(), second.tree().entity_id());
+            assert_ne!(first_owner.context, second_owner.context);
+            assert_eq!(first_owner.model, second_owner.model);
+            assert_eq!(
+                first.current_file_revision()?,
+                first_revision,
+                "Opening a second Android window must preserve the first usable capture"
+            );
+            assert_eq!(second.current_file_revision()?, second_revision);
+            for window in [&mut first, &mut second] {
+                window
+                    .tree()
+                    .update_in(&mut window.visual, |tree, window, cx| {
+                        let capture = tree
+                            .current_capture(window, cx)
+                            .context("Both Android captures must be current")?;
+                        for path in [MAIN, GENERATED] {
+                            let physical = project.read(cx).android_tree_project_path(
+                                capture,
+                                Path::new(path),
+                                cx,
+                            )?;
+                            assert!(project.read(cx).entry_for_path(&physical, cx).is_some());
+                        }
+                        Ok::<_, anyhow::Error>(())
+                    })?;
+            }
+
+            let first_completion = first.hold_next_completion();
+            let second_completion = second.hold_next_completion();
+            filesystem
+                .remove_file(Path::new(GENERATED), Default::default())
+                .await?;
+            let (first_pending, first_capture) = first_completion.await?;
+            let (second_pending, second_capture) = second_completion.await?;
+            let first_capture = first_capture?;
+            let second_capture = second_capture?;
+            for window in [&mut first, &mut second] {
+                window
+                    .tree()
+                    .update_in(&mut window.visual, |tree, window, cx| {
+                        let old = &tree
+                            .published
+                            .as_ref()
+                            .context("Last good capture during refresh")?
+                            .capture;
+                        assert!(!project.read(cx).is_android_tree_capture_current(old, cx));
+                        assert!(
+                            project
+                                .read(cx)
+                                .android_tree_project_path(old, Path::new(GENERATED), cx)
+                                .is_err()
+                        );
+                        assert!(
+                            tree.current_capture(window, cx).is_none(),
+                            "Neither Android window may navigate its stale generated-file capture"
+                        );
+                        Ok::<_, anyhow::Error>(())
+                    })?;
+            }
+            first
+                .tree()
+                .update_in(&mut first.visual, |tree, window, cx| {
+                    tree.finish_capture(&first_pending, Ok(first_capture), window, cx);
+                });
+            second
+                .tree()
+                .update_in(&mut second.visual, |tree, window, cx| {
+                    tree.finish_capture(&second_pending, Ok(second_capture), window, cx);
+                });
+            first.ready().await;
+            second.ready().await;
+            assert_ne!(first.current_file_revision()?, first_revision);
+            assert_ne!(second.current_file_revision()?, second_revision);
+            for window in [&mut first, &mut second] {
+                window
+                    .tree()
+                    .update_in(&mut window.visual, |tree, window, cx| {
+                        let capture = tree
+                            .current_capture(window, cx)
+                            .context("Refreshed Android capture")?;
+                        assert!(!capture.tree().tree.nodes().any(|node| {
+                            node.navigation
+                                .as_ref()
+                                .is_some_and(|target| target.path == Path::new(GENERATED))
+                        }));
+                        project
+                            .read(cx)
+                            .android_tree_project_path(capture, Path::new(MAIN), cx)?;
+                        Ok::<_, anyhow::Error>(())
+                    })?;
+            }
+
+            let first_before_revoke = first.published_owner()?;
+            let second_before_revoke = second.published_owner()?;
+            first.visual.update(|_, cx| {
+                let root = root_id(&project, cx)?;
+                let store = project.read(cx).worktree_store();
+                let trust = TrustedWorktrees::try_get_global(cx).context("Trust store")?;
+                trust.update(cx, |trust, cx| {
+                    trust.restrict(
+                        store.downgrade(),
+                        [PathTrust::Worktree(root)].into_iter().collect(),
+                        cx,
+                    );
+                });
+                trust.update(cx, |trust, cx| {
+                    trust.trust(
+                        &store,
+                        [PathTrust::Worktree(root)].into_iter().collect(),
+                        cx,
+                    );
+                });
+                Ok::<_, anyhow::Error>(())
+            })?;
+            first.ready().await;
+            second.ready().await;
+            assert!(
+                first.published_owner()?.owner_generation > first_before_revoke.owner_generation
+            );
+            assert!(
+                second.published_owner()?.owner_generation > second_before_revoke.owner_generation
+            );
+            first.current_file_revision()?;
+            second.current_file_revision()?;
+            Ok(())
+        }
+        .await;
+        result.expect(
+            "Two Android windows must preserve content freshness and independent ownership",
+        );
+    }
 }
