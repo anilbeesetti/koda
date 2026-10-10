@@ -4801,6 +4801,229 @@ mod tests {
         assert_eq!(group_none.state.sidebar_open, false);
     }
 
+    struct PersistenceTestSidebar {
+        focus_handle: gpui::FocusHandle,
+        state: String,
+    }
+
+    impl gpui::EventEmitter<crate::multi_workspace::SidebarEvent> for PersistenceTestSidebar {}
+
+    impl gpui::Focusable for PersistenceTestSidebar {
+        fn focus_handle(&self, _cx: &App) -> gpui::FocusHandle {
+            self.focus_handle.clone()
+        }
+    }
+
+    impl gpui::Render for PersistenceTestSidebar {
+        fn render(
+            &mut self,
+            _window: &mut gpui::Window,
+            _cx: &mut gpui::Context<Self>,
+        ) -> impl gpui::IntoElement {
+            gpui::Empty
+        }
+    }
+
+    impl crate::multi_workspace::Sidebar for PersistenceTestSidebar {
+        fn width(&self, _cx: &App) -> gpui::Pixels {
+            px(200.0)
+        }
+
+        fn set_width(&mut self, _width: Option<gpui::Pixels>, _cx: &mut gpui::Context<Self>) {}
+
+        fn has_notifications(&self, _cx: &App) -> bool {
+            false
+        }
+
+        fn side(&self, _cx: &App) -> settings::SidebarSide {
+            settings::SidebarSide::Left
+        }
+
+        fn serialized_state(&self, _cx: &App) -> Option<String> {
+            Some(self.state.clone())
+        }
+    }
+
+    fn finish_multi_workspace_flush_on_background(
+        task: Task<()>,
+        dispatcher: &gpui::TestDispatcher,
+    ) {
+        use std::future::Future as _;
+
+        let mut task = std::pin::pin!(task);
+        let mut poll_context = std::task::Context::from_waker(futures::task::noop_waker_ref());
+        for _ in 0..10_000 {
+            if task.as_mut().poll(&mut poll_context).is_ready() {
+                return;
+            }
+            if !dispatcher.tick(true) {
+                assert!(
+                    task.as_mut().poll(&mut poll_context).is_ready(),
+                    "multi-workspace persistence must complete without foreground dispatch"
+                );
+                return;
+            }
+        }
+        assert!(
+            task.as_mut().poll(&mut poll_context).is_ready(),
+            "multi-workspace persistence exceeded the background task limit"
+        );
+    }
+
+    async fn assert_multi_workspace_flush_preserves_latest_state(
+        cx: &mut gpui::TestAppContext,
+        cancel_older_flush: bool,
+    ) {
+        use crate::multi_workspace::SerializedProjectGroupState;
+        use std::sync::atomic::{AtomicBool, Ordering};
+
+        crate::tests::init_test(cx);
+        let fs = fs::FakeFs::new(cx.executor());
+        let dir1 = unique_test_dir(&fs, "background-flush-first").await;
+        let dir2 = unique_test_dir(&fs, "background-flush-second").await;
+        let project1 = Project::test(fs.clone(), [dir1.as_path()], cx).await;
+        let project2 = Project::test(fs.clone(), [dir2.as_path()], cx).await;
+        let db = cx.update(|cx| WorkspaceDb::global(cx));
+        let workspace1_id = db.next_id().await.unwrap();
+        let workspace2_id = db.next_id().await.unwrap();
+        let dispatcher = cx.dispatcher.clone();
+        let (multi_workspace, cx) =
+            cx.add_window_view(|window, cx| MultiWorkspace::test_new(project1.clone(), window, cx));
+        let workspace1 = multi_workspace.read_with(cx, |mw, _| mw.workspace().clone());
+        workspace1.update(cx, |workspace, _cx| {
+            workspace.set_database_id(workspace1_id)
+        });
+        let workspace2 = multi_workspace.update_in(cx, |_mw, window, cx| {
+            cx.new(|cx| crate::Workspace::test_new(project2.clone(), window, cx))
+        });
+        workspace2.update(cx, |workspace, _cx| {
+            workspace.set_database_id(workspace2_id)
+        });
+        let sidebar = cx.new(|cx| PersistenceTestSidebar {
+            focus_handle: cx.focus_handle(),
+            state: r#"{"selection":"older"}"#.to_string(),
+        });
+        let first_key = ProjectGroupKey::new(None, PathList::new(&[dir1.as_path()]));
+        let second_key = ProjectGroupKey::new(None, PathList::new(&[dir2.as_path()]));
+        let window_id =
+            multi_workspace.update_in(cx, |_, window, _cx| window.window_handle().window_id());
+        cx.run_until_parked();
+
+        // A foreground witness makes accidental UI dispatch observable while flushing.
+        let foreground_ran = Arc::new(AtomicBool::new(false));
+        let foreground_witness = cx.foreground_executor().spawn({
+            let foreground_ran = foreground_ran.clone();
+            async move { foreground_ran.store(true, Ordering::SeqCst) }
+        });
+        let older_flush = multi_workspace.update_in(cx, |mw, _, cx| {
+            mw.register_sidebar(sidebar.clone(), cx);
+            mw.open_sidebar(cx);
+            mw.restore_project_groups(
+                vec![
+                    SerializedProjectGroupState {
+                        key: first_key.clone(),
+                        expanded: true,
+                    },
+                    SerializedProjectGroupState {
+                        key: second_key.clone(),
+                        expanded: false,
+                    },
+                ],
+                cx,
+            );
+            mw.serialize(cx);
+            mw.flush_serialization(cx)
+        });
+        assert!(
+            !older_flush.is_ready(),
+            "the first capture must still be pending"
+        );
+        let older_flush = if cancel_older_flush {
+            drop(older_flush);
+            None
+        } else {
+            Some(older_flush)
+        };
+        sidebar.update(cx, |sidebar, _cx| {
+            sidebar.state = r#"{"selection":"newer"}"#.to_string();
+        });
+        let newer_flush = multi_workspace.update_in(cx, |mw, window, cx| {
+            mw.activate(workspace2.clone(), None, window, cx);
+            mw.close_sidebar(window, cx);
+            mw.restore_project_groups(
+                vec![
+                    SerializedProjectGroupState {
+                        key: second_key.clone(),
+                        expanded: true,
+                    },
+                    SerializedProjectGroupState {
+                        key: first_key.clone(),
+                        expanded: false,
+                    },
+                ],
+                cx,
+            );
+            mw.serialize(cx);
+            mw.flush_serialization(cx)
+        });
+        assert!(
+            !newer_flush.is_ready(),
+            "both captures must precede background dispatch"
+        );
+
+        // Unrequested edits expose a late recapture or an uncancelled deferred save.
+        sidebar.update(cx, |sidebar, _cx| {
+            sidebar.state = r#"{"selection":"unrequested"}"#.to_string();
+        });
+        multi_workspace.update(cx, |mw, _cx| mw.set_all_groups_expanded(false));
+        finish_multi_workspace_flush_on_background(newer_flush, &dispatcher);
+        if let Some(older_flush) = older_flush {
+            finish_multi_workspace_flush_on_background(older_flush, &dispatcher);
+        }
+        let assert_saved_state = |state: model::MultiWorkspaceState| {
+            assert_eq!(state.active_workspace_id, Some(workspace2_id));
+            assert!(!state.sidebar_open);
+            assert_eq!(
+                state.sidebar_state.as_deref(),
+                Some(r#"{"selection":"newer"}"#)
+            );
+            let groups = state
+                .project_groups
+                .into_iter()
+                .map(|group| {
+                    let restored = group.into_restored_state();
+                    (restored.key, restored.expanded)
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(
+                groups,
+                vec![(second_key.clone(), true), (first_key.clone(), false)]
+            );
+        };
+        assert_saved_state(cx.update(|_, cx| read_multi_workspace_state(window_id, cx)));
+        assert!(
+            !foreground_ran.load(Ordering::SeqCst),
+            "saved state must be verified before any foreground work runs"
+        );
+        drop(foreground_witness);
+        cx.run_until_parked();
+        assert_saved_state(cx.update(|_, cx| read_multi_workspace_state(window_id, cx)));
+    }
+
+    #[gpui::test]
+    async fn test_multi_workspace_flush_completes_without_foreground_dispatch(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        assert_multi_workspace_flush_preserves_latest_state(cx, false).await;
+    }
+
+    #[gpui::test]
+    async fn test_multi_workspace_flush_survives_cancelled_predecessor(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        assert_multi_workspace_flush_preserves_latest_state(cx, true).await;
+    }
+
     #[gpui::test]
     async fn test_flush_serialization_completes_before_quit(cx: &mut gpui::TestAppContext) {
         crate::tests::init_test(cx);
@@ -6407,5 +6630,397 @@ mod tests {
                 "fallback should have found workspace_b, not the excluded workspace_a"
             );
         });
+    }
+
+    type HeldPersistenceWrite = Box<dyn FnOnce() + Send>;
+
+    struct HeldPersistenceWrites {
+        writes_blocked: Arc<std::sync::atomic::AtomicBool>,
+        queued_writes: Arc<std::sync::atomic::AtomicUsize>,
+        held_writes: Arc<parking_lot::Mutex<std::collections::VecDeque<HeldPersistenceWrite>>>,
+    }
+
+    async fn install_held_multi_workspace_writes(
+        cx: &mut gpui::TestAppContext,
+    ) -> HeldPersistenceWrites {
+        use std::collections::VecDeque;
+        use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+        let writes_blocked = Arc::new(AtomicBool::new(false));
+        let queued_writes = Arc::new(AtomicUsize::new(0));
+        let held_writes: Arc<parking_lot::Mutex<VecDeque<HeldPersistenceWrite>>> =
+            Arc::new(parking_lot::Mutex::new(VecDeque::new()));
+        let connection = ThreadSafeConnection::builder::<db::AppMigrator>(
+            &format!("bounded-multi-workspace-{}", uuid::Uuid::new_v4()),
+            false,
+        )
+        .with_write_queue_constructor(Box::new({
+            let writes_blocked = writes_blocked.clone();
+            let queued_writes = queued_writes.clone();
+            let held_writes = held_writes.clone();
+            move || {
+                let writes_blocked = writes_blocked.clone();
+                let queued_writes = queued_writes.clone();
+                let held_writes = held_writes.clone();
+                Box::new(move |write| {
+                    if writes_blocked.load(Ordering::SeqCst) {
+                        queued_writes.fetch_add(1, Ordering::SeqCst);
+                        held_writes.lock().push_back(write);
+                    } else {
+                        write();
+                    }
+                })
+            }
+        }))
+        .build()
+        .await
+        .unwrap();
+        cx.update(|cx| cx.set_global(db::AppDatabase(connection)));
+        HeldPersistenceWrites {
+            writes_blocked,
+            queued_writes,
+            held_writes,
+        }
+    }
+
+    struct BoundedPersistenceTestSidebar {
+        focus_handle: gpui::FocusHandle,
+        state: String,
+        captures: Arc<std::sync::atomic::AtomicUsize>,
+    }
+
+    impl gpui::EventEmitter<crate::multi_workspace::SidebarEvent> for BoundedPersistenceTestSidebar {}
+
+    impl gpui::Focusable for BoundedPersistenceTestSidebar {
+        fn focus_handle(&self, _cx: &App) -> gpui::FocusHandle {
+            self.focus_handle.clone()
+        }
+    }
+
+    impl gpui::Render for BoundedPersistenceTestSidebar {
+        fn render(
+            &mut self,
+            _window: &mut gpui::Window,
+            _cx: &mut gpui::Context<Self>,
+        ) -> impl gpui::IntoElement {
+            gpui::Empty
+        }
+    }
+
+    impl crate::multi_workspace::Sidebar for BoundedPersistenceTestSidebar {
+        fn width(&self, _cx: &App) -> gpui::Pixels {
+            px(200.0)
+        }
+
+        fn set_width(&mut self, _width: Option<gpui::Pixels>, _cx: &mut gpui::Context<Self>) {}
+
+        fn has_notifications(&self, _cx: &App) -> bool {
+            false
+        }
+
+        fn side(&self, _cx: &App) -> settings::SidebarSide {
+            settings::SidebarSide::Left
+        }
+
+        fn serialized_state(&self, _cx: &App) -> Option<String> {
+            self.captures
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            Some(self.state.clone())
+        }
+    }
+
+    fn drain_multi_workspace_background_dispatch(dispatcher: &gpui::TestDispatcher) {
+        for _ in 0..10_000 {
+            if !dispatcher.tick(true) {
+                return;
+            }
+        }
+        panic!("multi-workspace persistence exceeded the background dispatch limit");
+    }
+
+    async fn assert_multi_workspace_coalesces_blocked_writer_burst(
+        cx: &mut gpui::TestAppContext,
+        cancel_older_flush: bool,
+        exact_flush_burst: bool,
+    ) {
+        use crate::multi_workspace::SerializedProjectGroupState;
+        use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+        crate::tests::init_test(cx);
+        let HeldPersistenceWrites {
+            writes_blocked,
+            queued_writes,
+            held_writes,
+        } = install_held_multi_workspace_writes(cx).await;
+        let fs = fs::FakeFs::new(cx.executor());
+        let first_dir = unique_test_dir(&fs, "bounded-flush-first").await;
+        let second_dir = unique_test_dir(&fs, "bounded-flush-second").await;
+        let project = Project::test(fs, [first_dir.as_path()], cx).await;
+        let workspace_id = cx
+            .update(|cx| WorkspaceDb::global(cx))
+            .next_id()
+            .await
+            .unwrap();
+        let dispatcher = cx.dispatcher.clone();
+        let (multi_workspace, cx) =
+            cx.add_window_view(|window, cx| MultiWorkspace::test_new(project, window, cx));
+        multi_workspace
+            .read_with(cx, |mw, _| mw.workspace().clone())
+            .update(cx, |workspace, _cx| workspace.set_database_id(workspace_id));
+        let captures = Arc::new(AtomicUsize::new(0));
+        let payload = "x".repeat(64 * 1024);
+        let sidebar = cx.new(|cx| BoundedPersistenceTestSidebar {
+            focus_handle: cx.focus_handle(),
+            state: format!(r#"{{"sequence":"first","payload":"{payload}"}}"#),
+            captures: captures.clone(),
+        });
+        let first_key = ProjectGroupKey::new(None, PathList::new(&[first_dir.as_path()]));
+        let second_key = ProjectGroupKey::new(None, PathList::new(&[second_dir.as_path()]));
+        let window_id =
+            multi_workspace.update_in(cx, |_, window, _| window.window_handle().window_id());
+        multi_workspace.update(cx, |mw, cx| mw.register_sidebar(sidebar.clone(), cx));
+        cx.run_until_parked();
+        captures.store(0, Ordering::SeqCst);
+        writes_blocked.store(true, Ordering::SeqCst);
+        let older_flush = multi_workspace.update(cx, |mw, cx| mw.flush_serialization(cx));
+        drain_multi_workspace_background_dispatch(&dispatcher);
+        assert!(!older_flush.is_ready());
+        assert_eq!(captures.load(Ordering::SeqCst), 1);
+        assert_eq!(queued_writes.load(Ordering::SeqCst), 1);
+        assert_eq!(held_writes.lock().len(), 1);
+        let older_flush = if cancel_older_flush {
+            drop(older_flush);
+            None
+        } else {
+            Some(older_flush)
+        };
+
+        for index in 0..1_000 {
+            sidebar.update(cx, |sidebar, _| {
+                sidebar.state = format!(r#"{{"sequence":{index},"payload":"{payload}"}}"#);
+            });
+            multi_workspace.update_in(cx, |mw, window, cx| {
+                if index % 2 == 0 {
+                    mw.open_sidebar(cx);
+                } else {
+                    mw.close_sidebar(window, cx);
+                }
+                if exact_flush_burst {
+                    drop(mw.flush_serialization(cx));
+                }
+            });
+            cx.run_until_parked();
+            assert_eq!(queued_writes.load(Ordering::SeqCst), 1);
+            assert_eq!(held_writes.lock().len(), 1);
+            assert_eq!(
+                captures.load(Ordering::SeqCst),
+                if exact_flush_burst { index + 2 } else { 1 },
+                "ordinary UI requests must not clone the full sidebar while a write is blocked"
+            );
+        }
+
+        let latest_state = format!(r#"{{"sequence":"latest","payload":"{payload}"}}"#);
+        sidebar.update(cx, |sidebar, _| sidebar.state = latest_state.clone());
+        let foreground_ran = Arc::new(AtomicBool::new(false));
+        let foreground_witness = cx.foreground_executor().spawn({
+            let foreground_ran = foreground_ran.clone();
+            async move { foreground_ran.store(true, Ordering::SeqCst) }
+        });
+        let latest_flush = multi_workspace.update_in(cx, |mw, window, cx| {
+            mw.close_sidebar(window, cx);
+            mw.restore_project_groups(
+                vec![
+                    SerializedProjectGroupState {
+                        key: second_key.clone(),
+                        expanded: true,
+                    },
+                    SerializedProjectGroupState {
+                        key: first_key.clone(),
+                        expanded: false,
+                    },
+                ],
+                cx,
+            );
+            mw.flush_serialization(cx)
+        });
+        assert_eq!(
+            captures.load(Ordering::SeqCst),
+            if exact_flush_burst { 1_002 } else { 2 }
+        );
+        assert!(!latest_flush.is_ready());
+        sidebar.update(cx, |sidebar, _| sidebar.state = "unrequested".to_owned());
+        multi_workspace.update(cx, |mw, _| mw.set_all_groups_expanded(false));
+        drain_multi_workspace_background_dispatch(&dispatcher);
+        assert_eq!(queued_writes.load(Ordering::SeqCst), 1);
+
+        let first_write = held_writes.lock().pop_front().unwrap();
+        let first_write = cx.background_executor().spawn(async move {
+            first_write();
+        });
+        finish_multi_workspace_flush_on_background(first_write, &dispatcher);
+        drain_multi_workspace_background_dispatch(&dispatcher);
+        assert_eq!(queued_writes.load(Ordering::SeqCst), 2);
+        assert_eq!(held_writes.lock().len(), 1);
+        assert!(!latest_flush.is_ready());
+        if let Some(older_flush) = older_flush.as_ref() {
+            assert!(
+                !older_flush.is_ready(),
+                "a retained waiter must await its epoch's newer write"
+            );
+        }
+        let latest_write = held_writes.lock().pop_front().unwrap();
+        let latest_write = cx.background_executor().spawn(async move {
+            latest_write();
+        });
+        finish_multi_workspace_flush_on_background(latest_write, &dispatcher);
+        finish_multi_workspace_flush_on_background(latest_flush, &dispatcher);
+        if let Some(older_flush) = older_flush {
+            finish_multi_workspace_flush_on_background(older_flush, &dispatcher);
+        }
+        let assert_saved_state = |state: model::MultiWorkspaceState| {
+            assert_eq!(state.active_workspace_id, Some(workspace_id));
+            assert!(!state.sidebar_open);
+            assert_eq!(state.sidebar_state.as_deref(), Some(latest_state.as_str()));
+            assert_eq!(
+                state
+                    .project_groups
+                    .into_iter()
+                    .map(|group| {
+                        let restored = group.into_restored_state();
+                        (restored.key, restored.expanded)
+                    })
+                    .collect::<Vec<_>>(),
+                vec![(second_key.clone(), true), (first_key.clone(), false)]
+            );
+        };
+        assert_saved_state(cx.update(|_, cx| read_multi_workspace_state(window_id, cx)));
+        assert_eq!(queued_writes.load(Ordering::SeqCst), 2);
+        assert!(held_writes.lock().is_empty());
+        assert!(!foreground_ran.load(Ordering::SeqCst));
+        drop(foreground_witness);
+        writes_blocked.store(false, Ordering::SeqCst);
+        cx.run_until_parked();
+        assert_saved_state(cx.update(|_, cx| read_multi_workspace_state(window_id, cx)));
+        assert_eq!(queued_writes.load(Ordering::SeqCst), 2);
+    }
+
+    #[gpui::test]
+    async fn test_multi_workspace_coalesces_blocked_writer_burst(cx: &mut gpui::TestAppContext) {
+        assert_multi_workspace_coalesces_blocked_writer_burst(cx, false, false).await;
+    }
+
+    #[gpui::test]
+    async fn test_multi_workspace_coalesces_burst_after_cancelled_flush(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        assert_multi_workspace_coalesces_blocked_writer_burst(cx, true, false).await;
+    }
+
+    #[gpui::test]
+    async fn test_multi_workspace_coalesces_exact_flush_burst(cx: &mut gpui::TestAppContext) {
+        assert_multi_workspace_coalesces_blocked_writer_burst(cx, true, true).await;
+    }
+
+    struct PersistenceReleaseTestView;
+
+    impl gpui::Render for PersistenceReleaseTestView {
+        fn render(
+            &mut self,
+            _window: &mut gpui::Window,
+            _cx: &mut gpui::Context<Self>,
+        ) -> impl gpui::IntoElement {
+            gpui::Empty
+        }
+    }
+
+    #[gpui::test]
+    async fn test_multi_workspace_release_captures_deferred_request_without_foreground_dispatch(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+
+        crate::tests::init_test(cx);
+        let HeldPersistenceWrites {
+            writes_blocked,
+            queued_writes,
+            held_writes,
+        } = install_held_multi_workspace_writes(cx).await;
+        let fs = fs::FakeFs::new(cx.executor());
+        let directory = unique_test_dir(&fs, "released-flush").await;
+        let project = Project::test(fs, [directory.as_path()], cx).await;
+        let dispatcher = cx.dispatcher.clone();
+        let mut multi_workspace = None;
+        let (_view, cx) = cx.add_window_view(|window, cx| {
+            multi_workspace = Some(cx.new(|cx| MultiWorkspace::test_new(project, window, cx)));
+            PersistenceReleaseTestView
+        });
+        let multi_workspace = multi_workspace.unwrap();
+        let captures = Arc::new(AtomicUsize::new(0));
+        let sidebar = cx.new(|cx| BoundedPersistenceTestSidebar {
+            focus_handle: cx.focus_handle(),
+            state: r#"{"sequence":"first"}"#.to_owned(),
+            captures: captures.clone(),
+        });
+        let window_id =
+            multi_workspace.update_in(cx, |_, window, _| window.window_handle().window_id());
+        multi_workspace.update(cx, |mw, cx| mw.register_sidebar(sidebar.clone(), cx));
+        cx.run_until_parked();
+        captures.store(0, Ordering::SeqCst);
+        writes_blocked.store(true, Ordering::SeqCst);
+        let older_flush = multi_workspace.update(cx, |mw, cx| mw.flush_serialization(cx));
+        drain_multi_workspace_background_dispatch(&dispatcher);
+        assert!(!older_flush.is_ready());
+        assert_eq!(captures.load(Ordering::SeqCst), 1);
+        assert_eq!(queued_writes.load(Ordering::SeqCst), 1);
+        drop(older_flush);
+
+        let foreground_ran = Arc::new(AtomicBool::new(false));
+        let foreground_witness = cx.foreground_executor().spawn({
+            let foreground_ran = foreground_ran.clone();
+            async move { foreground_ran.store(true, Ordering::SeqCst) }
+        });
+        sidebar.update(cx, |sidebar, _| {
+            sidebar.state = r#"{"sequence":"released"}"#.to_owned();
+        });
+        multi_workspace.update(cx, |mw, cx| mw.serialize(cx));
+        let released = multi_workspace.downgrade();
+        drop(multi_workspace);
+        cx.update(|_, _| {});
+        assert!(released.upgrade().is_none());
+        assert_eq!(captures.load(Ordering::SeqCst), 2);
+        assert_eq!(held_writes.lock().len(), 1);
+        assert!(!foreground_ran.load(Ordering::SeqCst));
+
+        let first_write = held_writes.lock().pop_front().unwrap();
+        let first_write = cx.background_executor().spawn(async move {
+            first_write();
+        });
+        finish_multi_workspace_flush_on_background(first_write, &dispatcher);
+        drain_multi_workspace_background_dispatch(&dispatcher);
+        assert_eq!(queued_writes.load(Ordering::SeqCst), 2);
+        assert_eq!(held_writes.lock().len(), 1);
+        let latest_write = held_writes.lock().pop_front().unwrap();
+        let latest_write = cx.background_executor().spawn(async move {
+            latest_write();
+        });
+        finish_multi_workspace_flush_on_background(latest_write, &dispatcher);
+        drain_multi_workspace_background_dispatch(&dispatcher);
+        assert_eq!(queued_writes.load(Ordering::SeqCst), 2);
+        assert!(held_writes.lock().is_empty());
+        let saved = cx.update(|_, cx| read_multi_workspace_state(window_id, cx));
+        assert_eq!(
+            saved.sidebar_state.as_deref(),
+            Some(r#"{"sequence":"released"}"#)
+        );
+        assert!(!foreground_ran.load(Ordering::SeqCst));
+        drop(foreground_witness);
+        writes_blocked.store(false, Ordering::SeqCst);
+        cx.run_until_parked();
+        assert_eq!(
+            cx.update(|_, cx| read_multi_workspace_state(window_id, cx))
+                .sidebar_state
+                .as_deref(),
+            Some(r#"{"sequence":"released"}"#)
+        );
     }
 }
