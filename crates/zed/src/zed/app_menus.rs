@@ -433,7 +433,7 @@ mod tests {
         let generic_menus =
             visual.update(|_, cx| android_ui::application_menus(Some(&workspace.downgrade()), cx));
         for label in ["Spawn Task", "Start Debugger"] {
-            assert!(generic_menus.iter().any(|menu| menu.items.iter().any(|item| matches!(item, OwnedMenuItem::Action { name, .. } if name.as_ref() == label))), "Generic Run menu lost {label}");
+            assert!(generic_menus.iter().any(|menu| menu.items.iter().any(|item| matches!(item, OwnedMenuItem::Action { name, .. } if name.as_str() == label))), "Generic Run menu lost {label}");
         }
         visual.update(|_, cx| {
             let store = project.read(cx).worktree_store();
