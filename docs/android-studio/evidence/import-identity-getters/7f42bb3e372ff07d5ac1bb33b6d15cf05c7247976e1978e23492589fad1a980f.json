@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "round": 3,
+  "before_source_commit": "e0cfad266fce1a29e065ef016815f695ced9810b",
+  "actual_previous_result": "Compiler PASS,27testsPASS1FAIL positionalwrapperboundary accepted",
+  "exact_failing_boundary": "/importFacts/projectCatalogue/result/value/0/projectName",
+  "reason": "present_observation invoked remote derive inherent deserialize instead of the object-only Deserialize trait; captured_result had the same inherent-dispatch risk",
+  "fix": "Qualify Deserialize trait dispatch for GetterObservation<T> and CapturedField<T> callbacks",
+  "test_change": "Only original positionalloopfailurediagnostics strengthened; all28 previous rejection expectations preserved. Two additional nullablewrapper/failurepayload regressions.",
+  "tests_declared": 30,
+  "default_actual": "30PASS0fail0ignored0filtered",
+  "default_library": "PASS",
+  "workspace_fmt": "PASS",
+  "allfeatures_clippy_UI_SDK_Gradle_native": "pending_Root_lease",
+  "after_source_sha256": "817b9fa28240385e48fd68df1296619c6cb0ff4e6b219ef91b349ec563e3fafa",
+  "after_tests_sha256": "622dfb8c33596a9546583afefe0d65d21530e7fc933b87690c327616c4d976bc",
+  "runtime_receipts": "default-validation/summary.json",
+  "tests_deleted_skipped_weakened": 0
+}

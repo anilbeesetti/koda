@@ -1,0 +1,4 @@
+   Compiling android_tools v0.1.0 (/workspace/android-studio-project-tree-facts/crates/android_tools)
+    Finished `dev` profile [unoptimized] target(s) in 4.15s
+     Running `/workspace/.cache/zed/target/debug/examples/project_tree_facts_probe /workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project /workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/gradle-capture-correction5.log`
+Error: Disabled orphan flavor is absent from authoritative basic source sets

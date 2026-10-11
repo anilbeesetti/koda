@@ -1,0 +1,12 @@
+{
+  "command": [
+    "./script/clippy",
+    "--locked",
+    "-p",
+    "android_tools"
+  ],
+  "exitCode": 0,
+  "wallSeconds": 4.797875875003228,
+  "compilerInclusiveAggregatePeakRssKiB": 1076280,
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2"
+}

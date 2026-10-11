@@ -1,0 +1,155 @@
+   Compiling gpui_util v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/gpui_util)
+   Compiling path v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/path)
+   Compiling gpui_shared_string v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/gpui_shared_string)
+   Compiling ztracing v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/ztracing)
+   Compiling ztracing_macro v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/ztracing_macro)
+   Compiling rusty-fork v0.3.1
+   Compiling collections v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/collections)
+   Compiling perf v0.1.0 (/workspace/android-studio-tabbed-toolbar/tooling/perf)
+   Compiling zlog v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/zlog)
+   Compiling derive_refineable v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/refineable/derive_refineable)
+   Compiling gpui v0.2.2 (/workspace/android-studio-tabbed-toolbar/crates/gpui)
+   Compiling proptest v1.10.0 (https://github.com/proptest-rs/proptest?rev=3dca198a8fef1b32e3a66f1e1897c955b4dc5b5b#3dca198a)
+   Compiling util_macros v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/util_macros)
+   Compiling sum_tree v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/sum_tree)
+   Compiling scheduler v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/scheduler)
+   Compiling gpui_macros v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/gpui_macros)
+   Compiling cloud_llm_client v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/cloud_llm_client)
+   Compiling paths v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/paths)
+   Compiling release_channel v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/release_channel)
+   Compiling proto v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/proto)
+   Compiling util v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/util)
+   Compiling http_client v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/http_client)
+   Compiling refineable v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/refineable)
+   Compiling rope v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/rope)
+   Compiling language_model_core v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/language_model_core)
+   Compiling settings_json v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/settings_json)
+   Compiling net v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/net)
+   Compiling clock v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/clock)
+   Compiling settings_macros v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/settings_macros)
+   Compiling text v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/text)
+   Compiling telemetry_events v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/telemetry_events)
+   Compiling telemetry v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/telemetry)
+   Compiling language_core v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/language_core)
+   Compiling watch v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/watch)
+   Compiling language v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/language)
+   Compiling zeta_prompt v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/zeta_prompt)
+   Compiling grammars v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/grammars)
+   Compiling cloud_api_types v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/cloud_api_types)
+   Compiling http_client_tls v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/http_client_tls)
+   Compiling feature_flags_macros v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/feature_flags_macros)
+   Compiling proxy_handshake v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/proxy_handshake)
+   Compiling icons v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/icons)
+   Compiling node_runtime v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/node_runtime)
+   Compiling ui v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/ui)
+   Compiling env_var v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/env_var)
+   Compiling ui_macros v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/ui_macros)
+   Compiling android_tools v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/android_tools)
+   Compiling sqlez v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/sqlez)
+   Compiling oauth_callback_server v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/oauth_callback_server)
+   Compiling snippet v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/snippet)
+   Compiling sqlez_macros v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/sqlez_macros)
+   Compiling zed_env_vars v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/zed_env_vars)
+   Compiling settings_content v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/settings_content)
+   Compiling askpass v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/askpass)
+   Compiling syntax_theme v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/syntax_theme)
+   Compiling git v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/git)
+   Compiling theme v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/theme)
+   Compiling fs v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/fs)
+   Compiling zed_actions v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/zed_actions)
+   Compiling fuzzy v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/fuzzy)
+   Compiling task v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/task)
+   Compiling rpc v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/rpc)
+   Compiling fuzzy_nucleo v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/fuzzy_nucleo)
+   Compiling lsp v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/lsp)
+   Compiling credentials_provider v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/credentials_provider)
+   Compiling gpui_tokio v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/gpui_tokio)
+   Compiling cloud_api_client v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/cloud_api_client)
+   Compiling zed_credentials_provider v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/zed_credentials_provider)
+   Compiling component v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/component)
+   Compiling menu v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/menu)
+   Compiling mermaid_render v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/mermaid_render)
+   Compiling language_model v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/language_model)
+   Compiling db v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/db)
+   Compiling session v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/session)
+   Compiling assets v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/assets)
+   Compiling gpui_wgpu v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/gpui_wgpu)
+   Compiling ui_input v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/ui_input)
+   Compiling migrator v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/migrator)
+   Compiling file_icons v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/file_icons)
+   Compiling settings v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/settings)
+   Compiling feature_flags v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/feature_flags)
+   Compiling theme_settings v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/theme_settings)
+   Compiling remote v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/remote)
+   Compiling terminal v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/terminal)
+   Compiling git_hosting_providers v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/git_hosting_providers)
+   Compiling worktree v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/worktree)
+   Compiling buffer_diff v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/buffer_diff)
+   Compiling markdown v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/markdown)
+   Compiling prettier v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/prettier)
+   Compiling context_server v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/context_server)
+   Compiling client v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/client)
+   Compiling multi_buffer v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/multi_buffer)
+   Compiling language_detection v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/language_detection)
+   Compiling dap v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/dap)
+   Compiling edit_prediction_types v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/edit_prediction_types)
+   Compiling vim_mode_setting v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/vim_mode_setting)
+   Compiling extension v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/extension)
+   Compiling snippet_provider v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/snippet_provider)
+   Compiling project v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/project)
+   Compiling agent_settings v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/agent_settings)
+   Compiling workspace v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/workspace)
+   Compiling breadcrumbs v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/breadcrumbs)
+   Compiling editor v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/editor)
+   Compiling android_ui v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/android_ui)
+error[E0106]: missing lifetime specifier
+   --> crates/android_ui/src/tabbed_toolbar.rs:454:34
+    |
+452 |         title: &'static str,
+    |                ------------
+453 |         cx: &mut TestAppContext,
+    |             -------------------
+454 |     ) -> (Entity<TabbedToolbar>, &mut VisualTestContext) {
+    |                                  ^ expected named lifetime parameter
+    |
+    = help: this function's return type contains a borrowed value, but the signature does not say whether it is borrowed from `title` or `cx`
+help: consider introducing a named lifetime parameter
+    |
+451 ~     fn toolbar_with_title<'a>(
+452 |         title: &'static str,
+453 ~         cx: &'a mut TestAppContext,
+454 ~     ) -> (Entity<TabbedToolbar>, &'a mut VisualTestContext) {
+    |
+
+error[E0282]: type annotations needed for `&_`
+   --> crates/android_ui/src/tabbed_toolbar.rs:330:60
+    |
+330 | ...                   move |toolbar, event, window, cx| {
+    |                                      ^^^^^
+331 | ...                       if !event.is_middle_click() {
+    |                               ----- type must be known at this point
+    |
+help: consider giving this closure parameter an explicit type, where the placeholder `_` is specified
+    |
+330 |                                             move |toolbar, event: &E, window, cx| {
+    |                                                                 ++++
+
+error[E0061]: this method takes 2 arguments but 1 argument was supplied
+   --> crates/android_ui/src/tabbed_toolbar.rs:158:27
+    |
+158 |                 tab.focus.focus(window);
+    |                           ^^^^^-------- argument #2 of type `&mut gpui::App` is missing
+    |
+note: method defined here
+   --> crates/gpui/src/window.rs:601:12
+    |
+601 |     pub fn focus(&self, window: &mut Window, cx: &mut App) {
+    |            ^^^^^
+help: provide the argument
+    |
+158 |                 tab.focus.focus(window, /* &mut gpui::App */);
+    |                                       ++++++++++++++++++++++
+
+Some errors have detailed explanations: E0061, E0106, E0282.
+For more information about an error, try `rustc --explain E0061`.
+error: could not compile `android_ui` (lib test) due to 3 previous errors

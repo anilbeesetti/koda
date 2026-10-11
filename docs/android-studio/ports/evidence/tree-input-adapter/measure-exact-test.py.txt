@@ -1,0 +1,23 @@
+from pathlib import Path
+import hashlib,json,os,sys,time
+repo=Path('/workspace/android-studio-tree-input-adapter'); art=Path('/workspace/android-studio-artifacts/tree-input-adapter')
+label,test_name=sys.argv[1:]
+exe=Path('/tmp/tree-input-adapter-verified-binaries/project_tree_adapter-tests27')
+source_paths=['crates/android_tools/src/project_tree_adapter.rs','crates/android_tools/tests/project_tree_adapter.rs','crates/android_tools/src/android_tools.rs']
+before={p:hashlib.sha256((repo/p).read_bytes()).hexdigest() for p in source_paths}
+elf_sha=hashlib.sha256(exe.read_bytes()).hexdigest()
+assert elf_sha=='766efb129744a5851c2b10e1db1d706ee2a9257b779d60ddb6447c89d6714de6'
+command=[str(exe),'--exact',test_name,'--nocapture']
+fd=os.open(art/(label+'.log'),os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+start=time.monotonic()
+pid=os.posix_spawn(str(exe),command,os.environ,file_actions=[(os.POSIX_SPAWN_DUP2,fd,1),(os.POSIX_SPAWN_DUP2,fd,2),(os.POSIX_SPAWN_CLOSE,fd)])
+os.close(fd)
+finished,status,rusage=os.wait4(pid,0);elapsed=time.monotonic()-start
+assert finished==pid
+exit_code=os.waitstatus_to_exitcode(status)
+after={p:hashlib.sha256((repo/p).read_bytes()).hexdigest() for p in source_paths}
+content=(art/(label+'.log')).read_bytes()
+r={'command':command,'pid':pid,'measurement':'Direct os.posix_spawn and per-PID os.wait4; no aggregate RUSAGE_CHILDREN/git-helper baseline','exit_code':exit_code,'wall_seconds':elapsed,'user_seconds':rusage.ru_utime,'system_seconds':rusage.ru_stime,'max_rss_kib':rusage.ru_maxrss,'minor_page_faults':rusage.ru_minflt,'major_page_faults':rusage.ru_majflt,'source_before':before,'source_unchanged':before==after,'elf_sha256':elf_sha,'log_sha256':hashlib.sha256(content).hexdigest(),'exact_one_test_passed':b'1 passed; 0 failed; 0 ignored' in content,'scope':'Single debug integration-test capture/projection operation; not native app startup/UI latency or memory budget guarantee'}
+(art/(label+'.json')).write_text(json.dumps(r,indent=2)+'\n')
+print(json.dumps(r,indent=2))
+sys.exit(exit_code if r['source_unchanged'] and r['exact_one_test_passed'] else 125)

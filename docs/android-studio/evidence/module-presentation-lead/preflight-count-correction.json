@@ -1,0 +1,27 @@
+{
+  "scope": "Metadata-only factual correction before merge",
+  "incorrect_claim_removed": "Ten moduleNames methods/count was unsupported Root shorthand, not a verified original-test inventory",
+  "verified_inventory": {
+    "scope": "Separate bounded inspected-source planning inventory, not the canonical95selected/35passing matrix or an executed/runtime test census",
+    "inspected_method_declarations": 53,
+    "existing_adapted_declarations": 9,
+    "unported_declarations": 44,
+    "source_provider_definitions_unported": 22,
+    "runtime_parameter_or_runner_expansion": "incomplete; exact runtime case count unknown",
+    "global_census_complete": false,
+    "new_P1_original_credit": 0,
+    "inventory": {
+      "path": "docs/android-studio/evidence/module-presentation-lead/preflight/bounded-test-inventory.json",
+      "sha256": "2752149bde7e3d5b69901c45c76b3f2c012aea5a84729168e9a868f85b17fe53"
+    },
+    "preflight_report": {
+      "path": "docs/android-studio/evidence/module-presentation-lead/preflight/preflight-report.md.json",
+      "original_sha256": "3dfdc19ba1ee844a0b1f2fbf68cc77882ffc9fa76e0f74685473624f9580944b",
+      "wrapper_sha256": "8f9611636cf40756efd2f63b9c559abc566f15855573241915cc363a2ee5d058"
+    }
+  },
+  "prior_final_summary_report_port_source_guard_manifest_preserved_byte_exact": "history/preflight-count-correction/*.json reversible wrappers",
+  "canonical95_35_ledger_unchanged": true,
+  "source_or_test_change": false,
+  "new_original_credit": 0
+}

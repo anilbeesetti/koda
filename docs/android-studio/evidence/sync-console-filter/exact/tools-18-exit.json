@@ -1,0 +1,26 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--test",
+    "project_view_preferences_reference",
+    "test_show_visibility_icons_when_option_is_selected",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.8410253479960375,
+  "actual_process_pid": 377956,
+  "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-18.log",
+  "raw_log_bytes": 467,
+  "raw_log_sha256": "43c42398c4cec95ba576cb3a8f71528424c65dfea48ba2a1f288f1d35c8c521f",
+  "source_files": 4748,
+  "full_raw_index_status_and_source_hashes_unchanged": true
+}

@@ -1,0 +1,212 @@
+{
+  "schema": 1,
+  "reviewer": "/root/import_identity_getters_owner/identity_static_ux_review",
+  "area": "UX",
+  "verdict": "PASS",
+  "scope": "Final owner UX pass for P2a raw identity transport with current recorded normal tests and supplementary official getter captures. Root full-app/native/CI/exact-reference gates remain separate.",
+  "reviewed_at_utc": "2026-10-08T02:50:12.034714+00:00",
+  "source_head": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+  "source_file_count": 4743,
+  "source_binding": {
+    "snapshot_sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0",
+    "digest_recipe_verified": true,
+    "scoped_current_source_hashes": {
+      "crates/android_tools/src/import_facts.rs": "817b9fa28240385e48fd68df1296619c6cb0ff4e6b219ef91b349ec563e3fafa",
+      "crates/android_tools/src/project_model.gradle": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+      "crates/android_tools/src/project_model.rs": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c",
+      "crates/android_tools/src/generated_artifacts.rs": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+      "crates/android_tools/tests/import_facts.rs": "13744dfb88d81b17fcba3bed9a1d07000d0d8f3cffa4e62232a6f733ca72f319",
+      "crates/android_tools/test_data/import_facts/late_configuration.gradle": "c9f33742f6d0d5d9fcd26433f14d084593048597bd1030b17aec4fddcc249dac",
+      "crates/android_tools/test_data/import_facts/wire-template.json": "2bb32d6bf635c000bfabcf0bb3c14834d0fc05e64c04524b2f402703a3da85fc"
+    },
+    "index_head_status_unchanged": true,
+    "large_archives_not_reread": true
+  },
+  "findings": [],
+  "contracts_verified": [
+    "Basic and V2 full envelope properties, values and vector order identical in three old/current pairs after removing only additive importFacts, with no normalization",
+    "Actual declared root names differ from directory; raw catalogue keeps parent/root holders beyond compiled modules",
+    "Nested projects retain custom directories and colliding raw project/Idea names without guessing imported names",
+    "Actual absent-plugin nullable name preserved; authored typed tests preserve absent/failed/null/empty distinctions and stale bindings",
+    "Late projectsEvaluated Idea name equals independent official getter oracle",
+    "Both old/current included-build guards reject explicitly",
+    "No shipping bridge plugin application or JVM importer/facet/tree policy",
+    "Shipping UI and physical tree remain unchanged; no broader Android Studio workflow fidelity inferred from raw facts"
+  ],
+  "normal_current_gates": {
+    "library": "PASS fresh actual worktree source",
+    "tools": {
+      "passed": 291,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "import_facts_authored_tests": 30
+    },
+    "strict_repository_clippy": "PASS release/all-targets/all-features/deny warnings",
+    "workspace_fmt": "PASS",
+    "UI": {
+      "passed": 125,
+      "failed": 0,
+      "pre_existing_ignored": 1,
+      "filtered": 0,
+      "actual_worktree_fresh_false": true
+    },
+    "evidence": [
+      {
+        "stage": "library-build",
+        "receipt_sha256": "683faaa7da63a865ae0bb519d3f83369d61937d76b59e909143b746d6fe65573",
+        "log_sha256": "0808ad3e6f89e045b5eceae2dadc625d8a07462a1b2a02922ae61454ec5ecdd5",
+        "exit_code": 0,
+        "current_source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a"
+      },
+      {
+        "stage": "all-features-tests",
+        "receipt_sha256": "bf02d2554b8f00952f84607d7ebcac640611a57d6aaa562b93ea2c487079dfd2",
+        "log_sha256": "d0abe153b7a7092580e819a6616cf413f7b785f606e5db13712947d16899b662",
+        "exit_code": 0,
+        "current_source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a"
+      },
+      {
+        "stage": "strict-clippy",
+        "receipt_sha256": "b9846abe20db700bd553bfe3e818595586de3f9707cc910907b4b9608af90e81",
+        "log_sha256": "5a0f3d8cc9062215ede77cfc2ec59a483d0ed57a5ef0d8b39fccd280202ccee7",
+        "exit_code": 0,
+        "current_source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a"
+      },
+      {
+        "stage": "format-check",
+        "receipt_sha256": "cec5db2c6e3d775530710d8c13b728beee9df6c56321656d11df11344cae34da",
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "exit_code": 0,
+        "current_source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a"
+      },
+      {
+        "stage": "ui-full-default-suite",
+        "receipt_sha256": "5574a103630b19e9c22a8972f481eeeba3cf692689b0edfa951a43d592c6b33c",
+        "log_sha256": "2488cdaa0fff210d42064ca571adcfdd236fa9afce17ee7a69edb831591491c5",
+        "exit_code": 0,
+        "current_source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a"
+      }
+    ]
+  },
+  "supplementary_official_SDK": {
+    "captures": 8,
+    "supported_pairs": {
+      "baseline": {
+        "raw_projects": 3,
+        "compiled_modules": 2,
+        "projection_exact": true,
+        "projection_sha256": "65953451100c955061f140bb7721a720ed8449cf48d3a4ea765fe3514150c9e0",
+        "probe_stdout_sha256": "97a64c14922ddaafdf1eef46a16aca319554a15c94440157986890a80d390030",
+        "proof_sha256": "3e44df3ac66a3847b8de9f9e1998f5af4657e1c4033541e53b9053670a54dc0c"
+      },
+      "nested": {
+        "raw_projects": 7,
+        "compiled_modules": 4,
+        "projection_exact": true,
+        "projection_sha256": "81a98990317a817624c1c11d6bfc82afdd953e3fcc535ea6987ae2ce95f366cd",
+        "probe_stdout_sha256": "4d8f31fe21500fc268dc64f71b8b325f6bdfb704caffe8b9a63a906c6fa2b208",
+        "proof_sha256": "3f0d7babf4106652c28a1a67ee9cacd01de9305a9e7ac09c0dd5630f70f9d48c"
+      },
+      "late": {
+        "raw_projects": 7,
+        "compiled_modules": 4,
+        "projection_exact": true,
+        "projection_sha256": "81a98990317a817624c1c11d6bfc82afdd953e3fcc535ea6987ae2ce95f366cd",
+        "probe_stdout_sha256": "4c3252a7bc53b1ef724a02fb6989a6e4b5836788b2046089fffb6fad74c59936",
+        "proof_sha256": "502b7251d1364a6c987fb5d7a08341292beefcfa2a9bcdcd5d884931fca67ad7"
+      }
+    },
+    "explicit_existing_guard_rejections": 2,
+    "evidence": [
+      {
+        "scenario": "baseline-old",
+        "receipt_sha256": "86591bfdde1d70edf6d15258ee3f600e234aea665b9e267bc00a5d798f548aae",
+        "stdout_sha256": "2743bfaa09aecf6cc54d7aa52b70bb3766d611c909558fdbb3d7b622c0cf3c43",
+        "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756",
+        "exit_code": 0
+      },
+      {
+        "scenario": "baseline-current",
+        "receipt_sha256": "744b266cb15c6ad97d783ba964785707f10fdd76c72ae3caabb3c3898e4f42f3",
+        "stdout_sha256": "5a7c25e5ccb38997c33a5b86844de904d6ee36c82cbd37758e09958e0a6ed056",
+        "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756",
+        "exit_code": 0
+      },
+      {
+        "scenario": "nested-old",
+        "receipt_sha256": "7fc05a7b3c606eb31faebd54f6eeceefd067d5cc0554bc8fe09159624d9ec95a",
+        "stdout_sha256": "69e9555b5d34d17c121681eb8b7b5674eaf09767fb2b5ab27e5138b30810470c",
+        "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756",
+        "exit_code": 0
+      },
+      {
+        "scenario": "nested-current",
+        "receipt_sha256": "33225c09c21df864318cc69d159e64ebb3a09284a07282ab06674f8102ff9718",
+        "stdout_sha256": "d6b93cefdc7b726295ac7539514722f84cb220b60fb0e8bf4c39ee703ebbc634",
+        "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756",
+        "exit_code": 0
+      },
+      {
+        "scenario": "late-old",
+        "receipt_sha256": "0b3259d50eefe6275c948ce2b53df45ae6b1b0a82d9c8ba7774d42196c56f827",
+        "stdout_sha256": "539e9564f6fb7d9d0cdc9633542d9a848869397ab2111ae89a91cd1230f7c23d",
+        "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756",
+        "exit_code": 0
+      },
+      {
+        "scenario": "late-current",
+        "receipt_sha256": "832f87f46f5f52186bd07a92e900846aff6f3994cce5ce4d2f2232c612338a0b",
+        "stdout_sha256": "3c61ac79e4bfdc636fefe58c482ee4af9bbd94ee42579e6663a9d73f1b4b222a",
+        "stderr_sha256": "492f850a23d080a7ab1f9302ee522e1ee8c4c39863fe3bfb8fc98ddc6a727756",
+        "exit_code": 0
+      },
+      {
+        "scenario": "included-old",
+        "receipt_sha256": "6df9ebbd48a38d954f879495e0304dc425c72c0294d0cb57be87dcb2a59b8480",
+        "stdout_sha256": "883f9d57a981a692cdc0b5ae4a89cd37ff65f7b2f0e21fcc3aa943c20d9875f3",
+        "stderr_sha256": "c1f1710b277d848d8da715e543a06bfe89759fa0122e384c1d61954aaa03a8ed",
+        "exit_code": 1,
+        "expected_existing_guard": true
+      },
+      {
+        "scenario": "included-current",
+        "receipt_sha256": "a337c552c457b232d6b587e7d50a20c9e2a419f2d1bdcc228e9c530d238c7ac0",
+        "stdout_sha256": "883f9d57a981a692cdc0b5ae4a89cd37ff65f7b2f0e21fcc3aa943c20d9875f3",
+        "stderr_sha256": "86cd70aea0829024f6c6a034c127daf7b6bc0a111f62118d31dfc272d04681bc",
+        "exit_code": 1,
+        "expected_existing_guard": true
+      }
+    ],
+    "probe_source_sha256": "330abe4e7efb40e81e496d343d4ea5e2ce84811b4efd6d1a8c77fb56fb79a926",
+    "probe_binary_sha256": "a9389c2e14e85025f3b0bf1cff35c6b17ea0fc9ecaed44fa98addc7c10a1c15e",
+    "environment": "Private JDK21/Gradle9.6.1/AGP9.4/SDK37 with build-tools37 override only in two private Android DSL files; no original environment equivalence claimed",
+    "private_correction_receipt_sha256": "1f7997042634e58e0d1d78d5fc93016a74009d555aaabd852abffc53a5edf792",
+    "initial_default_build_tools36_capture_and_decoder_failure_retained": true,
+    "new_original_test_credit": 0
+  },
+  "history_preserved": "Three semantic product fixes, followed by one Root-authorized clone ownership cleanup after escalation under prior continue; no new user approval reply claimed. Prior ENOSPC and SDK36 failures are retained. No test assertions were deleted, skipped or weakened.",
+  "user_facing_limitations": [
+    "Physical project tree and Sync console raw JSON remain tracked",
+    "Authoritative imported naming/collision resolution, Kotlin facets, logical tree publication, LSP and full Android Studio workflows unfinished"
+  ],
+  "excluded_pending_lead_gates": [
+    "Root current full-app build/run",
+    "Root native keyboard/loading/cleanup validation",
+    "Full current CI/workspace lead validation",
+    "Current exact 36 reference captures and final merge checks"
+  ],
+  "prior_reports_preserved": {
+    "ux-static.md": "20cd9ccd4981ec06fadef8c501d9286cd427c8e7a5d15fb94ba25e5fa9ea2e6f",
+    "ux-static-6fb.md": "dbc7640133e2afec2df761926e21fc8e2968b1f6708ea1a9d0f8e4ec3f32731d",
+    "ux-ownership-cleanup-static.md": "476c51e58ed7f74aa3f962646b7f64626181febfff01ef1e3abae9065dcd4748",
+    "ux-static.json": "2bbcb04adc4e04c2e920e6fe714b7782eee9c98ffc10d405d320d1fbbf6a9a10",
+    "ux-static-6fb.json": "821e3d110b50ad18679c8c1d84f9e0d42e14646f97074956970713b24e891242",
+    "ux-ownership-cleanup-static.json": "b6d1e667998d7ecd97eddf4e0f3aeabb8f25ed11ec65ed8674e20f83adf35e92"
+  },
+  "runtime_commands_executed_by_reviewer": 0,
+  "original_test_parity_credit": 0,
+  "global_IDE_completion": false,
+  "read_hold_released": true
+}

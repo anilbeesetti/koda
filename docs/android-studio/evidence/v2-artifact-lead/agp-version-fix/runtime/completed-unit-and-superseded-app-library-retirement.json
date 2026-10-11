@@ -1,0 +1,28 @@
+{
+  "reason": "Retire redundant completed231-test unitELF and superseded Tree normal-app static library/metadata to allow unchanged-source fresh whole-app build. Current/frozen owner tests, full priorTreeapp, all Source/fixtures/rawlogs retained.",
+  "files": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "bytes": 303989152,
+      "sha256": "1f206c099eca9788f7b314fa21220c3b195a3d01c2cbf4fed567dac0603829d5",
+      "nlink": 1
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-6d8abc02ff6a24e4.rlib",
+      "bytes": 310131212,
+      "sha256": "426baa394c4910b975471e458097579b3f0b9ad35fb2c34b417ed075e3f2eb98",
+      "nlink": 1
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-6d8abc02ff6a24e4.rmeta",
+      "bytes": 2865414,
+      "sha256": "fe96c408fa85b2007ceb367525bc81c835b8e7f9addb28c770737eaa5186c65f",
+      "nlink": 1
+    }
+  ],
+  "available_bytes_before": 313577472,
+  "no_live_compiler_or_open_candidate_found": true,
+  "test_sources_and_assertions_deleted": false,
+  "actual231_test_record_retained": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/retry1/tooling-all-features-verified.json",
+  "available_bytes_after": 930504704
+}

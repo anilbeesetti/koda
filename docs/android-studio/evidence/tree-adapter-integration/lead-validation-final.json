@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "source_binding_count": 4704,
+  "source_module_sha256": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+  "five_owner_reviews": "PASS scoped current payload; failedrounds preserved",
+  "normal_fullapp_build": "PASS150.2708252sec",
+  "independent_current_app_build_quality": "PASS full4704/hash/oneof1206linkargs/currentELF",
+  "tooling_allfeatures": {
+    "passed": 201,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0,
+    "first_compile_ENOSPC_retained": true
+  },
+  "full_default_UI": {
+    "passed": 125,
+    "failed": 0,
+    "pre_existing_ignored": 1,
+    "filtered": 0
+  },
+  "strict_clippy": "PASS normal repository release/alltargets/allfeatures/denywarnings (session63616 exit0)",
+  "workspace_format": "PASS28.862sec",
+  "canonical_parity_validator": "PASS current33exactcaptures,17ported16adapted59unported",
+  "new_parity_credit": 0,
+  "native": "PASS actual currentf5e4 fullapp sync/tabs/toolwindows/focus/cleanup",
+  "root_inspected_images": [
+    "fixture-trusted.png",
+    "narrow230-output-focus.png"
+  ],
+  "performance": "Preserved source0e15 activeXMLcaret34.175%onecore and toolbar1.5987%onecore, nofaircomparison/nohardware/startup/largeprojectclaim; owner20k adapter scope separate.",
+  "known_diagnostics": "Unchanged externalJava6.8.27 Gradleindentquery issue; editingphaseRust support/fidelity pending",
+  "full_CI": {
+    "run_id": 37683734185,
+    "head_sha": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+    "all_three_jobs": "success",
+    "workspace_tests": {
+      "passed": 10450,
+      "failed": 0,
+      "pre_existing_skipped": 23,
+      "execution_seconds": 2191.59
+    },
+    "CI_synthetic_merge": "ff4569ea3fe17e2a631368f0751910b5df919044",
+    "CI_synthetic_tree": "ea0dd3b90fe66c30e6c7debd336cc708a4bbf0ec",
+    "synthetic_tree_equals_tested_source_tree": true,
+    "raw_log_bytes": 432299,
+    "raw_log_sha256": "28d679c8d32580ffb734d186c07d28f590e0e050bf8eb731c2f0d27e81edf77f",
+    "app_build_step": "success",
+    "unchanged_skips_not_modified_by_task": true,
+    "url": "https://github.com/anilbeesetti/koda/actions/runs/37683734185"
+  },
+  "protected_merge_performed": false,
+  "main_unchanged": true,
+  "phase_complete": false,
+  "IDE_complete": false,
+  "completion_of_original5generatedviewflows": false,
+  "generated_cache_recovery": "ExactownedoldELFs/oldpreviewarchive/incompletecompilerobject only; rawfailure/history/source/fixtures retained.",
+  "status": "PASS all scoped owner and lead gates; protected merge pending final metadata/source verification",
+  "canonical_matrix": {
+    "selected_cases": 92,
+    "ported": 17,
+    "adapted": 16,
+    "unported": 59,
+    "passing": 33,
+    "failing": 0,
+    "not_applicable": 0,
+    "global_census_complete": false
+  },
+  "superseded_UI_and_unit_ELFs": "Retired only after completed local 125/201/33 and successful CI workspace tests; source, tests, fixtures, logs, current app and frozen owner binaries retained. Receipt on following V2 integration.",
+  "documentation_format": {
+    "changed_task_documents": "formatted",
+    "broad_mdBook_check": "two pre-existing failures, exact baseline proof retained",
+    "evidence": "docs/android-studio/evidence/tree-adapter-integration/lead/documentation-format-baseline.json"
+  }
+}

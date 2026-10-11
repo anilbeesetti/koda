@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/workspace/android-studio-artifacts/module-presentation-native-905012f/runtime-probe",
+    "/workspace/android-studio-artifacts/module-presentation-native-905012f/generation-project",
+    "/workspace/android-studio-artifacts/module-presentation-native-905012f/native-model-record1.log"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.006727744999807328,
+  "input_record_sha256": "18d096dd82aabd8709b037b7d812d7a081be92ff7ef00b1eebc6671d466ef2d8",
+  "stdout_sha256": "0b1f2d76f08d901ae4481684d75af37468fdcb9624d1e34e2a7d68dad6e2e37f",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

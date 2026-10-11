@@ -1,0 +1,26 @@
+{
+  "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+  "current_normal_all_features_library_compiler_json": "/workspace/android-studio-artifacts/module-presentation-integration/runtime/library-build-verified.json",
+  "library_sha256": "a1a5e2968673a3026664777bbe17a36bdb71c94d61dc7e4af048083b037b1383",
+  "probe_source_sha256": "5551985487b7e87f31963365ccf203f138de5f7bb4ebb2d5f4ca9d9b9a971dca",
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "/workspace/android-studio-artifacts/module-presentation-native-905012f/runtime-probe.rs",
+    "-L",
+    "dependency=/workspace/.cache/zed/target/debug/deps",
+    "--extern",
+    "android_tools=/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+    "--extern",
+    "serde_json=/workspace/.cache/zed/target/debug/deps/libserde_json-dad50efee64284ac.rlib",
+    "--extern",
+    "anyhow=/workspace/.cache/zed/target/debug/deps/libanyhow-18b69cad26582a56.rlib",
+    "-o",
+    "/workspace/android-studio-artifacts/module-presentation-native-905012f/runtime-probe"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 1.646431143002701,
+  "probe_executable_sha256": "7b47af0f074d0220afae94cfcbffeee88dbe6f105ffb8996ed68ba8967a8e94f",
+  "guard_before_after_files": 4725,
+  "no_Cargo_rebuild": true
+}

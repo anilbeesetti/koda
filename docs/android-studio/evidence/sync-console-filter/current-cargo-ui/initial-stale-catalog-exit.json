@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/workspace/android-studio-artifacts/reference-runner-membership/dependency-integration-f2aa51b/runtime-current581/frozen-normal-xtask-5810906",
+    "android-parity"
+  ],
+  "cwd": "/workspace/android-studio-sync-console-filter",
+  "actual_pid": 414242,
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "CLI_normal_compile_source": "5810906 Member dependency integration; not relabeled taskf763 compiler output",
+  "executable_sha256": "2e85cbaec3314218506512f52ac4c897b2bdd3abe27402adb7e2d183045de8ae",
+  "executable_bytes": 50893168,
+  "executable_dev": 27,
+  "executable_inode": 1098774,
+  "started_utc": "2026-10-08T11:18:11.903684+00:00",
+  "all_Git_optional_locks_disabled": true,
+  "exit_code": 1,
+  "elapsed_seconds": 0.600969,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "deddd5b876de4ef8d80e3d9618989ab71fc693fc634910a1efdd4b7fea0507aa"
+}

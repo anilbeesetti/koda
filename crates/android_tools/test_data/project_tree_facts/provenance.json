@@ -1,0 +1,142 @@
+{
+  "schema": 1,
+  "scope": "Source-backed supplemental provider contracts; original five integration methods remain unported",
+  "sources": [
+    {
+      "archive": "idea.tar.gz",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "android-navigator/src/com/android/tools/idea/navigator/AndroidViewNodes.java",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/idea/android-navigator/src/com/android/tools/idea/navigator/AndroidViewNodes.java",
+      "bytes": 2934,
+      "sha256": "bb4a8691a165359c5f1b46f33a94475404f5a4e5a8cc57557171512509a4e621"
+    },
+    {
+      "archive": "idea.tar.gz",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "project-system-gradle/src/com/android/tools/idea/gradle/project/model/AndroidModelSourceProviderUtils.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/idea/project-system-gradle/src/com/android/tools/idea/gradle/project/model/AndroidModelSourceProviderUtils.kt",
+      "bytes": 10514,
+      "sha256": "4605166cb811b7d7afc3241641e28b324b936146995a85348838c449ba1f63ca"
+    },
+    {
+      "archive": "idea.tar.gz",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "project-system/src/com/android/tools/idea/projectsystem/SourceProviders.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/idea/project-system/src/com/android/tools/idea/projectsystem/SourceProviders.kt",
+      "bytes": 23540,
+      "sha256": "3908e5e66c6726d83cb269f2252af15637593a0c9e7b32e4c4e900bcf9710b58"
+    },
+    {
+      "archive": "idea.tar.gz",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "project-system/src/com/android/tools/idea/projectsystem/IdeaSourceProvider.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/idea/project-system/src/com/android/tools/idea/projectsystem/IdeaSourceProvider.kt",
+      "bytes": 4062,
+      "sha256": "b22840e8f769afaebd07d4b84090fbb1cf79f83b5cbfb6d7b372d880705b83aa"
+    },
+    {
+      "archive": "idea.tar.gz",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/ModelCacheV2Impl.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/idea/project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/ModelCacheV2Impl.kt",
+      "bytes": 92315,
+      "sha256": "bb39e57b69e8a462206c6fc2201e2d0d1c29e55728855be980912b4637ee03b7"
+    },
+    {
+      "archive": "idea.tar.gz",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/BasicModules.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/idea/project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/BasicModules.kt",
+      "bytes": 20824,
+      "sha256": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed"
+    },
+    {
+      "archive": "base.tar.gz",
+      "source_commit": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "build-system/gradle-core/src/main/java/com/android/build/gradle/internal/ide/v2/ModelBuilder.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/base/build-system/gradle-core/src/main/java/com/android/build/gradle/internal/ide/v2/ModelBuilder.kt",
+      "bytes": 72961,
+      "sha256": "128bf77cd981464a9698bbda450dccaf1458fa154f4f7a215aafed488dd9eff4"
+    },
+    {
+      "archive": "base.tar.gz",
+      "source_commit": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "build-system/gradle-core/src/main/java/com/android/build/api/variant/impl/SourcesImpl.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/base/build-system/gradle-core/src/main/java/com/android/build/api/variant/impl/SourcesImpl.kt",
+      "bytes": 11512,
+      "sha256": "44ec4ed412d0b1cbd8e28864a996d4b8cbb06cf91b5cd69d88671cd547c51cea"
+    },
+    {
+      "archive": "base.tar.gz",
+      "source_commit": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "build-system/gradle-core/src/main/java/com/android/build/gradle/internal/core/VariantSources.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/base/build-system/gradle-core/src/main/java/com/android/build/gradle/internal/core/VariantSources.kt",
+      "bytes": 5540,
+      "sha256": "11793b82e6209bb9af38e38a21734f677ed47103d00b7fa51deb6d0322a8819f"
+    },
+    {
+      "archive": "base.tar.gz",
+      "source_commit": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "build-system/builder-model/src/main/java/com/android/builder/model/v2/models/Versions.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/base/build-system/builder-model/src/main/java/com/android/builder/model/v2/models/Versions.kt",
+      "bytes": 2844,
+      "sha256": "a47d46dc68bf39e06989e69264aa25c172f94d0f3ddfee56aa59cd0f430f86c6"
+    },
+    {
+      "archive": "base.tar.gz",
+      "source_commit": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "build-system/builder-model/src/main/java/com/android/builder/model/v2/models/BasicAndroidProject.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/base/build-system/builder-model/src/main/java/com/android/builder/model/v2/models/BasicAndroidProject.kt",
+      "bytes": 2515,
+      "sha256": "8b1f05df996785dcfe41358a4cecf3a35a6f2cc3af9a92bdb684272f3d91ec88"
+    },
+    {
+      "archive": "base.tar.gz",
+      "source_commit": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "build-system/builder-model/src/main/java/com/android/builder/model/v2/ide/SourceSetContainer.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/base/build-system/builder-model/src/main/java/com/android/builder/model/v2/ide/SourceSetContainer.kt",
+      "bytes": 1633,
+      "sha256": "6bafceb5c3d522769edd245835da203c6059ecf548d6f3c228859318f67755a9"
+    },
+    {
+      "archive": "base.tar.gz",
+      "source_commit": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "build-system/builder-model/src/main/java/com/android/builder/model/v2/ide/SourceProvider.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/base/build-system/builder-model/src/main/java/com/android/builder/model/v2/ide/SourceProvider.kt",
+      "bytes": 3705,
+      "sha256": "fef9b5fc89afeff7b4526e3a6a12fbda704ca993aab5d944b187ac597d2027cd"
+    },
+    {
+      "archive": "base.tar.gz",
+      "source_commit": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "build-system/builder-model/src/main/java/com/android/builder/model/v2/ide/BasicArtifact.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/base/build-system/builder-model/src/main/java/com/android/builder/model/v2/ide/BasicArtifact.kt",
+      "bytes": 1284,
+      "sha256": "a4ff536aab6c4b4ec79f7a6fda23ca0cc419e8da7e1fca7df802aa6b23dbd361"
+    },
+    {
+      "archive": "base.tar.gz",
+      "source_commit": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "build-system/builder-model/src/main/java/com/android/builder/model/v2/ide/BasicVariant.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/base/build-system/builder-model/src/main/java/com/android/builder/model/v2/ide/BasicVariant.kt",
+      "bytes": 2118,
+      "sha256": "35b826c8ade5936ca1b0158c4167fbb0805938e76ccc9fd7deaef176cc2c1d2d"
+    },
+    {
+      "archive": "base.tar.gz",
+      "source_commit": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "build-system/builder-model/src/main/java/com/android/builder/model/v2/models/BasicTestSuite.kt",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/base/build-system/builder-model/src/main/java/com/android/builder/model/v2/models/BasicTestSuite.kt",
+      "bytes": 1377,
+      "sha256": "3eb6ffabcccd5b489e4c4a470bc229e79579276678eb9139f98564ae0e2f4400"
+    },
+    {
+      "archive": "idea.tar.gz",
+      "source_commit": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidResFileNode.java",
+      "retained_path": "crates/android_tools/test_data/project_tree_facts/reference/idea/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidResFileNode.java",
+      "bytes": 5553,
+      "sha256": "c9bf766eb36ac02eeb31fe93e4f4420f072f6eedb8c765593717e3a3d373e512"
+    }
+  ]
+}

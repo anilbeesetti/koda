@@ -1,0 +1,2 @@
+    Finished `dev` profile [unoptimized] target(s) in 0.83s
+     Running `/workspace/.cache/zed/target/debug/examples/project_model_probe /workspace/android-studio-artifacts/assets-generation-facts/project /workspace/android-studio-artifacts/assets-generation-facts/gradle-round4.log --model-only`

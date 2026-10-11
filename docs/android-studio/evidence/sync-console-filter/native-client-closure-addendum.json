@@ -1,0 +1,28 @@
+{
+  "utc": "2026-10-08T10:43:02.915033+00:00",
+  "all_three_exact_receipt_clients_nonrunning": true,
+  "clients": [
+    {
+      "finish_receipt": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/gradle-finish-1791455921151208352-409281.json",
+      "actual_client_pid_from_receipt": 409307,
+      "actual_gradle_exit": 1,
+      "exists": false,
+      "running": false
+    },
+    {
+      "finish_receipt": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/gradle-finish-1791454806393050914-406106.json",
+      "actual_client_pid_from_receipt": 406157,
+      "actual_gradle_exit": 0,
+      "exists": false,
+      "running": false
+    },
+    {
+      "finish_receipt": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/gradle-finish-1791455070641901569-407356.json",
+      "actual_client_pid_from_receipt": 407383,
+      "actual_gradle_exit": 0,
+      "exists": false,
+      "running": false
+    }
+  ],
+  "initial_closure_extra_nonclient_pid406122_is_not_original_client_credit": true
+}

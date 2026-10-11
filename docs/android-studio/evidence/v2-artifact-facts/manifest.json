@@ -1,0 +1,494 @@
+{
+  "source_commit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "all_five_reviews_passed": true,
+  "files": [
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/baseline-guard.json",
+      "bytes": 625349,
+      "sha256": "75d7ad55d84d2531ef783da611495ae081edf01d7a1faf65b8f2256e52a88672"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bridge-boundary-output.json",
+      "bytes": 2930,
+      "sha256": "a31326ea099d09e9924fb0014d401928efcc0d9c84d8634099ac1169f95858e3"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bridge-boundary-probe-source.json",
+      "bytes": 492,
+      "sha256": "10793d1359b086f76d6ce875865d2b9cf375347311f06841343c414ac86edc03"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bridge-boundary-run.json",
+      "bytes": 533,
+      "sha256": "b5e74349e9ad721591dbbc27f6a88fe91223cd9a41d8be0f773dca0d0b17968b"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bridge-boundary-rust-assertions.json",
+      "bytes": 360,
+      "sha256": "5dd042743fe23a07bf18bca011ffb750ceeedf0f197db487c0840299687aaf0d"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bridge-boundary-rust-assertions.log",
+      "bytes": 101,
+      "sha256": "4167a7fcabd9ea53968bfb0d2eab4321f40006f2131e120153e34decb250b3e1"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bridge-boundary-stderr.log",
+      "bytes": 84,
+      "sha256": "f190686d783f38ba8a2f40f89ab01b7abb5d36bd72387b063b1d24ee559a7ceb"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bytecode-gradle-result.json",
+      "bytes": 1120,
+      "sha256": "a75f9496208bba2a71bc8390f3ecba6b900d8b504677dee1283aca73717d2e43"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bytecode-gradle.log",
+      "bytes": 70827,
+      "sha256": "a6ddf67c8148efa724958ac62e6ebb5396fcb627ab8e832402de8919626147d1"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bytecode-inspection.json",
+      "bytes": 1800,
+      "sha256": "24e07fa16b6f02fb309e31e6ca8bc6163d747d1a05eecef2e891e9c4e540d6f5"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bytecode-rust-facts.json",
+      "bytes": 15233,
+      "sha256": "b6e5647c541a1c8950b311bb22c47190ef5a012fa5c0ec62fdd846f2580b037a"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bytecode-rust-result.json",
+      "bytes": 623,
+      "sha256": "34814250769e97d2b018e029fe9871737911799076a7ed90a325cfca907769de"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/bytecode-rust-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/cargo-freshness-touch.json",
+      "bytes": 410,
+      "sha256": "7ce0d0612a407b739cce96fc27f5fd31cd1b0f774e99fb386eaf25b834a727ae"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/cargo-tests-compiler-artifacts.json",
+      "bytes": 188661,
+      "sha256": "a25325cba7ebc79fe537d511065d08591d9f9f02849afdcdb1de5204f8b53376"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/cargo-tests-launch-failure1.json",
+      "bytes": 269,
+      "sha256": "78c040b81f82a6ae08b9293901e9835c47eef6dd955b8b95e2df7a2388eb5c4e"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/cargo-tests-result.json",
+      "bytes": 964,
+      "sha256": "87166ce4f62fbc55957382e3ee51ddcc117b520f60cd4674fe4c2bda607ab521"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/cargo-tests.log",
+      "bytes": 169282,
+      "sha256": "ef59bd2249cadff4ab556d6bf23044398bdd21f2ab14df9fcc9e4e8b87cc20bb"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/clippy-result.json",
+      "bytes": 258,
+      "sha256": "711918b4f82c8d89596b62a3467d7b3c954f5b1b5f28d08033fee91c5ce2276c"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/clippy.log",
+      "bytes": 316,
+      "sha256": "d51a47e5b64b2f64e249ce049d16970537763487108201580f9a841d02290ad5"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/code-review-final-addendum.json",
+      "bytes": 3320,
+      "sha256": "95d89f6104ce673956efcf3381861a97a21466a8f6485345038accb99d6f93a8"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/code-review-round1.json",
+      "bytes": 7534,
+      "sha256": "de2c973d683614529d2a523385caa15c6f540bb9d2249465c9e8897b8b7f9f67"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/code-review-round2.json",
+      "bytes": 9589,
+      "sha256": "c6431c5a5161fc9731525708889bc4ec712a79ebfc77d59f05d065c88f039902"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/code-review-round3.json",
+      "bytes": 8635,
+      "sha256": "f3799d1e4e176a275716a3612e45008b8f2ebbbaa947efad82dea70193e707be"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/code-review-runtime-addendum.json",
+      "bytes": 12883,
+      "sha256": "1e0b2c5f90896d2518f0a93f7f5e2e7894402dee6b102d0742cea0fd2c4b45ae"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/custom-gradle-result.json",
+      "bytes": 1116,
+      "sha256": "797fbefdc0b2d33dc30dec3e54252870331b1ca45ca4e6d39280cee743d83cdc"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/custom-gradle.log",
+      "bytes": 70418,
+      "sha256": "b7035ab7ed15959ae5ddc32663578e6484b0aec5edeb6ab05c583c418c741f97"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/custom-inspection.json",
+      "bytes": 1681,
+      "sha256": "f814d314713b69c1894f4ed41c8f8d35aeec08860f95007f954c36ad52832cce"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/custom-rust-facts.json",
+      "bytes": 13993,
+      "sha256": "a0fcd6655fbaea9dda4eb77a56d53721411704373ceb976f6c7d0ac7d5256977"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/custom-rust-result.json",
+      "bytes": 615,
+      "sha256": "7703e862d92c6b54fe580f67245a1c682e17555bdb99e87100aadd7745a4dc98"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/custom-rust-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-artifact-gradle-result.json",
+      "bytes": 1139,
+      "sha256": "b0572e212dc193f2e2e500e4bac1577e9ff77a78391d9698267ae9828d18bf70"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-artifact-gradle.log",
+      "bytes": 70158,
+      "sha256": "e6edaaa11e178de8c5dea1fd633e84c8a4086b37ddd060e08153f3e0d55b0e9b"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-artifact-inspection.json",
+      "bytes": 1642,
+      "sha256": "0911395ce56e02acbf37dc35491e5d64271f47f0c05a6ac0eee9f33bab4a8b88"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-artifact-rust-facts.json",
+      "bytes": 13993,
+      "sha256": "a0fcd6655fbaea9dda4eb77a56d53721411704373ceb976f6c7d0ac7d5256977"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-artifact-rust-result.json",
+      "bytes": 658,
+      "sha256": "09e95a722217361a0ad1779e15253f56bab223b9b49287bf5d32d7fef91fc162"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-artifact-rust-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-gradle-result.json",
+      "bytes": 1119,
+      "sha256": "84731cdbc4042de80ee49969a03c3777777374aadc9b4b6c6a0d44f497e5d5b6"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-gradle.log",
+      "bytes": 69107,
+      "sha256": "e1d505bd17a31f6badb39be3fb31353e085e9644209c813a5f1e88b7e1d6597c"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-inspection.json",
+      "bytes": 465,
+      "sha256": "ac6af4a79171008b41a55e6fed75680fbff805ebd09843f6ea45ca729b8c7166"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-rust-facts.json",
+      "bytes": 13540,
+      "sha256": "bd1d5d3d426a939b8bab54d34ec2fa4a15508349e757e3b3c507fdf487f1ad9e"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-rust-result.json",
+      "bytes": 623,
+      "sha256": "2c7be429b7f303a33bd897f9a7287b3a90c2d1397caa49e42e6600c335f19f83"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/disabled-rust-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/execution-cleanup-final.json",
+      "bytes": 7287,
+      "sha256": "6908ee78c49a8e2d852dbe2a9eaa558aa54c2fcaea73eb9da7dbbf4a67b8c263"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/execution-guard-after.json",
+      "bytes": 663,
+      "sha256": "ff29cea274719c23a7af23449fe1d62779dc34b3f92e46b7c7fd4bdb46bf1c63"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/execution-guard-before.json",
+      "bytes": 533491,
+      "sha256": "abf8849f4c72a70a29fceabe831806623263a8c547fe14c032958d0c79933747"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/external-artifact-identities.json",
+      "bytes": 10857,
+      "sha256": "7fd7b712205f7d357c9c689dd4f961ba2153be6b8783869aa4b16c64cbdb3c1d"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/fix-preparation-failure1.json",
+      "bytes": 1258,
+      "sha256": "6bee6d11c2ad2e745b99b49741e68ded8ff296374b5807d54763cf38bf18d01d"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/fix-preparation-failure2.json",
+      "bytes": 445,
+      "sha256": "1dbdffb058f185a01a5211a4ae946ea4373876c4cbd4b88a9f3e66d1a9ab71b9"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/fmt-result.json",
+      "bytes": 200,
+      "sha256": "bd4bf324b7de86d366dc6889a8fa25e5569cf6a5d8912e1554f941645f566beb"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/fmt.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/library-build-result.json",
+      "bytes": 332,
+      "sha256": "cc9dc59bd5bd7c32b208b9753f538182072decbe1f12ca602db14581e436e2c4"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/library-build.log",
+      "bytes": 145137,
+      "sha256": "eedeb7b735f09df468771ee8f2b7665343c3577e1b31608fb510b3f47ad207ec"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/owner-gate-final.json",
+      "bytes": 5567,
+      "sha256": "3f58624cd37ecff544361f0bb5d926cbd206a8c8549810dfda1bb667e81586ed"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/packaging-guard-final.json",
+      "bytes": 547,
+      "sha256": "b8eef0c3ebe0e3d6f116f405bb59143d544addad6e6f77fa8c6c71797c664e35"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/packaging-summary-lookup-failure.json",
+      "bytes": 497,
+      "sha256": "5eb1de8f520f6a3388a162ebea8c3b605100a3ae0e28416df8dd8bc40ef5b3d9"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/performance-review-final-addendum.json",
+      "bytes": 2732,
+      "sha256": "eb7480d6d0df6ebee12b296aeb499cb219e81468463651b82c4b04229eee5c8f"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/performance-review-round1.json",
+      "bytes": 8321,
+      "sha256": "75de818962977d08901e643a73e58ae39bb30e806a086314c1b5bd3e541e2269"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/performance-review-round2.json",
+      "bytes": 7296,
+      "sha256": "140a3bcb29fd22e26f24b1fd4550cb7aad66cd045e6ea4eaee8abaddc5b8aa32"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/performance-review-round3.json",
+      "bytes": 6295,
+      "sha256": "4d29c3d1af3a04390b65d3cb5f7cf1bc6fab3896d9f3815dda225f735280a557"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/performance-review-runtime-addendum.json",
+      "bytes": 8005,
+      "sha256": "fe64e4d6f59ca643e4887faf2247b4bbd2adf1cdb484e7d0558b896746c54d62"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/ports-proposal.json",
+      "bytes": 3036,
+      "sha256": "2e2c308abf2cbed64cc27a5b7efbc8999cdb508b39fd82b90f7711996646585e"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/quality-review-final-addendum.json",
+      "bytes": 2481,
+      "sha256": "8bf0d6488cb556e15bd51789b3880c71ea39aef89d150b4e01584c827d99bf28"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/quality-review-round1.json",
+      "bytes": 6823,
+      "sha256": "29621c3c24aae5a3fd50d4390ab80f4e22b6b1ede87127f08261050098e4f68b"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/quality-review-round2.json",
+      "bytes": 7157,
+      "sha256": "ff914f94291ac885a91d41da988c272cf0f74592f85fbbbfb88200b97e2eb19c"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/quality-review-round3.json",
+      "bytes": 8236,
+      "sha256": "e382e4f668aaadff1083e5f030fc005396fc02531889ec3ec0d295a2562c1d56"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/quality-review-runtime-addendum.json",
+      "bytes": 11367,
+      "sha256": "fc4ebf890744e0860bfc10b106a2731e8efd881974de5118d0d1f9c05d72ec5c"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/raw-evidence-whitespace-check.json",
+      "bytes": 6574,
+      "sha256": "dc7c172c007cd2df7ff99f0dd851585ba03900b611ef5b6d43b1d362bf5d216b"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/review-source-snapshot-round1.json",
+      "bytes": 1249,
+      "sha256": "507dc75c0d9fb78b779d2d3f99e7ffb78d4e189b493df9d9b549b0a082776395"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/review-source-snapshot-round2.json",
+      "bytes": 1249,
+      "sha256": "4f9d7e8bfa57d26a18e81bb51dadbdf04e945350e769c80ccbfe1b6ebbef34ba"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/review-source-snapshot-round3.json",
+      "bytes": 1249,
+      "sha256": "e4dde1c5f57ebfec12fdb8183e3038eb24ca2ed6017730778fec81ac8120ba7e"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/review-source-snapshot-round4.json",
+      "bytes": 1344,
+      "sha256": "34e05719451bb9012bfe8542493b9e197faa10a4d9e3c7368d2a7a50d5cc44f3"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/review-source-snapshot.json",
+      "bytes": 1344,
+      "sha256": "34e05719451bb9012bfe8542493b9e197faa10a4d9e3c7368d2a7a50d5cc44f3"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/root-unit85-cache-retirement.json",
+      "bytes": 3873,
+      "sha256": "63f3cc45be114a8b45be096033e0eafe55f2c0c1c8c8662837ae248fb937cb8a"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/runtime-fixture-copy.json",
+      "bytes": 1760,
+      "sha256": "7c7c9ce31419910ae29b085f78e5ebd40d515d5b8ea1d0a57b984529cc1d6dfe"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/runtime-measurement-method.json",
+      "bytes": 11273,
+      "sha256": "e0d35aaf71077c7279b3297e44f2b8330eefeff75162343a780be609d64996f4"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/runtime-probe-build.json",
+      "bytes": 1355,
+      "sha256": "78c6859de3e3b291edfe04b3adeaf54494dea4b02ead0846e4414d9a567a8731"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/runtime-probe-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/sdk-runtime-bridge-identity.json",
+      "bytes": 460,
+      "sha256": "7b35c12877c119ff2a90ca6f947bd015c1da7d4980dbf5f068154080c8ac4fd7"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/sdk-toolchain-identity.json",
+      "bytes": 2743,
+      "sha256": "5f9a5ada259b498f5488ba300c0441e60ae6e709a7c735f883d1f61fcc8835a8"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/source-gradle-result.json",
+      "bytes": 1116,
+      "sha256": "6805d053348ddbc682e07fe88f4edb6ea8efc8f11b4d8ff3f197743bc102e9f4"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/source-gradle.log",
+      "bytes": 70111,
+      "sha256": "b24233d0cf47c1d7ed7ab179ffbdd3476520c5d13d5687c5f3621d3c505b1f3a"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/source-inspection.json",
+      "bytes": 1642,
+      "sha256": "0911395ce56e02acbf37dc35491e5d64271f47f0c05a6ac0eee9f33bab4a8b88"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/source-rust-facts.json",
+      "bytes": 13993,
+      "sha256": "a0fcd6655fbaea9dda4eb77a56d53721411704373ceb976f6c7d0ac7d5256977"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/source-rust-result.json",
+      "bytes": 615,
+      "sha256": "bf474027a18a11d38a671d8a3046c2e384a663829e353a7f71d41e2a1f9cb798"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/source-rust-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/static-gate-state.json",
+      "bytes": 2605,
+      "sha256": "1990d64b493c5e0cf320bac44b14094b1d951fa453faeeee2f8ea15ddb68eacc"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/ui-review-final-addendum.json",
+      "bytes": 3445,
+      "sha256": "6707df8b736f816cd5933a13d7c0c5b5c0c8d2befd0b1f5d5657680d35d3c9e3"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/ui-review-round1.json",
+      "bytes": 6927,
+      "sha256": "8ca5aedc094cb1ab152c2c6249af83597d415f3257974e9beabbeb4d1bec4b48"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/ui-review-round3.json",
+      "bytes": 7133,
+      "sha256": "71c2e7fd4a7ac7d48d0ec15cdf80aa25afb05523d35b63bc76c1be3d3b871eee"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/ui-review-runtime-addendum.json",
+      "bytes": 11578,
+      "sha256": "6c59eb9e3076133679d0dd72d616af2d792c86a474a8d723863d6ee23a9a87fb"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/ux-review-final-addendum.json",
+      "bytes": 2933,
+      "sha256": "ce806ccab80c1774bbd21dce7dc9fe80fc53598a44773f70cd82aba264516964"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/ux-review-round1.json",
+      "bytes": 7271,
+      "sha256": "a32de47c5309653a61e145035ce59a76daab3e36b9a1c7eb56c1c74df37d7da7"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/ux-review-round2.json",
+      "bytes": 7303,
+      "sha256": "e833776b0f8a9269ed4fc14f21aba0ee3721506d23c6263f7e56c969fa96119a"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/ux-review-round3.json",
+      "bytes": 7722,
+      "sha256": "5046632979ca96fd6a8da5fb138c70a6d56e9f823c043648f67388e87654a1c7"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/ux-review-runtime-addendum.json",
+      "bytes": 12718,
+      "sha256": "d0182faeb5c92b279394d7a9d6749f4e4bf9528d273e13817e0662168df2fea5"
+    },
+    {
+      "path": "docs/android-studio/evidence/v2-artifact-facts/worktree-preparation.json",
+      "bytes": 486,
+      "sha256": "e6e66c8536a33ab2bef3b7d6f992184e96409e81087217816613ee719075351f"
+    }
+  ],
+  "external_source_snapshot_manifest": "docs/android-studio/evidence/v2-artifact-facts/external-artifact-identities.json",
+  "historical_preparation_static_only_records_preserved": true,
+  "current_gate_record": "docs/android-studio/evidence/v2-artifact-facts/owner-gate-final.json"
+}

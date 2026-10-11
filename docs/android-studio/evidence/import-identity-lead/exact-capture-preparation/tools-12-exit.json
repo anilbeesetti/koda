@@ -1,0 +1,24 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--test",
+    "gradle_import_reference",
+    "import_subproject_with_custom_location",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.7884727700002259,
+  "raw_log": "/workspace/android-studio-artifacts/import-identity-integration/exact-capture/tools-12.log",
+  "raw_log_sha256": "bedafaa2fe5b9243d00dee3e95611adcf41dd66aedec00b59b2442c15e4853fa",
+  "source_files": 4743,
+  "full_raw_index_status_and_all_source_hashes_unchanged": true
+}

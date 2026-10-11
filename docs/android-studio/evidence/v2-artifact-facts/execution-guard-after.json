@@ -1,0 +1,31 @@
+{
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "wholeSourceFiles": 4612,
+  "wholeSourceGuardPassed": true,
+  "indexUnchanged": true,
+  "immutableOriginals": 184,
+  "privateFixtureInputsRestored": true,
+  "oldFixtureInputsUnchanged": true,
+  "liveDecoderProcesses": [],
+  "gradleDaemonsObserved": [
+    {
+      "pid": 167092,
+      "state": "S",
+      "owned": false
+    },
+    {
+      "pid": 255023,
+      "state": "S",
+      "owned": false
+    }
+  ],
+  "unownedProcessesLeftUntouched": true,
+  "fiveSingleUseGradleCommandsExited": true,
+  "sdkModes": [
+    "source",
+    "bytecode",
+    "custom",
+    "disabled",
+    "disabled-artifact"
+  ]
+}

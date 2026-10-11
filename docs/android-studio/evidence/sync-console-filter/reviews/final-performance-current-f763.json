@@ -1,0 +1,360 @@
+{
+  "area": "performance",
+  "review_stage": "final-current-source-and-recorded-runtime-evidence",
+  "verdict": "PASS",
+  "scope": "bounded Sync console filter/copy task",
+  "source": "f763baebb6d0970b283f759967d7980084317e67",
+  "protected_dependency": "f2aa51b883b2c926cb54cfe1618bc2cb8f738420",
+  "findings": [],
+  "fourth_semantic_fix_requested": false,
+  "task_or_full_IDE_complete": false,
+  "lead_merge_pending": true,
+  "actual_current_runtime_evidence_reviewed": true,
+  "new_runtime_commands_by_reviewer": 0,
+  "new_benchmark_or_native_helper_runs": 0,
+  "source_edits_by_reviewer": 0,
+  "locks_or_runtime_lease_held": false,
+  "actual_tests": {
+    "local_tools_pass": 291,
+    "local_UI_pass": 142,
+    "inherited_UI_ignored": 1,
+    "17_individual_current_once_ok": true,
+    "CI_workspace_pass": 10557,
+    "CI_workspace_fail": 0,
+    "inherited_CI_skips": 23,
+    "existing_supplemental_mapping_captures_verified": 36,
+    "original_reference_credit": 0
+  },
+  "observations": {
+    "source": "f763baebb6d0970b283f759967d7980084317e67",
+    "app_build_elapsed_seconds": 668.1251344820048,
+    "app_binding": {
+      "path": "/tmp/android-studio-sync-console-link-output/koda-sync-console-400429",
+      "bytes": 1359525048,
+      "sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c"
+    },
+    "local_tools": {
+      "passed": 291,
+      "elapsed_seconds": 24.261850509996293,
+      "binary_count": 10
+    },
+    "local_UI": {
+      "passed": 142,
+      "failed": 0,
+      "unchanged_ignored": 1,
+      "compile_seconds": 263.35541473599733,
+      "test_seconds": 5.603475374999107,
+      "raw_libtest_seconds": 5.58,
+      "17_individual_pass_names": [
+        "android_build::tests::model_console_capture_limit_applies_to_hidden_records",
+        "android_build::tests::model_console_chunks_unicode_without_restarting_prefix_detection",
+        "android_build::tests::model_console_filters_only_exact_leading_stdout_records",
+        "android_build::tests::model_console_hidden_record_does_not_buffer_its_payload",
+        "android_build::tests::model_console_invalid_utf8_does_not_become_a_successful_raw_model",
+        "android_build::tests::model_console_matches_prefix_across_every_read_split",
+        "android_build::tests::model_console_preserves_line_endings_blanks_and_unterminated_lines",
+        "android_build::tests::model_console_preserves_upstream_diagnostic_fixture_contents",
+        "android_build::tests::model_console_propagates_closed_output_even_for_hidden_only_input",
+        "android_build::tests::model_console_ready_hidden_capture_yields_before_eof",
+        "android_build::tests::model_console_real_command_can_cancel_after_hidden_transport",
+        "android_build::tests::model_console_real_command_preserves_stderr_failure_and_normal_command_output",
+        "android_build::tests::model_console_retains_basic_and_v2_decoding_and_validation",
+        "android_build::tests::model_console_retains_partial_prefix_at_eof_and_after_mismatch",
+        "android_build::tests::model_console_sync_and_build_sessions_keep_distinct_visible_output",
+        "android_build::tests::model_console_timeout_and_preexisting_cancel_prevent_success",
+        "android_build::tests::model_console_visible_output_obeys_backpressure"
+      ]
+    },
+    "other_component_elapsed_seconds": {
+      "android-tools-library-build": {
+        "elapsed_seconds": 0.7349710760026937,
+        "exit_code": 0
+      },
+      "strict-script-clippy": {
+        "elapsed_seconds": 199.67799584299792,
+        "exit_code": 0
+      },
+      "format": {
+        "elapsed_seconds": 28.366321747002075,
+        "exit_code": 0
+      }
+    },
+    "CI": {
+      "run_id": 37738240656,
+      "summary": {
+        "run": 10557,
+        "passed": 10557,
+        "failed": 0,
+        "skipped": 23,
+        "elapsed_seconds": 2290.747,
+        "binaries": 212
+      },
+      "build_and_execution_seconds": 3644.0,
+      "linux_app_build_seconds": 611.5
+    },
+    "gradle_wrapper_observations": [
+      {
+        "case": "failure",
+        "id": "1791455921151208352-409281",
+        "exit_code": 1,
+        "actual_client_pid": 409307,
+        "wrapper_elapsed_UTC_seconds": 1.581494,
+        "stdout_bytes": 91,
+        "stderr_bytes": 1038
+      },
+      {
+        "case": "success",
+        "id": "1791454806393050914-406106",
+        "exit_code": 0,
+        "actual_client_pid": 406157,
+        "wrapper_elapsed_UTC_seconds": 20.051534,
+        "stdout_bytes": 97174,
+        "stderr_bytes": 423
+      },
+      {
+        "case": "success",
+        "id": "1791455070641901569-407356",
+        "exit_code": 0,
+        "actual_client_pid": 407383,
+        "wrapper_elapsed_UTC_seconds": 2.400068,
+        "stdout_bytes": 97149,
+        "stderr_bytes": 423
+      }
+    ],
+    "owned_app_resource_snapshot": {
+      "utc": "2026-10-08T10:40:49.090615+00:00",
+      "pid": 409167,
+      "proc_status": {
+        "VmPeak": "22293756 kB",
+        "VmSize": "22293732 kB",
+        "VmHWM": "670164 kB",
+        "VmRSS": "670164 kB",
+        "RssAnon": "273664 kB",
+        "RssFile": "42224 kB",
+        "RssShmem": "354276 kB",
+        "Threads": "48"
+      },
+      "open_fds": 65,
+      "software_vulkan_only": true,
+      "no_benchmark_or_large_project_claim": true
+    },
+    "midstage_cgroup": {
+      "memory.current": "17149886464",
+      "memory.peak": "17180594176",
+      "memory.max": "17179869184",
+      "memory.events": "low 0\nhigh 0\nmax 1771812\noom 0\noom_kill 0\noom_group_kill 0",
+      "breakdown": {
+        "anon": "905707520",
+        "file": "15255146496",
+        "slab": "979753920",
+        "shmem": "9378324480"
+      }
+    },
+    "closure_cgroup": {
+      "memory.current": "16267698176",
+      "memory.max": "17179869184",
+      "memory.peak": "17180594176",
+      "memory.events": "low 0\nhigh 0\nmax 1772705\noom 0\noom_kill 0\noom_group_kill 0",
+      "observed_breakdown_bytes": {
+        "anon": 52170752,
+        "file": 15231000576,
+        "shmem": 9351188480,
+        "slab": 981684784
+      }
+    },
+    "recorded_owned_closure": [
+      {
+        "pid": 405872,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 405896,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 405886,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 409121,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 409167,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 409157,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 406191,
+        "state": "Z",
+        "start_ticks": 9144813,
+        "running": false
+      },
+      {
+        "pid": 406106,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 407356,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 409281,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 406122,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 407383,
+        "exists": false,
+        "running": false
+      },
+      {
+        "pid": 409307,
+        "exists": false,
+        "running": false
+      }
+    ],
+    "current_owned_state_observation": [
+      {
+        "pid": 405872,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 405896,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 405886,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 409121,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 409167,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 409157,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 406191,
+        "exists_now": true,
+        "state_now": "Z",
+        "start_ticks_now": 9144813,
+        "running_now": false
+      },
+      {
+        "pid": 406106,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 407356,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 409281,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 406122,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 407383,
+        "exists_now": false,
+        "running_now": false
+      },
+      {
+        "pid": 409307,
+        "exists_now": false,
+        "running_now": false
+      }
+    ],
+    "display123_free_now": true,
+    "all_exact_receipt_clients_nonrunning": true,
+    "production_android_build_bytes_equal_reviewed768": true,
+    "17_tests_all_source_assertions_retained": true,
+    "inherited_protected_test_tail_byte_equal": true,
+    "raw_record_bytes_including_prefix_and_LF": 96215,
+    "JSON_payload_bytes_excluding_prefix_and_LF": 96187,
+    "raw_record_sha256": "65342272ca9c5a36b5b271736fdc311b1f7a8c6858d8c9df78c1b254876ef686",
+    "native_copy_bytes": [
+      1450,
+      1425,
+      1425,
+      1185
+    ],
+    "evidence_count": 88
+  },
+  "performance_limits": [
+    "Software Vulkan only",
+    "Small native fixture, no large-project benchmark",
+    "Build elapsed time is compilation, not app startup",
+    "No CPU profile, FPS/frame percentile, throughput comparison, precise stop-latency benchmark, or leak time series",
+    "Inherited 360px clipping and Return activation no-op",
+    "SDK emulator binary absent; no device/emulator credit",
+    "Native complete record 96215B includes prefix/LF; JSON payload alone96187B"
+  ],
+  "administrative_preservation": {
+    "historical_review_process_guard": "FAIL retained",
+    "historical_raw_index_sha256": "41ab8963b247461218ef316b6d5999d74fee3c60dcb761b5699c11a18ba5a2fc",
+    "current_raw_index_sha256_before": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+    "current_raw_index_sha256_after": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+    "attribution": "uncertain; initial owner/reviewer Git status reads had optional locks enabled",
+    "approved_current_observer_sha256": "0b4e575fc27644c6b25ad65789f1a06b78f11186c87570614c37a3fd4b27f272",
+    "affected_current_recheck": "PASS",
+    "logical_index_sha256": "0169a434622b3427f580458029286ff2a14ffed8ef0e3132db7b3bb06b2d7883",
+    "tracked_bytes_modes_index_HEAD_verified": 6960,
+    "fixed_Source_verified": 4748,
+    "excluded_metadata_verified": 2212,
+    "current_raw_before_after_equal": true,
+    "Source_HEAD_all_refs_and_clean_status_before_after_equal": true,
+    "restoration_or_product_fix": false,
+    "later_git_reads_optional_locks_disabled": true
+  },
+  "evidence_payloads_after_verified": 126,
+  "report_sha256": "5f87468c9232f79a885a61c2855c326d0c44563e90def99c62ec6b287283242b",
+  "supporting_receipts": [
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-performance-before-f763.json",
+      "sha256": "8e91c7926f441229f9ae128269e2fe689e3992bc2afa801e131c6e5b9dfa6a5c"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-performance-evidence-before-f763.json",
+      "sha256": "7334e9a02642eef4880ad09df81b24cf84768cf389b070827599ce063cb72259"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-performance-after-f763.json",
+      "sha256": "cafe392175aa1b73ae584f337b84b6484583c22e605f1aad185d713b51703543"
+    }
+  ]
+}

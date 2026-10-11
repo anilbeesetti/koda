@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "source_binding_count": 4704,
+  "source_module_sha256": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+  "five_owner_reviews": "PASS scoped current payload; failedrounds preserved",
+  "normal_fullapp_build": "PASS150.2708252sec",
+  "independent_current_app_build_quality": "PASS full4704/hash/oneof1206linkargs/currentELF",
+  "tooling_allfeatures": {
+    "passed": 201,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0,
+    "first_compile_ENOSPC_retained": true
+  },
+  "full_default_UI": {
+    "passed": 125,
+    "failed": 0,
+    "pre_existing_ignored": 1,
+    "filtered": 0
+  },
+  "strict_clippy": "PASS normal repository release/alltargets/allfeatures/denywarnings (session63616 exit0)",
+  "workspace_format": "PASS28.862sec",
+  "canonical_parity_validator": "PASS current33exactcaptures,17ported16adapted59unported",
+  "new_parity_credit": 0,
+  "native": "PASS actual currentf5e4 fullapp sync/tabs/toolwindows/focus/cleanup",
+  "root_inspected_images": [
+    "fixture-trusted.png"
+  ],
+  "performance": "Preserved source0e15 activeXMLcaret34.175%onecore and toolbar1.5987%onecore, nofaircomparison/nohardware/startup/largeprojectclaim; owner20k adapter scope separate.",
+  "known_diagnostics": "Unchanged externalJava6.8.27 Gradleindentquery issue; editingphaseRust support/fidelity pending",
+  "full_CI": {
+    "run_id": 37683734185,
+    "url": "https://github.com/anilbeesetti/koda/actions/runs/37683734185",
+    "format": "PASS",
+    "macOS": "PASS",
+    "Linux": "in_progress"
+  },
+  "protected_merge_performed": false,
+  "main_unchanged": true,
+  "phase_complete": false,
+  "IDE_complete": false,
+  "completion_of_original5generatedviewflows": false,
+  "generated_cache_recovery": "ExactownedoldELFs/oldpreviewarchive/incompletecompilerobject only; rawfailure/history/source/fixtures retained."
+}

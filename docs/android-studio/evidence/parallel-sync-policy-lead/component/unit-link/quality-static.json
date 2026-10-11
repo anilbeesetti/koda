@@ -1,0 +1,47 @@
+{
+  "verdict": "PASS",
+  "scope": "Independent static output-only linker harness adaptation review; runtime remains pending",
+  "reviewed_at_utc": "2026-10-07T23:55:53.692696+00:00",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "git_tree": "9659baeb98fcf7111435169eb04490ba3952989d",
+  "branch": "android-studio-task/1-parallel-sync-integration",
+  "whole_source_snapshot_sha256": "1ee9fccb1197681f050c9c283763fd150e978b1eb0f7915cb8d15463774f1326",
+  "fixed_seven_pathspec_exact": true,
+  "whole_source_file_count": 4730,
+  "all_snapshot_file_hashes_unchanged": true,
+  "commit_index_worktree_untracked_guard_passed": true,
+  "nested_port_evidence_guarded_count": 103,
+  "fixed_source_pathspec": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "helper_path": "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/cc.rs",
+  "helper_sha256": "042e58723429235b722a41c4b342ba0c054de734e00a58fcc45dbaea5c173918",
+  "reference_helper_sha256": "4c1afa55f6bce97b187de02f0049e91004487d3a798eb198f1aa152f146909a9",
+  "reverse_substitutions_byte_identical": true,
+  "real_cc": "/usr/bin/cc",
+  "only_selected_argument_changed": "Exactly one separate -o output value for the explicit expected final artifact or private probe path",
+  "unknown_argument_vectors_forwarded_unchanged": true,
+  "existing_output_and_dangling_symlink_refused": true,
+  "existing_receipt_refused_create_new": true,
+  "real_linker_output_inherited": true,
+  "runtime_executed_by_reviewer": false,
+  "source_or_shared_cache_or_git_mutated_by_reviewer": false,
+  "raw_receipt_or_log_mutated_by_reviewer": false,
+  "findings": [],
+  "pending": [
+    "Compile and execute the exact current helper and real Rust probe",
+    "Independently verify actual argument receipt, stdout, exit status and ELF digest",
+    "Verify current normal unit/full-app execution and source guards"
+  ],
+  "limitations": [
+    "Static review does not certify startup, performance, native behavior, reference parity, CI, all five feature reviews, or full IDE completion",
+    "Receipt argument serialization uses to_string_lossy; actual runtime argument vectors must be confirmed UTF-8 to treat receipt strings as exact. Real CC receives the original OsString bytes with only the selected output value replaced.",
+    "Any I/O or symlink publication error fails the helper. Only after a receipt has been created does a nonzero real-link status explicitly remove the owned incomplete redirected output; earlier I/O failure does not claim cleanup."
+  ]
+}

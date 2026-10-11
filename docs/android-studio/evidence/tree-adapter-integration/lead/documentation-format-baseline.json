@@ -1,0 +1,32 @@
+{
+  "command": [
+    "npx",
+    "--no-install",
+    "prettier",
+    "--check",
+    "src/"
+  ],
+  "exit_code": 1,
+  "affected_existing_files": [
+    {
+      "path": "docs/src/installation.md",
+      "current_sha256": "1a4dcd9e8a3bd235d601d33da2d0a925b2f033164b8a59c4b354d3358571d565",
+      "unchanged_at_all_baselines": {
+        "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab": "1a4dcd9e8a3bd235d601d33da2d0a925b2f033164b8a59c4b354d3358571d565",
+        "cd2735eb6183508c5903cdafca9f9936b601cbcb": "1a4dcd9e8a3bd235d601d33da2d0a925b2f033164b8a59c4b354d3358571d565",
+        "30fca99a7a015168dfe4f394f576fbe2955fb4ea": "1a4dcd9e8a3bd235d601d33da2d0a925b2f033164b8a59c4b354d3358571d565"
+      }
+    },
+    {
+      "path": "docs/src/languages/csharp.md",
+      "current_sha256": "9a0f09eb0ea40809ea8f70a622efef5713d94c3dc7cb4d0e0f7cb473aeb7823b",
+      "unchanged_at_all_baselines": {
+        "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab": "9a0f09eb0ea40809ea8f70a622efef5713d94c3dc7cb4d0e0f7cb473aeb7823b",
+        "cd2735eb6183508c5903cdafca9f9936b601cbcb": "9a0f09eb0ea40809ea8f70a622efef5713d94c3dc7cb4d0e0f7cb473aeb7823b",
+        "30fca99a7a015168dfe4f394f576fbe2955fb4ea": "9a0f09eb0ea40809ea8f70a622efef5713d94c3dc7cb4d0e0f7cb473aeb7823b"
+      }
+    }
+  ],
+  "classification": "Pre-existing repository-wide mdBook formatting failures, byte-identical to protected branch, tested source, and read-only main. No task changes in mdBook src. Retained for separate formatting fix; Rust formatting and all required code/test gates passed.",
+  "check_not_weakened_or_reported_passing": true
+}

@@ -1,0 +1,13 @@
+{
+  "source_commit": "a7ef0b6be4c2fccaf4d9120672115f6310c7c379",
+  "bytes": 1358436976,
+  "sha256": "523c1bdf1005a0ef802ddcb0b830fe729fb18680211379192464f129215b5096",
+  "frozen_executable": "/tmp/android-studio-frozen-executables/koda-next-foundation-a7ef0b6b",
+  "build_log": "/workspace/android-studio-artifacts/next-foundation-app-build.log",
+  "build_exit_code": 0,
+  "action": "Verified copy into independent tmpfs; remove generated executable aliases and replace cached launch path with symlink, retaining all source and test evidence.",
+  "aliases": [
+    "/workspace/.cache/zed/target/debug/koda",
+    "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935"
+  ]
+}

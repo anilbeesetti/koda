@@ -1,0 +1,101 @@
+{
+  "providerCount": 20,
+  "configuredRootCount": 182,
+  "order": "gradleSourceSetIteration",
+  "assetRecords": [
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/build/generated/assets/createAssets",
+      "kind": "assets",
+      "generated": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/demoDebug/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/unrelated-assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/unrelated-assets/nested",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/flavor-assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/testDemoDebug/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/testDebug/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/testDemo/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/test/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/androidTestDemoDebug/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/androidTestDebug/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/androidTestDemo/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/androidTest/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/build/generated/assets/createAssets",
+      "kind": "assets",
+      "generated": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/demoRelease/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/src/release/assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/flavor-assets",
+      "kind": "assets",
+      "generated": false
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/source-providers-smoke/project/app/unrelated-assets",
+      "kind": "assets",
+      "generated": false
+    }
+  ],
+  "sharedConfiguredAssetProviders": [
+    "debug",
+    "main"
+  ]
+}

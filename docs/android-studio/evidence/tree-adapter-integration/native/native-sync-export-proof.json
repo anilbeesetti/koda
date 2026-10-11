@@ -1,0 +1,13 @@
+{
+  "command_arguments": [
+    "--init-script",
+    "/tmp/koda-android-model-IZTy6B/export.gradle",
+    "kodaAndroidProjectModel",
+    "--no-configuration-cache",
+    "--console=plain"
+  ],
+  "init_path": "/tmp/koda-android-model-IZTy6B/export.gradle",
+  "sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+  "expected_source_bridge_sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+  "matches_source": true
+}

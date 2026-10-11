@@ -1,0 +1,18 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "before_script_sha256": "17f170531ec767456eba8e2f6559fa68a905107f3242a575134b5020182e04dd",
+  "current_script_sha256": "c9afdb8183f8d685de655e28497c4e97dd6fadf94c64ab33c9877bfed4963a00",
+  "current_guide_sha256": "fef91c13309fee987dee8b967a5c05cd246d5ad4ad11717aae502cf8e20c0840",
+  "current_template_sha256": "a4b3ce046876ab7e2723aa750e640060587d7f8cff247702878192fc23f9c061",
+  "immutable_plan_sha256": "80ba1959c27763808c35d9a7fa545f6a96d43f6f5bec0e5df822d12c894cecc7",
+  "main_readonly_baseline_sha256": "48ab0ad54b62f3eb8c37e87be16087cfb6f98cf748d550bd204b203b18655e2c",
+  "actual_verify_plan_exit": 0,
+  "actual_stdout_sha256": "657c02401069b7e0c34ce44cc6aa4a538fca54dcaadb4761c7162ac823cd6551",
+  "actual_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "Root_hold": "ACTIVE",
+  "actual_apply_verify_applied_rollback": false,
+  "WT_index_refs_Source_cache_native_writes": 0,
+  "fake_main_branch_created": false,
+  "all_original_payload_and_pre_correction_reports_retained": true,
+  "Source_semantic_product_fix_round_increment": 0
+}

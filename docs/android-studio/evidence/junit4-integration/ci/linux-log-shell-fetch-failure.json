@@ -1,0 +1,7 @@
+{
+  "attempt": "gh API job logs redirect",
+  "result": "HTTP403 from redirected artifact host",
+  "log_bytes_received": 0,
+  "source_changes": false,
+  "recovery": "Connected GitHub integration returned complete decoded log; raw UTF-8 bytes retained. Signed URL intentionally omitted."
+}

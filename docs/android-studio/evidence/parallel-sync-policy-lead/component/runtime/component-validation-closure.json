@@ -1,0 +1,2954 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "source_tree": "9659baeb98fcf7111435169eb04490ba3952989d",
+  "completed_at_utc": "2026-10-08T00:11:31.249812+00:00",
+  "whole_source_files_unchanged": 4730,
+  "source_index_status_unchanged": true,
+  "fixed_source_pathspec": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "component_gates": [
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/all-features-tests-verified.json",
+      "sha256": "a842b9a4a3053a0923a3483aa16ac1a44a06d8b98ad5d80ca80480fdba97be41",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "log_sha256": "8dc03d1c16198c0b7a4aa62802e8b78541822a7fe87ee4f33fe9b22c8d0e954b",
+      "elapsed_seconds": 22.912713565994636
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/library-build-verified.json",
+      "sha256": "96019693a96e08040011ee182c8ef1b35acc7444928e655548567d422654c602",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "log_sha256": "6c292e8fe6938eae4afefe19417847d595b327a23c5f883191d2d3121014de4c",
+      "elapsed_seconds": 7.003666010001325
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/strict-clippy-verified.json",
+      "sha256": "cf1040d4652a388d247c5ecb790e5c879ab531b1869567858b756f1e952561bd",
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools"
+      ],
+      "log_sha256": "7c4b66f8ebba0d155987e8ac056294d589166bee2ea24a4d6d10953fe823b9dc",
+      "elapsed_seconds": 8.601122882995696
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/format-check-verified.json",
+      "sha256": "789d898e5396344e28ff1e1377e792c10cd7d3cc6bee096d3817f0ed15090bae",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "elapsed_seconds": 28.453732686997682
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/ui-full-default-suite-verified.json",
+      "sha256": "619d88e1ef4921fa9f093f2a3824d0da7a3159659cd912446eea724eed67582c",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_ui",
+        "--lib",
+        "--message-format=json"
+      ],
+      "log_sha256": "f1d900298b7cd14ec30cce63458e34738809b44fa6006b777b26b677a64235ac",
+      "elapsed_seconds": 229.73584386100265
+    }
+  ],
+  "tools_tests": {
+    "passed": 261,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0,
+    "fresh_targets": 9
+  },
+  "ui_tests": {
+    "passed": 125,
+    "failed": 0,
+    "pre_existing_ignored": 1,
+    "filtered": 0,
+    "fresh_targets": 1,
+    "normal_linker": true
+  },
+  "frozen_parallel_policy": {
+    "path": "/tmp/parallel-sync-integration-verified-binaries/parallel-sync-tests10",
+    "bytes": 1762488,
+    "sha256": "18f4b143970b3ce0cab30050572d2bb781ffedf2c81780d647ace083a4f49f23",
+    "source_artifact": {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/parallel_sync-46aceb136bb01d88",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/parallel_sync-46aceb136bb01d88"
+      ],
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "parallel_sync",
+        "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/parallel_sync.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/parallel_sync-46aceb136bb01d88",
+          "bytes": 1762488,
+          "sha256": "18f4b143970b3ce0cab30050572d2bb781ffedf2c81780d647ace083a4f49f23"
+        }
+      ]
+    }
+  },
+  "retained_unit_elf": {
+    "path": "/tmp/android-studio-link-output/android-tools-parallel-unit-298321",
+    "bytes": 303989152,
+    "sha256": "cc057a4cfa9df4f9eacda0b581803c9062697db9edd4cfd4c0c651ab86512ea1"
+  },
+  "retained_ui_elf": {
+    "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+    "bytes": 451815736,
+    "sha256": "ff714b206f2f4c062680f85ada3714812ee21b1bd36c4f0b4830fa9d58450b1a"
+  },
+  "first_failed_attempt_preserved": {
+    "path": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/all-features-tests.log",
+    "sha256": "88c4bc56be2f85a0bc3c0b54c08cfa866b1df3a1fe5a386e73702a51de4bde25",
+    "exit_code": 101,
+    "reason": "ENOSPC followed by linker SIGBUS; no tests ran; infrastructure recovery, no product changes"
+  },
+  "controlled_retirement_receipts": [
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/completed-prior-251-unit-ELF-retirement.json",
+      "sha256": "e34e75ea0650f18e76311e41e667234acfecf3cf57839e3422b9d8cba69aa04a"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/owned-failed-unit-object-retirement.json",
+      "sha256": "f58a6c36a8c2ffb4cebaa3c566188968d73d305d728de222a3a6d7c832c78aef"
+    }
+  ],
+  "live_process_observations": [
+    {
+      "pid": 1,
+      "state": "S",
+      "name": "tail",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ],
+      "exe_accessible": true,
+      "exe_basename": "tail",
+      "cwd": "/workspace",
+      "gradle_daemon_observed": false
+    },
+    {
+      "pid": 2,
+      "state": "S",
+      "name": "caas-prefix-tra",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ],
+      "exe_accessible": true,
+      "exe_basename": "caas-prefix-transfer-server",
+      "cwd": "/workspace",
+      "gradle_daemon_observed": false
+    },
+    {
+      "pid": 198,
+      "state": "S",
+      "name": "dockerd",
+      "uids": [
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "exe_accessible": false,
+      "cwd_accessible": false,
+      "gradle_daemon_observed": false
+    },
+    {
+      "pid": 249,
+      "state": "S",
+      "name": "containerd",
+      "uids": [
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "exe_accessible": false,
+      "cwd_accessible": false,
+      "gradle_daemon_observed": false
+    },
+    {
+      "pid": 514,
+      "state": "S",
+      "name": "codex",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ],
+      "exe_accessible": true,
+      "exe_basename": "codex",
+      "cwd": "/workspace",
+      "gradle_daemon_observed": false
+    },
+    {
+      "pid": 37407,
+      "state": "S",
+      "name": "adb",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ],
+      "exe_accessible": true,
+      "exe_basename": "adb",
+      "cwd": "/workspace/android-studio-plan",
+      "gradle_daemon_observed": false
+    },
+    {
+      "pid": 167092,
+      "state": "S",
+      "name": "java",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ],
+      "exe_accessible": true,
+      "exe_basename": "java",
+      "cwd": "/workspace/android-studio-artifacts/gradle-home/daemon/9.6.1",
+      "gradle_daemon_observed": true
+    },
+    {
+      "pid": 301561,
+      "state": "R",
+      "name": "python3",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ],
+      "exe_accessible": true,
+      "exe_basename": "python3.12",
+      "cwd": "/workspace",
+      "gradle_daemon_observed": false
+    }
+  ],
+  "zombie_status_observations": [
+    {
+      "pid": 689,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 1393,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 1401,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 1495,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 34966,
+      "state": "Z",
+      "name": "Xvfb",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 37283,
+      "state": "Z",
+      "name": "Xvfb",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 37461,
+      "state": "Z",
+      "name": "java",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 44286,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 60322,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75296,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75297,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75300,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75310,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75325,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75326,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75327,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75359,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75366,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75374,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75634,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75635,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75636,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75641,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75666,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75669,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75673,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75678,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75699,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 75722,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 79852,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 88779,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 90634,
+      "state": "Z",
+      "name": "sleep",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 91003,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 91341,
+      "state": "Z",
+      "name": "sleep",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 101329,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 103011,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 103662,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104079,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104665,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104669,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104671,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104677,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104698,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104702,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104704,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104719,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104745,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 104755,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 105105,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 111658,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 111706,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 112693,
+      "state": "Z",
+      "name": "gzip",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 116286,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 117214,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 117516,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 118110,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 118207,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 118288,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 121238,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129167,
+      "state": "Z",
+      "name": "rustc",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129227,
+      "state": "Z",
+      "name": "llvm-symbolizer",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129450,
+      "state": "Z",
+      "name": "sleep",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129619,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129621,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129622,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129626,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129651,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129656,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129659,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129660,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129682,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 129712,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 133452,
+      "state": "Z",
+      "name": "rustc",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 134072,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 134519,
+      "state": "Z",
+      "name": "java",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 134957,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 141148,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 144295,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 147206,
+      "state": "Z",
+      "name": "sleep",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 147574,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 147851,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 150998,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 152268,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 152556,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 154168,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 154304,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 157315,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 157837,
+      "state": "Z",
+      "name": "sh",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 158315,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 161277,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 166816,
+      "state": "Z",
+      "name": "llvm-symbolizer",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 167625,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 167627,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 167631,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 167637,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 167657,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 167660,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 167664,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 167680,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 167703,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 167713,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 168276,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 168957,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 169099,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 169100,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 169105,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 169111,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 169130,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 169132,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 169136,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 169150,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 169176,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 169178,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 172879,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173129,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173256,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173262,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173266,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173272,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173294,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173295,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173297,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173307,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173336,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 173339,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 174048,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179721,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179833,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179835,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179838,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179842,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179866,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179867,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179868,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179884,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179911,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 179913,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180371,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180459,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180460,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180463,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180464,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180490,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180491,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180496,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180508,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180538,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 180540,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 182089,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 182969,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 185363,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 190419,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 197388,
+      "state": "Z",
+      "name": "sleep",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 198005,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 208150,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 208827,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 208959,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 209036,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 212000,
+      "state": "Z",
+      "name": "llvm-symbolizer",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 212533,
+      "state": "Z",
+      "name": "sleep",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 213111,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 213972,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220085,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220354,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220487,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220772,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220774,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220790,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220794,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220802,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220804,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220814,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220835,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220851,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 220864,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 221817,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 221819,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 221821,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 221822,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 221846,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 221849,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 221852,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 221869,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 221893,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 221898,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 223975,
+      "state": "Z",
+      "name": "sleep",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 232854,
+      "state": "Z",
+      "name": "koda",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 238505,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 238506,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 238517,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 238536,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 238537,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 238542,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 238556,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 238570,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 238573,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 238578,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 239227,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 239298,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 239377,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 239647,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 239902,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 245249,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 245250,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 245265,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 245276,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 245281,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 245283,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 245299,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 245309,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 245332,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 245336,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 252244,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 252440,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 252758,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 254002,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 254222,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 258638,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 259533,
+      "state": "Z",
+      "name": "llvm-symbolizer",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 261972,
+      "state": "Z",
+      "name": "sleep",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 264526,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 265009,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 265264,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 265444,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 267447,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 269441,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 269475,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 269569,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 277520,
+      "state": "Z",
+      "name": "sleep",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 284162,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 294096,
+      "state": "Z",
+      "name": "sh",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 295309,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 297431,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 297571,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 300696,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 300920,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 301203,
+      "state": "Z",
+      "name": "sleep",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    },
+    {
+      "pid": 301469,
+      "state": "Z",
+      "name": "git",
+      "uids": [
+        "1000",
+        "1000",
+        "1000",
+        "1000"
+      ]
+    }
+  ],
+  "vanished_process_observations": [],
+  "active_accessible_compilers": [],
+  "inaccessible_live_infrastructure_services": [
+    {
+      "pid": 198,
+      "state": "S",
+      "name": "dockerd",
+      "uids": [
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "exe_accessible": false,
+      "cwd_accessible": false,
+      "gradle_daemon_observed": false
+    },
+    {
+      "pid": 249,
+      "state": "S",
+      "name": "containerd",
+      "uids": [
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      "exe_accessible": false,
+      "cwd_accessible": false,
+      "gradle_daemon_observed": false
+    }
+  ],
+  "process_inspection_limit": "Root-owned infrastructure exe/cwd/FD access is unavailable. No whole-system no-FD claim. Unowned Gradle daemon observed and untouched.",
+  "capacity": {
+    "/workspace": {
+      "available_bytes": 358854656,
+      "total_bytes": 33770192896
+    },
+    "/tmp": {
+      "available_bytes": 1191903232,
+      "total_bytes": 9441349632
+    }
+  },
+  "lease_owner_processes_complete": true,
+  "scope_limit": "Component gates only; full app/native/reference exact captures/full workspace/lead merge belong to Root and are not claimed here."
+}

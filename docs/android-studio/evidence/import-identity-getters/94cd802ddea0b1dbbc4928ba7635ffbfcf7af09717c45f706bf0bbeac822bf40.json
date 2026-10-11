@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "area": "performance",
+  "verdict": "PASS",
+  "scope": "independent static source review only",
+  "reviewed_at_utc": "2026-10-08T01:25:47.211149+00:00",
+  "source_commit": "6fb7f94173320326bd523a8af67db77916ac7da3",
+  "base_commit": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
+  "worktree": "/workspace/android-studio-import-identity-getters",
+  "blocking_findings": [],
+  "source_checks": {
+    "no_new_production_Gradle_tasks_or_invocations": true,
+    "getter_bodies_no_configuration_resolution_or_Provider_realization": true,
+    "capture_timing": "task graph readiness after project-evaluation callbacks; runtime oracle pending",
+    "catalogue_order_preserved": true,
+    "catalogue_index": "BTreeMap<String, usize>",
+    "catalogue_and_Basic_module_matching_comparisons": "O(P log P + M log P), with path-length-dependent string comparisons",
+    "wire_record_acceptance_bound_bytes": 16777216,
+    "wire_bound_is_not_peak_heap_or_JVM_producer_bound": true,
+    "freshness_cost": "Revision/selection comparison then owned Basic identity reconstruction and comparison when revisions/selections match",
+    "selection_validation_cost": "O(M log M + S log S + S log M) plus selected-module variant scans",
+    "existing_Basic_V2_producer_tasks_and_process_cancellation_unchanged": true,
+    "new_decoder_UI_or_render_callers": 0
+  },
+  "runtime_follow_up": [
+    "Measure canonical-path filesystem overhead, catalogue capture duration and peak memory on representative large projects",
+    "Record combined Basic/V2/import sidecar stdout byte count and headroom below existing 16 MiB capture limit",
+    "Measure cancellation responsiveness during capture and preserve existing Basic/V2 SDK projections",
+    "Avoid per-frame owned identity reconstruction in future UI publication and measure chosen call boundaries"
+  ],
+  "existing_evidence_read_only": {
+    "default_import_facts_tests": {
+      "passed": 30,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0
+    },
+    "default_library_build": "passed per owner receipt",
+    "workspace_formatting": "passed per owner receipt",
+    "independent_runtime_rerun": false,
+    "summary_path": "/workspace/android-studio-artifacts/import-identity-getters/fix-round-3/default-validation/summary.json",
+    "summary_sha256": "9ddc3369b8a750b8a8727f4ceb4139b03fd25533d0143592dae61ce591a89226"
+  },
+  "pending_gates": [
+    "all-feature tooling tests/build",
+    "strict repository Clippy",
+    "real Gradle/SDK oracle probes",
+    "full app/native workflow",
+    "large-project runtime performance measurements",
+    "lead full CI and merge review"
+  ],
+  "performance_measurements_claimed": [],
+  "new_original_test_credit": 0,
+  "reviewed_file_sha256": {
+    ".rules": "99b5278fdebe4ec30dd9634f5f580f0086fdd8eb203e30eaeed55c4158f21d28",
+    "crates/android_tools/src/import_facts.rs": "817b9fa28240385e48fd68df1296619c6cb0ff4e6b219ef91b349ec563e3fafa",
+    "crates/android_tools/src/project_model.gradle": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+    "crates/android_tools/tests/import_facts.rs": "622dfb8c33596a9546583afefe0d65d21530e7fc933b87690c327616c4d976bc",
+    "crates/android_tools/src/project_model.rs": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c",
+    "crates/android_ui/src/android_build.rs": "b54fc43d2c4875e4052af22bff2bf81029da96900d26564533232ce1f763ef8b",
+    "crates/android_ui/src/android_ui.rs": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8",
+    "docs/android-studio/import-identity-getters-task-report.md": "66cbf4abc56eef1f0b3b382ae28c9ef9553c68bbb8ee016415d9fbd554b8e004",
+    "docs/android-studio/ports/import-identity-getters.json": "f15503c3db200c7d7671b064dba8b10757f653ce1f1b9d8504784a5a996d93f7"
+  },
+  "whole_source_verification": {
+    "snapshot_path": "/workspace/android-studio-artifacts/import-identity-getters/fix-round-3/default-validation/whole-source-before.json",
+    "snapshot_sha256": "f9aa2f02621e3e060549918602ae9583cc54fb886666f48c819cfb3c62941ba6",
+    "snapshot_source_parent": "e0cfad266fce1a29e065ef016815f695ced9810b",
+    "snapshot_is_fixed_working_source_now_committed": true,
+    "fixed_seven_patterns": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ],
+    "source_path_count": 4738,
+    "all_source_hashes_match": true,
+    "index_sha256_unchanged": "6b1c3918ac87428d17a88fffa52a9f4464490e75bf1c33c2c94f075d485240bd",
+    "working_status_unchanged": "",
+    "retained_reference_files_verified": 6
+  },
+  "runtime_commands_run": 0,
+  "source_or_cache_mutations": 0,
+  "outputs_only": [
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-static-current.md",
+    "/workspace/android-studio-artifacts/import-identity-getters/reviews/performance-static-current.json"
+  ],
+  "markdown_sha256": "9f688dc03675422ecc8c9bd6b998a045866df874e3ce23c147067fa24c0cc83a"
+}

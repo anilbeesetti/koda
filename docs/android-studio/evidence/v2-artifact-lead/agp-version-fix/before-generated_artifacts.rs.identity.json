@@ -1,0 +1,6 @@
+{
+  "path": "crates/android_tools/tests/generated_artifacts.rs",
+  "before_commit": "b23db3d372fe3e9d01c223bdce3e65e55ff2b186",
+  "before_sha256": "9900069b1a993875795c4be1feadf5f4a8da2a5750f486beb4596ae6b45efbf1",
+  "preserved_byte_exact": true
+}

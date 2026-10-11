@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "review_area": "UI",
+  "verdict": "PASS",
+  "scope": "Independent read-only source review only; no runtime or visual pass",
+  "timestamp_utc": "2026-10-08T00:48:54.059136+00:00",
+  "source_head": "8362e8ca7187164dc7d15173994528790f100368",
+  "base": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
+  "fixed_source_exclusions": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "changed_source_files": {
+    "crates/android_tools/src/android_tools.rs": {
+      "sha256": "3f1c28a5d58541490a34efe8e0756cc1df6dc4069b58b387db0caa5393f7925b",
+      "bytes": 33283
+    },
+    "crates/android_tools/src/import_facts.rs": {
+      "sha256": "36db0e332e2d981d3c3b9072ea883e1241c58cc30a184fba5a1fce5da4f3c8ad",
+      "bytes": 23641
+    },
+    "crates/android_tools/src/project_model.gradle": {
+      "sha256": "09e59928d1a1c4a8c75089f19c491589f706792ee6358ffd3bfef517cea007d6",
+      "bytes": 36197
+    },
+    "crates/android_tools/test_data/import_facts/LICENSE-APACHE": {
+      "sha256": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+      "bytes": 10768
+    },
+    "crates/android_tools/test_data/import_facts/NOTICE": {
+      "sha256": "daaa2926f1e97ec8e8593191e4fca7e66de07e881065c64ad2edcd5844155577",
+      "bytes": 864
+    },
+    "crates/android_tools/test_data/import_facts/reference-manifest.json": {
+      "sha256": "4e06dbe73487fdc31fe4a797ff40db92f9f0c6ab6dce10deb640c72794bc81cf",
+      "bytes": 3243
+    },
+    "crates/android_tools/test_data/import_facts/references/gradle/platforms/ide/tooling-api/src/main/java/org/gradle/tooling/model/gradle/BasicGradleProject.java": {
+      "sha256": "b7dadfd9fa270fddd4b5d3c85d4ccab634ebddf99d0a3ec52a0b536c0bfadf18",
+      "bytes": 2676
+    },
+    "crates/android_tools/test_data/import_facts/references/gradle/subprojects/core-api/src/main/java/org/gradle/api/Project.java": {
+      "sha256": "f259911bfff32f46c24d9bd1f6f3a577a92c599b9cd995a6e3f852367dd14346",
+      "bytes": 80144
+    },
+    "crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java": {
+      "sha256": "cc99f71aa146656368b5c62fc88746747ae19d3ecd5b87fea63ef17a6214c6eb",
+      "bytes": 61012
+    },
+    "crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/model/projectModel/GradleExternalProjectModelBuilder.java": {
+      "sha256": "b1255e9ced2ef115f3ce453d1b34d80429a1c63a76daa79575c448ceb4fb0b38",
+      "bytes": 3291
+    },
+    "crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleIdeaPluginUtil.java": {
+      "sha256": "9f47198c20cc8e8b124c45c18fe9c9094f14079c05e17724aca920ec017d879a",
+      "bytes": 3533
+    },
+    "crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleProjectUtil.java": {
+      "sha256": "49312efd6eb1e7c71230d4e4e6b76a0cf48988846c506724864d8266b629b616",
+      "bytes": 1604
+    },
+    "crates/android_tools/test_data/import_facts/wire-template.json": {
+      "sha256": "2bb32d6bf635c000bfabcf0bb3c14834d0fc05e64c04524b2f402703a3da85fc",
+      "bytes": 12830
+    },
+    "crates/android_tools/tests/import_facts.rs": {
+      "sha256": "062bc0523570936375363843c840c69de44326415b8b84f8331b81bcfe0bd6f1",
+      "bytes": 24440
+    }
+  },
+  "unchanged_consumer_files": {
+    "crates/android_tools/src/project_model.rs": {
+      "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c",
+      "bytes": 69027,
+      "byte_equal_to_base": true
+    },
+    "crates/android_tools/src/generated_artifacts.rs": {
+      "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+      "bytes": 29465,
+      "byte_equal_to_base": true
+    },
+    "crates/android_ui/src/android_ui.rs": {
+      "sha256": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8",
+      "bytes": 260293,
+      "byte_equal_to_base": true
+    },
+    "crates/android_ui/src/android_build.rs": {
+      "sha256": "b54fc43d2c4875e4052af22bff2bf81029da96900d26564533232ce1f763ef8b",
+      "bytes": 77987,
+      "byte_equal_to_base": true
+    }
+  },
+  "unchanged_ui_project_editor_theme_diff": [],
+  "shipping_import_facts_consumer_search": {
+    "crates/android_ui": [],
+    "crates/project": [],
+    "crates/project_panel": [],
+    "crates/editor": []
+  },
+  "reference_files": [
+    {
+      "path": "references/gradle/subprojects/core-api/src/main/java/org/gradle/api/Project.java",
+      "source_path": "subprojects/core-api/src/main/java/org/gradle/api/Project.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "sha256": "f259911bfff32f46c24d9bd1f6f3a577a92c599b9cd995a6e3f852367dd14346",
+      "bytes": 80144,
+      "role": "gradle_build_tree_path",
+      "repository": "gradle",
+      "full_file_hash_verified": true
+    },
+    {
+      "path": "references/gradle/platforms/ide/tooling-api/src/main/java/org/gradle/tooling/model/gradle/BasicGradleProject.java",
+      "source_path": "platforms/ide/tooling-api/src/main/java/org/gradle/tooling/model/gradle/BasicGradleProject.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "sha256": "b7dadfd9fa270fddd4b5d3c85d4ccab634ebddf99d0a3ec52a0b536c0bfadf18",
+      "bytes": 2676,
+      "role": "gradle_build_tree_path",
+      "repository": "gradle",
+      "full_file_hash_verified": true
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleProjectUtil.java",
+      "source_path": "plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleProjectUtil.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "49312efd6eb1e7c71230d4e4e6b76a0cf48988846c506724864d8266b629b616",
+      "bytes": 1604,
+      "role": "reference_gradle_identity_path",
+      "repository": "intellij-core",
+      "full_file_hash_verified": true
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/model/projectModel/GradleExternalProjectModelBuilder.java",
+      "source_path": "plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/model/projectModel/GradleExternalProjectModelBuilder.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "b1255e9ced2ef115f3ce453d1b34d80429a1c63a76daa79575c448ceb4fb0b38",
+      "bytes": 3291,
+      "role": "gradle_idea_name",
+      "repository": "intellij-core",
+      "full_file_hash_verified": true
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "source_path": "plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "cc99f71aa146656368b5c62fc88746747ae19d3ecd5b87fea63ef17a6214c6eb",
+      "bytes": 61012,
+      "role": "gradle_idea_name",
+      "repository": "intellij-core",
+      "full_file_hash_verified": true
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleIdeaPluginUtil.java",
+      "source_path": "plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleIdeaPluginUtil.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "9f47198c20cc8e8b124c45c18fe9c9094f14079c05e17724aca920ec017d879a",
+      "bytes": 3533,
+      "role": "gradle_idea_name",
+      "repository": "intellij-core",
+      "full_file_hash_verified": true
+    }
+  ],
+  "authored_supplemental_tests": {
+    "count": 28,
+    "names": [
+      "root_holders_and_nested_directories_are_independent_of_compiled_modules",
+      "missing_failed_null_and_empty_idea_names_remain_distinct",
+      "successful_nullable_getter_requires_an_explicit_value_member",
+      "optional_getter_failure_preserves_other_observed_identity",
+      "public_and_reference_identity_paths_are_never_substituted",
+      "colliding_project_and_idea_names_do_not_trigger_transport_renaming",
+      "catalogue_order_is_preserved_and_duplicate_identities_are_rejected",
+      "missing_required_identity_and_failed_getter_have_typed_reasons",
+      "missing_sidecar_null_sidecar_and_unsupported_schema_are_distinct",
+      "sidecar_binding_rejects_changed_root_module_directory_kind_and_variants",
+      "snapshot_rejects_changed_model_selection_revision_and_selected_variant",
+      "unknown_or_duplicate_selected_variants_are_explicit_errors",
+      "raw_catalogue_binding_requires_root_and_each_basic_module",
+      "raw_available_parent_root_and_plugin_observations_cannot_contradict",
+      "provenance_and_unavailable_failure_metadata_are_validated",
+      "positional_arrays_are_rejected_at_every_object_boundary",
+      "bare_null_observations_and_nonnullable_null_payloads_are_malformed",
+      "unknown_wire_fields_and_statuses_are_rejected",
+      "catalogue_failure_is_capability_without_losing_basic_model",
+      "raw_holder_directory_can_be_outside_the_build_without_claiming_trust",
+      "malformed_directories_and_project_paths_are_typed_errors",
+      "absent_observation_round_trip_does_not_become_bare_null",
+      "unavailable_getter_preserves_full_failure_in_round_trip",
+      "empty_catalogue_is_observed_then_rejected_for_missing_root_identity",
+      "single_record_json_and_existing_size_boundary_are_enforced",
+      "basic_projection_is_unchanged_by_unrelated_or_missing_sidecars",
+      "repeated_root_build_getters_cannot_disagree",
+      "successful_all_projects_catalogue_requires_observed_parent_holders"
+    ],
+    "execution": "not_run_by_this_reviewer"
+  },
+  "findings": [],
+  "observations": [
+    "The only existing production-file changes are an additive module export and a Gradle JSON sidecar; no UI, project publication, editor, theme or physical tree files change.",
+    "Basic parse_model and generatedArtifacts decoding retain their schemas and ignore unrelated top-level sidecars. Gradle Basic and V2 field construction is unchanged.",
+    "Each optional getter and all-projects catalogue invocation preserves available/unavailable state. Rust decoding returns typed facts errors, takes Basic model immutably, and has no publish/reset UI call.",
+    "Project/root names, project paths, public build-tree paths, reference identity paths and nullable Idea module names remain raw observations. No imported-name fallback, collision rename, facet assignment or tree label is guessed.",
+    "Retained full helper sources distinguish Gradle raw names, Idea names and later internal/qualified naming policy. Both public and reference paths remain distinct until authoritative observations justify equivalence.",
+    "The existing physical tree and raw JSON Sync console limitation are explicitly retained in docs/android-studio/module-presentation-task-report.md:89-94. New sidecar output will also be visible there until the separate console filter task."
+  ],
+  "pending_runtime_gates": [
+    "Current-source library/build/tests/Clippy/formatting under exclusive lease",
+    "Real Gradle/SDK captures with successful, nullable, absent and failed getter observations",
+    "Full app and current native loading/empty/error/resizing/focus/cleanup checks by Root",
+    "Full CI/workspace checks and all other reviewer runtime addenda"
+  ],
+  "limitations": [
+    "No original-test parity credit, logical tree publication, naming/facet UI fidelity or overall IDE completion claim.",
+    "Static source isolation cannot establish real Gradle compatibility, serialization success or visual behavior.",
+    "Getter records enlarge the existing model JSON; existing bounded stream/record handling and large-project behavior require runtime/performance review."
+  ],
+  "source_mutations": 0,
+  "runtime_commands": [],
+  "cache_mutations": 0,
+  "subagents_spawned": 0,
+  "report_sha256": "970a600b4119719c1f4619a53cf6251d512ec09ffe5c56c6aff9fcc5a24c0815"
+}

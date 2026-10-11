@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "failed_gate": "Final metadata source_review_reports path existence check",
+  "error": "Missing docs/android-studio/ports/reference-census.json",
+  "implementation_and4606hash_guard": "passed before this report-link check",
+  "incorrect_metadata_commit": "7197aa5cafc5955404016d4a4483e6ce1e171872",
+  "protected_or_remote_updated": false,
+  "correction": "reference-census-task-report.json",
+  "history_rewritten": false
+}

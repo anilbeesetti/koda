@@ -1,0 +1,202 @@
+{
+  "report": "# Native full-app UI and UX follow-up\n\n**PASS**, scoped to the changed toolbar, its actual Build panel consumer, and SDK model sync. Source commit `371e79d3dd29f94db1b1cc2d01aff85327630065`; actual rebuilt executable SHA-256 `e5bec9ab384701f21e8af5a9e6a353e24ff1e7c31f677794c878bc7b8aa65521`.\n\nThe 230 px defect is visibly corrected: forward Tab reveals the previously clipped Output focus without changing selected content. Space selects Output. Reverse Shift+Tab reveals Sync while preserving Output until Space. The 290 px and wide flows also pass. Actual arrow buttons respond to pointer, Space, and Return; traversal leaves the toolbar; Ctrl+Alt+R starts sync; Return hides the Build panel, and its sidebar button restores Output selection.\n\nReturn on a tab has no effect. This matches the unchanged pinned TabbedToolbar.java listener at lines 141\u2013143, which checks VK_SPACE only (AOSP revision a84efec3ba9542d9bfa1255103f0dc94833a3796; file SHA-256 7e9b312394b5419b446880151f83cfb04f01f9acb7364b1ab3e01baa93c4e59f). Return activation of actual buttons is separately demonstrated. No test or expectation was changed.\n\nFresh native sync shows loading, Successful, two discovered variants, and :app demoDebug selection. Captured stdout comes from the actual app-launched Gradle command, with all arguments, stdout, and exit status forwarded by an external QA-only shim. The emitted init script SHA-256 0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3 equals the current embedded bridge. Three native model records retain configured static Java/Kotlin/resource/asset flags, including static assets under build and generated assets outside build. Inactive providers remain cataloged without active roots. This supplemental SDK run grants no reference parity credit.\n\nA separate fresh-profile intentional Gradle failure shows loading, Failed, red Sync status, and the exact exception. Empty Output and restoration of the original error console pass. No stale variant/model appears. No app crash was observed. The missing emulator shown by the Android panel is an environment limitation.\n\nThe quiet measurements preserve all results: wide 32 ticks/10.0072 s (3.20% of one core), initial narrow 81 ticks/10.0074 s (8.09%), and the justified settled narrow recheck 22 ticks/10.0068 s (2.20%). Initial higher CPU did not persist after additional settling. RSS was 669452 kB wide and 654288 kB after the settled narrow recheck. No Cargo, other live GUI, or Gradle wrapper client ran during these samples. The unowned historical daemon used four CPU ticks during the first 22 seconds. These software-Vulkan samples do not establish hardware, startup, large-project performance, or absence of redraw storms.\n\nInterrupted pre-restart artifacts remain retained and uncredited. Fresh PTY launches used isolated profiles and fixture-only trust. Success launcher/app/Xvfb PIDs 235104/235128/235118 and error PIDs 237154/237189/237170 are all absent after identity-verified TERM to their owned launchers; both launcher exits were 143. Display :118 is released. No unrelated daemon or historical zombie was signaled.\n\nFinal guard verifies the unchanged whole source tree, index, untracked production files, and all 4606 bound file hashes with the original fixed metadata exclusions. The executable hash remains unchanged. Committed generation fixture bytes and copied error fixture source files remain unchanged; expected generated Gradle state is separate. No product, index, or original fixture edits occurred.\n\nEvidence: runtime-proof.json, guard-final-after-native.json, native-restored-model-proof.json, final-closure.json, idle-restored-*.json, and the inspected full-app captures. Close controls are not configured in this Build consumer and receive no native credit. Project-tree UI wiring, full Android Studio appearance, device/emulator execution, and exhaustive parity remain unverified.\n",
+  "original_report_external_path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/review-report.md",
+  "original_report_sha256": "343471bfc83fa519cdd9da577deb00c2aa28379e74fcb9533b5eef73a54edf18",
+  "external_images": [
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/initial-window.png",
+      "bytes": 88659,
+      "sha256": "e153e7b78507bdc2f600234dc6e101f0516981a19597535266677b1aae9366b7"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-build-restored-output.png",
+      "bytes": 70254,
+      "sha256": "04b50e1853ccc3e77c7e48db210c1be58b5ff8ca79fe1fdc66b93926fcf1079f"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-error-initial-window.png",
+      "bytes": 84748,
+      "sha256": "66b0fa00e2f4537607447aa097dae13eeb5f88d909b93fb89db5ffcb143818c2"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-error-output-empty.png",
+      "bytes": 93121,
+      "sha256": "6c72012dbe2d132ac99a2f38e756c1d8715efd83be8d42e0995ed566711996d0"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-error-sync-loading.png",
+      "bytes": 83103,
+      "sha256": "a4d6e5376d37b94f1c3f8f319f9af67600fe3a31a3dfbf4afef689c8383f2877"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-error-sync-restored.png",
+      "bytes": 129905,
+      "sha256": "97976e1d52d6d3520dcc1dec532696bd3d441239e717a0ebc0c545dd564fdd67"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-error-sync-result.png",
+      "bytes": 130174,
+      "sha256": "ad8bb069e348f79e26057268d2b46a9fa2297e6998782c41afb2bb95ad5c0da9"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-global-sync-loading.png",
+      "bytes": 88605,
+      "sha256": "e8146ac9e9cd61089e7ab8735312fca2c481e372eb445851499b8ff17f2183f8"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-global-sync-success.png",
+      "bytes": 114371,
+      "sha256": "62fc8daff381c608d9eef373b388ae28623c9a23e31528baaf1eb2886edb3136"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-hide-return-focus.png",
+      "bytes": 70358,
+      "sha256": "2ca287004810beb0db1418e8c81f111f62e7c0e37240c50773f689ab0f1f9587"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-hide-return-hidden.png",
+      "bytes": 67271,
+      "sha256": "ad8125de3092b6e81163143457c975b1c6608462c1c5361608b8cf481acadc87"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-idle-narrow-after.png",
+      "bytes": 47560,
+      "sha256": "7a5241d2240cbb8eede9982ff2f67fa710d850be09529afe48d9293338c9308b"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-idle-narrow-recheck-after.png",
+      "bytes": 47560,
+      "sha256": "7a5241d2240cbb8eede9982ff2f67fa710d850be09529afe48d9293338c9308b"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-idle-wide-after.png",
+      "bytes": 114371,
+      "sha256": "62fc8daff381c608d9eef373b388ae28623c9a23e31528baaf1eb2886edb3136"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-initial-window.png",
+      "bytes": 92908,
+      "sha256": "5ae55478703c1c5c734e33e174169d811b791b97e53b867e195d4db7ca19d5bf"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow230-arrow-before.png",
+      "bytes": 44052,
+      "sha256": "02973a8e56ea9d3f9050e762590a27f95194fca5ba6bb4ca8d61f22c0cc1f38e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow230-arrow-click.png",
+      "bytes": 44093,
+      "sha256": "78b27ee18af82d90ebddf8223bcc0273be07a4a2148078451c213f1c071c241d"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow230-arrow-return.png",
+      "bytes": 44079,
+      "sha256": "821050c75e70f259b821d4df451b74dd9397f915488424eae2d181a53ab33209"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow230-arrow-space.png",
+      "bytes": 43884,
+      "sha256": "1b7823756d21f12ede96777ffdb09bbf795956f956c66a7e9204d45ae90907ef"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow230-reverse-space-sync.png",
+      "bytes": 44052,
+      "sha256": "02973a8e56ea9d3f9050e762590a27f95194fca5ba6bb4ca8d61f22c0cc1f38e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow230-shift-tab-focus.png",
+      "bytes": 43024,
+      "sha256": "c04de5149e9e694e01e01292154f2494f205b10dc0bb3eb1239996238f486a96"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow230-space-output.png",
+      "bytes": 42850,
+      "sha256": "f6f67d1b32ad618fa8563d576f52dbf86cb96feb2e578664667b7f22ed75278f"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow230-sync.png",
+      "bytes": 44619,
+      "sha256": "7a05a6de7ff7c96d3a7133f5b21c2bb0bba6e5574b69f41f05edf4cf644e26eb"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow230-tab-focus.png",
+      "bytes": 44409,
+      "sha256": "582ca8611015855c6a74012f96ceb18b9e867083ef6704b12074143693b43ee6"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow290-space-output.png",
+      "bytes": 45572,
+      "sha256": "50d854de9bc86b3c958d7f269bcb30b1fdcba3f1cd0d0ec7b74f50d82857b1bd"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-narrow290-tab-focus.png",
+      "bytes": 47418,
+      "sha256": "a1625bdbab986b45149420ded5cb0fc0eac8f9cac11bb4c31925f79b97887ee2"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-sync-loading.png",
+      "bytes": 93334,
+      "sha256": "e42a9cb58664b4ea6d28a9002d279a7d0c6c4492d07a5ee558be20670c843a38"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-sync-success.png",
+      "bytes": 119130,
+      "sha256": "4547c151e9ede2d9861a1d3f2017ef36ba92c2445565903dcce3c0dda0d4937f"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-wide-external-rerun-focus.png",
+      "bytes": 114510,
+      "sha256": "73de8f7fbc0ee97d572d578c6d755150d0adec0355225d94535d12ccb76e6da6"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-wide-hide-focus.png",
+      "bytes": 114519,
+      "sha256": "c8a1f062c0af80bdba0c300131aae419981069eace1ddadd2430dd0b9ec01d12"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-wide-rerun-space-loading.png",
+      "bytes": 88702,
+      "sha256": "7131e9c72ba07ce2c7887419a53a8e55c966e40a736f11d4ad8bcc9752bd2e78"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-wide-rerun-success.png",
+      "bytes": 114444,
+      "sha256": "fc5ec8adb4c6f48f028534f374a6903003c7fa1df548caed2b090dfc8b7c05dc"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-wide-return-sync.png",
+      "bytes": 74373,
+      "sha256": "8c8e28bf3d9bcbd9658d91a3234c6e3253a7f904b3a244e000244e3384aa723e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-wide-reverse-space-sync.png",
+      "bytes": 118820,
+      "sha256": "ff675f8d80a0ca2900ee6480747286116c4db8a7848f21f48d5b83452205801c"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-wide-shift-tab-focus.png",
+      "bytes": 74373,
+      "sha256": "8c8e28bf3d9bcbd9658d91a3234c6e3253a7f904b3a244e000244e3384aa723e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-wide-space-output.png",
+      "bytes": 74371,
+      "sha256": "0d36cdd4f0fc1bf7db3f9ac008008789d7956504744deffb57e3d781b6f6ebde"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-wide-tab-focus.png",
+      "bytes": 118818,
+      "sha256": "71051c5007acce344b3615233fe0c61c43769c6960349d3c20adee296a0dee56"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/restored-widened-sync.png",
+      "bytes": 114480,
+      "sha256": "ece8eb7eb6b2b472a27b9077fdf0de17c8eaab181d9db0b28de732a4cf6ef2b1"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/captures/sync-loading.png",
+      "bytes": 80896,
+      "sha256": "fe72c98c088847a83df7ad03c64df1192b28c6c3b97bff2f033d49ebcea72d24"
+    }
+  ]
+}

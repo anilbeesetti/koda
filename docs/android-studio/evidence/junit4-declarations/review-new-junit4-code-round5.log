@@ -1,0 +1,12 @@
+**CODE review round 5: PASS, scoped.** No blocking findings on module SHA-256 `68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f`.
+
+The correction follows the approved metadata-budget design:
+
+- One aggregate budget covers the complete selection. Evidence-string copies, qualified-name construction, owner duplication and hash formatting are charged before allocation.
+- Annotation prefixes borrow existing facts. The expanded class-header limit is checked before copying headers or retaining class annotations.
+- JSON writes check length and arithmetic before reserving or extending the buffer. Capacity requests are capped, allocation errors propagate, and the trailing newline uses the same writer.
+- Generation errors propagate before staging or publication. Annotation confirmation rules remain unchanged; runtime counts remain null, completeness false and behavioral parity credit zero.
+
+All 34 previous tests and helpers remain byte-for-byte preserved against the retained `739d29d…` source. Six new tests bring the module to 40 authored tests. All 16 original fixtures match their hashes and byte counts, totaling 100,711 bytes; selection SHA remains `e87a079f…`. Frozen discovery, canonical manifest and ledger remain identical to base `7b2bd3e…`. `git diff --check` passes.
+
+This was a static review. No Cargo, tests, CLI, runtime checks, cache mutations or source edits occurred. The current 114-test suite and remaining validation gates are pending; this verdict does not establish task completion.

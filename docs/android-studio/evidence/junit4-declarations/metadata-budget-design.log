@@ -1,0 +1,168 @@
+# Lead corrective design: selected JUnit4 metadata and output bounds
+
+Task: `android-studio-task/1-junit4-declarations`, own worktree only. Current
+module SHA-256: `739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec`.
+No production edits implement this proposal yet. The history remains three
+owner static fix rounds plus two authorized lead test/helper corrections. The
+current 108 tests and strict Clippy pass; performance is FAIL and task incomplete.
+Canonical 92 rows, pinned manifest, prior discovery, all 16 original fixtures
+(100,711 bytes) and all existing 34 new test assertions remain unchanged.
+
+## Findings and acceptance
+
+1. A 1 MiB package, one class and 512 annotated methods can retain about
+   513 MiB of owners before serialization/output-limit rejection.
+2. A 1 MiB annotation literal before a class bypasses the current 16 KiB
+   class-to-brace bound when the expanded header is copied.
+3. Current `to_vec_pretty` allocates all output before checking its size.
+
+The proposed correction must charge owned evidence strings before allocation,
+share that charge across the complete selection, reject JSON writes before
+extending a buffer beyond the existing 16 MiB output cap, and enforce the
+existing 16 KiB class-header cap on the expanded annotation/modifier prefix.
+No limit increase, framework-binding expansion, automatic N/A or parity credit.
+Source budget failure rejects generation with an explicit unresolved-evidence
+error; it must never produce an apparently complete partial output. A header
+cap failure retains original file provenance/global annotation facts and the
+existing unresolved class/header reason; affected methods cannot gain direct
+ownership/confirmation. Runner counts remain null and applicability unreviewed.
+
+## Exact implementation scope
+
+Only the new module, its NEW stress/boundary tests and its task documentation
+change. No dependency/workspace manifests, existing assertions, original source
+fixtures, selection identities, publication code or canonical ledger change.
+
+### One aggregate string budget
+
+Add `MetadataBudget { used: usize, limit: usize }`, production limit equal to
+`MAX_TOTAL_BYTES` (16 MiB). `charge(additional)` uses checked arithmetic and
+rejects before increasing used beyond limit. No refund makes accounting
+conservative, including dropped temporaries/duplicate set insertions.
+
+Create the budget once in `generate`, before parsing bounded manifest/selection.
+Charge each bounded JSON input's byte length before deserialization, conservatively
+covering its decoded owned strings. Those reads themselves keep their existing
+256 KiB input caps. Charge additional identity-key clones, reference field
+clones and generated evidence hashes before allocation. Move existing selected
+fields/baseline/scope without recopying them. Files share the SAME budget; do not
+reset it in the loop. Existing raw source reads remain capped independently.
+
+Pass `&mut MetadataBudget` into a fallible scanner and its owned-string helpers.
+Keep the existing `source_facts(text, kotlin)` test convenience wrapper, with a
+normal budget and an explicit expectation that existing small inputs succeed;
+production uses the fallible budget-sharing scanner. Budget exhaustion returns
+an error such as `selected declaration metadata budget exhausted; declaration
+evidence unresolved and not published`, propagated by `generate` before staging.
+The scanner does not publish partial facts on budget exhaustion.
+
+Audit every scanner allocation site (`to_owned`, `format!`, `clone`) involving
+owned evidence strings, including package/import/alias names, annotation
+spelling/use-site targets, copied annotation facts, class names/kinds/owners/
+headers, method names/owners/signature hashes and unresolved reasons. Central
+helpers must reserve string lengths before construction:
+
+- `owned(&str)` charges length then copies; `clone_annotation` charges all its
+  owned strings before copying. Fixed reason strings are charged too, including
+  those currently created by tokenization (make tokenization fallible with the
+  same budget, or return borrowed static reasons and charge before ownership).
+- `qualified_name` first walks borrowed tokens to determine end/checked output
+  length, then charges and builds once. Do not allocate its whole String and
+  charge afterward. No unbounded formatter temporary.
+- Package-qualified owners compute checked `package.len() + 1 + name.len()`
+  and charge before `format!`/String construction. Method-owner clones charge
+  source owner length before cloning. Signature hash text reserves its fixed
+  64 bytes before hex formatting.
+- Change declaration-prefix collection to borrowed annotation facts or indices.
+  Compute its full span before copying any header; budgeted annotation clones
+  occur only after the appropriate declaration/header guards.
+- Keep bounded structural token/delimiter/class/method collections and existing
+  semantic checks. These structures are not claimed to be covered by the
+  string-byte cap; their existing independent count limits still apply.
+
+### Full class-header guard
+
+After identifying the expanded prefix start, check the full borrowed slice from
+that start up to (excluding) the class opening brace before any header `to_owned` or
+annotation clones. Use the existing `MAX_HEADER_BYTES` value and existing
+inclusive boundary convention. Class-to-brace and class-count guards remain.
+On overflow continue with the existing explicit class/header/ownership unresolved
+reason, preserving the original global annotation/source evidence. No owner is
+created for an unsupported header and no method in it is confirmed by an
+accidental neighboring owner.
+
+### Bounded pretty JSON writer
+
+Remove intermediate per-FileEvidence `to_vec_pretty` and its post-allocation
+check. Aggregate string accounting already bounds retained evidence; final output
+has its own strict cap. Serialize once with `serde_json::to_writer_pretty` into
+`BoundedJsonWriter`, an `io::Write` implementation owning its Vec.
+
+Before any write, calculate `len.checked_add(buf.len())`; reject if it exceeds
+the existing 16 MiB cap. Only then reserve/grow and extend. Growth is geometric
+but capped at the limit, with checked arithmetic and `try_reserve_exact`, so
+small outputs do not repeatedly reallocate once per serializer fragment and no
+requested Vec capacity exceeds the output cap. Allocation errors propagate.
+Include the trailing newline through the same bounded writer, not a later
+unchecked `push`. The completed Vec is returned only after serialization and
+newline succeed. There is no full oversized intermediate JSON allocation.
+
+Generation remains ahead of all publication staging; existing output and
+`--check` behavior remain transactional. A serializer error causes no output
+creation/replacement or staging leak. Successful JSON schema/order/pretty style
+and newline stay byte-identical for the existing original selection; verify
+against a preserved pre-correction selected output once a matching CLI can be
+built, or compare bounded serialization with the original serializer for a small
+unit value. No false archive authentication flag or capability claims change.
+
+## New meaningful Rust tests (preserve every existing test)
+
+1. **Aggregate budget arithmetic/allocation boundary:** an exact-length owned
+   copy succeeds; one additional byte fails without changing usage. Checked
+   arithmetic overflow fails. Charging a failed copy does not allocate it.
+2. **Actual owner-amplification shape:** the review's 1 MiB Java package plus
+   512 distinct `@Test void testN()` methods fits source/token limits. The
+   fallible scanner with the normal 16 MiB shared budget returns a metadata-
+   budget error before retaining all repeated owners; used never exceeds cap.
+   A small corresponding source still retains declared evidence/runtime nulls.
+   Do not execute the old unbounded scanner on this shape.
+3. **Across-file cumulative budget:** two individually affordable source scans
+   reuse ONE deliberately small budget; the second fails once cumulative owned
+   strings exceed it. A newly reset budget must not be used in production.
+   Prefer also exercise `generate` with two hash-bound synthetic selected files
+   and a private test-only budget override to prove the actual loop shares it.
+4. **Expanded class-header bypass and exact boundary:** the 1 MiB annotation-
+   literal prefix produces a header-budget unresolved fact and zero confirmed
+   methods while original annotation/file evidence remains. Construct full
+   prefix spans exactly at the existing header limit and one byte beyond;
+   supported exact boundary keeps owner, over-boundary does not.
+5. **Writer limit and JSON escaping:** exact-boundary writes succeed, one byte
+   beyond and a huge incoming chunk fail BEFORE len/capacity grows. Check
+   newline inclusion and JSON escaping that expands beyond a small writer cap.
+   Small pretty output matches `to_vec_pretty` plus newline exactly. Geometric
+   capacity remains at or below the configured cap after many small writes.
+6. **Generation/publication failure:** induce budget or serialization overflow
+   using hash-bound synthetic source provenance and private test-only limit
+   injection. `run` must fail without output/staging creation; in `--check`,
+   previously valid output bytes are unchanged. No fixture source provenance is
+   relaxed to make this test pass.
+
+Private limit-injection helpers must keep the public production CLI limits fixed
+and must not add a bypass flag. Tests assert actual error and state boundaries,
+not timing thresholds or mirrored implementation formulas. All old 108 tests
+must run unfiltered along with the new cases; no tests skipped/removed/weakened.
+
+## Review and runtime gates
+
+First independent performance DESIGN review: PASS/FAIL on this exact document
+hash before production edits; parent then authorizes the reviewed concrete plan.
+New production source gets hash-bound Code/Performance/Quality review rechecks;
+UI/UX recheck the budget errors and output compatibility as meaningful changed
+CLI behavior. One reviewer at a time; preserve all prior verdicts and failures.
+
+No Cargo/shared-cache work until parent regrants the exclusive lease. Required
+component gates are full locked xtask tests, repository strict Clippy, workspace
+formatting, normal CLI build/help, generate and deterministic `--check`, exact
+source/executable/output hashes, failure-retention and measurements. Root owns
+normal full-workspace/app/CI/integration gates. Global/effective census remains
+incomplete and canonical behavioral parity credit remains zero throughout.

@@ -1,0 +1,206 @@
+{
+  "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+  "actual_unfiltered_tests": 241,
+  "new_policy_tests": 10,
+  "reference_method_actual_owner_execution": "checkSupportsParallelSync; nine exact assertions; onepass ninefiltered zeroignored",
+  "checks": {
+    "all-features-tests": {
+      "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+      "stage": "all-features-tests",
+      "lease_granted": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/root-lease-grant.json",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 38.92199029200128,
+      "log": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/all-features-tests.log",
+      "log_sha256": "01d4b8e155f9c0e2cdec9fa1562b45c29d7aa7de29c0cc5816ee95a361e4f173",
+      "whole_source_bindings": 4717,
+      "source_index_status_unchanged": true,
+      "passed": 241,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 0,
+      "groups": [
+        [
+          85,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          30,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          20,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          10,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          27,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          21,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          29,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          19,
+          0,
+          0,
+          0,
+          0
+        ]
+      ]
+    },
+    "library-build": {
+      "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+      "stage": "library-build",
+      "lease_granted": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/root-lease-grant.json",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 5.355480632999388,
+      "log": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/library-build.log",
+      "log_sha256": "18a067ad8f063d8d25f3e040407244e29289f768b53f755f5b9e99f96e1bf0dd",
+      "whole_source_bindings": 4717,
+      "source_index_status_unchanged": true
+    },
+    "strict-clippy": {
+      "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+      "stage": "strict-clippy",
+      "lease_granted": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/root-lease-grant.json",
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 61.82992909099994,
+      "log": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/strict-clippy.log",
+      "log_sha256": "374a5f0ae1c5538821077712da269021283d9cd6e7c6ca447eca2b371380500a",
+      "whole_source_bindings": 4717,
+      "source_index_status_unchanged": true
+    },
+    "format-check": {
+      "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+      "stage": "format-check",
+      "lease_granted": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/root-lease-grant.json",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 27.811437708995072,
+      "log": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/format-check.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "whole_source_bindings": 4717,
+      "source_index_status_unchanged": true
+    },
+    "exact-original": {
+      "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+      "stage": "exact-original",
+      "lease_granted": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/root-lease-grant.json",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "/workspace/android-studio-parallel-sync-policy/Cargo.toml",
+        "-p",
+        "android_tools",
+        "--test",
+        "parallel_sync",
+        "check_supports_parallel_sync",
+        "--message-format=json",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 4.789697501000774,
+      "log": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/exact-original.log",
+      "log_sha256": "b1b45f3b1d6d7e3f6ae92ca481a676326cbad7528a408578a44424fe9940fa04",
+      "whole_source_bindings": 4717,
+      "source_index_status_unchanged": true,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 9,
+      "original_method": "checkSupportsParallelSync",
+      "original_assertions": 9,
+      "canonical_parity_credit": 0,
+      "lead_exact_capture": "pending",
+      "groups": [
+        [
+          1,
+          0,
+          0,
+          0,
+          9
+        ]
+      ]
+    }
+  },
+  "whole_source_bindings": 4717,
+  "immutable_originals": 148,
+  "all_current_source_and_git_guards_passed": true,
+  "five_static_reviews": "PASS preserved; current runtime addenda pending",
+  "canonical_parity_credit": 0,
+  "full_app_native_full_workspace_ci_lead_gates": "pending",
+  "scheduler_or_parallel_Gradle_execution_claimed": false,
+  "closure": {
+    "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+    "all_stage_processes_exited": true,
+    "active_owned_processes": [],
+    "git_clean": true,
+    "cargo_gradle_native_lease": "released to Root",
+    "generated_artifacts_removed_by_owner": [],
+    "overlay_available_bytes": 688369664,
+    "tmp_available_bytes": 1508995072
+  }
+}

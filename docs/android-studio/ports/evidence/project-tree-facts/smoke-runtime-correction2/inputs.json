@@ -1,0 +1,113 @@
+{
+  "source_manifest": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction2.json",
+  "scope": "Public-toolchain supplemental smoke only; five original cases unported",
+  "project": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/project",
+  "wrapper_scope": "Linux runtime copy; optional Windows batch wrapper absent in reused wrapper source",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 792,
+      "sha256": "c4806faa7b678c5dccba6e4129342be96163bdea66a53e4b521dfddf64b4f889"
+    },
+    {
+      "path": "app/build.gradle",
+      "bytes": 2204,
+      "sha256": "4b876b19c2fdaf3b31bdc3a4d2093ea386e70dee9329b44d409b25ac8941c8a5"
+    },
+    {
+      "path": "app/combined-assets/combined.txt",
+      "bytes": 16,
+      "sha256": "ec7a1700e56bae02ada3575dc3eb42cb97ea6e158af8fc715147cb787078a471"
+    },
+    {
+      "path": "app/custom-manifest/AndroidManifest.xml",
+      "bytes": 134,
+      "sha256": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e"
+    },
+    {
+      "path": "app/flavor-assets/demo.txt",
+      "bytes": 11,
+      "sha256": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd"
+    },
+    {
+      "path": "app/inactive-assets/inactive.txt",
+      "bytes": 16,
+      "sha256": "3297afa922c9718a05da8873a677be88521ee0a9b24fe0ba8f68cbb2f0a72fa0"
+    },
+    {
+      "path": "app/late-static-assets/late.txt",
+      "bytes": 19,
+      "sha256": "d51ffe227e294a259cc66a25682de2a4c92314bd5fa469bd888c92d9251dfd85"
+    },
+    {
+      "path": "app/main/resources/resources.properties",
+      "bytes": 28,
+      "sha256": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c"
+    },
+    {
+      "path": "app/provider-res/layout/sample.xml",
+      "bytes": 148,
+      "sha256": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208"
+    },
+    {
+      "path": "app/red-assets/red.txt",
+      "bytes": 11,
+      "sha256": "32a19848c0a6e660b89268669afdc8268097850f707b43b0b5276041f035f1dc"
+    },
+    {
+      "path": "app/unrelated-assets/nested/shared.txt",
+      "bytes": 24,
+      "sha256": "31f338a6eaaaed4c8ab1a5836dddc2b8b48b6f933a1db15d9a9fb40d97a55780"
+    },
+    {
+      "path": "app/unrelated-assets/sample.txt",
+      "bytes": 23,
+      "sha256": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950"
+    },
+    {
+      "path": "app/wide-assets/wide.txt",
+      "bytes": 12,
+      "sha256": "5f143cf287591032f657d54cef1e27f596f241dd062d923ebb85ca2371a1aeb9"
+    },
+    {
+      "path": "build.gradle",
+      "bytes": 190,
+      "sha256": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2"
+    },
+    {
+      "path": "export.gradle",
+      "bytes": 25994,
+      "sha256": "5b8539668f08ee16ba8b1b63ef24d9ec795b4e42b939d8e436cd68a3cf0bf358"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.jar",
+      "bytes": 48462,
+      "sha256": "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.properties",
+      "bytes": 368,
+      "sha256": "89f62533208a72b7a8cc2892b6b3540c445fa6175508297d932dae57d653591a"
+    },
+    {
+      "path": "gradle.properties",
+      "bytes": 78,
+      "sha256": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2"
+    },
+    {
+      "path": "gradlew",
+      "bytes": 8656,
+      "sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59"
+    },
+    {
+      "path": "local.properties",
+      "bytes": 48,
+      "sha256": "00c76c7994130b465695145ca6d2e144002d7b1afb594b3d2f715c7643eb87da"
+    },
+    {
+      "path": "settings.gradle",
+      "bytes": 57,
+      "sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c"
+    }
+  ]
+}

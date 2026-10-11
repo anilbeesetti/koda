@@ -8357,11 +8357,41 @@ impl Editor {
         if let Some(project) = self.project.clone() {
             let position = language::ToPointUtf16::to_point_utf16(&start, buffer.read(cx));
             let plan = project.update(cx, |project, cx| {
-                project.prepare_android_resource_rename(&buffer, position, new_name.clone(), cx)
+                project.prepare_android_resource_rename_if_applicable(
+                    &buffer,
+                    position,
+                    new_name.clone(),
+                    cx,
+                )
             });
             if let Some(plan) = plan {
                 return Some(cx.spawn_in(window, async move |editor, cx| {
-                    let plan = plan.await?;
+                    let Some(plan) = plan.await? else {
+                        let rename = editor
+                            .update(cx, |editor, cx| {
+                                editor.semantics_provider.as_ref()?.perform_rename(
+                                    &buffer,
+                                    start,
+                                    new_name.clone(),
+                                    rename.language_server_id,
+                                    cx,
+                                )
+                            })?
+                            .context("The language server cannot rename this symbol")?;
+                        let transaction = rename.await?;
+                        Self::open_project_transaction(
+                            &editor,
+                            workspace,
+                            transaction,
+                            format!("Rename: {old_name} → {new_name}"),
+                            cx,
+                        )
+                        .await?;
+                        editor.update(cx, |editor, cx| {
+                            editor.refresh_document_highlights(cx);
+                        })?;
+                        return Ok(());
+                    };
                     let (plan, preview) = cx
                         .background_executor()
                         .spawn(async move {

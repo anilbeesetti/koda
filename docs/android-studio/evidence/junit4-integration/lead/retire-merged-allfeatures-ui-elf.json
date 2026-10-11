@@ -1,0 +1,15 @@
+{
+  "generated_artifact": "/tmp/android-studio-frozen-executables/android-ui-371e79d3dd-allfeatures125",
+  "bytes": 741639088,
+  "sha256": "eb5965f9ad837d35373953a677524917593f780ebda40500e1d9f06581d48c53",
+  "hardlinks_before": 1,
+  "live_process_or_fd_users": [],
+  "only_generated_alias_removed": "/workspace/.cache/zed/target/debug/deps/android_ui-09bc6d780809bc79",
+  "replacement_or_preserved_artifacts": [
+    "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+    "/tmp/android-studio-link-output/koda-followup-231332"
+  ],
+  "preserved_tests_and_fixtures_and_all_raw_logs": true,
+  "reason": "Retire reproducible Root-owned all-feature test ELF after125actualPASS/fullCI10383PASS/nativePASS/protectedmerge; preserve current default UI executable for new33exactcaptures and current fullapp. Free/tmp capacity for next normal app link; no source/fixture/evidence deletion.",
+  "retired": true
+}

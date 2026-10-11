@@ -1,0 +1,25 @@
+{
+  "source_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "original_committed_generation_fixture_files_unchanged": true,
+  "official_wrapper_original_sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+  "external_capture_shim_modifications": "Only new external QA fixture gradlew; official wrapper retained, all arguments/stdout/exit forwarded. Interrupted and restored instrumentation logs separate.",
+  "external_error_fixture_source_files_unchanged": true,
+  "generated_gradle_state_changes": "Expected; excluded from fixture-source comparison",
+  "source_edits": "None",
+  "all_owned_live_processes_absent": true,
+  "owned_pids": [
+    235104,
+    235118,
+    235128,
+    237154,
+    237170,
+    237189
+  ],
+  "launcher_exit_codes": {
+    "restored_success": 143,
+    "restored_error": 143
+  },
+  "display118_socket_absent": true,
+  "historical_unowned_daemon167092_not_stopped": true,
+  "historical_zombie232854_not_signaled": true
+}

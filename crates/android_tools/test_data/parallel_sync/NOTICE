@@ -1,0 +1,22 @@
+The Rust parallel_sync policy is adapted from Apache-2.0 Android Open Source Project code.
+
+platform/tools/adt/idea revision a84efec3ba9542d9bfa1255103f0dc94833a3796:
+project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/BasicModules.kt
+  Copyright (C) 2022 The Android Open Source Project
+  SUPPORTS_PARALLEL_SYNC ranges and ModelFeature.appliesTo.
+project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt
+  Copyright (C) 2024 The Android Open Source Project
+  Complete checkSupportsParallelSync, with all nine assertions and named messages.
+Both unchanged originals are retained under ../generated_artifacts.
+The original helper's nullable minimumModelConsumer is represented as an unavailable
+unused minimum-consumer field; this feature never consults that compatibility input.
+Model Int.MIN_VALUE major/minor and empty description remain exact in the helper.
+
+platform/tools/base revision 4a5d2ec9571e2021fc9a4621e24a195f966ee6dd:
+sdk-common/src/main/java/com/android/ide/common/repository/AgpVersion.kt
+  Copyright (C) 2022 The Android Open Source Project
+  Exact numeric/preview parsing constraints and ALPHA/BETA/RC/DEV/NONE ordering.
+The unmodified original is retained here as AgpVersion.kt, SHA-256:
+e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb
+
+No JVM comparator or Gradle scheduler is added; capability policy is Rust.

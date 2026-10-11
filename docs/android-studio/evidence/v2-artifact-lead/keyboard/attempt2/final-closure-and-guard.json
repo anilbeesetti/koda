@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "git_tree": "6b84b2d512405eba30658cc9d92577570f4e4796",
+  "final_guard_utc": "2026-10-07T23:03:09.478655+00:00",
+  "whole_source_files_verified": 4712,
+  "fixed_metadata_exclusions": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "source_index_worktree_untracked_and_file_hashes_match": true,
+  "original_and_each_private_fixture_files_verified": 12,
+  "private_fixture_copies": 2,
+  "all_fixture_hashes_and_official_wrappers_unchanged": true,
+  "original_native_manifest655_files_plus_manifest_byte_unchanged": true,
+  "current_app_sha256": "577814b594205348eab4869aef4f3d0dc0377bbd6fe4acc9bb40ca7788b89c3e",
+  "successful_attempt_owned_pids_absent": [
+    278936,
+    278956,
+    278946
+  ],
+  "failed_attempt_owned_pids_absent": [
+    278199,
+    278219,
+    278209
+  ],
+  "display119_absent": true,
+  "successful_launcher_exec_session": 48564,
+  "successful_launcher_exit_code": 143,
+  "failed_launcher_exec_session": 9374,
+  "failed_launcher_exit_code": 143,
+  "unowned_gradle167092_present": true,
+  "no_unrelated_processes_signaled": true,
+  "successful_profile_only_trust_row": [
+    [
+      1,
+      "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/attempt2/generation-project",
+      null,
+      null
+    ]
+  ],
+  "event_commands_started_and_finished": 48,
+  "all_successful_attempt_commands_exit_zero": true,
+  "events_sha256": "32c7e4ce64c1d63d665fa8d572d52388a215c2a4250b930833f8b1001c26bed6",
+  "raw_attached_pty_sha256": "e24991d28eb5e7283c8c875f7cfee0d19466ff27aa3aaec6491178747b7255c4",
+  "recorded_preexisting_gradle_indentation_query_diagnostic": true,
+  "new_original_reference_test_credit": 0,
+  "phase_or_IDE_complete": false
+}

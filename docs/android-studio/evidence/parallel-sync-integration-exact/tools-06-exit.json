@@ -1,0 +1,24 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--lib",
+    "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.6572883620028733,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
+    "sha256": "ac2d027867d52d4aa35c93e9c9dc6af302136926827c0e1265fa51d87556b9cb"
+  }
+}

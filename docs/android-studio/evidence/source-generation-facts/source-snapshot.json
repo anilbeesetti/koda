@@ -1,0 +1,62 @@
+{
+  "source_files": [
+    {
+      "path": "crates/android_tools/src/project_model.gradle",
+      "sha256": "7c8a928444c502d880be3a1a0c92b28254084f3e2e69f1f12d0f59f6be14acb6"
+    },
+    {
+      "path": "crates/android_tools/src/project_model.rs",
+      "sha256": "533df8ef101df1d3ba6c8163cd2e4eaa3d5105307518fed21162d6bfed35ef2c"
+    }
+  ],
+  "fixture_files": [
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/README.md",
+      "sha256": "1cb9b07ab2aa3329998d7ff24de213f1830d2529b2c27024c00dbcec8cf6bd03"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/build.gradle",
+      "sha256": "522e77481cf8d0f3ef0d379373c665447aaa99d5f7b40ec43de3dfa601243564"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/custom-manifest/AndroidManifest.xml",
+      "sha256": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/flavor-assets/demo.txt",
+      "sha256": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/main/resources/resources.properties",
+      "sha256": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/provider-res/layout/sample.xml",
+      "sha256": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/unrelated-assets/sample.txt",
+      "sha256": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/build.gradle",
+      "sha256": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/gradle.properties",
+      "sha256": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/model.json",
+      "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/provenance.json",
+      "sha256": "73879ce3d81ef14bc4fd091a986f1ca785633ed35388dedc7e69ce43a0c39620"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/settings.gradle",
+      "sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "source_commit": "b0f340dc4e00268705eac00521e26c21b23d7ebd",
+  "source_sha256_before": {
+    "crates/android_tools/src/android_tools.rs": "294945f7bff20d2fd60eec3e181cf8d409fb0510cb4877065d398aba4a4284e8",
+    "crates/android_tools/src/java_class_facts.rs": "5d941d6eaf53e17966ef20fe7ef334d5e8b817d0b6b6667c84ce05b0857da83d",
+    "Cargo.lock": "8b8fa07d44a4151a5c75935510eb686728e79f10bb3a6f375efdeaa8837a9c88",
+    "crates/android_tools/Cargo.toml": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+  },
+  "commands": [
+    {
+      "label": "final-focused-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--lib",
+        "java_class_facts::tests::",
+        "--",
+        "--nocapture"
+      ],
+      "at_utc": "2026-10-07T14:43:27.490429+00:00",
+      "exit_code": 0,
+      "wall_seconds": 6.064,
+      "log": "/workspace/android-studio-artifacts/java-class-facts/final-focused-tests.log"
+    },
+    {
+      "label": "final-affected-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features"
+      ],
+      "at_utc": "2026-10-07T14:43:33.554594+00:00",
+      "exit_code": 0,
+      "wall_seconds": 8.594,
+      "log": "/workspace/android-studio-artifacts/java-class-facts/final-affected-tests.log"
+    },
+    {
+      "label": "final-clippy",
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools"
+      ],
+      "at_utc": "2026-10-07T14:43:42.148558+00:00",
+      "exit_code": 0,
+      "wall_seconds": 3.804,
+      "log": "/workspace/android-studio-artifacts/java-class-facts/final-clippy.log"
+    },
+    {
+      "label": "final-fmt",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "at_utc": "2026-10-07T14:43:45.952441+00:00",
+      "exit_code": 0,
+      "wall_seconds": 29.45,
+      "log": "/workspace/android-studio-artifacts/java-class-facts/final-fmt.log"
+    },
+    {
+      "label": "final-test-artifacts",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "at_utc": "2026-10-07T14:44:15.402960+00:00",
+      "exit_code": 0,
+      "wall_seconds": 0.89,
+      "log": "/workspace/android-studio-artifacts/java-class-facts/final-test-artifacts.log"
+    }
+  ],
+  "source_sha256_after": {
+    "crates/android_tools/src/android_tools.rs": "294945f7bff20d2fd60eec3e181cf8d409fb0510cb4877065d398aba4a4284e8",
+    "crates/android_tools/src/java_class_facts.rs": "5d941d6eaf53e17966ef20fe7ef334d5e8b817d0b6b6667c84ce05b0857da83d",
+    "Cargo.lock": "8b8fa07d44a4151a5c75935510eb686728e79f10bb3a6f375efdeaa8837a9c88",
+    "crates/android_tools/Cargo.toml": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+  },
+  "source_bytes_unchanged": true
+}

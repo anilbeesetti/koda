@@ -1,0 +1,7 @@
+{
+  "source_head": "1f79e48740a1face751d0c48b188793838e5a737",
+  "cargo_executable": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+  "test_executable": "/workspace/android-studio-toolbar-scroll-lead/target/cloud-tests/android-ui-focus-reveal-1f79e487",
+  "sha256": "e1ae797ec3cb7b73656975233ef7332c6006d2563cede5a6a0a9c65129efd22b",
+  "historical_650_executable_sha256": "fc54fd05545dc8993124cbbd3e2a983f232f49bbc7d0a620b3f83184733b25ab"
+}

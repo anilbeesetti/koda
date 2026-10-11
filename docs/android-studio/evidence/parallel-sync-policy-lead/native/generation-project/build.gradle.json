@@ -1,0 +1,8 @@
+{
+  "original_path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/build.gradle",
+  "original_bytes": 190,
+  "original_sha256": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2",
+  "content_preserved_byte_exact": true,
+  "encoding": "utf-8",
+  "utf8_content": "buildscript {\n    repositories { google(); mavenCentral() }\n    dependencies { classpath 'com.android.tools.build:gradle:9.4.0' }\n}\nallprojects { repositories { google(); mavenCentral() } }\n"
+}

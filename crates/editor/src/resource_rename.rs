@@ -232,4 +232,145 @@ mod tests {
             );
         }
     }
+
+    #[gpui::test]
+    async fn test_android_source_normal_symbol_confirm_rename_uses_lsp_without_resource_review(
+        cx: &mut TestAppContext,
+    ) {
+        use crate::{
+            Backspace, ConfirmRename, Rename, test::editor_lsp_test_context::EditorLspTestContext,
+        };
+        use futures::StreamExt as _;
+        use language::{Language, LanguageConfig, LanguageMatcher};
+        use std::sync::{
+            Arc,
+            atomic::{AtomicUsize, Ordering},
+        };
+        init_test(cx, |_| {});
+        for (name, suffix, kind, text) in [
+            ("AndroidRenameKotlin", "kt", "kotlin", "val loˇcal = 1;"),
+            ("AndroidRenameJava", "java", "java", "int loˇcal = 1;"),
+        ] {
+            let language = Language::new(
+                LanguageConfig {
+                    name: name.into(),
+                    matcher: Arc::new(LanguageMatcher {
+                        path_suffixes: vec![suffix.into()],
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                },
+                None,
+            );
+            let mut test = EditorLspTestContext::new(
+                language,
+                lsp::ServerCapabilities {
+                    rename_provider: Some(lsp::OneOf::Right(lsp::RenameOptions {
+                        prepare_provider: Some(true),
+                        ..Default::default()
+                    })),
+                    ..Default::default()
+                },
+                cx,
+            )
+            .await;
+            test.set_state(text);
+            let project = test
+                .workspace
+                .read_with(&test.cx.cx, |workspace, _| workspace.project().clone());
+            let root = EditorLspTestContext::root_path().to_path_buf();
+            let model = serde_json::from_value(serde_json::json!({
+                "version": 1, "root": root, "diagnostics": [], "resourceModels": {},
+                "modules": [{"path": ":app", "directory": root.join("dir"),
+                    "namespace": "example.app", "kind": "application", "variants": [{
+                        "name": "debug", "outputListing": null,
+                        "components": [{"name": "debug", "scope": "main", "dependencies": [],
+                            "sources": [{"path": root.join("dir"), "kind": kind, "generated": false}]}]
+                    }]}]
+            })).expect("Selected Android source model");
+            project.update(&mut test.cx.cx, |project, cx| {
+                let token = project.invalidate_android_model(Some(root), cx);
+                project
+                    .publish_android_model(&token, model, cx)
+                    .expect("Publish Android model");
+                project
+                    .select_android_variant(
+                        Some(
+                            serde_json::from_value(serde_json::json!({
+                                "module": ":app", "variant": "debug"
+                            }))
+                            .expect("Variant identity"),
+                        ),
+                        cx,
+                    )
+                    .expect("Select variant");
+            });
+            let mut prepare_handler = test
+                .set_request_handler::<lsp::request::PrepareRenameRequest, _, _>(
+                    |_, _, _| async move {
+                        Ok(Some(lsp::PrepareRenameResponse::Range(lsp::Range::new(
+                            lsp::Position::new(0, 4),
+                            lsp::Position::new(0, 9),
+                        ))))
+                    },
+                );
+            let request_count = Arc::new(AtomicUsize::new(0));
+            let mut rename_handler = test.set_request_handler::<lsp::request::Rename, _, _>({
+                let count = request_count.clone();
+                move |url, params, _| {
+                    count.fetch_add(1, Ordering::SeqCst);
+                    async move {
+                        Ok(Some(lsp::WorkspaceEdit::new(
+                            std::collections::HashMap::from_iter([(
+                                url,
+                                vec![lsp::TextEdit {
+                                    range: lsp::Range::new(
+                                        lsp::Position::new(0, 4),
+                                        lsp::Position::new(0, 9),
+                                    ),
+                                    new_text: params.new_name,
+                                }],
+                            )]),
+                        )))
+                    }
+                }
+            });
+            let prepare = test
+                .update_editor(|editor, window, cx| editor.rename(&Rename, window, cx))
+                .expect("Prepare ordinary rename");
+            prepare_handler
+                .next()
+                .await
+                .expect("Ordinary LSP prepare request");
+            prepare.await.expect("Prepared editor rename");
+            let rename_editor = test.editor(|editor, _, _| {
+                editor
+                    .pending_rename()
+                    .expect("Pending ordinary rename")
+                    .editor
+                    .clone()
+            });
+            rename_editor.update_in(&mut test.cx.cx, |editor, window, cx| {
+                editor.backspace(&Backspace, window, cx);
+                editor.insert("renamed", window, cx);
+            });
+            let confirm = test
+                .update_editor(|editor, window, cx| {
+                    editor.confirm_rename(&ConfirmRename, window, cx)
+                })
+                .expect("Confirm ordinary Android-source symbol rename");
+            rename_handler
+                .next()
+                .await
+                .expect("Nonresource confirmation must reach LSP rather than a review modal");
+            confirm.await.expect("Ordinary symbol rename completes");
+            test.run_until_parked();
+            assert_eq!(request_count.load(Ordering::SeqCst), 1, "{name}");
+            assert_eq!(
+                test.buffer_text(),
+                text.replace('ˇ', "").replace("local", "renamed")
+            );
+            assert!(test.editor(|editor, _, _| editor.pending_rename().is_none()));
+        }
+    }
 }

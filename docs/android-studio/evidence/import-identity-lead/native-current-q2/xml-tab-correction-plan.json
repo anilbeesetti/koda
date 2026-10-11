@@ -1,0 +1,43 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "reason": "Original restore-xml-tab-pointer x316 hit navigation chrome; original capture retained and shows Gradle active. Actual live XML tab spans x363..519; x434 inspected before correction. This adds coverage without changing the original53 events/plan or17 images.",
+  "original_events_sha256": "907fe305f9401f987d73d3e0084ad7a086715e10794ce64c50eeb1ee07f2091b",
+  "original_wrong_capture_sha256": "995933d3ffc8eb33552582f3e64f579e25ad241261a5623f274b0bd13e19daa8",
+  "session_binding_sha256": "026b71570fafa80c71307a105579b822ed49f91e3e7cbaa2995641f20007598d",
+  "records": [
+    {
+      "label": "restore-xml-corrected-tab-coordinate",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "434",
+        "58",
+        "click",
+        "1"
+      ]
+    },
+    {
+      "label": "settle-corrected-xml",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-corrected-xml",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        ":122",
+        "-window",
+        "2097153",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/supplemental-captures/editor-xml-restored-corrected.png"
+      ]
+    }
+  ],
+  "bound_before_inputs": true,
+  "utc": "2026-10-08T03:59:22.215086+00:00"
+}

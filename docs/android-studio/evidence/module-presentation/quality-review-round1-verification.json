@@ -1,0 +1,65 @@
+{
+  "scope": "static code quality only; no Cargo, compiler, Gradle, or app executions",
+  "base": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "production_sha256": "0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c",
+  "tests_sha256": "9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924",
+  "frozen_source_paths_verified": 172,
+  "baseline_original_paths_verified": 159,
+  "original_paths_byte_identical": 158,
+  "additive_export_verified": "crates/android_tools/src/android_tools.rs",
+  "supplemental_test_declarations": 20,
+  "fixture_sources": [
+    {
+      "path": "crates/android_tools/test_data/module_presentation/reference/idea/project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/GradleModuleSystem.kt",
+      "sha256": "ebd25bd8d48a828b309615924c4eb315d92a128684bfb29115acaf22d056038c",
+      "bytes": 36961,
+      "matching_independent_copy": "/workspace/android-studio-artifacts/module-presentation-preflight/references/idea/project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/GradleModuleSystem.kt"
+    },
+    {
+      "path": "crates/android_tools/test_data/module_presentation/reference/idea/project-system/src/com/android/tools/idea/projectsystem/AndroidModuleSystem.kt",
+      "sha256": "9d6e88c13ae8cf46cd920c7ef96f773d033a60123e336e2ec28f39c7603ad4d4",
+      "bytes": 21957,
+      "matching_independent_copy": "/workspace/android-studio-artifacts/module-presentation-preflight/references/idea/project-system/src/com/android/tools/idea/projectsystem/AndroidModuleSystem.kt"
+    },
+    {
+      "path": "crates/android_tools/test_data/module_presentation/reference/idea/android-navigator/src/com/android/tools/idea/navigator/nodes/AndroidViewModuleNode.java",
+      "sha256": "f1b28f0b2fb54b4c419af27521e674210c7a2ab213324f15648de67d9bd7eb99",
+      "bytes": 5797,
+      "matching_independent_copy": "/workspace/android-studio-artifacts/module-presentation-preflight/references/idea/android-navigator/src/com/android/tools/idea/navigator/nodes/AndroidViewModuleNode.java"
+    },
+    {
+      "path": "crates/android_tools/test_data/module_presentation/reference/idea/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidModuleNode.kt",
+      "sha256": "0df6ce40e8d8a51b84d547cda3a459bb1be47e77fc1653f6c78ae76a7283f2cd",
+      "bytes": 5519,
+      "matching_independent_copy": "/workspace/android-studio-artifacts/evaluated-capabilities-preflight-ac588/references/idea/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidModuleNode.kt"
+    },
+    {
+      "path": "crates/android_tools/test_data/module_presentation/reference/idea/project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/LinkedAndroidModuleGroupUtils.kt",
+      "sha256": "de6d167144b3aef51b91f0db56f1b5499485168932ce29581a7d6ed62fb445dc",
+      "bytes": 5522,
+      "matching_independent_copy": "/workspace/android-studio-artifacts/module-presentation-preflight/references/idea/project-system-gradle/src/com/android/tools/idea/projectsystem/gradle/LinkedAndroidModuleGroupUtils.kt"
+    },
+    {
+      "path": "crates/android_tools/test_data/module_presentation/reference/intellij-core/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "sha256": "cc99f71aa146656368b5c62fc88746747ae19d3ecd5b87fea63ef17a6214c6eb",
+      "bytes": 61012,
+      "matching_independent_copy": "/workspace/android-studio-artifacts/module-presentation-preflight/references/intellij-core/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java"
+    },
+    {
+      "path": "crates/android_tools/test_data/module_presentation/reference/intellij-core/platform/util/src/com/intellij/openapi/util/text/StringUtil.java",
+      "sha256": "d87821f7e79ae9f79daedf36dd22012d1034dc81317bc86ae5680fc6ea67eddf",
+      "bytes": 112743,
+      "matching_independent_copy": "/workspace/android-studio-artifacts/module-presentation-task/references/intellij-core/platform/util/src/com/intellij/openapi/util/text/StringUtil.java"
+    },
+    {
+      "path": "crates/android_tools/test_data/module_presentation/reference/intellij-core/platform/util-rt/src/com/intellij/openapi/util/text/StringUtilRt.java",
+      "sha256": "31d691e0490b3425778d79812ce2332e23bf32bb94978e89b8f1969e64eeebda",
+      "bytes": 15431,
+      "matching_independent_copy": "/workspace/android-studio-artifacts/module-presentation-task/references/intellij-core/platform/util-rt/src/com/intellij/openapi/util/text/StringUtilRt.java"
+    }
+  ],
+  "license_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+  "original_credit": 0,
+  "runtime_checks": "not_run",
+  "initial_audit_inventory_note": "An initial reviewer assertion counted the frozen source closure as the full 159-path baseline; it failed at 157 because two canonical JSON metadata paths belong only to the original-preservation inventory. Corrected review separately verifies all 159 baseline paths and 172 frozen current paths. No product issue or source edit."
+}

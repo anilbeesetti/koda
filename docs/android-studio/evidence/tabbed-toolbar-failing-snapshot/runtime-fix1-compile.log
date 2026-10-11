@@ -1,0 +1,11 @@
+   Compiling android_ui v0.1.0 (/workspace/android-studio-tabbed-toolbar/crates/android_ui)
+warning: unused variable: `window`
+   --> crates/android_ui/src/tabbed_toolbar.rs:385:46
+    |
+385 | ...                   move |_, window, cx| {
+    |                                ^^^^^^ help: if this is intentional, prefix it with an underscore: `_window`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `android_ui` (lib test) generated 1 warning (run `cargo fix --lib -p android_ui --tests` to apply 1 suggestion)
+    Finished `test` profile [unoptimized] target(s) in 14.93s

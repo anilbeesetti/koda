@@ -1,0 +1,8 @@
+{
+  "checked_at": "2026-10-07T21:01:58.203710+00:00",
+  "result": "Blocked before unit ELF unlink by conservative process-name guard; checking zombie state next",
+  "archive_relocation_complete_and_byte_exact": true,
+  "unit_ELF_still_present": true,
+  "source_changes": false,
+  "no_permission_or_product_test_failure": true
+}

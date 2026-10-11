@@ -1,0 +1,25 @@
+{
+  "tested_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "crate_roots": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "f9a4c776e09e7480d4b056b8b4955d9332f80c8ffd0d6b54583990ea79898f4b"
+    },
+    {
+      "path": "crates/android_ui/src/android_ui.rs",
+      "sha256": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8"
+    },
+    {
+      "path": "crates/zed/src/main.rs",
+      "sha256": "5c30731b30c45516e9d6a06563c8f49176d025d4adf22bbce92e5572f4de0b15"
+    },
+    {
+      "path": "crates/icons/src/icons.rs",
+      "sha256": "f312b115ffb6bc0c7f7cef8c6fdf44681a88edb3b5a0acc7d58426829e81911d"
+    }
+  ],
+  "source_bytes_unchanged_after_mtime_freshness_recovery": true,
+  "helper_sha256": "acbf2e889b39f01f4558e2c70e5e005560707b0d2cba3a5ccc09650e901a2dd7",
+  "canonical_environment": "/workspace/cloud-environment/env.sh",
+  "only_linker_argument_relocation": "final app output to independently mounted tmpfs"
+}

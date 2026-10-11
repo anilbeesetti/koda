@@ -1,0 +1,187 @@
+{
+  "verdict": "PASS",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "policy_source_sha256": "943e61b9d6e3256275b38750a7f8595cc4aa270a099093f6df8404f6270998e7",
+  "probe_base_sha256": "5551985487b7e87f31963365ccf203f138de5f7bb4ebb2d5f4ca9d9b9a971dca",
+  "probe_added_only_two_external_current_policy_statements": true,
+  "probe_source_sha256": "0e6cb4ff731f9b228334e6dc19094d04b2e247dc1e93ebf709c0cbd7e6c1e5cc",
+  "probe_executable_sha256": "b5cca1a9b6853ea370b045be63e47741ca38017e1294685490263f5b11d60f0d",
+  "normal_library_sha256": "df1784c08f936efbc397f77d690ee04427691bf61571652696a73883e4f63db8",
+  "model_inputs": [
+    {
+      "record": 1,
+      "module": ":app",
+      "captured_versions": {
+        "status": "available",
+        "value": {
+          "agp": "9.4.0",
+          "producer": {
+            "major": 23,
+            "minor": 0,
+            "description": "Android Gradle Plugin 9.1"
+          },
+          "minimumConsumer": {
+            "status": "available",
+            "value": {
+              "major": 66,
+              "minor": 1,
+              "description": "Android Studio Iguana"
+            }
+          },
+          "models": [
+            {
+              "name": "basic_android_project",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "android_project",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "android_dsl",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "variant_dependencies",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "native_module",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "model_producer",
+              "version": {
+                "major": 23,
+                "minor": 0,
+                "description": "Android Gradle Plugin 9.1"
+              }
+            },
+            {
+              "name": "minimum_model_consumer",
+              "version": {
+                "major": 66,
+                "minor": 1,
+                "description": "Android Studio Iguana"
+              }
+            }
+          ]
+        }
+      },
+      "current_Rust_supports_parallel_sync_assertion_passed": true,
+      "schedules_parallel_work": false
+    },
+    {
+      "record": 2,
+      "module": ":app",
+      "captured_versions": {
+        "status": "available",
+        "value": {
+          "agp": "9.4.0",
+          "producer": {
+            "major": 23,
+            "minor": 0,
+            "description": "Android Gradle Plugin 9.1"
+          },
+          "minimumConsumer": {
+            "status": "available",
+            "value": {
+              "major": 66,
+              "minor": 1,
+              "description": "Android Studio Iguana"
+            }
+          },
+          "models": [
+            {
+              "name": "basic_android_project",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "android_project",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "android_dsl",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "variant_dependencies",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "native_module",
+              "version": {
+                "major": 0,
+                "minor": 1,
+                "description": null
+              }
+            },
+            {
+              "name": "model_producer",
+              "version": {
+                "major": 23,
+                "minor": 0,
+                "description": "Android Gradle Plugin 9.1"
+              }
+            },
+            {
+              "name": "minimum_model_consumer",
+              "version": {
+                "major": 66,
+                "minor": 1,
+                "description": "Android Studio Iguana"
+              }
+            }
+          ]
+        }
+      },
+      "current_Rust_supports_parallel_sync_assertion_passed": true,
+      "schedules_parallel_work": false
+    }
+  ],
+  "policy_executed_by_current_Rust_library_for_both_complete_models": true,
+  "no_scheduler_or_parallel_execution_claim": true,
+  "supplementary_SDK_not_pinned_reference_driver": true,
+  "current_Rust_parallel_capability_proof": "current-parallel-capability-proof.json",
+  "command_count_includes_inputs_screenshots_geometry_discovery_and_settle_delays": true,
+  "actual_commands_match_prior51_route_plan": true,
+  "no_parallel_scheduler_or_execution_credit": true,
+  "narrow_width_limit": "230px intentionally exercises tool-window tab overflow below a usable editor width; unrelated clipped UI is not a fidelity claim.",
+  "new_original_reference_credit": 0
+}

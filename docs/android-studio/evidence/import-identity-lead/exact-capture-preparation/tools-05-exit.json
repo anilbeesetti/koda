@@ -1,0 +1,23 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--lib",
+    "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.7936261630093213,
+  "raw_log": "/workspace/android-studio-artifacts/import-identity-integration/exact-capture/tools-05.log",
+  "raw_log_sha256": "4a8617fe624995f5f8efa84b636d916f246de9753fae05d72ad0552507cb98bc",
+  "source_files": 4743,
+  "full_raw_index_status_and_all_source_hashes_unchanged": true
+}

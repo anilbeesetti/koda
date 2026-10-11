@@ -1,0 +1,16 @@
+[
+  {
+    "path": "/tmp/android-studio-frozen-executables/koda-source-providers-33795aaa",
+    "bytes": 1358127824,
+    "sha256": "0272419ff550c566c1a5d536215a3fd5857b2068074f47c1c9e18615ef8a5dd8",
+    "reason": "Superseded by byte-identical provider implementation in combined a7ef successful build; original source and all build/live-sync/failure logs retained.",
+    "action": "Remove superseded generated compilation artifact only; no source test, fixture or execution evidence removed."
+  },
+  {
+    "path": "/tmp/android-studio-frozen-executables/android-ui-eefe-prior119",
+    "bytes": 449951192,
+    "sha256": "7681b997acda1e25fab52b38b4fdd4b6352d9d6ffaafbe3a551434f72ec8d981",
+    "reason": "Superseded by new650 default executable proving all14previous toolbar tests; previous Rust source and119test logs retained.",
+    "action": "Remove superseded generated compilation artifact only; no source test, fixture or execution evidence removed."
+  }
+]

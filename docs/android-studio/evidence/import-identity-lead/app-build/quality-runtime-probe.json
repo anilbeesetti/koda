@@ -1,0 +1,39 @@
+{
+  "verdict": "PASS",
+  "scope": "Read-only independent actual tiny owned Rust probe and output-only final real linker audit; current product Source/component/Clippy/full-app/native/CI/merge remain separate",
+  "reviewed_at_utc": "2026-10-08T01:53:02.734443+00:00",
+  "preparation_source_commit_context": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "whole_product_current_source_or_Clippy_PASS_claim": false,
+  "helper_source_SHA256": "1be51b477135a4be865650db1b09747fc9b0b20b4a31cddcd6d0e90d609daf9f",
+  "helper_binary_SHA256": "e21ba9925188f76a5872b62fba400401d1e5832e94f158e231e2f7fddf563a43",
+  "probe_source_SHA256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+  "probe_validation_receipt_SHA256": "3c2f0ee2a1f2afec44b85b8c91cc3a0f3ac35f58d9bd18393da14fab21300d2a",
+  "actual_final_cc_receipt_SHA256": "25e0b94777966f82c08a9391e581c8b04fe2d3153ea58d620f9ca7a9be7f576e",
+  "actual_arguments": 47,
+  "changed_argument_indexes": [
+    42
+  ],
+  "single_o_index": 41,
+  "all_actual_argument_strings_ASCII_UTF8_without_replacement": true,
+  "all_other_actual_flags_inputs_and_libraries_equal": true,
+  "real_cc": "/usr/bin/cc",
+  "real_cc_exit_code": 0,
+  "probe_regular_ELF": "/tmp/android-studio-link-output/probe-324864",
+  "probe_ELF_bytes": 4507016,
+  "probe_ELF_SHA256": "6b7138922e193a430356709f59cc0e23db2a1e90a4e13437c8deac77cb494f78",
+  "private_probe_alias_resolves_exact_regular_ELF": true,
+  "actual_probe_exit_code": 0,
+  "exact_probe_stdout_SHA256": "09397da5e4ca42fcbaf16c84742601a70d34414c8b5322b8cb52bbfd7d1bbc2a",
+  "exact_probe_stderr_SHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "both_actual_rustc_command_and_exit_raw_log_receipts_verified": true,
+  "no_project_Cargo_SDK_cache_Source_normal_app_alias_or_Git_actions_by_reviewer": true,
+  "reviewer_additional_compiler_linker_or_probe_runtime_actions": false,
+  "blocking_findings": [],
+  "remaining": [
+    "Bind corrected product Source and complete component/Clippy/format gates",
+    "Root fixed7 whole Source/index/untracked and physical-app/alias/PID-FD capacity preparation",
+    "Actual normal current full-app build and independent final linker receipt audit",
+    "Current app/native/SDK/model/cleanup, CI and final lead integration"
+  ],
+  "no_whole_IDE_feature_or_startup_performance_credit": true
+}

@@ -1,0 +1,449 @@
+{
+  "verdict": "PASS",
+  "scope": "Current combined source full native positive SDK sync, existing editor/tool-window keyboard regression, current Rust full model decoder and parallel capability; policy does not schedule work.",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "whole_source_files": 4730,
+  "actual_normal_full_app": {
+    "pid": 310699,
+    "window_id": 2097153,
+    "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+    "executable": "/tmp/android-studio-link-output/koda-parallel-sync-310075",
+    "executable_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+    "command": "/workspace/android-studio-parallel-sync-policy/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/qa/user-data /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project /workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/custom-manifest/AndroidManifest.xml ",
+    "utc": "2026-10-08T00:47:01.541371+00:00",
+    "monotonic": 57061.611017955
+  },
+  "fresh_profile_fixture_only_trust": true,
+  "sdk_syncs_exit_zero": 2,
+  "actual_sdk_driver": "Official AGP9.4.0, Gradle9.6.1, SDK37, explicit TemurinJDK21; supplementary, not the pinned reference driver",
+  "durable_commands_started_and_finished": 51,
+  "all_commands_paired_and_exit_zero": true,
+  "events_sha256": "fbefc5f36c22e639c83a3b9459d0c25e2ac0de349fbc1b08b887187154081986",
+  "raw_attached_PTY_sha256": "2c9c5138e6b565751e26a6a6367cc1fdbcfcd5858e350f7cb9a88d301008f014",
+  "captures": [
+    {
+      "path": "captures/build-sidebar-restored.png",
+      "sha256": "9a8af9035d8e9b310b96b41046ead0513f3b84128d205aac03b59194d788e808",
+      "bytes": 112606,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/editor-gradle-tab.png",
+      "sha256": "02c87110c5b414abab638ed168b6cbd0df0ebe7a15fda4396692f4b3faa8e735",
+      "bytes": 209306,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/editor-xml-restored.png",
+      "sha256": "d01031577686d9936734eada812686eec35dbaf88f794d6a98e145a970643553",
+      "bytes": 113740,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/hide-return.png",
+      "sha256": "59bcc002c9235bb35f6823db9cca769378b7002624b87bd911774d0194687300",
+      "bytes": 66220,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/narrow-output-focus.png",
+      "sha256": "46c9c71e689fae5ad3c56eb3583efbfa9c4f947b7a5e3bf2d3c1128b908f71e5",
+      "bytes": 32035,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/narrow-output-selected.png",
+      "sha256": "c48833a0dc9c67a2e25033b4728976e5e36822b76dfd5ff109bc5f44b84db46b",
+      "bytes": 31177,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/narrow-reverse-sync-focus.png",
+      "sha256": "7f5309a34335b988a276d24fe1ed4357824032cb6985a5ee310681dbc7f1c365",
+      "bytes": 31270,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/narrow-sync-restored.png",
+      "sha256": "9b2d3d6581c9239605c376c587029bbb1b177f9e959c54caf4b5d175b8258b55",
+      "bytes": 32154,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/narrow-sync.png",
+      "sha256": "6f3b829c7deb8a95c10375e94ed2213b5841084d2afca2aac8594d341e8cb639",
+      "bytes": 32227,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/sync1-loading.png",
+      "sha256": "577d347be67bf59e72c976a8f68ec9042eea29b5cf27ea64b9cb218cd0e77966",
+      "bytes": 87365,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/sync1-settled.png",
+      "sha256": "b3ac15fa6208bb19099313fc59006ca7b45b9b5f3712881c8d047381c8d02f7f",
+      "bytes": 116386,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/sync2-loading.png",
+      "sha256": "cf3689e250714c6fecaa9564438624fa9308d14d90a5e82d2aa9566586ff1216",
+      "bytes": 92852,
+      "visually_inspected": true,
+      "loading_state_credit": true
+    },
+    {
+      "path": "captures/sync2-settled.png",
+      "sha256": "e66b04c5bfe751c6febd14f3efad92d5c8ff7d3a7b5c1a63fef45486120688dd",
+      "bytes": 117115,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/trust-prompt.png",
+      "sha256": "694195ae7db47617156045f0cac45d36d9d33d7af221fd4e41d37aad466bb4d5",
+      "bytes": 87476,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/wide-hide-focus.png",
+      "sha256": "22b0650d3df11eb2f4a33f74589faa8aac1a48a836c69ace9cac6c0dc12213ac",
+      "bytes": 112606,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/wide-output-focus.png",
+      "sha256": "09a57a89e7075ebb444000e81c35db78de5d86de30e22d943a907e9ffe9737fa",
+      "bytes": 116809,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    },
+    {
+      "path": "captures/wide-output-selected.png",
+      "sha256": "06c6f35401ff8370c9693a576ebebf931767d5a3606920d1c4fa59902a89857e",
+      "bytes": 73685,
+      "visually_inspected": true,
+      "loading_state_credit": false
+    }
+  ],
+  "keyboard_routes": {
+    "wide-tab-to-output": {
+      "kind": "command-finish",
+      "label": "wide-tab-to-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "Tab"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:51:07.928531+00:00",
+      "monotonic": 57307.998171287,
+      "elapsed_seconds": 0.0148445829981938,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "wide-space-select-output": {
+      "kind": "command-finish",
+      "label": "wide-space-select-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "space"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:51:08.558151+00:00",
+      "monotonic": 57308.627790988,
+      "elapsed_seconds": 0.014311331004137173,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "narrow-tab-to-output": {
+      "kind": "command-finish",
+      "label": "narrow-tab-to-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "Tab"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:51:18.648945+00:00",
+      "monotonic": 57318.718586223,
+      "elapsed_seconds": 0.015491138998186216,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "narrow-space-select-output": {
+      "kind": "command-finish",
+      "label": "narrow-space-select-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "space"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:51:19.200139+00:00",
+      "monotonic": 57319.269779782,
+      "elapsed_seconds": 0.015189003002888057,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "narrow-shift-tab-to-sync": {
+      "kind": "command-finish",
+      "label": "narrow-shift-tab-to-sync",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "shift+Tab"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:51:19.772992+00:00",
+      "monotonic": 57319.842639238,
+      "elapsed_seconds": 0.03179862200340722,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "narrow-space-restore-sync": {
+      "kind": "command-finish",
+      "label": "narrow-space-restore-sync",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "space"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:51:20.319154+00:00",
+      "monotonic": 57320.388796762,
+      "elapsed_seconds": 0.01468305099842837,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "hide-return": {
+      "kind": "command-finish",
+      "label": "hide-return",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "Return"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:51:31.514234+00:00",
+      "monotonic": 57331.583881758,
+      "elapsed_seconds": 0.015682997000112664,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "restore-build-sidebar-pointer": {
+      "kind": "command-finish",
+      "label": "restore-build-sidebar-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "18",
+        "930",
+        "click",
+        "1"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:51:32.272342+00:00",
+      "monotonic": 57332.341989841,
+      "elapsed_seconds": 0.1028472259931732,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "open-gradle-tab-pointer": {
+      "kind": "command-finish",
+      "label": "open-gradle-tab-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "114",
+        "293",
+        "click",
+        "--repeat",
+        "2",
+        "--delay",
+        "100",
+        "1"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:51:33.153859+00:00",
+      "monotonic": 57333.223507162,
+      "elapsed_seconds": 0.21054690399614628,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "restore-xml-tab-pointer": {
+      "kind": "command-finish",
+      "label": "restore-xml-tab-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "316",
+        "58",
+        "click",
+        "1"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:51:34.283625+00:00",
+      "monotonic": 57334.353275871,
+      "elapsed_seconds": 0.1034696439965046,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "resync-ctrl-alt-r": {
+      "kind": "command-finish",
+      "label": "resync-ctrl-alt-r",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "2097153",
+        "ctrl+alt+r"
+      ],
+      "cwd": "/workspace/android-studio-parallel-sync-policy",
+      "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+      "display": ":119",
+      "window_id": 2097153,
+      "app_pid": 310699,
+      "utc": "2026-10-08T00:48:17.135056+00:00",
+      "monotonic": 57137.204702384,
+      "elapsed_seconds": 0.040188004000810906,
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "full_model_decoder_and_comparison_proof": "native-model-proof.json",
+  "complete_model_comparison": "Both current full models including generatedArtifacts equal both retained successful905 full models after only exact known private-root-prefix replacement; all7 older legacy projections retain all other values/list order.",
+  "current_error_state": "No SDK error was triggered in this positive native run; no current error-state screenshot credit claimed. Prior wrong-JDK errors belong earlier preserved runs and receive no current runtime credit.",
+  "first_loading_capture_limit": "sync1-loading.png still shows trust prompt and receives zero loading-state credit; sync2-loading.png visibly shows Syncing/load model and status progress",
+  "known_existing_diagnostics": [
+    "Software-X11 Found no xinput mouse pointers",
+    "Gradle TreeSitter indents query missing required indent capture"
+  ],
+  "no_crash_in_observed_run": true,
+  "performance_scope": "No CPU, startup, large-project or hardware GPU performance measurement; software X11/Vulkan functional checks only",
+  "closure": {
+    "verdict": "PASS",
+    "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+    "utc": "2026-10-08T00:54:42.911499+00:00",
+    "source_before_after_files": 4730,
+    "source_index_worktree_untracked_and_hashes_unchanged": true,
+    "original_and_private_fixture_files_verified": 12,
+    "all_fixture_bytes_and_official_wrapper_unchanged": true,
+    "fixture_only_sdk_properties_unchanged": true,
+    "owned_pids_absent": [
+      310681,
+      310699,
+      310689
+    ],
+    "display119_absent": true,
+    "launcher_exec_session": 61721,
+    "launcher_exit_code": 143,
+    "unowned_gradle167092_present_and_never_signaled": true,
+    "no_unrelated_processes_signaled": true,
+    "trusted_worktrees_rows": [
+      [
+        1,
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project",
+        null,
+        null
+      ]
+    ],
+    "current_app_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+    "current_runtime_decoder_library_sha256": "df1784c08f936efbc397f77d690ee04427691bf61571652696a73883e4f63db8"
+  },
+  "current_Rust_parallel_capability_proof": "current-parallel-capability-proof.json",
+  "command_count_includes_inputs_screenshots_geometry_discovery_and_settle_delays": true,
+  "actual_commands_match_prior51_route_plan": true,
+  "no_parallel_scheduler_or_execution_credit": true,
+  "narrow_width_limit": "230px intentionally exercises tool-window tab overflow below a usable editor width; unrelated clipped UI is not a fidelity claim.",
+  "new_original_reference_credit": 0,
+  "no_logical_project_tree_or_Rust_LSP_or_Kotlin_facet_credit": true,
+  "phase_or_IDE_complete": false
+}

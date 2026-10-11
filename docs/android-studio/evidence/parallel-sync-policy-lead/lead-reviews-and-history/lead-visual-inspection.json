@@ -1,0 +1,45 @@
+{
+  "scope": "Lead actual screenshot inspection of current native regression; full Android Studio fidelity and IDE completion remain pending",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "app_sha256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34",
+  "captures": [
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/captures/sync1-settled.png",
+      "sha256": "b3ac15fa6208bb19099313fc59006ca7b45b9b5f3712881c8d047381c8d02f7f",
+      "width_height": [
+        1536,
+        1000
+      ],
+      "lead_personally_viewed": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/captures/sync2-loading.png",
+      "sha256": "cf3689e250714c6fecaa9564438624fa9308d14d90a5e82d2aa9566586ff1216",
+      "width_height": [
+        1536,
+        1000
+      ],
+      "lead_personally_viewed": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/captures/narrow-output-focus.png",
+      "sha256": "46c9c71e689fae5ad3c56eb3583efbfa9c4f947b7a5e3bf2d3c1128b908f71e5",
+      "width_height": [
+        230,
+        1000
+      ],
+      "lead_personally_viewed": true
+    }
+  ],
+  "observations": [
+    "Wide settled window shows the project tree, XML editor tab/breadcrumbs, toolbar, Build/Sync/Build Output tool-window controls and status bar. SDK reports BUILD SUCCESSFUL in 3s and two variants.",
+    "Second-sync loading shows running project-model task and syncing status/progress.",
+    "Keyboard output-focus stress capture forces230px width below application declared360px minimum (crates/zed/src/zed.rs). Captions/editor/output clipping in that image does not demonstrate supported-window layout fidelity."
+  ],
+  "known_remaining_work": [
+    "Logical Android project-tree publication and original workflow tests remain unported.",
+    "Raw machine project-model JSON is still visible in Sync output; the independent console-filter task plan and bounded reference preflight track this existing behavior.",
+    "Rust LSP completion, device/emulator/run/Logcat workflows and later phases are not certified by these captures."
+  ],
+  "no_new_feature_completion_or_hardware_performance_credit": true
+}

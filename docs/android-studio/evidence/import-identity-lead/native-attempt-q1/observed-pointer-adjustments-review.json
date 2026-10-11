@@ -1,0 +1,70 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "actor": "Root",
+  "utc": "2026-10-08T03:36:14.302143+00:00",
+  "reviewed_before_affected_inputs": true,
+  "actual_image_personally_inspected": "captures/sync1-settled.png",
+  "actual_image_sha256": "968f5f5105138dfd3748fabf41ef995eeda5563862eb6a428831f9223d97f79c",
+  "prior_plan_sha256": "9f476f430b3385090efa337a10c456fed41a6a27039ca576792dec0aada2b1c4",
+  "current_plan_sha256": "3a18429b3d227ed7b15d89c3e40497f328c6865e6b00a2709815af42ef05f7c1",
+  "changes": [
+    {
+      "label": "open-gradle-tab-pointer",
+      "before": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "114",
+        "293",
+        "click",
+        "--repeat",
+        "2",
+        "--delay",
+        "100",
+        "1"
+      ],
+      "after": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "114",
+        "389",
+        "click",
+        "--repeat",
+        "2",
+        "--delay",
+        "100",
+        "1"
+      ],
+      "reason": "Actual settled image shows root build.gradle row y389 after Gradle .gradle/generated artifact entries appear; original y293 is provider-res/layout."
+    },
+    {
+      "label": "restore-xml-tab-pointer",
+      "before": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "316",
+        "58",
+        "click",
+        "1"
+      ],
+      "after": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "2097153",
+        "415",
+        "58",
+        "click",
+        "1"
+      ],
+      "reason": "Actual window project sidebar ends x319; AndroidManifest.xml tab is x370-520 at y58. Choose its center x415, rather than border x316."
+    }
+  ],
+  "same53labels_route_intents_and17required_images": true,
+  "no_test_or_product_source_change": true
+}

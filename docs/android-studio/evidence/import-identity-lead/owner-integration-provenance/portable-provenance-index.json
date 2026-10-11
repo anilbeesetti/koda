@@ -1,0 +1,412 @@
+{
+  "schema_version": 1,
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "files": [
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/Root-source-index-hold-release.json",
+      "bytes": 2670,
+      "sha256": "d9a86fc58efa22501a483d3955f8216e8d29b3a592ac20746f7d74920d79ca39",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/Root-source-index-hold-release.json",
+        "bytes": 2670,
+        "sha256": "d9a86fc58efa22501a483d3955f8216e8d29b3a592ac20746f7d74920d79ca39"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/owner-plan-exit.json",
+      "bytes": 379,
+      "sha256": "d8368d55acdaba1c7725faab5f9f953cb0ba2d16592cd017c2a6fac62ff3d02e",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/owner-plan-exit.json",
+        "bytes": 379,
+        "sha256": "d8368d55acdaba1c7725faab5f9f953cb0ba2d16592cd017c2a6fac62ff3d02e"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/owner-plan.stdout.log",
+      "bytes": 86,
+      "sha256": "657c02401069b7e0c34ce44cc6aa4a538fca54dcaadb4761c7162ac823cd6551",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/owner-plan.stdout.log",
+        "bytes": 86,
+        "sha256": "657c02401069b7e0c34ce44cc6aa4a538fca54dcaadb4761c7162ac823cd6551"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/owner-plan.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/owner-plan.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/owner-apply-exit.json",
+      "bytes": 505,
+      "sha256": "97dae9ff885a6887234ba74e36d0b4d31740d9ba2614caf2835e3f158b37030d",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/owner-apply-exit.json",
+        "bytes": 505,
+        "sha256": "97dae9ff885a6887234ba74e36d0b4d31740d9ba2614caf2835e3f158b37030d"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/owner-apply.stdout.log",
+      "bytes": 21501,
+      "sha256": "c566d82e073b8de64c15553ef9c470db12aa047e16d67ece346a74f20a727680",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/owner-apply.stdout.log",
+        "bytes": 21501,
+        "sha256": "c566d82e073b8de64c15553ef9c470db12aa047e16d67ece346a74f20a727680"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/owner-apply.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/owner-apply.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/owner-verify-applied-exit.json",
+      "bytes": 382,
+      "sha256": "bdfa71179cf34671b6c51143a6724ab02c8c1a0fb024c667aa39efb152ede552",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/owner-verify-applied-exit.json",
+        "bytes": 382,
+        "sha256": "bdfa71179cf34671b6c51143a6724ab02c8c1a0fb024c667aa39efb152ede552"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/owner-verify-applied.stdout.log",
+      "bytes": 184,
+      "sha256": "f9746ad1193d5a5d200aa845337e90720b05dddc357af9305f175e558f9e2222",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/owner-verify-applied.stdout.log",
+        "bytes": 184,
+        "sha256": "f9746ad1193d5a5d200aa845337e90720b05dddc357af9305f175e558f9e2222"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/owner-verify-applied.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/owner-verify-applied.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/actual-transaction/state.json",
+      "bytes": 22201,
+      "sha256": "f89dc99d3cc1f84ee6010910265fcaf2ee14967b490d23f9f15969080098334f",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/actual-transaction/state.json",
+        "bytes": 22201,
+        "sha256": "f89dc99d3cc1f84ee6010910265fcaf2ee14967b490d23f9f15969080098334f"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/actual-transaction/before.json",
+      "bytes": 1023,
+      "sha256": "8a3ce96e155d0f2dd5cc9b83adbdd2682ea559b3c47eb24e0260c5c33f1ae7d0",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/actual-transaction/before.json",
+        "bytes": 1023,
+        "sha256": "8a3ce96e155d0f2dd5cc9b83adbdd2682ea559b3c47eb24e0260c5c33f1ae7d0"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/actual-transaction/after.json",
+      "bytes": 43207,
+      "sha256": "1cd585bbdc1cb0e1c736bfb5bc4b733868fbbcd167734f8de3500f92f227d15c",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/actual-transaction/after.json",
+        "bytes": 43207,
+        "sha256": "1cd585bbdc1cb0e1c736bfb5bc4b733868fbbcd167734f8de3500f92f227d15c"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/actual-transaction/release-receipt.json",
+      "bytes": 2670,
+      "sha256": "d9a86fc58efa22501a483d3955f8216e8d29b3a592ac20746f7d74920d79ca39",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/actual-transaction/release-receipt.json",
+        "bytes": 2670,
+        "sha256": "d9a86fc58efa22501a483d3955f8216e8d29b3a592ac20746f7d74920d79ca39"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/actual-transaction/original-destinations.json",
+      "bytes": 22645,
+      "sha256": "2db8d8a9a94c8bedae7d4a762d2bd811a0b43b425fdefba1ecac771df2ce97f4",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/actual-transaction/original-destinations.json",
+        "bytes": 22645,
+        "sha256": "2db8d8a9a94c8bedae7d4a762d2bd811a0b43b425fdefba1ecac771df2ce97f4"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/actual-transaction/once.lock.archive.json",
+      "bytes": 479,
+      "sha256": "2a6929f2cf9dce32103218eb7440238b4bf312a53896f80c33cdbc15fc14df99",
+      "format": "base64_json_archive",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/actual-transaction/once.lock",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/integrate-owner-package.py.archive.json",
+      "bytes": 23327,
+      "sha256": "4cc63639d2a0aac0a92ed5956efab20478077cd10b69142f4a1729ccc7b3bd32",
+      "format": "base64_json_archive",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integrate-owner-package.py",
+        "bytes": 17121,
+        "sha256": "c9afdb8183f8d685de655e28497c4e97dd6fadf94c64ab33c9877bfed4963a00"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/integrate-owner-package.before-verifier-guard.py.archive.json",
+      "bytes": 18559,
+      "sha256": "2a9fd8a3b3e4c9f1d7523ae488e18328fa338a7f712569003d4ff2854ac3d0cd",
+      "format": "base64_json_archive",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integrate-owner-package.before-verifier-guard.py",
+        "bytes": 13512,
+        "sha256": "3c5a3d0727cc2060ebef6550cd42248f4e9d8aea1a12b99622602462938a84f0"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/integrate-owner-package.py.before-main-observer-correction.archive.json",
+      "bytes": 21219,
+      "sha256": "71b1fbfa06e6f278063c732bc396e5af3913eeaff16be950e420ae7ae4e09852",
+      "format": "base64_json_archive",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integrate-owner-package.py.before-main-observer-correction",
+        "bytes": 15490,
+        "sha256": "17f170531ec767456eba8e2f6559fa68a905107f3242a575134b5020182e04dd"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/integration-guide.md.archive.json",
+      "bytes": 10562,
+      "sha256": "adcc1f74c9a9b48e83b2ac8ff07beb419e9239d3268432f16ca5421a9dc2c1d3",
+      "format": "base64_json_archive",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integration-guide.md",
+        "bytes": 7557,
+        "sha256": "fef91c13309fee987dee8b967a5c05cd246d5ad4ad11717aae502cf8e20c0840"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/integration-guide.before-verifier-guard.md.archive.json",
+      "bytes": 8342,
+      "sha256": "ebc498f96664c3a671bf8205a7f2609759835f01ba0e6ddbad600edb208a53af",
+      "format": "base64_json_archive",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integration-guide.before-verifier-guard.md",
+        "bytes": 5859,
+        "sha256": "60b53da7c8b2fd73a7fcb5cc3591b7b417c0ce5f2dbe73c65a441a60eca7bfd7"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/integration-guide.md.before-main-observer-correction.archive.json",
+      "bytes": 9018,
+      "sha256": "67ff4828b35085b132e99bc18e9b497bd5f5550721b1d6fa6e7522ed7e14f1ac",
+      "format": "base64_json_archive",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integration-guide.md.before-main-observer-correction",
+        "bytes": 6349,
+        "sha256": "1148e6a6be7be8ee79c5fa92c06f749094e4ed8e39ac8dcf068430044bab6f22"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/integration-plan.json",
+      "bytes": 42710,
+      "sha256": "80ba1959c27763808c35d9a7fa545f6a96d43f6f5bec0e5df822d12c894cecc7",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/integration-plan.json",
+        "bytes": 42710,
+        "sha256": "80ba1959c27763808c35d9a7fa545f6a96d43f6f5bec0e5df822d12c894cecc7"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/main-observer-correction-receipt.json",
+      "bytes": 1144,
+      "sha256": "59cfa8178637758dc509b1ae20db3009539ec8f2c323ce242766ca2362a63dec",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/main-observer-correction-receipt.json",
+        "bytes": 1144,
+        "sha256": "59cfa8178637758dc509b1ae20db3009539ec8f2c323ce242766ca2362a63dec"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/main-observer-final-handoff.json",
+      "bytes": 1518,
+      "sha256": "3921641123342a31d7055fbe60204a05d8052c3c91799e3fb8c534271f123560",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/main-observer-final-handoff.json",
+        "bytes": 1518,
+        "sha256": "3921641123342a31d7055fbe60204a05d8052c3c91799e3fb8c534271f123560"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/main-observer-readonly-baseline.json",
+      "bytes": 975,
+      "sha256": "48ab0ad54b62f3eb8c37e87be16087cfb6f98cf748d550bd204b203b18655e2c",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/main-observer-readonly-baseline.json",
+        "bytes": 975,
+        "sha256": "48ab0ad54b62f3eb8c37e87be16087cfb6f98cf748d550bd204b203b18655e2c"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/verifier-guard-correction-receipt.json",
+      "bytes": 1164,
+      "sha256": "38f6d8ce60c4fb77c896e3ba7c434f26162aacbd3ff4f8d65bf0d96dee782560",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/verifier-guard-correction-receipt.json",
+        "bytes": 1164,
+        "sha256": "38f6d8ce60c4fb77c896e3ba7c434f26162aacbd3ff4f8d65bf0d96dee782560"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/verifier-static-finding-before-fix.json",
+      "bytes": 540,
+      "sha256": "97676027752cc9ff83342309a9c7ee85faf7e674bec408a4789ff7399ff521be",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/verifier-static-finding-before-fix.json",
+        "bytes": 540,
+        "sha256": "97676027752cc9ff83342309a9c7ee85faf7e674bec408a4789ff7399ff521be"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/verify-plan-after-verifier-guard.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/verify-plan-after-verifier-guard.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/verify-plan-after-verifier-guard.stdout.log",
+      "bytes": 86,
+      "sha256": "657c02401069b7e0c34ce44cc6aa4a538fca54dcaadb4761c7162ac823cd6551",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/verify-plan-after-verifier-guard.stdout.log",
+        "bytes": 86,
+        "sha256": "657c02401069b7e0c34ce44cc6aa4a538fca54dcaadb4761c7162ac823cd6551"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/verify-plan-main-observer.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/verify-plan-main-observer.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/verify-plan-main-observer.stdout.log",
+      "bytes": 86,
+      "sha256": "657c02401069b7e0c34ce44cc6aa4a538fca54dcaadb4761c7162ac823cd6551",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/verify-plan-main-observer.stdout.log",
+        "bytes": 86,
+        "sha256": "657c02401069b7e0c34ce44cc6aa4a538fca54dcaadb4761c7162ac823cd6551"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/verify-plan-tool-result.json",
+      "bytes": 493,
+      "sha256": "c86eaebd7a4a0cadc16b5caf36ae9b163c4dd46978bcd9aa55deecc8b1f5ec11",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/verify-plan-tool-result.json",
+        "bytes": 493,
+        "sha256": "c86eaebd7a4a0cadc16b5caf36ae9b163c4dd46978bcd9aa55deecc8b1f5ec11"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/preparation-history/parent-lead-gate-update-02.json",
+      "bytes": 1009,
+      "sha256": "838ff95c9186de43babab1b58f1ef752cfe9528c606029bd6b5d4d4b0500fc91",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/owner-package-integration-preparation/parent-lead-gate-update-02.json",
+        "bytes": 1009,
+        "sha256": "838ff95c9186de43babab1b58f1ef752cfe9528c606029bd6b5d4d4b0500fc91"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/review/quality-integration-main-observer.json",
+      "bytes": 4200,
+      "sha256": "73abb2e6c81b209eb3104d996704e6ddd49d7fa50331aa7bf56d0f4f40421cf5",
+      "format": "raw_byte_exact_copy",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/quality-integration-main-observer.json",
+        "bytes": 4200,
+        "sha256": "73abb2e6c81b209eb3104d996704e6ddd49d7fa50331aa7bf56d0f4f40421cf5"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/review/quality-integration-main-observer.md.archive.json",
+      "bytes": 3771,
+      "sha256": "c918f4b34c6cc7c7470967b5cecf9c4b88e742915f4e2f91e98014e2c8042845",
+      "format": "base64_json_archive",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/quality-integration-main-observer.md",
+        "bytes": 2471,
+        "sha256": "add1ecf1cab8995425ed2aa22ab8c2ae297a2c61d278fe15a6fa153409046cb5"
+      }
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/actual-owner-copy-summary.json",
+      "bytes": 1613,
+      "sha256": "c46011fe6b312f855565d757046b9de17a2f7b34e0b1cee627036d59b94e6048",
+      "format": "derived_actual_transaction_summary"
+    }
+  ],
+  "original411_package_unchanged": true,
+  "actual_owner_copy_summary": "docs/android-studio/evidence/import-identity-lead/owner-integration-provenance/actual-owner-copy-summary.json",
+  "final_metadata_HEAD_CI": "NOT_RUN",
+  "packager_repository_mutations": false
+}

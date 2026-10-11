@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "task": "1-window-rails",
+  "branch": "android-studio-task/1-window-rails",
+  "problem": "Existing rails have small icon/state surfaces and gaps; align contiguous slots and make padded full-slot targets reliable using Rust/GPUI.",
+  "change": "Contiguous40px logical input slots;20px icon boxes;5px inset30px themed state surface; separate1px border; existing panel actions/focus/menu/resize routes retained.",
+  "implementation_files": [
+    "crates/workspace/src/dock.rs",
+    "crates/workspace/src/workspace.rs"
+  ],
+  "tested_implementation_commit": "c5cf3ef9629d62ad05b43ec7d5a0a4929c31b001",
+  "tested_implementation_tree": "87d766d884651119a86358d6fd627405ef5616c1",
+  "implementation_snapshot_sha256": "7201ee3f2456dda2b9dab8c97e7806e0ead1446e626830abee2ccbf3a91c563e",
+  "implementation_source_paths": 4748,
+  "dependency_commit": "404ea3faad6e6b4946206560685411d6be5c5721",
+  "status": "Five final area reviewers/build/fullsuite/native/strictClippy PASS on implementation; final metadata-head CI and lead merge pending",
+  "reference": {
+    "license": "Apache-2.0; JetBrains original headers retained in exact external source evidence",
+    "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+    "scope": "Supplementary matching build-family IntelliJ platform sources; no proof of byte-identical Android Studio packaged platform",
+    "geometry_files": [
+      {
+        "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+        "path": "platform/util/ui/src/com/intellij/util/ui/JBUI.java",
+        "bytes": 113386,
+        "sha256": "bec78999e074b43f82d07d6982aefdd0e68708fcba915348bb74866f669f78be",
+        "url": "https://raw.githubusercontent.com/JetBrains/intellij-community/b75ab523e6adbe1d26112219729eacbcfd24daa0/platform/util/ui/src/com/intellij/util/ui/JBUI.java"
+      },
+      {
+        "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+        "path": "platform/platform-impl/src/com/intellij/openapi/wm/impl/SquareStripeButtonLook.kt",
+        "bytes": 4539,
+        "sha256": "acc746680152b720d4c9e33a8c3425bea48c7af46ebea7e0fe34f45c934a5a9b",
+        "url": "https://raw.githubusercontent.com/JetBrains/intellij-community/b75ab523e6adbe1d26112219729eacbcfd24daa0/platform/platform-impl/src/com/intellij/openapi/wm/impl/SquareStripeButtonLook.kt"
+      },
+      {
+        "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+        "path": "platform/platform-impl/src/com/intellij/toolWindow/ToolWindowLeftToolbar.kt",
+        "bytes": 1245,
+        "sha256": "c28cbfaabb55ebef1a51daf1fc6a54da66d297d333ca5716555165c2147fa723",
+        "url": "https://raw.githubusercontent.com/JetBrains/intellij-community/b75ab523e6adbe1d26112219729eacbcfd24daa0/platform/platform-impl/src/com/intellij/toolWindow/ToolWindowLeftToolbar.kt"
+      },
+      {
+        "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+        "path": "platform/platform-impl/src/com/intellij/toolWindow/ToolWindowRightToolbar.kt",
+        "bytes": 1307,
+        "sha256": "a63676da9ec24a6e14c270d0d4fde32028a850eedbdfaa0f27bc49361d48b4b6",
+        "url": "https://raw.githubusercontent.com/JetBrains/intellij-community/b75ab523e6adbe1d26112219729eacbcfd24daa0/platform/platform-impl/src/com/intellij/toolWindow/ToolWindowRightToolbar.kt"
+      }
+    ],
+    "discovery_limit": "Supplementary matching b75ab523 build-family platform, not byte-identical packaged AOSP platform; selected complete platform-impl/platform-tests trees found no original stripe geometry/input tests; AOSP designer AttachedToolWindow tests do not stand in for main IDE stripes",
+    "original_reference_test_credit": 0,
+    "original_tests_newly_marked_not_applicable": 0
+  },
+  "supplements": [
+    {
+      "rust_test": "workspace::tests::test_tool_window_rail_reference_geometry",
+      "status": "passing in full unfiltered implementation Source suite",
+      "original_reference_credit": 0
+    },
+    {
+      "rust_test": "workspace::tests::test_tool_window_rail_full_slot_activates_and_hides_panel",
+      "status": "passing in full unfiltered implementation Source suite",
+      "original_reference_credit": 0
+    }
+  ],
+  "supplement_execution_note": "Two unignored gpui::test registrations are included in the full Source suite. Fail-only reporter omits individual passing names; current10559 vsConsole10557 count supports suite-backed inclusion, not printed testcase-line credit.",
+  "canonical_partial_parity": {
+    "discovery_complete": false,
+    "seeded_cases": 95,
+    "ported": 20,
+    "adapted": 16,
+    "unported": 59,
+    "passing": 36,
+    "matrix_changed": false
+  },
+  "full_CI": {
+    "run_id": 37789793506,
+    "url": "https://github.com/anilbeesetti/koda/actions/runs/37789793506",
+    "mode": "full",
+    "test_filter": "",
+    "native_checks": true,
+    "all_three_jobs": "success",
+    "tests_run": 10559,
+    "passed": 10559,
+    "failed": 0,
+    "reported_existing_skips": 23,
+    "binaries": 212,
+    "skip_identity_equivalence_claimed": false,
+    "proof": {
+      "path": "/workspace/android-studio-artifacts/window-rails/runtime/Root-combined-c5-terminal-full-ci-PASS.json",
+      "sha256": "b89b396784157ee09f82b0a7c386c2a9974717d2700652ebcde40b144f15719c"
+    }
+  },
+  "normal_current_app": {
+    "proof": {
+      "path": "/workspace/android-studio-artifacts/window-rails/runtime/Root-current-c5-normal-app-independent-PASS.json",
+      "sha256": "2a7e85e4d266569958d36354cf3be641f690f64571403f61fcf344b537421e10"
+    },
+    "sha256": "67c2a7ee67bb27385517124e77d4ba64393288cca5f59f7bdd2010f1457493fc",
+    "actual_current_package_roots_rebuilt": true,
+    "dynamic_git_stamp": "c5cf3ef9629d62ad05b43ec7d5a0a4929c31b001"
+  },
+  "strict_Clippy": {
+    "proof": {
+      "path": "/workspace/android-studio-artifacts/window-rails/runtime/strict-clippy-attempt1/actual-strict-clippy-PASS.json",
+      "sha256": "9c248293a34afbb7fd29fe7585106f14478ac15698164dc82519ab6059af1429"
+    },
+    "command": "./script/clippy --locked -p workspace -p android_tools -p android_ui --message-format=json-render-diagnostics",
+    "normal_script_mode": "release/all-targets/all-features/deny warnings",
+    "diagnostics": 0,
+    "affected_lib_and_test_units_rebuilt": true,
+    "optional_tools_no_credit_if_absent": true
+  },
+  "native": {
+    "app_source": "c5cf3ef9629d62ad05b43ec7d5a0a4929c31b001",
+    "actual_scale_factors": [
+      1,
+      2
+    ],
+    "all_ten_rail_corner_pairs_each_scale": true,
+    "geometry_logical_pixels": {
+      "slot": 40,
+      "icon_box": 20,
+      "state_surface": 30,
+      "state_inset": 5,
+      "separate_border": 1
+    },
+    "pixel_geometry_proof_sha256": "a1d3bd21c8b50ddebff9a301f80ebf00f4964ad35af98db1049599a9f274a4d9",
+    "observations_sha256": "93f424ecef02b1131940582b9cb1d4eb3967a830b212c5103335705e08dba26f",
+    "capture_event_keeper_manifest_sha256": "07bb3b42eee98f8ad9497b8a73293f8d1ffc693e575968cb4a3b054df3838131",
+    "actual_rail_keyboard_route": "Build Output -> Tab Hide -> Tab Agent rail -> rawSpace/Return; no direct focus injection/customkeymap",
+    "owned_launcher_app_display_processes_closed": true,
+    "native_limits": [
+      "Basic sync identity :mobile/demoDebug with evaluated-provider and build-tools36.0.0/license warnings",
+      "No installed emulator; isolated language servers disabled",
+      "Inherited whole-shell clipping at360x720, rails remain usable",
+      "Software Vulkan/smallfixture; RSS owner-recorded snapshots, no controlled memory/startup/input-latency/hardware/largeproject proof"
+    ]
+  },
+  "five_final_reviews": {
+    "code": {
+      "path": "/workspace/android-studio-artifacts/window-rails/reviews/code-current-c5-final.md",
+      "sha256": "7fc9a6d2b707dfb6a3029b6f7fc6fe15197f8982992e557726cd5432b666048d",
+      "verdict": "PASS",
+      "holds_released": true
+    },
+    "ux": {
+      "path": "/workspace/android-studio-artifacts/window-rails/reviews/ux-current-c5-final.md",
+      "sha256": "488b22fbb9a8b97e156d37ac1cbb07e9e5b82ebcf112e2d984c9156362b53f18",
+      "verdict": "PASS",
+      "holds_released": true
+    },
+    "quality": {
+      "path": "/workspace/android-studio-artifacts/window-rails/reviews/quality-current-c5-final.md",
+      "sha256": "ee0cf552727606067f8e632b0b560fae8c03f62b154dd7d0b85124f1945bb4c6",
+      "verdict": "PASS",
+      "holds_released": true
+    },
+    "ui": {
+      "path": "/workspace/android-studio-artifacts/window-rails/reviews/ui-current-c5-final.md",
+      "sha256": "641e50f6b733703a2978ed63324bfca1865097bff58e7983275c2410bb1c9037",
+      "verdict": "PASS",
+      "holds_released": true
+    },
+    "performance": {
+      "path": "/workspace/android-studio-artifacts/window-rails/reviews/performance-current-c5-final.md",
+      "sha256": "e1c7f597efc565dcf5b653aa2717b7c86920e4967fe53ba2e372f5adcce4298b",
+      "verdict": "PASS",
+      "holds_released": true
+    }
+  },
+  "prior_failures_and_semantic_budget": "All prior599/bec/round3 failures retained externally; three semantic rounds plus exactly one USER-approved visible-worktree fixture correction, no budget reset or weakened assertions/events.",
+  "scope_limits": [
+    "Incremental generic rail geometry only; Project/editor/Android and other panels preexist",
+    "Full Android Studio shell redesign and visible Android project-tree adapter integration remain planned",
+    "General-purpose Python/HTML/other extension workflows and top project/workspace/branch switcher must remain",
+    "Android-specific UI/actions/workflows require future qualifying active Android/KMP/CMP context gating task",
+    "No fullIDE/phase/evaluatedprovider/build-run/LSP/preview completion claim"
+  ],
+  "non_rust_components_added_by_geometry": [],
+  "documentation_scope_exception": "User explicitly retains inherited C++WebRTC for existing calls/screen sharing, unchanged; stable media implementation/Rust replacement outside authorized scope. Other native deps remain individually reviewed.",
+  "main_protection": "This task made no main writes; localmain/work30f remains unchanged. Root separately observed remote main7e49ce60 external PR52 update; remote30f invariance is not claimed."
+}

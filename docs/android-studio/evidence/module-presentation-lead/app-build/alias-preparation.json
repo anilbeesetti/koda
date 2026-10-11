@@ -1,0 +1,19 @@
+{
+  "removed_aliases_only": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+      "type": "symlink",
+      "target": "/tmp/android-studio-link-output/koda-v2-artifact-273741",
+      "resolved_frozen_app": "/tmp/android-studio-link-output/koda-v2-artifact-273741"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/koda",
+      "type": "symlink",
+      "target": "/tmp/android-studio-link-output/koda-v2-artifact-273741",
+      "resolved_frozen_app": "/tmp/android-studio-link-output/koda-v2-artifact-273741"
+    }
+  ],
+  "older_full_app_preserved": "/tmp/android-studio-link-output/koda-v2-artifact-273741",
+  "older_full_app_sha256": "577814b594205348eab4869aef4f3d0dc0377bbd6fe4acc9bb40ca7788b89c3e",
+  "no_source_fixtures_sdk_logs_or_physical_app_removed": true
+}

@@ -1,0 +1,922 @@
+{
+  "schema_version": 1,
+  "task": "1-default-variants",
+  "scope": "Only DefaultVariantsTest default variant selection; not complete Android project-model parity.",
+  "reference": {
+    "repository": "platform/tools/adt/idea",
+    "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "suite": "com.android.tools.idea.gradle.project.sync.DefaultVariantsTest",
+    "license": "Apache-2.0",
+    "copyright": "Copyright (C) 2022 The Android Open Source Project",
+    "files": [
+      {
+        "path": "project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/DefaultVariants.kt",
+        "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/DefaultVariants.kt",
+        "sha256": "afff0c6eac2817edd0887458dd4a942e952897e562cd61aa75f0a2d544d8c143",
+        "retained_path": "crates/android_tools/test_data/default_variants/DefaultVariants.kt"
+      },
+      {
+        "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+        "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15",
+        "retained_path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.kt"
+      }
+    ],
+    "fixture": {
+      "path": "crates/android_tools/test_data/default_variants/DefaultVariantsTest.cases.json",
+      "sha256": "fcadccc2ffe619da8b4d0fca1e940b0a190a057d414341c2ccec3e6153d9fe02",
+      "adaptation": "Eight original literal cases transcribed to JSON with exact input order and assertions; no case removed or weakened."
+    }
+  },
+  "implementation": "crates/android_tools/src/project_model.rs",
+  "tests": [
+    {
+      "reference_test": "oneVariant",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "project_model::tests::default_variants_one_variant",
+      "reason": "Same literal inputs, preference sets and expected default, asserted in Rust.",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_one_variant",
+      "integration_target": null,
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_one_variant",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_one_variant",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/default-variants-oneVariant.log",
+              "sha256": "ba5c2dc76d157e5e0ce64cc483cf7915ebda0fc90b98d8a81f696feb8c3d78e9"
+            }
+          }
+        }
+      ],
+      "supplementary_direct_executable_evidence": {
+        "status": "passing",
+        "artifact": "/workspace/android-studio-artifacts/default-variants-reference-tests/oneVariant.log",
+        "sha256": "b16d0ece7e7e81aa449e7999eb3076abc6b6a2e05d269a7fb732d8295d793592",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_one_variant",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/default-variants-oneVariant.log",
+        "sha256": "ba5c2dc76d157e5e0ce64cc483cf7915ebda0fc90b98d8a81f696feb8c3d78e9",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "debugPreferred",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "project_model::tests::default_variants_debug_preferred",
+      "reason": "Same literal inputs, preference sets and expected default, asserted in Rust.",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_debug_preferred",
+      "integration_target": null,
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_debug_preferred",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_debug_preferred",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/default-variants-debugPreferred.log",
+              "sha256": "01f23e28421df077bad505f11d98e8aee48c51c0234eba2f6d7221fc0e92655a"
+            }
+          }
+        }
+      ],
+      "supplementary_direct_executable_evidence": {
+        "status": "passing",
+        "artifact": "/workspace/android-studio-artifacts/default-variants-reference-tests/debugPreferred.log",
+        "sha256": "aaa82ae88d0c8f00e1695382f1859a8d9f1c88ed405097da39108854d32c0afc",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_debug_preferred",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/default-variants-debugPreferred.log",
+        "sha256": "01f23e28421df077bad505f11d98e8aee48c51c0234eba2f6d7221fc0e92655a",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "preferredBuildType",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "project_model::tests::default_variants_preferred_build_type",
+      "reason": "Same literal inputs, preference sets and expected default, asserted in Rust.",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_preferred_build_type",
+      "integration_target": null,
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_build_type",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_build_type",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/default-variants-preferredBuildType.log",
+              "sha256": "56ca91cacc431ac7c71d425bf1826176d85a484fb48dad1f6b4b1503562bf7de"
+            }
+          }
+        }
+      ],
+      "supplementary_direct_executable_evidence": {
+        "status": "passing",
+        "artifact": "/workspace/android-studio-artifacts/default-variants-reference-tests/preferredBuildType.log",
+        "sha256": "a97a3c0d7c5717f734189477dbf787d9c5a7760de1f44c51b1f2f326b04006d3",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_build_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/default-variants-preferredBuildType.log",
+        "sha256": "56ca91cacc431ac7c71d425bf1826176d85a484fb48dad1f6b4b1503562bf7de",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "preferredProductFlavorOverDebugBuildType",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+      "reason": "Same literal inputs, preference sets and expected default, asserted in Rust.",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+      "integration_target": null,
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/default-variants-preferredProductFlavorOverDebugBuildType.log",
+              "sha256": "79d1dd25db235a42f40fa4d329fac534cd2b54486f0cc231f8cab179e4ffaa19"
+            }
+          }
+        }
+      ],
+      "supplementary_direct_executable_evidence": {
+        "status": "passing",
+        "artifact": "/workspace/android-studio-artifacts/default-variants-reference-tests/preferredProductFlavorOverDebugBuildType.log",
+        "sha256": "ae59abdffa258b0e76e002d0314f2fcd6e8014bd614c4b443fb8aaf5db2ab4e4",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/default-variants-preferredProductFlavorOverDebugBuildType.log",
+        "sha256": "79d1dd25db235a42f40fa4d329fac534cd2b54486f0cc231f8cab179e4ffaa19",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "preferredFlavorsInTwoDimensions",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+      "reason": "Same literal inputs, preference sets and expected default, asserted in Rust.",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+      "integration_target": null,
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/default-variants-preferredFlavorsInTwoDimensions.log",
+              "sha256": "99764b81dd3b87e85309e388c5ff10b1fd714856c50086012db23a235990dac2"
+            }
+          }
+        }
+      ],
+      "supplementary_direct_executable_evidence": {
+        "status": "passing",
+        "artifact": "/workspace/android-studio-artifacts/default-variants-reference-tests/preferredFlavorsInTwoDimensions.log",
+        "sha256": "381ab466dacbc00dbb448f9ec921433b651ecdd0020de2a304a30fd509a0ee18",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/default-variants-preferredFlavorsInTwoDimensions.log",
+        "sha256": "99764b81dd3b87e85309e388c5ff10b1fd714856c50086012db23a235990dac2",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "preferredFlavorInSecondDimensionOnly",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+      "reason": "Same literal inputs, preference sets and expected default, asserted in Rust.",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+      "integration_target": null,
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/default-variants-preferredFlavorInSecondDimensionOnly.log",
+              "sha256": "2405a45bdc1a8c5c0265a5a91d91a288b35d97a56d67d7a3b715bede63e99c69"
+            }
+          }
+        }
+      ],
+      "supplementary_direct_executable_evidence": {
+        "status": "passing",
+        "artifact": "/workspace/android-studio-artifacts/default-variants-reference-tests/preferredFlavorInSecondDimensionOnly.log",
+        "sha256": "6d239151ad61d296cc2371573295f55bf82905d50bdeb49de4df8e11071a6e16",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/default-variants-preferredFlavorInSecondDimensionOnly.log",
+        "sha256": "2405a45bdc1a8c5c0265a5a91d91a288b35d97a56d67d7a3b715bede63e99c69",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "mismatchedProductFlavourLength",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "project_model::tests::default_variants_mismatched_product_flavour_length",
+      "reason": "Same literal inputs, preference sets and expected default, asserted in Rust.",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+      "integration_target": null,
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_mismatched_product_flavour_length",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/default-variants-mismatchedProductFlavourLength.log",
+              "sha256": "ab094a77d6598e3357f47b196e5b068b44f14c3e7ef7d2f7f8e9d7692a80bad7"
+            }
+          }
+        }
+      ],
+      "supplementary_direct_executable_evidence": {
+        "status": "passing",
+        "artifact": "/workspace/android-studio-artifacts/default-variants-reference-tests/mismatchedProductFlavourLength.log",
+        "sha256": "51f04ba6ddaf616133729723785b7d736edc9a58b17408a250485a321823527c",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_mismatched_product_flavour_length",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/default-variants-mismatchedProductFlavourLength.log",
+        "sha256": "ab094a77d6598e3357f47b196e5b068b44f14c3e7ef7d2f7f8e9d7692a80bad7",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    },
+    {
+      "reference_test": "onEmpty",
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+      "status": "ported",
+      "execution_status": "passing",
+      "rust_test": "project_model::tests::default_variants_on_empty",
+      "reason": "Same literal inputs, preference sets and expected default, asserted in Rust.",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_on_empty",
+      "integration_target": null,
+      "targets": [
+        {
+          "package": "android_tools",
+          "integration_target": null,
+          "test_name": "project_model::tests::default_variants_on_empty",
+          "manifest": {
+            "path": "crates/android_tools/Cargo.toml",
+            "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+          },
+          "source": {
+            "path": "crates/android_tools/src/project_model.rs",
+            "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+          },
+          "run": {
+            "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+            "command": [
+              "cargo",
+              "test",
+              "--locked",
+              "--manifest-path",
+              "crates/android_tools/Cargo.toml",
+              "-p",
+              "android_tools",
+              "--lib",
+              "project_model::tests::default_variants_on_empty",
+              "--",
+              "--exact",
+              "--show-output"
+            ],
+            "exit_code": 0,
+            "log": {
+              "path": "docs/android-studio/evidence/default-variants-onEmpty.log",
+              "sha256": "68f634707a82069c0a00399243381a0b2387960be364d2edd0019fa94b36a7f9"
+            }
+          }
+        }
+      ],
+      "supplementary_direct_executable_evidence": {
+        "status": "passing",
+        "artifact": "/workspace/android-studio-artifacts/default-variants-reference-tests/onEmpty.log",
+        "sha256": "1d835f212c4477f6e56db3a4f0794f19721dc954444d928e925db50ae0a11bcd",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "evidence": {
+        "status": "passing",
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_on_empty",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "artifact": "docs/android-studio/evidence/default-variants-onEmpty.log",
+        "sha256": "68f634707a82069c0a00399243381a0b2387960be364d2edd0019fa94b36a7f9",
+        "source_sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733",
+        "manifest_sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      }
+    }
+  ],
+  "validation": {
+    "unit_tests": {
+      "status": "passing",
+      "command": "cargo test --locked -p android_tools --lib",
+      "passed": 45,
+      "failed": 0,
+      "ignored": 0,
+      "ported_cases_passed": 8,
+      "artifact": "/workspace/android-studio-artifacts/default-variants-tests.log"
+    },
+    "crate_check": {
+      "status": "passing",
+      "command": "cargo check --locked -p android_tools --all-targets",
+      "historical": true,
+      "note": "Ran before the typed-wire optimization. Final source validation is provided by passing all-target/all-feature Clippy, helper compilation and the full app build."
+    },
+    "clippy": {
+      "status": "passing",
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools",
+        "-p",
+        "android_ui"
+      ],
+      "profile": "release",
+      "all_targets": true,
+      "all_features": true,
+      "deny_warnings": true,
+      "artifact": {
+        "path": "/workspace/android-studio-artifacts/default-variants-final-clippy-retry.log",
+        "sha256": "7459767eb7208cacf7b7e0e3c25fbc67d46530151e0fb7677a8684884a8db7bf"
+      },
+      "prior_blocked_attempt": {
+        "exit_code": 101,
+        "artifact": {
+          "path": "/workspace/android-studio-artifacts/default-variants-final-clippy.log",
+          "sha256": "835e182dcfd16d7d0d41a4746247244dfe3d0baa3d6ba30353c4c3dbe8dee0cf"
+        },
+        "reason": "Bundled-preview build script failed with No space left on device (os error 28). Lead removed only generated failed-full-suite outputs; identical command then passed."
+      }
+    },
+    "format": {
+      "status": "passing",
+      "commands": [
+        "cargo fmt --all -- --check",
+        "git diff --check",
+        "Python ast.parse(script/test-android-project-model)",
+        "npx --no-install prettier --check docs/android-studio/ports/default-variants.json docs/android-studio/evidence/default-variants-canonical-targets.json"
+      ]
+    },
+    "full_app_build": {
+      "status": "passing",
+      "command": ["cargo", "build", "--locked", "-p", "zed", "--bin", "koda"],
+      "worktree": "/workspace/android-studio-default-variants",
+      "elapsed": "1m05s",
+      "artifact": {
+        "path": "/workspace/android-studio-artifacts/default-variants-final-app-build.log",
+        "sha256": "709d393f0e5d86c5cd8f510f0432e5ce2688c3fda9c54dbf9d7f194e9e270eba"
+      }
+    },
+    "full_suite": {
+      "status": "blocked",
+      "tested_commit": "ead1bbc7e8ad47702cdb1aeef2da46689043045c",
+      "command": ["cargo", "test", "--locked", "--workspace", "--no-fail-fast"],
+      "exit_code": 101,
+      "artifact": {
+        "path": "/workspace/android-studio-artifacts/full-workspace-tests.log",
+        "sha256": "fd4cbab8146b3b1ae332b9421b9819d2cf383bee1e1dd14d44611bab03b4db21"
+      },
+      "reason": "32GB overlay filled during linking/build, including outline_panel, workspace and editor test targets. Full-workspace tests did not execute. Final source remains without a passing full-workspace gate."
+    },
+    "live_app_default_variant_sync": {
+      "status": "passing",
+      "code_snapshot": "c992461ee337253cca680554f2c18e1bced8c7e3",
+      "launch": "PTY with stdout attached, worktree hardlink, isolated fixture/profile, Xvfb98/Mesa software Vulkan.",
+      "fixture": "/workspace/android-studio-artifacts/default-variants-fixture",
+      "cases": [
+        {
+          "case": "Fresh preferred full/release default selected in both selectors before UI recovery fix; comparator/exporter source unchanged in final snapshot.",
+          "artifact": {
+            "path": "/workspace/android-studio-artifacts/default-variants-preferred-selectors.png",
+            "sha256": "b00e1f40081a27f5a998fd6c6715037c85b16e96e05204627014529181244d54"
+          },
+          "code_snapshot": "ead1bbc7e8ad47702cdb1aeef2da46689043045c"
+        },
+        {
+          "case": "Four fresh choices; select demoDebug in actual toolbar.",
+          "artifact": {
+            "path": "/workspace/android-studio-artifacts/default-variants-final-demo-panel.png",
+            "sha256": "57149ea30f5778ccdef4692548e436315a66cb27ef6f296ca81918bf7d5de96b"
+          }
+        },
+        {
+          "case": "Remove selected demoDebug in disposable Gradle fixture; successful real three-variant sync clears selectors and disables variant actions.",
+          "artifact": {
+            "path": "/workspace/android-studio-artifacts/default-variants-final-unavailable.png",
+            "sha256": "77bff5f9f2c67357479c3b94cb7c8c99c3d2ad0ed5eedaeba7c30ab960ad3084"
+          }
+        },
+        {
+          "case": "Actual recovery picker contains only three fresh variants.",
+          "artifact": {
+            "path": "/workspace/android-studio-artifacts/default-variants-final-recovery-picker.png",
+            "sha256": "15cfbca6b2455f9d0281ccbe75725aaaae26caa0dd25a34e68bca28f7f00c8b8"
+          }
+        },
+        {
+          "case": "Select fullRelease; both selectors and actions recover; stale status clears to Sync complete \u00b7 3 build variants.",
+          "artifact": {
+            "path": "/workspace/android-studio-artifacts/default-variants-final-recovered.png",
+            "sha256": "74bb0b37678a5d629252b2df26bb92e12f9b0173f38937df29c9fba4496decba"
+          }
+        },
+        {
+          "case": "Panel picker keyboard Down/Down/Down selects fullRelease, Return confirms.",
+          "artifact": {
+            "path": "/workspace/android-studio-artifacts/default-variants-final-keyboard-picker.png",
+            "sha256": "8b6047818f10de0e91527ff3bdcf5c49cdd42d0eb2a09fdb5faf531ca89e4d7f"
+          }
+        },
+        {
+          "case": "1280\u00d7850 window resize and Android-panel scrolling retain selectors and reachable status.",
+          "artifact": {
+            "path": "/workspace/android-studio-artifacts/default-variants-final-resized-scroll-clean.png",
+            "sha256": "ab63b84636b6a72fdd5c649cbf0985fd2d32a88dc0cb9d11190ed5319e9587c2"
+          }
+        }
+      ],
+      "loading_artifact": {
+        "path": "/workspace/android-studio-artifacts/default-variants-final-removing-loading.png",
+        "sha256": "4c5e8463a5dcf08c814c84464272f6534dccc2e420066b34f02c735d82c08845"
+      },
+      "runtime_observation": "No newly observed console crash or visible stall during this short fixture flow; no timing, memory or hardware benchmark claimed.",
+      "limitations": [
+        "No emulator installed/device selected; independent emulator error stays visible. App launch/deploy was not tested by this task."
+      ],
+      "cleanup": "TERM to own launcher; app and own Xvfb exited, verified no remaining own PIDs."
+    },
+    "reviews": {
+      "code": {
+        "verdict": "pass",
+        "scope": "Final source and 50+105 passing helper/Clippy logs inspected; no outstanding findings."
+      },
+      "ui": {
+        "verdict": "pass",
+        "scope": "Final full-app loading, unavailable, fresh picker and recovered screenshots inspected; stale diagnostic finding closed. Scoped default-variant workflow only."
+      },
+      "ux": {
+        "verdict": "pass",
+        "scope": "Final full-app screenshots and build log inspected; removed/recovered selections and independent SDK error behave as expected. Scoped default-variant workflow only."
+      },
+      "performance": {
+        "verdict": "pass",
+        "scope": "Typed wire avoids whole-module serde buffering; target snapshot cloning occurs at menu open. Final production source unchanged since review; checks/logs pass. No startup/memory/large-project or hardware benchmark claimed."
+      },
+      "quality": {
+        "verdict": "pass",
+        "scope": "Final source, provenance, passing helper and all-target/all-feature Clippy logs inspected; no tests removed or weakened."
+      }
+    },
+    "gradle_model": {
+      "status": "passing",
+      "versions": {
+        "gradle": "9.6.1",
+        "agp": "9.4.0",
+        "sdk": "37.0"
+      },
+      "cases": [
+        {
+          "default": "demoDebug",
+          "artifact": "/workspace/android-studio-artifacts/default-variants-normalized.json"
+        },
+        {
+          "default": "fullRelease",
+          "preferences": ["full", "release"],
+          "artifact": "/workspace/android-studio-artifacts/default-variants-preferred-normalized.json"
+        }
+      ]
+    },
+    "fix_rounds": 3,
+    "precommit_check_source_snapshot": "c992461ee337253cca680554f2c18e1bced8c7e3",
+    "precommit_check_note": "Final aggregate helper, Clippy, format and app build ran on the exact source tree subsequently committed as this snapshot. Eight canonical named Cargo captures ran after committing it.",
+    "android_helper": {
+      "status": "passing",
+      "command": [
+        "bash",
+        ".agents/skills/koda-app-validation/scripts/test-android.sh"
+      ],
+      "artifact": {
+        "path": "/workspace/android-studio-artifacts/default-variants-final-android-tests-round3.log",
+        "sha256": "3c5d9b24dbe5131b9d61024e73a2a2fb225f9c7618c049d505ed5779a5330408"
+      },
+      "android_tools": {
+        "passed": 50,
+        "failed": 0,
+        "ignored": 0,
+        "features": ["bundled-preview"],
+        "ported_cases_passed": 8
+      },
+      "android_ui": {
+        "passed": 105,
+        "failed": 0,
+        "ignored": 1,
+        "existing_ignored_test": "android_preview::tests::capture_compose_preview_surface",
+        "existing_ignored_reason": "Unchanged pre-existing opt-in native Vulkan screenshot harness; task live screenshots were inspected separately."
+      },
+      "corrected_failure": {
+        "test": "android_status::tests::status_stays_visible_with_build_hidden_and_cancels_sync_and_build",
+        "initial_helper": {
+          "path": "/workspace/android-studio-artifacts/default-variants-final-android-tests.log",
+          "sha256": "c04b25cd98155a5d01aac0b512014409a3ff7c84bec7b9712144408cb1bc342c"
+        },
+        "exact_reproduction": {
+          "path": "/workspace/android-studio-artifacts/default-variants-status-exact.log",
+          "sha256": "4632df1cca40e6894e8396cb6218f6edc69cc18ba2092c7499c305f4efc8d62c"
+        },
+        "cause": "Panel activation discovered the provisioned real host ADB, whose async-process driver woke the deterministic GPUI scheduler from another thread.",
+        "fix": "Established pending-device-refresh test fixture before activation. All existing status/render/cancel/boot-wait assertions, deterministic enforcement and dedicated device tests retained."
+      }
+    },
+    "fix_round_details": [
+      {
+        "round": 1,
+        "finding": "serde(flatten) buffered complete module graph",
+        "fix": "Typed exported module fields moved into public model without whole-graph buffering."
+      },
+      {
+        "round": 2,
+        "finding": "Live valid selection left stale unavailable-variant diagnostic",
+        "fix": "Clear only resolved selection diagnostic after successful publication; actual production-menu GPUI regression, with select_first before confirm."
+      },
+      {
+        "round": 3,
+        "finding": "Status UI test depended on host ADB and broke GPUI deterministic scheduler",
+        "fix": "Correct deterministic pending-refresh fixture, preserving every existing assertion and dedicated device tests."
+      }
+    ]
+  },
+  "code_commits": [
+    "ead1bbc7e8ad47702cdb1aeef2da46689043045c",
+    "c992461ee337253cca680554f2c18e1bced8c7e3"
+  ],
+  "completion_status": "blocked",
+  "completion_reason": "Scoped implementation, eight reference ports, Android tests, Clippy, app build and five reviews pass. Required full-workspace suite failed from disk exhaustion before tests; task is not complete or merged.",
+  "source_snapshot_files": [
+    {
+      "path": "crates/android_tools/src/project_model.rs",
+      "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+    },
+    {
+      "path": "crates/android_tools/src/project_model.gradle",
+      "sha256": "c8d4b8fa7bd9a33c1b933378040d853327228c24878f2889869c46d2016ec943"
+    },
+    {
+      "path": "crates/android_tools/examples/project_model_probe.rs",
+      "sha256": "f633657b9c0d9c6f09b1806c5cc73eafe53e3750d93b892486304f1bbe197236"
+    },
+    {
+      "path": "script/test-android-project-model",
+      "sha256": "d9b020a72119ff37dd3155236d852e40ef332da1b6eba5d6e90bdefaf00341dc"
+    },
+    {
+      "path": "crates/android_ui/src/android_ui.rs",
+      "sha256": "848df158385b7c39e4822d6528a5d4db4c0bb8de6785b6f8cbf9ccae86f6bfee"
+    },
+    {
+      "path": "crates/android_ui/src/android_status.rs",
+      "sha256": "9aa1a7584a750c77b31a9455d3e7fc73ff3ab9c7c913862264b5ab881d07f411"
+    }
+  ]
+}

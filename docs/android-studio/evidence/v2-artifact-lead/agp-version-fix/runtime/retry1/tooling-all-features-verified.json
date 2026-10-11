@@ -1,0 +1,292 @@
+{
+  "tested_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 12.527030425000703,
+  "log_sha256": "c9eca62d12ffb102df9265842c124a13fb4a17735194927cfe93369d8423b163",
+  "passed": 231,
+  "failed": 0,
+  "ignored": 0,
+  "filtered": 0,
+  "groups": [
+    [
+      85,
+      0,
+      0,
+      0
+    ],
+    [
+      30,
+      0,
+      0,
+      0
+    ],
+    [
+      20,
+      0,
+      0,
+      0
+    ],
+    [
+      27,
+      0,
+      0,
+      0
+    ],
+    [
+      21,
+      0,
+      0,
+      0
+    ],
+    [
+      29,
+      0,
+      0,
+      0
+    ],
+    [
+      19,
+      0,
+      0,
+      0
+    ]
+  ],
+  "whole_source_binding_count": 4712,
+  "normal_Cargo_artifacts": [
+    {
+      "fresh": true,
+      "executable": null,
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/build/android_tools-88ac8e7b0afbc2ed/build-script-build"
+      ],
+      "target": "build-script-build",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/build.rs",
+      "profile_test": false,
+      "target_kind": [
+        "custom-build"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/build/android_tools-88ac8e7b0afbc2ed/build-script-build",
+          "bytes": 16497768,
+          "sha256": "89a33bb9b93f5241c7824d7d9e17c69f97796814ce21ec83a7ad74e701fdfdab"
+        }
+      ]
+    },
+    {
+      "fresh": false,
+      "executable": null,
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rmeta"
+      ],
+      "target": "android_tools",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/src/android_tools.rs",
+      "profile_test": false,
+      "target_kind": [
+        "lib"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+          "bytes": 313404942,
+          "sha256": "fb116a4b204c848ccd86ada7f50cd90ea81f8fba98511a067b72dd5d99c712b4"
+        },
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rmeta",
+          "bytes": 3633612,
+          "sha256": "0d45f606598b74f1d431b85a9cf4b40737e16d84fc877709a06f1bf3a707d4a8"
+        }
+      ]
+    },
+    {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394"
+      ],
+      "target": "project_view_preferences_reference",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/tests/project_view_preferences_reference.rs",
+      "profile_test": true,
+      "target_kind": [
+        "test"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394",
+          "bytes": 2688608,
+          "sha256": "6536b82eb884be246a4ef49567b8af35f9287777cbc45cd4b88e09dd340b2bd5"
+        }
+      ]
+    },
+    {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/examples/project_tree_facts_probe",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/examples/project_tree_facts_probe"
+      ],
+      "target": "project_tree_facts_probe",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/examples/project_tree_facts_probe.rs",
+      "profile_test": false,
+      "target_kind": [
+        "example"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/examples/project_tree_facts_probe",
+          "bytes": 4394288,
+          "sha256": "c0a11edd1f6717c080513e30197ed56644cd795547cf543a0a30966484a17971"
+        }
+      ]
+    },
+    {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/generated_artifacts-9c69bd945c98b6fd",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/generated_artifacts-9c69bd945c98b6fd"
+      ],
+      "target": "generated_artifacts",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/tests/generated_artifacts.rs",
+      "profile_test": true,
+      "target_kind": [
+        "test"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/generated_artifacts-9c69bd945c98b6fd",
+          "bytes": 6104528,
+          "sha256": "04e3af20c4a49ee0071f390001e04c25251fa20a808292fe59d4103a0cc787fa"
+        }
+      ]
+    },
+    {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950"
+      ],
+      "target": "project_tree_component",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/tests/project_tree_component.rs",
+      "profile_test": true,
+      "target_kind": [
+        "test"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950",
+          "bytes": 4380072,
+          "sha256": "9e367251b090de6b2ef58a8147e4716aab5b879fcc68e9c2e52c169f1733f45b"
+        }
+      ]
+    },
+    {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_facts-d85b15a481942004",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/project_tree_facts-d85b15a481942004"
+      ],
+      "target": "project_tree_facts",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/tests/project_tree_facts.rs",
+      "profile_test": true,
+      "target_kind": [
+        "test"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/project_tree_facts-d85b15a481942004",
+          "bytes": 6460592,
+          "sha256": "ebdc1ca1a43a2960d8cbd67f8d92e8d34b7fe5a7656fd0ad4d98bd034132d0d2"
+        }
+      ]
+    },
+    {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_adapter-1a256a69c3619b4e",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/project_tree_adapter-1a256a69c3619b4e"
+      ],
+      "target": "project_tree_adapter",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/tests/project_tree_adapter.rs",
+      "profile_test": true,
+      "target_kind": [
+        "test"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/project_tree_adapter-1a256a69c3619b4e",
+          "bytes": 6525496,
+          "sha256": "21e77091a3c469a1026e9b90c7d75106c79b7bbb189ba717ce123c234f4063ca"
+        }
+      ]
+    },
+    {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/examples/project_model_probe",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/examples/project_model_probe"
+      ],
+      "target": "project_model_probe",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/examples/project_model_probe.rs",
+      "profile_test": false,
+      "target_kind": [
+        "example"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/examples/project_model_probe",
+          "bytes": 4345728,
+          "sha256": "825325e0f922dd8af53b52f93c6fce30a286ee6867dbcdc0b02f5ee778179c07"
+        }
+      ]
+    },
+    {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5"
+      ],
+      "target": "gradle_import_reference",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/tests/gradle_import_reference.rs",
+      "profile_test": true,
+      "target_kind": [
+        "test"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5",
+          "bytes": 3063608,
+          "sha256": "4f1b6b06bfc1e3e8abf035c9529e6c27d0fec41ad68e7a621a974c7b17e5bf97"
+        }
+      ]
+    },
+    {
+      "fresh": false,
+      "executable": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2"
+      ],
+      "target": "android_tools",
+      "source": "/workspace/android-studio-source-providers/crates/android_tools/src/android_tools.rs",
+      "profile_test": true,
+      "target_kind": [
+        "lib"
+      ],
+      "file_bindings": [
+        {
+          "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+          "bytes": 303989152,
+          "sha256": "1f206c099eca9788f7b314fa21220c3b195a3d01c2cbf4fed567dac0603829d5"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_ui/Cargo.toml",
+    "-p",
+    "android_ui",
+    "--lib",
+    "tabbed_toolbar::tests::can_select_tab_by_index",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 1.0234202680003364,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-can select tab by index.log",
+    "sha256": "d43df0b25c09b6882039b15307d81720580dfb02c4d99387698fe75804f0f772"
+  }
+}

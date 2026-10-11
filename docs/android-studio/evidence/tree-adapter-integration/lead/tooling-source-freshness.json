@@ -1,0 +1,14 @@
+{
+  "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "source_bytes_unchanged": true,
+  "roots": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "f4b033f8aa13b8141f706a1f24455c1d5500940ef5e4adffa46edd8baf1f2891"
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_adapter.rs",
+      "sha256": "5e5927568f42cdc1247d88d16f3fdf1dcbb7b427e24b4d6240928378b6e5f79e"
+    }
+  ]
+}

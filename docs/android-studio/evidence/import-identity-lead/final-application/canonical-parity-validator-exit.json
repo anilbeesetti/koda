@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/tmp/android-studio-junit4-integration/xtask",
+    "android-parity",
+    "--repository",
+    "/workspace/android-studio-import-identity-getters",
+    "--reference-root",
+    "/workspace/android-studio-references"
+  ],
+  "exit_code": 0,
+  "raw_log_sha256": "d36d3229331febf3b06cac59ec45a72913525ec6ffd2c61af326ca5c1d48b011",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "selected": 95,
+  "ported": 20,
+  "adapted": 16,
+  "unported": 59,
+  "passing": 36,
+  "failing": 0,
+  "not_run": 59,
+  "exhaustive_census_complete": false,
+  "mirror_coverage_verified": false,
+  "new_original_credit": 0
+}

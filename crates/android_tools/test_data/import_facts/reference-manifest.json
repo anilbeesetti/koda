@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "records": [
+    {
+      "path": "references/gradle/subprojects/core-api/src/main/java/org/gradle/api/Project.java",
+      "source_path": "subprojects/core-api/src/main/java/org/gradle/api/Project.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "sha256": "f259911bfff32f46c24d9bd1f6f3a577a92c599b9cd995a6e3f852367dd14346",
+      "bytes": 80144,
+      "role": "gradle_build_tree_path",
+      "repository": "gradle"
+    },
+    {
+      "path": "references/gradle/platforms/ide/tooling-api/src/main/java/org/gradle/tooling/model/gradle/BasicGradleProject.java",
+      "source_path": "platforms/ide/tooling-api/src/main/java/org/gradle/tooling/model/gradle/BasicGradleProject.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "sha256": "b7dadfd9fa270fddd4b5d3c85d4ccab634ebddf99d0a3ec52a0b536c0bfadf18",
+      "bytes": 2676,
+      "role": "gradle_build_tree_path",
+      "repository": "gradle"
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleProjectUtil.java",
+      "source_path": "plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleProjectUtil.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "49312efd6eb1e7c71230d4e4e6b76a0cf48988846c506724864d8266b629b616",
+      "bytes": 1604,
+      "role": "reference_gradle_identity_path",
+      "repository": "intellij-core"
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/model/projectModel/GradleExternalProjectModelBuilder.java",
+      "source_path": "plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/model/projectModel/GradleExternalProjectModelBuilder.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "b1255e9ced2ef115f3ce453d1b34d80429a1c63a76daa79575c448ceb4fb0b38",
+      "bytes": 3291,
+      "role": "gradle_idea_name",
+      "repository": "intellij-core"
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "source_path": "plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "cc99f71aa146656368b5c62fc88746747ae19d3ecd5b87fea63ef17a6214c6eb",
+      "bytes": 61012,
+      "role": "gradle_idea_name",
+      "repository": "intellij-core"
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleIdeaPluginUtil.java",
+      "source_path": "plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleIdeaPluginUtil.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "9f47198c20cc8e8b124c45c18fe9c9094f14079c05e17724aca920ec017d879a",
+      "bytes": 3533,
+      "role": "gradle_idea_name",
+      "repository": "intellij-core"
+    }
+  ],
+  "supplementary_reference": true,
+  "original_test_credit": 0
+}

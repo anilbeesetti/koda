@@ -1,0 +1,19 @@
+{
+  "command": [
+    "gradle",
+    "--no-daemon",
+    "--console=plain",
+    "--rerun-tasks",
+    "--init-script",
+    "/workspace/android-studio-integration/crates/android_tools/src/project_model.gradle",
+    ":app:createAssetsDemoDebug",
+    ":app:createAssetsDemoRelease",
+    "kodaAndroidProjectModel"
+  ],
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "project": "/workspace/android-studio-artifacts/assets-generation-facts/project",
+  "exit_code": 0,
+  "elapsed_seconds": 12.628764121000131,
+  "exporter_sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+  "log_sha256": "ef384b2aaeedddc0d2a38a4f0e1d3640d408379e64fb32ec1b29b1794f16e6e0"
+}

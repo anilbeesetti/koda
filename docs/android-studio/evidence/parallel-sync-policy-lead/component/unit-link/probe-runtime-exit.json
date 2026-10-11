@@ -1,0 +1,9 @@
+{
+  "command": [
+    "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/probe-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.007884638995165005,
+  "log": "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/probe-runtime.log",
+  "log_sha256": "09397da5e4ca42fcbaf16c84742601a70d34414c8b5322b8cb52bbfd7d1bbc2a"
+}

@@ -1,0 +1,47 @@
+[android-studio-task/1-module-presentation-integration 905012f118] android: record captured presentation component verification
+ Date: Wed Oct 7 22:23:22 2026 +0000
+ 46 files changed, 13631 insertions(+), 6 deletions(-)
+ create mode 100644 docs/android-studio/evidence/module-presentation/actual-checks-summary.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/all-features-tests.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/all-features-tests.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/code-review-round1.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/code-review-runtime-addendum.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/compiler-source-elf-proof.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/current-worktree-compiler-freshness.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/exact-root-pathspec-equivalence.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/final-metadata-source-equivalence.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/format-check.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/format-check.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/frozen-policy-executable.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/library-build.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/library-build.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/long-name-exact-per-pid.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/long-name-exact-per-pid.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/manifest.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/original-preservation-after-initial.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/original-preservation-before.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/owned-process-closure.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/performance-review-round1.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/performance-review-runtime-addendum.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/quality-review-final-metadata.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/quality-review-round1-verification.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/quality-review-round1.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/quality-review-runtime-addendum.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/quality-review-runtime-verification.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/retained-validation-runner-sources.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/review-source-round1.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/root-authorized-prior-unit-elf-retirement.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/runtime-lease-release.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/source-commit.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/strict-clippy.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/strict-clippy.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/string-util-rt-source.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/string-util-source.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/ui-review-round1.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/ui-review-runtime-addendum.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/ux-review-round1.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/ux-review-runtime-addendum.log
+ create mode 100644 docs/android-studio/evidence/module-presentation/ux-runtime-review-verification.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/whole-product-source-after.json
+ create mode 100644 docs/android-studio/evidence/module-presentation/whole-product-source-before.json
+ create mode 100644 docs/android-studio/module-presentation-task-report.md

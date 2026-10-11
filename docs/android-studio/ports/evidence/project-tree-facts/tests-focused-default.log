@@ -1,0 +1,18 @@
+   Compiling android_tools v0.1.0 (/workspace/android-studio-project-tree-facts/crates/android_tools)
+error[E0621]: explicit lifetime required in the type of `module`
+   --> crates/android_tools/src/project_tree.rs:661:24
+    |
+661 |           Some(names) => names
+    |  ________________________^
+662 | |             .get(&(module.id.as_str(), path.into()))
+663 | |             .map(|provider| provider.as_deref())
+664 | |             .context("Entry provider fact is unavailable"),
+    | |__________________________________________________________^ lifetime `'a` required
+    |
+help: add explicit lifetime `'a` to the type of `module`
+    |
+656 |     module: &'a TreeModule,
+    |              ++
+
+For more information about this error, try `rustc --explain E0621`.
+error: could not compile `android_tools` (lib) due to 1 previous error

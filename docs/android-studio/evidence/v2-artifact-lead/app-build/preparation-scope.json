@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "current_commit": "b23db3d372fe3e9d01c223bdce3e65e55ff2b186",
+  "current_repository": "/workspace/android-studio-source-providers",
+  "previous_reviewed_directory": "/workspace/android-studio-artifacts/tree-adapter-integration/app-build",
+  "allowed_substitutions": [
+    "external artifact directory",
+    "checkout root",
+    "koda-tree-adapter label to koda-v2-artifact"
+  ],
+  "no_changed_flags_or_source_exclusions": true,
+  "files": [
+    {
+      "path": "cc.rs",
+      "previous_sha256": "7081a4f8bfd70930a9402f4e4749fd4c807f9c9a60d855d14f71d17347124b83",
+      "current_sha256": "acbf2e889b39f01f4558e2c70e5e005560707b0d2cba3a5ccc09650e901a2dd7"
+    },
+    {
+      "path": "retry-app-build.py",
+      "previous_sha256": "d417525830ac45a3ebe66bfd41aaa637853260f03a1bbdc1b9d417d13ba86345",
+      "current_sha256": "9c7630037c0dc5e8f6e4dcc22fecd91b7896a492fdbf468aa79f1aba38d72042"
+    },
+    {
+      "path": "guarded-app-build.py",
+      "previous_sha256": "1c635c66d34adef3d0334018afe160349dbaba7181961dbaf7d9c10bd89b6e59",
+      "current_sha256": "0c38f38eabc10b5ebff9cb988c648652299032253130cef329aaaeecf972c2ad"
+    },
+    {
+      "path": "probe.rs",
+      "previous_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+      "current_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_files": 4743,
+  "old_recipes_and_failed_logs_retained_at": "/workspace/android-studio-artifacts/import-identity-getters/quality-ownership-cleanup/runtime",
+  "Root_explicit_runtime_recipe": "fresh LIB FIRST root+tests mtime only/byteunchanged, normalCargo allfeatures; next ALLTESTS refresh tests only, noforce lib-root between normal stages",
+  "all_original_test_commands_assertions_counts_unchanged": true,
+  "fresh_library_expected_actual_absolute_WT_false_in_LIB_stage": true,
+  "alltest_library_may_fresh_true_only_if_same_source_lib_compiler_and_hash_bound": true,
+  "all10test_ELFs_expected_fresh_false_current_absolute_WT": true,
+  "unit_and_UI_oldoutputs_Root_scoped_cache_retirement_with_prior_actual_execution_bindings": true,
+  "temporary_original_source_no_mutations": true,
+  "repeat_gates_started": false,
+  "otherStages": "strict ./script/clippy, fmt, freshdefaultUI thenactualSDK; no helperPATH/outputredirect unless reviewed Rootcapacity fallback required"
+}

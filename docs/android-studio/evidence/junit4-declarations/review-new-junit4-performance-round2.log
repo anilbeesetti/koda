@@ -1,0 +1,9 @@
+**PASS — static scoped performance review; no remaining findings.**
+
+Reviewed source SHA: `68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f`.
+
+Both prior P2 findings are corrected. The selection shares one 16 MiB metadata budget, charged before owned-string construction and copying. The complete expanded class header is checked before annotation copies, owner construction and header allocation.
+
+The JSON writer checks lengths before reserving or extending its buffer, uses capped geometric growth and includes the newline within the limit. Generation errors propagate before publication staging. Existing structural limits remain separate from the string budget.
+
+The six appended regression groups meaningfully cover amplification, cumulative accounting, boundaries, escaping and publication failure by inspection. **The 114 tests and CLI checks remain unexecuted**, so this verdict makes no runtime, benchmark or task-completion claim. Prior FAIL and design PASS reports remain historical evidence. Census completion stays false, runtime counts null and parity credit zero.

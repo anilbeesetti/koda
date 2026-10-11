@@ -1,0 +1,7 @@
+{
+  "path": "/workspace/android-studio-source-providers/crates/android_tools/src/android_tools.rs",
+  "before": "8ee120d91a3dc26ebe235e14bce66074f3b1504901e43915729a43d353e7f2df",
+  "after": "8ee120d91a3dc26ebe235e14bce66074f3b1504901e43915729a43d353e7f2df",
+  "bytesUnchanged": true,
+  "reason": "Invalidate shared target freshness across worktrees for the current source and embedded fixture/bridge paths"
+}

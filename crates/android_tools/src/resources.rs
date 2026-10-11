@@ -20,13 +20,46 @@ fn non_transitive_default() -> bool {
     true
 }
 
+#[cfg(test)]
+mod exporter_contract_tests {
+    use super::*;
+
+    #[test]
+    fn external_resources_preserve_exporter_public_resources_and_legacy_alias() -> Result<()> {
+        let dependency: ExternalResources = serde_json::from_value(serde_json::json!({
+            "namespace": "external.library", "path": "/aar/res",
+            "publicResources": "/aar/public.txt"
+        }))?;
+        assert_eq!(
+            dependency.public_resources,
+            Some(PathBuf::from("/aar/public.txt"))
+        );
+        let serialized = serde_json::to_value(&dependency)?;
+        assert_eq!(serialized["publicResources"], "/aar/public.txt");
+        assert!(serialized.get("public_resources").is_none());
+        let legacy: ExternalResources = serde_json::from_value(serde_json::json!({
+            "namespace": "external.library", "path": "/aar/res",
+            "public_resources": "/aar/legacy-public.txt"
+        }))?;
+        assert_eq!(
+            legacy.public_resources,
+            Some(PathBuf::from("/aar/legacy-public.txt"))
+        );
+        let absent: ExternalResources = serde_json::from_value(serde_json::json!({
+            "namespace": "external.library", "path": "/aar/res"
+        }))?;
+        assert!(absent.public_resources.is_none());
+        Ok(())
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ExternalResources {
     pub namespace: String,
     pub path: PathBuf,
     #[serde(default)]
     pub manifest: Option<PathBuf>,
-    #[serde(default)]
+    #[serde(default, rename = "publicResources", alias = "public_resources")]
     pub public_resources: Option<PathBuf>,
 }
 
@@ -68,8 +101,19 @@ pub struct Resolution<'a> {
 }
 
 pub fn resolve<'a>(declarations: &'a [Declaration], symbol: &Symbol) -> Resolution<'a> {
+    resolve_entries(declarations, symbol)
+}
+
+/// Resolve the already-indexed entries for a symbol using the same overlay rules.
+pub fn resolve_entries<'a>(
+    declarations: impl IntoIterator<Item = &'a Declaration>,
+    symbol: &Symbol,
+) -> Resolution<'a> {
     let mut groups: BTreeMap<&str, Vec<&Declaration>> = BTreeMap::new();
-    for declaration in declarations.iter().filter(|entry| &entry.symbol == symbol) {
+    for declaration in declarations
+        .into_iter()
+        .filter(|entry| &entry.symbol == symbol)
+    {
         groups
             .entry(&declaration.qualifier)
             .or_default()
@@ -115,20 +159,120 @@ static SHADOW: LazyLock<Regex> = LazyLock::new(|| {
 
 // Preserve byte positions while hiding comments and strings, including Kotlin nested comments.
 pub fn code_mask(text: &str) -> String {
+    let mut checkpoint = || Ok(());
+    code_mask_controlled(
+        text,
+        &mut ResourceParserControl::new(&mut checkpoint, usize::MAX),
+    )
+    .expect("unlimited resource code mask")
+}
+
+/// Cooperative cancellation and a separate bound for repeated whole-document
+/// passes. The record limit alone cannot bound alias or binding analysis.
+pub struct ResourceParserControl<'a> {
+    checkpoint: &'a mut dyn FnMut() -> Result<()>,
+    remaining_work: usize,
+    owned: ResourceOwnedBudget,
+    pub binding_checks: usize,
+}
+
+impl<'a> ResourceParserControl<'a> {
+    pub fn new(checkpoint: &'a mut dyn FnMut() -> Result<()>, work: usize) -> Self {
+        Self {
+            checkpoint,
+            remaining_work: work,
+            owned: ResourceOwnedBudget::new(128 * 1024 * 1024),
+            binding_checks: 0,
+        }
+    }
+
+    pub fn checkpoint(&mut self) -> Result<()> {
+        (self.checkpoint)()
+    }
+
+    pub fn with_owned_byte_limit(mut self, bytes: usize) -> Self {
+        self.owned = ResourceOwnedBudget::new(bytes);
+        self
+    }
+
+    pub fn charge_owned(&mut self, bytes: impl IntoIterator<Item = usize>) -> Result<()> {
+        self.checkpoint()?;
+        self.owned.charge(bytes)
+    }
+
+    pub fn charge_work(&mut self, bytes: usize) -> Result<()> {
+        self.checkpoint()?;
+        self.remaining_work = self
+            .remaining_work
+            .checked_sub(bytes)
+            .ok_or_else(|| anyhow::anyhow!("Android resource parser exceeds work limit"))?;
+        Ok(())
+    }
+
+    fn charge(&mut self, bytes: usize) -> Result<()> {
+        self.charge_work(bytes)
+    }
+}
+
+/// Preflight duplicated owned payload before allocation. Record/count limits
+/// separately bound container overhead; this is not a total process RSS claim.
+pub struct ResourceOwnedBudget {
+    remaining: usize,
+}
+
+impl ResourceOwnedBudget {
+    pub fn new(bytes: usize) -> Self {
+        Self { remaining: bytes }
+    }
+
+    pub fn charge(&mut self, bytes: impl IntoIterator<Item = usize>) -> Result<()> {
+        let failure = || {
+            anyhow::Error::new(ResourceLimitExceeded)
+                .context("Android resource scan exceeds owned byte limit")
+        };
+        let bytes = bytes.into_iter().try_fold(0_usize, |sum, bytes| {
+            sum.checked_add(bytes).ok_or_else(failure)
+        })?;
+        self.remaining = self.remaining.checked_sub(bytes).ok_or_else(failure)?;
+        Ok(())
+    }
+}
+
+pub fn code_mask_controlled(text: &str, control: &mut ResourceParserControl<'_>) -> Result<String> {
+    control.charge(text.len())?;
+    control.charge_owned([text.len()])?;
     let input = text.as_bytes();
-    let mut output = input.to_vec();
+    let mut output = Vec::new();
+    output.try_reserve_exact(input.len())?;
+    for chunk in input.chunks(4096) {
+        control.checkpoint()?;
+        output.extend_from_slice(chunk);
+    }
     let mut offset = 0;
+    let mut next_checkpoint = 0;
     while offset < input.len() {
+        if offset >= next_checkpoint {
+            control.checkpoint()?;
+            next_checkpoint = offset.saturating_add(4096);
+        }
         let start = offset;
         if input.get(offset..offset + 2) == Some(b"//") {
             offset += 2;
             while offset < input.len() && input[offset] != b'\n' {
+                if offset >= next_checkpoint {
+                    control.checkpoint()?;
+                    next_checkpoint = offset.saturating_add(4096);
+                }
                 offset += 1;
             }
         } else if input.get(offset..offset + 2) == Some(b"/*") {
             offset += 2;
             let mut depth = 1;
             while offset < input.len() && depth > 0 {
+                if offset >= next_checkpoint {
+                    control.checkpoint()?;
+                    next_checkpoint = offset.saturating_add(4096);
+                }
                 if input.get(offset..offset + 2) == Some(b"/*") {
                     depth += 1;
                     offset += 2;
@@ -144,6 +288,10 @@ pub fn code_mask(text: &str) -> String {
             let triple = input.get(offset..offset + 3) == Some(b"\"\"\"");
             offset += if triple { 3 } else { 1 };
             while offset < input.len() {
+                if offset >= next_checkpoint {
+                    control.checkpoint()?;
+                    next_checkpoint = offset.saturating_add(4096);
+                }
                 if triple && input.get(offset..offset + 3) == Some(b"\"\"\"") {
                     offset += 3;
                     break;
@@ -162,34 +310,88 @@ pub fn code_mask(text: &str) -> String {
             offset += 1;
             continue;
         }
-        for byte in &mut output[start..offset] {
-            if *byte != b'\n' && *byte != b'\r' {
-                *byte = b' ';
+        for chunk in output[start..offset].chunks_mut(4096) {
+            control.checkpoint()?;
+            for byte in chunk {
+                if *byte != b'\n' && *byte != b'\r' {
+                    *byte = b' ';
+                }
             }
         }
     }
     // Every non-ASCII byte removed from a string/comment was replaced, and code was left intact.
-    String::from_utf8(output).expect("mask preserves UTF-8")
+    Ok(String::from_utf8(output).expect("mask preserves UTF-8"))
+}
+
+/// A bounded parser fails rather than returning incomplete navigation results.
+#[derive(Debug)]
+pub struct ResourceLimitExceeded;
+
+impl std::fmt::Display for ResourceLimitExceeded {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str("Android resource scan exceeds symbol limit")
+    }
+}
+
+impl std::error::Error for ResourceLimitExceeded {}
+
+fn check_resource_limit(count: usize, limit: usize) -> Result<()> {
+    if count >= limit {
+        return Err(ResourceLimitExceeded.into());
+    }
+    Ok(())
 }
 
 pub fn code_references(text: &str) -> Vec<Reference> {
-    let mask = code_mask(text);
-    let imports = IMPORT
-        .captures_iter(&mask)
-        .filter_map(|capture| {
-            Some((
-                capture
-                    .name("alias")
-                    .map_or("R", |alias| alias.as_str())
-                    .to_owned(),
-                capture.name("namespace")?.as_str().to_owned(),
-            ))
-        })
-        .collect::<BTreeMap<_, _>>();
+    code_references_limited(text, usize::MAX).expect("unlimited resource reference parser")
+}
+
+fn code_references_limited(text: &str, limit: usize) -> Result<Vec<Reference>> {
+    let mut checkpoint = || Ok(());
+    code_references_controlled(
+        text,
+        limit,
+        &mut ResourceParserControl::new(&mut checkpoint, usize::MAX),
+    )
+}
+
+pub fn code_references_controlled(
+    text: &str,
+    limit: usize,
+    control: &mut ResourceParserControl<'_>,
+) -> Result<Vec<Reference>> {
+    let mask = code_mask_controlled(text, control)?;
+    code_references_from_mask(&mask, limit, control, &mut BTreeMap::new())
+}
+
+fn code_references_from_mask(
+    mask: &str,
+    limit: usize,
+    control: &mut ResourceParserControl<'_>,
+    bindings: &mut BTreeMap<String, bool>,
+) -> Result<Vec<Reference>> {
+    control.charge(mask.len())?;
+    let mut imports = BTreeMap::new();
+    for capture in IMPORT.captures_iter(&mask) {
+        control.checkpoint()?;
+        let Some(namespace) = capture.name("namespace") else {
+            continue;
+        };
+        let alias = capture.name("alias").map_or("R", |alias| alias.as_str());
+        if !imports.contains_key(alias) {
+            check_resource_limit(imports.len(), limit)?;
+        }
+        control.charge_owned([alias.len(), namespace.as_str().len()])?;
+        imports.insert(alias.to_owned(), namespace.as_str().to_owned());
+    }
+    control.charge_owned([mask.len()])?;
     let stripped = IMPORT.replace_all(&mask, "");
-    let ambiguous = SHADOW.is_match(&stripped) || binding_shadow(&stripped, "R");
+    control.charge(stripped.len())?;
+    let ambiguous =
+        SHADOW.is_match(&stripped) || binding_shadow_cached(&stripped, "R", control, bindings)?;
     let mut references = Vec::new();
     for capture in REFERENCE.captures_iter(&mask) {
+        control.checkpoint()?;
         let (Some(found), Some(kind), Some(name)) =
             (capture.get(0), capture.name("kind"), capture.name("name"))
         else {
@@ -197,20 +399,26 @@ pub fn code_references(text: &str) -> Vec<Reference> {
         };
         let namespace = capture
             .name("namespace")
-            .map(|value| value.as_str().to_owned())
-            .or_else(|| imports.get("R").cloned());
-        if ambiguous
-            || namespace.as_ref().is_some_and(|namespace| {
-                namespace
-                    .split('.')
-                    .next()
-                    .is_some_and(|first| binding_shadow(&stripped, first))
-            })
-        {
+            .map(|value| value.as_str())
+            .or_else(|| imports.get("R").map(String::as_str));
+        let shadowed =
+            if let Some(first) = namespace.and_then(|namespace| namespace.split('.').next()) {
+                binding_shadow_cached(&stripped, first, control, bindings)?
+            } else {
+                false
+            };
+        if ambiguous || shadowed {
             continue;
         }
+        check_resource_limit(references.len(), limit)?;
+        control.charge_owned([
+            namespace.map_or(0, str::len),
+            kind.as_str().len(),
+            name.as_str().len(),
+            std::mem::size_of::<Reference>() * 2,
+        ])?;
         references.push(Reference {
-            namespace,
+            namespace: namespace.map(str::to_owned),
             kind: kind.as_str().into(),
             name: name.as_str().into(),
             range: found.range(),
@@ -219,7 +427,7 @@ pub fn code_references(text: &str) -> Vec<Reference> {
         });
     }
     for (alias, namespace) in imports.iter().filter(|(alias, _)| *alias != "R") {
-        if binding_shadow(&stripped, alias) {
+        if binding_shadow_cached(&stripped, alias, control, bindings)? {
             continue;
         }
         let expression = Regex::new(&format!(
@@ -227,12 +435,21 @@ pub fn code_references(text: &str) -> Vec<Reference> {
             regex::escape(alias)
         ));
         let Ok(expression) = expression else { continue };
+        control.charge(mask.len())?;
         for capture in expression.captures_iter(&mask) {
+            control.checkpoint()?;
             let (Some(found), Some(kind), Some(name)) =
                 (capture.get(0), capture.get(1), capture.get(2))
             else {
                 continue;
             };
+            check_resource_limit(references.len(), limit)?;
+            control.charge_owned([
+                namespace.len(),
+                kind.as_str().len(),
+                name.as_str().len(),
+                std::mem::size_of::<Reference>() * 2,
+            ])?;
             references.push(Reference {
                 namespace: Some(namespace.clone()),
                 kind: kind.as_str().into(),
@@ -244,7 +461,7 @@ pub fn code_references(text: &str) -> Vec<Reference> {
         }
     }
     references.sort_by_key(|reference| reference.range.start);
-    references
+    Ok(references)
 }
 
 pub fn code_namespace(text: &str, fallback: &str) -> String {
@@ -254,83 +471,171 @@ pub fn code_namespace(text: &str, fallback: &str) -> String {
         .map_or_else(|| fallback.into(), |value| value.as_str().into())
 }
 
+/// Return only an explicitly declared package; callers can retain a shared
+/// fallback namespace instead of allocating it once per source document.
+pub fn code_declared_namespace_controlled(
+    text: &str,
+    control: &mut ResourceParserControl<'_>,
+) -> Result<Option<String>> {
+    let mask = code_mask_controlled(text, control)?;
+    let Some(namespace) = PACKAGE.captures(&mask).and_then(|capture| capture.get(1)) else {
+        return Ok(None);
+    };
+    control.charge_owned([namespace.as_str().len()])?;
+    Ok(Some(namespace.as_str().to_owned()))
+}
+
 fn binding_shadow(mask: &str, identifier: &str) -> bool {
     let identifier = regex::escape(identifier);
     Regex::new(&format!(r"\b(?:enum|class|object|interface|typealias|val|var|fun|record)\s+{identifier}\b|\b{identifier}\s*(?::|->|\bin\b|[,);}}{{=>(])|\b[A-Za-z_$][\w$<>\[\]?]*\s+{identifier}\s*(?:[=;,:)]|$)"))
         .is_ok_and(|expression| expression.is_match(mask))
 }
 
+fn binding_shadow_cached(
+    mask: &str,
+    identifier: &str,
+    control: &mut ResourceParserControl<'_>,
+    bindings: &mut BTreeMap<String, bool>,
+) -> Result<bool> {
+    control.checkpoint()?;
+    if let Some(value) = bindings.get(identifier) {
+        return Ok(*value);
+    }
+    control.charge(mask.len())?;
+    control.binding_checks += 1;
+    let value = binding_shadow(mask, identifier);
+    bindings.insert(identifier.to_owned(), value);
+    Ok(value)
+}
+
 pub fn rename_code_is_unambiguous(text: &str) -> bool {
-    let mask = code_mask(text);
+    let mut checkpoint = || Ok(());
+    rename_code_is_unambiguous_controlled(
+        text,
+        usize::MAX,
+        &mut ResourceParserControl::new(&mut checkpoint, usize::MAX),
+    )
+    .expect("unlimited resource rename parser")
+}
+
+pub fn rename_code_is_unambiguous_controlled(
+    text: &str,
+    limit: usize,
+    control: &mut ResourceParserControl<'_>,
+) -> Result<bool> {
+    code_rename_analysis_controlled(text, limit, control).map(|(safe, _)| safe)
+}
+
+pub fn code_rename_analysis_controlled(
+    text: &str,
+    limit: usize,
+    control: &mut ResourceParserControl<'_>,
+) -> Result<(bool, Vec<Reference>)> {
+    let mask = code_mask_controlled(text, control)?;
+    control.charge(mask.len())?;
     let stripped = IMPORT.replace_all(&mask, "");
-    let imports = IMPORT.captures_iter(&mask).collect::<Vec<_>>();
     let mut names = BTreeMap::new();
-    for import in imports {
+    let mut bindings = BTreeMap::new();
+    for import in IMPORT.captures_iter(&mask) {
+        control.checkpoint()?;
+        check_resource_limit(names.len(), limit)?;
         let alias = import.name("alias").map_or("R", |alias| alias.as_str());
         let Some(namespace) = import.name("namespace") else {
-            return false;
+            return Ok((false, Vec::new()));
         };
-        if names.insert(alias, namespace.as_str()).is_some() || binding_shadow(&stripped, alias) {
-            return false;
+        if names.insert(alias, namespace.as_str()).is_some()
+            || binding_shadow_cached(&stripped, alias, control, &mut bindings)?
+        {
+            return Ok((false, Vec::new()));
         }
     }
-    if binding_shadow(&stripped, "R") || SHADOW.is_match(&stripped) {
-        return false;
+    control.charge(stripped.len())?;
+    if binding_shadow_cached(&stripped, "R", control, &mut bindings)? || SHADOW.is_match(&stripped)
+    {
+        return Ok((false, Vec::new()));
     }
+    control.charge(stripped.len())?;
     if Regex::new(r"\b(?:extends|implements)\b|\b(?:class|object|interface)\b[^{};]*:")
         .is_ok_and(|expression| expression.is_match(&stripped))
     {
-        return false;
+        return Ok((false, Vec::new()));
     }
-    if !rename_scopes_are_unambiguous(&stripped) {
-        return false;
+    if !rename_scopes_are_unambiguous_controlled(&stripped, control)? {
+        return Ok((false, Vec::new()));
     }
+    control.charge(stripped.len())?;
     if Regex::new(r"(?m)^\s*import[^\n;]*(?:\bR\b|\*)")
         .is_ok_and(|expression| expression.is_match(&stripped))
     {
-        return false;
+        return Ok((false, Vec::new()));
     }
-    for reference in code_references(text) {
-        if let Some(namespace) = reference.namespace
+    let references = code_references_from_mask(&mask, limit, control, &mut bindings)?;
+    for reference in &references {
+        if let Some(namespace) = &reference.namespace
             && let Some(first) = namespace.split('.').next()
-            && binding_shadow(&stripped, first)
+            && binding_shadow_cached(&stripped, first, control, &mut bindings)?
         {
-            return false;
+            return Ok((false, Vec::new()));
         }
     }
-    !code_rename_has_unsupported_syntax(text)
+    control.charge(text.len())?;
+    Ok((!code_rename_has_unsupported_syntax(text), references))
 }
 
 pub fn code_rename_has_unsupported_syntax(text: &str) -> bool {
     text.contains("\\u") || text.contains('`') || text.contains("\"\"\"") || text.contains("${")
 }
 
-fn rename_scopes_are_unambiguous(mask: &str) -> bool {
+fn rename_scopes_are_unambiguous_controlled(
+    mask: &str,
+    control: &mut ResourceParserControl<'_>,
+) -> Result<bool> {
     // A lexer cannot prove bindings supplied by implicit receivers, extension
     // receivers or anonymous superclasses. Accept only recognizable declaration
     // and control-flow blocks; other scopes need language-server verification.
     let unsupported = Regex::new(
         r"\bnew\b[^{};]*\{|\bcontext\s*\(|\b(?:fun|val|var)\s+(?:<[^>{}]*>\s*)?[\w<>?]+\s*\.",
     );
+    control.charge(mask.len())?;
     if unsupported.is_ok_and(|expression| expression.is_match(mask)) {
-        return false;
+        return Ok(false);
     }
     let Ok(block) = Regex::new(
         r"(?:\b(?:class|interface|enum|object)\s+\w+[^{};\n]*|\bfun\s+\w+\s*\([^{};=]*\)(?:\s*:\s*[^{};=]+)?|\b(?:void|int|long|boolean|byte|short|float|double|char|[A-Z]\w*(?:<[^{};]*>)?(?:\[\])?)\s+\w+\s*\([^{};]*\)|\b(?:if|for|while|when|switch|catch|synchronized)\s*\([^{};]*\)|\b(?:else|try|finally|do))\s*$",
     ) else {
-        return false;
+        return Ok(false);
     };
-    mask.match_indices('{').all(|(offset, _)| {
+    for (offset, _) in mask.match_indices('{') {
+        control.checkpoint()?;
         let start = mask[..offset]
             .char_indices()
             .rev()
             .nth(512)
             .map_or(0, |(offset, _)| offset);
-        block.is_match(&mask[start..offset])
-    })
+        if !block.is_match(&mask[start..offset]) {
+            return Ok(false);
+        }
+    }
+    Ok(true)
 }
 
 pub fn xml_rename_is_unambiguous(text: &str, kind: &str, name: &str) -> Result<bool> {
+    let mut checkpoint = || Ok(());
+    xml_rename_is_unambiguous_controlled(
+        text,
+        kind,
+        name,
+        &mut ResourceParserControl::new(&mut checkpoint, usize::MAX),
+    )
+}
+
+pub fn xml_rename_is_unambiguous_controlled(
+    text: &str,
+    kind: &str,
+    name: &str,
+    control: &mut ResourceParserControl<'_>,
+) -> Result<bool> {
+    control.charge(text.len())?;
     let expression = Regex::new(&format!(
         r"[@?]\+?(?:[\w.]+:)?{}/{}\b|\b\w*R\s*\.\s*{}\s*\.\s*{}\b",
         regex::escape(kind),
@@ -339,6 +644,7 @@ pub fn xml_rename_is_unambiguous(text: &str, kind: &str, name: &str) -> Result<b
         regex::escape(name)
     ))?;
     let mut reader = Reader::from_str(text);
+    let mut encoded_reference = None;
     let check = |value: &[u8]| -> Result<bool> {
         let raw = std::str::from_utf8(value)?;
         let decoded = quick_xml::escape::unescape(raw)?;
@@ -347,6 +653,7 @@ pub fn xml_rename_is_unambiguous(text: &str, kind: &str, name: &str) -> Result<b
             && !(expression.is_match(&decoded) && decoded != raw))
     };
     loop {
+        control.checkpoint()?;
         match reader.read_event()? {
             Event::Start(element) | Event::Empty(element) => {
                 for attribute in element.attributes() {
@@ -366,8 +673,16 @@ pub fn xml_rename_is_unambiguous(text: &str, kind: &str, name: &str) -> Result<b
             }
             Event::GeneralRef(_) => {
                 // Numeric/entity references split text events in quick-xml.
-                let decoded = quick_xml::escape::unescape(text)?;
-                if expression.is_match(&decoded) {
+                let matches = if let Some(matches) = encoded_reference {
+                    matches
+                } else {
+                    control.charge(text.len())?;
+                    let decoded = quick_xml::escape::unescape(text)?;
+                    let matches = expression.is_match(&decoded);
+                    encoded_reference = Some(matches);
+                    matches
+                };
+                if matches {
                     return Ok(false);
                 }
             }
@@ -378,19 +693,42 @@ pub fn xml_rename_is_unambiguous(text: &str, kind: &str, name: &str) -> Result<b
 }
 
 pub fn references(text: &str, xml: bool) -> Result<Vec<Reference>> {
+    references_limited(text, xml, usize::MAX)
+}
+
+/// Parse references without allocating more than the supplied record limit.
+pub fn references_limited(text: &str, xml: bool, limit: usize) -> Result<Vec<Reference>> {
+    let mut checkpoint = || Ok(());
+    references_controlled(
+        text,
+        xml,
+        limit,
+        &mut ResourceParserControl::new(&mut checkpoint, usize::MAX),
+    )
+}
+
+pub fn references_controlled(
+    text: &str,
+    xml: bool,
+    limit: usize,
+    control: &mut ResourceParserControl<'_>,
+) -> Result<Vec<Reference>> {
     if !xml {
-        return Ok(code_references(text));
+        return code_references_controlled(text, limit, control);
     }
+    control.charge(text.len())?;
     let mut reader = Reader::from_str(text);
     let mut references = Vec::new();
     let mut named_usages = Vec::new();
-    let mut append = |value: &[u8]| -> Result<()> {
+    let reference_count = std::cell::Cell::new(0_usize);
+    let mut append = |value: &[u8], control: &mut ResourceParserControl<'_>| -> Result<()> {
         let start = (value.as_ptr() as usize)
             .checked_sub(text.as_ptr() as usize)
             .filter(|offset| offset + value.len() <= text.len())
             .ok_or_else(|| anyhow::anyhow!("Resource XML value is outside its input"))?;
         let value = std::str::from_utf8(value)?;
         for capture in REFERENCE.captures_iter(value) {
+            control.checkpoint()?;
             let (Some(found), Some(kind), Some(name)) = (
                 capture.get(0),
                 capture.name("xml_kind"),
@@ -401,6 +739,8 @@ pub fn references(text: &str, xml: bool) -> Result<Vec<Reference>> {
             if value.trim() != found.as_str() {
                 continue;
             }
+            check_resource_limit(reference_count.get(), limit)?;
+            reference_count.set(reference_count.get() + 1);
             references.push(Reference {
                 namespace: capture
                     .name("xml_namespace")
@@ -415,6 +755,7 @@ pub fn references(text: &str, xml: bool) -> Result<Vec<Reference>> {
         Ok(())
     };
     loop {
+        control.checkpoint()?;
         match reader.read_event()? {
             Event::Start(element) | Event::Empty(element) => {
                 if element.name().as_ref() == b"public" {
@@ -431,6 +772,8 @@ pub fn references(text: &str, xml: bool) -> Result<Vec<Reference>> {
                         let start = (name.value.as_ref().as_ptr() as usize)
                             .checked_sub(text.as_ptr() as usize)
                             .context("Public resource attribute outside input")?;
+                        check_resource_limit(reference_count.get(), limit)?;
+                        reference_count.set(reference_count.get() + 1);
                         named_usages.push(Reference {
                             namespace: None,
                             kind: String::from_utf8(kind.value.to_vec())?,
@@ -442,13 +785,16 @@ pub fn references(text: &str, xml: bool) -> Result<Vec<Reference>> {
                     }
                 }
                 for attribute in element.attributes() {
-                    append(attribute?.value.as_ref())?;
+                    append(attribute?.value.as_ref(), control)?;
                 }
             }
-            Event::Text(value) => append(value.as_ref())?,
+            Event::Text(value) => append(value.as_ref(), control)?,
             Event::Eof => break,
             _ => {}
         }
+    }
+    if references.len().saturating_add(named_usages.len()) > limit {
+        return Err(ResourceLimitExceeded.into());
     }
     references.extend(named_usages);
     Ok(references)
@@ -458,10 +804,36 @@ pub fn declarations(
     text: &str,
     namespace: &str,
 ) -> Result<Vec<(String, String, Range<usize>, Range<usize>)>> {
+    declarations_limited(text, namespace, usize::MAX)
+}
+
+/// Parse declarations without allocating more than the supplied record limit.
+pub fn declarations_limited(
+    text: &str,
+    namespace: &str,
+    limit: usize,
+) -> Result<Vec<(String, String, Range<usize>, Range<usize>)>> {
+    let mut checkpoint = || Ok(());
+    declarations_controlled(
+        text,
+        namespace,
+        limit,
+        &mut ResourceParserControl::new(&mut checkpoint, usize::MAX),
+    )
+}
+
+pub fn declarations_controlled(
+    text: &str,
+    namespace: &str,
+    limit: usize,
+    control: &mut ResourceParserControl<'_>,
+) -> Result<Vec<(String, String, Range<usize>, Range<usize>)>> {
+    control.charge(text.len())?;
     let mut reader = Reader::from_str(text);
     let mut result = Vec::new();
     let mut stack = Vec::new();
     loop {
+        control.checkpoint()?;
         let start = reader.buffer_position() as usize;
         let event = reader.read_event()?;
         match event {
@@ -501,6 +873,7 @@ pub fn declarations(
                         && !name.contains(':')
                         && !kind.is_empty()
                     {
+                        check_resource_limit(result.len(), limit)?;
                         result.push((kind, name, start..reader.buffer_position() as usize, range));
                     }
                 }
@@ -1008,18 +1381,60 @@ mod tests {
 }
 
 pub fn completion_reference(text: &str, offset: usize, xml: bool) -> Option<Reference> {
-    let text = text.get(..offset)?;
+    let mut checkpoint = || Ok(());
+    completion_context_controlled(
+        text,
+        offset,
+        xml,
+        "",
+        &mut ResourceParserControl::new(&mut checkpoint, usize::MAX),
+    )
+    .ok()
+    .flatten()
+    .map(|(reference, _)| reference)
+}
+
+/// Both completion and the document package are derived from one code mask.
+pub fn completion_context_controlled(
+    text: &str,
+    offset: usize,
+    xml: bool,
+    fallback: &str,
+    control: &mut ResourceParserControl<'_>,
+) -> Result<Option<(Reference, String)>> {
+    if text.get(..offset).is_none() {
+        return Ok(None);
+    }
     let mask = if xml {
+        let text = &text[..offset];
+        control.charge(text.len())?;
         if text
             .rfind("<!--")
             .is_some_and(|start| text.rfind("-->").is_none_or(|end| start > end))
         {
-            return None;
+            return Ok(None);
         }
         text.to_owned()
     } else {
-        code_mask(text)
+        code_mask_controlled(text, control)?
     };
+    control.charge(mask.len())?;
+    let namespace = if xml {
+        fallback.to_owned()
+    } else {
+        PACKAGE
+            .captures(&mask)
+            .and_then(|capture| capture.get(1))
+            .map_or_else(|| fallback.to_owned(), |value| value.as_str().to_owned())
+    };
+    control.charge(offset)?;
+    Ok(
+        completion_reference_from_mask(&mask[..offset], xml)
+            .map(|reference| (reference, namespace)),
+    )
+}
+
+fn completion_reference_from_mask(mask: &str, xml: bool) -> Option<Reference> {
     let expression = if xml {
         r"[@?](?:\+)?(?:(?<namespace>[\w.]+):)?(?<kind>\w+)/(?<name>[\w.]*)$"
     } else {
@@ -1060,6 +1475,56 @@ pub fn completion_reference(text: &str, offset: usize, xml: bool) -> Option<Refe
         name_range: name.range(),
         declaration: false,
     })
+}
+
+pub fn reference_context_controlled(
+    text: &str,
+    offset: usize,
+    xml: bool,
+    fallback: &str,
+    limit: usize,
+    control: &mut ResourceParserControl<'_>,
+) -> Result<Option<(Reference, String)>> {
+    let (mut references, namespace) = if xml {
+        (
+            references_controlled(text, true, limit, control)?,
+            fallback.to_owned(),
+        )
+    } else {
+        let mask = code_mask_controlled(text, control)?;
+        control.charge(mask.len())?;
+        let namespace = PACKAGE
+            .captures(&mask)
+            .and_then(|capture| capture.get(1))
+            .map_or_else(|| fallback.to_owned(), |value| value.as_str().to_owned());
+        (
+            code_references_from_mask(&mask, limit, control, &mut BTreeMap::new())?,
+            namespace,
+        )
+    };
+    if xml {
+        for (kind, name, range, name_range) in
+            declarations_controlled(text, &namespace, limit, control)?
+        {
+            control.checkpoint()?;
+            check_resource_limit(references.len(), limit)?;
+            references.push(Reference {
+                namespace: None,
+                kind,
+                name: name.replace('.', "_"),
+                range,
+                name_range,
+                declaration: true,
+            });
+        }
+    }
+    Ok(references
+        .into_iter()
+        .find(|reference| {
+            (reference.name_range.start <= offset && offset <= reference.name_range.end)
+                || reference.range.contains(&offset)
+        })
+        .map(|reference| (reference, namespace)))
 }
 
 #[derive(Clone, Debug)]
@@ -1124,6 +1589,14 @@ pub fn manifest_attributes(text: &str) -> Result<Vec<ManifestAttribute>> {
 }
 
 pub fn public_symbols(text: &str) -> Result<std::collections::BTreeSet<(String, String)>> {
+    public_symbols_limited(text, usize::MAX)
+}
+
+/// Bound public metadata independently from resource declarations.
+pub fn public_symbols_limited(
+    text: &str,
+    limit: usize,
+) -> Result<std::collections::BTreeSet<(String, String)>> {
     let mut reader = Reader::from_str(text);
     let mut symbols = std::collections::BTreeSet::new();
     loop {
@@ -1137,10 +1610,14 @@ pub fn public_symbols(text: &str) -> Result<std::collections::BTreeSet<(String, 
                 let kind = entries.iter().find(|entry| entry.key.as_ref() == b"type");
                 let name = entries.iter().find(|entry| entry.key.as_ref() == b"name");
                 if let (Some(kind), Some(name)) = (kind, name) {
-                    symbols.insert((
+                    let symbol = (
                         String::from_utf8(kind.value.to_vec())?,
                         String::from_utf8(name.value.to_vec())?.replace('.', "_"),
-                    ));
+                    );
+                    if !symbols.contains(&symbol) {
+                        check_resource_limit(symbols.len(), limit)?;
+                        symbols.insert(symbol);
+                    }
                 }
             }
             Event::Eof => return Ok(symbols),
@@ -1156,4 +1633,214 @@ pub fn code_rename_has_unsupported_templates(text: &str, kind: &str, name: &str)
         regex::escape(name)
     ));
     text.contains("${") && expression.is_ok_and(|expression| expression.is_match(text))
+}
+
+#[cfg(test)]
+mod resource_parser_worker_tests {
+    use super::*;
+
+    #[test]
+    fn repeated_qualified_references_check_each_binding_once() -> Result<()> {
+        let text = "val value = library.R.string.title\n".repeat(2_000);
+        let mut checkpoint = || Ok(());
+        let mut control = ResourceParserControl::new(&mut checkpoint, 16 * text.len());
+        let references = code_references_controlled(&text, 2_000, &mut control)?;
+        assert_eq!(references.len(), 2_000);
+        assert_eq!(control.binding_checks, 2); // R and library, independently of usage count.
+        assert!(
+            references
+                .iter()
+                .all(|reference| reference.namespace.as_deref() == Some("library"))
+        );
+        let shadowed = format!("fun use(library: Local) = Unit\n{text}");
+        let mut checkpoint = || Ok(());
+        let mut control = ResourceParserControl::new(&mut checkpoint, 16 * shadowed.len());
+        assert!(code_references_controlled(&shadowed, 2_000, &mut control)?.is_empty());
+        assert_eq!(control.binding_checks, 2);
+        Ok(())
+    }
+
+    #[test]
+    fn rename_analysis_reuses_the_same_binding_cache_and_references() -> Result<()> {
+        let text = format!(
+            "fun read() {{\n{}\n}}",
+            "val value = library.R.string.title\n".repeat(1_000)
+        );
+        let mut checkpoint = || Ok(());
+        let mut control = ResourceParserControl::new(&mut checkpoint, 32 * text.len());
+        let (safe, references) = code_rename_analysis_controlled(&text, 1_000, &mut control)?;
+        assert!(safe);
+        assert_eq!(references.len(), 1_000);
+        assert_eq!(control.binding_checks, 2);
+        let unsafe_text = "fun read(R: Local) = R.string.title";
+        let mut checkpoint = || Ok(());
+        let mut control = ResourceParserControl::new(&mut checkpoint, 32 * unsafe_text.len());
+        assert!(!code_rename_analysis_controlled(unsafe_text, 1_000, &mut control)?.0);
+        Ok(())
+    }
+
+    #[test]
+    fn distinct_aliases_have_an_independent_whole_document_work_budget() {
+        let text = (0..100)
+            .map(|index| format!("import library{index}.R as Alias{index}\n"))
+            .collect::<String>();
+        let mut checkpoint = || Ok(());
+        let mut control = ResourceParserControl::new(&mut checkpoint, 8 * text.len());
+        let error = code_references_controlled(&text, 1_000, &mut control).unwrap_err();
+        assert!(error.to_string().contains("parser exceeds work limit"));
+        assert!(control.binding_checks < 100);
+    }
+
+    #[test]
+    fn cancellation_interrupts_a_single_large_comment_before_reference_or_rename_results() {
+        let text = format!(
+            "/*{}*/\nval value = library.R.string.title",
+            "x".repeat(1_000_000)
+        );
+        for rename in [false, true] {
+            let mut calls = 0;
+            let mut checkpoint = || {
+                calls += 1;
+                anyhow::ensure!(calls < 8, "request cancelled");
+                Ok(())
+            };
+            let mut control = ResourceParserControl::new(&mut checkpoint, 32 * text.len());
+            let result = if rename {
+                code_rename_analysis_controlled(&text, 1_000, &mut control)
+                    .map(|(_, references)| references)
+            } else {
+                code_references_controlled(&text, 1_000, &mut control)
+            };
+            assert!(
+                result
+                    .unwrap_err()
+                    .to_string()
+                    .contains("request cancelled")
+            );
+            assert_eq!(calls, 8);
+        }
+    }
+
+    #[test]
+    fn completion_context_masks_once_and_cancels_before_returning_a_cursor_result() -> Result<()> {
+        let text = "package example.app\nval value = library.R.string.ti";
+        let mut checkpoint = || Ok(());
+        let mut control = ResourceParserControl::new(&mut checkpoint, 3 * text.len());
+        let (reference, namespace) =
+            completion_context_controlled(text, text.len(), false, "fallback", &mut control)?
+                .expect("Resource cursor");
+        assert_eq!(namespace, "example.app");
+        assert_eq!(reference.namespace.as_deref(), Some("library"));
+        assert_eq!(reference.name, "ti");
+        let text = format!("/*{}*/\n{text}", "x".repeat(1_000_000));
+        let mut calls = 0;
+        let mut checkpoint = || {
+            calls += 1;
+            anyhow::ensure!(calls < 8, "request cancelled");
+            Ok(())
+        };
+        let mut control = ResourceParserControl::new(&mut checkpoint, 4 * text.len());
+        assert!(
+            completion_context_controlled(&text, text.len(), false, "fallback", &mut control)
+                .unwrap_err()
+                .to_string()
+                .contains("request cancelled")
+        );
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod resource_scan_limit_tests {
+    use super::*;
+
+    #[test]
+    fn bounded_resource_parsers_keep_exact_results_or_fail_without_truncation() -> Result<()> {
+        let values = "<resources><string name='first'>First</string><string name='second'>Second</string></resources>";
+        let full = declarations(values, "app")?;
+        assert_eq!(declarations_limited(values, "app", 2)?, full);
+        assert!(
+            declarations_limited(values, "app", 1)
+                .unwrap_err()
+                .is::<ResourceLimitExceeded>()
+        );
+        let layout = "<view first='@+id/first' second='@+id/second'/>";
+        assert_eq!(references_limited(layout, true, 2)?.len(), 2);
+        assert!(
+            references_limited(layout, true, 1)
+                .unwrap_err()
+                .is::<ResourceLimitExceeded>()
+        );
+        let code = "val first = R.string.first; val second = R.string.second";
+        assert_eq!(references_limited(code, false, 2)?.len(), 2);
+        assert!(
+            references_limited(code, false, 1)
+                .unwrap_err()
+                .is::<ResourceLimitExceeded>()
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn bounded_public_metadata_keeps_duplicates_and_combined_xml_reference_limit() -> Result<()> {
+        let values = "<resources><public type='string' name='first'/><public type='string' name='first'/><public type='string' name='second'/></resources>";
+        assert_eq!(public_symbols_limited(values, 2)?, public_symbols(values)?);
+        assert!(
+            public_symbols_limited(values, 1)
+                .unwrap_err()
+                .is::<ResourceLimitExceeded>()
+        );
+        let mixed = "<resources><public type='string' name='first'/><string name='second'>@string/first</string></resources>";
+        assert!(
+            references_limited(mixed, true, 1)
+                .unwrap_err()
+                .is::<ResourceLimitExceeded>()
+        );
+        assert_eq!(references_limited(mixed, true, 2)?.len(), 2);
+        assert!(declarations_limited("<resources/>", "app", 0)?.is_empty());
+        assert!(references_limited("<view/>", true, 0)?.is_empty());
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod resource_owned_payload_tests {
+    use super::*;
+
+    #[test]
+    fn imported_and_aliased_namespaces_fail_the_owned_budget_without_partial_results() -> Result<()>
+    {
+        let namespace = "long_namespace".repeat(32);
+        for alias in ["R", "LibraryResources"] {
+            let import = if alias == "R" {
+                format!("import {namespace}.R\n")
+            } else {
+                format!("import {namespace}.R as {alias}\n")
+            };
+            let text = format!(
+                "{import}{}",
+                format!("val value = {alias}.string.title\n").repeat(12)
+            );
+            let mut checkpoint = || Ok(());
+            let mut control = ResourceParserControl::new(&mut checkpoint, 32 * text.len())
+                .with_owned_byte_limit(64 * 1024);
+            let full = code_references_controlled(&text, 12, &mut control)?;
+            assert_eq!(full.len(), 12, "{alias}");
+            assert!(
+                full.iter()
+                    .all(|reference| reference.namespace.as_deref() == Some(namespace.as_str())),
+                "{alias}"
+            );
+            let mut checkpoint = || Ok(());
+            let mut control = ResourceParserControl::new(&mut checkpoint, 32 * text.len())
+                .with_owned_byte_limit(4 * 1024);
+            let error = code_references_controlled(&text, 12, &mut control).unwrap_err();
+            assert!(error.is::<ResourceLimitExceeded>(), "{alias}: {error:#}");
+            assert!(
+                error.to_string().contains("owned byte limit"),
+                "{alias}: {error:#}"
+            );
+        }
+        Ok(())
+    }
 }

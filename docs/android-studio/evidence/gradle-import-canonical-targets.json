@@ -1,0 +1,329 @@
+{
+  "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+  "targets": [
+    {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_simple_gradle_project",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_simple_gradle_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/gradle-import-testImportSimpleGradleProject.log",
+          "sha256": "799d88e52678eaaf6243ce07948a6c70cc0dc6f79aa50106502ea2c45f3f3ffa"
+        }
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subprojects",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subprojects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/gradle-import-testImportSubprojects.log",
+          "sha256": "70358f681a56cb472bbc04d8f36d599e99a4775cf891123a6f4cc1f2a0ef3a75"
+        }
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subprojects_with_missing_submodule",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subprojects_with_missing_submodule",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/gradle-import-testImportSubProjectsWithMissingSubModule.log",
+          "sha256": "82a306f2311044f2822e2ea133b8b05c5540da514f581adae709e608f09e861d"
+        }
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "import_subproject_with_custom_location",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subproject_with_custom_location",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/gradle-import-testImportSubProjectWithCustomLocation.log",
+          "sha256": "a01db3cae45d732df67e3f272519e26b4c2d4a8503465d34ff150a594805e8ee"
+        }
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "required_projects",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "required_projects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/gradle-import-testRequiredProjects.log",
+          "sha256": "759b1fbf829b75f5c755798d9a8923f1665ea25282b1d7caee3acef5630400b4"
+        }
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "missing_required_projects",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "missing_required_projects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/gradle-import-testMissingRequiredProjects.log",
+          "sha256": "842b1c5d47e947569135ac251ab69a86517432e343ecb341153abac322593a5e"
+        }
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "missing_enclosing_project",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "missing_enclosing_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/gradle-import-testMissingEnclosingProject.log",
+          "sha256": "98f1ed872d32769dbfc7f0eaf5cc5ff7aab00873df0dcee11d17756723971dbe"
+        }
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "transitive_dependencies",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "transitive_dependencies",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/gradle-import-testTransitiveDependencies.log",
+          "sha256": "43ac55bfad56b932ea6a6d1a10082c492da40a3831be40b98547f20f5d680ab8"
+        }
+      }
+    },
+    {
+      "package": "android_tools",
+      "integration_target": "gradle_import_reference",
+      "test_name": "circular_dependencies",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/tests/gradle_import_reference.rs",
+        "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1"
+      },
+      "run": {
+        "tested_commit": "d5e045870bd2d74be8f623e2b6f1e69b37380f68",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "circular_dependencies",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/gradle-import-testCircularDependencies.log",
+          "sha256": "f543624577fe55c87b7fb0dcbabbbec40b65127a6767a5adf0452cac834e02dc"
+        }
+      }
+    }
+  ]
+}

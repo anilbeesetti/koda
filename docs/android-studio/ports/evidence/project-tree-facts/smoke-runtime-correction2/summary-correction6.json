@@ -1,0 +1,59 @@
+{
+  "source_manifest": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+  "raw_model": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/model-raw-correction5.json",
+  "decoded_model": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/rust-decoded-correction6.json",
+  "decoded_sha256": "1e1f6f82a7bea1008f8e19faf6655992fdf2ae3304c6155927ed81142526c7cc",
+  "captures": [
+    {
+      "variant": "redWideDebug",
+      "studio_main": [
+        "main",
+        "red",
+        "wide",
+        "redWide",
+        "debug",
+        "redWideDebug"
+      ],
+      "native_main": [
+        "main",
+        "wide",
+        "red",
+        "redWide",
+        "debug",
+        "redWideDebug"
+      ],
+      "shared_provider_candidates": [
+        "main",
+        "red",
+        "wide",
+        "debug"
+      ]
+    },
+    {
+      "variant": "redWideRelease",
+      "studio_main": [
+        "main",
+        "red",
+        "wide",
+        "redWide",
+        "release",
+        "redWideRelease"
+      ],
+      "native_main": [
+        "main",
+        "wide",
+        "red",
+        "redWide",
+        "release",
+        "redWideRelease"
+      ],
+      "shared_provider_candidates": [
+        "main",
+        "red",
+        "wide"
+      ]
+    }
+  ],
+  "probe_assertions": "Actual DSL orphan retained with original assets; Basic/variant orphan independently absent; inactive index assertion preserved; exact Studio/native flavor orders; selected release unit artifact absent but all-variant default test container retained; actual shared file first main provider",
+  "upstream_credit": 0
+}

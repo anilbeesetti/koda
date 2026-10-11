@@ -1,0 +1,13 @@
+{
+  "grant_from": "/root",
+  "grant": "Bounded exclusive Cargo lease after native closure; allfeatures241, freshlibrary, strict repositoryClippy, workspacefmt and exactoriginal; no automatic artifact deletion.",
+  "root_retirement_receipt": "/workspace/android-studio-artifacts/v2-artifact-integration/single-superseded-project-library-cache-retirement.json",
+  "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+  "retained_previous_tooling_library": {
+    "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+    "bytes": 313404942,
+    "sha256": "fb116a4b204c848ccd86ada7f50cd90ea81f8fba98511a067b72dd5d99c712b4"
+  },
+  "overlay_available_bytes": 710938624,
+  "tmp_available_bytes": 1510797312
+}

@@ -1,0 +1,89 @@
+# Independent UI review: runtime-evidence addendum
+
+Verdict: **PASS for the bounded captured module naming policy and its supplied runtime evidence**.
+No blocking UI finding. The earlier static UI verdict remains applicable because
+both reviewed source and supplemental test bytes are unchanged.
+
+Reviewer: `/root/module_presentation_audit/module_ui_review`.
+Reviewed at 2026-10-07 22:16 UTC.
+Worktree: `/workspace/android-studio-module-presentation`.
+Source commit: `5e4b752a057bff25d9e281a43ce4b71a8598406f`.
+Base: `0e15a3d2b6eff51451b5f30d4c62ab0edde608ab`.
+Policy SHA-256: `0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c`.
+Supplemental tests SHA-256: `9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924`.
+
+## Evidence independently checked
+
+Read `actual-checks-summary.json`, all four command receipts and raw logs,
+`compiler-source-elf-proof.json`, `current-worktree-compiler-freshness.json`,
+`frozen-policy-executable.json`, `source-commit.json`, the complete before/after
+source/Git snapshots, the exact Root pathspec-equivalence receipt, and the
+validation runner source. All four raw log hashes match their command receipts.
+
+The normal locked, unfiltered all-features `android_tools` run has seven successful
+suite summaries: 85 + 20 + 20 + 27 + 21 + 29 + 19 = **221 passed, 0 failed,
+0 ignored, 0 measured, 0 filtered out**. The module presentation suite's 20 individual
+`... ok` case names exactly match every supplemental case in the pinned selection.
+Those cases exercise distinct internal/display/holder/sort names, unavailable
+capture, root and nonroot labeling, null-versus-empty IDs, source-set precedence,
+trailing delimiters, raw path equality, Unicode/whitespace, holder fallback, and
+borrowed long names. No case was filtered out to obtain this result.
+
+The normal locked all-features library build, repository `./script/clippy --locked
+-p android_tools`, and full-workspace `cargo fmt --all -- --check` all have exit 0.
+The raw clippy log shows the script's strict effective invocation with release,
+all targets, all features, and `--deny warnings`. Formatting produced an empty log
+whose hash agrees with its successful receipt.
+
+I independently parsed the raw compiler-artifact records: all seven tested
+executables have the current worktree's manifest/source paths and `fresh: false`.
+The freshness receipt records only root mtime changes with unchanged source hashes,
+addressing the shared relative-dependency-cache risk. I checked the compiler
+records against the stored proof; I did not assume historical hashes of shared
+Cargo output paths still describe their present bytes after lease release.
+
+Instead, the retained policy executable was read directly, without executing it:
+`/tmp/module-presentation-verified-binaries/module-presentation-tests20`,
+1,642,216 bytes, SHA-256
+`6dcbba6ac91c0318aaa8cc7a459fd599a1d61eacbdd4ba4444b50b133f4726e4`.
+Its current bytes match the recorded fresh policy compiler artifact and frozen
+receipt. The executable was not rerun by this reviewer.
+
+The before/after snapshots are exactly equal for all **4,717** source bindings,
+Git index, and Git status. I independently rehashed each bound current source file,
+compared current index/status, and checked the file set using the recorded exact
+Root Git pathspecs. All checks agree; the exclusions were not widened. The current
+policy and tests also match the source commit and earlier frozen static review.
+The base-to-head path list contains only the policy/export, supplemental tests,
+attributed source/provenance fixtures, and direct task documentation/metadata.
+No app, project panel, GPUI, visual asset, theme, icon, or existing UI source changed.
+
+## What this establishes and what remains pending
+
+These results support the pure policy's captured display name, separate holder-group
+identity, and imported internal sort key against the previously reviewed pinned
+source calls. They do not establish live tree labels, actual on-screen sort order,
+visual styling, resizing, focus, keyboard navigation, loading/empty/error states,
+or Android-node test serialization. The `(Android)` test suffix remains a later
+node/UI responsibility and is not appended by this policy.
+
+The policy deliberately preserves empty reference labels. The existing tree adapter
+still rejects empty labels; its extension and edge tests remain unported. No
+invented fallback or passing supplemental case conceals that boundary. Authoritative
+getter capture, imported-name construction/collision handling, holder resolution,
+Kotlin/facet capability production, revision binding, tree publication, and project
+panel wiring are still absent from this bounded change.
+
+The 20 cases are supplemental source-derived cases and grant **zero new canonical
+reference-test credit**. The five original generated-tree workflows remain
+**unported/not_run**. The 221 component passes do not imply those original flows,
+full workspace tests, full live Android tree behavior, phase completion, or IDE
+completion.
+
+Root's matching full-app build, native/live affected-flow validation, and full
+workspace CI are **pending lead integration**. The repository `.rules` full-app
+and live-validation requirements remain open before protected merge/completion.
+No new tests, Cargo/Gradle commands, compiler, app, cache operations, or screenshots
+were executed by this reviewer. Only read-only source/evidence checks and this
+external report write were performed; no product, fixture, matrix, main, or
+protected-branch files were edited.

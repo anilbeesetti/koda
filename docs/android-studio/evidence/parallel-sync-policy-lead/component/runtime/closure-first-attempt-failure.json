@@ -1,0 +1,9 @@
+{
+  "action": "Read-only component evidence closure",
+  "failure": "AssertionError at manually copied unit ELF SHA; one substring was transcribed incorrectly",
+  "actual_preserved_unit_validation_receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/current-unit-link-validation.json",
+  "script_sha256": "7a7efe479e3e2cdd466e5396a648416db261f64216e057ef7f8761cbc2d96c74",
+  "source_or_runtime_mutated": false,
+  "closure_not_written": true,
+  "correction": "Read exact expected SHA/bytes/path from existing at-execution independently reviewed receipt instead of manually transcribing it."
+}

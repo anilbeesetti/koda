@@ -1,0 +1,18 @@
+{
+  "run_id": 37696260846,
+  "head_sha": "905012f11885a86c9e8e18710ead07897d941d40",
+  "all_three_jobs": "success",
+  "workspace_tests": {
+    "passed": 10500,
+    "failed": 0,
+    "pre_existing_skipped": 23,
+    "execution_seconds": 1099.69
+  },
+  "CI_synthetic_merge": "6ce178a20c755cdce04774bc56281c8bf647c7c2",
+  "CI_synthetic_tree": "ca7e3a82b6dcd83c756a40e6e74c57dcf9cdb796",
+  "synthetic_tree_equals_tested_source_tree": true,
+  "raw_log_bytes": 423527,
+  "raw_log_sha256": "c024922293e081b70fc05fc69dcfee16313c667ed53f310657451dd76f0a3a83",
+  "app_build_step": "success",
+  "local_native_and_exact_parity_gates": "pending"
+}

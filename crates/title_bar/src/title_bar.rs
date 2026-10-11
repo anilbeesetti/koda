@@ -463,18 +463,21 @@ impl TitleBar {
         let active_call = ActiveCall::global(cx);
 
         let platform_style = PlatformStyle::platform();
-        let application_menu = match platform_style {
-            PlatformStyle::Mac => {
-                if option_env!("ZED_USE_CROSS_PLATFORM_MENU").is_some() {
-                    Some(cx.new(|cx| ApplicationMenu::new(window, cx)))
-                } else {
-                    None
+        let application_menu =
+            match platform_style {
+                PlatformStyle::Mac => {
+                    if option_env!("ZED_USE_CROSS_PLATFORM_MENU").is_some() {
+                        Some(cx.new(|cx| {
+                            ApplicationMenu::new_for_workspace(workspace.weak_handle(), window, cx)
+                        }))
+                    } else {
+                        None
+                    }
                 }
-            }
-            PlatformStyle::Linux | PlatformStyle::Windows => {
-                Some(cx.new(|cx| ApplicationMenu::new(window, cx)))
-            }
-        };
+                PlatformStyle::Linux | PlatformStyle::Windows => Some(cx.new(|cx| {
+                    ApplicationMenu::new_for_workspace(workspace.weak_handle(), window, cx)
+                })),
+            };
 
         let mut subscriptions = Vec::new();
         subscriptions.push(

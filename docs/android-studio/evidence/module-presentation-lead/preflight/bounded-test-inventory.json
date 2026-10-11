@@ -1,0 +1,1794 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-10-07T21:02:41.770424+00:00",
+  "inventory_kind": "bounded static declaration inventory, not JUnit runtime census",
+  "canonical_new_parity_credit": 0,
+  "declarations": [
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedSourceFiles_lightClasses",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 103,
+      "body_end_line": 125,
+      "body_sha256": "9ee7aa0c8f5b96e84337c76d6a675cd1ac31b6c5409acb2c0f606467c53668a5",
+      "body": "{\n    projectRule.loadProject(SIMPLE_APPLICATION);\n\n    // Create BuildConfig.java in one of the generated source folders.\n    Module appModule = TestModuleUtil.findAppModule(projectRule.getProject());\n    GradleAndroidModel androidModel = GradleAndroidModel.get(appModule);\n    assertThat(androidModel).isNotNull();\n    Collection<File> generatedFolders = androidModel.getMainArtifact().getGeneratedSourceFolders();\n    assertThat(generatedFolders).isNotEmpty();\n\n    File buildConfigFolder = generatedFolders.stream().filter(f -> f.getPath().contains(\"buildConfig\")).findFirst().orElse(null);\n    assertThat(buildConfigFolder).isNotNull();\n    writeToFile(new File(buildConfigFolder, join(\"com\", \"application\", \"BuildConfig.java\")),\n                \"package com.application; public final class BuildConfig {}\");\n\n    refreshProjectFiles();\n    AndroidGradleTests.waitForSourceFolderManagerToProcessUpdates(projectRule.getProject());\n    myPane = createPane();\n    TestAndroidTreeStructure structure = new TestAndroidTreeStructure(projectRule.getProject(), projectRule.getFixture().getTestRootDisposable());\n\n    Set<List<String>> allNodes = getAllNodes(structure);\n    assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"java (generated)\", \"application\", \"BuildConfig\"));\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 109,
+          "text": "assertThat(androidModel).isNotNull();"
+        },
+        {
+          "line": 111,
+          "text": "assertThat(generatedFolders).isNotEmpty();"
+        },
+        {
+          "line": 114,
+          "text": "assertThat(buildConfigFolder).isNotNull();"
+        },
+        {
+          "line": 124,
+          "text": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"java (generated)\", \"application\", \"BuildConfig\"));"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedSourceFiles_lightClasses",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedResources",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 128,
+      "body_end_line": 183,
+      "body_sha256": "c0e75307d9e4eea7b219e0cbd0bc454a207eef1d1fa48f898576ba3a3d0281b2",
+      "body": "{\n    Function1<File, Unit> patch = (projectRoot) -> {\n      try {\n        Files.asCharSink(new File(projectRoot, \"app/build.gradle\"), StandardCharsets.UTF_8, FileWriteMode.APPEND)\n            .write(\n              \"\"\"\n\n                abstract class GenerateRes extends DefaultTask {\n                    @OutputDirectory\n                    abstract DirectoryProperty getOutputFolder()\n\n                    @TaskAction\n                    void taskAction() {\n                        def rawDir = new File(getOutputFolder().get().asFile, \"raw\")\n                        rawDir.mkdirs()\n                        new File(rawDir, \"sample_raw_resource\").write(\"sample text\")\n                    }\n                }\n\n                androidComponents {\n                    onVariants(selector().all()) { variant ->\n                        def generateResTask = tasks.register(\"generateMyResources_${variant.name}\", GenerateRes) {\n                            outputFolder.set(file(\"${buildDir}/generated/my_generated_resources/${variant.name}/res\"))\n                        }\n                        variant.sources.res.addGeneratedSourceDirectory(generateResTask, { it.getOutputFolder() })\n                    }\n                }\"\"\");\n      }\n      catch (Exception e) {\n        throw new RuntimeException(e);\n      }\n      return Unit.INSTANCE;\n    };\n    projectRule.loadProject(SIMPLE_APPLICATION, null, null, patch);\n\n    Module appModule = TestModuleUtil.findAppModule(projectRule.getProject());\n    GradleAndroidModel androidModel = GradleAndroidModel.get(appModule);\n    File generatedResourcesFolder = androidModel.getMainArtifact()\n      .getGeneratedResourceFolders()\n      .stream()\n      .filter(f -> f.getPath().contains(\"my_generated_resources\"))\n      .findFirst()\n      .orElse(null);\n    assertThat(generatedResourcesFolder).named(\"my_generated_resources folder\").isNotNull();\n    File resourceFile = FileUtils.join(generatedResourcesFolder, \"raw\", \"sample_raw_resource\");\n    Files.createParentDirs(resourceFile);\n    Files.write(\"\\nsample text\", resourceFile, StandardCharsets.UTF_8);\n\n    refreshProjectFiles();\n\n    myPane = createPane();\n    TestAndroidTreeStructure structure = new TestAndroidTreeStructure(projectRule.getProject(), projectRule.getFixture().getTestRootDisposable());\n\n    Set<List<String>> allNodes = getAllNodes(structure);\n    assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"res (generated)\", \"raw\", \"sample_raw_resource\"));\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 171,
+          "text": "assertThat(generatedResourcesFolder).named(\"my_generated_resources folder\").isNotNull();"
+        },
+        {
+          "line": 182,
+          "text": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"res (generated)\", \"raw\", \"sample_raw_resource\"));"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedResources",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGeneratedAssets",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 186,
+      "body_end_line": 240,
+      "body_sha256": "0685255aed8d4c23a4de957192489bd69a77a7ad0cc18f1908fb67bafb1a8cd0",
+      "body": "{\n    Function1<File, Unit> patch = (projectRoot) -> {\n      try {\n        Files.asCharSink(new File(projectRoot, \"app/build.gradle\"), StandardCharsets.UTF_8, FileWriteMode.APPEND)\n          .write(\n            \"\"\"\n\n             abstract class AssetGenerator extends DefaultTask {\n                 @OutputDirectory\n                 abstract DirectoryProperty getOutputDirectory();\n                 @TaskAction\n                 void run() {\n                     def outputFile = new File(getOutputDirectory().get().getAsFile(), \"foo.txt\")\n                     new FileWriter(outputFile).with {\n                         write(\"some text\")\n                         flush()\n                     }\n                 }\n             }\n             def writeAssetTask = tasks.register(\"createAssets\", AssetGenerator.class)\n             androidComponents {\n                 onVariants(selector().all(),  { variant ->\n                     variant.sources.assets.addGeneratedSourceDirectory(writeAssetTask, AssetGenerator::getOutputDirectory)\n                 })\n             }\"\"\");\n      }\n      catch (Exception e) {\n        throw new RuntimeException(e);\n      }\n      return Unit.INSTANCE;\n    };\n    projectRule.loadProject(SIMPLE_APPLICATION, null, null, patch);\n\n    Module appModule = TestModuleUtil.findAppModule(projectRule.getProject());\n    GradleAndroidModel androidModel = GradleAndroidModel.get(appModule);\n    File generatedAssetsFolder = androidModel.getMainArtifact()\n      .getGeneratedAssetFolders()\n      .stream()\n      .filter(f -> f.getPath().contains(\"createAssets\"))\n      .findFirst()\n      .orElse(null);\n    assertThat(generatedAssetsFolder).named(\"createAssets folder\").isNotNull();\n\n    File assetFile = FileUtils.join(generatedAssetsFolder, \"raw\", \"createAssets\");\n    Files.createParentDirs(assetFile);\n    Files.asCharSink(assetFile, StandardCharsets.UTF_8).write(\"\\nsample text\");\n\n    refreshProjectFiles();\n\n    myPane = createPane();\n    TestAndroidTreeStructure structure = new TestAndroidTreeStructure(projectRule.getProject(), projectRule.getFixture().getTestRootDisposable());\n\n    Set<List<String>> allNodes = getAllNodes(structure);\n    assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"assets (generated)\", \"raw\", \"createAssets\"));\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 227,
+          "text": "assertThat(generatedAssetsFolder).named(\"createAssets folder\").isNotNull();"
+        },
+        {
+          "line": 239,
+          "text": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"assets (generated)\", \"raw\", \"createAssets\"));"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGeneratedAssets",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testShowVisibilityIconsWhenOptionIsSelected",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 243,
+      "body_end_line": 250,
+      "body_sha256": "e030dd1a115910e7aa642917ba7ad5b032c340e5dbe55ce2525784bd42aa1545",
+      "body": "{\n    ProjectViewState projectViewState = projectRule.getProject().getService(ProjectViewState.class);\n    projectViewState.setShowVisibilityIcons(true);\n\n    myPane = createPane();\n    ProjectAbstractTreeStructureBase structure = myPane.createStructure();\n    assertThat(((ProjectViewSettings)structure).isShowVisibilityIcons()).isTrue();\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 249,
+          "text": "assertThat(((ProjectViewSettings)structure).isShowVisibilityIcons()).isTrue();"
+        }
+      ],
+      "status": "adapted",
+      "run_status": "passing",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testShowVisibilityIconsWhenOptionIsUnselected",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 253,
+      "body_end_line": 260,
+      "body_sha256": "755f04c6f5202586fdbac290af81ca0dfc51858d9be3c4f68bb2a5330058553c",
+      "body": "{\n    ProjectViewState projectViewState = projectRule.getProject().getService(ProjectViewState.class);\n    projectViewState.setShowVisibilityIcons(false);\n\n    myPane = createPane();\n    ProjectAbstractTreeStructureBase structure = myPane.createStructure();\n    assertThat(((ProjectViewSettings)structure).isShowVisibilityIcons()).isFalse();\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 259,
+          "text": "assertThat(((ProjectViewSettings)structure).isShowVisibilityIcons()).isFalse();"
+        }
+      ],
+      "status": "adapted",
+      "run_status": "passing",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testResourcesPropertiesInAndroidView",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 263,
+      "body_end_line": 274,
+      "body_sha256": "bf9a316fb7aef676c4b8688b159e8839c0ca4e1f42466df5553065a020870e13",
+      "body": "{\n    projectRule.loadProject(SIMPLE_APPLICATION);\n    FileUtils.createFile(new File(projectRule.getProject().getBasePath(), \"/app/src/main/res/resources.properties\"), \"\");\n\n    refreshProjectFiles();\n    AndroidGradleTests.waitForSourceFolderManagerToProcessUpdates(projectRule.getProject());\n    myPane = createPane();\n    TestAndroidTreeStructure structure = new TestAndroidTreeStructure(projectRule.getProject(), projectRule.getFixture().getTestRootDisposable());\n\n    Set<List<String>> allNodes = getAllNodes(structure);\n    assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"res\", \"resources.properties (main)\"));\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 273,
+          "text": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"res\", \"resources.properties (main)\"));"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testResourcesPropertiesInAndroidView",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testGoogleServicesJsonInAndroidView",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 277,
+      "body_end_line": 288,
+      "body_sha256": "1485bb1e87acb877c656ce66bb95213f28c2d18f5dd721331751ea6a396f09e4",
+      "body": "{\n    projectRule.loadProject(SIMPLE_APPLICATION);\n    FileUtils.createFile(new File(projectRule.getProject().getBasePath(), \"/app/google-services.json\"), \"\");\n\n    refreshProjectFiles();\n    AndroidGradleTests.waitForSourceFolderManagerToProcessUpdates(projectRule.getProject());\n    myPane = createPane();\n    TestAndroidTreeStructure structure = new TestAndroidTreeStructure(projectRule.getProject(), projectRule.getFixture().getTestRootDisposable());\n\n    Set<List<String>> allNodes = getAllNodes(structure);\n    assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"google-services.json\"));\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 287,
+          "text": "assertThat(allNodes).contains(Arrays.asList(\"app (Android)\", \"google-services.json\"));"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testGoogleServicesJsonInAndroidView",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefault",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 291,
+      "body_end_line": 357,
+      "body_sha256": "e7e8fedae5ad5863673f1b4c601e3d8910142f00affa939d9f54e61b238ef9dd",
+      "body": "{\n    IdeInfo ideInfo = Mockito.spy(IdeInfo.getInstance());\n    AndroidProjectViewSettingsImpl settings = new AndroidProjectViewSettingsImpl();\n    Project project = projectRule.getProject();\n    GradleProjectSystem mockGradleProjectSystem = Mockito.mock(GradleProjectSystem.class);\n    CommonAndroidUtil commonAndroidUtil = Mockito.mock(CommonAndroidUtil.class);\n    MockedStatic<CommonAndroidUtil> commonAndroidUtilMockedStatic = Mockito.mockStatic(CommonAndroidUtil.class);\n    commonAndroidUtilMockedStatic.when(CommonAndroidUtil::getInstance).thenReturn(commonAndroidUtil);\n    MockedStatic<ProjectSystemUtil> projectSystemUtilMockedStatic = Mockito.mockStatic(ProjectSystemUtil.class);\n    projectSystemUtilMockedStatic.when(() -> ProjectSystemUtil.getProjectSystem(project)).thenReturn(mockGradleProjectSystem);\n    when(mockGradleProjectSystem.isAndroidProjectViewSupported()).thenReturn(true);\n    when(commonAndroidUtil.isAndroidProject(project)).thenReturn(true);\n    myPane = createPane();\n\n    assertThat(myPane.isInitiallyVisible()).isTrue();\n\n    overrideForTest(StudioFlags.SHOW_DEFAULT_PROJECT_VIEW_SETTINGS, false, disposableRule.getDisposable());\n    assertThat(settings.isDefaultToProjectViewVisible()).isFalse();\n\n    overrideForTest(StudioFlags.SHOW_DEFAULT_PROJECT_VIEW_SETTINGS, true, disposableRule.getDisposable());\n    assertThat(settings.isDefaultToProjectViewVisible()).isTrue();\n    when(ideInfo.isAndroidStudio()).thenReturn(false);\n    when(ideInfo.isGameTools()).thenReturn(false);\n    assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault\").isFalse();\n\n    when(ideInfo.isAndroidStudio()).thenReturn(true);\n    when(ideInfo.isGameTools()).thenReturn(false);\n    assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isTrue();\n\n    when(ideInfo.isAndroidStudio()).thenReturn(false);\n    when(ideInfo.isGameTools()).thenReturn(true);\n    assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(GameTools)\").isTrue();\n\n    try (SystemPropertyOverrides override = new SystemPropertyOverrides()) {\n      override.setProperty(PROJECT_VIEW_DEFAULT_KEY, \"true\");\n      assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();\n      when(ideInfo.isAndroidStudio()).thenReturn(false);\n      when(ideInfo.isGameTools()).thenReturn(false);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(property)\").isFalse();\n\n      when(ideInfo.isAndroidStudio()).thenReturn(true);\n      when(ideInfo.isGameTools()).thenReturn(false);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio, property)\").isFalse();\n\n      when(ideInfo.isAndroidStudio()).thenReturn(false);\n      when(ideInfo.isGameTools()).thenReturn(true);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(GameTools, property)\").isFalse();\n\n      settings.setDefaultToProjectView(true);\n      override.setProperty(PROJECT_VIEW_DEFAULT_KEY, \"false\");\n      assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();\n      when(ideInfo.isAndroidStudio()).thenReturn(false);\n      when(ideInfo.isGameTools()).thenReturn(false);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(settings)\").isFalse();\n\n      when(ideInfo.isAndroidStudio()).thenReturn(true);\n      when(ideInfo.isGameTools()).thenReturn(false);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio, settings)\").isFalse();\n\n      when(ideInfo.isAndroidStudio()).thenReturn(false);\n      when(ideInfo.isGameTools()).thenReturn(true);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(GameTools, settings)\").isFalse();\n    }\n\n    commonAndroidUtilMockedStatic.close();\n    projectSystemUtilMockedStatic.close();\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 305,
+          "text": "assertThat(myPane.isInitiallyVisible()).isTrue();"
+        },
+        {
+          "line": 308,
+          "text": "assertThat(settings.isDefaultToProjectViewVisible()).isFalse();"
+        },
+        {
+          "line": 311,
+          "text": "assertThat(settings.isDefaultToProjectViewVisible()).isTrue();"
+        },
+        {
+          "line": 314,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault\").isFalse();"
+        },
+        {
+          "line": 318,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isTrue();"
+        },
+        {
+          "line": 322,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(GameTools)\").isTrue();"
+        },
+        {
+          "line": 326,
+          "text": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();"
+        },
+        {
+          "line": 329,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(property)\").isFalse();"
+        },
+        {
+          "line": 333,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio, property)\").isFalse();"
+        },
+        {
+          "line": 337,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(GameTools, property)\").isFalse();"
+        },
+        {
+          "line": 341,
+          "text": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();"
+        },
+        {
+          "line": 344,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(settings)\").isFalse();"
+        },
+        {
+          "line": 348,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio, settings)\").isFalse();"
+        },
+        {
+          "line": 352,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(GameTools, settings)\").isFalse();"
+        }
+      ],
+      "status": "adapted",
+      "run_status": "passing",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 360,
+      "body_end_line": 379,
+      "body_sha256": "a2f9c365f17fc8039f0a0bd3adf96367f6c4863a38b3d32639395f1a2a61bfb5",
+      "body": "{\n    IdeInfo ideInfo = Mockito.spy(IdeInfo.getInstance());\n    AndroidProjectViewSettingsImpl settings = new AndroidProjectViewSettingsImpl();\n    Project project = projectRule.getProject();\n    AndroidProjectSystem mockProjectSystem = Mockito.mock(AndroidProjectSystem.class);\n    MockedStatic<ProjectSystemUtil> projectSystemUtilMockedStatic = Mockito.mockStatic(ProjectSystemUtil.class);\n    projectSystemUtilMockedStatic.when(() -> ProjectSystemUtil.getProjectSystem(project)).thenReturn(mockProjectSystem);\n    CommonAndroidUtil commonAndroidUtil = Mockito.mock(CommonAndroidUtil.class);\n    MockedStatic<CommonAndroidUtil> commonAndroidUtilMockedStatic = Mockito.mockStatic(CommonAndroidUtil.class);\n    commonAndroidUtilMockedStatic.when(CommonAndroidUtil::getInstance).thenReturn(commonAndroidUtil);\n    when(mockProjectSystem.isAndroidProjectViewSupported()).thenReturn(false);\n    when(commonAndroidUtil.isAndroidProject(project)).thenReturn(true);\n    myPane = createPane();\n\n    assertThat(myPane.isInitiallyVisible()).isFalse();\n    assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault\").isFalse();\n\n    commonAndroidUtilMockedStatic.close();\n    projectSystemUtilMockedStatic.close();\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 374,
+          "text": "assertThat(myPane.isInitiallyVisible()).isFalse();"
+        },
+        {
+          "line": 375,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault\").isFalse();"
+        }
+      ],
+      "status": "adapted",
+      "run_status": "passing",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewNotVisibleInNonAndroidProject",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 382,
+      "body_end_line": 401,
+      "body_sha256": "5b0baf4e75678bd8ebb950610cbcb2a1a1a2a1abb69ba6469129002fb013911c",
+      "body": "{\n    IdeInfo ideInfo = Mockito.spy(IdeInfo.getInstance());\n    AndroidProjectViewSettingsImpl settings = new AndroidProjectViewSettingsImpl();\n    Project project = projectRule.getProject();\n    AndroidProjectSystem mockProjectSystem = Mockito.mock(AndroidProjectSystem.class);\n    MockedStatic<ProjectSystemUtil> projectSystemUtilMockedStatic = Mockito.mockStatic(ProjectSystemUtil.class);\n    projectSystemUtilMockedStatic.when(() -> ProjectSystemUtil.getProjectSystem(project)).thenReturn(mockProjectSystem);\n    CommonAndroidUtil commonAndroidUtil = Mockito.mock(CommonAndroidUtil.class);\n    MockedStatic<CommonAndroidUtil> commonAndroidUtilMockedStatic = Mockito.mockStatic(CommonAndroidUtil.class);\n    commonAndroidUtilMockedStatic.when(CommonAndroidUtil::getInstance).thenReturn(commonAndroidUtil);\n    when(mockProjectSystem.isAndroidProjectViewSupported()).thenReturn(true);\n    when(commonAndroidUtil.isAndroidProject(project)).thenReturn(false);\n    myPane = createPane();\n\n    assertThat(myPane.isInitiallyVisible()).isFalse();\n    assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault\").isFalse();\n\n    commonAndroidUtilMockedStatic.close();\n    projectSystemUtilMockedStatic.close();\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 396,
+          "text": "assertThat(myPane.isInitiallyVisible()).isFalse();"
+        },
+        {
+          "line": 397,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault\").isFalse();"
+        }
+      ],
+      "status": "adapted",
+      "run_status": "passing",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultCustomPropertyHandling",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 404,
+      "body_end_line": 442,
+      "body_sha256": "8f87d1cb91e57ab70127a682b46fc4e1e3b4dc808df87827d87c49be0334fd67",
+      "body": "{\n    Project project = projectRule.getProject();\n    IdeInfo ideInfo = Mockito.spy(IdeInfo.getInstance());\n    GradleProjectSystem mockGradleProjectSystem = Mockito.mock(GradleProjectSystem.class);\n    CommonAndroidUtil commonAndroidUtil = Mockito.mock(CommonAndroidUtil.class);\n    MockedStatic<ProjectSystemUtil> projectSystemUtilMockedStatic = Mockito.mockStatic(ProjectSystemUtil.class);\n    MockedStatic<CommonAndroidUtil> commonAndroidUtilMockedStatic = Mockito.mockStatic(CommonAndroidUtil.class);\n    projectSystemUtilMockedStatic.when(() -> ProjectSystemUtil.getProjectSystem(project)).thenReturn(mockGradleProjectSystem);\n    commonAndroidUtilMockedStatic.when(CommonAndroidUtil::getInstance).thenReturn(commonAndroidUtil);\n    AndroidNotification myMockNotification = Mockito.mock(AndroidNotification.class);\n    new IdeComponents(project).replaceProjectService(AndroidNotification.class, myMockNotification);\n    AndroidProjectViewSettingsImpl settings = new AndroidProjectViewSettingsImpl();\n    myPane = createPane();\n\n    when(mockGradleProjectSystem.isAndroidProjectViewSupported()).thenReturn(true);\n    when(commonAndroidUtil.isAndroidProject(project)).thenReturn(true);\n\n    try (SystemPropertyOverrides override = new SystemPropertyOverrides()) {\n      override.setProperty(PROJECT_VIEW_DEFAULT_KEY, \"true\");\n\n      // Assert that setting is set to true, custom property is removed, and user is notified\n      when(ideInfo.isAndroidStudio()).thenReturn(true);\n      when(ideInfo.isGameTools()).thenReturn(false);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();\n      assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();\n      assertThat(settings.isProjectViewDefault()).isTrue();\n      assertThat(java.lang.Boolean.getBoolean(PROJECT_VIEW_DEFAULT_KEY)).isFalse();\n\n      // Assert that no additional notifications are shown the next time isDefaultPane is called\n      myPane.isDefaultPane(project, ideInfo, settings);\n      verify(myMockNotification, times(1)).showBalloon(\"Default Project View Setting Updated\",\n                                                       \"'Set Project view as the default' advanced\" +\n                                                       \" setting was enabled due to the custom property `studio.projectview=true`. We recommend removing this property and using\" +\n                                                       \" 'Advanced Settings -> Project View -> Set Project view as the default` to configure the default project view.\",\n                                                       NotificationType.INFORMATION);\n    }\n    projectSystemUtilMockedStatic.close();\n    commonAndroidUtilMockedStatic.close();\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 427,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();"
+        },
+        {
+          "line": 428,
+          "text": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();"
+        },
+        {
+          "line": 429,
+          "text": "assertThat(settings.isProjectViewDefault()).isTrue();"
+        },
+        {
+          "line": 430,
+          "text": "assertThat(java.lang.Boolean.getBoolean(PROJECT_VIEW_DEFAULT_KEY)).isFalse();"
+        },
+        {
+          "line": 434,
+          "text": "verify(myMockNotification, times(1)).showBalloon(\"Default Project View Setting Updated\","
+        }
+      ],
+      "status": "adapted",
+      "run_status": "passing",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 445,
+      "body_end_line": 488,
+      "body_sha256": "4bd5e1fb6fd6dddc3c5b1afad3e7ec3280c4a601de236a7f853cef518fc20ff5",
+      "body": "{\n    Project project = projectRule.getProject();\n    IdeInfo ideInfo = Mockito.spy(IdeInfo.getInstance());\n    GradleProjectSystem mockGradleProjectSystem = Mockito.mock(GradleProjectSystem.class);\n    CommonAndroidUtil commonAndroidUtil = Mockito.mock(CommonAndroidUtil.class);\n    MockedStatic<ProjectSystemUtil> projectSystemUtilMockedStatic = Mockito.mockStatic(ProjectSystemUtil.class);\n    MockedStatic<CommonAndroidUtil> commonAndroidUtilMockedStatic = Mockito.mockStatic(CommonAndroidUtil.class);\n    projectSystemUtilMockedStatic.when(() -> ProjectSystemUtil.getProjectSystem(project)).thenReturn(mockGradleProjectSystem);\n    commonAndroidUtilMockedStatic.when(CommonAndroidUtil::getInstance).thenReturn(commonAndroidUtil);\n    AndroidNotification myMockNotification = Mockito.mock(AndroidNotification.class);\n    new IdeComponents(project).replaceProjectService(AndroidNotification.class, myMockNotification);\n    AndroidProjectViewSettingsImpl settings = new AndroidProjectViewSettingsImpl();\n    myPane = createPane();\n\n    MockedStatic<PathManager> mockedPathManager = mockStatic(PathManager.class);\n    tempFolder.create();\n    File customTempDir = tempFolder.getRoot();\n    File ideaFile = tempFolder.newFile(PathManager.PROPERTIES_FILE_NAME);\n    java.nio.file.Files.writeString(ideaFile.toPath(), PROJECT_VIEW_DEFAULT_KEY + \"=true\");\n    mockedPathManager.when(PathManager::getCustomOptionsDirectory)\n      .thenReturn(customTempDir.getPath());\n\n    when(mockGradleProjectSystem.isAndroidProjectViewSupported()).thenReturn(true);\n    when(commonAndroidUtil.isAndroidProject(project)).thenReturn(true);\n\n    try (SystemPropertyOverrides override = new SystemPropertyOverrides()) {\n      override.setProperty(PROJECT_VIEW_DEFAULT_KEY, \"true\");\n\n      // Assert that setting is set to true, custom property is removed, file is updated, and user is notified\n      when(ideInfo.isAndroidStudio()).thenReturn(true);\n      when(ideInfo.isGameTools()).thenReturn(false);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();\n      assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();\n      assertThat(settings.isProjectViewDefault()).isTrue();\n      assertThat(java.lang.Boolean.getBoolean(PROJECT_VIEW_DEFAULT_KEY)).isFalse();\n      verify(myMockNotification).showBalloon(\"Default Project View Setting Updated\", \"'Set Project view as the default' advanced\" +\n                                                                                     \" setting was enabled due to the custom property `studio.projectview=true`. This property has been removed from \" +\n                                                                                     ideaFile.getPath(), NotificationType.INFORMATION);\n      assertThat(java.nio.file.Files.readString(ideaFile.toPath())).doesNotContain(PROJECT_VIEW_DEFAULT_KEY + \"=true\");\n    }\n    mockedPathManager.close();\n    projectSystemUtilMockedStatic.close();\n    commonAndroidUtilMockedStatic.close();\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 476,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();"
+        },
+        {
+          "line": 477,
+          "text": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();"
+        },
+        {
+          "line": 478,
+          "text": "assertThat(settings.isProjectViewDefault()).isTrue();"
+        },
+        {
+          "line": 479,
+          "text": "assertThat(java.lang.Boolean.getBoolean(PROJECT_VIEW_DEFAULT_KEY)).isFalse();"
+        },
+        {
+          "line": 480,
+          "text": "verify(myMockNotification).showBalloon(\"Default Project View Setting Updated\", \"'Set Project view as the default' advanced\" +"
+        },
+        {
+          "line": 483,
+          "text": "assertThat(java.nio.file.Files.readString(ideaFile.toPath())).doesNotContain(PROJECT_VIEW_DEFAULT_KEY + \"=true\");"
+        }
+      ],
+      "status": "adapted",
+      "run_status": "passing",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 491,
+      "body_end_line": 530,
+      "body_sha256": "8aada99cd4025a0ed416477b7dfdcc3e334cc0b83be82dae3677ca722df5568c",
+      "body": "{\n    Project project = projectRule.getProject();\n    IdeInfo ideInfo = Mockito.spy(IdeInfo.getInstance());\n    GradleProjectSystem mockGradleProjectSystem = Mockito.mock(GradleProjectSystem.class);\n    CommonAndroidUtil commonAndroidUtil = Mockito.mock(CommonAndroidUtil.class);\n    MockedStatic<ProjectSystemUtil> projectSystemUtilMockedStatic = Mockito.mockStatic(ProjectSystemUtil.class);\n    MockedStatic<CommonAndroidUtil> commonAndroidUtilMockedStatic = Mockito.mockStatic(CommonAndroidUtil.class);\n    projectSystemUtilMockedStatic.when(() -> ProjectSystemUtil.getProjectSystem(project)).thenReturn(mockGradleProjectSystem);\n    commonAndroidUtilMockedStatic.when(CommonAndroidUtil::getInstance).thenReturn(commonAndroidUtil);\n    AndroidNotification myMockNotification = Mockito.mock(AndroidNotification.class);\n    new IdeComponents(project).replaceProjectService(AndroidNotification.class, myMockNotification);\n    AndroidProjectViewSettingsImpl settings = new AndroidProjectViewSettingsImpl();\n    myPane = createPane();\n\n    tempFolder.create();\n    File vmPropertiesFile = tempFolder.newFile(\"studio64.vmoptions\");\n    java.nio.file.Files.writeString(vmPropertiesFile.toPath(), \"-D\" + PROJECT_VIEW_DEFAULT_KEY + \"=true\");\n    when(mockGradleProjectSystem.isAndroidProjectViewSupported()).thenReturn(true);\n    when(commonAndroidUtil.isAndroidProject(project)).thenReturn(true);\n\n    try (SystemPropertyOverrides override = new SystemPropertyOverrides()) {\n      override.setProperty(PROJECT_VIEW_DEFAULT_KEY, \"true\");\n      override.setProperty(\"jb.vmOptionsFile\", vmPropertiesFile.getPath());\n\n      // Assert that setting is set to true, custom property is removed, file is updated, and user is notified\n      when(ideInfo.isAndroidStudio()).thenReturn(true);\n      when(ideInfo.isGameTools()).thenReturn(false);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();\n      assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();\n      assertThat(settings.isProjectViewDefault()).isTrue();\n      assertThat(java.lang.Boolean.getBoolean(PROJECT_VIEW_DEFAULT_KEY)).isFalse();\n      verify(myMockNotification).showBalloon(\"Default Project View Setting Updated\", \"'Set Project view as the default' advanced\" +\n                                                                                     \" setting was enabled due to the custom property `studio.projectview=true`. This property has been removed from custom VM options.\",\n                                             NotificationType.INFORMATION);\n      assertThat(java.nio.file.Files.readString(vmPropertiesFile.toPath())).doesNotContain(PROJECT_VIEW_DEFAULT_KEY + \"=true\");\n    }\n\n    projectSystemUtilMockedStatic.close();\n    commonAndroidUtilMockedStatic.close();\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 518,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();"
+        },
+        {
+          "line": 519,
+          "text": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();"
+        },
+        {
+          "line": 520,
+          "text": "assertThat(settings.isProjectViewDefault()).isTrue();"
+        },
+        {
+          "line": 521,
+          "text": "assertThat(java.lang.Boolean.getBoolean(PROJECT_VIEW_DEFAULT_KEY)).isFalse();"
+        },
+        {
+          "line": 522,
+          "text": "verify(myMockNotification).showBalloon(\"Default Project View Setting Updated\", \"'Set Project view as the default' advanced\" +"
+        },
+        {
+          "line": 525,
+          "text": "assertThat(java.nio.file.Files.readString(vmPropertiesFile.toPath())).doesNotContain(PROJECT_VIEW_DEFAULT_KEY + \"=true\");"
+        }
+      ],
+      "status": "adapted",
+      "run_status": "passing",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.AndroidProjectViewTest",
+      "method": "testAndroidViewIsDefaultMetrics",
+      "source_path": "idea/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "source_sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "declaration_line": 533,
+      "body_end_line": 589,
+      "body_sha256": "2706a8514bcd2809a57ed6dbec95fb4985406ec8560fb8e47245ebbf1cfce3e2",
+      "body": "{\n    myPane = createPane();\n    IdeInfo ideInfo = Mockito.spy(IdeInfo.getInstance());\n    GradleProjectSystem mockGradleProjectSystem = Mockito.mock(GradleProjectSystem.class);\n    CommonAndroidUtil commonAndroidUtil = Mockito.mock(CommonAndroidUtil.class);\n    MockedStatic<CommonAndroidUtil> commonAndroidUtilMockedStatic = Mockito.mockStatic(CommonAndroidUtil.class);\n    MockedStatic<ProjectSystemUtil> projectSystemUtilMockedStatic = Mockito.mockStatic(ProjectSystemUtil.class);\n    commonAndroidUtilMockedStatic.when(CommonAndroidUtil::getInstance).thenReturn(commonAndroidUtil);\n    AndroidProjectViewSettingsImpl settings = new AndroidProjectViewSettingsImpl();\n    Project project = projectRule.getProject();\n    projectSystemUtilMockedStatic.when(() -> ProjectSystemUtil.getProjectSystem(project)).thenReturn(mockGradleProjectSystem);\n    when(mockGradleProjectSystem.isAndroidProjectViewSupported()).thenReturn(true);\n    when(commonAndroidUtil.isAndroidProject(project)).thenReturn(true);\n\n    try (SystemPropertyOverrides override = new SystemPropertyOverrides()) {\n      override.setProperty(PROJECT_VIEW_DEFAULT_KEY, \"false\");\n      settings.setDefaultToProjectView(true);\n\n      TestUsageTracker testUsageTracker = new TestUsageTracker(new VirtualTimeScheduler());\n      UsageTracker.setWriterForTest(testUsageTracker);\n\n      settings.setDefaultToProjectView(false);\n      assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();\n      when(ideInfo.isAndroidStudio()).thenReturn(true);\n      when(ideInfo.isGameTools()).thenReturn(false);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isTrue();\n\n      settings.setDefaultToProjectView(true);\n      assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();\n      when(ideInfo.isAndroidStudio()).thenReturn(true);\n      when(ideInfo.isGameTools()).thenReturn(false);\n      assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();\n\n      // Assert that event is not logged when setting is set to current value\n      settings.setDefaultToProjectView(true);\n\n      List<AndroidStudioEvent> statsEvents = testUsageTracker.getUsages().stream()\n        .map(LoggedUsage::getStudioEvent)\n        .filter(event -> event.getKind() == AndroidStudioEvent.EventKind.PROJECT_VIEW_DEFAULT_VIEW_EVENT)\n        .toList();\n      assertThat(statsEvents.size()).isEqualTo(2);\n\n      AndroidStudioEvent disableDefaultProjectViewEvent = statsEvents.get(0);\n      assertThat(disableDefaultProjectViewEvent.getKind()).isEqualTo(AndroidStudioEvent.EventKind.PROJECT_VIEW_DEFAULT_VIEW_EVENT);\n      assertThat(disableDefaultProjectViewEvent.getProjectViewDefaultViewEvent().getDefaultView()).isEqualTo(\n        ProjectViewDefaultViewEvent.DefaultView.ANDROID_VIEW);\n\n      AndroidStudioEvent enableDefaultProjectViewEvent = statsEvents.get(1);\n      assertThat(enableDefaultProjectViewEvent.getKind()).isEqualTo(AndroidStudioEvent.EventKind.PROJECT_VIEW_DEFAULT_VIEW_EVENT);\n      assertThat(enableDefaultProjectViewEvent.getProjectViewDefaultViewEvent().getDefaultView()).isEqualTo(\n        ProjectViewDefaultViewEvent.DefaultView.PROJECT_VIEW);\n    }\n\n    UsageTracker.cleanAfterTesting();\n    commonAndroidUtilMockedStatic.close();\n    projectSystemUtilMockedStatic.close();\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 555,
+          "text": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();"
+        },
+        {
+          "line": 558,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isTrue();"
+        },
+        {
+          "line": 561,
+          "text": "assertThat(settings.isDefaultToProjectViewEnabled()).isTrue();"
+        },
+        {
+          "line": 564,
+          "text": "assertThat(myPane.isDefaultPane(project, ideInfo, settings)).named(\"isDefault(AndroidStudio)\").isFalse();"
+        },
+        {
+          "line": 573,
+          "text": "assertThat(statsEvents.size()).isEqualTo(2);"
+        },
+        {
+          "line": 576,
+          "text": "assertThat(disableDefaultProjectViewEvent.getKind()).isEqualTo(AndroidStudioEvent.EventKind.PROJECT_VIEW_DEFAULT_VIEW_EVENT);"
+        },
+        {
+          "line": 577,
+          "text": "assertThat(disableDefaultProjectViewEvent.getProjectViewDefaultViewEvent().getDefaultView()).isEqualTo("
+        },
+        {
+          "line": 581,
+          "text": "assertThat(enableDefaultProjectViewEvent.getKind()).isEqualTo(AndroidStudioEvent.EventKind.PROJECT_VIEW_DEFAULT_VIEW_EVENT);"
+        },
+        {
+          "line": 582,
+          "text": "assertThat(enableDefaultProjectViewEvent.getProjectViewDefaultViewEvent().getDefaultView()).isEqualTo("
+        }
+      ],
+      "status": "adapted",
+      "run_status": "passing",
+      "canonical_reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+      "status_origin": "existing canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.run.deployment.liveedit.ComposableCompileTest",
+      "method": "testModuleName",
+      "source_path": "idea/android/run/testSrc/com/android/tools/idea/run/deployment/liveedit/ComposableCompileTest.kt",
+      "source_sha256": "63eb839f244f0f7c05fbfcd15c9e173f5f5477ed4c5740c0ef32c6e6a80fcbc6",
+      "declaration_line": 314,
+      "body_end_line": 332,
+      "body_sha256": "ae3965bd6fea47ea61d1bb0a231e28d679e8316a066b09033cd87c209e2987b0",
+      "body": "{\n    val file =\n      projectRule.createKtFile(\n        \"HasComposableSingletons.kt\",\n        \"\"\"\n      import androidx.compose.runtime.Composable\n      @Composable fun hasLambdaA(content: @Composable () -> Unit) { }\n      @Composable fun hasLambdaB() { hasLambdaA {} }\n    \"\"\",\n      )\n    val output = projectRule.postDeploymentStateCompile(file)\n\n    val singleton = output.supportClassesMap[\"ComposableSingletons\\$HasComposableSingletonsKt\"]\n    Assert.assertNotNull(singleton)\n    val cl = loadClass(output, \"ComposableSingletons\\$HasComposableSingletonsKt\")\n    val getLambda = cl.methods.find { it.name.contains(\"getLambda\") }\n    // Make sure we have getLambda$<MODULE_NAME>\n    Assert.assertTrue(getLambda!!.name.contains(projectRule.module.name))\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 327,
+          "text": "Assert.assertNotNull(singleton)"
+        },
+        {
+          "line": 331,
+          "text": "Assert.assertTrue(getLambda!!.name.contains(projectRule.module.name))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "selected method only"
+    },
+    {
+      "suite": "com.android.tools.idea.gradle.project.sync.runsGradleSyncIntegration.KotlinSingleVariantSyncIntegrationTest",
+      "method": "kotlinSingleVariantSync",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/gradle/project/sync/runsGradleSyncIntegration/KotlinSingleVariantSyncIntegrationTest.kt",
+      "source_sha256": "aa40b06f23aa9cfcefac44791d5056e1f5b6e94a4e556d692ef67c5ad8093ac5",
+      "declaration_line": 39,
+      "body_end_line": 47,
+      "body_sha256": "0108573b6595559e332c9381b2deab4d4d359ae66c92f5c9e1c1ce8f62623ac2",
+      "body": "{\n    registerTestHelperProjectResolver(CapturePlatformModelsProjectResolverExtension.IdeModels(), projectRule.testRootDisposable)\n    val preparedProject = projectRule.prepareTestProject(AndroidCoreTestProject.KOTLIN_KAPT)\n    preparedProject.open { project ->\n      expect\n        .that(getKotlinModel(project.gradleModule(\":app\")!!)?.testSourceSetNames().orEmpty())\n        .containsExactly(\"debugAndroidTest\", \"debug\", \"debugUnitTest\")\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 43,
+          "text": "expect"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.navigator.SourceProvidersSnapshotComparisonTest",
+      "method": "testJpsWithQualifiedNames",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/navigator/SourceProvidersSnapshotComparisonTest.kt",
+      "source_sha256": "066d65ad876369ee08c121f50eb1ebcf2d27777a917a3ac00a103ffdfb7478ad",
+      "declaration_line": 107,
+      "body_end_line": 122,
+      "body_sha256": "b303bf0f6d6108edd6dad47e2d053e09e52144d3a33148ea74acdba28b6912df",
+      "body": "{\n    val srcPath = File(testDataPath, toSystemDependentName(TestProjectToSnapshotPaths.JPS_WITH_QUALIFIED_NAMES))\n    // Prepare project in a different directory (_jps) to avoid closing the currently opened project.\n    val projectPath = File(toSystemDependentName(projectRule.project.basePath + \"_jps\"))\n\n    AndroidGradleTests.prepareProjectForImportCore(srcPath, projectPath) { projectRoot ->\n      // Override settings just for tests (e.g. sdk.dir)\n      AndroidGradleTests.updateLocalProperties(projectRoot, TestUtils.getSdk().toFile())\n    }\n\n    val project = PlatformTestUtil.loadAndOpenProject(projectPath.toPath(), projectRule.fixture.testRootDisposable)\n    val text = project.dumpSourceProviders()\n    PlatformTestUtil.forceCloseProjectWithoutSaving(project)\n\n    assertIsEqualToSnapshot(text)\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 121,
+          "text": "assertIsEqualToSnapshot(text)"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testRegisterDependencyDependency",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 64,
+      "body_end_line": 69,
+      "body_sha256": "056d799213f046679d61b53dd958a6d6c49917f911fb7386e5b7c0f6082b41f3",
+      "body": "{\n    val dependency = GoogleMavenArtifactId.CONSTRAINT_LAYOUT.getDependency(\"+\")\n    gradleModuleSystem.registerDependency(dependency, DependencyType.IMPLEMENTATION)\n    Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))\n      .addDependencies(myModule, listOf(dependency), \"implementation\")\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 67,
+          "text": "Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testRegisterDebugDependencyDependency",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 71,
+      "body_end_line": 76,
+      "body_sha256": "2612b33bb11ef3cf666ada3d051ff69e249f52a3599d5753f0cece31041e2a6d",
+      "body": "{\n    val dependency = GoogleMavenArtifactId.COMPOSE_TOOLING.getDependency(\"+\")\n    gradleModuleSystem.registerDependency(dependency, DependencyType.DEBUG_IMPLEMENTATION)\n    Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))\n      .addDependencies(myModule, listOf(dependency), \"debugImplementation\")\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 74,
+          "text": "Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testRegisterAnnotationProcessorDependencyDependency",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 78,
+      "body_end_line": 83,
+      "body_sha256": "ceea1041c07d07d5dc35646991fa7731464c66dda805c887c4bf2193d1e71672",
+      "body": "{\n    val dependency = GoogleMavenArtifactId.ROOM_COMPILER.getDependency(\"+\")\n    gradleModuleSystem.registerDependency(dependency, DependencyType.ANNOTATION_PROCESSOR)\n    Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))\n      .addDependencies(myModule, listOf(dependency), \"annotationProcessor\")\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 81,
+          "text": "Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testRegisterDependencyId",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 85,
+      "body_end_line": 91,
+      "body_sha256": "0fa5283fbaf4471ec7cdb0ab78fa779cb366968727ab8b4c2ef96deafee3bc8f",
+      "body": "{\n    val id = gradleModuleSystem.getRegisteredDependencyId(GoogleMavenArtifactId.CONSTRAINT_LAYOUT)\n    val dependency = GoogleMavenArtifactId.CONSTRAINT_LAYOUT.getDependency(\"+\")\n    gradleModuleSystem.registerDependency(id, DependencyType.IMPLEMENTATION)\n    Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))\n      .addDependencies(myModule, listOf(dependency), \"implementation\")\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 89,
+          "text": "Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testRegisterDebugDependencyId",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 93,
+      "body_end_line": 99,
+      "body_sha256": "6be1ca2bbd8656b143342baae79f7579e046b5472eb4bae1e738bcc33925be3b",
+      "body": "{\n    val id = gradleModuleSystem.getRegisteredDependencyId(GoogleMavenArtifactId.COMPOSE_TOOLING)\n    val dependency = GoogleMavenArtifactId.COMPOSE_TOOLING.getDependency(\"+\")\n    gradleModuleSystem.registerDependency(id, DependencyType.DEBUG_IMPLEMENTATION)\n    Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))\n      .addDependencies(myModule, listOf(dependency), \"debugImplementation\")\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 97,
+          "text": "Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testRegisterAnnotationProcessorDependencyId",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 101,
+      "body_end_line": 107,
+      "body_sha256": "946529c2a9b687a25614491c02f04a87e6a87102d704e4224add4b2e3ca56a56",
+      "body": "{\n    val id = gradleModuleSystem.getRegisteredDependencyId(GoogleMavenArtifactId.ROOM_COMPILER)\n    val dependency = GoogleMavenArtifactId.ROOM_COMPILER.getDependency(\"+\")\n    gradleModuleSystem.registerDependency(id, DependencyType.ANNOTATION_PROCESSOR)\n    Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))\n      .addDependencies(myModule, listOf(dependency), \"annotationProcessor\")\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 105,
+          "text": "Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testRegisterDependencyVersionedId",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 109,
+      "body_end_line": 115,
+      "body_sha256": "59a4d165315fc8017a6ddea3d8d61b52373bd39bf59451e1f9567bac80f2292e",
+      "body": "{\n    val dependency = GoogleMavenArtifactId.CONSTRAINT_LAYOUT.getDependency(\"1.2.3\")\n    val id = gradleModuleSystem.getRegisteredDependencyId(dependency)\n    gradleModuleSystem.registerDependency(id, DependencyType.IMPLEMENTATION)\n    Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))\n      .addDependencies(myModule, listOf(dependency), \"implementation\")\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 113,
+          "text": "Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testRegisterDebugDependencyVersionedId",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 117,
+      "body_end_line": 123,
+      "body_sha256": "29e07dd5675fe2673e995d050a1feccfa15c2cfc818f705338a4165c731c4cfe",
+      "body": "{\n    val dependency = GoogleMavenArtifactId.COMPOSE_TOOLING.getDependency(\"4.5.6\")\n    val id = gradleModuleSystem.getRegisteredDependencyId(dependency)\n    gradleModuleSystem.registerDependency(id, DependencyType.DEBUG_IMPLEMENTATION)\n    Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))\n      .addDependencies(myModule, listOf(dependency), \"debugImplementation\")\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 121,
+          "text": "Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testRegisterAnnotationProcessorDependencyVersionedId",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 125,
+      "body_end_line": 131,
+      "body_sha256": "96b96efa4e51cfc831f5368de58d4cc0094a9cfc44c437a72944d3a933d9c24c",
+      "body": "{\n    val dependency = GoogleMavenArtifactId.ROOM_COMPILER.getDependency(\"7.8.9\")\n    val id = gradleModuleSystem.getRegisteredDependencyId(dependency)\n    gradleModuleSystem.registerDependency(id, DependencyType.ANNOTATION_PROCESSOR)\n    Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))\n      .addDependencies(myModule, listOf(dependency), \"annotationProcessor\")\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 129,
+          "text": "Mockito.verify<GradleDependencyManager>(gradleDependencyManager, times(1))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testNoGradleAndroidModel",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 133,
+      "body_end_line": 137,
+      "body_sha256": "56950646bdd997b9ec30b184c4637995549902946e933efe260687f50898e612",
+      "body": "{\n    // The GradleAndroidModel shouldn't be created when running from an IdeaTestCase.\n    assertThat(GradleAndroidModel.get(myModule)).isNull()\n    assertThat(gradleModuleSystem.hasResolvedDependency(GoogleMavenArtifactId.SUPPORT_APPCOMPAT_V7)).isFalse()\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 135,
+          "text": "assertThat(GradleAndroidModel.get(myModule)).isNull()"
+        },
+        {
+          "line": 136,
+          "text": "assertThat(gradleModuleSystem.hasResolvedDependency(GoogleMavenArtifactId.SUPPORT_APPCOMPAT_V7)).isFalse()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.GradleModuleSystemTest",
+      "method": "testGetPackageName_noOverrides",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/GradleModuleSystemTest.kt",
+      "source_sha256": "fd4f01f27937c4fad1822d29539f4cf5881f052060f3f8104eee67c2528c1175",
+      "declaration_line": 139,
+      "body_end_line": 142,
+      "body_sha256": "f3c09916c395b91e8a159cacc54999a24448eff82c09681652b42e0e49c6050e",
+      "body": "{\n    val packageName = (myModule.getModuleSystem() as DefaultModuleSystem).getPackageName()\n    assertThat(packageName).isEqualTo(\"p1.p2\")\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 141,
+          "text": "assertThat(packageName).isEqualTo(\"p1.p2\")"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testRegisterDependency",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 73,
+      "body_end_line": 87,
+      "body_sha256": "5075a5904e7aa212940943904e2ce1f230bb89193d286f62a48fc37e53c8e468",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(TestProject.SIMPLE_APPLICATION)\n    preparedProject.open { project ->\n      val moduleSystem = project.findAppModule().getModuleSystem() as GradleModuleSystem\n      val dependencyManager = GradleDependencyManager.getInstance(project)\n      val dummyDependency = Dependency.parse(\"a:b:+\")\n      val anotherDummyDependency = Dependency.parse(\"hello:world:1.2.3\")\n\n      moduleSystem.registerDependency(dummyDependency, DependencyType.IMPLEMENTATION)\n      moduleSystem.registerDependency(anotherDummyDependency, DependencyType.IMPLEMENTATION)\n\n      assertThat(dependencyManager.findMissingDependencies(project.findAppModule(), listOf(dummyDependency, anotherDummyDependency)))\n        .isEmpty()\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 84,
+          "text": "assertThat(dependencyManager.findMissingDependencies(project.findAppModule(), listOf(dummyDependency, anotherDummyDependency)))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testGetRegisteredExistingDependency",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 90,
+      "body_end_line": 105,
+      "body_sha256": "07abb5f49560cf8b23291469456e2f746b679127ff84a110d6498fc6f253e47b",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(TestProject.SIMPLE_APPLICATION)\n    preparedProject.open { project ->\n      verifyProjectDependsOnWildcardAppCompat(project)\n      val moduleSystem = project.findAppModule().getModuleSystem() as GradleModuleSystem\n\n      // Verify that getRegisteredDependency gets a existing dependency correctly.\n      val appCompat = SUPPORT_APPCOMPAT_V7\n      assertThat(moduleSystem.hasRegisteredDependency(appCompat)).isTrue()\n      assertThat(moduleSystem.hasRegisteredDependency(appCompat.getModule())).isTrue()\n      val foundDependency = moduleSystem.getRegisteredDependency(appCompat)\n      assertThat(foundDependency).isNotNull()\n      assertThat(foundDependency?.dependency?.module).isEqualTo(appCompat.getModule())\n      assertThat(foundDependency?.dependency?.version).isEqualTo(RichVersion.parse(\"+\"))\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 93,
+          "text": "verifyProjectDependsOnWildcardAppCompat(project)"
+        },
+        {
+          "line": 98,
+          "text": "assertThat(moduleSystem.hasRegisteredDependency(appCompat)).isTrue()"
+        },
+        {
+          "line": 99,
+          "text": "assertThat(moduleSystem.hasRegisteredDependency(appCompat.getModule())).isTrue()"
+        },
+        {
+          "line": 101,
+          "text": "assertThat(foundDependency).isNotNull()"
+        },
+        {
+          "line": 102,
+          "text": "assertThat(foundDependency?.dependency?.module).isEqualTo(appCompat.getModule())"
+        },
+        {
+          "line": 103,
+          "text": "assertThat(foundDependency?.dependency?.version).isEqualTo(RichVersion.parse(\"+\"))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testGetRegisteredDependencies",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 108,
+      "body_end_line": 119,
+      "body_sha256": "0eaed7f02c0570356825e6718b129908e9f5783d8c692cf88f1780fb0425291c",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(AndroidCoreTestProject.SIMPLE_APP_WITH_OLDER_SUPPORT_LIB)\n    preparedProject.open { project ->\n      val moduleSystem = project.findAppModule().getModuleSystem() as GradleModuleSystem\n      val appCompat = SUPPORT_APPCOMPAT_V7\n\n      assertThat(moduleSystem.getRegisteredDependency(appCompat.getModule())).isEqualTo(appCompat.getDependency(\"25.4.0\"))\n      assertThat(moduleSystem.hasRegisteredDependency(appCompat.getModule())).isTrue()\n      assertThat(moduleSystem.getRegisteredDependency(Module(SUPPORT_LIB_GROUP_ID, \"BAD\"))).isNull()\n      assertThat(moduleSystem.hasRegisteredDependency(Module(SUPPORT_LIB_GROUP_ID, \"BAD\"))).isFalse()\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 114,
+          "text": "assertThat(moduleSystem.getRegisteredDependency(appCompat.getModule())).isEqualTo(appCompat.getDependency(\"25.4.0\"))"
+        },
+        {
+          "line": 115,
+          "text": "assertThat(moduleSystem.hasRegisteredDependency(appCompat.getModule())).isTrue()"
+        },
+        {
+          "line": 116,
+          "text": "assertThat(moduleSystem.getRegisteredDependency(Module(SUPPORT_LIB_GROUP_ID, \"BAD\"))).isNull()"
+        },
+        {
+          "line": 117,
+          "text": "assertThat(moduleSystem.hasRegisteredDependency(Module(SUPPORT_LIB_GROUP_ID, \"BAD\"))).isFalse()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "test use androidx in all modules of a non-androidx project",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 122,
+      "body_end_line": 140,
+      "body_sha256": "45547816adace4ea17ab82533703d387c55ed9d37ff9d3aa4e959ddb7cea0131",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(AndroidCoreTestProject.SIMPLE_APPLICATION)\n    preparedProject.root\n      .resolve(\"gradle.properties\")\n      .appendText(\n        \"\"\"\n        android.useAndroidX=false\n        \"\"\"\n          .trimIndent()\n      )\n\n    preparedProject.open { project ->\n      val modules = project.modules.toList()\n      assertThat(modules).isNotEmpty()\n      for (module in modules) {\n        assertThat(module.getModuleSystem().useAndroidX).named(\"module[%s].moduleSystem.useAndroidx\", module.name).isFalse()\n      }\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 135,
+          "text": "assertThat(modules).isNotEmpty()"
+        },
+        {
+          "line": 137,
+          "text": "assertThat(module.getModuleSystem().useAndroidX).named(\"module[%s].moduleSystem.useAndroidx\", module.name).isFalse()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "test use androidx in all modules of a androidx project",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 143,
+      "body_end_line": 152,
+      "body_sha256": "f8f94586ef2aa48a0e49c35f67bacddb2e9b408a7d02fac6dfad52908c0ff31f",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(AndroidCoreTestProject.ANDROIDX_SIMPLE)\n    preparedProject.open { project ->\n      val modules = project.modules.toList()\n      assertThat(modules).isNotEmpty()\n      for (module in modules) {\n        assertThat(module.getModuleSystem().useAndroidX).named(\"module[\\\"{}\\\"].moduleSystem.useAndroidx\", module.name).isTrue()\n      }\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 147,
+          "text": "assertThat(modules).isNotEmpty()"
+        },
+        {
+          "line": 149,
+          "text": "assertThat(module.getModuleSystem().useAndroidX).named(\"module[\\\"{}\\\"].moduleSystem.useAndroidx\", module.name).isTrue()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testGetResolvedAarDependencies",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 155,
+      "body_end_line": 165,
+      "body_sha256": "e84ef8216db78f0a02b7d52dff97b55011c3ddeb2c96199ee9ef9aa2b53a0825",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(TestProject.SIMPLE_APPLICATION)\n    preparedProject.open { project ->\n      verifyProjectDependsOnWildcardAppCompat(project)\n\n      val moduleSystem = project.findAppModule().getModuleSystem() as GradleModuleSystem\n      // appcompat-v7 is a dependency with an AAR.\n      assertThat(moduleSystem.hasResolvedDependency(SUPPORT_APPCOMPAT_V7)).isTrue()\n      assertThat(moduleSystem.getResolvedDependency(SUPPORT_APPCOMPAT_V7.getModule(), MAIN)?.version).isEqualTo(Version.parse(\"28.0.0\"))\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 158,
+          "text": "verifyProjectDependsOnWildcardAppCompat(project)"
+        },
+        {
+          "line": 162,
+          "text": "assertThat(moduleSystem.hasResolvedDependency(SUPPORT_APPCOMPAT_V7)).isTrue()"
+        },
+        {
+          "line": 163,
+          "text": "assertThat(moduleSystem.getResolvedDependency(SUPPORT_APPCOMPAT_V7.getModule(), MAIN)?.version).isEqualTo(Version.parse(\"28.0.0\"))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testGetResolvedJarDependencies",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 168,
+      "body_end_line": 178,
+      "body_sha256": "e96ef4538c3508cbf99c52de016825670ebb75492a1759c6f7a2ca2a0e90c061",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(TestProject.SIMPLE_APPLICATION)\n    preparedProject.open { project ->\n      verifyProjectDependsOnGuava(project)\n\n      val moduleSystem = project.findAppModule().getModuleSystem() as GradleModuleSystem\n      // guava is a dependency with a JAR.\n      assertThat(moduleSystem.hasResolvedDependency(GUAVA_GUAVA)).isTrue()\n      assertThat(moduleSystem.getResolvedDependency(GUAVA_GUAVA.getModule(), MAIN)?.version).isEqualTo(Version.parse(\"19.0\"))\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 171,
+          "text": "verifyProjectDependsOnGuava(project)"
+        },
+        {
+          "line": 175,
+          "text": "assertThat(moduleSystem.hasResolvedDependency(GUAVA_GUAVA)).isTrue()"
+        },
+        {
+          "line": 176,
+          "text": "assertThat(moduleSystem.getResolvedDependency(GUAVA_GUAVA.getModule(), MAIN)?.version).isEqualTo(Version.parse(\"19.0\"))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testGetDynamicFeatureModules",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 181,
+      "body_end_line": 190,
+      "body_sha256": "05bd5146b73b221ab1573d00d6a6f367558b8d845286a843e8d5bb0e036fb60e",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(AndroidCoreTestProject.INSTANT_APP_WITH_DYNAMIC_FEATURES)\n    preparedProject.open { project ->\n      val moduleSystem = project.findAppModule().getModuleSystem()\n      val dynamicFeatureModuleNames = moduleSystem.getDynamicFeatureModules().map { it.name }\n      assertThat(dynamicFeatureModuleNames)\n        .containsExactly(project.findModule(\"dynamicfeature\").getName(), project.findModule(\"instantdynamicfeature\").getName())\n        .inOrder()\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 186,
+          "text": "assertThat(dynamicFeatureModuleNames)"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testGetDependencyPath",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 193,
+      "body_end_line": 201,
+      "body_sha256": "9bf917f7d5abd6ad7447f2e3add59c4ab0879c304c1f397615d13b6ffeaf7d4d",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(TestProject.SIMPLE_APPLICATION)\n    preparedProject.open { project ->\n      val moduleSystem = project.findAppModule().getModuleSystem() as GradleModuleSystem\n\n      // Verify that the module system returns a path.\n      assertThat(moduleSystem.getDependencyPath(SUPPORT_APPCOMPAT_V7.getDependency(\"+\"))).isNotNull()\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 199,
+          "text": "assertThat(moduleSystem.getDependencyPath(SUPPORT_APPCOMPAT_V7.getDependency(\"+\"))).isNotNull()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testDesugarLibraryConfigFiles",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 204,
+      "body_end_line": 236,
+      "body_sha256": "b33fb495cdfcc3bad01039b4b558bcefd0a3cfd6c3455fc1bc659aad589f2340",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(TestProject.SIMPLE_APPLICATION)\n    val buildGradle = preparedProject.root.resolve(\"app/build.gradle\")\n    buildGradle.appendText(\n      \"\"\"\n\n      android.compileOptions.coreLibraryDesugaringEnabled = true\n      android.defaultConfig.multiDexEnabled = true\n      dependencies {\n          coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.5'\n      }\n      \"\"\"\n        .trimIndent()\n    )\n    preparedProject.open { project ->\n      val moduleSystem = project.findAppModule().getModuleSystem() as GradleModuleSystem\n\n      assertThat(moduleSystem.desugarLibraryConfigFilesKnown).named(\"desugarLibraryConfigFilesKnown\").isTrue()\n      assertThat(moduleSystem.desugarLibraryConfigFilesNotKnownUserMessage).named(\"desugarLibraryConfigFilesNotKnownUserMessage\").isNull()\n      assertThat(moduleSystem.desugarLibraryConfigFiles).named(\"desugarLibraryConfigFiles\").hasSize(1)\n      assertThat(moduleSystem.desugarLibraryConfigFiles.single())\n        .contains(\n          \"\"\"\n          {\n            \"configuration_format_version\": 3,\n            \"group_id\" : \"com.tools.android\",\n            \"artifact_id\" : \"desugar_jdk_libs\",\n            \"version\": \"1.1.5\"\n          \"\"\"\n            .trimIndent()\n        ) // Asserting the beginning of the file has the expected header\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 221,
+          "text": "assertThat(moduleSystem.desugarLibraryConfigFilesKnown).named(\"desugarLibraryConfigFilesKnown\").isTrue()"
+        },
+        {
+          "line": 222,
+          "text": "assertThat(moduleSystem.desugarLibraryConfigFilesNotKnownUserMessage).named(\"desugarLibraryConfigFilesNotKnownUserMessage\").isNull()"
+        },
+        {
+          "line": 223,
+          "text": "assertThat(moduleSystem.desugarLibraryConfigFiles).named(\"desugarLibraryConfigFiles\").hasSize(1)"
+        },
+        {
+          "line": 224,
+          "text": "assertThat(moduleSystem.desugarLibraryConfigFiles.single())"
+        },
+        {
+          "line": 234,
+          "text": ") // Asserting the beginning of the file has the expected header"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testFindSourceProvider",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 239,
+      "body_end_line": 270,
+      "body_sha256": "aa56d3b25b2cec2f555feb47072369d63989a93d1c0fe57abbab604541b737bd",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(AndroidCoreTestProject.PROJECT_WITH_APPAND_LIB)\n    preparedProject.open { project ->\n      val module = project.gradleModule(\":app\")!!\n      val facet = module.androidFacet!!\n      TestCase.assertNotNull(AndroidModel.get(facet))\n      val moduleFile = VfsUtil.findFileByIoFile(preparedProject.root.resolve(\"app\"), true)\n      TestCase.assertNotNull(moduleFile)\n      // Try finding main flavor\n      val mainFlavorSourceProvider = SourceProviderManager.getInstance(facet).mainIdeaSourceProvider\n      TestCase.assertNotNull(mainFlavorSourceProvider)\n      val javaMainSrcFile = moduleFile!!.findFileByRelativePath(\"src/main/java/com/example/projectwithappandlib/\")\n      TestCase.assertNotNull(javaMainSrcFile)\n      var providers: Collection<NamedIdeaSourceProvider?>? = facet.sourceProviders.getForFile(javaMainSrcFile)\n      TestCase.assertNotNull(providers)\n      TestCase.assertEquals(1, providers!!.size)\n      var actualProvider = providers.iterator().next()\n      TestCase.assertEquals(mainFlavorSourceProvider, actualProvider)\n      // Try finding paid flavor\n      val paidFlavorSourceProvider =\n        SourceProviderManager.getInstance(facet).currentAndSomeFrequentlyUsedInactiveSourceProviders.single { it: NamedIdeaSourceProvider ->\n          it.name.equals(\"paid\", ignoreCase = true)\n        }\n      val javaSrcFile = moduleFile.findFileByRelativePath(\"src/paid/java/com/example/projectwithappandlib/app/paid\")\n      TestCase.assertNotNull(javaSrcFile)\n      providers = facet.sourceProviders.getForFile(javaSrcFile)\n      TestCase.assertNotNull(providers)\n      TestCase.assertEquals(1, providers!!.size)\n      actualProvider = providers.iterator().next()\n      TestCase.assertEquals(paidFlavorSourceProvider, actualProvider)\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 244,
+          "text": "TestCase.assertNotNull(AndroidModel.get(facet))"
+        },
+        {
+          "line": 246,
+          "text": "TestCase.assertNotNull(moduleFile)"
+        },
+        {
+          "line": 249,
+          "text": "TestCase.assertNotNull(mainFlavorSourceProvider)"
+        },
+        {
+          "line": 251,
+          "text": "TestCase.assertNotNull(javaMainSrcFile)"
+        },
+        {
+          "line": 253,
+          "text": "TestCase.assertNotNull(providers)"
+        },
+        {
+          "line": 254,
+          "text": "TestCase.assertEquals(1, providers!!.size)"
+        },
+        {
+          "line": 256,
+          "text": "TestCase.assertEquals(mainFlavorSourceProvider, actualProvider)"
+        },
+        {
+          "line": 263,
+          "text": "TestCase.assertNotNull(javaSrcFile)"
+        },
+        {
+          "line": 265,
+          "text": "TestCase.assertNotNull(providers)"
+        },
+        {
+          "line": 266,
+          "text": "TestCase.assertEquals(1, providers!!.size)"
+        },
+        {
+          "line": 268,
+          "text": "TestCase.assertEquals(paidFlavorSourceProvider, actualProvider)"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testSourceProviderContainsFile",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 273,
+      "body_end_line": 292,
+      "body_sha256": "efd6101c99389e5e3b0ec281acf384f98235895110b58c5bf18a144d84d0593d",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(AndroidCoreTestProject.PROJECT_WITH_APPAND_LIB)\n    preparedProject.open { project ->\n      val module = project.gradleModule(\":app\")!!\n      val facet = module.androidFacet!!\n      TestCase.assertNotNull(AndroidModel.get(facet))\n      val paidFlavorSourceProvider: IdeaSourceProvider =\n        SourceProviderManager.getInstance(facet).currentAndSomeFrequentlyUsedInactiveSourceProviders.single { it: NamedIdeaSourceProvider ->\n          it.name.equals(\"paid\", ignoreCase = true)\n        }\n      val moduleFile = VfsUtil.findFileByIoFile(preparedProject.root.resolve(\"app\"), true)\n      TestCase.assertNotNull(moduleFile)\n      val javaSrcFile = moduleFile!!.findFileByRelativePath(\"src/paid/java/com/example/projectwithappandlib/app/paid\")\n      TestCase.assertNotNull(javaSrcFile)\n      AndroidTestCase.assertTrue(paidFlavorSourceProvider.containsFile(javaSrcFile!!))\n      val javaMainSrcFile = moduleFile.findFileByRelativePath(\"src/main/java/com/example/projectwithappandlib/\")\n      TestCase.assertNotNull(javaMainSrcFile)\n      AndroidTestCase.assertFalse(paidFlavorSourceProvider.containsFile(javaMainSrcFile!!))\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 278,
+          "text": "TestCase.assertNotNull(AndroidModel.get(facet))"
+        },
+        {
+          "line": 284,
+          "text": "TestCase.assertNotNull(moduleFile)"
+        },
+        {
+          "line": 286,
+          "text": "TestCase.assertNotNull(javaSrcFile)"
+        },
+        {
+          "line": 287,
+          "text": "AndroidTestCase.assertTrue(paidFlavorSourceProvider.containsFile(javaSrcFile!!))"
+        },
+        {
+          "line": 289,
+          "text": "TestCase.assertNotNull(javaMainSrcFile)"
+        },
+        {
+          "line": 290,
+          "text": "AndroidTestCase.assertFalse(paidFlavorSourceProvider.containsFile(javaMainSrcFile!!))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testSourceProviderIsContainedByFolder",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 295,
+      "body_end_line": 324,
+      "body_sha256": "82c7cb77d2fa53adcff8f2287a87c9ca3007cecd93151e99ca25f1b23edbae78",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(AndroidCoreTestProject.PROJECT_WITH_APPAND_LIB)\n    preparedProject.open { project ->\n      val module = project.gradleModule(\":app\")!!\n      val facet = module.androidFacet!!\n\n      val paidFlavorSourceProvider =\n        SourceProviderManager.getInstance(facet)\n          .currentAndSomeFrequentlyUsedInactiveSourceProviders\n          .filter { it -> it.name.equals(\"paid\", ignoreCase = true) }\n          .single()\n\n      val moduleFile = VfsUtil.findFileByIoFile(preparedProject.root.resolve(\"app\"), true)\n      AndroidTestCase.assertNotNull(moduleFile)\n      val javaSrcFile = moduleFile!!.findFileByRelativePath(\"src/paid/java/com/example/projectwithappandlib/app/paid\")!!\n      AndroidTestCase.assertNotNull(javaSrcFile)\n\n      AndroidTestCase.assertFalse(paidFlavorSourceProvider.isContainedBy(javaSrcFile))\n\n      val flavorRoot = moduleFile.findFileByRelativePath(\"src/paid\")!!\n      AndroidTestCase.assertNotNull(flavorRoot)\n\n      AndroidTestCase.assertTrue(paidFlavorSourceProvider.isContainedBy(flavorRoot))\n\n      val srcFile = moduleFile.findChild(\"src\")!!\n      AndroidTestCase.assertNotNull(srcFile)\n\n      AndroidTestCase.assertTrue(paidFlavorSourceProvider.isContainedBy(srcFile))\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 308,
+          "text": "AndroidTestCase.assertNotNull(moduleFile)"
+        },
+        {
+          "line": 310,
+          "text": "AndroidTestCase.assertNotNull(javaSrcFile)"
+        },
+        {
+          "line": 312,
+          "text": "AndroidTestCase.assertFalse(paidFlavorSourceProvider.isContainedBy(javaSrcFile))"
+        },
+        {
+          "line": 315,
+          "text": "AndroidTestCase.assertNotNull(flavorRoot)"
+        },
+        {
+          "line": 317,
+          "text": "AndroidTestCase.assertTrue(paidFlavorSourceProvider.isContainedBy(flavorRoot))"
+        },
+        {
+          "line": 320,
+          "text": "AndroidTestCase.assertNotNull(srcFile)"
+        },
+        {
+          "line": 322,
+          "text": "AndroidTestCase.assertTrue(paidFlavorSourceProvider.isContainedBy(srcFile))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testSourceProviderIsContainedByFolder_noSources",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 327,
+      "body_end_line": 346,
+      "body_sha256": "3bdefe0f32978fe9900ca2012cfa9222c8439bb1849a2933410f1956d58c4f46",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(AndroidCoreTestProject.PROJECT_WITH_APPAND_LIB)\n    preparedProject.open { project ->\n      val module = project.gradleModule(\":app\")!!\n      val facet = module.androidFacet!!\n\n      val paidFlavorSourceProvider =\n        SourceProviderManager.getInstance(facet).currentAndSomeFrequentlyUsedInactiveSourceProviders.single {\n          it.name.equals(\"basicDebug\", ignoreCase = true)\n        }\n\n      val moduleFile = VfsUtil.findFileByIoFile(preparedProject.root.resolve(\"app\"), true)\n      AndroidTestCase.assertNotNull(moduleFile)\n\n      val srcFile = moduleFile!!.findChild(\"src\")!!\n      AndroidTestCase.assertNotNull(srcFile)\n\n      AndroidTestCase.assertTrue(paidFlavorSourceProvider.isContainedBy(srcFile))\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 339,
+          "text": "AndroidTestCase.assertNotNull(moduleFile)"
+        },
+        {
+          "line": 342,
+          "text": "AndroidTestCase.assertNotNull(srcFile)"
+        },
+        {
+          "line": 344,
+          "text": "AndroidTestCase.assertTrue(paidFlavorSourceProvider.isContainedBy(srcFile))"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testUsesComposeFlag",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 349,
+      "body_end_line": 370,
+      "body_sha256": "aff90fb5f6abaf8139d938bbf4f1642649ac52b75e53b25d9d19127c795c0c37",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(TestProject.SIMPLE_APPLICATION)\n    preparedProject.open { project ->\n      val module = project.gradleModule(\":app\")!!\n\n      val projectSystem = ProjectSystemService.getInstance(project).projectSystem\n      val moduleSystem = projectSystem.getModuleSystem(module)\n      // Verify defaults\n      AndroidTestCase.assertFalse(\n        \"usesCompose override is only meant to be set via properties by the AndroidX project\",\n        StudioFlags.COMPOSE_PROJECT_USES_COMPOSE_OVERRIDE.get(),\n      )\n      AndroidTestCase.assertFalse(moduleSystem.usesCompose)\n\n      StudioFlags.COMPOSE_PROJECT_USES_COMPOSE_OVERRIDE.override(true)\n      try {\n        AndroidTestCase.assertTrue(moduleSystem.usesCompose)\n      } finally {\n        StudioFlags.COMPOSE_PROJECT_USES_COMPOSE_OVERRIDE.clearOverride()\n      }\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 357,
+          "text": "AndroidTestCase.assertFalse("
+        },
+        {
+          "line": 361,
+          "text": "AndroidTestCase.assertFalse(moduleSystem.usesCompose)"
+        },
+        {
+          "line": 365,
+          "text": "AndroidTestCase.assertTrue(moduleSystem.usesCompose)"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "com.android.tools.idea.projectsystem.runsGradleProjectsystem.GradleModuleSystemIntegrationTest",
+      "method": "testDisableAgpUpgradePromptProperty",
+      "source_path": "idea/project-system-gradle/testSrc/com/android/tools/idea/projectsystem/runsGradleProjectsystem/GradleModuleSystemIntegrationTest.kt",
+      "source_sha256": "555957e0d52bcf122a21736af6edf1e024e50515e8ead330c92288302a1102ef",
+      "declaration_line": 373,
+      "body_end_line": 414,
+      "body_sha256": "d63196a511957e56099119e62e9f03fa9c2b56fd53173cc4dc20bec682b0774f",
+      "body": "{\n    val preparedProject = projectRule.prepareTestProject(TestProject.SIMPLE_APPLICATION)\n\n    preparedProject.open { project ->\n      val module = project.gradleModule(\":app\")!!\n\n      val projectSystem = ProjectSystemService.getInstance(project).projectSystem\n      val moduleSystem = projectSystem.getModuleSystem(module)\n\n      val gradleProperties = project.guessProjectDir()?.findChild(\"gradle.properties\")!!\n\n      assertThat(gradleProperties.exists()).isTrue()\n\n      ApplicationManager.getApplication().runWriteAction {\n        VfsUtil.saveText(\n          gradleProperties,\n          \"\"\"\n          android.disableAgpUpgradePrompt=true\n          \"\"\"\n            .trimIndent(),\n        )\n      }\n      GradleSyncInvoker.getInstance()\n        .requestProjectSync(project, GradleSyncInvoker.Request(GradleSyncStats.Trigger.TRIGGER_PROJECT_MODIFIED))\n\n      AndroidTestCase.assertTrue(moduleSystem.disableAgpUpgradePrompt)\n\n      ApplicationManager.getApplication().runWriteAction {\n        VfsUtil.saveText(\n          gradleProperties,\n          \"\"\"\n          android.disableAgpUpgradePrompt=false\n          \"\"\"\n            .trimIndent(),\n        )\n      }\n      GradleSyncInvoker.getInstance()\n        .requestProjectSync(project, GradleSyncInvoker.Request(GradleSyncStats.Trigger.TRIGGER_PROJECT_MODIFIED))\n\n      AndroidTestCase.assertFalse(moduleSystem.disableAgpUpgradePrompt)\n    }\n  }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 384,
+          "text": "assertThat(gradleProperties.exists()).isTrue()"
+        },
+        {
+          "line": 398,
+          "text": "AndroidTestCase.assertTrue(moduleSystem.disableAgpUpgradePrompt)"
+        },
+        {
+          "line": 412,
+          "text": "AndroidTestCase.assertFalse(moduleSystem.disableAgpUpgradePrompt)"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testSimpleKotlinFacetCreate",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 19,
+      "body_end_line": 22,
+      "body_sha256": "8998f973f44a0304f7d7494d9e163485b9564d27c22a01a958ef07ff57b9bfbe",
+      "body": "{\n        getKotlinFacet()\n        checkStorageForEntityAndFacet()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 21,
+          "text": "checkStorageForEntityAndFacet()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testEditorTabConfigurationOnFacetCreation",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 24,
+      "body_end_line": 38,
+      "body_sha256": "6f4590b1a665fd3f5563b187491027c2e9697870baf6d830f65a02139db9eef8",
+      "body": "{\n        val facet = getKotlinFacet()\n        val editorContext: FacetEditorContext = MockFacetEditorContext(getKotlinFacet())\n        var facetEditorTab: FacetEditorImpl? = null\n        try {\n            facetEditorTab = FacetEditorImpl(editorContext, facet.configuration)\n            facetEditorTab.let {\n                it.getComponent()\n                it.reset()\n                assertNotNull(it.component)\n            }\n        } finally {\n            facetEditorTab?.disposeUIResources()\n        }\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 33,
+          "text": "assertNotNull(it.component)"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testFacetRenameAndRemove",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 40,
+      "body_end_line": 70,
+      "body_sha256": "9ebda069d4b90e3ee8f73d66c22f36a32b4aaa5add4d04e256599ec71686675e",
+      "body": "{\n        val oldFacetName = \"Kotlin\"\n        val newFacetName = \"NewFacetName\"\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        val facetManager = FacetManager.getInstance(myModule)\n        var modifiableModel = facetManager.createModifiableModel()\n        assertEquals(oldFacetName, modifiableModel.getFacetName(mainFacet))\n        modifiableModel.rename(mainFacet, newFacetName)\n        checkStorageForEntityAndFacet()\n        assertEquals(oldFacetName, modifiableModel.getFacetName(mainFacet))\n        assertEquals(newFacetName, modifiableModel.getNewName(mainFacet))\n\n        runWriteActionAndWait {\n            modifiableModel.commit()\n        }\n\n        assertEquals(newFacetName, mainFacet.name)\n        checkStorageForEntityAndFacet(facetName = newFacetName)\n\n        modifiableModel = facetManager.createModifiableModel()\n        modifiableModel.removeFacet(mainFacet)\n        runWriteActionAndWait {\n            modifiableModel.commit()\n        }\n\n        val entityStorage = WorkspaceModel.getInstance(myProject).currentSnapshot\n        assertEmpty(entityStorage.entities(KotlinSettingsEntity::class.java).toList())\n        assertEmpty(facetManager.allFacets)\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 44,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 48,
+          "text": "assertEquals(oldFacetName, modifiableModel.getFacetName(mainFacet))"
+        },
+        {
+          "line": 50,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 51,
+          "text": "assertEquals(oldFacetName, modifiableModel.getFacetName(mainFacet))"
+        },
+        {
+          "line": 52,
+          "text": "assertEquals(newFacetName, modifiableModel.getNewName(mainFacet))"
+        },
+        {
+          "line": 58,
+          "text": "assertEquals(newFacetName, mainFacet.name)"
+        },
+        {
+          "line": 59,
+          "text": "checkStorageForEntityAndFacet(facetName = newFacetName)"
+        },
+        {
+          "line": 68,
+          "text": "assertEmpty(entityStorage.entities(KotlinSettingsEntity::class.java).toList())"
+        },
+        {
+          "line": 69,
+          "text": "assertEmpty(facetManager.allFacets)"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testCreateFacetWithDisabledUseProjectSettingsFlag",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 72,
+      "body_end_line": 80,
+      "body_sha256": "d3a9d2dddcc73f4c509e518049f826bb855fb6535d2dda2330e458058ecf3aa6",
+      "body": "{\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        mainFacet.configuration.settings.useProjectSettings = false\n\n        fireFacetChangedEvent(mainFacet)\n        checkStorageForEntityAndFacet()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 74,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 79,
+          "text": "checkStorageForEntityAndFacet()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testCreateFacetEnableHmpp",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 82,
+      "body_end_line": 90,
+      "body_sha256": "c676d5715d810d61b741dd301fcb55c607fa44ac18fd1e40d04d719e1c4d659e",
+      "body": "{\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        mainFacet.configuration.settings.isHmppEnabled = true\n\n        fireFacetChangedEvent(mainFacet)\n        checkStorageForEntityAndFacet()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 84,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 89,
+          "text": "checkStorageForEntityAndFacet()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testCreateFacetExternalSystemProjectId",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 92,
+      "body_end_line": 101,
+      "body_sha256": "0552784ead496aa5656068b25a43182935412db81bd604b8d569e45531dc514d",
+      "body": "{\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        mainFacet.configuration.settings.externalSystemRunTasks =\n            listOf(ExternalSystemTestRunTask(\"taskName\", \"externalSystemProjectId\", \"targetName\", \"kotlinPlatformId\"))\n\n        fireFacetChangedEvent(mainFacet)\n        checkStorageForEntityAndFacet()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 94,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 100,
+          "text": "checkStorageForEntityAndFacet()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testCreateFacetAndCheckNullableTypes",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 103,
+      "body_end_line": 115,
+      "body_sha256": "7330a6e85e975b1f30e67f4bed3484935039a5e8db2254ad28bc0eae244c3b23",
+      "body": "{\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        mainFacet.configuration.settings.compilerArguments = null\n        mainFacet.configuration.settings.compilerSettings = null\n        mainFacet.configuration.settings.targetPlatform = null\n        mainFacet.configuration.settings.productionOutputPath = null\n        mainFacet.configuration.settings.testOutputPath = null\n\n        fireFacetChangedEvent(mainFacet)\n        checkStorageForEntityAndFacet()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 105,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 114,
+          "text": "checkStorageForEntityAndFacet()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "org.jetbrains.kotlin.idea.facets.KotlinFacetBridgeTest",
+      "method": "testChangeCompilerSettingsAfterCreation",
+      "source_path": "intellij-core/plugins/kotlin/base/facet/tests/test/org/jetbrains/kotlin/idea/facets/KotlinFacetBridgeTest.kt",
+      "source_sha256": "8591901aa62da44efa061fb2cfe01a76ae4756286264719f7f7c778f0dc4fb89",
+      "declaration_line": 117,
+      "body_end_line": 136,
+      "body_sha256": "6aba4225e4860dbda0b98fa76cf6a67892c1fc5ee2e360e3d22a7c6cf60de382",
+      "body": "{\n        val mainFacet = getKotlinFacet()\n        checkStorageForEntityAndFacet()\n\n        val additionalArgs = \"foo\"\n        val scriptTemplates = \"bar\"\n        // setup initial compiler settings\n        mainFacet.configuration.settings.compilerSettings = CompilerSettings().apply {\n            additionalArguments = additionalArgs\n        }\n        fireFacetChangedEvent(mainFacet)\n\n        // change compiler settings after setup\n        mainFacet.configuration.settings.compilerSettings?.scriptTemplates = scriptTemplates\n        fireFacetChangedEvent(mainFacet)\n\n        // check that both changes were applied\n        assertTrue(getEntity().compilerSettings!!.additionalArguments == additionalArgs)\n        assertTrue(getEntity().compilerSettings!!.scriptTemplates == scriptTemplates)\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 119,
+          "text": "checkStorageForEntityAndFacet()"
+        },
+        {
+          "line": 134,
+          "text": "assertTrue(getEntity().compilerSettings!!.additionalArguments == additionalArgs)"
+        },
+        {
+          "line": 135,
+          "text": "assertTrue(getEntity().compilerSettings!!.scriptTemplates == scriptTemplates)"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "No parameter provider visible in this inspected class; runtime inheritance/runner expansion unverified.",
+      "scope": "all direct test declarations visible in inspected file"
+    },
+    {
+      "suite": "org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests.k2.KotlinJvmSimpleFacetImportTest",
+      "method": "testSimpleFacetImport",
+      "source_path": "intellij-core/plugins/kotlin/gradle/multiplatform-tests-k2/test/org/jetbrains/kotlin/gradle/idea/importing/multiplatformTests/k2/KotlinJvmSimpleFacetImportTest.kt",
+      "source_sha256": "43145ed84d9a3f5de1778ef84a0f799f261aa6319ba002008fe1bb9c88f122fd",
+      "declaration_line": 22,
+      "body_end_line": 24,
+      "body_sha256": "99d3b6a745caa9a32d46fa5c2c474b64f0892c4092350c43c7c2322e90cb510d",
+      "body": "{\n        doTest()\n    }",
+      "assertion_or_helper_invocation_lines": [
+        {
+          "line": 23,
+          "text": "doTest()"
+        }
+      ],
+      "status": "unported",
+      "run_status": "not_run",
+      "canonical_reference_id": null,
+      "status_origin": "external proposal only; not entered in canonical ledger",
+      "parameter_inventory": "@PluginTargetVersions(pluginVersion = \"1.9.20+\", gradleVersion = \"7.6+\"); actual runtime combinations and fixture checker expansion unenumerated.",
+      "scope": "all direct test declarations visible in inspected file"
+    }
+  ],
+  "source_provider_definitions": [
+    {
+      "project": "SIMPLE_APPLICATION",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "SIMPLE_APPLICATION_VIA_SYMLINK",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "SIMPLE_APPLICATION_APP_VIA_SYMLINK",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "SIMPLE_APPLICATION_NOT_AT_ROOT",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "SIMPLE_APPLICATION_MULTIPLE_ROOTS",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "SIMPLE_APPLICATION_WITH_SCREENSHOT_TEST",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "APP_WITH_ML_MODELS",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "MULTI_FLAVOR",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "PSD_SAMPLE_GROOVY",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "COMPOSITE_BUILD",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "APP_WITH_BUILDSRC",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "COMPATIBILITY_TESTS_AS_36",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "COMPATIBILITY_TESTS_AS_36_NO_IML",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "TEST_FIXTURES",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "KOTLIN_KAPT",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "KOTLIN_MULTIPLATFORM",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "ANDROID_KOTLIN_MULTIPLATFORM",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "NAVIGATOR_PACKAGEVIEW_COMMONROOTS",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "NAVIGATOR_PACKAGEVIEW_SIMPLE",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "APP_WITH_BUILD_FEATURES_ENABLED",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "TEST_STATIC_DIR",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    },
+    {
+      "project": "TEST_SUITES",
+      "agpVersion": "AGP_CURRENT",
+      "compatibility_rule": "agpVersion == AGP_CURRENT",
+      "assertion": "SnapshotContext(...).assertIsEqualToSnapshot(project.dumpSourceProviders())",
+      "status": "unported",
+      "run_status": "not_run",
+      "runtime_case_count": "unknown"
+    }
+  ],
+  "named_uninspected_tests": [
+    "GradleFacetImportTest.testCommonImportByPlatformPlugin",
+    "GradleFacetImportTest.testKotlinAndroidPluginDetection"
+  ],
+  "global_census_complete": false,
+  "preparation_history": [
+    "Initial inventory validation rejected a pattern that excluded digits in COMPATIBILITY_TESTS_AS_36 names before writing the inventory. Corrected to include digits; all 22 definitions retained."
+  ]
+}

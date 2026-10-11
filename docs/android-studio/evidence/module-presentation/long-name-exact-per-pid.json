@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/tmp/module-presentation-verified-binaries/module-presentation-tests20",
+    "--exact",
+    "long_captured_names_are_borrowed_without_reformatting",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "pid": 266605,
+  "exit_code": 0,
+  "elapsed_seconds": 0.0018168370006605983,
+  "maximum_resident_kib": 11008,
+  "user_cpu_seconds": 0.0011819999999999999,
+  "system_cpu_seconds": 0.0,
+  "sha256_before_after": "6dcbba6ac91c0318aaa8cc7a459fd599a1d61eacbdd4ba4444b50b133f4726e4",
+  "source_commit": "5e4b752a057bff25d9e281a43ce4b71a8598406f",
+  "source_sha256": "0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c",
+  "test_input_imported_name_bytes": 327680,
+  "test_input_external_id_bytes": 327692,
+  "runner_sha256": "625ddbf8336332481dd791fe487b12e02c7d99f6b50589bbf1d18580cdf02cfe",
+  "log_sha256": "6d2bceb30d9edfa1840d7a539c5820fe7128c719e952f12581b758f2beb4b769",
+  "measurement_scope": "one actual existing supplemental test process, including startup/allocation/assertions/output; metadata borrowing coverage, not an adversarial colon-scan, allocation-count, memory-ceiling, full-IDE startup or large-project benchmark"
+}

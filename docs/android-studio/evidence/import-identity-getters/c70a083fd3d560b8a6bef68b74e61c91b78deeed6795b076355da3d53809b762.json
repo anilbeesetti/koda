@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "review_area": "UI",
+  "verdict": "PASS",
+  "scope": "Current-source static addendum only; Root full-app/native and all runtime gates pending",
+  "source_head": "e0cfad266fce1a29e065ef016815f695ced9810b",
+  "prior_review_head": "8362e8ca7187164dc7d15173994528790f100368",
+  "base": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
+  "timestamp_utc": "2026-10-08T00:56:33.440999+00:00",
+  "prior_report_sha256": "970a600b4119719c1f4619a53cf6251d512ec09ffe5c56c6aff9fcc5a24c0815",
+  "prior_receipt_sha256": "99e3e5ec9f355d49d1ba2671ebd356d8584bd257077bdd67b9c7ffb526df9c7b",
+  "changed_source_since_prior": {
+    "crates/android_tools/src/import_facts.rs": {
+      "bytes": 27999,
+      "sha256": "45618d7c6960dfb39068453ce04f90ab263e5edd887cb7bb48c0a41191f136f8"
+    },
+    "crates/android_tools/src/project_model.gradle": {
+      "bytes": 36402,
+      "sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9"
+    },
+    "crates/android_tools/test_data/import_facts/late_configuration.gradle": {
+      "bytes": 611,
+      "sha256": "c9f33742f6d0d5d9fcd26433f14d084593048597bd1030b17aec4fddcc249dac"
+    },
+    "crates/android_tools/tests/import_facts.rs": {
+      "bytes": 29151,
+      "sha256": "7f4a9e4c2c718204c88d36be8753972839b7cda09b8ec85ba246598d06d9e1d1"
+    }
+  },
+  "fixed_source_exclusions": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "unchanged_consumers": {
+    "crates/android_tools/src/project_model.rs": {
+      "sha256": "06c707d1553896b821b071e2a638e52a6923fa02ca6e24d670d67ca07e0a7a4c",
+      "bytes": 69027,
+      "equal_to_prior_and_base": true
+    },
+    "crates/android_tools/src/generated_artifacts.rs": {
+      "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+      "bytes": 29465,
+      "equal_to_prior_and_base": true
+    },
+    "crates/android_ui/src/android_ui.rs": {
+      "sha256": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8",
+      "bytes": 260293,
+      "equal_to_prior_and_base": true
+    },
+    "crates/android_ui/src/android_build.rs": {
+      "sha256": "b54fc43d2c4875e4052af22bff2bf81029da96900d26564533232ce1f763ef8b",
+      "bytes": 77987,
+      "equal_to_prior_and_base": true
+    }
+  },
+  "ui_project_editor_theme_diff": [],
+  "formatting_receipt": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/formatting/receipt.json",
+    "sha256": "6cad719542f3052a1b0ab21a03b475e94167e0ee3298a8fae6e8e802b044bea5",
+    "verified_source_files": [
+      {
+        "file": "crates/android_tools/src/import_facts.rs",
+        "before_bytes": 23641,
+        "before_sha256": "36db0e332e2d981d3c3b9072ea883e1241c58cc30a184fba5a1fce5da4f3c8ad",
+        "after_bytes": 27999,
+        "after_sha256": "45618d7c6960dfb39068453ce04f90ab263e5edd887cb7bb48c0a41191f136f8",
+        "function_names_equal": true,
+        "all_string_literals_equal_in_order": true,
+        "test_attribute_count_equal": true,
+        "test_count": 0,
+        "current_file_matches_formatted_snapshot": true,
+        "before_matches_prior_review_source": true,
+        "reviewer_verified_function_names_and_literal_sequence": true
+      },
+      {
+        "file": "crates/android_tools/tests/import_facts.rs",
+        "before_bytes": 24440,
+        "before_sha256": "062bc0523570936375363843c840c69de44326415b8b84f8331b81bcfe0bd6f1",
+        "after_bytes": 29151,
+        "after_sha256": "7f4a9e4c2c718204c88d36be8753972839b7cda09b8ec85ba246598d06d9e1d1",
+        "function_names_equal": true,
+        "all_string_literals_equal_in_order": true,
+        "test_attribute_count_equal": true,
+        "test_count": 28,
+        "current_file_matches_formatted_snapshot": true,
+        "before_matches_prior_review_source": true,
+        "reviewer_verified_function_names_and_literal_sequence": true
+      }
+    ],
+    "logs": {
+      "/workspace/android-studio-artifacts/import-identity-getters/formatting/rustfmt.log": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "/workspace/android-studio-artifacts/import-identity-getters/formatting/rustfmt-check.log": {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "owner_reported_formatter_exit": 0,
+    "owner_reported_idempotent_check_exit": 0,
+    "rerun_by_reviewer": false,
+    "workspace_formatting": "pending"
+  },
+  "verified_references": [
+    {
+      "path": "references/gradle/subprojects/core-api/src/main/java/org/gradle/api/Project.java",
+      "source_path": "subprojects/core-api/src/main/java/org/gradle/api/Project.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "sha256": "f259911bfff32f46c24d9bd1f6f3a577a92c599b9cd995a6e3f852367dd14346",
+      "bytes": 80144,
+      "role": "gradle_build_tree_path",
+      "repository": "gradle",
+      "full_file_hash_verified": true
+    },
+    {
+      "path": "references/gradle/platforms/ide/tooling-api/src/main/java/org/gradle/tooling/model/gradle/BasicGradleProject.java",
+      "source_path": "platforms/ide/tooling-api/src/main/java/org/gradle/tooling/model/gradle/BasicGradleProject.java",
+      "revision": "309d128bd9fe8c0b71311878fc660b9cbaa07c51",
+      "sha256": "b7dadfd9fa270fddd4b5d3c85d4ccab634ebddf99d0a3ec52a0b536c0bfadf18",
+      "bytes": 2676,
+      "role": "gradle_build_tree_path",
+      "repository": "gradle",
+      "full_file_hash_verified": true
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleProjectUtil.java",
+      "source_path": "plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleProjectUtil.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "49312efd6eb1e7c71230d4e4e6b76a0cf48988846c506724864d8266b629b616",
+      "bytes": 1604,
+      "role": "reference_gradle_identity_path",
+      "repository": "intellij-core",
+      "full_file_hash_verified": true
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/model/projectModel/GradleExternalProjectModelBuilder.java",
+      "source_path": "plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/model/projectModel/GradleExternalProjectModelBuilder.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "b1255e9ced2ef115f3ce453d1b34d80429a1c63a76daa79575c448ceb4fb0b38",
+      "bytes": 3291,
+      "role": "gradle_idea_name",
+      "repository": "intellij-core",
+      "full_file_hash_verified": true
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "source_path": "plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "cc99f71aa146656368b5c62fc88746747ae19d3ecd5b87fea63ef17a6214c6eb",
+      "bytes": 61012,
+      "role": "gradle_idea_name",
+      "repository": "intellij-core",
+      "full_file_hash_verified": true
+    },
+    {
+      "path": "references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleIdeaPluginUtil.java",
+      "source_path": "plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleIdeaPluginUtil.java",
+      "revision": "b75ab523e6adbe1d26112219729eacbcfd24daa0",
+      "sha256": "9f47198c20cc8e8b124c45c18fe9c9094f14079c05e17724aca920ec017d879a",
+      "bytes": 3533,
+      "role": "gradle_idea_name",
+      "repository": "intellij-core",
+      "full_file_hash_verified": true
+    }
+  ],
+  "authored_rust_tests": {
+    "count": 28,
+    "executed_by_reviewer": 0
+  },
+  "findings": [],
+  "observations": [
+    "Capture now runs from taskGraph.whenReady registered within projectsEvaluated, so later projectsEvaluated callbacks can finalize raw Idea names before capture. Actual Gradle ordering remains an unexecuted runtime requirement.",
+    "Getter envelopes, Basic and V2 emission, Rust import-facts behavior and shipping consumer isolation are unchanged from the previous UI review.",
+    "The late-configuration fixture applies Idea only in the private fixture, changes its module name in projectsEvaluated, and separately prints the final getter value. The shipping bridge still never applies Idea.",
+    "Pinned rustfmt receipt before/after files match prior and current Source exactly; ordered function names, string literals and 28 test attributes remain equal.",
+    "No UI display, module renaming, collision policy, Kotlin facet, tree label, Basic reset or model publication changes were introduced.",
+    "The physical tree and raw JSON Sync console remain tracked limitations. No original-test or visual fidelity credit is added."
+  ],
+  "pending_gates": [
+    "Current-source Cargo tests/library/strict repository Clippy/workspace formatting",
+    "Real Gradle/SDK late-configuration oracle comparison and getter failure/nullable captures",
+    "Root full app/full CI/current native screenshots and focus/loading/empty/error/resizing/cleanup checks",
+    "Other reviewer runtime addenda"
+  ],
+  "runtime_or_visual_pass": false,
+  "reviewer_runtime_commands": [],
+  "source_cache_sdk_native_mutations": 0,
+  "subagents_spawned": 0,
+  "report_sha256": "31a6e36c196c7e819b823884514de67bf816659f84d124fccd78057b3cea27a4"
+}

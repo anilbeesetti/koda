@@ -1,0 +1,30 @@
+{
+  "verdict": "PASS",
+  "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+  "utc": "2026-10-07T23:36:34.782993+00:00",
+  "source_before_after_files": 4725,
+  "source_index_worktree_untracked_and_hashes_unchanged": true,
+  "original_and_private_fixture_files_verified": 12,
+  "all_fixture_bytes_and_official_wrapper_unchanged": true,
+  "fixture_only_sdk_properties_unchanged": true,
+  "owned_pids_absent": [
+    294546,
+    294564,
+    294554
+  ],
+  "display119_absent": true,
+  "launcher_exec_session": 48277,
+  "launcher_exit_code": 143,
+  "unowned_gradle167092_present_and_never_signaled": true,
+  "no_unrelated_processes_signaled": true,
+  "trusted_worktrees_rows": [
+    [
+      1,
+      "/workspace/android-studio-artifacts/module-presentation-native-905012f/generation-project",
+      null,
+      null
+    ]
+  ],
+  "current_app_sha256": "9c018912f5622c4b991276a311a1f86bd3544de612537904d299cdc7f0b40891",
+  "current_runtime_decoder_library_sha256": "a1a5e2968673a3026664777bbe17a36bdb71c94d61dc7e4af048083b037b1383"
+}

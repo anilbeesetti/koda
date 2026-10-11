@@ -1,0 +1,7 @@
+{
+  "reason": "Shared Cargo target reused a library whose relative dep-info omitted project_tree after another worktree built it. Refresh task-owned crate root mtime to force recompilation without changing source bytes or deleting artifacts.",
+  "path": "crates/android_tools/src/android_tools.rs",
+  "sha256": "3384502fe3b1222533eaf71d7bf101dfb04fe58c2b5cace6e5f4a4a2b0afdd7f",
+  "mtime_before_ns": 1791374047776153691,
+  "mtime_after_ns": 1791378435039013211
+}

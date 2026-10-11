@@ -1,0 +1,55 @@
+{
+  "source_commit": "905012f11885a86c9e8e18710ead07897d941d40",
+  "roots": [
+    {
+      "path": "crates/android_tools/src/android_tools.rs",
+      "sha256": "4c9c5ccf65133edc6d755b0a71e0f370ed9e76e844fa78177d4f3e986b306f2e",
+      "before_mtime_ns": 1791414557175095602,
+      "after_mtime_ns": 1791414670813582546
+    },
+    {
+      "path": "crates/android_tools/tests/generated_artifacts.rs",
+      "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c",
+      "before_mtime_ns": 1791414557175095602,
+      "after_mtime_ns": 1791414670813582546
+    },
+    {
+      "path": "crates/android_tools/tests/gradle_import_reference.rs",
+      "sha256": "b4bc4ae4d1949bf219484d5dd7f964e6d6e25a98ec8cdf0caf10bc70c6d7e5b1",
+      "before_mtime_ns": 1791414557175095602,
+      "after_mtime_ns": 1791414670813582546
+    },
+    {
+      "path": "crates/android_tools/tests/module_presentation.rs",
+      "sha256": "9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924",
+      "before_mtime_ns": 1791414557175095602,
+      "after_mtime_ns": 1791414670813582546
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_adapter.rs",
+      "sha256": "5e5927568f42cdc1247d88d16f3fdf1dcbb7b427e24b4d6240928378b6e5f79e",
+      "before_mtime_ns": 1791414557175095602,
+      "after_mtime_ns": 1791414670813582546
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_component.rs",
+      "sha256": "6fedcb1c5fd0f9a56d0b925b82de839584eaa3a4db111d1ebad1f3106c93bf22",
+      "before_mtime_ns": 1791414557175095602,
+      "after_mtime_ns": 1791414670813582546
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_facts.rs",
+      "sha256": "7d032f41e790d19a7a3f2f7cb38ea91cf19181c3427c4531f3126d6a2b6542fc",
+      "before_mtime_ns": 1791414557175095602,
+      "after_mtime_ns": 1791414670813582546
+    },
+    {
+      "path": "crates/android_tools/tests/project_view_preferences_reference.rs",
+      "sha256": "6342ccfc05bcd1860a5a07a763d68601577b4ae0c114c16ef794fa15cdfa2d32",
+      "before_mtime_ns": 1791414557175095602,
+      "after_mtime_ns": 1791414670813582546
+    }
+  ],
+  "source_bytes_unchanged": true,
+  "reason": "Prevent falsely fresh compiler results from shared relative dependency paths."
+}

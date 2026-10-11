@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "task": "1-junit4-declarations",
+  "combined_source_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "source_files_and_fixture_hashes_verified": 4626,
+  "source_module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+  "all_prior_and_new_xtask_tests": {
+    "passed": 114,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "strict_repository_clippy": "PASS release/alltargets/allfeatures/denywarnings",
+  "workspace_format": "PASS",
+  "normal_full_app_build": "PASS141.814737sec",
+  "normal_cli_build_and_8_actual_flows": "PASS",
+  "actual_amplification_rejection": {
+    "input_package_bytes": 1048576,
+    "methods": 512,
+    "elapsed_seconds": 0.010062294000817928,
+    "peak_process_rss_kib": 21596,
+    "scope": "One CLI rejection shape, not a corpus memory ceiling; existing output unchanged and no staging."
+  },
+  "current_full_app_native": "PASS scoped source931/f2f7 actual sync/editor/tabs/narrow230 focus/Hide restore/cleanup",
+  "root_inspected_native_images": [
+    "sync-progress.png",
+    "narrow230-output-focus.png"
+  ],
+  "canonical_selected_parity": {
+    "ported": 17,
+    "adapted": 16,
+    "unported": 59,
+    "passing": 33,
+    "failing": 0,
+    "not_applicable": 0,
+    "new_credit_from_this_task": 0
+  },
+  "completion_gate": "EXPECTED REJECTION: reference census incomplete; no complete claim",
+  "full_workspace_CI": {
+    "run_id": 37675257011,
+    "url": "https://github.com/anilbeesetti/koda/actions/runs/37675257011",
+    "status": "pending",
+    "known_jobs": {
+      "formatting": "PASS",
+      "macOS_application": "PASS",
+      "Linux_build_and_workspace_tests": "in_progress"
+    }
+  },
+  "five_owner_reviews": "All5PASS current68bfab0 with actual-evidence quality/perf addenda; historicalFAILs/escalations preserved in ports/junit4-declarations.json",
+  "existing_gradle_indentation_diagnostic": "Recorded installedJava6.8.27 query issue; bytes equal previous profile; editingphase fidelity remains unverified. No new Rust LSP credit.",
+  "main_modified": false,
+  "protected_merge_performed": false,
+  "task_complete": false,
+  "phase_complete": false,
+  "IDE_complete": false,
+  "non_rust_exceptions_added": []
+}

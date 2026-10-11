@@ -1,0 +1,2 @@
+pluginManagement { includeBuild '../logic' }
+rootProject.name = 'included-android-convention-context'

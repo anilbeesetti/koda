@@ -1,0 +1,16 @@
+{
+  "source_commit": "5e4b752a057bff25d9e281a43ce4b71a8598406f",
+  "released_at": "2026-10-07T22:11:46.000439+00:00",
+  "all_bounded_cargo_checks_complete": true,
+  "all_features_passed": 221,
+  "new_supplemental_passed": 20,
+  "failed": 0,
+  "ignored": 0,
+  "filtered": 0,
+  "whole_source_bindings": 4717,
+  "exact_root_patterns_verified": true,
+  "source_git_index_status_unchanged": true,
+  "no_owned_cargo_gradle_app_processes_left": true,
+  "source_fixes": 0,
+  "scope": "component gates only; full app/live/full CI stay pending lead integration"
+}

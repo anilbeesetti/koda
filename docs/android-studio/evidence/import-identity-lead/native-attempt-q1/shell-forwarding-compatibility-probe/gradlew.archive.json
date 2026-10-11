@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "archive_kind": "reversible_single_file",
+  "original_path": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/shell-forwarding-compatibility-probe/gradlew",
+  "recovery_relative_path": "native-attempt-q1/shell-forwarding-compatibility-probe/gradlew",
+  "original_bytes": 183,
+  "original_sha256": "14ae5510ebb3d4267353bdf43ba7c99cdd8335e62e941c644372e9337cba8cb1",
+  "content_preserved_byte_exact": true,
+  "encoding": "base64",
+  "base64_content": "IyEvYmluL3NoCmV4ZWMgL3Vzci9iaW4vcHl0aG9uMyAnL3dvcmtzcGFjZS9hbmRyb2lkLXN0dWRpby1hcnRpZmFjdHMvaW1wb3J0LWlkZW50aXR5LW5hdGl2ZS03ZTNmNzJlLXJldHJ5MS9zaGVsbC1mb3J3YXJkaW5nLWNvbXBhdGliaWxpdHktcHJvYmUvY2FwdHVyZSAnIiciJ3F1b3RlZCciJyInIHBhdGgucHknICIkQCIK"
+}

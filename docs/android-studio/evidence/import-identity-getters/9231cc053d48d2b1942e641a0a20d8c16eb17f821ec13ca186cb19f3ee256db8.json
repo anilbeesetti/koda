@@ -1,0 +1,23 @@
+{
+  "authorization": "Root explicit narrow nonsemantic ownership-quality cleanup after user-facing three-round escalation, under existing user continue/no routine questions; no new user approval reply claimed",
+  "prior_actual_source": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "after_source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_file_count": 4743,
+  "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+  "semantic_product_fix_rounds_used": 3,
+  "additional_nonsemantic_quality_cleanup": true,
+  "sole_source_delta": [
+    "crates/android_tools/tests/import_facts.rs"
+  ],
+  "removed_exact_bytes": ".clone()",
+  "all30_prior_test_mutations_assertions_preserved": true,
+  "complete_after_equals_before_one_exact_replacement": true,
+  "required_project_clone_unchanged": true,
+  "before_test_sha256": "622dfb8c33596a9546583afefe0d65d21530e7fc933b87690c327616c4d976bc",
+  "after_test_sha256": "13744dfb88d81b17fcba3bed9a1d07000d0d8f3cffa4e62232a6f733ca72f319",
+  "all_other4742_source_bytes_unchanged": true,
+  "earlier_failed_strictClippy_and_independent_qualityFAIL_preserved": true,
+  "earlier_defaultUI_actual125pass1existingignored": true,
+  "corrected_source_runtime_validation": "pending",
+  "clean_ordinary_task_branch_commit": true
+}

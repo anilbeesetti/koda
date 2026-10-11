@@ -1,0 +1,14 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "official_launcher_exit_code": 143,
+  "owned_pids_absent": {
+    "345885": true,
+    "345903": true,
+    "345893": true
+  },
+  "owned_display_socket_absent": true,
+  "owned_display_lock_absent": true,
+  "unowned_daemon167092_not_signaled": true,
+  "actual_attached_PTY_exit_observed": true,
+  "utc": "2026-10-08T04:00:24.002208+00:00"
+}

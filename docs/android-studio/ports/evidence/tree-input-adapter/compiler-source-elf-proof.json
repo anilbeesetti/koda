@@ -1,0 +1,332 @@
+{
+  "worktree": "/workspace/android-studio-tree-input-adapter",
+  "source_hashes": {
+    "crates/android_tools/src/project_tree_adapter.rs": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+    "crates/android_tools/src/android_tools.rs": "f4b033f8aa13b8141f706a1f24455c1d5500940ef5e4adffa46edd8baf1f2891",
+    "crates/android_tools/tests/project_tree_adapter.rs": "5e5927568f42cdc1247d88d16f3fdf1dcbb7b427e24b4d6240928378b6e5f79e"
+  },
+  "counts": [
+    [
+      85,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      20,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      27,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      21,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      29,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      19,
+      0,
+      0,
+      0,
+      0
+    ]
+  ],
+  "unfiltered_total_passed": 201,
+  "all_test_targets_actual_compiler_json": [
+    {
+      "log": "all-features-tests-retry1.log",
+      "package_id": "path+file:///workspace/android-studio-tree-input-adapter/crates/android_tools#0.1.0",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "android_tools",
+        "src_path": "/workspace/android-studio-tree-input-adapter/crates/android_tools/src/android_tools.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "fresh": false,
+      "files": {
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib": {
+          "sha256": "433fb76f7656b8dce2e9bc44c5ef0e5116adfc36c11ed088b4a96d70aafb6f0a",
+          "bytes": 309864372,
+          "mtime_ns": 1791403805943361456
+        },
+        "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rmeta": {
+          "sha256": "41a751430a047907dd270be0b7edee25b2d8deecdc494b895aea9690cbdb20cb",
+          "bytes": 2860395,
+          "mtime_ns": 1791403804633699538
+        }
+      },
+      "executable": null,
+      "dependency_file": "/workspace/.cache/zed/target/debug/deps/android_tools-b6087fa93a4c72f9.d",
+      "dependency_file_sha256": "767acdd38597100c2023c3dbcf31160008fa953034b9a8931c38b04e9d205d16",
+      "adapter_source_declared_in_dependency_file": true
+    },
+    {
+      "log": "all-features-tests-retry1.log",
+      "package_id": "path+file:///workspace/android-studio-tree-input-adapter/crates/android_tools#0.1.0",
+      "target": {
+        "kind": [
+          "example"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "project_tree_facts_probe",
+        "src_path": "/workspace/android-studio-tree-input-adapter/crates/android_tools/examples/project_tree_facts_probe.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": false
+      },
+      "fresh": false,
+      "files": {
+        "/workspace/.cache/zed/target/debug/examples/project_tree_facts_probe": {
+          "sha256": "8e386b336f16000e55c5b2def31ccb15c750d548d3a7246a3e608c9df254e6a8",
+          "bytes": 4349072,
+          "mtime_ns": 1791403806475370380
+        }
+      },
+      "executable": "/workspace/.cache/zed/target/debug/examples/project_tree_facts_probe",
+      "dependency_file": "/workspace/.cache/zed/target/debug/examples/project_tree_facts_probe.d",
+      "dependency_file_sha256": "960798ef178b0da9a6dbbe472edc0b44c14a1fe5b7862de1d27b4ae0f5a50583",
+      "adapter_source_declared_in_dependency_file": true
+    },
+    {
+      "log": "all-features-tests-retry1.log",
+      "package_id": "path+file:///workspace/android-studio-tree-input-adapter/crates/android_tools#0.1.0",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "gradle_import_reference",
+        "src_path": "/workspace/android-studio-tree-input-adapter/crates/android_tools/tests/gradle_import_reference.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "fresh": false,
+      "files": {
+        "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5": {
+          "sha256": "2b290e89aeed9484e839f1e62cb46f923e44cdee54ef77c97c56633df331fa4d",
+          "bytes": 3018328,
+          "mtime_ns": 1791403806567371924
+        }
+      },
+      "executable": "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5",
+      "dependency_file": "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5.d",
+      "dependency_file_sha256": "883c41dca7796d670e9d240d5f5189829741de124f1ca91b9d2d81d0e44254ca",
+      "adapter_source_declared_in_dependency_file": false
+    },
+    {
+      "log": "all-features-tests-retry1.log",
+      "package_id": "path+file:///workspace/android-studio-tree-input-adapter/crates/android_tools#0.1.0",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "project_tree_component",
+        "src_path": "/workspace/android-studio-tree-input-adapter/crates/android_tools/tests/project_tree_component.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "fresh": false,
+      "files": {
+        "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950": {
+          "sha256": "f42922bf28f788f65d741563606336a52e55c9486540bf49403d520e93cb4153",
+          "bytes": 4334904,
+          "mtime_ns": 1791403806671373669
+        }
+      },
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950",
+      "dependency_file": "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950.d",
+      "dependency_file_sha256": "7c8b413341d081c97e15122b2ac5720e507cadad31994a936a31af4c5a56689a",
+      "adapter_source_declared_in_dependency_file": false
+    },
+    {
+      "log": "all-features-tests-retry1.log",
+      "package_id": "path+file:///workspace/android-studio-tree-input-adapter/crates/android_tools#0.1.0",
+      "target": {
+        "kind": [
+          "example"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "project_model_probe",
+        "src_path": "/workspace/android-studio-tree-input-adapter/crates/android_tools/examples/project_model_probe.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": false
+      },
+      "fresh": false,
+      "files": {
+        "/workspace/.cache/zed/target/debug/examples/project_model_probe": {
+          "sha256": "58cefda7ed030c37118239687661bbaf5e564dde62a3a51bdfc8763e6a8e67bd",
+          "bytes": 4300544,
+          "mtime_ns": 1791403806880249818
+        }
+      },
+      "executable": "/workspace/.cache/zed/target/debug/examples/project_model_probe",
+      "dependency_file": "/workspace/.cache/zed/target/debug/examples/project_model_probe.d",
+      "dependency_file_sha256": "36f27105c7d59418e842d07ea855a41c3f51a19dbf682d4595db1d3a37631f43",
+      "adapter_source_declared_in_dependency_file": true
+    },
+    {
+      "log": "all-features-tests-retry1.log",
+      "package_id": "path+file:///workspace/android-studio-tree-input-adapter/crates/android_tools#0.1.0",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "project_view_preferences_reference",
+        "src_path": "/workspace/android-studio-tree-input-adapter/crates/android_tools/tests/project_view_preferences_reference.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "fresh": false,
+      "files": {
+        "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394": {
+          "sha256": "b3e0764f66a2220dfcb090cd4d505663c295d43f60bf149fa674a6928c43ca7e",
+          "bytes": 2643304,
+          "mtime_ns": 1791403807235383129
+        }
+      },
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394",
+      "dependency_file": "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394.d",
+      "dependency_file_sha256": "304638ea1728ae64256d70c04cb81074a82c01ec289f91de5d9f87f7304e83b5",
+      "adapter_source_declared_in_dependency_file": false
+    },
+    {
+      "log": "all-features-tests-retry1.log",
+      "package_id": "path+file:///workspace/android-studio-tree-input-adapter/crates/android_tools#0.1.0",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "project_tree_facts",
+        "src_path": "/workspace/android-studio-tree-input-adapter/crates/android_tools/tests/project_tree_facts.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "fresh": false,
+      "files": {
+        "/workspace/.cache/zed/target/debug/deps/project_tree_facts-d85b15a481942004": {
+          "sha256": "6fbbe7cb270acadecf5cee1c7d12a96588c802b0fdb2f9cae3578215caa62930",
+          "bytes": 6414840,
+          "mtime_ns": 1791403807447386685
+        }
+      },
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_facts-d85b15a481942004",
+      "dependency_file": "/workspace/.cache/zed/target/debug/deps/project_tree_facts-d85b15a481942004.d",
+      "dependency_file_sha256": "12d6a2f38910e8b17310e502821e41679bce9dd93a90fc3bdaa4157cbc5328e1",
+      "adapter_source_declared_in_dependency_file": false
+    },
+    {
+      "log": "all-features-tests-retry2.log",
+      "package_id": "path+file:///workspace/android-studio-tree-input-adapter/crates/android_tools#0.1.0",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "project_tree_adapter",
+        "src_path": "/workspace/android-studio-tree-input-adapter/crates/android_tools/tests/project_tree_adapter.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "fresh": false,
+      "files": {
+        "/workspace/.cache/zed/target/debug/deps/project_tree_adapter-1a256a69c3619b4e": {
+          "sha256": "766efb129744a5851c2b10e1db1d706ee2a9257b779d60ddb6447c89d6714de6",
+          "bytes": 6480040,
+          "mtime_ns": 1791403912253143464
+        }
+      },
+      "executable": "/workspace/.cache/zed/target/debug/deps/project_tree_adapter-1a256a69c3619b4e",
+      "dependency_file": "/workspace/.cache/zed/target/debug/deps/project_tree_adapter-1a256a69c3619b4e.d",
+      "dependency_file_sha256": "02ecc74eab27383716561f74099f8cffd30ebc357ad142143f32905b2089787d",
+      "adapter_source_declared_in_dependency_file": false
+    },
+    {
+      "log": "all-features-tests-retry1.log",
+      "package_id": "path+file:///workspace/android-studio-tree-input-adapter/crates/android_tools#0.1.0",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "android_tools",
+        "src_path": "/workspace/android-studio-tree-input-adapter/crates/android_tools/src/android_tools.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "fresh": false,
+      "files": {
+        "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2": {
+          "sha256": "c6bb72afa57ba757ce535ff92fe8e1a57aaad7193718d96304d34294af1d1cd9",
+          "bytes": 303978976,
+          "mtime_ns": 1791403807855393530
+        }
+      },
+      "executable": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "dependency_file": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.d",
+      "dependency_file_sha256": "d2e0a5161430845e70bbfec1ad2ff4fdbbadb8c9d33f3e4660ecd94d5200b390",
+      "adapter_source_declared_in_dependency_file": true
+    }
+  ],
+  "frozen_adapter_executable": "/tmp/tree-input-adapter-verified-binaries/project_tree_adapter-tests27",
+  "frozen_adapter_executable_sha256": "766efb129744a5851c2b10e1db1d706ee2a9257b779d60ddb6447c89d6714de6"
+}

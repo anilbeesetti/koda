@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "verdict": "PASS",
+  "review_area": "code",
+  "scope": "ownership_cleanup_static_equivalence_corrected_runtime_pending",
+  "timestamp_utc": "2026-10-08T01:54:41.895142+00:00",
+  "source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "before_source": "a418947fcacd49c259a83cfc7c9a7c640552117c",
+  "source_file_hashes_independently_verified": 4743,
+  "other_source_files_byte_equal": 4742,
+  "sole_source_delta": "crates/android_tools/tests/import_facts.rs",
+  "exact_edit": "fixture.value.clone() becomes fixture.value only in absent_observation_round_trip_does_not_become_bare_null",
+  "complete_test_file_equals_one_exact_replacement": true,
+  "test_declarations_assertions_mutations_preserved": 30,
+  "required_project_clone_preserved": true,
+  "partial_move_lifetime_review": "Fixture has no custom Drop; remaining TempDir field retains lexical scope ownership and drops at scope exit. Whole fixture is not subsequently borrowed in this test.",
+  "before_tests_sha256": "622dfb8c33596a9546583afefe0d65d21530e7fc933b87690c327616c4d976bc",
+  "after_tests_sha256": "13744dfb88d81b17fcba3bed9a1d07000d0d8f3cffa4e62232a6f733ca72f319",
+  "production_bridge_decoder_unchanged": true,
+  "clean_worktree": true,
+  "unmerged_index_entries": 0,
+  "semantic_fix_rounds": 3,
+  "additional_nonsemantic_ownership_cleanup": true,
+  "new_user_approval_reply_claimed": false,
+  "provided_authorization_receipt": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/quality-ownership-cleanup/authorization-and-plan.json",
+    "sha256": "5d4a56f7e05e0075af415e2fe8c79f10643eef7806aec33536ed08af125894f3"
+  },
+  "source_snapshot": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/quality-ownership-cleanup/current-source.json",
+    "sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0"
+  },
+  "new_blocking_findings": [],
+  "reviewer_runtime_executions": 0,
+  "reviewer_git_mutations": 0,
+  "reviewer_source_mutations": 0,
+  "reviewer_cache_mutations": 0,
+  "new_original_test_credit": 0,
+  "report": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/code-ownership-cleanup-static.md",
+    "sha256": "004c2f834daa7c7b2882ee6c62402a658783bba1f5385464e4635c515df5622e"
+  },
+  "all_owner_gates_complete": false,
+  "pending_gates": [
+    "Fresh all-features tooling tests",
+    "Normal library build",
+    "Strict repository clippy",
+    "Workspace formatting",
+    "Current UI checks",
+    "Actual SDK/JVM/Gradle and late-callback getter oracle",
+    "All final reviewers",
+    "Full app/native and Root lead gates"
+  ]
+}

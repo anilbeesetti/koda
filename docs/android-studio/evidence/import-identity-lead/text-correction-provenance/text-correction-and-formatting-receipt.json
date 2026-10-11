@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "scope": "Correct only introduced draft markers/readability spacing and format proposed top-level taskMD/portJSON/final external PR body",
+  "prettier_version": "3.5.0",
+  "existing_node_entry": "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/bin/prettier.cjs",
+  "prettier_manifest": {
+    "path": "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/package.json",
+    "bytes": 6915,
+    "sha256": "79585a986ef01c279f9759ee33a7d3cf6f6a633868badb26b36c94c5c5c03e9f"
+  },
+  "prettier_entry": {
+    "path": "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/bin/prettier.cjs",
+    "bytes": 2237,
+    "sha256": "9aee781035e9f56b49124e92984ee379b69e333b401ac5c8b5e27e3e14783bde"
+  },
+  "formatting_config": "No config; explicit parser, no ignore file; external stdin inputs only",
+  "entries": [
+    {
+      "role": "task-report",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/payload/docs/android-studio/import-identity-getters-task-report.md",
+        "bytes": 7552,
+        "sha256": "578480352aa7169413184e1069684a0aecc09daf44e255f8e27848ea327a63d0"
+      },
+      "removed_introduced_marker_line_numbers": [
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115
+      ],
+      "introduced_PR_spacing_replacements": {},
+      "correction_diff": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/payload/docs/android-studio/evidence/import-identity-lead/text-correction-provenance/task-report-marker-correction-diff.log",
+        "bytes": 5219,
+        "sha256": "99ec43f395435649e35a33ac9041e9dc519c00db2352dce8cd4c6acaeb9b271d"
+      },
+      "format_command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/bin/prettier.cjs",
+        "--no-config",
+        "--ignore-path",
+        "/dev/null",
+        "--parser",
+        "markdown"
+      ],
+      "format_exit_code": 0,
+      "format_diff": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/payload/docs/android-studio/evidence/import-identity-lead/text-correction-provenance/task-report-prettier-diff.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "check_command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/bin/prettier.cjs",
+        "--no-config",
+        "--ignore-path",
+        "/dev/null",
+        "--check",
+        "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/payload/docs/android-studio/import-identity-getters-task-report.md"
+      ],
+      "check_exit_code": 0,
+      "final": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/payload/docs/android-studio/import-identity-getters-task-report.md",
+        "bytes": 7515,
+        "sha256": "56fafda04ee2d7a8e78de252ecd30dd47c47abf5478354ce14859466d2e59f2b"
+      }
+    },
+    {
+      "role": "port",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/payload/docs/android-studio/ports/import-identity-getters.json",
+        "bytes": 12132,
+        "sha256": "5e0b50f488223aca7111612badf6cbbd823a839bbde707ac75b97902c94e6f85"
+      },
+      "removed_introduced_marker_line_numbers": [],
+      "introduced_PR_spacing_replacements": {},
+      "correction_diff": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/payload/docs/android-studio/evidence/import-identity-lead/text-correction-provenance/port-marker-correction-diff.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "format_command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/bin/prettier.cjs",
+        "--no-config",
+        "--ignore-path",
+        "/dev/null",
+        "--parser",
+        "json"
+      ],
+      "format_exit_code": 0,
+      "format_diff": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/payload/docs/android-studio/evidence/import-identity-lead/text-correction-provenance/port-prettier-diff.log",
+        "bytes": 1455,
+        "sha256": "41c4f197c4318979acda9a6a06431617829134ca2d9b7d38ded5a17102e3c7b8"
+      },
+      "check_command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/bin/prettier.cjs",
+        "--no-config",
+        "--ignore-path",
+        "/dev/null",
+        "--check",
+        "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/payload/docs/android-studio/ports/import-identity-getters.json"
+      ],
+      "check_exit_code": 0,
+      "final": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/payload/docs/android-studio/ports/import-identity-getters.json",
+        "bytes": 12012,
+        "sha256": "a90d03e69294e9526afabe27c93295c32f9935a464075846ad802c0d1789f832"
+      }
+    },
+    {
+      "role": "PR-body",
+      "original": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/pull-request-body.md",
+        "bytes": 1873,
+        "sha256": "57dadc8b035bc18167548acefdafafcf2c69bdb7d867516a56dda6543afbb1a8"
+      },
+      "removed_introduced_marker_line_numbers": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32
+      ],
+      "introduced_PR_spacing_replacements": {
+        "run37716917444": "run 37716917444",
+        "Source7e3": "Source 7e3",
+        "strict53": "strict 53",
+        "adds3": "adds 3"
+      },
+      "correction_diff": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/payload/docs/android-studio/evidence/import-identity-lead/text-correction-provenance/PR-body-marker-correction-diff.log",
+        "bytes": 3799,
+        "sha256": "e6f8f54f33db5a360805edba03cac04660fd35edad224b0d4abcbe60ec8e8129"
+      },
+      "format_command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/bin/prettier.cjs",
+        "--no-config",
+        "--ignore-path",
+        "/dev/null",
+        "--parser",
+        "markdown"
+      ],
+      "format_exit_code": 0,
+      "format_diff": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/payload/docs/android-studio/evidence/import-identity-lead/text-correction-provenance/PR-body-prettier-diff.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "check_command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node",
+        "/workspace/.cache/zed/desktop/pnpm/dlx/bd294a6f58c7b99d8a9082ca38d52cef/muxzc1zy-2dpv/node_modules/prettier/bin/prettier.cjs",
+        "--no-config",
+        "--ignore-path",
+        "/dev/null",
+        "--check",
+        "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/pull-request-body.md"
+      ],
+      "check_exit_code": 0,
+      "final": {
+        "path": "/workspace/android-studio-artifacts/import-identity-integration/lead-metadata-preparation/corrected-text-overlay/pull-request-body.md",
+        "bytes": 1846,
+        "sha256": "5611c4c349366f45f5877644c74cd20c6cdc7e24936582e0681f140991453b94"
+      }
+    }
+  ],
+  "port_JSON_semantics_unchanged": true,
+  "status_unchanged": "lead_gates_pass_final_metadata_source_equivalence_and_final_HEAD_CI_pending",
+  "all_original_raw_proofs_negative_fixtures_and_base411_unchanged": true,
+  "repository_mutations": false,
+  "network_install_cache_write_or_full_format_actions": false,
+  "compiler_Cargo_SDK_app_or_kill_actions": false,
+  "all_read_holds_released": true
+}

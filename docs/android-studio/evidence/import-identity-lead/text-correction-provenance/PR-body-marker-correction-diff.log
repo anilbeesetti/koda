@@ -1,0 +1,64 @@
+--- PR-body-original
++++ PR-body-corrected
+@@ -1,32 +1,31 @@
+ Capture raw Gradle import identity getters
+-+
+-+Add official project/root/build identity getter observations and nullable Idea
+-+plugin names to the additive importFacts wire sidecar. Rust preserves ordered
+-+raw observations, validates object payloads and model/selection freshness, and
+-+returns typed unavailable errors without erasing the Basic model. Imported-name,
+-+facet, Kotlin and generated-tree policies remain dependent work.
+-+
+-+Validation: owner five-area review, 291 all-feature tooling tests (30 supplements),
+-+125 default UI tests with one inherited ignore, normal library build, repository
+-+Clippy and formatting pass. Eight supplementary SDK captures and all three complete
+-+Basic/V2 projection pairs pass. Current normal app build and actual cc/link review,
+-+native replay, independent UI/UX/quality reviews and 36 existing exact capture
+-+cases pass. Current Source CI run37716917444 succeeds in all three jobs: 10,540
+-+passed, zero failed and 23 reported inherited baseline skips; its synthetic full
+-+tree equals Source7e3. No new original-reference credit is claimed.
+-+
+-+Native history retains q0 FAIL and q1 INTERRUPTED_NOT_COMPLETE. q1 original PTY
+-+was lost by accidental duplicate truncation; remaining proof is retained and
+-+former launcher343964 zombie is explicitly not claimed absent. The successful
+-+current replay preserves strict53 commands/17 images and separately adds3
+-+planned commands/1 XML restoration image. Its original wrong-coordinate image
+-+is retained and uncredited. No full Android Studio fidelity, startup or performance
+-+completion is claimed.
+-+
+-+Root final metadata apply/stage, source equivalence, validator, commit and actual
+-+successful final metadata-HEAD CI remain pending. The complete IDE remains unfinished.
+-+
+-+Release Notes:
+-+
+-+- Added raw Gradle import identity observations with Rust payload and freshness validation.
+-++
++Add official project/root/build identity getter observations and nullable Idea
++plugin names to the additive importFacts wire sidecar. Rust preserves ordered
++raw observations, validates object payloads and model/selection freshness, and
++returns typed unavailable errors without erasing the Basic model. Imported-name,
++facet, Kotlin and generated-tree policies remain dependent work.
++
++Validation: owner five-area review, 291 all-feature tooling tests (30 supplements),
++125 default UI tests with one inherited ignore, normal library build, repository
++Clippy and formatting pass. Eight supplementary SDK captures and all three complete
++Basic/V2 projection pairs pass. Current normal app build and actual cc/link review,
++native replay, independent UI/UX/quality reviews and 36 existing exact capture
++cases pass. Current Source CI run 37716917444 succeeds in all three jobs: 10,540
++passed, zero failed and 23 reported inherited baseline skips; its synthetic full
++tree equals Source 7e3. No new original-reference credit is claimed.
++
++Native history retains q0 FAIL and q1 INTERRUPTED_NOT_COMPLETE. q1 original PTY
++was lost by accidental duplicate truncation; remaining proof is retained and
++former launcher343964 zombie is explicitly not claimed absent. The successful
++current replay preserves strict 53 commands/17 images and separately adds 3
++planned commands/1 XML restoration image. Its original wrong-coordinate image
++is retained and uncredited. No full Android Studio fidelity, startup or performance
++completion is claimed.
++
++Root final metadata apply/stage, source equivalence, validator, commit and actual
++successful final metadata-HEAD CI remain pending. The complete IDE remains unfinished.
++
++Release Notes:
++
++- Added raw Gradle import identity observations with Rust payload and freshness validation.

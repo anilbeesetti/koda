@@ -1,0 +1,20 @@
+{
+  "module_sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+  "actual_run": "114passed/0failed/0ignored/0filtered",
+  "artifacts": [
+    {
+      "path": "/workspace/.cache/zed/target/release/deps/xtask-ab9e3b7b145fa54b",
+      "bytes": 34985904,
+      "sha256": "96a6783ad0b63be984b067b5d309779f12d2dfc6bc0befa8b38ab98a12325a0c",
+      "fresh": false,
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 1,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      },
+      "source_path": "/workspace/android-studio-junit4-declarations/tooling/xtask/src/main.rs"
+    }
+  ]
+}

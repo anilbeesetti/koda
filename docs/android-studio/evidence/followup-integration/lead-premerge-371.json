@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "all4606tracked_product_and_fixture_hashes_match": true,
+  "fixed_exclusions_unchanged": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "main_worktree_clean_at": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+  "protected_worktree_clean_at": "c19021e1827e347b54b597b53f6f27ea61bce0d0",
+  "protected_is_ancestor_of_candidate": true,
+  "merge_conflicts_expected": false,
+  "full_ci": "10383PASS/0fail/23existingignored;all3jobsPASS",
+  "native_status": "passing_scoped_full_app_ui_ux_followup",
+  "canonical_selected_cases": {
+    "ported": 17,
+    "adapted": 16,
+    "unported": 59,
+    "not_applicable": 0,
+    "failing": 0
+  },
+  "feature_and_phase_complete": false
+}

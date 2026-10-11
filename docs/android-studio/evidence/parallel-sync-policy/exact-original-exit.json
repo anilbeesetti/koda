@@ -1,0 +1,27 @@
+{
+  "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+  "stage": "exact-original",
+  "lease_granted": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/root-lease-grant.json",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "/workspace/android-studio-parallel-sync-policy/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--test",
+    "parallel_sync",
+    "check_supports_parallel_sync",
+    "--message-format=json",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 4.789697501000774,
+  "log": "/workspace/android-studio-artifacts/parallel-sync-policy/runtime-recovery/exact-original.log",
+  "log_sha256": "b1b45f3b1d6d7e3f6ae92ca481a676326cbad7528a408578a44424fe9940fa04",
+  "whole_source_bindings": 4717,
+  "source_index_status_unchanged": true
+}
