@@ -5044,7 +5044,7 @@ mod native_owned_source_regression {
                 libc::AT_SYMLINK_NOFOLLOW,
             )
         };
-        ensure!(result == 0, "cold fixture initialization failed").unwrap();
+        assert_eq!(result, 0, "cold fixture initialization failed");
         physical(&fs::symlink_metadata(path).unwrap()).unwrap()
     }
 
