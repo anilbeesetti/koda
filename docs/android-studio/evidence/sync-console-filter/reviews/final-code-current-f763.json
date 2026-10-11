@@ -1,0 +1,80 @@
+{
+  "area": "code",
+  "verdict": "PASS",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "protected_dependency": "f2aa51b883b2c926cb54cfe1618bc2cb8f738420",
+  "utc": "2026-10-08T10:57:24.409792+00:00",
+  "scope": "Final current bounded Rust Android model-command stdout presentation filter, existing Copy Output and dependency integration",
+  "static_verdict": "PASS",
+  "runtime_evidence_verdict": "PASS",
+  "semantic_findings": [],
+  "product_fix_rounds_used": 3,
+  "fourth_semantic_fix_requested": false,
+  "source_guard_proof": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-code-current-f763-proof.json",
+  "source_guard_proof_sha256": "613a7f0b3d779759ff129e4252e6383eec2aaccb0e35134df44ffd8ee580b13c",
+  "source_file_count": 4748,
+  "immutable_evidence_files_verified_before_after": 311,
+  "current_app_sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c",
+  "current_tests": {
+    "android_tools_all_features_passed": 291,
+    "android_ui_default_passed": 142,
+    "supplemental_filter_methods_all_once_ok": 17,
+    "existing_ui_ignore": 1,
+    "existing_exact_reference_captures_passed": 36,
+    "CI_workflow_run": 37738240656,
+    "CI_all_three_jobs": "success",
+    "full_unfiltered_workspace_passed": 10557,
+    "workspace_failed": 0,
+    "existing_CI_skips": 23
+  },
+  "native_evidence": {
+    "successful_actual_model_commands": 2,
+    "failure_exit": 1,
+    "raw_model_record_bytes_including_marker_and_lf": 96215,
+    "json_body_without_marker_or_lf_bytes": 96187,
+    "raw_copy_preservation_independently_verified": true,
+    "all3_historical_full_ordered_models_equal_under_exact_root_normalization": true,
+    "actual_owned_client_closure_addendum_verified": true
+  },
+  "personally_inspected_screenshots": [
+    "success/captures/after-trust-observed.png",
+    "success/captures/resync-actual-loading.png",
+    "failure/captures/failed-diagnostic-selected.png"
+  ],
+  "read_only_review_runtime_commands": 0,
+  "prior_failures_preserved": true,
+  "new_original_reference_credit": 0,
+  "bounded_reference_inventory": {
+    "suites": 17,
+    "static_test_methods": 112,
+    "applicable_unported": 60,
+    "user_deferred_unported": 52,
+    "global_census_complete": false
+  },
+  "full_IDE_complete": false,
+  "nonblocking_broader_limits": [
+    "360px window clips editor and console; complete narrow Android Studio fidelity remains incomplete.",
+    "Return does not activate generic toolbar tab; actual Space activation is credited.",
+    "Android SDK lacks emulator/emulator; no device/emulator build/run credit.",
+    "Software Vulkan and small fixture do not establish hardware, startup, large-project or profiler performance.",
+    "Standalone current Rust decoder native probe was not compiled; current production app import and independent complete raw ordered model equality support this presentation-only slice."
+  ],
+  "verification_observations": [
+    {
+      "kind": "Raw index stat-cache identity",
+      "historical_app_build_raw_sha256": "41ab8963b247461218ef316b6d5999d74fee3c60dcb761b5699c11a18ba5a2fc",
+      "current_before_after_sha256": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+      "conclusion": "Logical staged entries match the frozen snapshot; Source, refs and clean status match. Raw current index remained stable through the final verifier. Earlier default git status reads by reviewer and owner may refresh stat cache; attribution uncertain, no restoration or product fix."
+    },
+    {
+      "kind": "External review verifier corrections",
+      "inputs": [
+        "final-code-review-verifier-input-reconciliation.json",
+        "final-code-review-wire-envelope-reconciliation.json"
+      ],
+      "conclusion": "Initial external verifier assumed an absent remote-tracking branch and misread the 96,215-byte complete wire record as bare JSON. Originals and failure descriptions preserved; corrected checks bind the local protected pin and exact marker+JSON+LF record plus 96,187-byte JSON body. Original receipts and product source unchanged."
+    }
+  ],
+  "read_holds_released": true,
+  "other_five_area_reviews_and_lead_merge": "Required; this report covers only code area."
+}

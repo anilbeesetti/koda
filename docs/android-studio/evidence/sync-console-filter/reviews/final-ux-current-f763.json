@@ -1,0 +1,196 @@
+{
+  "area": "UX",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "protected_dependency": "f2aa51b883b2c926cb54cfe1618bc2cb8f738420",
+  "verdict": "PASS",
+  "static_verdict": "PASS",
+  "native_ux_verdict": "PASS for bounded Sync-console acceptance with explicit inherited limits",
+  "findings": [],
+  "semantic_fix_rounds_used": 3,
+  "fourth_fix_proposed": false,
+  "full_Foundation_complete": false,
+  "full_IDE_complete": false,
+  "original_test_credit": 0,
+  "personally_inspected_screenshots": [
+    {
+      "path": "success/captures/trust-prompt.png",
+      "sha256": "75f33b341d2f249a987a1af8d1593ff7d0c30ad158be0ce1ff30fb49f5fb5d45"
+    },
+    {
+      "path": "success/captures/after-trust-observed.png",
+      "sha256": "9a20d1ddec7f3f0df9fca1329d2b8e4348c38df5032587d120b269683ee1ff58"
+    },
+    {
+      "path": "success/captures/resync-actual-loading.png",
+      "sha256": "78e3fb8584584889d21fcf4c7dffbf4e265e723791d203a9454435ca63ee735b"
+    },
+    {
+      "path": "success/captures/wide-output-selected.png",
+      "sha256": "06c6f35401ff8370c9693a576ebebf931767d5a3606920d1c4fa59902a89857e"
+    },
+    {
+      "path": "success/captures/restored-wide-output-focus.png",
+      "sha256": "9223a47df206d220104f1bb9ab3bbb03da7f0711ad9ef03e22d6754a6c8f02f9"
+    },
+    {
+      "path": "success/captures/restored-wide-output-selected.png",
+      "sha256": "d23692d73049d59e60d44204823b115e75e2bcad228e2798c0bca9a3a131d1b4"
+    },
+    {
+      "path": "success/captures/restored-wide-sync-focus.png",
+      "sha256": "7afe9c2ee0ca531cbebe103fdd07aa997d6a226b9222315ea468f3150202d11c"
+    },
+    {
+      "path": "success/captures/restored-wide-sync-space-selected.png",
+      "sha256": "a08266b1bb975fd846303cc6ccaf94bcea0bf03dfb43929017543ba52276b3ac"
+    },
+    {
+      "path": "failure/captures/trust-prompt.png",
+      "sha256": "75f33b341d2f249a987a1af8d1593ff7d0c30ad158be0ce1ff30fb49f5fb5d45"
+    },
+    {
+      "path": "failure/captures/after-private-trust-click.png",
+      "sha256": "bf3977fa3f98cd0ca076e21cfc47ff3ece6fa01fdb6f5d6cb88ebcc6463b3a0d"
+    },
+    {
+      "path": "failure/captures/settled-observed-first.png",
+      "sha256": "dcc52603d76a56dfc97f11221c0d6f3351bf7cf67e78f74b083a0e8ff16e8ca0"
+    },
+    {
+      "path": "failure/captures/failed-diagnostic-selected.png",
+      "sha256": "7b7911872863ae50119df0df3aad399ae574b8a8d8489b3a82d58e276f3ad866"
+    },
+    {
+      "path": "failure/captures/failed-tab-output-focus.png",
+      "sha256": "15063d3bbbff039dc6e116224ce23b3e71e54e627d62e86215303608b1d21b58"
+    },
+    {
+      "path": "failure/captures/failed-output-empty-selected.png",
+      "sha256": "348470091472309a6a2b9465338ef04873b1a4b95b04ad2f437eeab57c172f0e"
+    },
+    {
+      "path": "failure/captures/failed-sync-focus-no-selection.png",
+      "sha256": "28a4cf8b29b84ab1b037231d5c5c4ba0883b75027a48beeaa1958d89363b67c4"
+    },
+    {
+      "path": "failure/captures/failed-sync-space-restored.png",
+      "sha256": "56d1226ba1a5a287983e68d332a9c7e802d152eee989401680a966345d692cb2"
+    },
+    {
+      "path": "success/captures/narrow-selected-sync-copy-control.png",
+      "sha256": "7945a609ae34bc1d2f980b03f74b7f726108bcd444e7c895291497745ad91f70"
+    },
+    {
+      "path": "success/captures/wide-sync-restored-return.png",
+      "sha256": "b83792972542310cc39bbc9bcccb0abb148d2885964c5adf5345791858c1c5e4"
+    },
+    {
+      "path": "success/captures/sync1-loading.png",
+      "sha256": "75f33b341d2f249a987a1af8d1593ff7d0c30ad158be0ce1ff30fb49f5fb5d45"
+    },
+    {
+      "path": "success/captures/task-selection-output-location.png",
+      "sha256": "3e5f640d5ff29b2febcfdef63ded31b1f57671306e645a3b61c3326cae52702b"
+    },
+    {
+      "path": "success/captures/restored-wide-scrolled-top.png",
+      "sha256": "be84c4c39401e40b65991182cc6585b56b4456280b2700a4c6f09b93f928f07b"
+    },
+    {
+      "path": "success/captures/console-horizontal-scroll-right.png",
+      "sha256": "aca304c346985768e84060a8d7ab8b0958bc35b3fdad8d6a39cdf9e4ba081a87"
+    },
+    {
+      "path": "success/captures/build-divider-expanded.png",
+      "sha256": "be84c4c39401e40b65991182cc6585b56b4456280b2700a4c6f09b93f928f07b"
+    },
+    {
+      "path": "success/captures/editor-gradle-tab-open.png",
+      "sha256": "f0f9c0b1cca9bbc573dcdc836ba139f0676e97a2e0b5e57fdc794ade699a0e69"
+    },
+    {
+      "path": "success/captures/build-divider-native-drag-observed.png",
+      "sha256": "cae9f73671b391e5f5b32020330ae53aae799dfc47b2a43abc1c8e2068489349"
+    },
+    {
+      "path": "success/captures/editor-xml-tab-restored.png",
+      "sha256": "87104c8ca373d123e8b9cfb32436412ca267eafe0150908b9705c084d14d17c5"
+    },
+    {
+      "path": "success/captures/narrow-sync.png",
+      "sha256": "5207dab8a6df2ab7388822508c9a7cf6bde31adb32173e3f66254abb185a20e5"
+    },
+    {
+      "path": "success/captures/wide-reverse-sync-focus.png",
+      "sha256": "b83792972542310cc39bbc9bcccb0abb148d2885964c5adf5345791858c1c5e4"
+    }
+  ],
+  "personally_inspected_screenshot_count": 28,
+  "native_actual_success_exits": [
+    0,
+    0
+  ],
+  "native_actual_failure_exit": 1,
+  "copy_output_bytes": {
+    "success_first_wide": 1450,
+    "success_repeat_wide_and_narrow_identical": 1425,
+    "failure": 1185
+  },
+  "keyboard": {
+    "Tab_ShiftTab": "Focus only, selection unchanged",
+    "Space": "Actual activation of focused tab",
+    "Return": "Inherited no-op, no activation credit",
+    "CtrlAltR": "Actual repeat Sync through explicit isolated profile binding"
+  },
+  "limits": [
+    "Supported360px crowding/clipping remains",
+    "No live SDK Stop/timeout timing measured; current Rust tests cover cancellation/deadline/cleanup",
+    "No standalone current Rust sidecar native probe compiled",
+    "No device/emulator/hardware GPU/large-project/full keymap/fidelity credit"
+  ],
+  "current_execution": {
+    "ui_passed": 142,
+    "ui_failed": 0,
+    "unchanged_baseline_ignore": 1,
+    "supplemental_once_ok": 17,
+    "tooling_passed": 291,
+    "exact_current_tooling_Cargo_runs": 29,
+    "exact_current_UI_direct_ELF_runs": 7,
+    "direct_UI_runs_are_Cargo_invocations": false,
+    "canonical_UI_historical_Cargo_evidence_preserved": true,
+    "Clippy": "PASS",
+    "format": "PASS",
+    "CI_run": 37738240656,
+    "CI_passed": 10557,
+    "CI_failed": 0,
+    "CI_baseline_skips": 23,
+    "CI_individual_name_credit_claimed": false
+  },
+  "source_file_count": 4748,
+  "selected_immutable_evidence_files": 279,
+  "raw_index_stat_cache_change_disclosed": true,
+  "logical_index_refs_and_Source_unchanged": true,
+  "no_runtime_commands": true,
+  "guard_before": {
+    "path": "final-ux-current-f763-before.json",
+    "sha256": "60abbd2705727488a3a3d659662169e78916721cd62e8b1613261d1bbcffed1a"
+  },
+  "guard_after": {
+    "path": "final-ux-current-f763-after.json",
+    "sha256": "946ad122b81dd172fbaf27d2c795494ef9dcc24bedb135093b2dec0f16ad8f7d"
+  },
+  "comparison_proof": {
+    "path": "final-ux-current-f763-comparison-proof.json",
+    "sha256": "70a49aed121bc21cb99e2be0c66ca73c12ebf57bf19f3f87dd2b63ab579e7fbd"
+  },
+  "index_addendum": {
+    "path": "final-ux-current-f763-index-stat-cache-addendum.json",
+    "sha256": "de7dac11ebe95697da8cd16ec3982766b043c719cb3a53a90121d1eda04ad519"
+  },
+  "report": {
+    "path": "final-ux-current-f763.md",
+    "sha256": "f57c35f084e0c545e2cfe2568ebfaa7902f515b20804f6fe638aadb4cf28d0e0"
+  },
+  "review_holds_released": true,
+  "lead_protected_merge": "PENDING"
+}

@@ -1,0 +1,110 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "compile_command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_ui",
+    "--lib",
+    "--no-run",
+    "--message-format=json-render-diagnostics"
+  ],
+  "compile_exit": 0,
+  "compile_elapsed_seconds": 263.35541473599733,
+  "source_files_unchanged_after_compile": 4748,
+  "test_command": [
+    "/workspace/android-studio-sync-console-filter/target/cloud-tests/android_ui-0a1e421ffc75c4cf"
+  ],
+  "test_exit": 0,
+  "test_elapsed_seconds": 5.603475374999107,
+  "test_summaries": [
+    [
+      "ok",
+      "142",
+      "0",
+      "1",
+      "0",
+      "0"
+    ]
+  ],
+  "log_sha256": "972c2b2075ed25d09533d9389a17d64bcb2c23bcc7ab7115ac7a9283ce7075c6",
+  "supplemental_method_results": [
+    [
+      "android_build::tests::model_console_chunks_unicode_without_restarting_prefix_detection",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_filters_only_exact_leading_stdout_records",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_invalid_utf8_does_not_become_a_successful_raw_model",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_matches_prefix_across_every_read_split",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_preserves_line_endings_blanks_and_unterminated_lines",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_preserves_upstream_diagnostic_fixture_contents",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_propagates_closed_output_even_for_hidden_only_input",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_hidden_record_does_not_buffer_its_payload",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_real_command_can_cancel_after_hidden_transport",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_real_command_preserves_stderr_failure_and_normal_command_output",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_retains_basic_and_v2_decoding_and_validation",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_retains_partial_prefix_at_eof_and_after_mismatch",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_sync_and_build_sessions_keep_distinct_visible_output",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_timeout_and_preexisting_cancel_prevent_success",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_visible_output_obeys_backpressure",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_ready_hidden_capture_yields_before_eof",
+      "ok"
+    ],
+    [
+      "android_build::tests::model_console_capture_limit_applies_to_hidden_records",
+      "ok"
+    ]
+  ],
+  "gate_conditions": {
+    "actual_test_process_exit_zero": true,
+    "all_current_default_tests_passed_with_only_preexisting_ignore": true,
+    "every_supplemental_method_reported_once": true,
+    "every_supplemental_method_passed": true
+  },
+  "gate_accepted": true,
+  "source_files_unchanged_after_tests": 4748
+}

@@ -857,13 +857,12 @@ impl AndroidPanel {
                     ]);
                     let mut command = util::command::new_std_command(program);
                     command.args(arguments).current_dir(&root);
-                    match android_build::command_output(
+                    match android_build::project_model_output(
                         command,
                         &executor,
                         Duration::from_secs(300),
                         output,
                         cancelled,
-                        true,
                     )
                     .await?
                     {

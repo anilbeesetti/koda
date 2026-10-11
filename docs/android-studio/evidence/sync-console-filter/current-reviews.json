@@ -1,0 +1,74 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "task": "Sync console machine-record display filtering",
+  "five_distinct_current_area_verdicts": "PASS",
+  "areas": [
+    {
+      "area": "code",
+      "verdict": "PASS",
+      "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+      "report_path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-code-current-f763.json",
+      "report_sha256": "2fbdec86f991ce54502baf1c8f312882270314e8dc9b49117fd70112f12424b4",
+      "scope": "bounded Rust Sync stdout presentation/copy task; broader IDE fidelity incomplete",
+      "new_original_credit": 0,
+      "affected_process_preservation_addendum": {
+        "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-code-current-f763-process-preservation-addendum.json",
+        "sha256": "dff7ead3cfc4b9d7c6944c32da4da244666deab6d49bc0bc2c34d55d4887cc0b"
+      }
+    },
+    {
+      "area": "ui",
+      "verdict": "PASS",
+      "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+      "report_path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ui-current-f763.json",
+      "report_sha256": "13ee7c83b927f4245a4075dd747bc8bb34a3e01cef0ef75ea222b70c1ef51e2a",
+      "scope": "bounded Rust Sync stdout presentation/copy task; broader IDE fidelity incomplete",
+      "new_original_credit": 0,
+      "affected_process_preservation_addendum": {
+        "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ui-current-f763-process-guard-addendum.json",
+        "sha256": "103612deaa78bf3a9ee054aa908c80aed44a842336620721376a7ee95a35844f"
+      }
+    },
+    {
+      "area": "ux",
+      "verdict": "PASS",
+      "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+      "report_path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ux-current-f763.json",
+      "report_sha256": "112d44bbfeb7190a8d665c7b1f540e6db0588d3521353e19fb85a26ee485660c",
+      "scope": "bounded Rust Sync stdout presentation/copy task; broader IDE fidelity incomplete",
+      "new_original_credit": 0,
+      "affected_process_preservation_addendum": {
+        "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ux-current-f763-process-preservation-addendum.json",
+        "sha256": "57293441bc4c3d68564f18ffc78a8f674d9492a3ba3297ed54f2355e6bc7efa0"
+      }
+    },
+    {
+      "area": "performance",
+      "verdict": "PASS",
+      "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+      "report_path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-performance-current-f763.json",
+      "report_sha256": "a76a10600becbcda3a9c23035ba909cecffcc29b651294a2efa22ee57fb17034",
+      "scope": "bounded Rust Sync stdout presentation/copy task; broader IDE fidelity incomplete",
+      "new_original_credit": 0
+    },
+    {
+      "area": "quality",
+      "verdict": "PASS",
+      "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+      "report_path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-quality-current-f763.json",
+      "report_sha256": "9ea756a447ac9ab28487c4be4ab4849cda9e45b2e3ddf744a1c50eb8438ec4c6",
+      "scope": "bounded Rust Sync stdout presentation/copy task; broader IDE fidelity incomplete",
+      "new_original_credit": 0
+    }
+  ],
+  "historical_raw_index_review_process_guard": "FAIL retained, uncertain stat-cache attribution",
+  "current_a4_raw_index_and_all6960_tracked_preservation_rechecks": "PASS in all five current reviews/addenda",
+  "product_semantic_fix_rounds_used": 3,
+  "new_original_credit": 0,
+  "current_execution_scope": "all291 tools/142UI+onebaselineignore/all17/36current behaviors/strictclippy/fmt/CI10557+23existing skips/normalcurrentapp/native actual cases",
+  "canonical_UI_execution_separation": "historical7e canonical Cargo receipts retained with same source/manifest; current seven asset-bound ELF actual receipts supplemental; no invented Cargo execution",
+  "metadata_apply_commit_push_finalHEAD_CI_lead_protected_merge": "pending",
+  "full_IDE_complete": false,
+  "global_reference_census_complete": false,
+  "all_reviewer_read_holds_released": true
+}

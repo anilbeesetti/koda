@@ -16,10 +16,13 @@ use gpui::{
 use serde::{Deserialize, Serialize};
 use settings::{Settings, SettingsStore, TerminalDockPosition};
 use std::sync::Arc;
-use ui::{ContextMenu, CountBadge, IconButton, Tooltip, prelude::*, right_click_menu};
+use ui::{ContextMenu, CountBadge, Tooltip, prelude::*, right_click_menu};
 use util::ResultExt as _;
 
 pub(crate) const RESIZE_HANDLE_SIZE: Pixels = px(6.);
+// IntelliJ's normal stripe reserves 40 logical pixels for each button, plus its
+// separate one-pixel rail border (JBUI/ToolWindowLeftToolbar, Apache-2.0).
+pub(crate) const TOOL_WINDOW_RAIL_WIDTH: Pixels = px(41.);
 
 pub enum PanelEvent {
     ZoomIn,
@@ -1527,17 +1530,64 @@ impl Render for PanelButtons {
                         })
                         .anchor(menu_anchor)
                         .attach(menu_attach)
-                        .trigger(move |is_active, _window, _cx| {
+                        .trigger(move |is_active, window, cx| {
                             // Include active state in element ID to invalidate the cached
                             // tooltip when panel state changes (e.g., via keyboard shortcut)
-                            let button = IconButton::new((name, is_active_button as u64), icon)
-                                .icon_size(IconSize::Medium)
-                                .toggle_state(is_active_button)
+                            let state = window.use_keyed_state(
+                                (name, is_active_button as u64),
+                                cx,
+                                |_, cx| {
+                                    (
+                                        cx.focus_handle().tab_index(0).tab_stop(true),
+                                        cx.focus_handle(),
+                                    )
+                                },
+                            );
+                            let (button_focus, surface_focus) = state.read(cx).clone();
+                            let group: SharedString = format!("tool-window-button-{name}").into();
+                            let colors = cx.theme().colors();
+                            let surface_color = if is_active_button {
+                                colors.ghost_element_selected
+                            } else {
+                                colors.ghost_element_background
+                            };
+                            let hover_color = if is_active_button {
+                                surface_color
+                            } else {
+                                colors.ghost_element_hover
+                            };
+                            let pressed_color = if is_active_button {
+                                surface_color
+                            } else {
+                                colors.ghost_element_active
+                            };
+                            let focused_color = colors.ghost_element_selected;
+                            let button = h_flex()
+                                .id((name, is_active_button as u64))
+                                .debug_selector(move || format!("tool-window-slot-{name}"))
+                                .group(group.clone())
+                                .relative()
+                                .size(px(40.))
+                                .flex_none()
+                                .items_center()
+                                .justify_center()
+                                .cursor_pointer()
+                                .track_focus(&button_focus)
                                 .tab_index(0isize)
+                                .role(gpui::Role::Button)
                                 .aria_label(icon_tooltip)
+                                .aria_toggled(if is_active_button {
+                                    gpui::accesskit::Toggled::True
+                                } else {
+                                    gpui::accesskit::Toggled::False
+                                })
+                                .on_mouse_down(MouseButton::Left, |_, window, _| {
+                                    window.prevent_default()
+                                })
                                 .on_click({
                                     let action = action.boxed_clone();
                                     move |_, window, cx| {
+                                        cx.stop_propagation();
                                         window.focus(&focus_handle, cx);
                                         window.dispatch_action(action.boxed_clone(), cx)
                                     }
@@ -1546,7 +1596,41 @@ impl Render for PanelButtons {
                                     this.tooltip(move |_window, cx| {
                                         Tooltip::for_action(tooltip.clone(), &*action, cx)
                                     })
-                                });
+                                })
+                                .child(
+                                    div()
+                                        .id("tool-window-state-surface")
+                                        .debug_selector(move || {
+                                            format!("tool-window-surface-{name}")
+                                        })
+                                        .absolute()
+                                        .inset(px(5.))
+                                        .rounded(px(6.))
+                                        .track_focus(&surface_focus)
+                                        .on_mouse_down(MouseButton::Left, |_, window, _| {
+                                            window.prevent_default()
+                                        })
+                                        .bg(surface_color)
+                                        .group_hover(group.clone(), |style| style.bg(hover_color))
+                                        .group_active(group, |style| style.bg(pressed_color))
+                                        .in_focus(|style| style.bg(focused_color)),
+                                )
+                                .child(
+                                    div()
+                                        .debug_selector(move || format!("tool-window-icon-{name}"))
+                                        .size(px(20.))
+                                        .child(
+                                            Icon::new(icon)
+                                                .size(IconSize::Custom(gpui::rems(
+                                                    20. / f32::from(window.rem_size()),
+                                                )))
+                                                .color(if is_active_button {
+                                                    Color::Selected
+                                                } else {
+                                                    Color::Default
+                                                }),
+                                        ),
+                                );
 
                             div().relative().child(button).when_some(
                                 icon_label
@@ -1570,7 +1654,6 @@ impl Render for PanelButtons {
             .aria_label(format!("{} tool windows", dock.position.label()))
             .w_full()
             .items_center()
-            .gap_2()
             .children(buttons)
     }
 }

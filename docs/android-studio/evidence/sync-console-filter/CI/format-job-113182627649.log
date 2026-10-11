@@ -1,0 +1,373 @@
+﻿2026-10-08T06:33:17.0665406Z Current runner version: '2.337.0'
+2026-10-08T06:33:17.0694018Z ##[group]Runner Image Provisioner
+2026-10-08T06:33:17.0695157Z Hosted Compute Agent
+2026-10-08T06:33:17.0695858Z Version: 20260901.588
+2026-10-08T06:33:17.0696668Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+2026-10-08T06:33:17.0697542Z Build Date: 2026-09-01T19:56:44Z
+2026-10-08T06:33:17.0698504Z Worker ID: {f9a723d8-6a15-4f02-856a-c98e1fd0cba8}
+2026-10-08T06:33:17.0699475Z Azure Region: eastus
+2026-10-08T06:33:17.0700193Z ##[endgroup]
+2026-10-08T06:33:17.0702145Z ##[group]Operating System
+2026-10-08T06:33:17.0702890Z Ubuntu
+2026-10-08T06:33:17.0703971Z 24.04.5
+2026-10-08T06:33:17.0704634Z LTS
+2026-10-08T06:33:17.0705247Z ##[endgroup]
+2026-10-08T06:33:17.0705963Z ##[group]Runner Image
+2026-10-08T06:33:17.0706676Z Image: ubuntu-24.04
+2026-10-08T06:33:17.0707415Z Version: 20260927.320.1
+2026-10-08T06:33:17.0709226Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+2026-10-08T06:33:17.0711248Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+2026-10-08T06:33:17.0712448Z ##[endgroup]
+2026-10-08T06:33:17.0713841Z ##[group]GITHUB_TOKEN Permissions
+2026-10-08T06:33:17.0716082Z Contents: read
+2026-10-08T06:33:17.0716849Z Metadata: read
+2026-10-08T06:33:17.0717501Z ##[endgroup]
+2026-10-08T06:33:17.0720116Z Secret source: Actions
+2026-10-08T06:33:17.0721332Z Cache mode: write
+2026-10-08T06:33:17.0722542Z Prepare workflow directory
+2026-10-08T06:33:17.1171884Z Prepare all required actions
+2026-10-08T06:33:17.1228427Z Getting action download info
+2026-10-08T06:33:17.2900295Z Download action repository 'actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd' (SHA:93cb6efe18208431cddfb8368fd83d5badbf9bfd)
+2026-10-08T06:33:17.4099615Z Download action repository 'actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-10-08T06:33:17.6157885Z Complete job name: Formatting and scripts
+2026-10-08T06:33:17.6790523Z ##[group]Run actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+2026-10-08T06:33:17.6791343Z with:
+2026-10-08T06:33:17.6791705Z   persist-credentials: false
+2026-10-08T06:33:17.6792151Z   ref: f763baebb6d0970b283f759967d7980084317e67
+2026-10-08T06:33:17.6792638Z   repository: anilbeesetti/koda
+2026-10-08T06:33:17.6795690Z   token: ***
+2026-10-08T06:33:17.6796041Z   ssh-strict: true
+2026-10-08T06:33:17.6796397Z   ssh-user: git
+2026-10-08T06:33:17.6796737Z   clean: true
+2026-10-08T06:33:17.6797094Z   sparse-checkout-cone-mode: true
+2026-10-08T06:33:17.6797511Z   fetch-depth: 1
+2026-10-08T06:33:17.6797853Z   fetch-tags: false
+2026-10-08T06:33:17.6798339Z   show-progress: true
+2026-10-08T06:33:17.6798692Z   lfs: false
+2026-10-08T06:33:17.6799025Z   submodules: false
+2026-10-08T06:33:17.6799381Z   set-safe-directory: true
+2026-10-08T06:33:17.6799937Z env:
+2026-10-08T06:33:17.6800271Z   CARGO_TERM_COLOR: always
+2026-10-08T06:33:17.6800652Z   CARGO_INCREMENTAL: 0
+2026-10-08T06:33:17.6801077Z   CARGO_PROFILE_DEV_DEBUG: 0
+2026-10-08T06:33:17.6801493Z   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: 0
+2026-10-08T06:33:17.6801925Z   RUST_BACKTRACE: 1
+2026-10-08T06:33:17.6802269Z ##[endgroup]
+2026-10-08T06:33:17.7622360Z Syncing repository: anilbeesetti/koda
+2026-10-08T06:33:17.7624371Z ##[group]Getting Git version info
+2026-10-08T06:33:17.7625191Z Working directory is '/home/runner/work/koda/koda'
+2026-10-08T06:33:17.7626312Z [command]/usr/bin/git version
+2026-10-08T06:33:17.7951762Z git version 2.55.0
+2026-10-08T06:33:17.7971471Z ##[endgroup]
+2026-10-08T06:33:17.7985078Z Temporarily overriding HOME='/home/runner/work/_temp/69674c59-9feb-431b-bfc2-e8e883874536' before making global git config changes
+2026-10-08T06:33:17.7986615Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-08T06:33:17.7990556Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/koda/koda
+2026-10-08T06:33:17.8044794Z Deleting the contents of '/home/runner/work/koda/koda'
+2026-10-08T06:33:17.8048264Z ##[group]Initializing the repository
+2026-10-08T06:33:17.8053001Z [command]/usr/bin/git init /home/runner/work/koda/koda
+2026-10-08T06:33:17.8223574Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-10-08T06:33:17.8225037Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-10-08T06:33:17.8226367Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-10-08T06:33:17.8227483Z hint: call:
+2026-10-08T06:33:17.8227945Z hint:
+2026-10-08T06:33:17.8228865Z hint: 	git config --global init.defaultBranch <name>
+2026-10-08T06:33:17.8229603Z hint:
+2026-10-08T06:33:17.8230117Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-10-08T06:33:17.8230837Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-10-08T06:33:17.8231427Z hint:
+2026-10-08T06:33:17.8231764Z hint: 	git branch -m <name>
+2026-10-08T06:33:17.8232148Z hint:
+2026-10-08T06:33:17.8232809Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-10-08T06:33:17.8234007Z Initialized empty Git repository in /home/runner/work/koda/koda/.git/
+2026-10-08T06:33:17.8235646Z [command]/usr/bin/git remote add origin https://github.com/anilbeesetti/koda
+2026-10-08T06:33:17.8293817Z ##[endgroup]
+2026-10-08T06:33:17.8294516Z ##[group]Disabling automatic garbage collection
+2026-10-08T06:33:17.8297760Z [command]/usr/bin/git config --local gc.auto 0
+2026-10-08T06:33:17.8505579Z ##[endgroup]
+2026-10-08T06:33:17.8506227Z ##[group]Setting up auth
+2026-10-08T06:33:17.8511145Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-08T06:33:17.8543824Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-08T06:33:17.8831077Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-08T06:33:17.8861195Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-08T06:33:17.9052264Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-08T06:33:17.9082238Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-08T06:33:17.9276166Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-10-08T06:33:17.9312936Z ##[endgroup]
+2026-10-08T06:33:17.9313858Z ##[group]Fetching the repository
+2026-10-08T06:33:17.9322810Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin f763baebb6d0970b283f759967d7980084317e67
+2026-10-08T06:33:21.8654487Z From https://github.com/anilbeesetti/koda
+2026-10-08T06:33:21.8656111Z  * branch            f763baebb6d0970b283f759967d7980084317e67 -> FETCH_HEAD
+2026-10-08T06:33:21.8659571Z ##[endgroup]
+2026-10-08T06:33:21.8660598Z ##[group]Determining the checkout info
+2026-10-08T06:33:21.8661677Z ##[endgroup]
+2026-10-08T06:33:21.8664055Z [command]/usr/bin/git sparse-checkout disable
+2026-10-08T06:33:21.8881502Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-10-08T06:33:21.8913528Z ##[group]Checking out the ref
+2026-10-08T06:33:21.8917144Z [command]/usr/bin/git checkout --progress --force f763baebb6d0970b283f759967d7980084317e67
+2026-10-08T06:33:22.5018387Z Note: switching to 'f763baebb6d0970b283f759967d7980084317e67'.
+2026-10-08T06:33:22.5019816Z 
+2026-10-08T06:33:22.5020136Z You are in 'detached HEAD' state. You can look around, make experimental
+2026-10-08T06:33:22.5020803Z changes and commit them, and you can discard any commits you make in this
+2026-10-08T06:33:22.5021545Z state without impacting any branches by switching back to a branch.
+2026-10-08T06:33:22.5022246Z 
+2026-10-08T06:33:22.5022525Z If you want to create a new branch to retain commits you create, you may
+2026-10-08T06:33:22.5023148Z do so (now or later) by using -c with the switch command. Example:
+2026-10-08T06:33:22.5023501Z 
+2026-10-08T06:33:22.5023665Z   git switch -c <new-branch-name>
+2026-10-08T06:33:22.5023928Z 
+2026-10-08T06:33:22.5024103Z Or undo this operation with:
+2026-10-08T06:33:22.5024327Z 
+2026-10-08T06:33:22.5024471Z   git switch -
+2026-10-08T06:33:22.5024719Z 
+2026-10-08T06:33:22.5025061Z Turn off this advice by setting config variable advice.detachedHead to false
+2026-10-08T06:33:22.5025470Z 
+2026-10-08T06:33:22.5025706Z HEAD is now at f763bae Merge verified Android import dependency
+2026-10-08T06:33:22.5052135Z ##[endgroup]
+2026-10-08T06:33:22.5164751Z [command]/usr/bin/git log -1 --format=%H
+2026-10-08T06:33:22.5190225Z f763baebb6d0970b283f759967d7980084317e67
+2026-10-08T06:33:22.5198729Z ##[group]Removing auth
+2026-10-08T06:33:22.5202241Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-08T06:33:22.5231096Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-08T06:33:22.5436507Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-08T06:33:22.5462622Z http.https://github.com/.extraheader
+2026-10-08T06:33:22.5467773Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-10-08T06:33:22.5498893Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-08T06:33:22.5697006Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-08T06:33:22.5724781Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-08T06:33:22.5920101Z ##[endgroup]
+2026-10-08T06:33:22.6148702Z ##[group]Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+2026-10-08T06:33:22.6149112Z with:
+2026-10-08T06:33:22.6149332Z   python-version: 3.13
+2026-10-08T06:33:22.6149561Z   check-latest: false
+2026-10-08T06:33:22.6151557Z   token: ***
+2026-10-08T06:33:22.6151781Z   update-environment: true
+2026-10-08T06:33:22.6152031Z   allow-prereleases: false
+2026-10-08T06:33:22.6152265Z   freethreaded: false
+2026-10-08T06:33:22.6152481Z env:
+2026-10-08T06:33:22.6152681Z   CARGO_TERM_COLOR: always
+2026-10-08T06:33:22.6152905Z   CARGO_INCREMENTAL: 0
+2026-10-08T06:33:22.6153122Z   CARGO_PROFILE_DEV_DEBUG: 0
+2026-10-08T06:33:22.6153367Z   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: 0
+2026-10-08T06:33:22.6153630Z   RUST_BACKTRACE: 1
+2026-10-08T06:33:22.6153845Z ##[endgroup]
+2026-10-08T06:33:22.7279709Z ##[group]Installed versions
+2026-10-08T06:33:22.7339102Z (node:2158) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-08T06:33:22.7340249Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-08T06:33:22.7340776Z Successfully set up CPython (3.13.15)
+2026-10-08T06:33:22.7341473Z ##[endgroup]
+2026-10-08T06:33:22.7475748Z ##[group]Run rustup show active-toolchain
+2026-10-08T06:33:22.7476199Z [36;1mrustup show active-toolchain[0m
+2026-10-08T06:33:22.7867492Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T06:33:22.7867900Z env:
+2026-10-08T06:33:22.7868269Z   CARGO_TERM_COLOR: always
+2026-10-08T06:33:22.7868521Z   CARGO_INCREMENTAL: 0
+2026-10-08T06:33:22.7868750Z   CARGO_PROFILE_DEV_DEBUG: 0
+2026-10-08T06:33:22.7868998Z   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: 0
+2026-10-08T06:33:22.7869259Z   RUST_BACKTRACE: 1
+2026-10-08T06:33:22.7869521Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:22.7869895Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib/pkgconfig
+2026-10-08T06:33:22.7870497Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:22.7870831Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:22.7871164Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:22.7871566Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib
+2026-10-08T06:33:22.7871880Z ##[endgroup]
+2026-10-08T06:33:23.0366913Z info: syncing channel updates for 1.98.1-x86_64-unknown-linux-gnu
+2026-10-08T06:33:23.4659688Z info: latest update on 2026-09-03 for version 1.98.1 (48a229cea 2026-09-01)
+2026-10-08T06:33:23.4660328Z info: downloading 10 components
+2026-10-08T06:33:38.0277401Z warn: the missing active toolchain `1.98.1-x86_64-unknown-linux-gnu` has been auto-installed
+2026-10-08T06:33:38.0277912Z warn: auto-installation is deprecated for most `rustup` commands
+2026-10-08T06:33:38.0278416Z warn: scripts relying on this behavior in `rustup` may stop working in the future
+2026-10-08T06:33:38.0278851Z warn: to install the active toolchain, use `rustup install` instead
+2026-10-08T06:33:38.0279387Z 1.98.1-x86_64-unknown-linux-gnu (overridden by '/home/runner/work/koda/koda/rust-toolchain.toml')
+2026-10-08T06:33:38.0316466Z warn: see <https://github.com/rust-lang/rustup/issues/4836> for more info
+2026-10-08T06:33:38.0361323Z ##[group]Run python3 script/ci-test-selection --event-name "$CI_EVENT_NAME" --base "$CI_BASE_SHA" --head "$CI_HEAD_SHA" --github-output "$GITHUB_OUTPUT"
+2026-10-08T06:33:38.0362148Z [36;1mpython3 script/ci-test-selection --event-name "$CI_EVENT_NAME" --base "$CI_BASE_SHA" --head "$CI_HEAD_SHA" --github-output "$GITHUB_OUTPUT"[0m
+2026-10-08T06:33:38.0420986Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T06:33:38.0421295Z env:
+2026-10-08T06:33:38.0421475Z   CARGO_TERM_COLOR: always
+2026-10-08T06:33:38.0421695Z   CARGO_INCREMENTAL: 0
+2026-10-08T06:33:38.0421906Z   CARGO_PROFILE_DEV_DEBUG: 0
+2026-10-08T06:33:38.0422129Z   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: 0
+2026-10-08T06:33:38.0422351Z   RUST_BACKTRACE: 1
+2026-10-08T06:33:38.0422578Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:38.0422905Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib/pkgconfig
+2026-10-08T06:33:38.0423280Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:38.0423584Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:38.0423883Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:38.0424179Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib
+2026-10-08T06:33:38.0424454Z   CI_EVENT_NAME: workflow_dispatch
+2026-10-08T06:33:38.0424656Z   CI_BASE_SHA: 
+2026-10-08T06:33:38.0424860Z   CI_HEAD_SHA: f763baebb6d0970b283f759967d7980084317e67
+2026-10-08T06:33:38.0425097Z ##[endgroup]
+2026-10-08T06:33:39.0346527Z {"mode": "full", "native_checks": true, "reason": "Main pushes and manual runs always validate the full workspace", "selected_packages": [], "test_filter": ""}
+2026-10-08T06:33:39.0444276Z ##[group]Run python3 -m unittest discover -s script/tests -p 'test_ci_*.py'
+2026-10-08T06:33:39.0444748Z [36;1mpython3 -m unittest discover -s script/tests -p 'test_ci_*.py'[0m
+2026-10-08T06:33:39.0500515Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T06:33:39.0500798Z env:
+2026-10-08T06:33:39.0500976Z   CARGO_TERM_COLOR: always
+2026-10-08T06:33:39.0501179Z   CARGO_INCREMENTAL: 0
+2026-10-08T06:33:39.0501363Z   CARGO_PROFILE_DEV_DEBUG: 0
+2026-10-08T06:33:39.0501580Z   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: 0
+2026-10-08T06:33:39.0501799Z   RUST_BACKTRACE: 1
+2026-10-08T06:33:39.0502026Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:39.0502373Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib/pkgconfig
+2026-10-08T06:33:39.0502722Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:39.0503020Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:39.0503561Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:39.0503864Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib
+2026-10-08T06:33:39.0504117Z ##[endgroup]
+2026-10-08T06:33:42.3862966Z ............................
+2026-10-08T06:33:42.4009605Z ----------------------------------------------------------------------
+2026-10-08T06:33:42.4009956Z Ran 28 tests in 2.370s
+2026-10-08T06:33:42.4010085Z 
+2026-10-08T06:33:42.4010152Z OK
+2026-10-08T06:33:42.4044106Z ##[group]Run cargo fmt --all -- --check
+2026-10-08T06:33:42.4044371Z [36;1mcargo fmt --all -- --check[0m
+2026-10-08T06:33:42.4100620Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T06:33:42.4100898Z env:
+2026-10-08T06:33:42.4101063Z   CARGO_TERM_COLOR: always
+2026-10-08T06:33:42.4101262Z   CARGO_INCREMENTAL: 0
+2026-10-08T06:33:42.4101444Z   CARGO_PROFILE_DEV_DEBUG: 0
+2026-10-08T06:33:42.4101658Z   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: 0
+2026-10-08T06:33:42.4101893Z   RUST_BACKTRACE: 1
+2026-10-08T06:33:42.4102113Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:42.4102455Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib/pkgconfig
+2026-10-08T06:33:42.4102777Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:42.4103069Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:42.4103360Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:33:42.4103699Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib
+2026-10-08T06:33:42.4103953Z ##[endgroup]
+2026-10-08T06:34:08.5366569Z ##[group]Run GOBIN="$RUNNER_TEMP/actionlint" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+2026-10-08T06:34:08.5367138Z [36;1mGOBIN="$RUNNER_TEMP/actionlint" go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7[0m
+2026-10-08T06:34:08.5367534Z [36;1mecho "$RUNNER_TEMP/actionlint" >> "$GITHUB_PATH"[0m
+2026-10-08T06:34:08.5422606Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T06:34:08.5422904Z env:
+2026-10-08T06:34:08.5423072Z   CARGO_TERM_COLOR: always
+2026-10-08T06:34:08.5423263Z   CARGO_INCREMENTAL: 0
+2026-10-08T06:34:08.5423444Z   CARGO_PROFILE_DEV_DEBUG: 0
+2026-10-08T06:34:08.5423659Z   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: 0
+2026-10-08T06:34:08.5423876Z   RUST_BACKTRACE: 1
+2026-10-08T06:34:08.5424098Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:08.5424427Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib/pkgconfig
+2026-10-08T06:34:08.5424794Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:08.5425085Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:08.5425378Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:08.5425665Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib
+2026-10-08T06:34:08.5425914Z ##[endgroup]
+2026-10-08T06:34:09.2452132Z go: downloading github.com/rhysd/actionlint v1.7.7
+2026-10-08T06:34:09.8725269Z go: downloading github.com/bmatcuk/doublestar/v4 v4.8.0
+2026-10-08T06:34:09.9021899Z go: downloading github.com/fatih/color v1.18.0
+2026-10-08T06:34:09.9022392Z go: downloading github.com/mattn/go-colorable v0.1.14
+2026-10-08T06:34:09.9163448Z go: downloading github.com/mattn/go-runewidth v0.0.16
+2026-10-08T06:34:09.9233890Z go: downloading github.com/mattn/go-shellwords v1.0.12
+2026-10-08T06:34:09.9241821Z go: downloading github.com/robfig/cron/v3 v3.0.1
+2026-10-08T06:34:09.9383366Z go: downloading golang.org/x/sync v0.10.0
+2026-10-08T06:34:09.9605503Z go: downloading golang.org/x/sys v0.29.0
+2026-10-08T06:34:09.9605890Z go: downloading gopkg.in/yaml.v3 v3.0.1
+2026-10-08T06:34:10.4418771Z go: downloading github.com/mattn/go-isatty v0.0.20
+2026-10-08T06:34:10.4424490Z go: downloading github.com/rivo/uniseg v0.4.7
+2026-10-08T06:34:18.4257582Z ##[group]Run actionlint
+2026-10-08T06:34:18.4257813Z [36;1mactionlint[0m
+2026-10-08T06:34:18.4313576Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T06:34:18.4314026Z env:
+2026-10-08T06:34:18.4314196Z   CARGO_TERM_COLOR: always
+2026-10-08T06:34:18.4314392Z   CARGO_INCREMENTAL: 0
+2026-10-08T06:34:18.4314572Z   CARGO_PROFILE_DEV_DEBUG: 0
+2026-10-08T06:34:18.4314788Z   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: 0
+2026-10-08T06:34:18.4315006Z   RUST_BACKTRACE: 1
+2026-10-08T06:34:18.4315224Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:18.4315565Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib/pkgconfig
+2026-10-08T06:34:18.4315892Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:18.4316184Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:18.4316470Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:18.4316807Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib
+2026-10-08T06:34:18.4317059Z ##[endgroup]
+2026-10-08T06:34:19.0670443Z ##[group]Run python3 -m unittest discover -s script/tests -p 'test_*.py'
+2026-10-08T06:34:19.0670877Z [36;1mpython3 -m unittest discover -s script/tests -p 'test_*.py'[0m
+2026-10-08T06:34:19.0728782Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T06:34:19.0729068Z env:
+2026-10-08T06:34:19.0729246Z   CARGO_TERM_COLOR: always
+2026-10-08T06:34:19.0729443Z   CARGO_INCREMENTAL: 0
+2026-10-08T06:34:19.0729628Z   CARGO_PROFILE_DEV_DEBUG: 0
+2026-10-08T06:34:19.0729839Z   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: 0
+2026-10-08T06:34:19.0730065Z   RUST_BACKTRACE: 1
+2026-10-08T06:34:19.0730295Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:19.0730630Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib/pkgconfig
+2026-10-08T06:34:19.0730958Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:19.0731250Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:19.0731601Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:19.0731893Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib
+2026-10-08T06:34:19.0732155Z ##[endgroup]
+2026-10-08T06:34:23.4856466Z No changes since the last published nightly; skipping build and release.
+2026-10-08T06:34:23.4857129Z Timestamp 2026.09.30.23.59 is reserved; waiting for an available minute.
+2026-10-08T06:34:23.6306187Z Validated cargo-bundle v0.6.1-zed
+2026-10-08T06:34:23.6306515Z Validated cargo-about 0.8.2
+2026-10-08T06:34:23.6544068Z Validated cargo-bundle v0.6.1-zed
+2026-10-08T06:34:23.6772996Z Validated cargo-about 0.8.2
+2026-10-08T06:34:23.6801177Z Validated cargo-bundle v0.6.1-zed
+2026-10-08T06:34:23.6801581Z Validated cargo-about 0.8.2
+2026-10-08T06:34:23.6823281Z Validated cargo-bundle v0.6.1-zed
+2026-10-08T06:34:23.6836443Z Validated cargo-about 0.8.2
+2026-10-08T06:34:23.6850974Z ........................................................................................
+2026-10-08T06:34:23.6851649Z ----------------------------------------------------------------------
+2026-10-08T06:34:23.6852171Z Ran 88 tests in 4.000s
+2026-10-08T06:34:23.6852394Z 
+2026-10-08T06:34:23.6852556Z OK
+2026-10-08T06:34:23.7035327Z ##[group]Run if [[ -f script/android-ide ]]; then
+2026-10-08T06:34:23.7035679Z [36;1mif [[ -f script/android-ide ]]; then[0m
+2026-10-08T06:34:23.7035913Z [36;1m  bash -n script/android-ide[0m
+2026-10-08T06:34:23.7036117Z [36;1mfi[0m
+2026-10-08T06:34:23.7036340Z [36;1mif [[ -f script/test-android-kotlin-installer ]]; then[0m
+2026-10-08T06:34:23.7036656Z [36;1m  python3 script/test-android-kotlin-installer[0m
+2026-10-08T06:34:23.7036896Z [36;1mfi[0m
+2026-10-08T06:34:23.7037082Z [36;1mif [[ -f script/test-kotlin-lsp ]]; then[0m
+2026-10-08T06:34:23.7037344Z [36;1m  python3 script/test-kotlin-lsp --self-test[0m
+2026-10-08T06:34:23.7037573Z [36;1mfi[0m
+2026-10-08T06:34:23.7093017Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-10-08T06:34:23.7093291Z env:
+2026-10-08T06:34:23.7093461Z   CARGO_TERM_COLOR: always
+2026-10-08T06:34:23.7093665Z   CARGO_INCREMENTAL: 0
+2026-10-08T06:34:23.7094031Z   CARGO_PROFILE_DEV_DEBUG: 0
+2026-10-08T06:34:23.7094280Z   CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: 0
+2026-10-08T06:34:23.7094503Z   RUST_BACKTRACE: 1
+2026-10-08T06:34:23.7094723Z   pythonLocation: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:23.7095055Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib/pkgconfig
+2026-10-08T06:34:23.7095387Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:23.7095689Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:23.7095987Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.13.15/x64
+2026-10-08T06:34:23.7096277Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.13.15/x64/lib
+2026-10-08T06:34:23.7096534Z ##[endgroup]
+2026-10-08T06:34:24.3225399Z Installed: /tmp/tmp3882p0xy/dependencies/kotlin-debug-adapter
+2026-10-08T06:34:24.3225958Z Relaunch script/android-ide to enable Android Kotlin debugging.
+2026-10-08T06:34:24.3226485Z Already installed: /tmp/tmp3882p0xy/dependencies/kotlin-debug-adapter
+2026-10-08T06:34:24.3227024Z Downloading kotlin-server-263.4702.0-aarch64.sit
+2026-10-08T06:34:24.3649483Z ....
+2026-10-08T06:34:24.3649923Z ----------------------------------------------------------------------
+2026-10-08T06:34:24.3650346Z Ran 4 tests in 0.569s
+2026-10-08T06:34:24.3650466Z 
+2026-10-08T06:34:24.3650543Z OK
+2026-10-08T06:34:24.3650850Z Installed official Kotlin LSP 263.4702.0+android-6: /tmp/tmpc781p0o2/dependencies/official
+2026-10-08T06:34:24.3651270Z Relaunch script/android-ide, then run Android: Configure Kotlin.
+2026-10-08T06:34:24.3651674Z The server uses its bundled Java 25 runtime; Android Gradle setup still uses project JDK 21.
+2026-10-08T06:34:24.3652081Z Already installed: /tmp/tmpc781p0o2/dependencies/official
+2026-10-08T06:34:24.5029090Z PASS protocol self-test
+2026-10-08T06:34:24.5187869Z Post job cleanup.
+2026-10-08T06:34:24.6193312Z (node:4465) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-10-08T06:34:24.6193980Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-10-08T06:34:24.6338351Z Post job cleanup.
+2026-10-08T06:34:24.7065538Z [command]/usr/bin/git version
+2026-10-08T06:34:24.7104281Z git version 2.55.0
+2026-10-08T06:34:24.7137498Z Temporarily overriding HOME='/home/runner/work/_temp/f10d61dd-1ca4-4b7e-b976-5db36fe5c1eb' before making global git config changes
+2026-10-08T06:34:24.7138550Z Adding repository directory to the temporary git global config as a safe directory
+2026-10-08T06:34:24.7142898Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/koda/koda
+2026-10-08T06:34:24.7180983Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-10-08T06:34:24.7211813Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-10-08T06:34:24.7449960Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-10-08T06:34:24.7482630Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-10-08T06:34:24.7725862Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-10-08T06:34:24.7762738Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-10-08T06:34:24.8117566Z Evaluate and set job outputs
+2026-10-08T06:34:24.8123531Z Set output 'native_checks'
+2026-10-08T06:34:24.8124885Z Set output 'mode'
+2026-10-08T06:34:24.8125762Z Cleaning up orphan processes
+2026-10-08T06:34:24.8391450Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
