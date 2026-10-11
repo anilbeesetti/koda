@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 46,
+  "original_sha256": "483723a5b53660a47f6111c0ecb0c131ed1047358b236be6fb9e6cb6cefadbef",
+  "contents": "Error: unsafe relative source path: ../unsafe\n"
+}

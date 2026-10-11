@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 396,
+  "original_sha256": "baae775ac17e4eb183c4945fae188ef882df22c3f4e05aaba18ef91c797838ba",
+  "contents": "+ cargo clippy --locked -p xtask --release --all-targets --all-features -- --deny warnings\n    Checking compliance v0.1.0 (/workspace/android-studio-reference-membership/tooling/compliance)\n    Checking xtask v0.1.0 (/workspace/android-studio-reference-membership/tooling/xtask)\n    Finished `release` profile [optimized + debuginfo] target(s) in 5.68s\n+ [[ -z '' ]]\n+ which cargo-shear\n+ exit 0\n"
+}

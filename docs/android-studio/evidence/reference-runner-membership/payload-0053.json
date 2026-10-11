@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 1084,
+  "original_sha256": "80b7bb08db4e9c5012ae10159817fb1a201b506836c2d0e233ffd7c0a0b1013d",
+  "contents": "{\n  \"schema_version\": 1,\n  \"stage\": \"xtask-tests\",\n  \"source_commit\": \"5fbebd9df3a60b6c29e09f7236c1b916fe4c4418\",\n  \"started_at_utc\": \"2026-10-08T04:21:04.980190+00:00\",\n  \"duration_seconds\": 12.941019763005897,\n  \"command\": [\n    \"cargo\",\n    \"test\",\n    \"--locked\",\n    \"-p\",\n    \"xtask\",\n    \"--message-format=json\",\n    \"--\",\n    \"--show-output\"\n  ],\n  \"exit_code\": 0,\n  \"raw_log\": \"/workspace/android-studio-artifacts/reference-runner-membership/runtime/xtask-tests.log\",\n  \"raw_log_bytes\": 269323,\n  \"raw_log_sha256\": \"a90dcf6e89e230d34d492ac2341d31bfdbd6523bf8d4554530b25a4930610d12\",\n  \"full_source_index_status_unchanged\": true,\n  \"source_file_count\": 4750,\n  \"before_snapshot\": \"/workspace/android-studio-artifacts/reference-runner-membership/runtime/xtask-tests-whole-source-before.json\",\n  \"free_bytes_before\": {\n    \"/workspace\": 1661751296,\n    \"/tmp\": 92274688\n  },\n  \"free_bytes_after\": {\n    \"/workspace\": 1656926208,\n    \"/tmp\": 92274688\n  },\n  \"compiler_executed\": true,\n  \"original_behavior_credit\": 0,\n  \"runtime_cases\": null,\n  \"global_census_complete\": false\n}\n"
+}

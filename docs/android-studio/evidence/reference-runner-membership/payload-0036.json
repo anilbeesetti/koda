@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 33,
+  "original_sha256": "3a523ee1ca0410667a2b56a4142302b97bb212c72505fa5f3abc682de05e06e8",
+  "contents": "Error: duplicate source identity\n"
+}

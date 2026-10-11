@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 1183,
+  "original_sha256": "56ab71316405f32d074202bacb0e672ac94d03de6a70f4b90dd5d8292130a0c6",
+  "contents": "{\n  \"source_commit\": \"5fbebd9df3a60b6c29e09f7236c1b916fe4c4418\",\n  \"normal_locked_build_fresh_current_worktree\": true,\n  \"compiler_artifact\": {\n    \"reason\": \"compiler-artifact\",\n    \"package_id\": \"path+file:///workspace/android-studio-reference-membership/tooling/xtask#0.1.0\",\n    \"manifest_path\": \"/workspace/android-studio-reference-membership/tooling/xtask/Cargo.toml\",\n    \"target\": {\n      \"kind\": [\n        \"bin\"\n      ],\n      \"crate_types\": [\n        \"bin\"\n      ],\n      \"name\": \"xtask\",\n      \"src_path\": \"/workspace/android-studio-reference-membership/tooling/xtask/src/main.rs\",\n      \"edition\": \"2024\",\n      \"doc\": true,\n      \"doctest\": false,\n      \"test\": true\n    },\n    \"profile\": {\n      \"opt_level\": \"0\",\n      \"debuginfo\": 0,\n      \"debug_assertions\": true,\n      \"overflow_checks\": true,\n      \"test\": false\n    },\n    \"features\": [],\n    \"filenames\": [\n      \"/workspace/.cache/zed/target/debug/xtask\"\n    ],\n    \"executable\": \"/workspace/.cache/zed/target/debug/xtask\",\n    \"fresh\": false\n  },\n  \"executable\": \"/workspace/.cache/zed/target/debug/xtask\",\n  \"bytes\": 50893168,\n  \"sha256\": \"2e85cbaec3314218506512f52ac4c897b2bdd3abe27402adb7e2d183045de8ae\"\n}\n"
+}

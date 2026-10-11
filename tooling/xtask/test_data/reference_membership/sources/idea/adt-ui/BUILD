@@ -1,0 +1,57 @@
+load("//tools/base/bazel:bazel.bzl", "iml_module")
+
+# managed by go/iml_to_build
+iml_module(
+    name = "intellij.android.adt.ui",
+    srcs = ["src/main/java"],
+    iml_files = ["intellij.android.adt.ui.iml"],
+    javacopts_from_jps = [
+        "--add-exports",
+        "java.desktop/sun.swing=ALL-UNNAMED",
+        "--add-exports",
+        "java.desktop/java.awt.peer=ALL-UNNAMED",
+        "--add-exports",
+        "java.desktop/sun.awt=ALL-UNNAMED",
+        "--add-exports",
+        "java.desktop/sun.java2d.pipe=ALL-UNNAMED",
+    ],
+    lint_baseline = "lint_baseline.xml",
+    resources = ["resources"],
+    test_class = "com.android.tools.adtui.AdtUiTestSuite",
+    test_data = [
+        "//tools/adt/idea/adt-ui/testData",
+        "//tools/adt/idea/artwork:device-art-resources",
+    ],
+    # do not sort: must match IML order
+    test_deps = [
+        "//tools/adt/idea/.idea/libraries:junit4",
+        "//tools/adt/idea/.idea/libraries:jetbrains.kotlinx.coroutines.test",
+        "//tools/adt/idea/.idea/libraries:kotlin-test",
+        "//tools/adt/idea/.idea/libraries:mockito",
+        "//tools/adt/idea/.idea/libraries:mockito-kotlin",
+        "@intellij//:com.intellij.platform.images",
+        "@intellij//:intellij.webp",
+        "//tools/adt/idea/.idea/libraries:truth",
+        "//tools/base/testutils:studio.android.sdktools.testutils",
+        "//tools/adt/idea/adt-testutils:intellij.android.adt.testutils",
+    ],
+    test_resources = ["src/test/resources"],
+    test_srcs = ["src/test/java"],
+    visibility = ["//visibility:public"],
+    # do not sort: must match IML order
+    deps = [
+        "@intellij//:intellij-sdk",
+        "@intellij//:com.intellij.java",
+        "@intellij//:org.jetbrains.kotlin",
+        "//tools/base/common:studio.android.sdktools.common",
+        "//tools/base/flags:studio.android.sdktools.flags",
+        "//tools/base/layoutlib-api:studio.android.sdktools.layoutlib-api",
+        "//tools/base/ninepatch:studio.android.sdktools.ninepatch",
+        "//tools/base/sdk-common:studio.android.sdktools.sdk-common",
+        "//tools/base/sdklib:studio.android.sdktools.sdklib",
+        "//tools/adt/idea/adt-ui-model:intellij.android.adt.ui.model",
+        "//tools/adt/idea/artwork:intellij.android.artwork",
+        "//tools/adt/idea/android-common:intellij.android.common",
+        "//tools/adt/idea/observable:intellij.android.observable",
+    ],
+)

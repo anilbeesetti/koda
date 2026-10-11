@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "encoding": "utf-8",
+  "original_bytes": 1021,
+  "original_sha256": "adc7e3b660007407c5a2a9a1ccf1ec74acd552b0849acab1c4e15918f05cbc46",
+  "contents": "{\n  \"schema_version\": 1,\n  \"stage\": \"xtask-clippy\",\n  \"source_commit\": \"5fbebd9df3a60b6c29e09f7236c1b916fe4c4418\",\n  \"started_at_utc\": \"2026-10-08T04:22:31.643243+00:00\",\n  \"duration_seconds\": 5.988050244995975,\n  \"command\": [\n    \"./script/clippy\",\n    \"--locked\",\n    \"-p\",\n    \"xtask\"\n  ],\n  \"exit_code\": 0,\n  \"raw_log\": \"/workspace/android-studio-artifacts/reference-runner-membership/runtime/xtask-clippy.log\",\n  \"raw_log_bytes\": 396,\n  \"raw_log_sha256\": \"baae775ac17e4eb183c4945fae188ef882df22c3f4e05aaba18ef91c797838ba\",\n  \"full_source_index_status_unchanged\": true,\n  \"source_file_count\": 4750,\n  \"before_snapshot\": \"/workspace/android-studio-artifacts/reference-runner-membership/runtime/xtask-clippy-whole-source-before.json\",\n  \"free_bytes_before\": {\n    \"/workspace\": 1652924416,\n    \"/tmp\": 92274688\n  },\n  \"free_bytes_after\": {\n    \"/workspace\": 1650753536,\n    \"/tmp\": 92270592\n  },\n  \"compiler_executed\": true,\n  \"original_behavior_credit\": 0,\n  \"runtime_cases\": null,\n  \"global_census_complete\": false\n}\n"
+}
