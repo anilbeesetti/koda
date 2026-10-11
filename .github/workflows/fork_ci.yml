@@ -479,8 +479,11 @@ jobs:
       CARGO_INCREMENTAL: '0'
       CARGO_PROFILE_DEV_DEBUG: '0'
       CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
-      CARGO_TARGET_DIR: ${{ runner.temp }}/native-independent-bootstrap-target
     steps:
+      - name: Set runner-local Cargo target directory
+        shell: bash
+        run: |
+          printf 'CARGO_TARGET_DIR=%s/native-independent-bootstrap-target\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - name: Checkout exact same-repository bootstrap controller head
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
         with:
@@ -580,7 +583,6 @@ jobs:
       CARGO_INCREMENTAL: '0'
       CARGO_PROFILE_DEV_DEBUG: '0'
       CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
-      CARGO_TARGET_DIR: ${{ runner.temp }}/native-request-tool-target
     outputs:
       selected: ${{ steps.select.outputs.selected || steps.presence.outputs.selected }}
       source_sha: ${{ steps.select.outputs.source_sha }}
@@ -589,6 +591,10 @@ jobs:
       source_owner_receipt_sha256: ${{ steps.select.outputs.source_owner_receipt_sha256 }}
       request_sha256: ${{ steps.select.outputs.request_sha256 }}
     steps:
+      - name: Set runner-local Cargo target directory
+        shell: bash
+        run: |
+          printf 'CARGO_TARGET_DIR=%s/native-request-tool-target\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - name: Checkout exact PR controller head
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
         with:
@@ -708,7 +714,6 @@ jobs:
       CARGO_INCREMENTAL: '0'
       CARGO_PROFILE_DEV_DEBUG: '0'
       CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
-      CARGO_TARGET_DIR: ${{ runner.temp }}/native-artifact-target
       CARGO_TERM_COLOR: always
       RUST_BACKTRACE: '1'
       CC: clang
@@ -720,6 +725,10 @@ jobs:
       REQUEST_SHA256: ${{ needs.select_exact_native_artifact.outputs.request_sha256 }}
       NATIVE_CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
+      - name: Set runner-local Cargo target directory
+        shell: bash
+        run: |
+          printf 'CARGO_TARGET_DIR=%s/native-artifact-target\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - name: Checkout immutable controller
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
         with:
