@@ -1,0 +1,6 @@
+{
+  "failed_preparation_check": "Required every helper/probe file to change; the standalone probe source has no path/label constant and should remain byte-identical.",
+  "compiler_or_Cargo_executed": false,
+  "product_source_or_fixture_changed": false,
+  "correction": "Compare exact approved replacements; allow unchanged files."
+}

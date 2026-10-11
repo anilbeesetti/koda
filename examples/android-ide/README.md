@@ -14,8 +14,8 @@ script/install-android-kotlin
 script/android-ide --release examples/android-ide
 ```
 
-Trusted Android projects sync automatically on open. Select **:mobile · demoDebug**
-in the topbar and use **Configure official Kotlin** in the Android tools panel. Install the Kotlin extension from Extensions if it is
+Trusted Android projects sync automatically on open and initially select
+**:mobile · demoDebug** in the topbar. Use **Configure official Kotlin** in the Android tools panel. Install the Kotlin extension from Extensions if it is
 not already installed. Select a connected device or a stopped emulator in the topbar,
 then **Run**; a stopped emulator is booted before deployment. The app should display `dev.zed.androidsample.demo`. Repeat with
 `fullDebug`; it should display `dev.zed.androidsample.full`. Both variants should
@@ -273,6 +273,12 @@ previous variant only if its identity still exists in the fresh catalog. This is
 also the integration API for the separate structured Android testing UI: use the
 selected component names/scopes and dependencies; do not discover another graph.
 
+On first sync, Koda selects the first application module alphabetically and uses
+Android Studio's default-variant ordering: explicit build-type defaults, explicit
+flavor defaults in dimension order, `debug`, alphabetical flavors, then build type.
+Only enabled variants are considered. The initial choice and manual changes are
+remembered per project. An unavailable remembered variant requires a new choice.
+
 The official Kotlin server still owns Kotlin/Java semantic analysis and rename.
 The managed `263.4702.0+android-6` importer accepts the resolved variant map and
 source-root projection without replacing native compiler settings, friend source
@@ -304,9 +310,15 @@ Supported boundaries:
 - The picker still selects application APK targets. Library/dynamic-feature and
   JVM modules are imported as part of that selected graph; library-only projects
   are catalogued but cannot currently be selected for language setup/build/preview.
-- Included builds, external module/source directories, standalone `com.android.test`
-  modules, and `com.android.kotlin.multiplatform.library` have explicit sync
-  diagnostics. Nested unit/device tests are distinct from standalone test modules.
+- Android multiplatform libraries (`com.android.kotlin.multiplatform.library`) are
+  imported as libraries with their single `androidMain` variant. Common,
+  intermediate, and Android source sets, registered generated roots, resources,
+  and enabled host/device tests are included. App debug/release variants resolve
+  to that same Android variant. Java setup handles Kotlin-only compilations and
+  libraries that enable `withJava()`.
+- Included builds, external module/source directories, and standalone
+  `com.android.test` modules have explicit sync diagnostics. Nested unit/device
+  tests are distinct from standalone test modules.
 - A graph requiring two active variants of one module is rejected, including
   conflicting main/test requirements. Ordinary resolution failures fail sync;
   partial catalogs are not published. Sync resolves the catalog's variants, so an
@@ -326,13 +338,17 @@ The real Gradle model/Java/Eclipse probe creates isolated fixtures with flavors,
 variant fallbacks, a dynamic feature, JVM test dependencies, registered generated roots,
 and library test fixtures. AGP 9 retains generator output outside `build/`; AGP 8
 relocates this registered output into its managed generated directory. It verifies removal/restoration of a selected
-variant, failed sync/recovery, and included-build diagnostics:
+variant, failed sync/recovery, and included-build diagnostics. AGP 9 also checks
+Android multiplatform dependencies and model/Java/Eclipse projections:
 
 ```sh
 script/test-android-project-model --gradle /path/to/gradle-8.11.1/bin/gradle \
   --sdk /path/to/android-sdk --agp 8.9.1
 script/test-android-project-model --gradle /path/to/gradle-9.7.1/bin/gradle \
   --sdk /path/to/android-sdk --agp 9.4.0
+# Run only the multiplatform regression fixture:
+script/test-android-project-model --gradle /path/to/gradle-9.7.1/bin/gradle \
+  --sdk /path/to/android-sdk --agp 9.4.0 --multiplatform-only
 cargo test --locked -p android_tools --lib
 cargo test --locked -p android_ui --lib
 cargo test --locked -p project --features test-support --test integration test_android_resource

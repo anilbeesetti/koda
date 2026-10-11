@@ -1,0 +1,63 @@
+{
+  "status": "owner_actual_checks_and_all_five_scoped_reviews_pass_lead_combined_gates_pending",
+  "source_hashes": {
+    "crates/android_tools/src/project_tree_adapter.rs": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+    "crates/android_tools/tests/project_tree_adapter.rs": "5e5927568f42cdc1247d88d16f3fdf1dcbb7b427e24b4d6240928378b6e5f79e",
+    "crates/android_tools/src/android_tools.rs": "f4b033f8aa13b8141f706a1f24455c1d5500940ef5e4adffa46edd8baf1f2891"
+  },
+  "source_fix_rounds": 3,
+  "tests": {
+    "unfiltered_passed": 201,
+    "new_supplemental_passed": 27,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0
+  },
+  "actual_checks_summary": "actual-checks-summary.json",
+  "compiler_source_elf_proof": "compiler-source-elf-proof.json",
+  "reviews": {
+    "code": {
+      "report": "code-review-round3.md",
+      "sha256": "2f89537e0b1e24dfe3edbd541ecf6bc5c776a0ce08891536c7ad978edc8c889a",
+      "verdict": "pass",
+      "scope": "final source and scoped actual evidence"
+    },
+    "ui": {
+      "report": "ui-review-round2.md",
+      "sha256": "ce6a7eb0a3d10a296f4470421d1e06cc0a518e6bf4f434fc0795eca6fcf95166",
+      "verdict": "pass",
+      "scope": "frozen production boundary"
+    },
+    "ux": {
+      "report": "ux-review-round2.md",
+      "sha256": "67e57f724e1c2d57e961af8d80b9a81a1cd3dff59d6d706c5e82d54ad1b0c724",
+      "verdict": "pass",
+      "scope": "frozen production boundary"
+    },
+    "performance": {
+      "report": "performance-review-round3.md",
+      "sha256": "c4231b57015b6f92573d3e073ae7c24e3de42f41fb851cde3dfa71f0d1ec2802",
+      "verdict": "pass",
+      "scope": "final source and scoped actual evidence"
+    },
+    "quality": {
+      "report": "quality-review-round4.md",
+      "sha256": "32beaa2934230c3eaa2d52979090543f6ebb5ff82e57f304ecb1102d80e687c2",
+      "verdict": "pass",
+      "scope": "final source and scoped actual evidence"
+    }
+  },
+  "historical_metadata_retained_and_superseded": [
+    "runtime-status.json",
+    "review-source-round3.json"
+  ],
+  "nonpassed_attempts_retained": [
+    "all-features-tests.json",
+    "all-features-tests-retry1.json",
+    "time-tool-unavailable.json"
+  ],
+  "protected97_unchanged": true,
+  "source_tree_unchanged_during_checks": true,
+  "lead_full_app_workspace_native_and_ci_gates": "pending",
+  "original_reference_credit": 0
+}

@@ -1,0 +1,282 @@
+[
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::component_is_added_element",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::component_is_added_element",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-componentIsAddedElement.log",
+          "sha256": "cd4e236bef45a68db5cd7606b4b01d05e3104ab7b78dd3896490721750244351"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::tab_is_added",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::tab_is_added",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-tabIsAdded.log",
+          "sha256": "1431a38af3269a182e1a1340d83f215f941b261386d6a347a7bd057f25be1a69"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::closed_is_called_when_clicked",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-closedIsCalledWhenClicked.log",
+          "sha256": "82d3fb9a0290bfe12fee3715dfe3b592f7202d6e0afcbabe78bfc9129a4f2c90"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::no_close_button_when_no_listener",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-noCloseButtonWhenNoListener.log",
+          "sha256": "1a16f0a831bea5e4bfd2e86eb1f87d3c859c150ecc08966b732b14a88f15cc66"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-iconButtonsCallbackWhenClicked.log",
+          "sha256": "a240bd1e491c2d4e0bc007e3ec5c482b33eea03770771949cfcdfab673526a82"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::can_select_tab_by_index",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::can_select_tab_by_index",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-can select tab by index.log",
+          "sha256": "d43df0b25c09b6882039b15307d81720580dfb02c4d99387698fe75804f0f772"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+    "port_status": "adapted",
+    "reason": "Swing component trees and JButton.doClick are adapted to production GPUI entities, rendered debug bounds and real input dispatch. The original title/tab text and callback assertions are retained. GPUI layout/frame pumping replaces the Swing platform driver without removing original assertions; native theme/header dimensions remain documented adaptations.",
+    "target": {
+      "package": "android_ui",
+      "integration_target": null,
+      "test_name": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+      "manifest": {
+        "path": "crates/android_ui/Cargo.toml",
+        "sha256": "f4b03ccce9f973eb58fdf0de44dbd6deb14d2f6e1c731b03e7289f8d0b04c8fe"
+      },
+      "source": {
+        "path": "crates/android_ui/src/tabbed_toolbar.rs",
+        "sha256": "e66c06c2aeabc1f943fef865772fdaca2d1188dd459176188ef7e105946ee0e1"
+      },
+      "run": {
+        "tested_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-adding tab should not trigger select listener.log",
+          "sha256": "ef52098cbc5ed088bd4683ec03850b91ceaf50b9812f445814091c2eff32e77e"
+        }
+      }
+    }
+  }
+]

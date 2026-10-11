@@ -1,0 +1,4 @@
+Checking formatting...
+[warn] src/installation.md
+[warn] src/languages/csharp.md
+[warn] Code style issues found in 2 files. Run Prettier with --write to fix.

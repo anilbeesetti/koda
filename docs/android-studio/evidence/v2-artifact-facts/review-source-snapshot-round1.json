@@ -1,0 +1,18 @@
+{
+  "round": 1,
+  "base": "ac58815bb268d338bea40a31fff630734cd719f4",
+  "sources": {
+    "crates/android_tools/src/generated_artifacts.rs": "07fc39f14d6447c62c459e6cd71a9dc81caa2169ddb9649df2b9249ce9ee04fb",
+    "crates/android_tools/src/project_model.gradle": "3b9c320fa0554dd9a6b788522c19a745a01ef5c4618866b37e77e6c24b8ae171",
+    "crates/android_tools/src/android_tools.rs": "8ee120d91a3dc26ebe235e14bce66074f3b1504901e43915729a43d353e7f2df",
+    "crates/android_tools/tests/generated_artifacts.rs": "bd9fecb0ad694957dd0004ec69d8655e450eb62bbd9cc1439520061d5a655484",
+    "crates/android_tools/test_data/generated_artifacts/BasicModules.kt": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed",
+    "crates/android_tools/test_data/generated_artifacts/LICENSE-APACHE": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+    "crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+    "crates/android_tools/test_data/generated_artifacts/NOTICE": "bfee2f15cfeccecbf0ea05f503b6138398459e43dc59fb1da59c5944ae146111"
+  },
+  "originalsPreserved": 184,
+  "testsDeclared": 24,
+  "testsExecuted": false,
+  "cargoGradleAppLease": false
+}

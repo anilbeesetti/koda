@@ -5,11 +5,14 @@ import org.gradle.api.artifacts.result.UnresolvedDependencyResult
 // Providers stay live until all plugins have registered their generated directories.
 def androidVariants = [:]
 def androidKinds = [:]
+def multiplatformPaths = [] as Set
 def optional = { object, name -> object != null && object.hasProperty(name) ? object."$name" : null }
 gradle.beforeProject { project ->
     ['com.android.application': 'application', 'com.android.library': 'library',
-     'com.android.dynamic-feature': 'dynamicFeature', 'com.android.test': 'test'].each { plugin, kind ->
+     'com.android.dynamic-feature': 'dynamicFeature', 'com.android.test': 'test',
+     'com.android.kotlin.multiplatform.library': 'library'].each { plugin, kind ->
         project.plugins.withId(plugin) {
+            if (plugin == 'com.android.kotlin.multiplatform.library') multiplatformPaths.add(project.path)
             androidKinds[project.path] = kind
             androidVariants[project.path] = []
             def components = project.extensions.getByName('androidComponents')
@@ -22,9 +25,54 @@ gradle.beforeProject { project ->
 gradle.projectsEvaluated {
     def root = gradle.rootProject
     if (!gradle.includedBuilds.isEmpty()) throw new GradleException('Koda Android model does not yet support included builds: ' + gradle.includedBuilds*.name.join(', '))
-    def unsupported = root.allprojects.findAll { it.plugins.hasPlugin('com.android.kotlin.multiplatform.library') }
-    if (!unsupported.isEmpty()) throw new GradleException('Koda Android model does not yet support the Android multiplatform library plugin: ' + unsupported*.path.join(', '))
     if (androidKinds.values().contains('test')) throw new GradleException('Koda Android model does not yet support standalone com.android.test modules; nested unit and device tests remain supported')
+    // Nullable Idea getter boundary follows JetBrains GradleIdeaPluginUtil (Apache-2.0);
+    // complete sources and notices are retained in test_data/import_facts.
+    // Raw getter results only: imported names, fallbacks and facets belong in Rust.
+    def importGetterFailure = { getter, failure ->
+        [getter: getter, result: [status: 'unavailable', value: [capability: getter,
+            detail: failure.class.name + ': ' + (failure.message ?: 'Gradle identity getter failed')]]]
+    }
+    def importGetter = { getter, action ->
+        try {
+            [getter: getter, result: [status: 'available', value: action()]]
+        } catch (Exception failure) {
+            importGetterFailure(getter, failure)
+        } catch (LinkageError failure) {
+            importGetterFailure(getter, failure)
+        }
+    }
+    def importProject = { project ->
+        [projectName: importGetter('org.gradle.api.Project.getName()') { project.getName() },
+         projectPath: importGetter('org.gradle.api.Project.getPath()') { project.getPath() },
+         projectDirectory: importGetter('org.gradle.api.Project.getProjectDir().getCanonicalPath()') { project.getProjectDir().getCanonicalPath() },
+         rootName: importGetter('org.gradle.api.Project.getRootProject().getName()') { project.getRootProject().getName() },
+         rootDirectory: importGetter('org.gradle.api.Project.getRootDir().getCanonicalPath()') { project.getRootDir().getCanonicalPath() },
+         parentProjectPath: importGetter('org.gradle.api.Project.getParent()?.getPath()') { project.getParent()?.getPath() },
+         buildTreePath: importGetter('org.gradle.api.Project.getBuildTreePath()') { project.getBuildTreePath() },
+         referenceIdentityPath: importGetter('org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()') {
+             ((org.gradle.api.internal.project.ProjectInternal) project).getIdentityPath().getPath()
+         },
+         ideaPluginPresent: importGetter('org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)') {
+             project.getPlugins().findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class) != null
+         },
+         ideaModuleName: importGetter('org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()') {
+             project.getPlugins().findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)?.getModel()?.getModule()?.getName()
+         }]
+    }
+    def importCatalogue = null
+    def importBuildIdentity = null
+    // Build/plugin projectsEvaluated listeners may still change Idea module names.
+    // Graph readiness follows all of them, before tasks or foreign resolution run.
+    gradle.taskGraph.whenReady {
+        def importRoot = importProject(root)
+        importCatalogue = importGetter('org.gradle.api.Project.getAllprojects()') {
+            root.getAllprojects().collect { importProject(it) }
+        }
+        importBuildIdentity = [rootName: importRoot.rootName, rootDirectory: importRoot.rootDirectory,
+            projectPath: importRoot.projectPath, buildTreePath: importRoot.buildTreePath,
+            referenceIdentityPath: importRoot.referenceIdentityPath]
+    }
     def attributes = { configuration ->
         configuration.attributes.keySet().findAll { it.name == 'com.android.build.api.attributes.BuildTypeAttr' || it.name.startsWith('com.android.build.api.attributes.ProductFlavor:') }.collectEntries {
             [(it.name): configuration.attributes.getAttribute(it).toString()]
@@ -42,6 +90,27 @@ gradle.projectsEvaluated {
     def projectPaths = root.allprojects*.path as Set
     def jvmProjects = root.allprojects.findAll { !androidVariants.containsKey(it.path) && it.extensions.findByName('sourceSets') != null }
     def jvmPaths = jvmProjects*.path as Set
+    def variantStaticDirectories = { source, project, component, kind ->
+        // AGP can omit variant-layer entries from its static provider. Read the
+        // same DirectoryEntry provenance used by its model converter instead.
+        def methods = source.class.methods.findAll {
+            it.name == 'variantSourcesForModel$gradle_core' && !it.isBridge() && it.parameterCount == 1 &&
+                it.parameterTypes[0].name == 'kotlin.jvm.functions.Function1'
+        }
+        if (methods.size() != 1) throw new GradleException('Cannot determine ' + kind + ' source provenance for ' + project.path + ':' + component.name + ': AGP DirectoryEntry metadata is unavailable')
+        def method = methods.first()
+        def predicateType = method.parameterTypes[0]
+        // Use the SDK's interface class loader; Gradle and AGP may isolate Kotlin.
+        def predicate = java.lang.reflect.Proxy.newProxyInstance(predicateType.classLoader, [predicateType] as Class[],
+            { proxy, invoked, arguments ->
+                if (invoked.name == 'invoke' && arguments?.length == 1) return !arguments[0].isGenerated()
+                if (invoked.name == 'toString') return 'Koda non-generated DirectoryEntry metadata filter'
+                if (invoked.name == 'hashCode') return System.identityHashCode(proxy)
+                if (invoked.name == 'equals') return proxy.is(arguments[0])
+                throw new IllegalStateException('Unexpected AGP DirectoryEntry predicate method: ' + invoked.name)
+            } as java.lang.reflect.InvocationHandler)
+        method.invoke(source, predicate).collect { it.canonicalPath } as Set
+    }
     def dependencies = { project, config ->
         config.incoming.resolutionResult.allDependencies.collect { dependency ->
             if (dependency instanceof UnresolvedDependencyResult) throw new GradleException('Cannot resolve ' + config.name + ': ' + dependency.attempted, dependency.failure)
@@ -56,7 +125,10 @@ gradle.projectsEvaluated {
                     def expected = selectedAttributes.keySet().findAll { it.name == 'com.android.build.api.attributes.BuildTypeAttr' || it.name.startsWith('com.android.build.api.attributes.ProductFlavor:') }.collectEntries { [(it.name): selectedAttributes.getAttribute(it).toString()] }
                     def candidates = variantCatalog[target].findAll { candidate ->
                         def actual = candidate.attributes
-                        !expected.isEmpty() && expected.every { key, value -> actual[key] == value }
+                        // KMP Android libraries publish one variant without build-type/flavor attributes.
+                        multiplatformPaths.contains(target) ?
+                            selectedAttributes.keySet().any { it.name == 'org.jetbrains.kotlin.platform.type' && selectedAttributes.getAttribute(it).toString() == 'androidJvm' } :
+                            !expected.isEmpty() && expected.every { key, value -> actual[key] == value }
                     }
                     if (candidates.size() != 1) throw new GradleException('Cannot map Gradle attributes ' + expected + ' to one variant of ' + target)
                     return [kind: 'project', module: target, variant: candidates.first().name]
@@ -67,16 +139,28 @@ gradle.projectsEvaluated {
             [kind: 'external', coordinate: id.displayName]
         }.findAll { it != null }.unique()
     }
-    def sources = { project, component ->
+    def sources = { project, component, declaredAssetPaths ->
         def result = []
-        ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources'].each { property, kind ->
+        def kotlin = project.extensions.findByName('kotlin')
+        def compilation = multiplatformPaths.contains(project.path) ?
+            kotlin.targets.getByName('android').compilations.find { it.defaultSourceSet.name == component.name } :
+            optional(optional(kotlin, 'target'), 'compilations')?.findByName(component.name)
+        ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources', 'assets': 'assets'].each { property, kind ->
             def source = optional(component.sources, property)
             def provider = optional(source, 'all')
             def staticProvider = optional(source, 'static')
             def staticPaths = staticProvider?.get()?.flatten()?.collect { it.asFile.canonicalPath } as Set
             def buildPath = project.layout.buildDirectory.get().asFile.canonicalFile.toPath()
+            if (multiplatformPaths.contains(project.path) && staticProvider != null && property in ['java', 'kotlin']) {
+                // AGP's KMP adapter exposes KGP roots in `all`, but omits them from `static`.
+                compilation.allKotlinSourceSets.each { sourceSet ->
+                    staticPaths.addAll(sourceSet.kotlin.srcDirs.collect { directory ->
+                        (property == 'java' ? new File(directory.parentFile, 'java') : directory).canonicalPath
+                    }.findAll { !new File(it).toPath().startsWith(buildPath) })
+                }
+            }
             def legacy = project.extensions.getByName('androidComponents').pluginVersion.major < 9
-            if (legacy && staticProvider != null) {
+            if (legacy && staticProvider != null && !multiplatformPaths.contains(project.path) && property != 'assets') {
                 // Older AGP omits variant-only static roots and includes res-value producers.
                 staticPaths = staticPaths.findAll { !new File(it).toPath().startsWith(buildPath) } as Set
                 project.extensions.getByName('android').sourceSets.each { sourceSet ->
@@ -84,16 +168,25 @@ gradle.projectsEvaluated {
                     if (conventional != null) staticPaths.addAll(conventional.srcDirs.collect { it.canonicalPath })
                 }
             }
+            def declaredAssets = property == 'assets' && declaredAssetPaths != null
+            if (declaredAssets) {
+                // AGP 9 also omits variant-only assets from `static`. Evaluated DSL
+                // directories remain configured roots, including missing/custom ones.
+                staticPaths = staticPaths ?: [] as Set
+                staticPaths.addAll(declaredAssetPaths)
+            }
+            if (provider != null) {
+                staticPaths = staticPaths ?: [] as Set
+                staticPaths.addAll(variantStaticDirectories(source, project, component, kind))
+            }
             if (provider != null) provider.get().flatten().each { directory ->
                 def file = directory.asFile.canonicalFile
-                def generated = staticProvider != null ? !staticPaths.contains(file.path) : file.toPath().startsWith(buildPath)
+                def generated = !staticPaths.contains(file.path)
                 result.add([path: file.path, kind: kind, generated: generated])
             }
         }
         // Kotlin Android before AGP 9 registers its compilation source sets in KGP.
-        def kotlin = project.extensions.findByName('kotlin')
-        def compilation = optional(optional(kotlin, 'target'), 'compilations')?.findByName(component.name)
-        if (compilation != null) compilation.allKotlinSourceSets.each { sourceSet ->
+        if (compilation != null && !multiplatformPaths.contains(project.path)) compilation.allKotlinSourceSets.each { sourceSet ->
             sourceSet.kotlin.srcDirs.each { directory ->
                 def file = directory.canonicalFile
                 result.add([path: file.path, kind: 'kotlin', generated: file.toPath().startsWith(project.layout.buildDirectory.get().asFile.canonicalFile.toPath())])
@@ -106,8 +199,227 @@ gradle.projectsEvaluated {
         }
         result.unique()
     }
+    def sourceProviders = { project ->
+        // These are evaluated DSL declarations, not Studio's active-provider overlay order.
+        // KMP source sets use a different model; missing declarations stay explicitly unknown.
+        if (multiplatformPaths.contains(project.path)) return null
+        def android = project.extensions.findByName('android')
+        def sourceSets = optional(android, 'sourceSets')
+        if (sourceSets == null) return null
+        [order: 'gradleSourceSetIteration', providers: sourceSets.collect { sourceSet ->
+            def roots = []
+            ['java': 'java', 'kotlin': 'kotlin', 'res': 'resources', 'aidl': 'aidl',
+             'renderscript': 'renderscript', 'assets': 'assets', 'jniLibs': 'jniLibs'].each { property, kind ->
+                def directories = optional(sourceSet, property)
+                if (directories != null) directories.srcDirs.each { directory ->
+                    roots.add([path: directory.canonicalPath, kind: kind])
+                }
+            }
+            def manifest = optional(sourceSet, 'manifest')
+            if (manifest != null) roots.add([path: manifest.srcFile.canonicalPath, kind: 'manifest'])
+            [name: sourceSet.name, roots: roots]
+        }]
+    }
+    def evaluatedProviders = { project, variants ->
+        def capability = 'agpV2BasicAndroidProject'
+        if (multiplatformPaths.contains(project.path)) {
+            return [status: 'unavailable', value: [capability: capability,
+                detail: 'KMP active-provider containers have not been proved against the pinned Studio adapter']]
+        }
+        try {
+            def required = { object, name ->
+                if (object == null || !object.hasProperty(name)) {
+                    throw new UnsupportedOperationException('Missing tooling-model property ' + name)
+                }
+                object."$name"
+            }
+            def registry = project.services.get(org.gradle.tooling.provider.model.ToolingModelBuilderRegistry)
+            def query = { modelName -> registry.getBuilder(modelName).buildAll(modelName, project) }
+            def versions = query('com.android.builder.model.v2.models.Versions')
+            def producer = required(versions, 'versions')['model_producer']
+            if (producer == null) throw new UnsupportedOperationException('Missing model_producer version')
+            def basic = query('com.android.builder.model.v2.models.BasicAndroidProject')
+            def provider = { source ->
+                if (source == null) return null
+                def roots = []
+                // This is findSourceRoot's category order; JVM resources/custom
+                // roots do not participate in the pinned lookup.
+                ['javaDirectories': 'java', 'kotlinDirectories': 'kotlin',
+                 'resDirectories': 'resources', 'aidlDirectories': 'aidl',
+                 'renderscriptDirectories': 'renderscript', 'assetsDirectories': 'assets',
+                 'jniLibsDirectories': 'jniLibs'].each { property, kind ->
+                    def directories = required(source, property)
+                    if (directories != null) directories.each { directory ->
+                        roots.add([path: directory.canonicalPath, kind: kind])
+                    }
+                }
+                def manifest = required(source, 'manifestFile')
+                if (manifest != null) roots.add([path: manifest.canonicalPath, kind: 'manifest'])
+                [name: required(source, 'name'), roots: roots]
+            }
+            def container = { sourceSet ->
+                if (sourceSet == null) return null
+                [main: provider(required(sourceSet, 'sourceProvider')),
+                 hostTests: required(sourceSet, 'hostTestSourceProviders').collect { artifact, source ->
+                     [artifact: artifact, provider: provider(source)]
+                 },
+                 deviceTests: required(sourceSet, 'deviceTestSourceProviders').collect { artifact, source ->
+                     [artifact: artifact, provider: provider(source)]
+                 },
+                 fixtures: provider(required(sourceSet, 'testFixturesSourceProvider'))]
+            }
+            def artifact = { source ->
+                if (source == null) return null
+                [multiFlavor: provider(required(source, 'multiFlavorSourceProvider')),
+                 variant: provider(required(source, 'variantSourceProvider'))]
+            }
+            def dimensions = { sourceSets -> sourceSets.collect { sourceSet ->
+                def value = container(sourceSet)
+                // ModelCacheV2Impl joins each actual DSL dimension to this
+                // typed container's sourceProvider.name, never a directory.
+                [name: value.main?.name, container: value]
+            } }
+            def suites = optional(basic, 'testSuites')
+            def nativeMembership = null
+            try {
+                nativeMembership = variants.collectMany { variant ->
+                    def components = [variant, optional(variant, 'unitTest'),
+                        optional(variant, 'androidTest'), optional(variant, 'testFixtures')]
+                    components.addAll((optional(variant, 'hostTests') ?: [:]).values())
+                    components.addAll((optional(variant, 'deviceTests') ?: [:]).values())
+                    components.findAll { it != null }.unique { it.name }.collect { component ->
+                        def sourceNames = optional(component.sources, 'sourceProviderNames')
+                        [variant: variant.name, component: component.name,
+                         artifact: required(required(component, 'componentType'), 'artifactName'),
+                         order: 'agpSourceProviderNames', providers: sourceNames == null ? null : sourceNames.collect { it }]
+                    }
+                }
+            } catch (Exception unavailableNativeMembership) {
+                // Native capability is separate from the complete basic model.
+                nativeMembership = null
+            }
+            [status: 'available', value: [version: 1, agpVersion: required(versions, 'agp'),
+             modelProducer: [major: required(producer, 'major'), minor: required(producer, 'minor')],
+             defaultSourceSet: container(required(basic, 'mainSourceSet')),
+             buildTypes: dimensions(required(basic, 'buildTypeSourceSets')),
+             productFlavors: dimensions(required(basic, 'productFlavorSourceSets')),
+             variants: required(basic, 'variants').collect { variant ->
+                 [name: required(variant, 'name'), buildType: required(variant, 'buildType'),
+                  productFlavors: required(variant, 'productFlavors').collect { it },
+                  main: artifact(required(variant, 'mainArtifact')),
+                  hostTests: required(variant, 'hostTestArtifacts').collect { name, value ->
+                      [artifact: name, sources: artifact(value)]
+                  },
+                  deviceTests: required(variant, 'deviceTestArtifacts').collect { name, value ->
+                      [artifact: name, sources: artifact(value)]
+                  },
+                  fixtures: artifact(required(variant, 'testFixturesArtifact')),
+                  testSuites: optional(variant, 'testSuiteArtifacts')?.keySet()?.collect { it }]
+             },
+             // Basic suite kinds need additional version-sensitive conversion.
+             // Retain each actual suite identity, with unavailable provider facts.
+             testSuites: suites == null ? null : suites.collect { suite ->
+                 [name: required(suite, 'name'), providers: null]
+             }, nativeMembership: nativeMembership]]
+        } catch (Exception failure) {
+            [status: 'unavailable', value: [capability: capability,
+                detail: failure.class.name + ': ' + (failure.message ?: 'Tooling model capture failed')]]
+        }
+    }
+    def generatedArtifacts = { project ->
+        def required = { object, name ->
+            if (object == null || !object.hasProperty(name)) {
+                throw new UnsupportedOperationException('Missing tooling-model property ' + name)
+            }
+            object."$name"
+        }
+        def captured = { capability, action ->
+            try {
+                [status: 'available', value: action()]
+            } catch (Exception failure) {
+                [status: 'unavailable', value: [capability: capability,
+                    detail: failure.class.name + ': ' + (failure.message ?: 'Tooling-model getter failed')]]
+            }
+        }
+        def query = { name ->
+            def registry = project.services.get(org.gradle.tooling.provider.model.ToolingModelBuilderRegistry)
+            registry.getBuilder(name).buildAll(name, project)
+        }
+        def version = { value ->
+            [major: required(value, 'major'), minor: required(value, 'minor'),
+             description: required(value, 'humanReadable')]
+        }
+        def versions = captured('com.android.builder.model.v2.models.Versions') {
+            def model = query('com.android.builder.model.v2.models.Versions')
+            def values = required(model, 'versions')
+            if (!(values instanceof Map)) throw new UnsupportedOperationException('Versions map is null or has an unsupported type')
+            [agp: required(model, 'agp'), producer: version(values['model_producer']),
+             minimumConsumer: captured('Versions.minimum_model_consumer') { version(values['minimum_model_consumer']) },
+             models: values.collect { name, value -> [name: name, version: version(value)] }]
+        }
+        def collection = { value ->
+            if (!(value instanceof Collection)) throw new UnsupportedOperationException('Tooling-model collection is null or has an unsupported type')
+            value
+        }
+        def entries = { value ->
+            if (!(value instanceof Map)) throw new UnsupportedOperationException('Tooling-model map is null or has an unsupported type')
+            value
+        }
+        def paths = { files -> collection(files).collect { file -> file.canonicalPath } }
+        def artifact = { value, kind ->
+            if (value == null) return [status: 'absent']
+            def field = { name, transform -> captured('AndroidProject.' + name) { transform(required(value, name)) } }
+            def androidField = { name, transform -> kind == 'android' ? field(name, transform) :
+                [status: 'notApplicable', value: 'JavaArtifact does not declare ' + name] }
+            [status: 'present', value: [kind: kind,
+             generatedSourceFolders: field('generatedSourceFolders', paths),
+             generatedResourceFolders: androidField('generatedResourceFolders', paths),
+             generatedAssetsFolders: androidField('generatedAssetsFolders', paths),
+             generatedClassPaths: field('generatedClassPaths', { values -> entries(values).collect { name, file ->
+                 [name: name, path: file.canonicalPath]
+             } }),
+             classesFolders: field('classesFolders', paths),
+             ideSetupTaskNames: field('ideSetupTaskNames', { values -> collection(values).collect { it } }),
+             sourceGenTaskName: androidField('sourceGenTaskName', { it }),
+             resGenTaskName: androidField('resGenTaskName', { it })]]
+        }
+        [module: project.path, directory: project.projectDir.canonicalPath, versions: versions,
+         buildFolder: captured('BasicAndroidProject.buildFolder') {
+             required(query('com.android.builder.model.v2.models.BasicAndroidProject'), 'buildFolder').canonicalPath
+         },
+         variants: captured('com.android.builder.model.v2.models.AndroidProject.variants') {
+             def model = query('com.android.builder.model.v2.models.AndroidProject')
+             collection(required(model, 'variants')).collect { value ->
+                 [name: required(value, 'name'),
+                  main: captured('Variant.mainArtifact') { artifact(required(value, 'mainArtifact'), 'android') },
+                  hostTests: captured('Variant.hostTestArtifacts') { entries(required(value, 'hostTestArtifacts')).collect { name, entry ->
+                      [artifact: name, value: artifact(entry, 'java')]
+                  } },
+                  deviceTests: captured('Variant.deviceTestArtifacts') { entries(required(value, 'deviceTestArtifacts')).collect { name, entry ->
+                      [artifact: name, value: artifact(entry, 'android')]
+                  } },
+                  fixtures: captured('Variant.testFixturesArtifact') { artifact(required(value, 'testFixturesArtifact'), 'android') }]
+             }
+         }]
+    }
+    def defaultVariantSelection = { project, variants ->
+        def multiplatform = multiplatformPaths.contains(project.path)
+        def android = multiplatform ? null : project.extensions.getByName('android')
+        def isDefault = { entry ->
+            def value = optional(entry, 'isDefault')
+            value instanceof org.gradle.api.provider.Provider ? value.getOrElse(false) : value == true
+        }
+        [multiplatform: multiplatform,
+         preferredBuildTypes: multiplatform ? [] : android.buildTypes.findAll { isDefault(it) }*.name,
+         preferredProductFlavors: multiplatform ? [] : android.productFlavors.findAll { isDefault(it) }*.name,
+         variants: variants.collect { variant ->
+             [name: variant.name, buildType: optional(variant, 'buildType'),
+              productFlavors: (optional(variant, 'productFlavors') ?: []).collect { it.second }]
+         }]
+    }
     // Under parallel execution Gradle holds the task owner's project lock only.
     // Collect each module there, then aggregate plain data without resolving foreign configurations.
+    def artifactModels = new java.util.concurrent.ConcurrentHashMap()
     def models = new java.util.concurrent.ConcurrentHashMap()
     def collectors = []
     androidVariants.each { path, variants ->
@@ -119,15 +431,21 @@ gradle.projectsEvaluated {
                 components.addAll((optional(variant, 'hostTests') ?: [:]).values())
                 components.addAll((optional(variant, 'deviceTests') ?: [:]).values())
                 components.findAll { it != null }.unique { it.name }.each { component ->
-                    ['java', 'kotlin', 'res', 'manifests'].each { kind ->
+                    ['java', 'kotlin', 'res', 'assets', 'manifests'].each { kind ->
                         def provider = optional(optional(component.sources, kind), 'all')
                         if (provider != null) inputs.files(provider)
                     }
                 }
             }
             doLast {
-                models[path] = [path: path, directory: project.projectDir.canonicalPath, namespace: project.extensions.getByName('android').namespace,
-                 kind: androidKinds[path], variants: variants.collect { variant ->
+                artifactModels[path] = generatedArtifacts(project)
+                def catalog = sourceProviders(project)
+                // Canonicalize configured paths once per module, not per variant/test component.
+                def declaredAssetPaths = catalog == null ? null : catalog.providers.collectMany { provider ->
+                    provider.roots.findAll { it.kind == 'assets' }*.path
+                } as Set
+                models[path] = [path: path, directory: project.projectDir.canonicalPath, namespace: multiplatformPaths.contains(path) ? variants.first().namespace.get() : project.extensions.getByName('android').namespace,
+                 kind: androidKinds[path], sourceProviders: catalog, evaluatedProviders: evaluatedProviders(project, variants), defaultVariantSelection: defaultVariantSelection(project, variants), variants: variants.collect { variant ->
                     def components = [[component: variant, scope: 'main']]
                     def add = { component, scope -> if (component != null && !components.any { it.component.name == component.name }) components.add([component: component, scope: scope]) }
                     add(optional(variant, 'unitTest'), 'unitTest')
@@ -152,7 +470,7 @@ gradle.projectsEvaluated {
                                 graph.add([kind: 'project', module: feature, variant: candidates.first().name])
                             }
                         }
-                        [name: entry.component.name, namespace: optional(entry.component, 'namespace')?.get(), scope: entry.scope, sources: sources(project, entry.component), dependencies: graph.unique()]
+                        [name: entry.component.name, namespace: optional(entry.component, 'namespace')?.get(), scope: entry.scope, sources: sources(project, entry.component, declaredAssetPaths), dependencies: graph.unique()]
                     }]
                  }]
             }
@@ -185,7 +503,19 @@ gradle.projectsEvaluated {
             def modules = models.entrySet().sort { it.key }.collect { it.value }
             if (modules.size() != collectors.size()) throw new GradleException('Android module collection did not finish; sync again')
             def diagnostics = modules.any { it.kind == 'application' } ? [] : ['No runnable application module was found. Library-only builds are catalogued, but selecting an application target is currently required for language setup, build/run/debug, and previews.']
-            println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics]))
+            def unknownProviders = modules.findAll { it.kind != 'jvm' && it.sourceProviders == null }*.path
+            if (!unknownProviders.isEmpty()) diagnostics.add('Source-provider names are unavailable for ' + unknownProviders.join(', ') + '; Android tree annotations cannot be determined.')
+            modules.findAll { it.evaluatedProviders?.status == 'unavailable' }.each { module ->
+                diagnostics.add('Evaluated active providers are unavailable for ' + module.path + ': ' + module.evaluatedProviders.value.detail)
+            }
+            modules.findAll { it.evaluatedProviders?.status == 'available' && it.evaluatedProviders.value.nativeMembership == null }.each { module ->
+                diagnostics.add('Native provider membership is unavailable for ' + module.path + '; Studio ordering remains a separate captured capability.')
+            }
+            println('KODA_ANDROID_PROJECT_MODEL=' + groovy.json.JsonOutput.toJson([version: 1, root: root.projectDir.canonicalPath, modules: modules, diagnostics: diagnostics,
+                generatedArtifacts: [schema: 1, root: root.projectDir.canonicalPath, modules: modules.findAll { it.kind != 'jvm' }.collect { artifactModels[it.path] }],
+                importFacts: [schema: 1, root: root.projectDir.canonicalPath, gradleVersion: gradle.getGradleVersion(),
+                    modules: modules.collect { [module: it.path, directory: it.directory, kind: it.kind, variants: it.variants*.name] },
+                    buildIdentity: importBuildIdentity, projectCatalogue: importCatalogue]]))
         }
     }
 }

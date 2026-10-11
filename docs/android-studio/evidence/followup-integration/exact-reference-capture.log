@@ -1,0 +1,34 @@
+PASS DefaultVariantsTest.oneVariant @ 371e79d3dd29
+PASS DefaultVariantsTest.debugPreferred @ 371e79d3dd29
+PASS DefaultVariantsTest.preferredBuildType @ 371e79d3dd29
+PASS DefaultVariantsTest.preferredProductFlavorOverDebugBuildType @ 371e79d3dd29
+PASS DefaultVariantsTest.preferredFlavorsInTwoDimensions @ 371e79d3dd29
+PASS DefaultVariantsTest.preferredFlavorInSecondDimensionOnly @ 371e79d3dd29
+PASS DefaultVariantsTest.mismatchedProductFlavourLength @ 371e79d3dd29
+PASS DefaultVariantsTest.onEmpty @ 371e79d3dd29
+PASS GradleModuleImportTest.testImportSimpleGradleProject @ 371e79d3dd29
+PASS GradleModuleImportTest.testImportSubprojects @ 371e79d3dd29
+PASS GradleModuleImportTest.testImportSubProjectsWithMissingSubModule @ 371e79d3dd29
+PASS GradleModuleImportTest.testImportSubProjectWithCustomLocation @ 371e79d3dd29
+PASS GradleModuleImportTest.testRequiredProjects @ 371e79d3dd29
+PASS GradleModuleImportTest.testMissingRequiredProjects @ 371e79d3dd29
+PASS GradleModuleImportTest.testMissingEnclosingProject @ 371e79d3dd29
+PASS GradleModuleImportTest.testTransitiveDependencies @ 371e79d3dd29
+PASS GradleModuleImportTest.testCircularDependencies @ 371e79d3dd29
+PASS AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected @ 371e79d3dd29
+PASS AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected @ 371e79d3dd29
+PASS AndroidProjectViewTest.testAndroidViewIsDefault @ 371e79d3dd29
+PASS AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem @ 371e79d3dd29
+PASS AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject @ 371e79d3dd29
+PASS AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling @ 371e79d3dd29
+PASS AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile @ 371e79d3dd29
+PASS AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile @ 371e79d3dd29
+PASS AndroidProjectViewTest.testAndroidViewIsDefaultMetrics @ 371e79d3dd29
+PASS TabbedToolbarTest.componentIsAddedElement @ 371e79d3dd29
+PASS TabbedToolbarTest.tabIsAdded @ 371e79d3dd29
+PASS TabbedToolbarTest.closedIsCalledWhenClicked @ 371e79d3dd29
+PASS TabbedToolbarTest.noCloseButtonWhenNoListener @ 371e79d3dd29
+PASS TabbedToolbarTest.iconButtonsCallbackWhenClicked @ 371e79d3dd29
+PASS TabbedToolbarTest.can select tab by index @ 371e79d3dd29
+PASS TabbedToolbarTest.adding tab should not trigger select listener @ 371e79d3dd29
+PASS 33 exact manifest-bound tests; whole source/index/untracked guards and fixture hashes unchanged.

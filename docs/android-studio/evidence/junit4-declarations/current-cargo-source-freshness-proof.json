@@ -1,0 +1,28 @@
+{
+  "observed_utc": "2026-10-07T18:36:57.953549+00:00",
+  "exclusive_Cargo_lease": "Root authorized after native quiet measurement released",
+  "source_roots": [
+    {
+      "path": "tooling/xtask/src/main.rs",
+      "sha256": "5e6b1566877f558ef4c02871d3f18cac11a83a3c93d005dc4492ef7e6af5a8e7",
+      "mtime_ns_before": 1791391819699418253,
+      "mtime_ns_after": 1791398217947975936,
+      "byte_identical": true
+    },
+    {
+      "path": "tooling/xtask/src/tasks.rs",
+      "sha256": "d1bcb131e58803dbc25ba8d673e8cc3fa4debe06145a6b79f8c395d142993e35",
+      "mtime_ns_before": 1791391819699418253,
+      "mtime_ns_after": 1791398217947975936,
+      "byte_identical": true
+    },
+    {
+      "path": "tooling/xtask/src/tasks/android_junit4_declarations.rs",
+      "sha256": "68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f",
+      "mtime_ns_before": 1791393756137530254,
+      "mtime_ns_after": 1791398217947975936,
+      "byte_identical": true
+    }
+  ],
+  "Cargo_flags_changed": false
+}

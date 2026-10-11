@@ -1,0 +1,483 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "all7_actual_normal_Cargo_exact_tests": "PASS",
+  "all7_named_once": true,
+  "current_default_unit_profile_features_unchanged": true,
+  "new_runner_asset_env_or_asset_hardlink": false,
+  "current_unit": {
+    "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+    "exists": true,
+    "dev": 27,
+    "inode": 1102215,
+    "bytes": 453675992,
+    "mode": 33216,
+    "nlink": 1,
+    "mtime_ns": 1791460372408379886,
+    "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1"
+  },
+  "first_actual_Cargo_elapsed_seconds": 150.03729618999932,
+  "first_Cargo_reported_test_profile_build_duration": "2m29s",
+  "elapsed_not_pure_compile_or_startup_benchmark": true,
+  "diagnostic_only_current_Cargo_no_run": {
+    "actual_pid": 417165,
+    "fresh": true,
+    "not_test_execution": true,
+    "raw_original_log": "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-remaining-attempt1/diagnostic-current-compiler/raw.log",
+    "raw_sha256": "eefda06bf21334d2f86537ac3ec1109aecfc15400f5b88e6cc1d40ec6a84fe5f"
+  },
+  "runs": [
+    {
+      "ordinal": 1,
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+      "test_name": "tabbed_toolbar::tests::component_is_added_element",
+      "actual_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_ui/Cargo.toml",
+        "-p",
+        "android_ui",
+        "--lib",
+        "tabbed_toolbar::tests::component_is_added_element",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "actual_pid": 416202,
+      "actual_pgid": 416202,
+      "elapsed_seconds": 150.03729618999932,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 142,
+      "current_raw": {
+        "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-01.log",
+        "sha256": "4bc31f4566dbe304f60803dc1777a378cffb54627940e29e2e56b4ffd73f5998"
+      },
+      "historical_canonical_run_retained": {
+        "tested_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::component_is_added_element",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/import-identity-integration-ui-01.log",
+          "sha256": "3e19aba6716804fc42ce407b7c1131c40dc11b60b478ad680631b8549fe642b9"
+        }
+      },
+      "actual_first_compiler_receipt": "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-first-attempt1/exit.json",
+      "current_ELF_binding": {
+        "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "exists": true,
+        "dev": 27,
+        "inode": 1102215,
+        "bytes": 453675992,
+        "mode": 33216,
+        "nlink": 1,
+        "mtime_ns": 1791460372408379886,
+        "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1"
+      }
+    },
+    {
+      "ordinal": 2,
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+      "test_name": "tabbed_toolbar::tests::tab_is_added",
+      "actual_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_ui/Cargo.toml",
+        "-p",
+        "android_ui",
+        "--lib",
+        "tabbed_toolbar::tests::tab_is_added",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "actual_pid": 416694,
+      "actual_pgid": 416694,
+      "elapsed_seconds": 1.7588911280035973,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 142,
+      "current_raw": {
+        "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-02.log",
+        "sha256": "cade428fd459c02f3ac2bf5f0a5cf846d416a4d00a955d11a4205fc4f8944723"
+      },
+      "historical_canonical_run_retained": {
+        "tested_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::tab_is_added",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/import-identity-integration-ui-02.log",
+          "sha256": "8923c2c7ca41f4f3e46da30bd8b8242b98c63c0055d6802bd3cc5f56f06b089a"
+        }
+      },
+      "actual_first_compiler_receipt": "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-first-attempt1/exit.json",
+      "current_ELF_binding": {
+        "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "exists": true,
+        "dev": 27,
+        "inode": 1102215,
+        "bytes": 453675992,
+        "mode": 33216,
+        "nlink": 1,
+        "mtime_ns": 1791460372408379886,
+        "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1"
+      }
+    },
+    {
+      "ordinal": 3,
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+      "test_name": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+      "actual_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_ui/Cargo.toml",
+        "-p",
+        "android_ui",
+        "--lib",
+        "tabbed_toolbar::tests::closed_is_called_when_clicked",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "actual_pid": 416764,
+      "actual_pgid": 416764,
+      "elapsed_seconds": 1.2589174180029659,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 142,
+      "current_raw": {
+        "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-03.log",
+        "sha256": "038019a7b67fac20c7ca25026fbcc18a7b972b6aefec3373b57ab6f4bdf96315"
+      },
+      "historical_canonical_run_retained": {
+        "tested_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::closed_is_called_when_clicked",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/import-identity-integration-ui-03.log",
+          "sha256": "f684ae1ffff896edd91050853f52a38657b4cfc9e515af1fa12badc7a337033f"
+        }
+      },
+      "actual_first_compiler_receipt": "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-first-attempt1/exit.json",
+      "current_ELF_binding": {
+        "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "exists": true,
+        "dev": 27,
+        "inode": 1102215,
+        "bytes": 453675992,
+        "mode": 33216,
+        "nlink": 1,
+        "mtime_ns": 1791460372408379886,
+        "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1"
+      }
+    },
+    {
+      "ordinal": 4,
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+      "test_name": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+      "actual_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_ui/Cargo.toml",
+        "-p",
+        "android_ui",
+        "--lib",
+        "tabbed_toolbar::tests::no_close_button_when_no_listener",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "actual_pid": 416852,
+      "actual_pgid": 416852,
+      "elapsed_seconds": 1.2576916480029467,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 142,
+      "current_raw": {
+        "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-04.log",
+        "sha256": "78b764f6c94553511248d1a52f7f9e9c8f31bb7e3ad90d06476883c31c82361b"
+      },
+      "historical_canonical_run_retained": {
+        "tested_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::no_close_button_when_no_listener",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/import-identity-integration-ui-04.log",
+          "sha256": "e9c9cb4249bfe452518bd51b3620ecbc949dc7725c519096f276ba7a30a2686c"
+        }
+      },
+      "actual_first_compiler_receipt": "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-first-attempt1/exit.json",
+      "current_ELF_binding": {
+        "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "exists": true,
+        "dev": 27,
+        "inode": 1102215,
+        "bytes": 453675992,
+        "mode": 33216,
+        "nlink": 1,
+        "mtime_ns": 1791460372408379886,
+        "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1"
+      }
+    },
+    {
+      "ordinal": 5,
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+      "test_name": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+      "actual_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_ui/Cargo.toml",
+        "-p",
+        "android_ui",
+        "--lib",
+        "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "actual_pid": 416922,
+      "actual_pgid": 416922,
+      "elapsed_seconds": 1.2569924429990351,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 142,
+      "current_raw": {
+        "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-05.log",
+        "sha256": "2e4d5383042e781ae2b9ae614d34b5dd1f84911fc9b03fa500ce227558c1a962"
+      },
+      "historical_canonical_run_retained": {
+        "tested_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/import-identity-integration-ui-05.log",
+          "sha256": "859dfdc33d25c66bb4a671e648a8e11a0cc892a1ba6d2188410c33cac66a4fa8"
+        }
+      },
+      "actual_first_compiler_receipt": "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-first-attempt1/exit.json",
+      "current_ELF_binding": {
+        "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "exists": true,
+        "dev": 27,
+        "inode": 1102215,
+        "bytes": 453675992,
+        "mode": 33216,
+        "nlink": 1,
+        "mtime_ns": 1791460372408379886,
+        "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1"
+      }
+    },
+    {
+      "ordinal": 6,
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+      "test_name": "tabbed_toolbar::tests::can_select_tab_by_index",
+      "actual_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_ui/Cargo.toml",
+        "-p",
+        "android_ui",
+        "--lib",
+        "tabbed_toolbar::tests::can_select_tab_by_index",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "actual_pid": 417010,
+      "actual_pgid": 417010,
+      "elapsed_seconds": 1.2571276139933616,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 142,
+      "current_raw": {
+        "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-06.log",
+        "sha256": "a03453611b241400cbb602596ad15fd9c00b077590837765a98c97082200f704"
+      },
+      "historical_canonical_run_retained": {
+        "tested_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::can_select_tab_by_index",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/import-identity-integration-ui-06.log",
+          "sha256": "865128e26ab10c8f61c477beb11bfdf2607527eec00c4b528695311485b980ab"
+        }
+      },
+      "actual_first_compiler_receipt": "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-first-attempt1/exit.json",
+      "current_ELF_binding": {
+        "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "exists": true,
+        "dev": 27,
+        "inode": 1102215,
+        "bytes": 453675992,
+        "mode": 33216,
+        "nlink": 1,
+        "mtime_ns": 1791460372408379886,
+        "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1"
+      }
+    },
+    {
+      "ordinal": 7,
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+      "test_name": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+      "actual_command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/android_ui/Cargo.toml",
+        "-p",
+        "android_ui",
+        "--lib",
+        "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+        "--",
+        "--exact",
+        "--show-output"
+      ],
+      "actual_pid": 417095,
+      "actual_pgid": 417095,
+      "elapsed_seconds": 1.257190532007371,
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "filtered": 142,
+      "current_raw": {
+        "path": "docs/android-studio/evidence/sync-console-filter/current-cargo-ui/ui-07.log",
+        "sha256": "cee26712e8e68465b7197a3346fbf7db6019d55a1620ae3ceab44724733a359c"
+      },
+      "historical_canonical_run_retained": {
+        "tested_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/import-identity-integration-ui-07.log",
+          "sha256": "c182d8e4452dc21b3c94d1f00bf0c58fd3593ef8f7700ff309854e24d9fe1203"
+        }
+      },
+      "actual_first_compiler_receipt": "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/ui-current-Cargo-first-attempt1/exit.json",
+      "current_ELF_binding": {
+        "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+        "exists": true,
+        "dev": 27,
+        "inode": 1102215,
+        "bytes": 453675992,
+        "mode": 33216,
+        "nlink": 1,
+        "mtime_ns": 1791460372408379886,
+        "sha256": "3d91367e775b516b6c1db45737c55f324e718cc2555aafb72bdf1828f1838eb1"
+      }
+    }
+  ],
+  "canonical95_IDs_statuses_reasons_targets_fixture_maps_unchanged": true,
+  "all29_tooling_current_Cargo_run_evidence_unchanged": true,
+  "new_original_test_credit": 0,
+  "prior_initial_catalog_failure": "retained unchanged; actual historical7e canonical evidence rejected on full current implementation projection; seven current literal Cargo commands refresh run evidence",
+  "no_metadata_applied_or_CLI_rerun_commit_push_merge": true
+}

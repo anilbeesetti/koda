@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "utc": "2026-10-08T10:53:06.038650+00:00",
+  "area": "UI",
+  "verdict": "PASS",
+  "scope": "Final current-source UI review for the bounded Sync-console model-record suppression and displayed-copy task",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "protected_dependency": "f2aa51b883b2c926cb54cfe1618bc2cb8f738420",
+  "blocking_findings": [],
+  "new_semantic_findings": [],
+  "static_production_UI_definitions_byte_identical_to_protected": true,
+  "all17_supplemental_bodies_and_existing_test_tail_preserved": true,
+  "all3_original_fixture_bytes_preserved": true,
+  "full_app_UI_screenshot_inspections": 23,
+  "native_surface_captures_used": 0,
+  "reviewer_launched_new_app_or_tests": false,
+  "actual_current_app": {
+    "physical_executable": "/tmp/android-studio-sync-console-link-output/koda-sync-console-400429",
+    "bytes": 1359525048,
+    "sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c",
+    "checked_before_after": true
+  },
+  "reviewed_current_gates": {
+    "normal_app_build": "PASS from current build receipt",
+    "local_default_UI": {
+      "passed": 142,
+      "failed": 0,
+      "unchanged_baseline_ignored": 1,
+      "all_17_raw_once_ok": true,
+      "raw_sha256": "972c2b2075ed25d09533d9389a17d64bcb2c23bcc7ab7115ac7a9283ce7075c6"
+    },
+    "strict_script_clippy": "PASS exit 0; raw hash verified",
+    "existing_exact_reference_mappings": "29 tools + 7 UI PASS; zero new credit",
+    "fullCI": {
+      "run": 37738240656,
+      "passed": 10557,
+      "failed": 0,
+      "unchanged_baseline_skips": 23,
+      "raw_logs_hash_verified": true
+    }
+  },
+  "native_actual": {
+    "success_gradle_exits": [
+      0,
+      0
+    ],
+    "failure_gradle_exit": 1,
+    "selected_module": ":app",
+    "selected_variant": "demoDebug",
+    "discovered_variants": 2,
+    "raw_model_record_bytes": 96215,
+    "raw_model_record_sha256": "65342272ca9c5a36b5b271736fdc311b1f7a8c6858d8c9df78c1b254876ef686",
+    "real_failure_profile_has_no_stale_selected_variant": true,
+    "copied_full_model_JSON_hidden": true,
+    "ordinary_midline_and_stderr_marker_lines_preserved_exactly": true,
+    "narrow_copy_equal_restored_wide": true,
+    "owned_cleanup_receipts_verified": true
+  },
+  "screenshot_observations": [
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/after-trust-observed.png",
+      "sha256": "9a20d1ddec7f3f0df9fca1329d2b8e4348c38df5032587d120b269683ee1ff58",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited settled full app: :app/demoDebug selected, successful Sync with two discovered variants; editor/tree visible; full machine JSON absent."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/resync-actual-loading.png",
+      "sha256": "78e3fb8584584889d21fcf4c7dffbf4e265e723791d203a9454435ca63ee735b",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited actual second Sync loading: Syncing spinner/root and Load Android project model phase, running status bar."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-console-preserved-progress-stderr.png",
+      "sha256": "988ac32e94468795bc88199186d565a5493d1cdbc27f3f2e166c26914e092a09",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited real Failed/red Sync: ordinary progress, midline marker and stderr marker displayed; no selected stale build variant."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/settled-observed-first.png",
+      "sha256": "dcc52603d76a56dfc97f11221c0d6f3351bf7cf67e78f74b083a0e8ff16e8ca0",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited settled actual named Gradle configuration failure and red error; fresh profile has no stale target selection."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/show-successful-task-tree.png",
+      "sha256": "c177c0421c3e7a6bb00559c458c92a6b9e8b5bf4e4d5e7ed6f110f6ddf32878e",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited successful-task tree rows and progress/ordinary midline/stderr visible; task/console split and action rails aligned at wide size."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/task-selection-output-location.png",
+      "sha256": "3e5f640d5ff29b2febcfdef63ded31b1f57671306e645a3b61c3326cae52702b",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited highlighted :loadAndroidProjectModel row with matching displayed task output; display uses visible sequence after record suppression."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/restored-wide-sync-focus.png",
+      "sha256": "7afe9c2ee0ca531cbebe103fdd07aa997d6a226b9222315ea468f3150202d11c",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Focus only: Build Output remains selected and empty; do not infer activation from focused Sync."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/restored-wide-sync-space-selected.png",
+      "sha256": "a08266b1bb975fd846303cc6ccaf94bcea0bf03dfb43929017543ba52276b3ac",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited Space selection: Sync active underline and prior successful console restored."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/narrow-selected-sync-copy-control.png",
+      "sha256": "7945a609ae34bc1d2f980b03f74b7f726108bcd444e7c895291497745ad91f70",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited actual 360px selected Sync and copy control; narrow console/editor clipped and crowded, a retained inherited limitation."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/final-restored-wide.png",
+      "sha256": "c754f1da44edd7b8ed6b584b92ea02418d96165ac2f8b04a1a8a3e08a994c93c",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited restored wide geometry and preserved selected task/console with Copy output tooltip."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-output-empty-selected.png",
+      "sha256": "348470091472309a6a2b9465338ef04873b1a4b95b04ad2f437eeab57c172f0e",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited Build Output empty state; failed Sync badge/state retained separately."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-sync-space-restored.png",
+      "sha256": "56d1226ba1a5a287983e68d332a9c7e802d152eee989401680a966345d692cb2",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited Space-restored failed Sync; red diagnostic selection/output retained."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/restored-wide-scrolled-top.png",
+      "sha256": "be84c4c39401e40b65991182cc6585b56b4456280b2700a4c6f09b93f928f07b",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited vertical scroll to beginning; ordinary progress, midline marker and stderr marker visible before task output."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/console-horizontal-scroll-right.png",
+      "sha256": "aca304c346985768e84060a8d7ab8b0958bc35b3fdad8d6a39cdf9e4ba081a87",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited horizontal console scrolling: long stderr/environment line shifted right while tree and action rails remain fixed."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/build-divider-native-drag-observed.png",
+      "sha256": "cae9f73671b391e5f5b32020330ae53aae799dfc47b2a43abc1c8e2068489349",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited actual dock top moved from y654 to y500; larger output region and aligned tree/console/action rails. Other similarly named divider files do not receive drag credit."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-diagnostic-selected.png",
+      "sha256": "7b7911872863ae50119df0df3aad399ae574b8a8d8489b3a82d58e276f3ad866",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited highlighted failure row and corresponding FAILURE line at console top."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/sync1-loading.png",
+      "sha256": "75f33b341d2f249a987a1af8d1593ff7d0c30ad158be0ce1ff30fb49f5fb5d45",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Noncredited misleading filename: project trust dialog visible; no actual Sync loading evidence."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/wide-sync-restored-return.png",
+      "sha256": "b83792972542310cc39bbc9bcccb0abb148d2885964c5adf5345791858c1c5e4",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Noncredited Return activation filename: Build Output stays selected/empty; Return was a no-op."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/wide-reverse-sync-focus.png",
+      "sha256": "b83792972542310cc39bbc9bcccb0abb148d2885964c5adf5345791858c1c5e4",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Focus-only screenshot: Build Output selected/empty; no Sync activation credit."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/narrow-sync.png",
+      "sha256": "5207dab8a6df2ab7388822508c9a7cf6bde31adb32173e3f66254abb185a20e5",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Noncredited Sync filename: narrow Build Output is selected/empty, not a selected Sync capture."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/editor-gradle-tab-open.png",
+      "sha256": "f0f9c0b1cca9bbc573dcdc836ba139f0676e97a2e0b5e57fdc794ade699a0e69",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited actual build.gradle editor tab; original fixture content shows the progress/midline/stderr lines used in console preservation checks."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/captures/editor-xml-tab-restored.png",
+      "sha256": "87104c8ca373d123e8b9cfb32436412ca267eafe0150908b9705c084d14d17c5",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Credited actual XML editor tab restoration; successful Sync task/console persists."
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/captures/failed-sync-focus-no-selection.png",
+      "sha256": "28a4cf8b29b84ab1b037231d5c5c4ba0883b75027a48beeaa1958d89363b67c4",
+      "inspection": "Personally inspected with view_image at original resolution",
+      "actual_state": "Focus only: Build Output remains selected/empty; separate Space-restored capture establishes activation."
+    }
+  ],
+  "copy_output_evidence": [
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/console-copy-failed-wide.log",
+      "bytes": 1185,
+      "sha256": "9417c45ed9aa8ef9f6ac49f18e01cecd845cd7375fd9c89c632b07fe2833b731",
+      "exact_ordinary_midline_stderr_lines_present": true,
+      "machine_json_absent": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/console-copy-first-wide.log",
+      "bytes": 1450,
+      "sha256": "65f45868068513fb643336826dcc79c39122f83f1ebffee46a1cab41e801a00a",
+      "exact_ordinary_midline_stderr_lines_present": true,
+      "machine_json_absent": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/console-copy-narrow.log",
+      "bytes": 1425,
+      "sha256": "434b57720840ac6b76358ce7bba0fa1b6267e2552af010646b5e51cf1c8ebdb7",
+      "exact_ordinary_midline_stderr_lines_present": true,
+      "machine_json_absent": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/success/console-copy-restored-wide.log",
+      "bytes": 1425,
+      "sha256": "434b57720840ac6b76358ce7bba0fa1b6267e2552af010646b5e51cf1c8ebdb7",
+      "exact_ordinary_midline_stderr_lines_present": true,
+      "machine_json_absent": true
+    }
+  ],
+  "inherited_or_unverified_limits": [
+    "At the supported 360px width, the unchanged project pane occupies almost the whole editor area and the task/console split clips text. Copy still returns the same 1425-byte displayed payload as restored-wide output. This is not complete Android Studio narrow layout fidelity.",
+    "Return does not activate the generic toolbar tab; focused Sync and selected Sync are distinct. Space activation is the actual successful path, and Return/focus-only screenshots receive no activation credit.",
+    "This change adds console transport separation, not full Android Studio output error parsers, hyperlinks/quick fixes, complete event-tree parity, logical Android project view or full IDE completion.",
+    "Real SDK runs use AGP 9.4.0/Gradle 9.6.1/JDK 21 in a small fixture. They are supplementary actual native evidence, not execution of pinned upstream Android Studio test runners.",
+    "No device/emulator launch credit; SDK emulator binary is absent. Software Vulkan screenshots do not establish hardware GPU performance, large-project responsiveness or startup benchmarks.",
+    "No native cancellation-state screenshot was supplied. Cancellation/timeout behavior has passing current supplemental tests, but only loading, settled success, empty tab, actual failure and focus/selection states receive screenshot credit.",
+    "The current full app consumed the actual model and selected :app/demoDebug. Complete raw sidecar equality is retained, but no standalone current Rust native model probe was compiled; do not claim such a probe."
+  ],
+  "original_reference_test_credit": 0,
+  "bounded_reference_inventory": {
+    "concrete_suites": 17,
+    "static_methods": 112,
+    "applicable_unported": 60,
+    "user_deferred_NDK_unported": 52,
+    "global_census_complete": false
+  },
+  "canonical_parity_changes": false,
+  "full_Android_Studio_visual_fidelity_approved": false,
+  "full_IDE_complete": false,
+  "overall_task_merge_authorized_by_this_area_review": false,
+  "source_and_input_guard": {
+    "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ui-current-f763-source-and-input-guard.json",
+    "sha256": "ce7e9f221416250ad77bb4dfc7f078dd12472262fda0de1c3f1bcf6aa8e11767",
+    "source_files": 4748,
+    "original_input_files_checked_before_after": 61,
+    "HEAD_index_refs_paths_hashes_clean": true,
+    "index_guard_kind": "Logical git ls-files -s -z staged entries, not raw index file bytes"
+  },
+  "read_only_review_hold_released": true,
+  "runtime_lease_acquired_by_reviewer": false,
+  "raw_index_stat_cache_clarification": {
+    "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-ui-current-f763-index-stat-cache-addendum.json",
+    "sha256": "ed5ecd4bb26d4160d15cae1e86444795777cd6f36fb50d918f8a92152a6d2047",
+    "previous_optional_lock_stat_cache_attribution_uncertain": true,
+    "logical_Source_staging_refs_unchanged": true,
+    "current_no_optional_locks_raw_index_before_after_equal": true
+  }
+}

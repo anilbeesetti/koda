@@ -1,0 +1,47 @@
+{
+  "reviewedSource": {
+    "round": 4,
+    "base": "ac58815bb268d338bea40a31fff630734cd719f4",
+    "sources": {
+      "crates/android_tools/src/generated_artifacts.rs": "5264e4c00d8958a4aaee250c7d924ae89e4665f778b893156442f6af3ed52be0",
+      "crates/android_tools/src/project_model.gradle": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+      "crates/android_tools/src/android_tools.rs": "8ee120d91a3dc26ebe235e14bce66074f3b1504901e43915729a43d353e7f2df",
+      "crates/android_tools/tests/generated_artifacts.rs": "9900069b1a993875795c4be1feadf5f4a8da2a5750f486beb4596ae6b45efbf1",
+      "crates/android_tools/test_data/generated_artifacts/BasicModules.kt": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed",
+      "crates/android_tools/test_data/generated_artifacts/LICENSE-APACHE": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+      "crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+      "crates/android_tools/test_data/generated_artifacts/NOTICE": "bfee2f15cfeccecbf0ea05f503b6138398459e43dc59fb1da59c5944ae146111"
+    },
+    "originalsPreserved": 184,
+    "testsDeclared": 28,
+    "testsExecuted": false,
+    "cargoGradleAppLease": false,
+    "change": "Test-only additive absent/null positional slot regression; production unchanged"
+  },
+  "reports": {
+    "code": {
+      "path": "/workspace/android-studio-artifacts/v2-artifact-facts/code-review-final-addendum.md",
+      "sha256": "b54647e5efc81492a3c11b4b5eb7b5be9c656e7fd0e16bad1be734b43be19301"
+    },
+    "ui": {
+      "path": "/workspace/android-studio-artifacts/v2-artifact-facts/ui-review-final-addendum.md",
+      "sha256": "15dca3def295cdc5363f82a70d626af0deb0158f3e0951fdf0219ae7cf14af2c"
+    },
+    "ux": {
+      "path": "/workspace/android-studio-artifacts/v2-artifact-facts/ux-review-final-addendum.md",
+      "sha256": "cf635790c45d7bbde6d87f3f9a3b46539587a1cf14f695b012817acd0340e3ee"
+    },
+    "performance": {
+      "path": "/workspace/android-studio-artifacts/v2-artifact-facts/performance-review-final-addendum.md",
+      "sha256": "c09ee8a463907f00db76efb3f138697a88ce813c196afea6ff6a95867a785869"
+    },
+    "quality": {
+      "path": "/workspace/android-studio-artifacts/v2-artifact-facts/quality-review-final-addendum.md",
+      "sha256": "78ec4a39ac545bbcfc2577a1588e3ee54be9b50c5819a4bd0bffc3d2ef9bba59"
+    }
+  },
+  "allFivePresent": true,
+  "immutableOriginals": 184,
+  "normalExecutionStarted": false,
+  "branch": "android-studio-task/1-v2-artifact-facts"
+}

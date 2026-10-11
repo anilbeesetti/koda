@@ -1,0 +1,69 @@
+{
+  "verdict": "PASS",
+  "scope": "Read-only independent archived duplicate planning checkout ownership, reversibility and exact Git retention audit",
+  "reviewed_at_utc": "2026-10-08T00:38:21.719166+00:00",
+  "archive_receipt_sha256": "fb754b5c1c3d8777960cb685a634da6aa7543b3f2e09321d4febb1f2d9184664",
+  "successful_raw_log_sha256": "d90409d58d79e97742e2e45931dcafee5eaf7cbc2da72e43f4548c6e5e1c9b28",
+  "corrected_script_sha256": "297fbcc1a961fe30e5e17e0949e68dafd2dad84f4b4867bd7438d12409fc8325",
+  "initial_no_local_main_script_sha256": "7ced1a5cdad504fd95ae2bd98d1e59e7afd6efcb0371254ccd25b2073f89e98e",
+  "archived_branches": [
+    {
+      "retained_branch": "android-studio-task/0-plan",
+      "commit": "4209fc04f2e9241f67cdb30dfff007a76b21416a",
+      "tree": "a84ae808c67543bcc718fc1df5c74b662ba26fc7",
+      "tracked_file_hash_count": 4408,
+      "relative_internal_symlink_count": 268,
+      "all_tracked_bytes_reconstructible_from_retained_git_objects": true,
+      "restore_command": [
+        "git",
+        "worktree",
+        "add",
+        "/workspace/android-studio-plan",
+        "android-studio-task/0-plan"
+      ]
+    },
+    {
+      "retained_branch": "android-studio-task/1-window-inventory",
+      "commit": "c7532dd4e6dff99c8c0d74ca70e7b1e727ac6e69",
+      "tree": "5cda6a38678461c5e6218dfdc4cdc05fc9e349a9",
+      "tracked_file_hash_count": 4510,
+      "relative_internal_symlink_count": 268,
+      "all_tracked_bytes_reconstructible_from_retained_git_objects": true,
+      "restore_command": [
+        "git",
+        "worktree",
+        "add",
+        "/workspace/android-studio-window-inventory",
+        "android-studio-task/1-window-inventory"
+      ]
+    }
+  ],
+  "all_retained_git_blobs_and_internal_relative_symlinks_checked": true,
+  "actual_current_remote_refs": {
+    "refs/heads/android-studio": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
+    "refs/heads/android-studio-task/0-plan": "4209fc04f2e9241f67cdb30dfff007a76b21416a",
+    "refs/heads/android-studio-task/1-window-inventory": "c7532dd4e6dff99c8c0d74ca70e7b1e727ac6e69",
+    "refs/heads/main": "30fca99a7a015168dfe4f394f576fbe2955fb4ea"
+  },
+  "protected_main_refs_and_heads_unchanged": {
+    "HEAD": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+    "refs/remotes/origin/main": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+    "android-studio": "0d72037ca895893e8cf338d5ade8b37b1bb645b8"
+  },
+  "local_main_ref_absent_no_ref_created": true,
+  "no_force_ref_deletion_or_history_rewrite": true,
+  "removed_paths_absent_and_worktree_registry_entries_removed": true,
+  "pre_removal_clean_no_untracked_or_ignored_requirements_present_and_bound_in_record": true,
+  "all4730_active_source_hashes_fixed7_and_git_guards_unchanged": true,
+  "initial_recipe_fails_local_main_ref_before_any_mutating_statement": true,
+  "corrected_recipe_only_replaces_readonly_main_ref_with_origin_main": true,
+  "reviewer_created_no_checkout_or_ref_mutation_cache_source_or_runtime_action": true,
+  "restoration_not_executed": true,
+  "capacity_credit": "No exact independent reclaimed-byte amount asserted; planning tree/archive reversibility only",
+  "findings": [],
+  "limits": [
+    "Pre-removal working-tree cleanliness is historical receipt/recipe evidence; removed live checkouts cannot be reinspected",
+    "Initial recipe source is preserved and local main absence independently corroborated; no byte-exact raw initial stderr file was provided",
+    "Full app/native/performance/reference parity and lead merge are outside this archive verdict"
+  ]
+}

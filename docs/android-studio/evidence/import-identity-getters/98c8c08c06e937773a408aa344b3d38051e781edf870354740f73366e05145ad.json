@@ -1,0 +1,16 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_files": 4743,
+  "actual_capture_count": 8,
+  "actual_supported_scenario_pairs": [
+    "baseline",
+    "nested",
+    "late"
+  ],
+  "actual_included_build_guard_rejections": 2,
+  "whole_source_index_unchanged": true,
+  "complete_basic_v2_projections_preserved": true,
+  "actual_rust_identity_decoding_and_late_official_oracle_pass": true,
+  "source_only_original_runtime_test_credit": 0,
+  "non_rust_exception": "official Gradle/AGP model runtime and public getters; serialization-only minimal bridge; all identity policy remains Rust"
+}

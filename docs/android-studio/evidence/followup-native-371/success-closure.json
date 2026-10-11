@@ -1,0 +1,12 @@
+{
+  "owned_pids": [
+    235104,
+    235118,
+    235128
+  ],
+  "all_absent": true,
+  "launcher_exit_code": 143,
+  "display118_socket_absent": true,
+  "interrupted_old_zombie_pid": 232854,
+  "historical_daemon_167092_not_stopped": true
+}

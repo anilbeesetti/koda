@@ -1,0 +1,6 @@
+Script started on 2026-10-07 22:53:34+00:00 [COMMAND="bash .agents/skills/koda-app-validation/scripts/run-app.sh --headless /workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/generation-project /workspace/android-studio-artifacts/v2-keyboard-9b9cbbc/generation-project/app/custom-manifest/AndroidManifest.xml" TERM="dumb" TTY="/dev/pts/0" COLUMNS="80" LINES="24"]
+Koda QA launcher PID: 278199
+2026-10-07T22:53:35+00:00 [1m[31mERROR[0m [[1mgpui_linux::linux::x11::client[0m] Found no xinput mouse pointers.
+2026-10-07T22:54:52+00:00 [1m[31mERROR[0m [[1mcrates/project/src/lsp_store.rs:11362[0m] /bin/sh failed (exit status: 1).
+
+Script done on 2026-10-07 22:56:38+00:00 [COMMAND_EXIT_CODE="143"]

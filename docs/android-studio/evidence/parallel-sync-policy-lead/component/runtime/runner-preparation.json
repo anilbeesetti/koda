@@ -1,0 +1,13 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "source_guard_count": 4730,
+  "source_guard_original": "/workspace/android-studio-artifacts/parallel-sync-integration/combined-whole-source-snapshot.json",
+  "source_guard_original_sha256": "1ee9fccb1197681f050c9c283763fd150e978b1eb0f7915cb8d15463774f1326",
+  "parent_runner": "/workspace/android-studio-artifacts/module-presentation-integration/runtime/run-checks.py",
+  "parent_runner_sha256": "fec988b675ad34023a4ddfbd53bdbfa95ac905ecccc83540120f4d81ce442179",
+  "new_runner": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/run-checks.py",
+  "new_runner_sha256": "f40535d60187a3f4e2d08a7d9a1b8d84b4b64a13e802985f651cada287b70650",
+  "only_adaptations": "worktree, artifactdirectory, sourcecommit, source4730, test261/ninetargets, frozenparallel10selection; unchanged fixedsevenpathspecs and normalcommands",
+  "exclusive_runtime_lease": "Root granted boundedcombinedcomponent compilation; app/native remain Root-owned",
+  "source_metadata_git_bytes_unchanged": true
+}

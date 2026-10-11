@@ -1,0 +1,8 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "normal_all_features_library_receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/library-build-verified.json",
+  "library": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+  "bytes": 313501394,
+  "sha256": "df1784c08f936efbc397f77d690ee04427691bf61571652696a73883e4f63db8",
+  "no_compiler_or_Cargo_executed": true
+}

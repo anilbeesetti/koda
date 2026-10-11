@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+      "port_status": "unported",
+      "run_status": "not_run",
+      "reason": "The identified upstream behavior has not yet been ported and exercised in a Rust test.",
+      "run_blocker": null,
+      "rust_targets": [],
+      "fixtures": []
+    }
+  ]
+}
+

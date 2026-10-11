@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "source_commit": "af387f61600975d4ac4df1e2541ecb59f26af470",
+  "source_sha256": "f312b115ffb6bc0c7f7cef8c6fdf44681a88edb3b5a0acc7d58426829e81911d",
+  "all_five_source_reviews_pass": true,
+  "current_rust_test_results_recorded": false,
+  "task_complete": false,
+  "files": [
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/ci-7b2-failed.log.gz",
+      "bytes": 6905,
+      "sha256": "bb66b0a39774960006cdd508f28d40d38009edee4ba4f054084f57c599755f23"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/ci-failure.json",
+      "bytes": 616,
+      "sha256": "30f709958624ec62720fa6c399e14844862d66ffee5a98f3084f7ea18258017a"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/code-review.json",
+      "bytes": 4410,
+      "sha256": "39fdba871a2c9d471dc16a552b19558d20289324b62d9d855471e988608c2b31"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/performance-review.json",
+      "bytes": 6630,
+      "sha256": "25c9e924b9c46054ff8bc3c1f322aabe67bb397e82df1be24eb6ea1399db3620"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/quality-review.json",
+      "bytes": 4789,
+      "sha256": "abbf8ebfb65dce57405ffaba6d2a9b30bfefa134fec55d4bd079c4c5cfa4680d"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/rustfmt-exit.json",
+      "bytes": 312,
+      "sha256": "812983456efee0a6e7121d3abaaae0a3f7ec1fa17b5f56b528ba21280f29d583"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/rustfmt.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/source-files.json",
+      "bytes": 800,
+      "sha256": "f7a67a16f1528aa51ecb16c658adf6c15193097e87b72af4eb43ffcbf1c57286"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/source-proof.json",
+      "bytes": 719,
+      "sha256": "61b800da8337e4ee1c4f4d76c840d341a232899d1a60b0b224dd38f39342e359"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/task-plan.json",
+      "bytes": 972,
+      "sha256": "feda45bcb944c12a3df4cc916a50b44db5c9a7852e250a7994c30c1dbd3fcf5f"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/ui-review.json",
+      "bytes": 4966,
+      "sha256": "5eadb39c6215b977969d1bdcff6f89d0445d51db650e12aee57a08bab6933561"
+    },
+    {
+      "path": "docs/android-studio/evidence/icon-integrity/ux-review.json",
+      "bytes": 5325,
+      "sha256": "d4128409ea75fc25159b1562e69df337fb83bbc6551d9a3d2708effa6e8e66d0"
+    }
+  ]
+}

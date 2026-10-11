@@ -1,0 +1,17 @@
+{
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "app_validation": "PASS",
+  "cargo_exit_code": 0,
+  "cargo_closure": {
+    "owned_cargo_pid_and_pgid": 395215,
+    "exit_code": 0,
+    "signals": [],
+    "owned_process_group_absent": true,
+    "global_process_absence_claimed": false
+  },
+  "monitor_error": null,
+  "abort_reason": null,
+  "error": null,
+  "actual_current_app_is_success_only": true,
+  "utc": "2026-10-08T09:37:14.532901+00:00"
+}

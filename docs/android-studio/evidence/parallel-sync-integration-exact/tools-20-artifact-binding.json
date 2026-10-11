@@ -1,0 +1,40 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+  "retained_at_execution_artifact": {
+    "reason": "compiler-artifact",
+    "package_id": "path+file:///workspace/android-studio-parallel-sync-policy/crates/android_tools#0.1.0",
+    "manifest_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/Cargo.toml",
+    "target": {
+      "kind": [
+        "test"
+      ],
+      "crate_types": [
+        "bin"
+      ],
+      "name": "project_view_preferences_reference",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/project_view_preferences_reference.rs",
+      "edition": "2024",
+      "doc": false,
+      "doctest": false,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "0",
+      "debuginfo": 0,
+      "debug_assertions": true,
+      "overflow_checks": true,
+      "test": true
+    },
+    "features": [],
+    "filenames": [
+      "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-db012737906b8d63"
+    ],
+    "executable": "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-db012737906b8d63",
+    "fresh": false,
+    "executable_bytes": 2666864,
+    "executable_sha256": "9a01763b886e12be3e21a2832972adbcad99130ac14bdacf9e6daa856c023c77"
+  },
+  "normal_Cargo_exact_execution": true,
+  "whole_source_binding_count": 4730
+}

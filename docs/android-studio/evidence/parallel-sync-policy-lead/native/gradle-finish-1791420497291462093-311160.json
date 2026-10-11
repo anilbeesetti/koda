@@ -1,0 +1,22 @@
+{
+  "id": "1791420497291462093-311160",
+  "arguments": [
+    "--init-script",
+    "/tmp/koda-android-model-89mHkL/export.gradle",
+    "kodaAndroidProjectModel",
+    "--no-configuration-cache",
+    "--console=plain"
+  ],
+  "start_utc": "2026-10-08T00:48:17.291469+00:00",
+  "cwd": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project",
+  "official_wrapper": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/gradlew-original",
+  "official_wrapper_sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+  "init_path": "/tmp/koda-android-model-89mHkL/export.gradle",
+  "saved_init_path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/native-sync-export-1791420497291462093-311160.gradle",
+  "init_sha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+  "expected_source_bridge_sha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+  "matches_source": true,
+  "finish_utc": "2026-10-08T00:48:18.783926+00:00",
+  "return_code": 0,
+  "raw_stdout_sha256": "6bdd670dd51bf29167c08145426b0a0d05ac618df0582baa4be30b47186690f5"
+}

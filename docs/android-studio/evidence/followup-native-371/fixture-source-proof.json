@@ -1,0 +1,23 @@
+{
+  "scope": "new external writable copy only; original committed fixtures and prior smoke unchanged",
+  "base_fixture": "/workspace/android-studio-integration/crates/android_tools/test_data/source_providers/gradle-smoke-generation",
+  "added_wrapper_source": "/workspace/android-studio-artifacts/source-providers-smoke/project",
+  "files": {
+    "README.md": "1cb9b07ab2aa3329998d7ff24de213f1830d2529b2c27024c00dbcec8cf6bd03",
+    "app/build.gradle": "522e77481cf8d0f3ef0d379373c665447aaa99d5f7b40ec43de3dfa601243564",
+    "app/custom-manifest/AndroidManifest.xml": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e",
+    "app/flavor-assets/demo.txt": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd",
+    "app/main/resources/resources.properties": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c",
+    "app/provider-res/layout/sample.xml": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208",
+    "app/unrelated-assets/sample.txt": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950",
+    "build.gradle": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2",
+    "gradle/wrapper/gradle-wrapper.jar": "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7",
+    "gradle/wrapper/gradle-wrapper.properties": "89f62533208a72b7a8cc2892b6b3540c445fa6175508297d932dae57d653591a",
+    "gradle.properties": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2",
+    "gradlew": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+    "local.properties": "00c76c7994130b465695145ca6d2e144002d7b1afb594b3d2f715c7643eb87da",
+    "model.json": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+    "provenance.json": "73879ce3d81ef14bc4fd091a986f1ca785633ed35388dedc7e69ce43a0c39620",
+    "settings.gradle": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c"
+  }
+}

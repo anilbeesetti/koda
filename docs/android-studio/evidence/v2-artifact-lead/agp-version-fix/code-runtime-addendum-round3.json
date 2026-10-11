@@ -1,0 +1,1064 @@
+{
+  "schema_version": 1,
+  "reviewer": "/root/v2_final_code_review",
+  "reviewed_at_utc": "2026-10-07T23:09:10.139800+00:00",
+  "verdict": "PASS",
+  "scope": "Current source correction and completed local runtime, including completed fresh keyboard replay; full CI remains a separate pending gate. No final task/merge authorization.",
+  "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "git_tree": "6b84b2d512405eba30658cc9d92577570f4e4796",
+  "blocking_code_findings": [],
+  "whole_source_guard": {
+    "files_independently_rehashed": 4712,
+    "exact_exclusions": [
+      ".",
+      ":(glob,exclude)docs/android-studio/*.md",
+      ":(exclude)docs/android-studio/reference-manifest.json",
+      ":(exclude)docs/android-studio/test-parity.json",
+      ":(glob,exclude)docs/android-studio/ports/*.json",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+      ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+    ],
+    "path_set_equal": true,
+    "source_index_worktree_untracked_clean_within_exact_scope": true,
+    "snapshot_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/retry1/whole-product-source-snapshot.json",
+    "snapshot_sha256": "f5fb39d4d1eb96ca6c92b1384361f52044ff2a92e717d90911ad0e4e8e266524"
+  },
+  "source_bindings": [
+    {
+      "path": "crates/android_tools/src/generated_artifacts.rs",
+      "sha256": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52"
+    },
+    {
+      "path": "crates/android_tools/tests/generated_artifacts.rs",
+      "sha256": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
+    },
+    {
+      "path": "crates/android_tools/test_data/generated_artifacts/AgpVersion.kt",
+      "sha256": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb"
+    },
+    {
+      "path": "crates/android_tools/test_data/generated_artifacts/BasicModules.kt",
+      "sha256": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed"
+    },
+    {
+      "path": "crates/android_tools/test_data/generated_artifacts/AGP-VERSION-NOTICE.md",
+      "sha256": "8433d749e6d56e4e16df936c1086210342deb077eac7d0c5fce83b698933d794"
+    },
+    {
+      "path": "crates/android_tools/src/project_model.gradle",
+      "sha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7"
+    }
+  ],
+  "prior_tests_preserved": {
+    "prior_functions": 28,
+    "current_functions": 30,
+    "all_prior_test_source_exact_after_removing_only_two_added_regressions_and_reversing_documented_wrong_DEV_tuple": true,
+    "documented_correction": "(8, 8, 8.2.0-dev, false) \u2192 true, matching pinned DEV ordering",
+    "original_test_source_sha256": "9900069b1a993875795c4be1feadf5f4a8da2a5750f486beb4596ae6b45efbf1"
+  },
+  "runtime_receipts_independently_hash_verified": [
+    {
+      "receipt_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/retry1/tooling-all-features-tests-exit.json",
+      "receipt_sha256": "6416386f7d45dadb90f0139548974296cbced2ed9b66903937c451ae47dc60da",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "raw_log_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/retry1/tooling-all-features-tests.log",
+      "raw_log_sha256": "c9eca62d12ffb102df9265842c124a13fb4a17735194927cfe93369d8423b163",
+      "exit_code": 0
+    },
+    {
+      "receipt_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/ui-full-default-suite-exit.json",
+      "receipt_sha256": "1c383a3e228b15c6d12cff5605e6ea07967c702d793af375d3d41ea5496246e3",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_ui",
+        "--lib"
+      ],
+      "raw_log_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/ui-full-default-suite.log",
+      "raw_log_sha256": "c48ac440c3be2b5dcfe232499aff4cd37bd96f0c1d68728ae184288a9d09f7ba",
+      "exit_code": 0
+    },
+    {
+      "receipt_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/frozen-parity-current35-exit.json",
+      "receipt_sha256": "e96e7ff596ac0cbaaecddb04ac6ff89b36d58e3c041027bddc7ba18fad6f783e",
+      "command": [
+        "/tmp/android-studio-junit4-integration/xtask",
+        "android-parity",
+        "--repository",
+        "/workspace/android-studio-source-providers",
+        "--reference-root",
+        "/workspace/android-studio-references"
+      ],
+      "raw_log_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/frozen-parity-current35.log",
+      "raw_log_sha256": "076b9b276011296cbaeb2bfd4768a8b3ca4799baf76a5af576bbe63849680b67",
+      "exit_code": 0
+    },
+    {
+      "receipt_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/workspace-format-current9b-exit.json",
+      "receipt_sha256": "e1d050d306657d049666b97e16a8826354c4b19d6ffebea5dd983b623b11da3f",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "raw_log_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/workspace-format-current9b.log",
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0
+    },
+    {
+      "receipt_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/strict-clippy-exit.json",
+      "receipt_sha256": "cb337d249fe2efebeae4c14056c7bc4be07ffb269947b59b81a7213c1eaade2a",
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools"
+      ],
+      "raw_log_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/runtime/strict-clippy.log",
+      "raw_log_sha256": "264284fcbe2a929c356a17ea4281b3240985a4dfa515df4cc9222fda8a117df4",
+      "exit_code": 0
+    },
+    {
+      "receipt_path": "/workspace/android-studio-artifacts/v2-artifact-integration/app-build/new-app-executable.json",
+      "receipt_sha256": "8699640bfb155012a72f0e026d7177f33a7b514689c882ed0a3c6dfaeb15c947",
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "zed",
+        "--bin",
+        "koda"
+      ],
+      "raw_log_path": "/workspace/android-studio-artifacts/v2-artifact-integration/app-build/app-build-retry.log",
+      "raw_log_sha256": "d574d6f8c5e583edc99da4ebc0725b608502af0b6fb902975ae5a20e65886a4f",
+      "exit_code": 0
+    }
+  ],
+  "tooling": {
+    "passed": 231,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0,
+    "groups": [
+      85,
+      30,
+      20,
+      27,
+      21,
+      29,
+      19
+    ],
+    "both_new_regressions_explicitly_passed": true
+  },
+  "UI": {
+    "passed": 125,
+    "failed": 0,
+    "pre_existing_ignored": 1,
+    "filtered": 0
+  },
+  "parity": {
+    "individually_identified": 95,
+    "port_counts": {
+      "ported": 19,
+      "unported": 60,
+      "adapted": 16
+    },
+    "run_counts": {
+      "passing": 35,
+      "not_run": 60
+    },
+    "census_complete": false,
+    "mirror_coverage": "UNVERIFIED",
+    "exact_capture_count": 35,
+    "exact_capture_logs": [
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+        "target": "project_model::tests::default_variants_one_variant",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_one_variant",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-DefaultVariantsTest-oneVariant.log",
+        "log_sha256": "864fe7f0963134d8282b272ef515231582a7583e002f54ff2a092f2e85960b71"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+        "target": "project_model::tests::default_variants_debug_preferred",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_debug_preferred",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-DefaultVariantsTest-debugPreferred.log",
+        "log_sha256": "b5cf6b762a7364b1bd73c6c326fe221c718c3af6497ec7b1ac22652c2a709e71"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+        "target": "project_model::tests::default_variants_preferred_build_type",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_build_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-DefaultVariantsTest-preferredBuildType.log",
+        "log_sha256": "5ddce15e01b02691d068ddee86f3598651c516eecac41b12412437a05cb54032"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+        "target": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-DefaultVariantsTest-preferredProductFlavorOverDebugBuildType.log",
+        "log_sha256": "840d060885db911db4d969afa4f5af59d3b8611859fddd7f40a47cfa38ea0842"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+        "target": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-DefaultVariantsTest-preferredFlavorsInTwoDimensions.log",
+        "log_sha256": "c14ea989f50aed8814025f0481703a2e0d5f19c17963c8997fb5d6fabdcf78f9"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+        "target": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-DefaultVariantsTest-preferredFlavorInSecondDimensionOnly.log",
+        "log_sha256": "011e1e243858c9de82662bec107ce8402f091d2cb8ef35587fce592713bcffda"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+        "target": "project_model::tests::default_variants_mismatched_product_flavour_length",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_mismatched_product_flavour_length",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-DefaultVariantsTest-mismatchedProductFlavourLength.log",
+        "log_sha256": "7029f9f37ccd6b040e5aa97a7f6e1b7aa6318f281e75a052bdc128eb42f1fd60"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+        "target": "project_model::tests::default_variants_on_empty",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_on_empty",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-DefaultVariantsTest-onEmpty.log",
+        "log_sha256": "0fabd958cd8b684524115dce580a1d3a9c56bfb650bdeaf70181e634f7134404"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+        "target": "import_simple_gradle_project",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_simple_gradle_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-GradleModuleImportTest-testImportSimpleGradleProject.log",
+        "log_sha256": "a363ea396339863ce1c161873843400fa2e778a63fd87544fab06623a6e7956f"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+        "target": "import_subprojects",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subprojects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-GradleModuleImportTest-testImportSubprojects.log",
+        "log_sha256": "c3fd81b38be5117959506ae7e0bb0a75b6d00026f4b00ab4a0f554749ddb1e46"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+        "target": "import_subprojects_with_missing_submodule",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subprojects_with_missing_submodule",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-GradleModuleImportTest-testImportSubProjectsWithMissingSubModule.log",
+        "log_sha256": "1ba6935170f357c72d7fc4536b87e46e54cf01bc3cca4a85aa8d643ab6fc98e2"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+        "target": "import_subproject_with_custom_location",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "import_subproject_with_custom_location",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-GradleModuleImportTest-testImportSubProjectWithCustomLocation.log",
+        "log_sha256": "5bbdd0ac1977ef06d82e0f98feb0dafa769c680ef31a71f2610e5bd651467db6"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+        "target": "required_projects",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "required_projects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-GradleModuleImportTest-testRequiredProjects.log",
+        "log_sha256": "102d658002028c03aaf5754e344150338c44525b954f5f92fb2fc2cf2d992a0c"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+        "target": "missing_required_projects",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "missing_required_projects",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-GradleModuleImportTest-testMissingRequiredProjects.log",
+        "log_sha256": "842b1c5d47e947569135ac251ab69a86517432e343ecb341153abac322593a5e"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+        "target": "missing_enclosing_project",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "missing_enclosing_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-GradleModuleImportTest-testMissingEnclosingProject.log",
+        "log_sha256": "98f1ed872d32769dbfc7f0eaf5cc5ff7aab00873df0dcee11d17756723971dbe"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+        "target": "transitive_dependencies",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "transitive_dependencies",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-GradleModuleImportTest-testTransitiveDependencies.log",
+        "log_sha256": "50427684412459472179e1c09efa13d62c2dfa966c065a83314d05a087bb555b"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+        "target": "circular_dependencies",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "gradle_import_reference",
+          "circular_dependencies",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-GradleModuleImportTest-testCircularDependencies.log",
+        "log_sha256": "94ec1c9c4f795c87d8d5a072d97ad538461b81cc79a5fcf4f7956ec0978a5336"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+        "target": "test_show_visibility_icons_when_option_is_selected",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_show_visibility_icons_when_option_is_selected",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsSelected.log",
+        "log_sha256": "855df1beab9ced5dbfa3e288e4101338ffb0349734c958bd045a630fbc1325d9"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+        "target": "test_show_visibility_icons_when_option_is_unselected",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_show_visibility_icons_when_option_is_unselected",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-AndroidProjectViewTest-testShowVisibilityIconsWhenOptionIsUnselected.log",
+        "log_sha256": "e414e275657433facd1682c552f5b0f7cac42ab874cd890d5d9bf57ddb1dec26"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+        "target": "test_android_view_is_default",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-AndroidProjectViewTest-testAndroidViewIsDefault.log",
+        "log_sha256": "d3623f7b8882478e1f943d580de767ae017ca8b91ce8eb7516c24122e7b123f9"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+        "target": "test_android_view_not_visible_in_unsupported_project_system",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_not_visible_in_unsupported_project_system",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInUnsupportedProjectSystem.log",
+        "log_sha256": "b825c98c0a8fab4893da7c40fe51a7958fe797b3f86c57baccfcdc1ec6bb98bc"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+        "target": "test_android_view_not_visible_in_non_android_project",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_not_visible_in_non_android_project",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-AndroidProjectViewTest-testAndroidViewNotVisibleInNonAndroidProject.log",
+        "log_sha256": "802cbcf71761be4d4e44b5a4bf84995a0cc3c93db09385451584fdb63243b9e7"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+        "target": "test_android_view_is_default_custom_property_handling",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_custom_property_handling",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandling.log",
+        "log_sha256": "c4c8e4ac28e6843a8a17fe1016d6e64745d9b28c63e667e7094e65c82693a457"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+        "target": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile.log",
+        "log_sha256": "abecc0c702d4fb3a09b9e627cac5b093f37942041557c07880f9ad9a09f60b11"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+        "target": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-AndroidProjectViewTest-testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile.log",
+        "log_sha256": "b3cb6b81bd7b9f5aaf59b1458149c54a821e1aa7b96b9287bbe5cc78235f3be0"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+        "target": "test_android_view_is_default_metrics",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "project_view_preferences_reference",
+          "test_android_view_is_default_metrics",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-AndroidProjectViewTest-testAndroidViewIsDefaultMetrics.log",
+        "log_sha256": "c1a118a95da364ebfcf871d60f59b5631ece086b515c9ae0e45211f472e10290"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+        "target": "tabbed_toolbar::tests::component_is_added_element",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::component_is_added_element",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-TabbedToolbarTest-componentIsAddedElement.log",
+        "log_sha256": "fd7588c34b01ecdd0e30b9d5537d604e07e847f2c37868f3ce2f0b6217f0b288"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+        "target": "tabbed_toolbar::tests::tab_is_added",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::tab_is_added",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-TabbedToolbarTest-tabIsAdded.log",
+        "log_sha256": "6fdf9d636c9150d4dcaaca75d0b6ce0071467bb9a391d976a1b5d07f40dbbabf"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+        "target": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::closed_is_called_when_clicked",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-TabbedToolbarTest-closedIsCalledWhenClicked.log",
+        "log_sha256": "3653a5d19b896ff3f89a5764c1eee05553ab929a4bf451e83bc6f652380b984a"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+        "target": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::no_close_button_when_no_listener",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-TabbedToolbarTest-noCloseButtonWhenNoListener.log",
+        "log_sha256": "ee9bf8b0bf628929e4925dd539fa50ea7db9aa3735b390db8223280634b24a6a"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+        "target": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-TabbedToolbarTest-iconButtonsCallbackWhenClicked.log",
+        "log_sha256": "673e467a4c3a665054dbb71322f26dd3cc783a838262495de300d50fd15e9983"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+        "target": "tabbed_toolbar::tests::can_select_tab_by_index",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::can_select_tab_by_index",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-TabbedToolbarTest-can select tab by index.log",
+        "log_sha256": "9a6e703e26e5e51e87198122de369d9b9633a722c59f39cabb445fc8160632d9"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+        "target": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_ui/Cargo.toml",
+          "-p",
+          "android_ui",
+          "--lib",
+          "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-TabbedToolbarTest-adding tab should not trigger select listener.log",
+        "log_sha256": "327760be18d6c159cc5f3c92e238da0fe2afe5ba20f4affd2705c2b5b246bf27"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+        "target": "check_model_consumer_version_ordering",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "generated_artifacts",
+          "check_model_consumer_version_ordering",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-ModelVersionsTest-checkModelConsumerVersionOrdering.log",
+        "log_sha256": "70555f9842b00bdc32507ac81f7ed577b23d42ac4f3ebe0d96a9f7b4efd8f43d"
+      },
+      {
+        "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+        "target": "check_model_version_ordering",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--test",
+          "generated_artifacts",
+          "check_model_version_ordering",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "log_path": "/workspace/android-studio-source-providers/docs/android-studio/evidence/v2-artifact-integration-ModelVersionsTest-checkModelVersionOrdering.log",
+        "log_sha256": "0fe051b29b1160b23c4d9a2465f88d7221e5e1fd6d12cb068fe80ca9f63d4df8"
+      }
+    ]
+  },
+  "full_app": {
+    "normal_build_receipt": {
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "zed",
+        "--bin",
+        "koda"
+      ],
+      "tested_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+      "exit_code": 0,
+      "elapsed_seconds": 201.78104909200192,
+      "log_sha256": "d574d6f8c5e583edc99da4ebc0725b608502af0b6fb902975ae5a20e65886a4f",
+      "executable": "/tmp/android-studio-link-output/koda-v2-artifact-273741",
+      "executable_sha256": "577814b594205348eab4869aef4f3d0dc0377bbd6fe4acc9bb40ca7788b89c3e",
+      "executable_bytes": 1359451320,
+      "cargo_published_executable": "/workspace/.cache/zed/target/debug/koda",
+      "original_linker_output": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+      "only_final_output_argument_changed": true
+    },
+    "independently_rehashed_ELF": true,
+    "all_1206_final_link_arguments_compared": true,
+    "only_changed_argument_indices": [
+      1199
+    ],
+    "only_final_output_relocated": true,
+    "actual_final_link_receipt_sha256": "c89485ca7c4e0f5660dbb06e5ff4d5e2c821651616b97d3e2a325e84a1cd1973"
+  },
+  "current_SDK_decoder": {
+    "build_receipt_sha256": "da2c5d43069867a6fb372559d515950f9820e941131acaeb850cdcc57d7d03d5",
+    "current_normal_library_sha256": "fb116a4b204c848ccd86ada7f50cd90ea81f8fba98511a067b72dd5d99c712b4",
+    "current_probe_source_sha256": "5551985487b7e87f31963365ccf203f138de5f7bb4ebb2d5f4ca9d9b9a971dca",
+    "current_decoder_sha256": "2b2a4ac53ddc4ca22f08142711254ca37eb00cb83b3eb5960d6eda501a74e271",
+    "both_completed_model_runs": [
+      {
+        "actual_receipt": {
+          "record": 1,
+          "command": [
+            "/workspace/android-studio-artifacts/v2-artifact-integration/sdk-decoder/runtime-probe",
+            "/workspace/android-studio-artifacts/v2-native-9b9cbbc/generation-project",
+            "/workspace/android-studio-artifacts/v2-native-9b9cbbc/native-model-record1.log"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.005005320999771357,
+          "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+          "decoder_sha256": "2b2a4ac53ddc4ca22f08142711254ca37eb00cb83b3eb5960d6eda501a74e271",
+          "input_record_sha256": "5631c684323c723015b1f887b5415a4534df08b3a4a183ec31e9e294d2708a1a",
+          "stdout_sha256": "581219e92bb713278d9f93eefe23eef9fd0ac7e4efd579710525da24f9125d18",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "receipt_sha256": "32c20cc128d1b14889da98ec171a87abb22807e274914789ce285efc86a0a618",
+        "complete_model_sha256": "f9df375d63ee54a9c731a8adec18b0267b20e33ed85616cdd50eeee235955aee",
+        "every_sidecar_module_value_and_list_order_equal": true
+      },
+      {
+        "actual_receipt": {
+          "record": 2,
+          "command": [
+            "/workspace/android-studio-artifacts/v2-artifact-integration/sdk-decoder/runtime-probe",
+            "/workspace/android-studio-artifacts/v2-native-9b9cbbc/generation-project",
+            "/workspace/android-studio-artifacts/v2-native-9b9cbbc/native-model-record2.log"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.00436316299601458,
+          "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+          "decoder_sha256": "2b2a4ac53ddc4ca22f08142711254ca37eb00cb83b3eb5960d6eda501a74e271",
+          "input_record_sha256": "5631c684323c723015b1f887b5415a4534df08b3a4a183ec31e9e294d2708a1a",
+          "stdout_sha256": "581219e92bb713278d9f93eefe23eef9fd0ac7e4efd579710525da24f9125d18",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "receipt_sha256": "c3baf52afa398e4882cbfcd7f254c3298b68743cf55bf4f0713a3490807f3bff",
+        "complete_model_sha256": "f9df375d63ee54a9c731a8adec18b0267b20e33ed85616cdd50eeee235955aee",
+        "every_sidecar_module_value_and_list_order_equal": true
+      }
+    ],
+    "supplementary_AGP": "9.4.0",
+    "supplementary_Gradle": "9.6.1",
+    "original_reference_runtime_credit": 0,
+    "actual_AGP_8_2_DEV_SDK_not_executed": true,
+    "generated_cache_preservation_note": "The actual 9b231 normal library/compiler/probe bindings and raw SDK executions were independently verified in the initial local review. Authorized subsequent normal Cargo compilation for another task may replace shared generated-cache bytes; no later-task library is substituted and no old cache path persistence requirement is invented."
+  },
+  "native_original_session": {
+    "recovery_report_sha256": "a8eb6540acd355ed46a762c23ae3c67c9688594288d74df3a44dc79afdcce1e7",
+    "runtime_proof_sha256": "01660437557f1ddb9d2f51003508e4817569341f014b31964577bc6817c0ded3",
+    "source_guard_sha256": "f91ce44cd2348226ca8857ac0f2670ab8f817752038386e23a7346b58fd6bee5",
+    "closure_receipt_sha256": "385161e3d9fa5f4cf9e3dfe18279dcbbbf939b55d3fd1a25018bfdde5dc4e529",
+    "specific_Tab_Space_ShiftTab_Return_routes": "UNVERIFIED: original executed input transcript is absent"
+  },
+  "fresh_keyboard_replay": {
+    "status": "PASS",
+    "successful_attempt": "attempt2",
+    "artifact_root": "/workspace/android-studio-artifacts/v2-keyboard-9b9cbbc",
+    "runtime_proof_sha256": "8b920d7ab07180459e7b964737fe6f8afb82561d68a69ccccdbde0988ec3eacd",
+    "review_report_sha256": "42659bb1ca5694e0d0e43d0d1ec8c1869aa1ef3f111b7902705e761d0f4bead2",
+    "artifact_manifest_sha256": "df0385ea8d149359a5630ed0a58dd9694e4eb96abcb05fb44edb290b7349a6dc",
+    "all_replay_manifest_files_independently_rehashed": 1228,
+    "source_hashes_independently_rechecked": 4712,
+    "original_native_evidence_files_independently_rehashed": 655,
+    "original_and_each_of_two_private_fixture_copies_12_files_verified": true,
+    "exact_executed_command_starts": 48,
+    "exact_executed_command_finishes": 48,
+    "all_command_start_finish_pairs_and_arguments_bindings_match": true,
+    "all_exit_codes_zero": true,
+    "executed_input_journal_sha256": "32c7e4ce64c1d63d665fa8d572d52388a215c2a4250b930833f8b1001c26bed6",
+    "session_binding_sha256": "e5d5fb84c9bb1febb283707f591ed551a2adac3ea9c7cc412f452d2f45efe64a",
+    "all14_successful_capture_hashes_match": true,
+    "captures_this_code_reviewer_visually_inspected": [
+      "attempt2/captures/wide-output-focus.png",
+      "attempt2/captures/wide-output-selected.png",
+      "attempt2/captures/narrow-reverse-sync-focus.png"
+    ],
+    "specific_Tab_Space_ShiftTab_Return_routes": "PASS in separately recorded successful fresh replay only",
+    "closure_and_source_guard_receipt_sha256": "a8a6e0d223e0173268a33458b9f19a637ff00165492f1bba5d2c0d0d25ea983d",
+    "all_six_attempt_owned_PIDs_and_display119_absent_independently_checked": true,
+    "raw_PTY_sha256": "e24991d28eb5e7283c8c875f7cfee0d19466ff27aa3aaec6491178747b7255c4",
+    "original_session_missing_transcript_and_failed_first_fresh_attempt_preserved": true,
+    "new_source_changes": 0,
+    "new_Cargo_builds": 0,
+    "new_reference_parity_credit": 0
+  },
+  "full_CI": {
+    "run_id": 37695121709,
+    "status": "PENDING in parent handoff; not independently credited here",
+    "local_component_pass_not_full_workspace_pass": true
+  },
+  "limitations": [
+    "Phase 1 and full IDE remain incomplete",
+    "No exhaustive reference census or verified complete mirror coverage",
+    "No logical Android project tree or Rust LSP runtime parity credit",
+    "Raw Sync model console payload remains a tracked workflow follow-up",
+    "Higher active-caret CPU observation remains retained; no hardware, startup, large-project or fair predecessor comparison",
+    "Preserved SIGBUS/failure/round1/round2 history receives no passing current-runtime credit",
+    "Original native missing-route transcript remains history; completed separate fresh replay closes only the current specific keyboard route gap"
+  ],
+  "reviewer_execution": {
+    "Cargo": false,
+    "rustc": false,
+    "Gradle": false,
+    "decoder_or_app": false,
+    "product_source_test_or_fixture_edits": false,
+    "written_files_only": [
+      "code-runtime-addendum-round3.md",
+      "code-runtime-addendum-round3.json",
+      "code-runtime-addendum-round3-before-keyboard.md",
+      "code-runtime-addendum-round3-before-keyboard.json"
+    ]
+  },
+  "initial_local_review_preserved": {
+    "markdown_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/code-runtime-addendum-round3-before-keyboard.md",
+    "markdown_sha256": "6ea54b55c31ded552108ae2d4e6f42f56416066d77c82091d9343f9c01433d6d",
+    "json_path": "/workspace/android-studio-artifacts/v2-artifact-integration/agp-version-fix/code-runtime-addendum-round3-before-keyboard.json",
+    "json_sha256": "79dd5729029a12ef5c5cb58d0a91ba45a3607be396bd150e40336d10b62f143b"
+  }
+}

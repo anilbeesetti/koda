@@ -1,0 +1,355 @@
+{
+  "utc": "2026-10-08T08:01:32.141963+00:00",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "source_tree": "b772af5fade0594c493b4fcbe93abf60400595ff",
+  "source_parents": [
+    "7687eb64c51f241623a2160a7f3d2bfa99a2b2fb",
+    "f2aa51b883b2c926cb54cfe1618bc2cb8f738420"
+  ],
+  "workflow_run": 37738240656,
+  "workflow_event": "workflow_dispatch",
+  "head_branch": "android-studio-task/1-sync-console-filter",
+  "job_conclusions": [
+    {
+      "id": 113182627649,
+      "name": "Formatting and scripts",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 113182977906,
+      "name": "Linux build and workspace tests",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 113182977935,
+      "name": "macOS application check",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "actual_nextest_summary": {
+    "run": 10557,
+    "passed": 10557,
+    "failed": 0,
+    "skipped": 23,
+    "elapsed_seconds": 2290.747,
+    "binaries": 212
+  },
+  "actual_workspace_build_and_execution_seconds": 3644.0,
+  "actual_normal_linux_app_build_seconds": 611.5,
+  "all_original_raw_job_logs": [
+    {
+      "job_id": 113182977906,
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/ci-combined-f763/linux-job-113182977906.log",
+      "bytes": 444301,
+      "sha256": "6ec97125e00263e5157bccb70b0c56bd356054cf3e79d6144d7e99a5f8d83c54",
+      "original_connector_decoded_UTF8_bytes_preserved": true
+    },
+    {
+      "job_id": 113182977935,
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/ci-combined-f763/macos-job-113182977935.log",
+      "bytes": 210432,
+      "sha256": "ac88bed7e1ac4fb95591742182938fb72a2dec7b7c4651a45c1616abb8116bb4",
+      "original_connector_decoded_UTF8_bytes_preserved": true
+    },
+    {
+      "job_id": 113182627649,
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/ci-combined-f763/format-job-113182627649.log",
+      "bytes": 28828,
+      "sha256": "c0811e6d0a38b7159d0c0c7f4e4324a59be0befcf5874ae5b5b96f5cfb6a91a0",
+      "original_connector_decoded_UTF8_bytes_preserved": true
+    }
+  ],
+  "full_empty_filter_planner_proof": "/workspace/android-studio-artifacts/sync-console-filter/ci-combined-f763/full-planner-log-proof.json",
+  "full_empty_filter_planner_proof_sha256": "0acd10c3901a85b11160fbf021a2101b73855e14920854f1916508dab61afba8",
+  "CI_aggregate_does_not_list_individual_test_names": true,
+  "CI_individual_17_and_36_PASS_entries_not_claimed": true,
+  "current_local_all_17_once_ok": [
+    "android_build::tests::model_console_capture_limit_applies_to_hidden_records",
+    "android_build::tests::model_console_chunks_unicode_without_restarting_prefix_detection",
+    "android_build::tests::model_console_filters_only_exact_leading_stdout_records",
+    "android_build::tests::model_console_hidden_record_does_not_buffer_its_payload",
+    "android_build::tests::model_console_invalid_utf8_does_not_become_a_successful_raw_model",
+    "android_build::tests::model_console_matches_prefix_across_every_read_split",
+    "android_build::tests::model_console_preserves_line_endings_blanks_and_unterminated_lines",
+    "android_build::tests::model_console_preserves_upstream_diagnostic_fixture_contents",
+    "android_build::tests::model_console_propagates_closed_output_even_for_hidden_only_input",
+    "android_build::tests::model_console_ready_hidden_capture_yields_before_eof",
+    "android_build::tests::model_console_real_command_can_cancel_after_hidden_transport",
+    "android_build::tests::model_console_real_command_preserves_stderr_failure_and_normal_command_output",
+    "android_build::tests::model_console_retains_basic_and_v2_decoding_and_validation",
+    "android_build::tests::model_console_retains_partial_prefix_at_eof_and_after_mismatch",
+    "android_build::tests::model_console_sync_and_build_sessions_keep_distinct_visible_output",
+    "android_build::tests::model_console_timeout_and_preexisting_cancel_prevent_success",
+    "android_build::tests::model_console_visible_output_obeys_backpressure"
+  ],
+  "current_local_36_existing_mapping_captures": [
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_one_variant",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-01.log",
+      "sha256": "cfa78f66e8a364d995accb1cfb40ae5f5d195e823efca86f4641d0484f572bc9"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_debug_preferred",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-02.log",
+      "sha256": "2c47af4230563194277303e2b10a253bae53e9350c30f0a24743ba4814e21eb4"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_preferred_build_type",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-03.log",
+      "sha256": "cdb1f66ed8033c1b4410a4615c5197964c28e7006e903629800536fe64731b49"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-04.log",
+      "sha256": "f428039c45c6b91dd68cfddf3c6d34ef358a63d3e552cee2089417d7a3ec5bbb"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-05.log",
+      "sha256": "7348fe944c7492b43eba2a42690ef5b55c6e7d764248c78072b8e740957072ed"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-06.log",
+      "sha256": "e57b845c0d7e6e7bd4eb4ed3f915c506fecaa1381cd1135f121130c4a6983d45"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-07.log",
+      "sha256": "9298b5f68580af360b9e656b070a9fd564fca091eda3ff4449f9b75e6e2a166a"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+      "package": "android_tools",
+      "test_name": "project_model::tests::default_variants_on_empty",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-08.log",
+      "sha256": "8eb15aa164bbcecd7962e75d069e2ec0a997cf79e58876cef9969f8b568a8d6e"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSimpleGradleProject",
+      "package": "android_tools",
+      "test_name": "import_simple_gradle_project",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-09.log",
+      "sha256": "148797919bad7862141496832827f3b0afa2f4ab1a715c3104ce03e045c1b4ff"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+      "package": "android_tools",
+      "test_name": "import_subprojects",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-10.log",
+      "sha256": "5e5dc64d17fd2fb4021e6a6ef79c74433f3e8c9d9550f07300e3cc036c44404f"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectsWithMissingSubModule",
+      "package": "android_tools",
+      "test_name": "import_subprojects_with_missing_submodule",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-11.log",
+      "sha256": "8ad95e70137d07433003884fc5c36d44553a3c113b9d90fc16495f9adec3685d"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubProjectWithCustomLocation",
+      "package": "android_tools",
+      "test_name": "import_subproject_with_custom_location",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-12.log",
+      "sha256": "1c76d4e2bc8e4b1d2db6fe10e53e39a56e3826ea4f04a22e0909a60a6e49af9e"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testRequiredProjects",
+      "package": "android_tools",
+      "test_name": "required_projects",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-13.log",
+      "sha256": "d9e08982bd603f894e6096a429892edc39fdf184299e6cdbaad20a7a80fa5afe"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingRequiredProjects",
+      "package": "android_tools",
+      "test_name": "missing_required_projects",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-14.log",
+      "sha256": "59a8be847513760bf1b6b9197746db94da614b173590e36da00b3438f4cf6e8a"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testMissingEnclosingProject",
+      "package": "android_tools",
+      "test_name": "missing_enclosing_project",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-15.log",
+      "sha256": "ce32e517812743e9eca403053b0dbb2dd163a707222c20330aa26e6582a93c71"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testTransitiveDependencies",
+      "package": "android_tools",
+      "test_name": "transitive_dependencies",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-16.log",
+      "sha256": "e0fe0a06e18f01f3fa3ddd396346df9a943c2d042b2870119400e3d131910cbb"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testCircularDependencies",
+      "package": "android_tools",
+      "test_name": "circular_dependencies",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-17.log",
+      "sha256": "db47d57f8e78c6fd18d75d7a816614b1ff9f0c0982b3fae7ed579ed40a45704b"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected",
+      "package": "android_tools",
+      "test_name": "test_show_visibility_icons_when_option_is_selected",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-18.log",
+      "sha256": "43c42398c4cec95ba576cb3a8f71528424c65dfea48ba2a1f288f1d35c8c521f"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected",
+      "package": "android_tools",
+      "test_name": "test_show_visibility_icons_when_option_is_unselected",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-19.log",
+      "sha256": "1e2ddc77814252c8d67c53a1f2e1cff4e346752c8cb00394bfbb36ed2548696b"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefault",
+      "package": "android_tools",
+      "test_name": "test_android_view_is_default",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-20.log",
+      "sha256": "3a4b5f464d8280534d4d29774626d838ca3330315a000ae3e4d5e9cc6d34d4e2"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem",
+      "package": "android_tools",
+      "test_name": "test_android_view_not_visible_in_unsupported_project_system",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-21.log",
+      "sha256": "cbcff0f162f25fa01f8489516c6ebce40ca106009a5ea3636c26a3d223524a85"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject",
+      "package": "android_tools",
+      "test_name": "test_android_view_not_visible_in_non_android_project",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-22.log",
+      "sha256": "2086cb3952fbe856a669209c5ac9899a5a55c9bbc1219dfa70b0d8a15cdc6f70"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling",
+      "package": "android_tools",
+      "test_name": "test_android_view_is_default_custom_property_handling",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-23.log",
+      "sha256": "c177eb63ea45a2d155b5e92e422ca8a1e3bca4695c3351b50a7a7792d4b1794e"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile",
+      "package": "android_tools",
+      "test_name": "test_android_view_is_default_custom_property_handling_with_custom_properties_file",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-24.log",
+      "sha256": "b37b1ecb336305039b58696d75cc0c58206d97574b48b4e766d961085d49c6d7"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile",
+      "package": "android_tools",
+      "test_name": "test_android_view_is_default_custom_property_handling_with_custom_vm_properties_file",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-25.log",
+      "sha256": "ab7699d3c2fcc26de85cd66ad3ccc11a9759ba333d2cd8dbf723aa881260f803"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java#com.android.tools.idea.navigator.AndroidProjectViewTest.testAndroidViewIsDefaultMetrics",
+      "package": "android_tools",
+      "test_name": "test_android_view_is_default_metrics",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-26.log",
+      "sha256": "b11d35ecd4debe25f219bd29b6886bd83cac7387a6d945644f3996b68293394a"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelConsumerVersionOrdering",
+      "package": "android_tools",
+      "test_name": "check_model_consumer_version_ordering",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-27.log",
+      "sha256": "d60beb8d4d704aa2d55cffcdf16e20cda0fc9d07f490460cd6b22c663e5824f9"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkModelVersionOrdering",
+      "package": "android_tools",
+      "test_name": "check_model_version_ordering",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-28.log",
+      "sha256": "ef3bacb24d720c5e8860653c853f44170dbf13a70e34956c33f5d2703f6fcc10"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt#com.android.tools.idea.gradle.project.sync.ModelVersionsTest.checkSupportsParallelSync",
+      "package": "android_tools",
+      "test_name": "check_supports_parallel_sync",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/default-exact29/tools-29.log",
+      "sha256": "aeda17cefd10c1839351aeff087a6a7ad61a8eb82c3b988cb78eb9dd81cd3b38"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.componentIsAddedElement",
+      "package": "android_ui",
+      "test_name": "tabbed_toolbar::tests::component_is_added_element",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-exact7/ui-01.log",
+      "sha256": "966c63f592c4492a6e1b3dec7230d546adb5a76d027717f550eb5024a58cc616"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.tabIsAdded",
+      "package": "android_ui",
+      "test_name": "tabbed_toolbar::tests::tab_is_added",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-exact7/ui-02.log",
+      "sha256": "02e654c5013a1e3a05f041c386c277affef6ff6a7512e084c43e94bf4d1f3a32"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.closedIsCalledWhenClicked",
+      "package": "android_ui",
+      "test_name": "tabbed_toolbar::tests::closed_is_called_when_clicked",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-exact7/ui-03.log",
+      "sha256": "cbe8366c1de5c135157674f232d01bf9a8b34842cd5708881f04477783d090a4"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.noCloseButtonWhenNoListener",
+      "package": "android_ui",
+      "test_name": "tabbed_toolbar::tests::no_close_button_when_no_listener",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-exact7/ui-04.log",
+      "sha256": "3e1742769c2975be7394082acc735da1c5595dd6055ef70600c91c6142404483"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+      "package": "android_ui",
+      "test_name": "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-exact7/ui-05.log",
+      "sha256": "52cabc717244cd1a2279491db1db94f8036688eb4e27574ad258acb6728b071a"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.can select tab by index",
+      "package": "android_ui",
+      "test_name": "tabbed_toolbar::tests::can_select_tab_by_index",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-exact7/ui-06.log",
+      "sha256": "58d81f37e7cf519610dc9b0184e0000a0f6c60a49dfd8b65932af81892e823e7"
+    },
+    {
+      "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.adding tab should not trigger select listener",
+      "package": "android_ui",
+      "test_name": "tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener",
+      "raw_log": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-exact7/ui-07.log",
+      "sha256": "08959f2d0728f770f71953f1990da675a80121b05ec15f8db4a03630e1300767"
+    }
+  ],
+  "Source4748_full_index_main_protected_and_six_oldkeepers": "PASS",
+  "additional_current581_frozen_CLI": {
+    "path": "/workspace/android-studio-artifacts/reference-runner-membership/dependency-integration-f2aa51b/runtime-current581/frozen-normal-xtask-5810906",
+    "dev": 27,
+    "inode": 1098774,
+    "sha256": "2e85cbaec3314218506512f52ac4c897b2bdd3abe27402adb7e2d183045de8ae"
+  },
+  "new_original_test_credit": 0,
+  "canonical95_IDs_statuses_reasons_targets_untouched": true,
+  "current_local_fullapp_helper_probe_native_final_five_lead_merge_pending": true,
+  "product_fix_rounds_used": 3,
+  "source_test_index_ref_cache_mutations": false,
+  "supplemental_initial_planner_location_error_retained": "/workspace/android-studio-artifacts/sync-console-filter/ci-combined-f763/terminal-verification-initial-planner-location-error.json"
+}

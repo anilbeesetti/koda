@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "tested_source_commit": "5e4b752a057bff25d9e281a43ce4b71a8598406f",
+  "files": [
+    {
+      "path": "docs/android-studio/evidence/module-presentation/actual-checks-summary.json",
+      "sha256": "b56836a37739e5efbddfdeaeb41d6beea621590f57cbc129cfd0a6df81219592",
+      "bytes": 2269
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/all-features-tests.json",
+      "sha256": "a18d6a603bc5441d4daede2dbd53a6d1a69edbbc9c178a4be42c132e9978d4c3",
+      "bytes": 461
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/all-features-tests.log",
+      "sha256": "f0ece135ca7cf77f8bc916dc4266bb3045c7fc387f800b871e2bdf9deeae9e38",
+      "bytes": 171812
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/code-review-round1.log",
+      "sha256": "72605c30b6b446a9d0555489ece894601c58dd86a092bbfde9531835a93be633",
+      "bytes": 5679
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/code-review-runtime-addendum.log",
+      "sha256": "bc49b6ae37ce11c6c69992684f94160dd45d8c3506bb105e2099d672a11f4c31",
+      "bytes": 5883
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/compiler-source-elf-proof.json",
+      "sha256": "74b759dab52bcb6aec7d0f58e6145830341d2c990e4b27c5e8222245dd9ea545",
+      "bytes": 9264
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/current-worktree-compiler-freshness.json",
+      "sha256": "ba51722103736dc26dfc7549430030c009700dc4697fdda980147466a32f8d01",
+      "bytes": 2265
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/exact-root-pathspec-equivalence.json",
+      "sha256": "0fac4b588f2761b2b5f2fecadc7f7b4f9c20c5ba1338ad39c850bdf0fb87d969",
+      "bytes": 616
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/final-metadata-source-equivalence.json",
+      "sha256": "4ed3b5902a80dddd2a1a62ad3b134835be8c934b71aedc6b0fdd71fe707651cb",
+      "bytes": 1010
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/format-check.json",
+      "sha256": "05b63541e85b187d25924bad58a22affb0fcd1c6f7cf8eea1dbcf6ec059c05d9",
+      "bytes": 394
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/format-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/frozen-policy-executable.json",
+      "sha256": "0ae8576dda0fe4a29b33c1b833624d62ee66787f7780739d3d15f1ba29d5266f",
+      "bytes": 1373
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/library-build.json",
+      "sha256": "71438229a3145aa8fba55606b0a1baeb3d2ad1f897a288e40b92ab5d8a3c4ebe",
+      "bytes": 456
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/library-build.log",
+      "sha256": "9ef92fa1048a071372ecd5e783331a115feb28a239d2f8ec04ec1eb8a84c0386",
+      "bytes": 145158
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/long-name-exact-per-pid.json",
+      "sha256": "1823b5e1f991160e539891280f02f97d35aaa8ecd202a7a99bb335e253d7970e",
+      "bytes": 1164
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/long-name-exact-per-pid.log",
+      "sha256": "6d2bceb30d9edfa1840d7a539c5820fe7128c719e952f12581b758f2beb4b769",
+      "bytes": 179
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/original-preservation-after-initial.json",
+      "sha256": "c303d0bfda783b83de31587e66ebaa35b1f2c49f53d8d2c8447a533223c14785",
+      "bytes": 180
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/original-preservation-before.json",
+      "sha256": "342e287c7bdc93a10cf7c091db2dc158f1c1a531287dab2f661ef0636e3aa78c",
+      "bytes": 32951
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/owned-process-closure.json",
+      "sha256": "74878edd3569f55e7b897b83b81e239f260097a37d0719aaa2eaf00be3d68bbf",
+      "bytes": 242
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/performance-review-round1.log",
+      "sha256": "8d1b9a400c29ecb70453080c36da1bebc2f3c30f513643515c5ccab2deadedb0",
+      "bytes": 5257
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/performance-review-runtime-addendum.log",
+      "sha256": "fc5a98906407de853e38cec812ae2f840d4260436e432c05751418a1ab7e5754",
+      "bytes": 5515
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/quality-review-final-metadata.log",
+      "sha256": "fc8c7068c02408b8fdc0a0bc8da93a64002a209bbf7dc669ecc0bf047de65c56",
+      "bytes": 5195
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/quality-review-round1-verification.json",
+      "sha256": "146bbb689d791d97cc19ed984dd10f1ec0a79e9c323e3fe192451e4cd4d8c91e",
+      "bytes": 5076
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/quality-review-round1.log",
+      "sha256": "18287f1dfba43e657fb215e849b4749f5dd791610c34c7126587f252dd37f821",
+      "bytes": 5098
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/quality-review-runtime-addendum.log",
+      "sha256": "d64273fb9d22b1430f4424aac93d0c0eb48fc5615639ee3b7d433b011dc70101",
+      "bytes": 6978
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/quality-review-runtime-verification.json",
+      "sha256": "b6214aff7f27237131760ba6a23abd1414f085e057fdc9b61749ea0d700bbf3a",
+      "bytes": 4878
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/retained-validation-runner-sources.json",
+      "sha256": "a2a1494ffd70793ffcfd53bee9bc7a1a0b136a1adfde02dc17fdf64c66b10238",
+      "bytes": 9616
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/review-source-round1.json",
+      "sha256": "eac4b0a2dbf80ad8efadbe91be09549c0470e786aa5d7d50fc2ccf9d84fa2041",
+      "bytes": 36249
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/root-authorized-prior-unit-elf-retirement.json",
+      "sha256": "ad660d13b4896e77328352cd6c5b30397cd8d161ade6c571312ce5f48bb500f9",
+      "bytes": 1430
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/runtime-lease-release.json",
+      "sha256": "29d318d217d3a42ef1d9818a9b9db7b26cc30ed24045678617f24b739ff43c55",
+      "bytes": 554
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/source-commit.json",
+      "sha256": "d2bd488c1a280eabb30016d11982e7ff477c4ec5110c85d63947043c3bf84d0c",
+      "bytes": 530
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/strict-clippy.json",
+      "sha256": "c4dd5628045803a241cff6e6f4d33010b5366a4696ec1f5fcbaa93bdcf52d931",
+      "bytes": 404
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/strict-clippy.log",
+      "sha256": "526b1f3297d109bc59478de61373899aea2b48b68062e3f3281b3ff9f476a2b2",
+      "bytes": 320
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/string-util-rt-source.json",
+      "sha256": "235aec64cdda0c624050f2f8eb487f0b31e3ac8c01e28c30d74b9082825b2841",
+      "bytes": 604
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/string-util-source.json",
+      "sha256": "1b3221ac31d1153b17ee6d6978191fca5c4704712216f6ea9ffb3cd31f2fc6e5",
+      "bytes": 590
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/ui-review-round1.log",
+      "sha256": "5c09b6d9ab109d039c52316c4127ea6fe9d8a02dbd48c59f930d72b3a913218c",
+      "bytes": 5497
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/ui-review-runtime-addendum.log",
+      "sha256": "3c590395a20901839de4205182bf145ed3e769ab3197dfe553072c0e831be90e",
+      "bytes": 5535
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/ux-review-round1.log",
+      "sha256": "fa621cea6fcfbf7cdd5dd088a831e8033e3827133db36f90e0747b05b76eb84a",
+      "bytes": 4366
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/ux-review-runtime-addendum.log",
+      "sha256": "47682fa020f824a8703bbebc3e60a84c57cda449ad9ccf1039d9fac884007cdc",
+      "bytes": 4602
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/ux-runtime-review-verification.json",
+      "sha256": "95cdf66fe13b03b0af9d65c0f7de0a2ba1fae73a8109069a7dbab023d28b512c",
+      "bytes": 610
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/whole-product-source-after.json",
+      "sha256": "d3375c9a027d3666090d59bf07b53e0628395e1fe056bb274a75a619c131c013",
+      "bytes": 1557442
+    },
+    {
+      "path": "docs/android-studio/evidence/module-presentation/whole-product-source-before.json",
+      "sha256": "d3375c9a027d3666090d59bf07b53e0628395e1fe056bb274a75a619c131c013",
+      "bytes": 1557442
+    }
+  ],
+  "portable_types": "JSON audit metadata and byte-exact raw/review logs only; no binaries/screenshots/runnable scripts",
+  "new_parity_credit": 0,
+  "final_metadata_audit": {
+    "path": "docs/android-studio/evidence/module-presentation/quality-review-final-metadata.log",
+    "sha256": "fc8c7068c02408b8fdc0a0bc8da93a64002a209bbf7dc669ecc0bf047de65c56",
+    "verdict": "PASS",
+    "scope": "Audited prior 41 entries; audit report is the additional 42nd retained entry and was owner hash-verified."
+  }
+}

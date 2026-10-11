@@ -1,0 +1,14 @@
+{
+  "command": [
+    "./script/clippy",
+    "--locked",
+    "-p",
+    "xtask"
+  ],
+  "started_utc": "2026-10-07T18:39:28.128396+00:00",
+  "wall_seconds": 19.567920771994977,
+  "exit_code": 0,
+  "peak_child_rss_kib": 1080444,
+  "measurement": "Linux RUSAGE_CHILDREN maxrss and monotonic wall time; full command including compilation for Cargo invocations",
+  "log": "/workspace/android-studio-artifacts/reference-census-next-task/xtask-clippy-68bfab0.log"
+}

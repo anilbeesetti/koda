@@ -1,0 +1,9 @@
+**PASS — design review only; no actionable gaps.**
+
+Reviewed proposal SHA: `5413ca6c1a9eeb0002a43bb00622cb303bb7a3c88170d4e39e13db58dbbe0dd1`, against source `739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec`.
+
+The design addresses both findings: one shared budget charges strings before allocation, and the header guard checks the expanded annotation prefix before copying. The bounded serializer rejects excessive writes before buffer growth and includes the trailing newline. Errors propagate before publication staging.
+
+The six proposed regression groups cover amplification, cumulative accounting, arithmetic and header boundaries, JSON expansion, buffer capacity and publication failure. Existing tests, fixtures, output compatibility and zero parity credit remain required.
+
+**The source performance verdict remains FAIL** until implementation and verification. This review authorizes no runtime or benchmark claim.

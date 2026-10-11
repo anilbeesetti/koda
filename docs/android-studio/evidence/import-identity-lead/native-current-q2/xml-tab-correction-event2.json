@@ -1,0 +1,18 @@
+{
+  "label": "settle-corrected-xml",
+  "command": [
+    "/workspace/cloud-environment/native/usr/bin/xdotool",
+    "sleep",
+    "0.4"
+  ],
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "actual_app_pid": 345903,
+  "window_id": 2097153,
+  "display": ":122",
+  "start_utc": "2026-10-08T03:59:22.320231+00:00",
+  "finish_utc": "2026-10-08T03:59:22.723052+00:00",
+  "elapsed_seconds": 0.40283124400593806,
+  "exit_code": 0,
+  "stdout": "",
+  "stderr": ""
+}

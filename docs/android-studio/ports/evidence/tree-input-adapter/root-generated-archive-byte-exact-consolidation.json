@@ -1,0 +1,56 @@
+{
+  "only_generated_cache_archive_storage_consolidated": true,
+  "all_original_archive_bytes_preserved": true,
+  "all_build_inputs_flags_and_source_untouched": true,
+  "atomic_hardlink_replacement_per_filesystem": true,
+  "existing_build_uses_atomic_archive_publish": true,
+  "files": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/build/android_tools-0fb6a17291efae4b/out/compose-preview.zip",
+      "bytes": 289704452,
+      "sha256": "ac08fa033ccf6c659106355703725cdd8aa4ad69f2bf2059158918e35e9d14a9",
+      "before_device": 27,
+      "before_inode": 1075087,
+      "before_links": 2,
+      "deduplicated": false
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/build/android_tools-3464d5024f3b5cfa/out/compose-preview.zip",
+      "bytes": 289704452,
+      "sha256": "6ba71a21d145c70ec45949aa600d4f74979f283caf39b18e812501d87052e04b",
+      "before_device": 27,
+      "before_inode": 1721239,
+      "before_links": 1,
+      "deduplicated": false
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/build/android_tools-577ae66163c01935/out/compose-preview.zip",
+      "bytes": 289704452,
+      "sha256": "ac08fa033ccf6c659106355703725cdd8aa4ad69f2bf2059158918e35e9d14a9",
+      "before_device": 27,
+      "before_inode": 1075087,
+      "before_links": 2,
+      "deduplicated": false
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/build/android_tools-bf3278b1c90fd1ab/out/compose-preview.zip",
+      "bytes": 289704452,
+      "sha256": "0cc74e3c4e86992bc673662be22f3ee594387bb17a882e490a75329746f5542e",
+      "before_device": 27,
+      "before_inode": 1077620,
+      "before_links": 1,
+      "deduplicated": false
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/build/android_tools-c2b682dc71378360/out/compose-preview.zip",
+      "bytes": 289704452,
+      "sha256": "ac08fa033ccf6c659106355703725cdd8aa4ad69f2bf2059158918e35e9d14a9",
+      "before_device": 33,
+      "before_inode": 77101,
+      "before_links": 2,
+      "deduplicated": false
+    }
+  ],
+  "replaced_duplicate_logical_bytes": 0,
+  "note": "Physical reclamation depends on former link count; same oldinode aliases are consolidated so only last deletion frees its blocks."
+}

@@ -1,0 +1,10 @@
+{
+  "worktree": "/workspace/android-studio-source-providers",
+  "new_task_branch": "android-studio-task/1-v2-artifact-facts",
+  "base_commit": "ac58815bb268d338bea40a31fff630734cd719f4",
+  "previous_completed_branch": "android-studio-task/1-assets-generation-facts",
+  "previous_commit_retained": "35c1ac7fa59c4fba680c2f1ae0cc4eb9a8ec9eac",
+  "previous_remote_verified_same_commit": true,
+  "reused_clean_completed_worktree_to_save_disk": true,
+  "main_and_protected_untouched": true
+}

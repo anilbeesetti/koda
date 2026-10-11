@@ -1,0 +1,33 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "source_snapshot_path": "/workspace/android-studio-artifacts/parallel-sync-integration/combined-whole-source-snapshot.json",
+  "source_snapshot_sha256": "1ee9fccb1197681f050c9c283763fd150e978b1eb0f7915cb8d15463774f1326",
+  "whole_source_files_verified": 4730,
+  "fixed_exclusions": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "original_fixture_files_verified": 12,
+  "fixture_or_profile_created": true,
+  "app_binding": "AwaitRoot actualnewELF/source/hash plus runtimelease",
+  "runtime_or_compiler_started": false,
+  "normal_current_library_receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/library-build-verified.json",
+  "fresh_decoder_probe_source_sha256": "0e6cb4ff731f9b228334e6dc19094d04b2e247dc1e93ebf709c0cbd7e6c1e5cc",
+  "probe_base_source_sha256": "5551985487b7e87f31963365ccf203f138de5f7bb4ebb2d5f4ca9d9b9a971dca",
+  "new_probe_assertion": "Invoke current Rust supports_parallel_sync on every captured SDK module; expect true for actual9.4/producer23 facts; no scheduler/performance claim",
+  "metadata_or_git_source_changes": false,
+  "previous_native_artifacts_preserved": true,
+  "recipe_syntax_verified": true,
+  "prepared_full_model_comparison": "Both complete current raw models includinggeneratedArtifacts decoded via freshSource4fb library, every sidecar value/list order equalsRustroundtrip; fullmodels compare2successful905 models plus7oldercompletelegacy projections after ONLY exactknown privateprojectprefix substitution",
+  "fixture_profile_setup_explicit_root_authorization": "preparation-authorized.json",
+  "new_actual_app_binding": "current-app-binding.json",
+  "normal_current_Rust_library": "current-library-read-only-verification.json",
+  "official_wrapper_preserved_byte_exact_with_fixture_only_forwarder": true,
+  "runtime_lease": "Not yet granted; recorder enforces lease-granted.json",
+  "readiness_updated_utc": "2026-10-08T00:44:57.190218+00:00"
+}

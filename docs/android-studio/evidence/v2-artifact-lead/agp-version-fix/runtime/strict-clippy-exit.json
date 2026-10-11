@@ -1,0 +1,14 @@
+{
+  "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "command": [
+    "./script/clippy",
+    "--locked",
+    "-p",
+    "android_tools"
+  ],
+  "tool_session": 39240,
+  "exit_code": 0,
+  "normal_repository_flags": true,
+  "raw_log_sha256": "264284fcbe2a929c356a17ea4281b3240985a4dfa515df4cc9222fda8a117df4",
+  "old_source_lint_not_used_as_corrected_source_credit": true
+}

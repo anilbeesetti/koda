@@ -1,0 +1,1088 @@
+{
+  "schema_version": 1,
+  "tested_source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "files": [
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/CI/ci-linux-workspace.log",
+      "bytes": 430953,
+      "sha256": "15a2ad1d1fe1b9a388d9e05d9309640573de2c80c2657e247c2bae4ce1338fe4"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/CI/ci-run-final.json",
+      "bytes": 6736,
+      "sha256": "e6bb76c00b0d84d7ec3682a0e8e25b64e900006f40cdb7ae3ab41511e35ee970"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/CI/ci-synthetic-merge-commit.json",
+      "bytes": 2672,
+      "sha256": "b96f8268b892db3b286337d7661f3980b66cd1fbffd334db80783904df8d9e83"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/CI/ci-verified-summary.json",
+      "bytes": 745,
+      "sha256": "2364ddba40e5e5d7716fd1fb78dace656336a3707a60e187c78372c402e45919"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/alias-preparation.json",
+      "bytes": 1083,
+      "sha256": "17230d4837f4a43c4f1ddf76bb95020b8218a24e876663111ed1f9559d1651de"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/app-build-retry-exit.json",
+      "bytes": 315,
+      "sha256": "b8b23e332646e93fb303c7171f7d03cff45cc815075898c7cea92c49b1682e20"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/app-build-retry.log",
+      "bytes": 17234,
+      "sha256": "9dff03dff942f7d45b35ec0896a2a03246456ff571ea5c7d678a1295c6ca0d5e"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/build-source-freshness.json",
+      "bytes": 974,
+      "sha256": "3e537cef807222812d7c9637b6edc062f829ee548fefd57b83ece244e0cc9b12"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/cc.rs.json",
+      "bytes": 4983,
+      "sha256": "589bf948f5ab441bfb860e016d1ab59f27e1fc7a23139147650960aa0bc66b19"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/guarded-app-build.py.json",
+      "bytes": 2710,
+      "sha256": "71bc2823728c368f57793dea1930a117301cb324829536e22586d56cd2348a3b"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/helper-compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/koda-parallel-sync-310075.json",
+      "bytes": 182477,
+      "sha256": "a655a0c39faf78f05c0363fdcf956f7a18f2bc4d99d7acd87ad6afae85217aa4"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/new-app-executable.json",
+      "bytes": 731,
+      "sha256": "cbf8f4b5b3429f79a28862a8ee2bdbf5a6147cd6316e75ee4b3bbf8bd8e2b3c9"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/preparation-scope.json",
+      "bytes": 1371,
+      "sha256": "16f2628ba25af1a474de73c2edcdee30a717076f806eb20e47c306ba1ff9bd7b"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/prepare-aliases.py.json",
+      "bytes": 3138,
+      "sha256": "01f796efa8f1ea8f2992788d580298ff257ee8db5936d90d0e116fb9c1f367df"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/probe-304281.json",
+      "bytes": 7967,
+      "sha256": "5e42a467b093a4a8f9dc34e626a2e16f40b9069c48986b22235e37317e0dc9fe"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/probe-compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/probe-stdout.log",
+      "bytes": 30,
+      "sha256": "09397da5e4ca42fcbaf16c84742601a70d34414c8b5322b8cb52bbfd7d1bbc2a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/probe-validation.json",
+      "bytes": 1067,
+      "sha256": "3fb8c4a31d62ba8a293d8fd08e5201f0da1b7bc5b77d2c6793caf92976e22c0b"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/probe.rs.json",
+      "bytes": 389,
+      "sha256": "44ee0c72c647a439587eaf97eaa0985427546c87c7253e74516fcf280cf37c99"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/quality-current-app-build.json",
+      "bytes": 2210,
+      "sha256": "e52a1f55c1669b5d0e3b0ee9313f61b98af06b52b75c95022622737aa85d6d8b"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/quality-current-app-build.md.json",
+      "bytes": 3054,
+      "sha256": "75ab3e8f04297340bbdc42fd554c71f3b390995e8f7d3e634824cefceb05e9ec"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/quality-runtime-probe.json",
+      "bytes": 2266,
+      "sha256": "b1639af8e0ba33cf1099e410a42bbae9aa5e18171f6037c4fc26f65847860898"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/quality-runtime-probe.md.json",
+      "bytes": 2310,
+      "sha256": "7212c2748cdec77917d72ca79fb5a6b46c9b794a511aac890e992a8651be8223"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/quality-static.json",
+      "bytes": 2835,
+      "sha256": "98a706fbb13aa5cc62b911c8f639a382dcf778a6c571fd7f15569994e27e844e"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/quality-static.md.json",
+      "bytes": 3360,
+      "sha256": "00658cb8742dca8b2a56c759899607c6f4f108947701e87f7e28b2267a2e657e"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/retry-app-build.py.json",
+      "bytes": 3773,
+      "sha256": "aba38e697c8a98624c2468ca64e7b3fa36b12ea47e008dad4caed11258e0f4d6"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/whole-product-guard-result.json",
+      "bytes": 220,
+      "sha256": "09b82cb5b8c5688cdd0991b614912f7d24274148a9774dd98226a7accc1c8601"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/app-build/whole-product-source-snapshot.json",
+      "bytes": 732711,
+      "sha256": "0e3ca3bd7e628076bc3b3f14f5749f15ee426284738751860e67132879dec670"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/all-features-tests-exit.json",
+      "bytes": 629,
+      "sha256": "c4140f6afd95db73b8d61aa17ae4a5c2a1191fb291fc488d01ea3b0c2e7d8d8b"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/all-features-tests-source-after.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/all-features-tests-source-before.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/all-features-tests-source-freshness.json",
+      "bytes": 2504,
+      "sha256": "2f56db7d7ade9ca62dcbc6a537e88308e36378e5acae37d091ac3f3e82291ada"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/all-features-tests.log",
+      "bytes": 162039,
+      "sha256": "88c4bc56be2f85a0bc3c0b54c08cfa866b1df3a1fe5a386e73702a51de4bde25"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/close-component-validation.first-attempt.py.json",
+      "bytes": 9441,
+      "sha256": "1938463e0966ad683a0472c48bb0c63e3cf4f426279a80f85eea1340e7c4a694"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/close-component-validation.py.json",
+      "bytes": 9643,
+      "sha256": "8a76108240ac539aae8f979f4d72832e44fed892feab8c59ca3b423c9c7989a8"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/closure-first-attempt-failure.json",
+      "bytes": 621,
+      "sha256": "4497e3b55bcba355dafb0ec1f611509473dfafb7be8a4debb0ce505389ff8fde"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/completed-prior-251-unit-ELF-retirement.json",
+      "bytes": 19415,
+      "sha256": "e34e75ea0650f18e76311e41e667234acfecf3cf57839e3422b9d8cba69aa04a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/component-validation-closure.json",
+      "bytes": 48229,
+      "sha256": "bbfe330911e46b7ea91c5826f4a8a8000f35c7e6be63adb551f929d50c134e05"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/owned-failed-unit-object-retirement.json",
+      "bytes": 19260,
+      "sha256": "f58a6c36a8c2ffb4cebaa3c566188968d73d305d728de222a3a6d7c832c78aef"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/quality-ui-component-closure.json",
+      "bytes": 3875,
+      "sha256": "bae0a2f91847e94a8c64b2223dd87c3cfd0a247243cbfa5b441dcaf81f4501cb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/quality-ui-component-closure.md.json",
+      "bytes": 3697,
+      "sha256": "386d54f90be32fe46133a16fcc2afdf91668af85180fc550433b436d78ddec40"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retire-prior-unit.py.json",
+      "bytes": 5657,
+      "sha256": "e0916fb39da9c289e227af23018dac41e545b79f9854d32eec6b8ea429808384"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retirement-preparation-first-attempt-failure.json",
+      "bytes": 860,
+      "sha256": "8372f281b276c1a4adf2093c8d9f7741663df58ba69246df41e03ac3b94a573f"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retirement-status-source-supplement.json",
+      "bytes": 28010,
+      "sha256": "155f3e105983aae53266be20f987834ec5d096f46734fc11850cb55ab6fc05ee"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/all-features-tests-exit.json",
+      "bytes": 657,
+      "sha256": "1e7e69822d05935035a1b8a79ef47a675305643aaed835925f3719d3100beabd"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/all-features-tests-source-after.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/all-features-tests-source-before.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/all-features-tests-source-freshness.json",
+      "bytes": 2504,
+      "sha256": "42e786171bf4df629f4ac61fe2b9cb3860fff21720c1d0f064304aa79cd51a85"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/all-features-tests-verified.json",
+      "bytes": 16602,
+      "sha256": "a842b9a4a3053a0923a3483aa16ac1a44a06d8b98ad5d80ca80480fdba97be41"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/all-features-tests.log",
+      "bytes": 176741,
+      "sha256": "8dc03d1c16198c0b7a4aa62802e8b78541822a7fe87ee4f33fe9b22c8d0e954b"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/format-check-exit.json",
+      "bytes": 564,
+      "sha256": "789d898e5396344e28ff1e1377e792c10cd7d3cc6bee096d3817f0ed15090bae"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/format-check-source-after.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/format-check-source-before.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/format-check-verified.json",
+      "bytes": 564,
+      "sha256": "789d898e5396344e28ff1e1377e792c10cd7d3cc6bee096d3817f0ed15090bae"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/format-check.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/library-build-exit.json",
+      "bytes": 627,
+      "sha256": "5e05eeaa80f861641e9ca57c94d4bdfd27c3e7bbf80584499d8f78ee3a2056ea"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/library-build-source-after.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/library-build-source-before.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/library-build-source-freshness.json",
+      "bytes": 2504,
+      "sha256": "363c42701904337051a77ca2ad4589da4f9d9657626bdfbdd20d0ed935353c5a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/library-build-verified.json",
+      "bytes": 2929,
+      "sha256": "96019693a96e08040011ee182c8ef1b35acc7444928e655548567d422654c602"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/library-build.log",
+      "bytes": 145270,
+      "sha256": "6c292e8fe6938eae4afefe19417847d595b327a23c5f883191d2d3121014de4c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/retry-preparation.json",
+      "bytes": 951,
+      "sha256": "fa4c6c62587e323f658b3d3b7be7e069a6a3193405af7129a4e9ad8b0085cf2e"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/run-checks.py.json",
+      "bytes": 9357,
+      "sha256": "f4d82d4d4aee7bff961011e92adf0a12eb44e9b5c70ff4d9587262b326be3fe9"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/strict-clippy-exit.json",
+      "bytes": 573,
+      "sha256": "cf1040d4652a388d247c5ecb790e5c879ab531b1869567858b756f1e952561bd"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/strict-clippy-source-after.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/strict-clippy-source-before.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/strict-clippy-verified.json",
+      "bytes": 573,
+      "sha256": "cf1040d4652a388d247c5ecb790e5c879ab531b1869567858b756f1e952561bd"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/strict-clippy.log",
+      "bytes": 320,
+      "sha256": "7c4b66f8ebba0d155987e8ac056294d589166bee2ea24a4d6d10953fe823b9dc"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/retry1/whole-source-static-guard.json",
+      "bytes": 553194,
+      "sha256": "1ee9fccb1197681f050c9c283763fd150e978b1eb0f7915cb8d15463774f1326"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/run-checks.py.json",
+      "bytes": 9223,
+      "sha256": "7a91ae511e4898000c18b59327e41e538dbc0446202073e226a2a167b419c0ad"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/run-ui-default.py.json",
+      "bytes": 5587,
+      "sha256": "d76cfa222d8decabf557591c8645bf5302d2e9095563c444923cc5e05d0e6ee0"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/runner-preparation.json",
+      "bytes": 1062,
+      "sha256": "d2844eeb975d717041e148fcf2a62b267b03a4be2a13c42ecb3e090610df378c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/ui-full-default-suite-exit.json",
+      "bytes": 650,
+      "sha256": "49278426b5783992924a9d0d6a54111c4dcd5317c9ec962058ba3f1702d511ba"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/ui-full-default-suite-source-after.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/ui-full-default-suite-source-before.json",
+      "bytes": 1643911,
+      "sha256": "fae18f078b73250afc5dc7291741ac3e313980c9075b481213381d7369f5aaeb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/ui-full-default-suite-source-freshness.json",
+      "bytes": 606,
+      "sha256": "c2e6682487dd25019240da5e7789edbf3847680e836bf57b928790618c47ae44"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/ui-full-default-suite-verified.json",
+      "bytes": 2053,
+      "sha256": "619d88e1ef4921fa9f093f2a3824d0da7a3159659cd912446eea724eed67582c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/ui-full-default-suite.log",
+      "bytes": 790665,
+      "sha256": "f1d900298b7cd14ec30cce63458e34738809b44fa6006b777b26b677a64235ac"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/runtime/whole-source-static-guard.json",
+      "bytes": 553194,
+      "sha256": "1ee9fccb1197681f050c9c283763fd150e978b1eb0f7915cb8d15463774f1326"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/android-tools-parallel-unit-298321.json",
+      "bytes": 17935,
+      "sha256": "3238b96ffe921f49570ed956fda8871db89050edcca7ae80df336c25ef3b5c88"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/cc.rs.json",
+      "bytes": 5001,
+      "sha256": "296a3ac9fbd1d3f4e5b3c7d886b3f257807f312837f344686d66b018cfce3762"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/current-unit-link-validation.json",
+      "bytes": 2212,
+      "sha256": "400723f79cc323f268fde618be6fd01f53af0738edfb57a95a52e5cfa463f5fb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/helper-build-exit.json",
+      "bytes": 479,
+      "sha256": "98228439926d70e69804ff16ecc963e1d1140bc5c03d5298a33cfd52526a87e3"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/helper-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/preparation-scope.json",
+      "bytes": 2255,
+      "sha256": "37510ff96affe9c8e5a9adfcb9b2588571dc8e2fa85557423219610d16bc5715"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/probe-297687.json",
+      "bytes": 7967,
+      "sha256": "f64e82edeafba7e7110e97ad77d9327de731ede551f367d1bb0cc41290d93de3"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/probe-build-exit.json",
+      "bytes": 590,
+      "sha256": "f9d943f2ee8ca8b72ddcf51310578a899175ba179e49ea16b0c7c847e6dcf83a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/probe-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/probe-runtime-exit.json",
+      "bytes": 361,
+      "sha256": "ef2c4e9aee90cafdf1568c95578befc546238e81697942c39b0f4b2b2c05f7bc"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/probe-runtime.log",
+      "bytes": 30,
+      "sha256": "09397da5e4ca42fcbaf16c84742601a70d34414c8b5322b8cb52bbfd7d1bbc2a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/probe-source-before.json",
+      "bytes": 142,
+      "sha256": "2011570b5c51b5cee3af66d116c72b12512a128515f333fd008351cbbb5dd4d4"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/probe-validation.json",
+      "bytes": 2698,
+      "sha256": "8f47bd8ff13bdfff7329afef5c4e3aeed8052b35ef7ed06819b71036dad63907"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/probe.rs.json",
+      "bytes": 389,
+      "sha256": "904c9be61553610d7609529cf5218c7f4f9ab646fcc6b6ff5d21f17a2a0291aa"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/quality-runtime-probe.json",
+      "bytes": 2064,
+      "sha256": "37b6d6a405070d1c7232b5b55c030692bec53245555747dd93dc6a8be2b4fc31"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/quality-runtime-probe.md.json",
+      "bytes": 2660,
+      "sha256": "ac8a6f12dadae34b5edaf66a50432551c7ff5f63346ed64dcbda147925f3bbf8"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/quality-static.json",
+      "bytes": 2835,
+      "sha256": "87fbfa591ef9fd538590134e58f2b0ef08e2215b03bf3b6204d38956150dc056"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/quality-static.md.json",
+      "bytes": 2807,
+      "sha256": "2034480220e04a7f9e7e221ddba94b082f49b405d85d6afb902f52109840e363"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/quality-unit-build.json",
+      "bytes": 4505,
+      "sha256": "6b3adfaa3b51fee584aca333f2c44dd408e957783e7182e3a8a7846e2ad271e4"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/component/unit-link/quality-unit-build.md.json",
+      "bytes": 3367,
+      "sha256": "40ef0a32e1ec2817a3f9fe087e0d5979e6af7be866504a545fda70de9bdaa091"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/final-lead-summary.json",
+      "bytes": 32597,
+      "sha256": "e38a3b9f4142cc5aaf644c8f87d7373470298fec43961cd9956aad0b2feea405"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/history/owner-port-metadata.json",
+      "bytes": 4956,
+      "sha256": "9dec5863d082e232ad23f7693e76f4cde89525fba2a0470d6bb679a3943f61e7"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/history/owner-task-report.json",
+      "bytes": 5334,
+      "sha256": "d6b6912910ced244ff866d57a25aeb41f4f1d2c81cef451c9977f457c16616f3"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/archive-planning-checkouts-initial-no-local-main.py.json",
+      "bytes": 4251,
+      "sha256": "6ad457b8ad7afbdf33353989e083734b1a3e9f4cd2ab73ad2d77dbe4bfc8ce60"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/archive-planning-checkouts-review.json",
+      "bytes": 3528,
+      "sha256": "9ae843c8e4a2c9c9239c762f3875ba5cbd48691f304df938aa10c8cd78d860e0"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/archive-planning-checkouts-review.md.json",
+      "bytes": 3176,
+      "sha256": "c77f6c4ac4bb399c3210f25b1115cbbb97a39b30c0cb3557f249ae6ec63d95ba"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/archive-planning-checkouts.log",
+      "bytes": 200,
+      "sha256": "d90409d58d79e97742e2e45931dcafee5eaf7cbc2da72e43f4548c6e5e1c9b28"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/archive-planning-checkouts.py.json",
+      "bytes": 4249,
+      "sha256": "3bbe225ccfe74dd082a1f99f6379b26ce6f022fd53adad2a4f6704ed966d51f4"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/archived-planning-checkouts.json",
+      "bytes": 1050660,
+      "sha256": "fb754b5c1c3d8777960cb685a634da6aa7543b3f2e09321d4febb1f2d9184664"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/final-portable-quality-preflight.json",
+      "bytes": 4474,
+      "sha256": "64a6eadafb80f89893d74304f81b8df8e64204cf9b8cdef8108924c5c5604226"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/final-portable-quality-preflight.md.json",
+      "bytes": 7504,
+      "sha256": "49d66df649e4c3b56939366c2f75c33903a91e2146bc205718d28140a66c2f75"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/lead-visual-inspection.json",
+      "bytes": 2254,
+      "sha256": "d810af8c0c1bc2c4db63f360dde7e8050fb969d315893aff807a6ea2ccd237ff"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/previous-p1-app-ELF-retirement-review.json",
+      "bytes": 2640,
+      "sha256": "f16253f331ed955a72a58b70b9189d5da26541aa6f23e04b0b787bec22ec72ff"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/previous-p1-app-ELF-retirement-review.md.json",
+      "bytes": 3120,
+      "sha256": "7dbbc386a19e3fa50d2f8e38981d1f974386a735f9347e3f27107bb6f042389c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/previous-p1-app-ELF-retirement.json",
+      "bytes": 22487,
+      "sha256": "411f0142593e5600e969af5b1f14eaee4b9b829766fed7670a0f91d6883b3408"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/previous-p1-app-ELF-retirement.log",
+      "bytes": 247,
+      "sha256": "6333b2238d51e9a916506d437bfbba30f13e7234b8fb4aff661cb0f42a9df9c6"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/lead-reviews-and-history/retire-completed-p1-app.py.json",
+      "bytes": 6335,
+      "sha256": "2062f0d90a93c31094e583c965dab52b42bc872cee1463bf4951af61d94cc693"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/artifact-manifest.json",
+      "bytes": 136432,
+      "sha256": "ca258cdf7b9a4f802daece0955e8877dccfe568877e854bc3404155843b957cb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/capture-gradle.py.json",
+      "bytes": 2285,
+      "sha256": "eac291658aefee8d32e85221b0e419f716a945147091b5e865aa0061e95a02cc"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/build-sidebar-restored.png.json",
+      "bytes": 150475,
+      "sha256": "a7a9d606f10f25892b3f8397f267060bc479f8b8acbd891205f4bc9b946de153"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/editor-gradle-tab.png.json",
+      "bytes": 279402,
+      "sha256": "74bbb881e9013477ec79ac76036a089b81633ed0f4272f5ca3fc6c1d932c7f61"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/editor-xml-restored.png.json",
+      "bytes": 151984,
+      "sha256": "bbeeafbc7f4e4ded40de42c98a0b41807bf1362d57f84ac698b480620cefa1f4"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/hide-return.png.json",
+      "bytes": 88615,
+      "sha256": "5e1c98ac6d84ff031a5c01341c9c4c8f9a529b65d1da98158b469d45c0597601"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/narrow-output-focus.png.json",
+      "bytes": 43043,
+      "sha256": "28e23acff762027b7f4ab281ec71f07d28ccc1d5f4d8972ce19ba98ac0acf2f2"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/narrow-output-selected.png.json",
+      "bytes": 41902,
+      "sha256": "5b57d66930b78c45dbd7fbd8bd38c27a4d3646633637d2c6d126985039644b6d"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/narrow-reverse-sync-focus.png.json",
+      "bytes": 42029,
+      "sha256": "82412a1322f574cf4d996777d3188de2e6ffa662ddc5c5b6534b59d42d9d3b80"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/narrow-sync-restored.png.json",
+      "bytes": 43200,
+      "sha256": "3eb54566a59fbd1b94f8f35a0f284f6246c91ba7f8e1bec9b7b0ea88dc6afc97"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/narrow-sync.png.json",
+      "bytes": 43291,
+      "sha256": "b6b25e8af32eea38876771b81328dfecaa99b62973e179fee7a029ca10958e06"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/sync1-loading.png.json",
+      "bytes": 116809,
+      "sha256": "3f519c2c73d69c8c8ac822f3b3454ed4f1db25485f70adb798dc4b3be08b996a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/sync1-settled.png.json",
+      "bytes": 155506,
+      "sha256": "9b40892db1b6a841f5f62ca38586d7c4777267de878f51449ac5d39cde94ca60"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/sync2-loading.png.json",
+      "bytes": 124125,
+      "sha256": "0de605e685320b8c749d3b585916ede51189ee8c0bea2c4a8f60a75cd95aec95"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/sync2-settled.png.json",
+      "bytes": 156478,
+      "sha256": "f332d04dc7e5c65954407d04863347971836125c0ad591cebd7c4a16f53b4e7c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/trust-prompt.png.json",
+      "bytes": 116956,
+      "sha256": "8528360831fd03a3787a667c36f3b95d1637276af6d835389b896a91bcc27b81"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/wide-hide-focus.png.json",
+      "bytes": 150468,
+      "sha256": "1b74018e70d2aa661041cdc274070132e475115f0edaff987b20d70ce97c6e18"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/wide-output-focus.png.json",
+      "bytes": 156074,
+      "sha256": "5eb27e3b3f265d983e744a9b1b2444285eeaf8f8c7e05acae378768d25abd4cd"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/captures/wide-output-selected.png.json",
+      "bytes": 98576,
+      "sha256": "b8b4bf33023eccbc9bafb3445044e5b1e56cb8faacf1fad43a2dc503790d48ce"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/cleanup-receipt.json",
+      "bytes": 246,
+      "sha256": "eae6af56b2be390f53ab43c0abdac360a510112a05b7fcac7b9eed9d757cd3e7"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/current-app-binding.json",
+      "bytes": 618,
+      "sha256": "17b7401ba1dfe3860ba4c5dda70d07d3b363236d018fe6f286d0061a2d19facf"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/current-decoder-build-proof.json",
+      "bytes": 1275,
+      "sha256": "b73b74504c8b76177b5af7165d4030e46207a8a838dad8ddcd62ccd0acb6ab0d"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/current-library-read-only-verification.json",
+      "bytes": 453,
+      "sha256": "97cdb691b46b472d2b80760e76028143ac70dae2db248133c2e06da73f8817fd"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/current-parallel-capability-proof.json",
+      "bytes": 5655,
+      "sha256": "edee7cd343446c4c6f9edd039e5b8b029fc81a7f5fda9946a913d4a1b23c5222"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/decoder-build.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/decoder-record1-result.json",
+      "bytes": 625,
+      "sha256": "884951e168e3d1fe86eddcf613c5f95c2ba06eebebdfc2050fae20c152a307a1"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/decoder-record1-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/decoder-record1.log",
+      "bytes": 13518,
+      "sha256": "47ab79b91d4ef40240dbc2a81a6a1d9d870a3b7d89f34eb77f623f69c087f2bb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/decoder-record2-result.json",
+      "bytes": 624,
+      "sha256": "3d2bc64e0b4a7a71f1bdc6ec23783813f16e797426861dbb8540ae2c5b9c2f82"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/decoder-record2-stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/decoder-record2.log",
+      "bytes": 13518,
+      "sha256": "47ab79b91d4ef40240dbc2a81a6a1d9d870a3b7d89f34eb77f623f69c087f2bb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/events.jsonl.jsonl.log",
+      "bytes": 49829,
+      "sha256": "fbefc5f36c22e639c83a3b9459d0c25e2ac0de349fbc1b08b887187154081986"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/events.py.json",
+      "bytes": 4224,
+      "sha256": "3d6edfe70469ee2f9ba7a2bc0a9442f28d101f3911441c41db4494cedd85c402"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/final-closure-and-guard.json",
+      "bytes": 1030,
+      "sha256": "76822dc0191fc6c01993162b5146d9971443bcd01a62f402e8db4bd98ed79c6e"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/final-verification.log",
+      "bytes": 607,
+      "sha256": "531493925a49f7ef329fa47cdcc5ed3d859f0802a458acdb10d69ff1b6d64fbb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/finalize-proof.py.json",
+      "bytes": 11442,
+      "sha256": "af383c1bb276bda669b239fe4fbec568246b1caa698fecab5ae8ee3c610a06cb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/README.md.json",
+      "bytes": 2511,
+      "sha256": "2d1018e95a9150e82f902b7002458b654b008cb7061996a9fe218b89de67d0e2"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/app/build.gradle.json",
+      "bytes": 2489,
+      "sha256": "4a57f3190835b83d4d54d8c2af4803379034b7fa6292e148bfc8082e3a07f9fa"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/app/custom-manifest/AndroidManifest.xml.json",
+      "bytes": 487,
+      "sha256": "b8fe06a5c3e339c2bc9f86f5666759375f834f2a46180a6653b2ccec09ecc2e6"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/app/flavor-assets/demo.txt.json",
+      "bytes": 346,
+      "sha256": "0d7997f88b1f9e887183a24ca5ffef2ace91e714bd7d5e041393394eda607c44"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/app/main/resources/resources.properties.json",
+      "bytes": 376,
+      "sha256": "6554e67e3e78336711a97a16e4f26fa22e36a847ab49e372bceede9628a0b225"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/app/provider-res/layout/sample.xml.json",
+      "bytes": 498,
+      "sha256": "cd7678418d4bc50f3016312fbf007b5ff200acbaff83e398e86999e8ecfe522a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/app/unrelated-assets/sample.txt.json",
+      "bytes": 363,
+      "sha256": "0f48932a29fed8b57372ce3bef882cda10b420b4c31d69327f96abc9e7678401"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/build.gradle.json",
+      "bytes": 516,
+      "sha256": "2fb7e39b0b94ef0e0c1efb9757142b05fa5e119f46584d213faf9386c8100948"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/gradle/wrapper/gradle-wrapper.jar.json",
+      "bytes": 64963,
+      "sha256": "02fb91b821a45e3e79999677cc166b1753a51bbcdf0db246f184d46936397af6"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/gradle/wrapper/gradle-wrapper.properties.json",
+      "bytes": 728,
+      "sha256": "7981af43776b98719a63f1d122b2a1b87a206088696a42d2f4476a1414847524"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/gradle.properties.json",
+      "bytes": 406,
+      "sha256": "bf3a426b6b7864fad251809e01d68f26af18a5c355c6ed5cc412b6c04219ffd4"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/gradlew.json",
+      "bytes": 440,
+      "sha256": "98d4f311a413031ed25667a4956eefc7b4a635ef647c9df88371aa874ad62514"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/local.properties.json",
+      "bytes": 373,
+      "sha256": "7e53fa7ee2bae743c74435c4fa06becea4f21fa8a822aa6402a0209a885fb80d"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/model.json",
+      "bytes": 54329,
+      "sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/provenance.json",
+      "bytes": 3206,
+      "sha256": "73879ce3d81ef14bc4fd091a986f1ca785633ed35388dedc7e69ce43a0c39620"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/generation-project/settings.gradle.json",
+      "bytes": 382,
+      "sha256": "57fc199eb8de20609ce22e432e98c7bdec5e34f82ffcb6b5e0225007d8d1434b"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/gradle-finish-1791420436306220523-310940.json",
+      "bytes": 1173,
+      "sha256": "ca1325c64ed1cfd6037f49ecf9cc373600f6e73898805dd337b7353150607b45"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/gradle-finish-1791420497291462093-311160.json",
+      "bytes": 1173,
+      "sha256": "c95ea7396002057f2db4ce565a7ded895cccc44a6714b361ed06fbf943929fff"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/gradle-start-1791420436306220523-310940.json",
+      "bytes": 1010,
+      "sha256": "9471ff0ea758e8932e3e7d4fec3c6c46475f3afeccd0ab4089f71790977a121f"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/gradle-start-1791420497291462093-311160.json",
+      "bytes": 1010,
+      "sha256": "9d68c14a123e2ab1b127652056ec7bd3e5c1746b01f24faf6a3670197386a59a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/guard.py.json",
+      "bytes": 2536,
+      "sha256": "601f65add1d1df2338f6c02abd772f0eaaf71351819bb5e5c417aec94a7164ae"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/input-replay-plan.json",
+      "bytes": 12343,
+      "sha256": "1200f28c64278a8c39c90eb6f795126842b79a74ecc9ffc64ae5dcfb35f039f2"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/jdk-version.log",
+      "bytes": 381,
+      "sha256": "6a92cfe4f307247e58adea2dca434a8767a115a9c58aa6d8d76a8fb088c2f03f"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/launch-request.json",
+      "bytes": 1035,
+      "sha256": "97f2f62e689ae3f75fcbb5b990c302b57dbfc420d6ec235bf8347d60bb0da966"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/launcher-pty.log",
+      "bytes": 754,
+      "sha256": "2c9c5138e6b565751e26a6a6367cc1fdbcfcd5858e350f7cb9a88d301008f014"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/lease-granted.json",
+      "bytes": 1124,
+      "sha256": "babe90d645c6af30dd32dcbf7a06e0b70ac8033090daf40172f29ac9cb8a9547"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/lease-released.json",
+      "bytes": 513,
+      "sha256": "726db77f573585fbf69d00b844922a8f926027656b078237bad5908583b96f93"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/model-verification.log",
+      "bytes": 1165,
+      "sha256": "814227d943266f85ab8ee04684488a9939e2042f700852b4705d8d7d1d6b6b74"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/native-model-complete1.json",
+      "bytes": 72952,
+      "sha256": "7302a1f63349dadc210998fafe90498b6036c0bc96bc605d9ec3de6255f30f21"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/native-model-complete2.json",
+      "bytes": 72952,
+      "sha256": "7302a1f63349dadc210998fafe90498b6036c0bc96bc605d9ec3de6255f30f21"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/native-model-proof.json",
+      "bytes": 3831,
+      "sha256": "acf1b958954fea949fe122747766f80135f2fdff93a55d869ca17f6e81f0bc50"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/native-model-record1.log",
+      "bytes": 72979,
+      "sha256": "1ec17fdcf1776ebe3600f29f7828ced42d2587dd96a139c518a870ec1904016d"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/native-model-record2.log",
+      "bytes": 72979,
+      "sha256": "1ec17fdcf1776ebe3600f29f7828ced42d2587dd96a139c518a870ec1904016d"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/native-sync-export-1791420436306220523-310940.gradle.json",
+      "bytes": 33679,
+      "sha256": "1055dffef346cdc91a00ab52e0e1ead348bd6f83cd45f22ec7de948c8b0a849c"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/native-sync-export-1791420497291462093-311160.gradle.json",
+      "bytes": 33679,
+      "sha256": "3552e8e9a0aaf8321785211f20822e9c3e74e4f20c2143677c6110fe13b70d97"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/native-sync-stdout-1791420436306220523-310940.log",
+      "bytes": 73743,
+      "sha256": "33465d7bab991421a34d26285596c4ed2dd6d37b43faf5536dd7328e509212ed"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/native-sync-stdout-1791420497291462093-311160.log",
+      "bytes": 73779,
+      "sha256": "6bdd670dd51bf29167c08145426b0a0d05ac618df0582baa4be30b47186690f5"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/native-sync-stdout.log",
+      "bytes": 147522,
+      "sha256": "13bacfb6606f3ca6b2b4b3ce3655b7c803e1228d703211047079abe9b54dd693"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/package-evidence.py.json",
+      "bytes": 3174,
+      "sha256": "9420c4a2279bc143d385093e5629a37c310bb85f364199c78ed7ecadb4715e2a"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/packaging-source-guard.log",
+      "bytes": 510,
+      "sha256": "d73e67aa36160c29b3497efbaec10cdd670c891e13e431fa4be726f77ce826a7"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/packaging-verification.json",
+      "bytes": 2136,
+      "sha256": "21d71f2c5da265c3fa74fce4d387a99d18b8018abee4bcfc1c3251281dfaa8bb"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/preparation-authorized.json",
+      "bytes": 1225,
+      "sha256": "93e3cee95965febfabfa5b78b01953b293311a1f71a15d24402fe47949635962"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/preparation-proof.json",
+      "bytes": 3767,
+      "sha256": "251e0c242906febb07db1b5ed624db1145ae1cbfc3282e489c0bca17215c8584"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/prepare.py.json",
+      "bytes": 5392,
+      "sha256": "7a6a79a48c1183776cbfd56ab0238d35d34400454dea14df159ecf8426981a31"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/readiness.json",
+      "bytes": 2303,
+      "sha256": "2a677a76188d752188f84f84c34bebe3f746c7ebb01794bc400dd50eb3b9a5d4"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/report-format-proof.json",
+      "bytes": 1035,
+      "sha256": "5a44093c8965b6337c7b375bdd7909839eceaaafc2f94eb08f936684335ac64d"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/report-prettier-1.log",
+      "bytes": 76,
+      "sha256": "5fac767cceaa012d67a7f8086309c3ff9b46701d3b292d3c0c7730bd7e01e4a0"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/report-prettier-2.log",
+      "bytes": 66,
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/review-report.md.json",
+      "bytes": 9528,
+      "sha256": "4640dfc53a1ef6494934dbf0041919634bb84836f56a91433dc8c2ca8510d7ac"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/runtime-probe.rs.json",
+      "bytes": 10432,
+      "sha256": "1e9446b9f61c24673b2dfccab3da143595f4bba0ce94d160be62551627bfbb46"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/runtime-proof.json",
+      "bytes": 16050,
+      "sha256": "7829ce541f287b5da34b2bfbb88078b0f004bd5f2382bdbd934ba18fd7148799"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/session-binding.json",
+      "bytes": 740,
+      "sha256": "c5bf700e12bed54613b6a715fca273e954875258d9b0734326981a31b4821dab"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/stop-owned-app.log",
+      "bytes": 578,
+      "sha256": "63202061432bae8b79033b301e9eb025b0d2c750c3ccbb00d652236332d002e7"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/stop-owned-app.py.json",
+      "bytes": 2305,
+      "sha256": "b8733dc30949eb56c6b8fb226b7fec451cba6fbe340844df511cf45f0d75a595"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/stop-request.json",
+      "bytes": 1675,
+      "sha256": "884aec2d069cb515857ad16aa35c573a0a354120741c7f0e84aa21863f24471e"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/native/verify-models.py.json",
+      "bytes": 4896,
+      "sha256": "2902eac81ba2d5edfc03e04b494182cca0e259446bfe032a851899dd182dff29"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/packaging-recipe/actual-schema-reconciliation.diff.json",
+      "bytes": 11336,
+      "sha256": "3fc76691b5f92a00833fe4f0441d68a76c04f72b311717f2b641197cae5d23b3"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/packaging-recipe/actual-schema-reconciliation.json",
+      "bytes": 934,
+      "sha256": "e8a38bbc9820a2ea07c818032b6e4b79d77254c2196330419d42730722001f67"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/packaging-recipe/package-final-lead.pre-actual-schema.py.json",
+      "bytes": 26643,
+      "sha256": "68604d97def1656000c49c14def97a7f2bc5d51061b689cefe505da6d7bfecfd"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/packaging-recipe/package-final-lead.py.json",
+      "bytes": 30495,
+      "sha256": "4307d91a9646c0632234f4cad3f3ddb9bcb8be6ba60ecce1df4b9762f46d1db0"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/reviews/quality-exact-reference-retirements.json",
+      "bytes": 3998,
+      "sha256": "96fe561105ffff2fb6012e6a0f037199a1b5890bc355f9d4cdc5123a75b53ed7"
+    },
+    {
+      "path": "docs/android-studio/evidence/parallel-sync-policy-lead/reviews/quality-exact-reference-retirements.md.json",
+      "bytes": 4313,
+      "sha256": "65fbdd7161acf2ff94d49ea2104d4f85582654142d0ed1d41bd54696d2cb5835"
+    }
+  ],
+  "files_count": 215,
+  "total_bytes": 28112051,
+  "raw_or_reversible_evidence_byte_exact": true,
+  "exact133_existing_manifest_unchanged": true,
+  "current_original_reference_credit": 1,
+  "global_census_complete": false,
+  "self_excluded": true
+}

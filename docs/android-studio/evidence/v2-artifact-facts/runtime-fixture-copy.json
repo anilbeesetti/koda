@@ -1,0 +1,32 @@
+{
+  "source": "/workspace/android-studio-artifacts/evaluated-capabilities-preflight-ac588/project",
+  "target": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project",
+  "sourceHashes": {
+    "README.md": "1cb9b07ab2aa3329998d7ff24de213f1830d2529b2c27024c00dbcec8cf6bd03",
+    "model.json": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+    "gradle.properties": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2",
+    "local.properties": "00c76c7994130b465695145ca6d2e144002d7b1afb594b3d2f715c7643eb87da",
+    "settings.gradle": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c",
+    "provenance.json": "73879ce3d81ef14bc4fd091a986f1ca785633ed35388dedc7e69ce43a0c39620",
+    "build.gradle": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2",
+    "app/build.gradle": "a674c878198cf34cb6dddfe0452da1aa1c890127ec2284836a9d4f10791f52ce",
+    "app/flavor-assets/demo.txt": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd",
+    "app/custom-manifest/AndroidManifest.xml": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e",
+    "app/unrelated-assets/sample.txt": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950",
+    "app/main/resources/resources.properties": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c",
+    "app/provider-res/layout/sample.xml": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208"
+  },
+  "copiedUnchanged": true,
+  "exclude": [
+    ".gradle",
+    ".koda",
+    ".kotlin",
+    ".zed",
+    "build",
+    "generated-outside-build",
+    "outside-build-generated-res"
+  ],
+  "supplementaryOnly": true,
+  "originalReferenceRuntimeTestCredit": 0,
+  "sdkRuntimeExecuted": false
+}

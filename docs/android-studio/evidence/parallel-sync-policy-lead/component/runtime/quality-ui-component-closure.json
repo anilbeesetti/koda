@@ -1,0 +1,69 @@
+{
+  "verdict": "PASS",
+  "scope": "Read-only combined current UI default suite and five component gate evidence closure; no native/full-app completion credit",
+  "reviewed_at_utc": "2026-10-08T00:14:36.405989+00:00",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "closure_sha256": "bbfe330911e46b7ea91c5826f4a8a8000f35c7e6be63adb551f929d50c134e05",
+  "ui_verified_receipt_sha256": "619d88e1ef4921fa9f093f2a3824d0da7a3159659cd912446eea724eed67582c",
+  "ui_raw_log_sha256": "f1d900298b7cd14ec30cce63458e34738809b44fa6006b777b26b677a64235ac",
+  "ui_passed": 125,
+  "ui_failed": 0,
+  "ui_preexisting_ignored": 1,
+  "ui_filtered": 0,
+  "ui_native_ignore_source_whole_file_byte_identical_to_main30fca99": true,
+  "android_preview_whole_file_sha256": "cd9eed2163f8aac4945e07fdcebc379413b4fec58b9f7b4a7f214c268c517be5",
+  "normal_ui_linker_no_output_helper": true,
+  "fresh_current_absolute_ui_source": "/workspace/android-studio-parallel-sync-policy/crates/android_ui/src/android_ui.rs",
+  "ui_ELF_bytes": 451815736,
+  "ui_ELF_sha256": "ff714b206f2f4c062680f85ada3714812ee21b1bd36c4f0b4830fa9d58450b1a",
+  "current_ELF_status": "Current regular ELF bytes, signature, size and hash independently match at-execution binding",
+  "component_gate_bindings": [
+    {
+      "receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/all-features-tests-verified.json",
+      "receipt_sha256": "a842b9a4a3053a0923a3483aa16ac1a44a06d8b98ad5d80ca80480fdba97be41",
+      "raw_log_sha256": "8dc03d1c16198c0b7a4aa62802e8b78541822a7fe87ee4f33fe9b22c8d0e954b",
+      "exit_code": 0
+    },
+    {
+      "receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/library-build-verified.json",
+      "receipt_sha256": "96019693a96e08040011ee182c8ef1b35acc7444928e655548567d422654c602",
+      "raw_log_sha256": "6c292e8fe6938eae4afefe19417847d595b327a23c5f883191d2d3121014de4c",
+      "exit_code": 0
+    },
+    {
+      "receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/strict-clippy-verified.json",
+      "receipt_sha256": "cf1040d4652a388d247c5ecb790e5c879ab531b1869567858b756f1e952561bd",
+      "raw_log_sha256": "7c4b66f8ebba0d155987e8ac056294d589166bee2ea24a4d6d10953fe823b9dc",
+      "exit_code": 0
+    },
+    {
+      "receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/format-check-verified.json",
+      "receipt_sha256": "789d898e5396344e28ff1e1377e792c10cd7d3cc6bee096d3817f0ed15090bae",
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0
+    },
+    {
+      "receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/ui-full-default-suite-verified.json",
+      "receipt_sha256": "619d88e1ef4921fa9f093f2a3824d0da7a3159659cd912446eea724eed67582c",
+      "raw_log_sha256": "f1d900298b7cd14ec30cce63458e34738809b44fa6006b777b26b677a64235ac",
+      "exit_code": 0
+    }
+  ],
+  "normal_fresh_library_validated": true,
+  "strict_repo_clippy_release_all_targets_all_features_deny_warnings_validated": true,
+  "workspace_format_check_validated": true,
+  "whole_source_files_checked": 4730,
+  "fixed_seven_and_all_whole_source_hash_guards_pass": true,
+  "all_at_execution_before_after_component_snapshots_identical": true,
+  "source_byte_preserving_ui_freshness": true,
+  "closure_process_observations_and_access_limits_retained": true,
+  "closure_first_transcription_assertion_failure_and_both_scripts_preserved": true,
+  "reviewer_ran_compilation_tests_native_or_mutated_cache_git_source_raw_evidence": false,
+  "findings": [],
+  "remaining": [
+    "Current full normal app build and app helper receipt/probe audit",
+    "Native SDK/model/keyboard/cleanup evidence",
+    "Exact reference parity captures",
+    "Full workspace CI and final protected merge"
+  ]
+}

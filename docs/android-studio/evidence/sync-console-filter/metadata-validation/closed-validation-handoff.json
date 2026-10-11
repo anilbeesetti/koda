@@ -1,0 +1,26 @@
+{
+  "result": "PASS_ALL3_REQUIRED_VALIDATOR_OUTCOMES",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "actual_catalog_reused_not_rerun": "/workspace/android-studio-artifacts/sync-console-filter/metadata-preparation/corrected23-apply-and-CLI-attempt1/catalog/exit.json",
+  "catalog_exit": 0,
+  "reference_exit": 0,
+  "completion_negative_exit": 1,
+  "completion_expected_error": "Error: completion blocked: reference test census is incomplete",
+  "global_census_complete": false,
+  "full_IDE_complete": false,
+  "new_original_credit": 0,
+  "canonical95_IDs_statuses_reasons_targets_unchanged": true,
+  "all36_tested_commit_f763_actual_commands": true,
+  "combined_metadata_paths": 140,
+  "combined_manifest_sha256": "e0311ad879f12b764d4a5f5166261cf47766d3cf03f5c2b3f8fea57832995b2d",
+  "physical_index": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+  "Source_metadata_index_refs_16keepers_alias_ADB_guards": "PASS",
+  "prior_administrative_wrapper_failure_preserved": true,
+  "no_Source_test_assertion_manifest_schema_ledger_extras_or_Git_runtime_writes": true,
+  "all_owned_process_groups_closed": true,
+  "closed_utc": "2026-10-08T12:14:21.319330+00:00",
+  "free": {
+    "/workspace": 331202560,
+    "/tmp": 90435584
+  }
+}

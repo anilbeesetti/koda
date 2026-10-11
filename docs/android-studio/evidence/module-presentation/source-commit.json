@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "source_commit": "5e4b752a057bff25d9e281a43ce4b71a8598406f",
+  "base_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "worktree": "/workspace/android-studio-module-presentation",
+  "source_sha256": "0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c",
+  "tests_sha256": "9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924",
+  "runner_sha256": "a9dc08df84936777afa5d160bed0a0307021413d6c7a303405bdc065ae5df5d1",
+  "git_status_clean": true,
+  "new_reference_credit": 0
+}

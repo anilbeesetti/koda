@@ -1,0 +1,36 @@
+{
+  "source_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "native_models": 2,
+  "model_value_equivalence_to_previous_actual_native_records": true,
+  "only_normalization": "Exact respective private fixture absolute project root in JSON strings. No keys or fields removed; JSON arrays/order and all values retained.",
+  "raw_stdout_sha256": "f4e0d4313886b5ea60830e1630a75dcb6e0c2202960426373dd1ac037a8a6961",
+  "previous_records": [
+    {
+      "path": "/workspace/android-studio-artifacts/junit4-native-9315534/native-sync-stdout.log",
+      "sha256": "8d0ce3ce049c2d4c58a726d94a17a3eb03267786c47ba2938039e7592126f3a2",
+      "models": 2,
+      "all_complete_models_equal": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/native-sync-stdout.log",
+      "sha256": "118d0647aba735c6a20e7deba1986cda65af6188bc923cb70d1c9982c93782ef",
+      "models": 1,
+      "all_complete_models_equal": true
+    }
+  ],
+  "bridge": {
+    "command_arguments": [
+      "--init-script",
+      "/tmp/koda-android-model-IZTy6B/export.gradle",
+      "kodaAndroidProjectModel",
+      "--no-configuration-cache",
+      "--console=plain"
+    ],
+    "init_path": "/tmp/koda-android-model-IZTy6B/export.gradle",
+    "sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+    "expected_source_bridge_sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+    "matches_source": true
+  },
+  "runtime": "AGP9.4.0/Gradle9.6.1/JDK21/SDK37 supplementary",
+  "reference_parity_credit": 0
+}

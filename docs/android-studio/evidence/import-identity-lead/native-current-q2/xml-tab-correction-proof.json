@@ -1,0 +1,18 @@
+{
+  "verdict": "PASS",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "original53_commands_and17_images_preserved": true,
+  "original_xml_capture_does_not_establish_restoration": true,
+  "supplemental_commands": 3,
+  "all_supplemental_commands_match_prior_plan_and_exit_zero": true,
+  "plan_sha256": "28733962e5f108e079c648a6a3a2871bb064aa04d4a34b2ec3b1c51deebd5b17",
+  "event_sha256s": [
+    "434501ff7b2b9225d754ee5e6963ad2d010ca7c8e48c452076c9173659b54b73",
+    "1e7fbc671b40d5a1d991583114fbcf97b7455e864237fe4b068f995deb29e897",
+    "eeaf2d0462b8a558045de443e4d10f485e8132a6813dbea58ad24ffec1bfb1d3"
+  ],
+  "corrected_capture_sha256": "c6f3e7b776dc7a06f77e4799d943af6a16963aa7795d0363c69606c1a784dd65",
+  "actual_corrected_XML_editor_inspected": true,
+  "total_actual_images_inspected": 18,
+  "new_original_reference_credit": 0
+}

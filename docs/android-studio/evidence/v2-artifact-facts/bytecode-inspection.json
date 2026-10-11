@@ -1,0 +1,49 @@
+{
+    "supplementaryOnly": true,
+    "originalReferenceRuntimeTestCredit": 0,
+    "variants": [
+        {
+            "name": "demoDebug",
+            "type": {
+                "status": "available",
+                "value": "JAR"
+            }
+        },
+        {
+            "name": "demoRelease",
+            "type": {
+                "status": "available",
+                "value": "JAR"
+            }
+        }
+    ],
+    "buildConfigTasks": [
+        {
+            "path": ":app:generateDemoDebugAndroidTestBuildConfig",
+            "sourceOutput": null,
+            "bytecodeOutput": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_build_config_jar/demoDebugAndroidTest/generateDemoDebugAndroidTestBuildConfig/BuildConfig.jar",
+            "namespace": "dev.koda.sourceproviders.test",
+            "customFields": [
+                
+            ]
+        },
+        {
+            "path": ":app:generateDemoDebugBuildConfig",
+            "sourceOutput": null,
+            "bytecodeOutput": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_build_config_jar/demoDebug/generateDemoDebugBuildConfig/BuildConfig.jar",
+            "namespace": "dev.koda.sourceproviders",
+            "customFields": [
+                
+            ]
+        },
+        {
+            "path": ":app:generateDemoReleaseBuildConfig",
+            "sourceOutput": null,
+            "bytecodeOutput": "/workspace/android-studio-artifacts/v2-artifact-facts/runtime-project/app/build/intermediates/compile_build_config_jar/demoRelease/generateDemoReleaseBuildConfig/BuildConfig.jar",
+            "namespace": "dev.koda.sourceproviders",
+            "customFields": [
+                
+            ]
+        }
+    ]
+}

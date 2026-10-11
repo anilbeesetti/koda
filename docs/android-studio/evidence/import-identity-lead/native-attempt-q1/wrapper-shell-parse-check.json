@@ -1,0 +1,11 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "command": [
+    "/bin/sh",
+    "-n",
+    "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/generation-project/gradlew"
+  ],
+  "exit_code": 0,
+  "actual_wrapper_sha256": "2b406c6b8f8df183bcff80049dd15b5ca08ccd7bcce55c89297791711712fc2a",
+  "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

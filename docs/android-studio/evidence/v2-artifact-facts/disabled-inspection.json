@@ -1,0 +1,23 @@
+{
+    "supplementaryOnly": true,
+    "originalReferenceRuntimeTestCredit": 0,
+    "variants": [
+        {
+            "name": "demoDebug",
+            "type": {
+                "status": "available",
+                "value": null
+            }
+        },
+        {
+            "name": "demoRelease",
+            "type": {
+                "status": "available",
+                "value": null
+            }
+        }
+    ],
+    "buildConfigTasks": [
+        
+    ]
+}

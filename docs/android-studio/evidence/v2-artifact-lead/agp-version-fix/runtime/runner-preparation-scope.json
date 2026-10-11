@@ -1,0 +1,9 @@
+{
+  "prior_runner_sha256": "e20072fcaeb34dff8957240f00f5e4d1224e7c03bacaae1f65b175b8d1d04886",
+  "current_runner_sha256": "f473ee7d4ecdd3ed98502989adbf46236b0ca52dbb46e530655ca092eea351fb",
+  "current_source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "unchanged_fixed_seven_source_exclusions": true,
+  "current_expected_actual_test_count": 231,
+  "old_verifier_basename_and_example_count_failure_history_retained": true,
+  "all_nonzero_failures_preserved": true
+}

@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "task": "Lead toolbar scroll correction after owner escalation",
+  "branch": "android-studio-task/1-toolbar-scroll-lead",
+  "source_commit": "eefe8ccffc087097cb0295b85d1390a06a5e5ba1",
+  "source_sha256": "01c50f467b9a51ba238146b0df43f54ba6c146b427edfafdf906a491105147bc",
+  "owner_failed_snapshot": "0151d5f1184e313eb8fff9e014b6235ce8dca9bd",
+  "scope": "Production GPUI embedded toolbar and existing BuildPanel consumer; no full-window or all-workflow parity claim.",
+  "status": "scroll_and_keyboard_runtime_and_strict_clippy_pass_pending_combined_native_workspace_and_exact_captures",
+  "owner_runtime_fix_rounds": 3,
+  "owner_failure_escalated_to_user": true,
+  "lead_runtime_fix_rounds": 2,
+  "original_tests_and_driver_prefix": {
+    "bytes": 19339,
+    "preserved_byte_identical": true
+  },
+  "added_regressions": [
+    "appended_tabs_reveal_the_tail_on_initial_layout_and_after_rebuild",
+    "clearing_before_frame_delivery_does_not_restore_old_scroll_arrows",
+    "fractional_scale_reveals_converge_for_tail_and_oversized_selection"
+  ],
+  "recorded_runtime": {
+    "focused_passed": 14,
+    "focused_failed": 0,
+    "full_ui_passed": 119,
+    "full_ui_failed": 0,
+    "full_ui_preexisting_opt_in_ignored": 1,
+    "source_before_format_and_comments_sha256": "43307dbdf170bc90deed2bcb1b8baaf095f5a5235ef4d3466183a4af9aaa8949",
+    "final_formatted_source_runtime_gate": "pending on immutable combined source"
+  },
+  "scoped_static_reviews": [
+    {
+      "area": "code",
+      "reviewer": "/root/toolbar_lead_code_review",
+      "verdict": "PASS",
+      "scope": "Frozen eefe component/source review; native runtime and required Clippy approval remain separate gates."
+    },
+    {
+      "area": "ui",
+      "reviewer": "/root/toolbar_lead_ui_review",
+      "verdict": "PASS",
+      "scope": "Frozen eefe component/source review; native runtime and required Clippy approval remain separate gates."
+    },
+    {
+      "area": "ux",
+      "reviewer": "/root/toolbar_lead_ux_review",
+      "verdict": "PASS",
+      "scope": "Frozen eefe component/source review; native runtime and required Clippy approval remain separate gates."
+    },
+    {
+      "area": "performance",
+      "reviewer": "/root/toolbar_lead_performance_review",
+      "verdict": "PASS",
+      "scope": "Frozen eefe component/source review; native runtime and required Clippy approval remain separate gates."
+    },
+    {
+      "area": "quality",
+      "reviewer": "/root/toolbar_lead_quality_review",
+      "verdict": "PASS",
+      "scope": "Frozen eefe component/source review; native runtime and required Clippy approval remain separate gates."
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/android-studio/evidence/toolbar-lead/first-focused-tests.log",
+      "sha256": "859499f168b1f4f4b5c1f0cdb36ad8dc221b3834ef1edaf2056132f0a38b25f4",
+      "bytes": 2686
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-lead/diagnostic-focused-tests.log",
+      "sha256": "2e9c8b42e740bd34b2c97694ebf016c2ce5818c9387e7b42a4265c9af32871b3",
+      "bytes": 19839
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-lead/second-focused-tests.log",
+      "sha256": "1cf45ae5a16caa2520b1c3e9028b6b583b4f40e628c9562116e98da442c601e7",
+      "bytes": 1270
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-lead/full-ui-tests.log",
+      "sha256": "3ac9b557a51cd7ce97f688eddcab717033112c67d8b2bfbcc2e39e666329fcd7",
+      "bytes": 11320
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-lead/third-compile.log",
+      "sha256": "41986b130c12b6e0971e734522d3ca2885083d5159e1cefd37f6460611a99286",
+      "bytes": 159
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-lead/diagnostic-compile.log",
+      "sha256": "bfda686f59e4fd879d725f02f1a082b8f494d8460b2c2167b19f51d858f7c838",
+      "bytes": 159
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-lead/fourth-compile.log",
+      "sha256": "515fdff95da58802870618e93ece60c06853d7e1c22b0e9de09e23b6b0eec0d5",
+      "bytes": 159
+    },
+    {
+      "path": "docs/android-studio/evidence/toolbar-lead/final-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    }
+  ],
+  "pending": [
+    "Exact manifest-bound seven original case captures on combined source",
+    "Combined all-feature affected-crate tests and repository Clippy",
+    "Native app BuildPanel flow and controlled production-toolbar resize/scroll/idle proof",
+    "Final full-workspace CI on unchanged implementation/fixtures",
+    "Lead main/protected/conflict guard before merge"
+  ],
+  "reference_credit": "Canonical seven toolbar rows remain unported until fresh exact captures; no whole-window fidelity credit.",
+  "keyboard_follow_up": {
+    "branch": "android-studio-task/1-toolbar-keyboard-lead",
+    "initial_source_commit": "f48b72127fac902582e1b7b28499eccc4ebf1841",
+    "final_source_commit": "65055461bb17273fd41e1408cb4ad854280adafd",
+    "source_sha256": "e412121cd4e11274f76ecd8e450e3f7087ae13b3ff8101a064b4c65813462c5c",
+    "trigger": "Actual a7ef native app did not traverse toolbar controls with plain Tab/Shift+Tab.",
+    "implementation": "Plain Tab and Shift+Tab use GPUI window focus traversal; explicit focus handles opt into tab stops. Modified shortcuts retain ordinary dispatch.",
+    "initial_focused_run": {
+      "passed": 14,
+      "failed": 2,
+      "ignored": 0,
+      "cause": "Explicit GPUI focus handles require tab_stop(true); element tab_index does not opt in those supplied handles."
+    },
+    "final_focused_run": {
+      "passed": 16,
+      "failed": 0,
+      "ignored": 0
+    },
+    "full_all_features_ui_retry": {
+      "passed": 121,
+      "failed": 0,
+      "preexisting_opt_in_ignored": 1,
+      "filtered": 0
+    },
+    "required_clippy": "PASS: ./script/clippy --locked -p android_ui (release, all targets/features, warnings denied)",
+    "existing_14_tests_and_driver_prefix_bytes": 23614,
+    "existing_14_tests_and_driver_prefix_preserved_byte_identical": true,
+    "scoped_static_reviews": [
+      {
+        "area": "code",
+        "reviewer": "/root/toolbar_lead_code_review",
+        "verdict": "PASS",
+        "scope": "Frozen650 component/source; native runtime and combined-source merge gates remain separate."
+      },
+      {
+        "area": "ui",
+        "reviewer": "/root/toolbar_lead_ui_review",
+        "verdict": "PASS",
+        "scope": "Frozen650 component/source; native runtime and combined-source merge gates remain separate."
+      },
+      {
+        "area": "ux",
+        "reviewer": "/root/toolbar_lead_ux_review",
+        "verdict": "PASS",
+        "scope": "Frozen650 component/source; native runtime and combined-source merge gates remain separate."
+      },
+      {
+        "area": "performance",
+        "reviewer": "/root/toolbar_lead_performance_review",
+        "verdict": "PASS",
+        "scope": "Frozen650 component/source; native runtime and combined-source merge gates remain separate."
+      },
+      {
+        "area": "quality",
+        "reviewer": "/root/toolbar_lead_quality_review",
+        "verdict": "PASS",
+        "scope": "Frozen650 component/source; native runtime and combined-source merge gates remain separate."
+      }
+    ],
+    "native_runtime": "PENDING on rebuilt7b2 binary. Old keyboard failure and39.34% one-core wide-window sample are preserved, neither is resolved by unit tests.",
+    "source_task_completion": "NOT COMPLETE; native, exact captures and full workspace gates pending",
+    "evidence": [
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/allfeatures-executable.json",
+        "sha256": "fa0751dadf7f129d9cc1a39f2b33a65af1a0798bec5679a25b05e3398fd0a2d8",
+        "bytes": 524
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/capacity-recovery.json",
+        "sha256": "e1871ecaab25c17ae84a330a6162c10bfb1e8927566a994c1a9343774b80d426",
+        "bytes": 1039
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/clippy-exit.json",
+        "sha256": "e89df0eae5ec7db81135aed16463968955c578bcc4f2ec43172eff351f080c17",
+        "bytes": 17
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/clippy.log",
+        "sha256": "8adad65de23389d2093e18831482dab004ef66727cbc3258dbdc66a0cb9f469f",
+        "bytes": 30106
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/focused-exit.json",
+        "sha256": "c6a0f3df1f62063c14d07bb0f7bd31dc9a4023dc7ed1a272d43165f0130fbdec",
+        "bytes": 19
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/focused-round2-exit.json",
+        "sha256": "e89df0eae5ec7db81135aed16463968955c578bcc4f2ec43172eff351f080c17",
+        "bytes": 17
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/focused-tests-round2.log",
+        "sha256": "7e4400a933715eaa56d16169ac2b88ba2bf46caf51dfae1b45a2ddbcfc47006f",
+        "bytes": 1732
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/focused-tests.log",
+        "sha256": "89678270633b41cc229fb1c6b4fc461a1365aee7dd589020732f07216c3b724b",
+        "bytes": 5370
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/freshness.json",
+        "sha256": "8cdffb8d210d7d90391b4bc065e7946ca9462d8f5b11e5d90b8e37a44a8d2ecf",
+        "bytes": 387
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/full-ui-exit.json",
+        "sha256": "c6a0f3df1f62063c14d07bb0f7bd31dc9a4023dc7ed1a272d43165f0130fbdec",
+        "bytes": 19
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/full-ui-retry-exit.json",
+        "sha256": "e89df0eae5ec7db81135aed16463968955c578bcc4f2ec43172eff351f080c17",
+        "bytes": 17
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/full-ui-tests-retry.log",
+        "sha256": "0bda472775ef5483a95ad2ad44774be49e06ceea0f34d2ea47daee7632a34060",
+        "bytes": 11499
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/full-ui-tests.log",
+        "sha256": "656fe1649dd1832bec5a80531c8d5de6ccc78f1ed958b42655317bbd27de114d",
+        "bytes": 28543
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/rlib-capacity-recovery.json",
+        "sha256": "fcc4a45869fca158cb4f023eccedd42cde5c904b7f714f66cb29b20cd27d2470",
+        "bytes": 885
+      },
+      {
+        "path": "docs/android-studio/evidence/toolbar-keyboard-lead/superseded-executable-retirement.json",
+        "sha256": "a83a61d909ef032d5235cf82a439c9f0571f6f0dfd885be2e36b0fd8a8fef30f",
+        "bytes": 959
+      }
+    ]
+  }
+}

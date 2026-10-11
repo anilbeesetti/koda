@@ -449,12 +449,6 @@ impl Render for TitleBar {
 }
 
 impl TitleBar {
-    pub fn refresh_application_menu(&mut self, cx: &mut Context<Self>) {
-        if let Some(menu) = &self.application_menu {
-            menu.update(cx, |menu, cx| menu.refresh(cx));
-        }
-    }
-
     pub fn new(
         id: impl Into<ElementId>,
         workspace: &Workspace,
@@ -469,21 +463,23 @@ impl TitleBar {
         let active_call = ActiveCall::global(cx);
 
         let platform_style = PlatformStyle::platform();
-        let application_menu = match platform_style {
-            PlatformStyle::Mac => {
-                if option_env!("ZED_USE_CROSS_PLATFORM_MENU").is_some() {
-                    Some(cx.new(|cx| ApplicationMenu::new(window, cx)))
-                } else {
-                    None
+        let application_menu =
+            match platform_style {
+                PlatformStyle::Mac => {
+                    if option_env!("ZED_USE_CROSS_PLATFORM_MENU").is_some() {
+                        Some(cx.new(|cx| {
+                            ApplicationMenu::new_for_workspace(workspace.weak_handle(), window, cx)
+                        }))
+                    } else {
+                        None
+                    }
                 }
-            }
-            PlatformStyle::Linux | PlatformStyle::Windows => {
-                Some(cx.new(|cx| ApplicationMenu::new(window, cx)))
-            }
-        };
+                PlatformStyle::Linux | PlatformStyle::Windows => Some(cx.new(|cx| {
+                    ApplicationMenu::new_for_workspace(workspace.weak_handle(), window, cx)
+                })),
+            };
 
         let mut subscriptions = Vec::new();
-        subscriptions.push(cx.observe(&project, |_, _, cx| cx.notify()));
         subscriptions.push(
             cx.observe(&workspace.weak_handle().upgrade().unwrap(), |_, _, cx| {
                 cx.notify()

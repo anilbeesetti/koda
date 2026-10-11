@@ -1,0 +1,15 @@
+{
+  "reason": "Distinct production/test files initially shared a basename, overwriting the temporary production snapshot. The actual old test bytes were retained. Production round1 bytes were reconstructed by reversing only the round1 corrections and rustfmt; equality is independently checked against the immutable pre-fix source hash. No checkout source was changed.",
+  "snapshots": {
+    "src": {
+      "path": "/workspace/android-studio-artifacts/tree-input-adapter/round1-source/src-project_tree_adapter.rs",
+      "sha256": "67dbb26617d07caee7db19047aa0cdb82c8572e34de305e97847b7af32549c09",
+      "matches_original_frozen_sha256": true
+    },
+    "tests": {
+      "path": "/workspace/android-studio-artifacts/tree-input-adapter/round1-source/tests-project_tree_adapter.rs",
+      "sha256": "eeaaaa01809c3dabebbcdca3f84b3ad22b02db6060de54db4ffb858c4314133e",
+      "matches_original_frozen_sha256": true
+    }
+  }
+}

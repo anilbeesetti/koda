@@ -1,0 +1,25 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java#com.android.tools.idea.gradle.project.GradleModuleImportTest.testImportSubprojects",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--test",
+    "gradle_import_reference",
+    "import_subprojects",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.6141510539964656,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-GradleModuleImportTest-testImportSubprojects.log",
+    "sha256": "3cb70742b052a431812dd05bb4a9a8d676329a3ccb71dc49e8a7658ed5212bce"
+  }
+}

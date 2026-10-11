@@ -1,0 +1,16 @@
+{
+  "utc": "2026-10-08T02:03:27.967629+00:00",
+  "source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source4743_before_after_unchanged": true,
+  "public_alias_bytes_and_path_unchanged": true,
+  "public_alias_now_current_deps_hardlink": true,
+  "exact_same_content_sha256": "9c8c3235cac1fcfc10832e8af791487865164786533fb45afecac2440d0be570",
+  "old_duplicate_inode": 1051320,
+  "current_shared_inode": 1051264,
+  "nlink": 2,
+  "no_tests_fixtures_logs_or_ELFs_removed": true,
+  "normal_atomic_link_replace_no_Cargo_flags_changed": true,
+  "free_before": 0,
+  "free_after": 243810304,
+  "free_increase": 243810304
+}

@@ -1,0 +1,123 @@
+{
+  "tested_source_manifest": "/workspace/android-studio-artifacts/project-tree-facts/review-source-lead-correction6.json",
+  "tested_git_head": "959992d03c4cfc928aaad01fda6f83cfc3e34994",
+  "tested_worktree_state": "Uncommitted reviewed snapshot; eventual source commit must match these exact source/fixture bytes, no retroactive tested_commit claim",
+  "suite_counts": {
+    "lib": 55,
+    "gradle_import_reference": 20,
+    "project_tree_component": 21,
+    "project_tree_facts": 29,
+    "project_view_preferences_reference": 19
+  },
+  "total_passed": 144,
+  "failed_ignored_filtered": 0,
+  "executables": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "sha256": "32d1c16265bb86e3dc76c05fdc6236e374c7cda9ada38efadd075d195dc58a6b",
+      "bytes": 303550816
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/gradle_import_reference-04456d8e242bc9e5",
+      "sha256": "7f74ef5cd91eff7d33f61f27e5ae54216558857c58caf80c7bb82c0b34de6c57",
+      "bytes": 3000744
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/project_tree_component-5492bd7c5a79a950",
+      "sha256": "9fd0bb56ae53181c47a54b17128dadad75221367a1718d5ed0de8c534e9a005b",
+      "bytes": 4316944
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/project_tree_facts-d85b15a481942004",
+      "sha256": "2fafd36c2260a9b426031caabb3df809db914326dbd129c9d253173863c6bab2",
+      "bytes": 6399968
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/project_view_preferences_reference-920b46c1a9286394",
+      "sha256": "bef4755a656f1b6728011ad161960d5fc5473499d10dfe330c82373db033fae3",
+      "bytes": 2625616
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/examples/project_tree_facts_probe",
+      "sha256": "10b5bd48d120fa5dd16eea2a710db29b5ddcb4080ab6ae44ef631763b33c8fd3",
+      "bytes": 4331416
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/tests-focused-default.log",
+      "sha256": "09b58f5a8faae25ecd832e06dfdff28065f2c84c76d4dcfff91dc6d1f64a69d5",
+      "bytes": 839
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/tests-focused-default-correction3.log",
+      "sha256": "c965ef5b6582d3d05ce3cea631bfc22fdf13d410c10590725c6db489d17e914b",
+      "bytes": 2793
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction3.log",
+      "sha256": "18d77f6d0b07a2763ec60c6fe55d4e8b2553ec4245f548e98aa2c766e52dbea8",
+      "bytes": 12565
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction4.log",
+      "sha256": "46713fa25900ceef5910905fbc8c418ffe763634b63ced1776a8c58c36cb8e37",
+      "bytes": 12565
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/tests-all-features-correction6.log",
+      "sha256": "67f6bf990ad393d1522136eda73a5c9b822937b92f8e4454dcddfdd281f65ccc",
+      "bytes": 12565
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/clippy-correction3.log",
+      "sha256": "ea92141de246e22fcb6ea3c1ce55dffc19564862395f568d5fefbfdd3e11cafd",
+      "bytes": 991
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/clippy-correction4.log",
+      "sha256": "afba42ef7a942fe3ce005ace608b23a44dd871500315781258a05809d2dd51cb",
+      "bytes": 318
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/clippy-correction6.log",
+      "sha256": "d25f58ba35a43405194f0561c8c1b1a51822e304d183a3d008291083f300a801",
+      "bytes": 318
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/fmt-correction6.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/gradle-capture-initial.log",
+      "sha256": "05259cb2d6ee8d5778895272ba723d08590d9287d7c9e1861e848dbaaaff23e5",
+      "bytes": 1519
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/gradle-capture-correction5.log",
+      "sha256": "ed046cfb2c1b40997e3d74ea2c94eada8d30647dea9d35a63f731c74adab5948",
+      "bytes": 245919
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/probe-incorrect-presence-correction5.log",
+      "sha256": "42781893d9d5c00f16047c186e8d62d914402f587f1d486ea719c9d6603e5c45",
+      "bytes": 524
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/probe-correction6.log",
+      "sha256": "94fdc44f9cb5ece36bf95f4e44e8847ad8d5002a04f723704e89ac336cfbbce2",
+      "bytes": 447
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/model-raw-correction5.json",
+      "sha256": "35833ae90abbf8f86af047c37954b125de0257f3af7a206f20309246eaf4df8c",
+      "bytes": 394523
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/project-tree-facts/smoke-runtime-correction2/rust-decoded-correction6.json",
+      "sha256": "1e1f6f82a7bea1008f8e19faf6655992fdf2ae3304c6155927ed81142526c7cc",
+      "bytes": 457389
+    }
+  ]
+}

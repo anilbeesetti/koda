@@ -1,0 +1,26 @@
+{
+  "task": "1-icon-integrity",
+  "branch": "android-studio-task/1-icon-integrity",
+  "base_commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+  "source_commit": "af387f61600975d4ac4df1e2541ecb59f26af470",
+  "dependencies": [
+    "7b2 toolbar SVG assets",
+    "exclusive shared Cargo lease",
+    "combined lead app/native checks"
+  ],
+  "files": [
+    "crates/icons/src/icons.rs"
+  ],
+  "acceptance": [
+    "unchanged test_all_icons_exist passes",
+    "unchanged test_no_dangling_icons passes",
+    "strict repository clippy for icons passes",
+    "formatting passes",
+    "five independent scoped reviews pass",
+    "lead combined full app/native/workspace CI passes before protected merge"
+  ],
+  "reference_tests_to_port": [],
+  "reason_no_new_reference_credit": "Repairs Zed icon asset registry invariant covered by unchanged preexisting Zed tests; no Android Studio reference behavior or fixtures added.",
+  "non_rust_exceptions_added": [],
+  "completion": false
+}

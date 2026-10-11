@@ -1,0 +1,78 @@
+--- task-report-original
++++ task-report-corrected
+@@ -76,40 +76,39 @@
+ Task metadata is docs/android-studio/ports/import-identity-getters.json.
+ 
+ Lead validation retains the successful locked normal app build (726.314 seconds,
+-+1,359,509,184-byte physical ELF, SHA-256
+-+`09d15d2ce3bdb708692254a8365bf94dedaa33a892af2b2a8156a8b75ced60b0`).
+-+Actual cc arguments preserve the full normal link except its sole final output
+-+path. Current Source CI run 37716917444 succeeds in all three jobs, with 10,540
+-+workspace tests passed, zero failed and 23 reported inherited baseline skips.
+-+The actual CI synthetic full tree equals Source. This source CI does not establish
+-+the pending final metadata-HEAD CI.
+-+
+-+Current native proof preserves its strict original 53 exit-zero commands and 17
+-+images. Its original final XML coordinate was wrong; that image remains retained
+-+and receives no restoration credit. A separate prior-planned additive correction
+-+records three actual exit-zero commands and one inspected XML-restoration image:
+-+56 commands and 18 images total. Two complete current Rust/revision/raw model
+-+checks pass. Both complete parent 4fb models match after removing only importFacts;
+-+seven older Basic records match after removing only generatedArtifacts and
+-+importFacts. Only an exact independently asserted private-root prefix changes,
+-+at whole-string or slash boundaries; all other nested values and property/vector
+-+order remain. The fresh profile trusts only the private fixture. Current owned
+-+app, launcher and Xvfb PIDs are absent, display122 is gone and the official
+-+launcher exit is 143. At 360px the controls and keyboard routes function, but the
+-+project tree consumes the editor and Sync output clips. No full Android Studio
+-+fidelity or native performance credit is claimed.
+-+
+-+The initial q0 native attempt failed because the external Python wrapper was
+-+invoked through sh and called ImageMagick. Retry q1 is INTERRUPTED_NOT_COMPLETE:
+-+its original launcher PTY was lost when an accidental duplicate launch truncated
+-+it. Remaining partial events, images, Gradle/model proof and the duplicate PTY
+-+remain. Former launcher343964 is a zombie explicitly not claimed absent; its
+-+descriptor inspection returned PermissionDenied. Neither attempt receives
+-+complete-PASS credit, and no all-original-PTY-retention claim is made.
+-+
+-+Portable lead validation and the actual hashes/byte counts are indexed by
+-+docs/android-studio/evidence/import-identity-lead/portable-evidence-index.json.
+-+The immutable owner169 and Root canonical39 packages remain separate. Final
+-+metadata source equivalence, validator, commit, final-HEAD CI and protected merge
+-+remain Root-owned pending steps.
+-++1,359,509,184-byte physical ELF, SHA-256
++`09d15d2ce3bdb708692254a8365bf94dedaa33a892af2b2a8156a8b75ced60b0`).
++Actual cc arguments preserve the full normal link except its sole final output
++path. Current Source CI run 37716917444 succeeds in all three jobs, with 10,540
++workspace tests passed, zero failed and 23 reported inherited baseline skips.
++The actual CI synthetic full tree equals Source. This source CI does not establish
++the pending final metadata-HEAD CI.
++
++Current native proof preserves its strict original 53 exit-zero commands and 17
++images. Its original final XML coordinate was wrong; that image remains retained
++and receives no restoration credit. A separate prior-planned additive correction
++records three actual exit-zero commands and one inspected XML-restoration image:
++56 commands and 18 images total. Two complete current Rust/revision/raw model
++checks pass. Both complete parent 4fb models match after removing only importFacts;
++seven older Basic records match after removing only generatedArtifacts and
++importFacts. Only an exact independently asserted private-root prefix changes,
++at whole-string or slash boundaries; all other nested values and property/vector
++order remain. The fresh profile trusts only the private fixture. Current owned
++app, launcher and Xvfb PIDs are absent, display122 is gone and the official
++launcher exit is 143. At 360px the controls and keyboard routes function, but the
++project tree consumes the editor and Sync output clips. No full Android Studio
++fidelity or native performance credit is claimed.
++
++The initial q0 native attempt failed because the external Python wrapper was
++invoked through sh and called ImageMagick. Retry q1 is INTERRUPTED_NOT_COMPLETE:
++its original launcher PTY was lost when an accidental duplicate launch truncated
++it. Remaining partial events, images, Gradle/model proof and the duplicate PTY
++remain. Former launcher343964 is a zombie explicitly not claimed absent; its
++descriptor inspection returned PermissionDenied. Neither attempt receives
++complete-PASS credit, and no all-original-PTY-retention claim is made.
++
++Portable lead validation and the actual hashes/byte counts are indexed by
++docs/android-studio/evidence/import-identity-lead/portable-evidence-index.json.
++The immutable owner169 and Root canonical39 packages remain separate. Final
++metadata source equivalence, validator, commit, final-HEAD CI and protected merge
++remain Root-owned pending steps.

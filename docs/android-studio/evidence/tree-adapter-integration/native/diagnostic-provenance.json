@@ -1,0 +1,17 @@
+{
+  "diagnostic": "missing required capture(s) in Gradle indents TreeSitter query: indent",
+  "external_installed_extension": "Java6.8.27",
+  "extension_files": [
+    {
+      "path": "/workspace/android-studio-artifacts/tree-native-0e15a3d/qa-success/user-data/extensions/installed/java/extension.toml",
+      "sha256": "eca1da859606b77db3cc9129d7caa7885670422aa89ce303d8f0190e614e895b",
+      "byte_identical_previous_931_profile": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/tree-native-0e15a3d/qa-success/user-data/extensions/installed/java/languages/gradle/indents.scm",
+      "sha256": "fff0db02df15470940a2601b06d747c9181bd31ed4aecefd505980cabe312d81",
+      "byte_identical_previous_931_profile": true
+    }
+  ],
+  "source_scope": "Pure tree adapter integration; grammar/app UI and installed extension source unchanged. XML and Gradle highlight, indentation and Rust LSP are not credited."
+}

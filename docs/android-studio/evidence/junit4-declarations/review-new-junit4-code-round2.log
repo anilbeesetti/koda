@@ -1,0 +1,57 @@
+# JUnit4 declaration task: code review round 2
+
+Verdict: **FAIL** for one remaining malformed-import edge. All four round 1
+findings are resolved in the reviewed source.
+
+Reviewed module SHA-256:
+fb4fdef8c532c2fabde87464dfa71eced00809b45d490746f3d2ccca1fe84d32
+
+## Blocking finding
+
+**P2 — Malformed or Java-only-unsupported alias imports can still confirm
+annotations** (android_junit4_declarations.rs, import alias parsing around
+lines 908–920; direct binding around lines 1045–1060).
+
+The alias branch accepts a missing alias as None and emits only a file warning;
+it does not mark the parsed import header unsupported. Consequently the malformed
+Kotlin import below becomes the ordinary unique explicit JUnit4 import again:
+
+~~~kotlin
+import org.junit.Test as ;
+class Suite { @Test fun actual() {} }
+~~~
+
+The same branch also accepts alias syntax for Java. A malformed Java import that
+does not shadow org/Test therefore leaves qualified confirmation enabled:
+
+~~~java
+import other.Annotation as Check;
+class Suite { @org.junit.Test public void actual() {} }
+~~~
+
+Require a valid alias identifier after Kotlin as. Mark missing aliases and any
+Java alias import unsupported for confirmation, retain their source/import
+evidence, and add regression assertions that these methods remain unresolved.
+
+## Resolved findings and preserved checks
+
+- Java triple-quoted text blocks now honor escapes. The negative regression
+  requires no phantom annotation or method. Kotlin raw triples retain their
+  distinct semantics and a real following declaration.
+- Java enum types participate in Test/org shadowing. The regressions preserve
+  unresolved method candidates and Kotlin enum ownership.
+- Effective imported names include aliases and static imports in conflict
+  checks; qualified prefix ambiguity and wildcard gaps remain unresolved.
+- Exact mirror line pairs 33/38 and 41/41 replace the erroneous inequality.
+  Original hashes, unequal file bytes, names and declaration counts remain
+  asserted; fixture selection remains unchanged.
+- Output explicitly records selected_archive_membership_reverified=false.
+  Supplied selection validation remains separate from retained archive-capture
+  proof, and documentation now states that boundary.
+- Frozen discovery SHA and canonical manifest/ledger SHA values remain
+  unchanged. Runtime cases remain null, applicability unreviewed, completion
+  false and behavioral parity credit zero.
+
+This review is static. No Cargo, cache mutation, repository edits or execution
+occurred; only this requested external report was written. The 32 authored tests,
+required clippy, matching CLI, full workspace and full-app gates remain pending.

@@ -1,0 +1,90 @@
+# Independent UI review: captured module presentation, round 1
+
+Verdict: **PASS for the frozen bounded static policy**. No blocking UI finding.
+This is not a live Android project tree, full-app, phase, or IDE completion verdict.
+
+Reviewer: `/root/module_presentation_audit/module_ui_review`.
+Review time: 2026-10-07 22:04 UTC.
+Worktree: `/workspace/android-studio-module-presentation`.
+Base: `0e15a3d2b6eff51451b5f30d4c62ab0edde608ab`.
+
+## Reviewed identity
+
+- Policy SHA-256: `0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c`.
+- Supplemental tests SHA-256: `9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924`.
+- Frozen review snapshot: `/workspace/android-studio-artifacts/module-presentation-task/review-source-round1.json`.
+- Checked every one of its 172 path hashes against current bytes: zero mismatches.
+- Checked the eight complete selected reference files against their declared hashes: zero mismatches.
+  AOSP sources are pinned to `a84efec3ba9542d9bfa1255103f0dc94833a3796`;
+  supplementary IntelliJ Community sources are pinned to `b75ab523e6adbe1d26112219729eacbcfd24daa0`.
+
+## UI fidelity supported by this policy
+
+The display policy matches `GradleModuleSystem.kt:646–659` and the default
+`AndroidModuleSystem.kt:296`: reported null external project IDs or captured non-Gradle awareness fall back to
+the imported internal name; uncaptured external-system identity returns a typed error.
+Source-set identities use `GradleProjectResolverUtil.java:531–540`,
+root project identities retain the entire external ID, and other project identities
+use the final colon component. Exact reported path equality is preserved, including
+two null paths; there is no path normalization or case folding.
+
+I checked the important empty-label distinction directly: the source-set helper's
+condition is `length < i + 1`, so a trailing colon returns an empty suffix, not null.
+The Rust policy and its supplemental cases preserve this behavior. A nonroot
+project's trailing delimiter also preserves the empty suffix from `StringUtilRt`.
+Null and missing-delimiter fallbacks remain separate from these empty results.
+Unicode, whitespace, qualified imported names, and collision suffixes are preserved.
+
+`AndroidViewModuleNode.java:137–156` calls the module display policy for both its
+base test string and its visible presentable/bold label. The returned `display_name`
+is therefore the appropriate captured display identity for a future node consumer.
+The policy does not append `(Android)` to the visible label. The pinned suffix is
+in `AndroidModuleNode.kt:74–79`'s test serialization and is explicitly left to a
+later node/UI implementation.
+
+The policy keeps holder-group naming separate from the short display label:
+`GradleModuleSystem.kt:665` uses `getHolderModule().name`, and the linked-module
+helper at `LinkedAndroidModuleGroupUtils.kt:61` can fall back to the module itself.
+The policy preserves the supplied authoritative holder name, without guessing or
+resolving the holder. `AndroidModuleNode.kt:66–68` uses the imported internal name
+for its sort and type-sort key; `sort_name` retains that name even when the external
+ID produces a different display label. This task supplies the key, not the complete
+IntelliJ comparator or actual UI sorting.
+
+All 20 supplemental test bodies were inspected for these branches and distinct
+identities. This review did not execute them and grants no runtime result.
+
+## Changes and honest boundaries
+
+The only tracked delta against the base is one additive export in
+`crates/android_tools/src/android_tools.rs`. Untracked additions are the new pure
+policy, its supplemental tests, attributed reference/provenance files, and direct
+task documentation/port metadata. No app, project panel, GPUI, theme, icons, visual
+assets, renderer, existing adapter DTOs, existing fixtures, or canonical parity
+matrix is changed. No screenshots were generated or reused to establish this verdict.
+
+The task document accurately says that actual getter capture, imported-name
+construction, collision handling, holder resolution, Kotlin/facet capability,
+revision binding, tree publication, Android node suffix wiring, and project panel
+wiring are not implemented here. The current adapter at
+`project_tree_adapter.rs:201–211` rejects an empty display name; the policy preserves
+that specifically applicable reference behavior, and the document identifies the
+required adapter extension and edge tests as unported. No invented fallback label
+hides that limitation.
+
+The selected reference sources retain attribution, while the 20 new cases are
+explicitly supplemental source-derived cases with zero original-test and zero new
+canonical parity credit. The five original generated-tree workflows remain
+unported/not_run. The task does not claim a Kotlin capability producer or completed
+visual fidelity for the live Android tree.
+
+## Pending lead gates
+
+Runtime tests, normal library build, repository clippy/formatting, matching full-app
+build, live affected-flow validation, and full workspace CI remain separate gates.
+No Cargo, Gradle, app, compiler, cache, or screenshot execution was performed in
+this review; Root owns that exclusive lease. The repository `.rules` live-validation
+requirement remains applicable before implementation completion and protected merge.
+
+No product, fixture, canonical matrix, main, or protected-branch file was edited by
+this reviewer. Only this external independent review report was written.

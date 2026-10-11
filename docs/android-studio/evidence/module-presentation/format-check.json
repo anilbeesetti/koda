@@ -1,0 +1,15 @@
+{
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 28.44017281199922,
+  "log": "/workspace/android-studio-artifacts/module-presentation-task/format-check.log",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_bindings": 4717,
+  "whole_source_git_index_status_unchanged": true
+}

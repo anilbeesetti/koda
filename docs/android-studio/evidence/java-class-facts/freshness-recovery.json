@@ -1,0 +1,16 @@
+{
+  "source_commit": "8f2c43c83c803cbb6ef826fb1cf844125612a10b",
+  "at_utc": "2026-10-07T14:38:47.671439+00:00",
+  "reason": "Invalidate cross-worktree relative Cargo fingerprint reuse without changing source bytes",
+  "path": "/workspace/android-studio-java-class-facts/crates/android_tools/src/android_tools.rs",
+  "sha256_before": "294945f7bff20d2fd60eec3e181cf8d409fb0510cb4877065d398aba4a4284e8",
+  "sha256_after": "294945f7bff20d2fd60eec3e181cf8d409fb0510cb4877065d398aba4a4284e8",
+  "mtime_ns_before": 1791380892186690573,
+  "mtime_ns_after": 1791383927668093976,
+  "source_files": {
+    "crates/android_tools/src/android_tools.rs": "294945f7bff20d2fd60eec3e181cf8d409fb0510cb4877065d398aba4a4284e8",
+    "crates/android_tools/src/java_class_facts.rs": "35499e67402ea64c2eacd92d8b942bdc1938c75495536a1849e5d7c85fff1e4d",
+    "Cargo.lock": "8b8fa07d44a4151a5c75935510eb686728e79f10bb3a6f375efdeaa8837a9c88",
+    "crates/android_tools/Cargo.toml": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "stage": "round1 coordinatedfix syntax",
+  "failure": "new additive unrelatedBasicPayload test missing closing brace; directrustfmt rejected source; no Cargo/Gradle/app executed",
+  "source": "/workspace/android-studio-artifacts/v2-artifact-facts/fix-preparation-failure2-tests.rs",
+  "sha256": "1d56864653ce2173cd2d9d3c902f8ffee37abdabb9d21bda4c0a003899d37c86",
+  "correctiveChange": "add missing closing brace, preserve every assertion"
+}

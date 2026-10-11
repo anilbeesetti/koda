@@ -1,0 +1,20 @@
+{
+  "reason": "Narrow Root-authorized relocation of this task newly compiled bundled rlib to permit unchanged allfeatureUI final link; previous artifacts and all logs/source/tests retained",
+  "source_commit": "1f79e48740a1face751d0c48b188793838e5a737",
+  "compiled_crate_source": "/workspace/android-studio-toolbar-scroll-lead/crates/android_tools/src/android_tools.rs",
+  "fresh": false,
+  "features": [
+    "bundled-preview"
+  ],
+  "original": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-12b798ab3d74a304.rlib",
+  "destination": "/tmp/android-studio-frozen-executables/libandroid_tools-1f79-12b798ab3d74a304.rlib",
+  "original_inode": 1075404,
+  "original_hardlinks": 1,
+  "mtime_ns": 1791389812955895408,
+  "bytes": 301393414,
+  "sha256_before": "34d8f2de4df69119b9c0cd3ef70088ef51f290b6a9fbc9368df4d0e0f7164495",
+  "status": "completed_exact_bytes_preserved",
+  "sha256_after": "34d8f2de4df69119b9c0cd3ef70088ef51f290b6a9fbc9368df4d0e0f7164495",
+  "destination_inode": 57130,
+  "destination_hardlinks": 1
+}

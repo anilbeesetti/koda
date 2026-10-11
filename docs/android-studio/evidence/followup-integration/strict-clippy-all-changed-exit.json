@@ -1,0 +1,18 @@
+{
+  "command": [
+    "./script/clippy",
+    "--locked",
+    "-p",
+    "android_tools",
+    "-p",
+    "android_ui",
+    "-p",
+    "icons",
+    "-p",
+    "xtask"
+  ],
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "exit_code": 0,
+  "elapsed_seconds": 150.66698929300037,
+  "log_sha256": "b442ef81d7893146fc282a4ba9d9a0c06ceb860e7ad53daabafbfcd24471e8fa"
+}

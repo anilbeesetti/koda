@@ -1,0 +1,24 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt#com.android.tools.adtui.TabbedToolbarTest.iconButtonsCallbackWhenClicked",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_ui/Cargo.toml",
+    "-p",
+    "android_ui",
+    "--lib",
+    "tabbed_toolbar::tests::icon_buttons_callback_when_clicked",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 1.0508291379956063,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-TabbedToolbarTest-iconButtonsCallbackWhenClicked.log",
+    "sha256": "a240bd1e491c2d4e0bc007e3ec5c482b33eea03770771949cfcdfab673526a82"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "head": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "old_assertions_preserved": true,
+  "sole_old_assertion_change": {
+    "agp": "8.2.0-dev",
+    "producer": [
+      8,
+      8
+    ],
+    "before": false,
+    "after": true,
+    "reason": "pinned DEV ranks above RC, beta, alpha"
+  },
+  "old_test_count": 28,
+  "current_test_count": 30,
+  "review_aid_only": true,
+  "actual_rust_tests_executed_by_reviewer": false,
+  "grammar_cases_compared": 250563,
+  "valid_case_count": 8996,
+  "additional_terminator_and_shape_cases": 8,
+  "mismatches": 0,
+  "note": "Python differential review aid independently models pinned Kotlin regex/padding and inspected Rust split-parser. This is not Rust runtime or upstream test-parity evidence."
+}

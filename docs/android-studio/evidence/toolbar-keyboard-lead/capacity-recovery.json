@@ -1,0 +1,25 @@
+{
+  "reason": "Known failed all-feature UI linker output; source, fixtures and failure logs are retained.",
+  "deleted_incomplete_outputs": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_ui-09bc6d780809bc79.tmp82b5112",
+      "bytes": 739939696
+    }
+  ],
+  "preserved_executables": [
+    {
+      "original": "/workspace/android-studio-toolbar-scroll-lead/target/cloud-tests/android-ui",
+      "frozen": "/tmp/android-studio-frozen-executables/android-ui-eefe-prior119",
+      "sha256": "7681b997acda1e25fab52b38b4fdd4b6352d9d6ffaafbe3a551434f72ec8d981",
+      "bytes": 449951192,
+      "scope": "Prior119passing UI tests at eefe source"
+    },
+    {
+      "original": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+      "frozen": "/tmp/android-studio-frozen-executables/android-ui-650-default16",
+      "sha256": "fc54fd05545dc8993124cbbd3e2a983f232f49bbc7d0a620b3f83184733b25ab",
+      "bytes": 450033216,
+      "scope": "Actual16focusedpassing default UI tests at650 source"
+    }
+  ]
+}

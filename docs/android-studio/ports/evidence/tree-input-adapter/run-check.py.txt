@@ -1,0 +1,33 @@
+import hashlib
+import json
+import os
+from pathlib import Path
+import resource
+import subprocess
+import sys
+import time
+
+repo = Path('/workspace/android-studio-tree-input-adapter')
+artifacts = Path('/workspace/android-studio-artifacts/tree-input-adapter')
+label, *command = sys.argv[1:]
+paths = subprocess.check_output(['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard', '--', 'crates/android_tools'], cwd=repo).split(b'\0')
+files = sorted({os.fsdecode(path) for path in paths if path})
+def closure():
+    return {path: hashlib.sha256((repo / path).read_bytes()).hexdigest() for path in files}
+before = closure()
+start = time.monotonic()
+with (artifacts / (label + '.log')).open('wb') as log:
+    process = subprocess.run(command, cwd=repo, stdout=log, stderr=subprocess.STDOUT)
+result = {
+    'command': command,
+    'exit_code': process.returncode,
+    'wall_seconds': time.monotonic() - start,
+    'child_peak_rss_kib': resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,
+    'source_closure_count': len(before),
+    'source_unchanged': closure() == before,
+    'source_before': before,
+    'log_sha256': hashlib.sha256((artifacts / (label + '.log')).read_bytes()).hexdigest(),
+}
+(artifacts / (label + '.json')).write_text(json.dumps(result, indent=2) + '\n')
+print(json.dumps({key: value for key, value in result.items() if key != 'source_before'}, indent=2), flush=True)
+sys.exit(process.returncode if result['source_unchanged'] else 125)

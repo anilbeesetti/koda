@@ -1,0 +1,207 @@
+{
+  "Root_authorized_supplementary_private_SDK_setup": true,
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "failed_epoch_retained": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime",
+  "failed_raw_V2_error_retained": true,
+  "cloned_failed_epoch_inputs_exact_before_override": {
+    "README.md": {
+      "sha256": "24504cb238e09004377979e200c9c1d939a2868153efb8547e872cf83b17e004",
+      "bytes": 22908
+    },
+    "build.gradle.kts": {
+      "sha256": "ef9df20c798d2efbf85bbaed27e77df730b0a155848ad24f91fd864ad162cfcf",
+      "bytes": 207
+    },
+    "gradlew.bat": {
+      "sha256": "d539676c48b596afda64c963ec8f7ee56c7b3fe7e3b81d1dbe2d1a1e3dd9e9f8",
+      "bytes": 2848
+    },
+    "COMPOSE_PREVIEW.md": {
+      "sha256": "ba63329c049da0c6478487f2c25daf40f5177e3c3159365d11c0b86ca8dba980",
+      "bytes": 15113
+    },
+    "gradle.properties": {
+      "sha256": "5669826d79ffba2fda136c3ecd0d130fa2f54103869ec47ed5e6842e27717217",
+      "bytes": 112
+    },
+    "gradlew": {
+      "sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+      "bytes": 8656
+    },
+    "LOGCAT.md": {
+      "sha256": "2088a681837f1e81a8117197801e61d19213335f6b83c0899a91c85bb2eccac2",
+      "bytes": 9873
+    },
+    ".gitignore": {
+      "sha256": "de544b62d9970c2a10b54543b575f0ded36ce6403e803f892bb175e8c09498ca",
+      "bytes": 73
+    },
+    "APK_SELECTION.md": {
+      "sha256": "3fd1158aea0f910ca3594873376bd7dfc13bec21cdd8a7880e5014b28f9fd6f7",
+      "bytes": 7036
+    },
+    "settings.gradle.kts": {
+      "sha256": "5e14d048c95bf8dd715b60592a3572ed6eb15b8988be7592b6c78713deb486a5",
+      "bytes": 354
+    },
+    "mobile/build.gradle.kts": {
+      "sha256": "45467c40c6e381c6e45f0e3b5e4149129230944b08af61e4e907dc34ccda13bb",
+      "bytes": 1247
+    },
+    "mobile/src/main/AndroidManifest.xml": {
+      "sha256": "902f81109721369232038d8d3365ed195adaf592584453238c4b789881974d80",
+      "bytes": 637
+    },
+    "mobile/src/main/java/dev/zed/androidsample/MainActivity.kt": {
+      "sha256": "d02f4980c0c1c419132680869ddbb0f051087d162093a6d39bab2f15a7f95973",
+      "bytes": 1354
+    },
+    "mobile/src/main/java/dev/zed/androidsample/Greeting.java": {
+      "sha256": "b8312e5fdd93958a5f57dbe0785ea021d8231a0f23e90d4748f8c03ff29399e6",
+      "bytes": 206
+    },
+    "mobile/src/main/res/values/strings.xml": {
+      "sha256": "7e4bb40e72c68c9614e13c3c74dde3df3195cbeef7114520be48e2fe7d0b7642",
+      "bytes": 81
+    },
+    "mobile/src/main/kotlin/dev/zed/androidsample/PreviewGallery.kt": {
+      "sha256": "b4f9b474270be1729e7917ae40e74a3d308126286ceb21f81c5f1674bb378a9a",
+      "bytes": 1282
+    },
+    "mobile/src/test/java/dev/zed/androidsample/VariantTest.kt": {
+      "sha256": "984e848f08385d9a1b95fa4ff794d7b798a4cdd0971ade34583947e3c9dd6520",
+      "bytes": 600
+    },
+    "greeting/build.gradle.kts": {
+      "sha256": "dac6bc7f174efca81b82e114a7824ce9ec5235076a38ab92dd5f37c551ac2345",
+      "bytes": 291
+    },
+    "greeting/src/main/kotlin/dev/zed/greeting/LibraryGreeting.kt": {
+      "sha256": "5ae97a31c8b0f39fde2456849add884e93747d8acc94d01fb9ac01921caa77be",
+      "bytes": 109
+    },
+    "gradle/wrapper/gradle-wrapper.properties": {
+      "sha256": "89f62533208a72b7a8cc2892b6b3540c445fa6175508297d932dae57d653591a",
+      "bytes": 368
+    },
+    "gradle/wrapper/gradle-wrapper.jar": {
+      "sha256": "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7",
+      "bytes": 48462
+    }
+  },
+  "private_changes_only": [
+    {
+      "private_path": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project/mobile/build.gradle.kts",
+      "before_sha256": "45467c40c6e381c6e45f0e3b5e4149129230944b08af61e4e907dc34ccda13bb",
+      "after_sha256": "bd8511c0541b2a42717f14c5ce16fc90aa6f9e583cc44b0bebcb8314286af2d2",
+      "added_exact_text": "\n// Supplementary validation pins the actually installed SDK build-tools.\nandroid { buildToolsVersion = \"37.0.0\" }\n",
+      "original_source_or_test_data_changed": false
+    },
+    {
+      "private_path": "/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/official-private-project/greeting/build.gradle.kts",
+      "before_sha256": "dac6bc7f174efca81b82e114a7824ce9ec5235076a38ab92dd5f37c551ac2345",
+      "after_sha256": "587ef3ccdfb7abbf100430dd26775e4e5b194ed7f3013d019269a3777b73fa9a",
+      "added_exact_text": "\n// Supplementary validation pins the actually installed SDK build-tools.\nandroid { buildToolsVersion = \"37.0.0\" }\n",
+      "original_source_or_test_data_changed": false
+    }
+  ],
+  "private_baseline_inputs_after_override": {
+    "README.md": {
+      "sha256": "24504cb238e09004377979e200c9c1d939a2868153efb8547e872cf83b17e004",
+      "bytes": 22908
+    },
+    "build.gradle.kts": {
+      "sha256": "ef9df20c798d2efbf85bbaed27e77df730b0a155848ad24f91fd864ad162cfcf",
+      "bytes": 207
+    },
+    "gradlew.bat": {
+      "sha256": "d539676c48b596afda64c963ec8f7ee56c7b3fe7e3b81d1dbe2d1a1e3dd9e9f8",
+      "bytes": 2848
+    },
+    "COMPOSE_PREVIEW.md": {
+      "sha256": "ba63329c049da0c6478487f2c25daf40f5177e3c3159365d11c0b86ca8dba980",
+      "bytes": 15113
+    },
+    "gradle.properties": {
+      "sha256": "5669826d79ffba2fda136c3ecd0d130fa2f54103869ec47ed5e6842e27717217",
+      "bytes": 112
+    },
+    "gradlew": {
+      "sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+      "bytes": 8656
+    },
+    "LOGCAT.md": {
+      "sha256": "2088a681837f1e81a8117197801e61d19213335f6b83c0899a91c85bb2eccac2",
+      "bytes": 9873
+    },
+    ".gitignore": {
+      "sha256": "de544b62d9970c2a10b54543b575f0ded36ce6403e803f892bb175e8c09498ca",
+      "bytes": 73
+    },
+    "APK_SELECTION.md": {
+      "sha256": "3fd1158aea0f910ca3594873376bd7dfc13bec21cdd8a7880e5014b28f9fd6f7",
+      "bytes": 7036
+    },
+    "settings.gradle.kts": {
+      "sha256": "5e14d048c95bf8dd715b60592a3572ed6eb15b8988be7592b6c78713deb486a5",
+      "bytes": 354
+    },
+    "mobile/build.gradle.kts": {
+      "sha256": "bd8511c0541b2a42717f14c5ce16fc90aa6f9e583cc44b0bebcb8314286af2d2",
+      "bytes": 1362
+    },
+    "mobile/src/main/AndroidManifest.xml": {
+      "sha256": "902f81109721369232038d8d3365ed195adaf592584453238c4b789881974d80",
+      "bytes": 637
+    },
+    "mobile/src/main/java/dev/zed/androidsample/MainActivity.kt": {
+      "sha256": "d02f4980c0c1c419132680869ddbb0f051087d162093a6d39bab2f15a7f95973",
+      "bytes": 1354
+    },
+    "mobile/src/main/java/dev/zed/androidsample/Greeting.java": {
+      "sha256": "b8312e5fdd93958a5f57dbe0785ea021d8231a0f23e90d4748f8c03ff29399e6",
+      "bytes": 206
+    },
+    "mobile/src/main/res/values/strings.xml": {
+      "sha256": "7e4bb40e72c68c9614e13c3c74dde3df3195cbeef7114520be48e2fe7d0b7642",
+      "bytes": 81
+    },
+    "mobile/src/main/kotlin/dev/zed/androidsample/PreviewGallery.kt": {
+      "sha256": "b4f9b474270be1729e7917ae40e74a3d308126286ceb21f81c5f1674bb378a9a",
+      "bytes": 1282
+    },
+    "mobile/src/test/java/dev/zed/androidsample/VariantTest.kt": {
+      "sha256": "984e848f08385d9a1b95fa4ff794d7b798a4cdd0971ade34583947e3c9dd6520",
+      "bytes": 600
+    },
+    "greeting/build.gradle.kts": {
+      "sha256": "587ef3ccdfb7abbf100430dd26775e4e5b194ed7f3013d019269a3777b73fa9a",
+      "bytes": 406
+    },
+    "greeting/src/main/kotlin/dev/zed/greeting/LibraryGreeting.kt": {
+      "sha256": "5ae97a31c8b0f39fde2456849add884e93747d8acc94d01fb9ac01921caa77be",
+      "bytes": 109
+    },
+    "gradle/wrapper/gradle-wrapper.properties": {
+      "sha256": "89f62533208a72b7a8cc2892b6b3540c445fa6175508297d932dae57d653591a",
+      "bytes": 368
+    },
+    "gradle/wrapper/gradle-wrapper.jar": {
+      "sha256": "497c8c2a7e5031f6aa847f88104aa80a93532ec32ee17bdb8d1d2f67a194a9c7",
+      "bytes": 48462
+    }
+  },
+  "baseline_input_witness": "baseline-old/private-inputs-before.json captured before actual run",
+  "actual_installed_buildtools_version_explicit": "37.0.0",
+  "SDK_install_or_license_mutation": false,
+  "original_source_tests_fixtures_assertions_unchanged": true,
+  "all8capture_assertions_and_full_projection_check_code_identical_except_owned_BASE_path": true,
+  "script_before_sha256": "32e1a1c9119dbc698a2cbc9a9526a63587f4b308ebe24a7e3cb83d4d1216185d",
+  "script_after_sha256": "cc4c61258b20abf3528998dcfcf4116ec7e949f87dbf0efb98584cdaec8a996b",
+  "current_normal_fresh_library_and_probe_binding_reused_byte_exact": true,
+  "current_probe_source_sha256": "330abe4e7efb40e81e496d343d4ea5e2ce84811b4efd6d1a8c77fb56fb79a926",
+  "current_probe_binary_sha256": "a9389c2e14e85025f3b0bf1cff35c6b17ea0fc9ecaed44fa98addc7c10a1c15e",
+  "original_reference_runtime_credit": 0,
+  "semantic_product_fix_count_unchanged": 3,
+  "both_receipt_preparation_diagnostics_preserved": true
+}

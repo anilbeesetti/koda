@@ -1,0 +1,113 @@
+{
+  "checkedUtc": "2026-10-07T20:58:52.357927+00:00",
+  "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "wholeSourceFiles": 4612,
+  "wholeSourceGuardPassed": true,
+  "indexBlobTreeMatchesHead": true,
+  "indexByteShaBefore": "fa3c98ae7750fb261239644bcca15142aa50519149955db177298a881aadde62",
+  "indexByteShaAfterRefresh": "45b0175871cabd44f0f3e457e9db0bd2d1c0dfe818e845268adea0584c5c01b5",
+  "indexByteChanged": true,
+  "indexChangeExplanation": "Git stat/cache metadata refreshed; byte guard and clean cached/worktree diffs independently preserve content. Earlier execution-guard-after.json records equal index bytes before environment refresh.",
+  "immutableOriginals": 184,
+  "oldAndPrivateFixtureInputsUnchanged": 13,
+  "ownedDaemons": [
+    {
+      "pid": 254416,
+      "log": "/workspace/android-studio-artifacts/gradle-home/daemon/9.6.1/daemon-254416.out.log",
+      "sha256": "ce7227e68f80902e01acbec10a34e7b92e53800d92c075d2d2bc6a47d0780bdf",
+      "ownedByPrivateFixture": true,
+      "exitEvidence": [
+        "2026-10-07T20:39:36.165+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [40f2ac06-1d82-4fb1-8554-4e50472685e6 port:35487, addresses:[localhost/127.0.0.1]]",
+        "2026-10-07T20:39:36.226+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [40f2ac06-1d82-4fb1-8554-4e50472685e6 port:35487, addresses:[localhost/127.0.0.1]]",
+        "Daemon vm is shutting down... The daemon has exited normally or was terminated in response to a user interrupt.",
+        "2026-10-07T20:39:36.233+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [40f2ac06-1d82-4fb1-8554-4e50472685e6 port:35487, addresses:[localhost/127.0.0.1]]"
+      ],
+      "live": false
+    },
+    {
+      "pid": 254518,
+      "log": "/workspace/android-studio-artifacts/gradle-home/daemon/9.6.1/daemon-254518.out.log",
+      "sha256": "175fd42bafc027656cd59ed777152baeecd33a19370ef5f466e133e1ceb4e9da",
+      "ownedByPrivateFixture": true,
+      "exitEvidence": [
+        "2026-10-07T20:39:46.759+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [db7b9353-b3a7-4a4d-a8ea-5e788da71786 port:35803, addresses:[localhost/127.0.0.1]]",
+        "2026-10-07T20:39:46.821+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [db7b9353-b3a7-4a4d-a8ea-5e788da71786 port:35803, addresses:[localhost/127.0.0.1]]",
+        "Daemon vm is shutting down... The daemon has exited normally or was terminated in response to a user interrupt.",
+        "2026-10-07T20:39:46.825+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [db7b9353-b3a7-4a4d-a8ea-5e788da71786 port:35803, addresses:[localhost/127.0.0.1]]"
+      ],
+      "live": false
+    },
+    {
+      "pid": 254619,
+      "log": "/workspace/android-studio-artifacts/gradle-home/daemon/9.6.1/daemon-254619.out.log",
+      "sha256": "7d0ec820375081c714ef503a009f226eeca2a304082cbc4c9262e8785bf849a4",
+      "ownedByPrivateFixture": true,
+      "exitEvidence": [
+        "2026-10-07T20:39:58.402+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [e65367aa-2a60-4423-bd6e-680cb52e5f71 port:37719, addresses:[localhost/127.0.0.1]]",
+        "2026-10-07T20:39:58.463+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [e65367aa-2a60-4423-bd6e-680cb52e5f71 port:37719, addresses:[localhost/127.0.0.1]]",
+        "Daemon vm is shutting down... The daemon has exited normally or was terminated in response to a user interrupt.",
+        "2026-10-07T20:39:58.467+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [e65367aa-2a60-4423-bd6e-680cb52e5f71 port:37719, addresses:[localhost/127.0.0.1]]"
+      ],
+      "live": false
+    },
+    {
+      "pid": 254759,
+      "log": "/workspace/android-studio-artifacts/gradle-home/daemon/9.6.1/daemon-254759.out.log",
+      "sha256": "c0604fb1ef15fd4e142bf6f40d6f3f19fcd21a70ecb3ce2f7f75bfcfa4b6a112",
+      "ownedByPrivateFixture": true,
+      "exitEvidence": [
+        "2026-10-07T20:40:09.693+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [d340d1e0-e039-41ad-a607-143395c22948 port:41679, addresses:[localhost/127.0.0.1]]",
+        "2026-10-07T20:40:09.748+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [d340d1e0-e039-41ad-a607-143395c22948 port:41679, addresses:[localhost/127.0.0.1]]",
+        "Daemon vm is shutting down... The daemon has exited normally or was terminated in response to a user interrupt.",
+        "2026-10-07T20:40:09.752+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [d340d1e0-e039-41ad-a607-143395c22948 port:41679, addresses:[localhost/127.0.0.1]]"
+      ],
+      "live": false
+    },
+    {
+      "pid": 254860,
+      "log": "/workspace/android-studio-artifacts/gradle-home/daemon/9.6.1/daemon-254860.out.log",
+      "sha256": "91c3f22985e40c4858e31932285a77b5c6c1a1896672169266d476134a557fd8",
+      "ownedByPrivateFixture": true,
+      "exitEvidence": [
+        "2026-10-07T20:40:20.744+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [ee6d6a99-0696-4c55-8f1a-bbef362c958b port:40559, addresses:[localhost/127.0.0.1]]",
+        "2026-10-07T20:40:20.803+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [ee6d6a99-0696-4c55-8f1a-bbef362c958b port:40559, addresses:[localhost/127.0.0.1]]",
+        "Daemon vm is shutting down... The daemon has exited normally or was terminated in response to a user interrupt.",
+        "2026-10-07T20:40:20.808+0000 [DEBUG] [org.gradle.launcher.daemon.registry.PersistentDaemonRegistry] Removing daemon address: [ee6d6a99-0696-4c55-8f1a-bbef362c958b port:40559, addresses:[localhost/127.0.0.1]]"
+      ],
+      "live": false
+    }
+  ],
+  "ownedDaemonProcessesAbsent": true,
+  "formerlyUnclassified255023Absent": true,
+  "unownedDaemonsObserved": [
+    {
+      "pid": 167092,
+      "owned": false
+    }
+  ],
+  "unownedProcessesLeftUntouched": true,
+  "frozenExecutables": [
+    {
+      "target": "generated_artifacts",
+      "path": "/workspace/.cache/zed/target/debug/deps/generated_artifacts-9c69bd945c98b6fd",
+      "sha256": "e5aec644871ca23c82482c60e6f47314719d96376b8ef14406b85ab7ba223b0e",
+      "bytes": 6093240,
+      "fresh": false,
+      "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2"
+    },
+    {
+      "target": "android_tools",
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "sha256": "205534950afe41974d7f65395b2529cceb204b6c3cce211324d6ea7116ff613d",
+      "bytes": 303989152,
+      "fresh": false,
+      "sourceCommit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2"
+    }
+  ],
+  "libraryBuildResult": "library-build-result.json",
+  "noFurtherOwnerCompilerGradleActivityNeeded": true,
+  "capacityBytes": {
+    "workspace": 865972224,
+    "tmp": 1233149952
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "jobs": 36,
+  "protected_previous_passing": 35,
+  "first_stage_ui": 7,
+  "later_tools": 29,
+  "original_parallel_method_assertions": 9,
+  "fixed_source_pathspec": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "source_guard_count": 4730,
+  "ledger_promoted": false,
+  "adapted_parent_runner_sha256": "a2af786ecfd458301e64ff01dd72d43fdfed59cafe51e098724d083f1d7cae1b"
+}

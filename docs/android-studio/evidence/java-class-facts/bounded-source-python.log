@@ -1,0 +1,6 @@
+
+running 1 test
+test java_class_facts::tests::source_size_limit_is_checked_before_utf8_or_tokenization ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 83 filtered out; finished in 0.13s
+

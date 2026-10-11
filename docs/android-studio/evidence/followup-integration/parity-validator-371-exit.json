@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/tmp/android-studio-reference-census/xtask-1a6b161d0e",
+    "android-parity",
+    "--repository",
+    "/workspace/android-studio-integration",
+    "--reference-root",
+    "/workspace/android-studio-references"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 38.035685235998244,
+  "source_equivalence": "All xtask module/main/manifest bytes match frozen74-test reviewed CLI source1a6b161d0e; not a new compile",
+  "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "executable_sha256": "001523de86d393d7a9c5dc8220c9ab277fc49e33090e1ca73da37562830ca49f"
+}

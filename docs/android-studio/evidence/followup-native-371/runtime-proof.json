@@ -1,0 +1,371 @@
+{
+  "schema_version": 1,
+  "source_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+  "git_tree": "54be49ec652e75d15e8d6afb0292f05e5bcd068a",
+  "status": "passing_scoped_full_app_ui_ux_followup",
+  "finished_utc": "2026-10-07T18:40:17Z",
+  "review_verdicts": {
+    "native_UI": "PASS for changed toolbar and Buildconsumer flows",
+    "native_UX": "PASS for changed toolbar and Buildconsumer workflows"
+  },
+  "scope": "Actual rebuilt full Koda app on Xvfb/software Vulkan: scoped toolbar focus, scrolling, Build panel workflows, and current SDK model sync. Full Android Studio window, theme, and exhaustive parity remain unverified.",
+  "build_receipt": {
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "-p",
+      "zed",
+      "--bin",
+      "koda"
+    ],
+    "tested_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+    "exit_code": 0,
+    "elapsed_seconds": 215.45362006700088,
+    "log_sha256": "b49dc2397bd1a0747c8ecad0c1d2b946c5186df406d86485b13c48117d1105bd",
+    "executable": "/tmp/android-studio-link-output/koda-followup-231332",
+    "executable_sha256": "e5bec9ab384701f21e8af5a9e6a353e24ff1e7c31f677794c878bc7b8aa65521",
+    "executable_bytes": 1359369480,
+    "cargo_published_executable": "/workspace/.cache/zed/target/debug/koda",
+    "original_linker_output": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+    "only_final_output_argument_changed": true
+  },
+  "skill": "/workspace/android-studio-integration/.agents/skills/koda-app-validation/SKILL.md",
+  "restoration": "Interrupted pre-restart captures, process proof, and stdout are retained under interrupted-before-restart and receive no credit. Fresh post-restoration profiles and process identities were verified.",
+  "actual_launches": [
+    {
+      "profile": "qa-restored-success",
+      "launcher_pid": 235104,
+      "app_pid": 235128,
+      "xvfb_pid": 235118,
+      "display": ":118",
+      "pty_session": 77855,
+      "project": "generation-project",
+      "process_proof": "process-restored-success.json"
+    },
+    {
+      "profile": "qa-restored-error",
+      "launcher_pid": 237154,
+      "app_pid": 237189,
+      "xvfb_pid": 237170,
+      "display": ":118",
+      "pty_session": 13079,
+      "project": "restored-error-project",
+      "process_proof": "process-restored-error.json"
+    }
+  ],
+  "launch_flags": "PTY; no --build; exact frozen ELF and integration cwd; isolated profiles; trust only the external fixture, with global trust unchecked. Language servers, updates, and telemetry disabled by repository QA defaults.",
+  "flows": [
+    {
+      "name": "sync_loading_success",
+      "status": "passing",
+      "captures": [
+        "restored-sync-loading.png",
+        "restored-sync-success.png"
+      ],
+      "observation": "Loading changes to Successful in 2 seconds; two variants discovered; :app demoDebug selected."
+    },
+    {
+      "name": "wide_tab_space_reverse",
+      "status": "passing",
+      "captures": [
+        "restored-wide-tab-focus.png",
+        "restored-wide-space-output.png"
+      ],
+      "observation": "Tab visibly focuses Output while the Sync log remains selected. Space selects empty Output. Shift+Tab visibly focuses Sync while Output remains selected; Space restores Sync."
+    },
+    {
+      "name": "narrow230_forward_reverse_focus",
+      "status": "passing",
+      "captures": [
+        "restored-narrow230-tab-focus.png",
+        "restored-narrow230-shift-tab-focus.png"
+      ],
+      "observation": "At 230 px, focus reveals the oversized Output tab leading edge and focus background without selection. Space selects Output. Reverse Shift+Tab reveals Sync, preserving empty Output until Space."
+    },
+    {
+      "name": "narrow290_forward_activation",
+      "status": "passing",
+      "captures": [
+        "restored-narrow290-tab-focus.png",
+        "restored-narrow290-space-output.png"
+      ],
+      "observation": "At 290 px, Output focus is fully visible; Sync remains selected until Space."
+    },
+    {
+      "name": "narrow_arrows_pointer_space_return",
+      "status": "passing",
+      "captures": [
+        "restored-narrow230-arrow-click.png",
+        "restored-narrow230-arrow-return.png"
+      ],
+      "observation": "Each pointer, Space, and Return activation moves the actual clipped tabs further right; Sync remains selected."
+    },
+    {
+      "name": "traversal_leaves_toolbar",
+      "status": "passing",
+      "captures": [
+        "restored-wide-hide-focus.png",
+        "restored-wide-rerun-space-loading.png"
+      ],
+      "observation": "Tab moves from Sync to Output, Hide, and external Rerun. Space starts Sync. No toolbar focus trap was observed."
+    },
+    {
+      "name": "global_sync_shortcut",
+      "status": "passing",
+      "captures": [
+        "restored-global-sync-loading.png",
+        "restored-global-sync-success.png"
+      ],
+      "observation": "Ctrl+Alt+R from focused Output starts and completes a new sync."
+    },
+    {
+      "name": "hide_return_restore_output",
+      "status": "passing",
+      "captures": [
+        "restored-hide-return-hidden.png",
+        "restored-build-restored-output.png"
+      ],
+      "observation": "Return on focused Hide removes the Build panel; its sidebar button restores Output selection and empty content."
+    },
+    {
+      "name": "intentional_error",
+      "status": "passing",
+      "captures": [
+        "restored-error-sync-loading.png",
+        "restored-error-sync-result.png"
+      ],
+      "observation": "Fresh profile: loading changes to Failed in one second with red Sync status. The exact intentional Gradle exception appears; no stale variant or model is displayed."
+    },
+    {
+      "name": "error_console_selection_preserved",
+      "status": "passing",
+      "captures": [
+        "restored-error-output-empty.png",
+        "restored-error-sync-restored.png"
+      ],
+      "observation": "Pointer selection shows empty Output; Shift+Tab and Space restore the original Sync failure console."
+    }
+  ],
+  "return_on_tab_observation": {
+    "status": "observed_no_effect_consistent_with_pinned_tab_label_listener",
+    "capture": "restored-wide-return-sync.png",
+    "reference_source": "crates/android_ui/test_data/tabbed_toolbar/TabbedToolbar.java",
+    "reference_revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "reference_sha256": "7e9b312394b5419b446880151f83cfb04f01f9acb7364b1ab3e01baa93c4e59f",
+    "lines": [
+      141,
+      142,
+      143
+    ],
+    "reference_behavior": "The pinned tab label listener selects only on VK_SPACE. Return has no effect, matching the observed production behavior. No assertion changed, and Return tab support is not claimed."
+  },
+  "native_sdk_model": {
+    "proof": "native-restored-model-proof.json",
+    "bridge_sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+    "bridge_byte_equal_current_source": true,
+    "runtime": "AGP9.4.0/Gradle9.6.1/JDK21/SDK37 supplemental",
+    "observed": "Two active variants retain configured variant-only Java, Kotlin, resource, and asset roots as non-generated. Static assets inside and outside build are non-generated; task-generated assets outside build are generated. The inactive DSL catalog remains known without active component roots."
+  },
+  "performance": {
+    "coordination": "Root granted an exclusive quiet window with no Cargo, other live GUI, or Gradle wrapper clients. The unowned historical Gradle daemon used four CPU ticks over the first 22 seconds.",
+    "wide": {
+      "state": "restored-wide",
+      "pid": 235128,
+      "before": {
+        "monotonic": 34701.222191553,
+        "utc": "2026-10-07T18:34:21Z",
+        "cpu_ticks": 5026,
+        "raw_proc_stat": "235128 (koda) R 235104 235104 235104 34816 235104 4194560 138600 125803 1 0 4543 483 437 79 20 0 48 0 3434809 22841196544 167194 18446744073709551615 93900241691456 93900647572656 140735887689120 0 0 0 0 4102 1224 0 0 0 17 3 0 0 0 0 0 93900670025120 93900670184088 93901731340288 140735887691924 140735887692297 140735887692297 140735887699900 0\n",
+        "memory": {
+          "State": "R (running)",
+          "VmHWM": "669424 kB",
+          "VmRSS": "669424 kB",
+          "Threads": "48"
+        },
+        "compiler_and_graphics_processes": [
+          "  34966       1 Z Xvfb            [Xvfb] <defunct>",
+          "  37283       1 Z Xvfb            [Xvfb] <defunct>",
+          " 129167       1 Z rustc           [rustc] <defunct>",
+          " 133452       1 Z rustc           [rustc] <defunct>",
+          " 232854       1 Z koda            [koda] <defunct>",
+          " 235118  235104 S Xvfb            /workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :118 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset",
+          " 235128  235104 R koda            /workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/followup-native-371e79d3dd/qa-restored-success/user-data /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/custom-manifest/AndroidManifest.xml"
+        ]
+      },
+      "after": {
+        "monotonic": 34711.229435543,
+        "utc": "2026-10-07T18:34:31Z",
+        "cpu_ticks": 5058,
+        "raw_proc_stat": "235128 (koda) S 235104 235104 235104 34816 235104 4194560 138641 125803 1 0 4573 485 437 79 20 0 48 0 3434809 22841196544 167194 18446744073709551615 93900241691456 93900647572656 140735887689120 0 0 0 0 4102 1224 0 0 0 17 0 0 0 0 0 0 93900670025120 93900670184088 93901731340288 140735887691924 140735887692297 140735887692297 140735887699900 0\n",
+        "memory": {
+          "State": "S (sleeping)",
+          "VmHWM": "669452 kB",
+          "VmRSS": "669452 kB",
+          "Threads": "48"
+        },
+        "compiler_and_graphics_processes": [
+          "  34966       1 Z Xvfb            [Xvfb] <defunct>",
+          "  37283       1 Z Xvfb            [Xvfb] <defunct>",
+          " 129167       1 Z rustc           [rustc] <defunct>",
+          " 133452       1 Z rustc           [rustc] <defunct>",
+          " 232854       1 Z koda            [koda] <defunct>",
+          " 235118  235104 S Xvfb            /workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :118 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset",
+          " 235128  235104 S koda            /workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/followup-native-371e79d3dd/qa-restored-success/user-data /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/custom-manifest/AndroidManifest.xml"
+        ]
+      },
+      "elapsed_seconds": 10.007243989995914,
+      "clock_ticks_per_second": 100,
+      "cpu_ticks_delta": 32,
+      "one_core_cpu_percent": 3.1976836011982828,
+      "scope": "10-second software Vulkan/Xvfb idle sample; no hardware/startup/large-project benchmark"
+    },
+    "narrow_initial": {
+      "state": "restored-narrow",
+      "pid": 235128,
+      "before": {
+        "monotonic": 34712.422907782,
+        "utc": "2026-10-07T18:34:32Z",
+        "cpu_ticks": 5084,
+        "raw_proc_stat": "235128 (koda) S 235104 235104 235104 34816 235104 4194560 140295 125803 1 0 4597 487 437 79 20 0 48 0 3434809 22792318976 163351 18446744073709551615 93900241691456 93900647572656 140735887689120 0 0 0 0 4102 1224 0 0 0 17 0 0 0 0 0 0 93900670025120 93900670184088 93901731340288 140735887691924 140735887692297 140735887692297 140735887699900 0\n",
+        "memory": {
+          "State": "S (sleeping)",
+          "VmHWM": "668776 kB",
+          "VmRSS": "654136 kB",
+          "Threads": "48"
+        },
+        "compiler_and_graphics_processes": [
+          "  34966       1 Z Xvfb            [Xvfb] <defunct>",
+          "  37283       1 Z Xvfb            [Xvfb] <defunct>",
+          " 129167       1 Z rustc           [rustc] <defunct>",
+          " 133452       1 Z rustc           [rustc] <defunct>",
+          " 232854       1 Z koda            [koda] <defunct>",
+          " 235118  235104 S Xvfb            /workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :118 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset",
+          " 235128  235104 S koda            /workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/followup-native-371e79d3dd/qa-restored-success/user-data /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/custom-manifest/AndroidManifest.xml"
+        ]
+      },
+      "after": {
+        "monotonic": 34722.430298369,
+        "utc": "2026-10-07T18:34:42Z",
+        "cpu_ticks": 5165,
+        "raw_proc_stat": "235128 (koda) S 235104 235104 235104 34816 235104 4194560 140376 125803 1 0 4674 491 437 79 20 0 48 0 3434809 22792318976 163383 18446744073709551615 93900241691456 93900647572656 140735887689120 0 0 0 0 4102 1224 0 0 0 17 3 0 0 0 0 0 93900670025120 93900670184088 93901731340288 140735887691924 140735887692297 140735887692297 140735887699900 0\n",
+        "memory": {
+          "State": "S (sleeping)",
+          "VmHWM": "668776 kB",
+          "VmRSS": "654172 kB",
+          "Threads": "48"
+        },
+        "compiler_and_graphics_processes": [
+          "  34966       1 Z Xvfb            [Xvfb] <defunct>",
+          "  37283       1 Z Xvfb            [Xvfb] <defunct>",
+          " 129167       1 Z rustc           [rustc] <defunct>",
+          " 133452       1 Z rustc           [rustc] <defunct>",
+          " 232854       1 Z koda            [koda] <defunct>",
+          " 235118  235104 S Xvfb            /workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :118 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset",
+          " 235128  235104 S koda            /workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/followup-native-371e79d3dd/qa-restored-success/user-data /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/custom-manifest/AndroidManifest.xml"
+        ]
+      },
+      "elapsed_seconds": 10.007390587001282,
+      "clock_ticks_per_second": 100,
+      "cpu_ticks_delta": 81,
+      "one_core_cpu_percent": 8.094018045544447,
+      "scope": "10-second software Vulkan/Xvfb idle sample; no hardware/startup/large-project benchmark"
+    },
+    "narrow_settled_recheck": {
+      "state": "restored-narrow-settled-recheck",
+      "pid": 235128,
+      "before": {
+        "monotonic": 34748.791263911,
+        "utc": "2026-10-07T18:35:08Z",
+        "cpu_ticks": 5223,
+        "raw_proc_stat": "235128 (koda) S 235104 235104 235104 34816 235104 4194560 140402 125803 1 0 4726 497 437 79 20 0 48 0 3434809 22792318976 163383 18446744073709551615 93900241691456 93900647572656 140735887689120 0 0 0 0 4102 1224 0 0 0 17 4 0 0 0 0 0 93900670025120 93900670184088 93901731340288 140735887691924 140735887692297 140735887692297 140735887699900 0\n",
+        "memory": {
+          "State": "S (sleeping)",
+          "VmHWM": "668776 kB",
+          "VmRSS": "654256 kB",
+          "Threads": "48"
+        },
+        "compiler_and_graphics_processes": [
+          "  34966       1 Z Xvfb            [Xvfb] <defunct>",
+          "  37283       1 Z Xvfb            [Xvfb] <defunct>",
+          " 129167       1 Z rustc           [rustc] <defunct>",
+          " 133452       1 Z rustc           [rustc] <defunct>",
+          " 232854       1 Z koda            [koda] <defunct>",
+          " 235118  235104 S Xvfb            /workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :118 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset",
+          " 235128  235104 S koda            /workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/followup-native-371e79d3dd/qa-restored-success/user-data /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/custom-manifest/AndroidManifest.xml"
+        ]
+      },
+      "after": {
+        "monotonic": 34758.798030816,
+        "utc": "2026-10-07T18:35:18Z",
+        "cpu_ticks": 5245,
+        "raw_proc_stat": "235128 (koda) S 235104 235104 235104 34816 235104 4194560 140412 125803 1 0 4746 499 437 79 20 0 48 0 3434809 22792318976 163383 18446744073709551615 93900241691456 93900647572656 140735887689120 0 0 0 0 4102 1224 0 0 0 17 4 0 0 0 0 0 93900670025120 93900670184088 93901731340288 140735887691924 140735887692297 140735887692297 140735887699900 0\n",
+        "memory": {
+          "State": "S (sleeping)",
+          "VmHWM": "668776 kB",
+          "VmRSS": "654288 kB",
+          "Threads": "48"
+        },
+        "compiler_and_graphics_processes": [
+          "  34966       1 Z Xvfb            [Xvfb] <defunct>",
+          "  37283       1 Z Xvfb            [Xvfb] <defunct>",
+          " 129167       1 Z rustc           [rustc] <defunct>",
+          " 133452       1 Z rustc           [rustc] <defunct>",
+          " 232854       1 Z koda            [koda] <defunct>",
+          " 235118  235104 S Xvfb            /workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :118 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset",
+          " 235128  235104 S koda            /workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/followup-native-371e79d3dd/qa-restored-success/user-data /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/custom-manifest/AndroidManifest.xml"
+        ]
+      },
+      "elapsed_seconds": 10.006766904996766,
+      "clock_ticks_per_second": 100,
+      "cpu_ticks_delta": 22,
+      "one_core_cpu_percent": 2.1985122876215444,
+      "scope": "10-second software Vulkan/Xvfb idle sample; no hardware/startup/large-project benchmark"
+    },
+    "interpretation": "Wide: 3.20% of one core. Initial narrow: 8.09%. Settled narrow recheck: 2.20%. The first higher result remains preserved and did not persist after additional settling. These samples do not establish hardware, startup, large-project performance, or absence of redraw storms."
+  },
+  "closure": {
+    "source_commit": "371e79d3dd29f94db1b1cc2d01aff85327630065",
+    "original_committed_generation_fixture_files_unchanged": true,
+    "official_wrapper_original_sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+    "external_capture_shim_modifications": "Only new external QA fixture gradlew; official wrapper retained, all arguments/stdout/exit forwarded. Interrupted and restored instrumentation logs separate.",
+    "external_error_fixture_source_files_unchanged": true,
+    "generated_gradle_state_changes": "Expected; excluded from fixture-source comparison",
+    "source_edits": "None",
+    "all_owned_live_processes_absent": true,
+    "owned_pids": [
+      235104,
+      235118,
+      235128,
+      237154,
+      237170,
+      237189
+    ],
+    "launcher_exit_codes": {
+      "restored_success": 143,
+      "restored_error": 143
+    },
+    "display118_socket_absent": true,
+    "historical_unowned_daemon167092_not_stopped": true,
+    "historical_zombie232854_not_signaled": true
+  },
+  "source_guard_receipts": [
+    "guard-after-restoration-before-launch.json",
+    "guard-final-after-native.json"
+  ],
+  "source_guard_files": 4606,
+  "source_guard_exclusions": "Exactlycapture-next-foundation metadata exclusions;not widened",
+  "diagnostics": {
+    "success_pty": "Initial X11 no-xinput-mouse-pointers warning; later PTY polls empty; no app crash observed.",
+    "error_pty": "Same initial X11 warning, followed by expected /bin/sh failed (exit status: 1) from the intentional Gradle exception; no app crash observed.",
+    "known_environment_limit": "No emulator in this SDK and no ADB target. The error Android panel shows the missing emulator separately."
+  },
+  "unverified": [
+    "Close controls: none configured in the actual Build consumer; component GPUI tests remain separate.",
+    "Project-tree GPUI adapter and generated-group visual parity.",
+    "Full Android Studio appearance and workflow coverage.",
+    "Hardware GPU, startup, and large-project performance.",
+    "Android device/emulator execution."
+  ],
+  "new_reference_parity_credit": 0
+}

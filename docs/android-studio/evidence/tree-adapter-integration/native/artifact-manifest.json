@@ -1,0 +1,310 @@
+{
+  "source_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "verdict": "PASS",
+  "files": [
+    {
+      "path": "app-pty-output.log",
+      "sha256": "246eb3e9952b2d79dee392168e222b3f63744177790e8f195abbe20c02b57124",
+      "bytes": 299,
+      "portable": true
+    },
+    {
+      "path": "capture-gradle.py",
+      "sha256": "353a00ea6234361d7e1b9796139bc5c41d560e9c4dc40b808af31a71d2c1e721",
+      "bytes": 1045,
+      "portable": false
+    },
+    {
+      "path": "diagnostic-provenance.json",
+      "sha256": "fbf13bcb91d24bbdd605eac22f2909006a80450e4b2b90408e8f56f5ff4f0d52",
+      "bytes": 924,
+      "portable": true
+    },
+    {
+      "path": "final-closure.json",
+      "sha256": "29a15859527cf8bd90fa35aef75b9ba642e7fa209f3f56802201f1f2642feca6",
+      "bytes": 564,
+      "portable": true
+    },
+    {
+      "path": "guard-after-controls.json",
+      "sha256": "332c7b42b5ed143458f3cb145979fcb7ba2696ecbf4626993fd40d463153a470",
+      "bytes": 799,
+      "portable": true
+    },
+    {
+      "path": "guard-before-launch.json",
+      "sha256": "f7c85952129403c496749ae4ba021efb1c699c6bffae7a9391428263f225d4d5",
+      "bytes": 798,
+      "portable": true
+    },
+    {
+      "path": "guard-final-after-native.json",
+      "sha256": "63c0cfefb702e5b9a1c8233ca0ebc2020865a6ecbac4cf20e15a540c2e5d6ec5",
+      "bytes": 803,
+      "portable": true
+    },
+    {
+      "path": "idle-settled-toolbar-focus.json",
+      "sha256": "e53e1139ff623c8762e90fa4318630a64a3b68a49e79561d9e3234674b02b8eb",
+      "bytes": 3420,
+      "portable": true
+    },
+    {
+      "path": "idle-settled-wide.json",
+      "sha256": "b91d3045e93ea05d217935a48ae0b814839d5933f6ee15c126bb65651c7d84d6",
+      "bytes": 3413,
+      "portable": true
+    },
+    {
+      "path": "initial-focus-identifier-failure.json",
+      "sha256": "56ce099d2ba6ca19e44d4696f4eca0dbad23beae89470c6d84d607c8e9378787",
+      "bytes": 324,
+      "portable": true
+    },
+    {
+      "path": "initial-xdotool-env-failure.json",
+      "sha256": "5933c9a2d5aaade40c32a7db8b26091ffe7a63ecc88cd80a7be8cccd335c664c",
+      "bytes": 394,
+      "portable": true
+    },
+    {
+      "path": "loading-capture-timing.json",
+      "sha256": "0da7c0599522dff1ce074016e42d253f9404f93a9bf1ff3044d2ddd6f4755855",
+      "bytes": 171,
+      "portable": true
+    },
+    {
+      "path": "native-model-first.json",
+      "sha256": "a3d16a6bfa83292f939eabb9340cea6f8fcb82d9d9eee39e8254ff959350c2d0",
+      "bytes": 102792,
+      "portable": true
+    },
+    {
+      "path": "native-model-proof-initial.json",
+      "sha256": "12407aebc94d9a955d2ce4b1ae698a598a39eacc10c81511eea98f8195ac550f",
+      "bytes": 1553,
+      "portable": true
+    },
+    {
+      "path": "native-model-proof.json",
+      "sha256": "9b665ba6e92ba2c2c11436134a1f633502146e3371fb7bfcd32c0f94e147e748",
+      "bytes": 1863,
+      "portable": true
+    },
+    {
+      "path": "native-sync-export-proof.json",
+      "sha256": "1f39201a5fe0733a75eb25686f60171713faef719e91e180273edd47ba7799db",
+      "bytes": 463,
+      "portable": true
+    },
+    {
+      "path": "native-sync-export.gradle",
+      "sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+      "bytes": 27761,
+      "portable": false
+    },
+    {
+      "path": "native-sync-stdout.log",
+      "sha256": "f4e0d4313886b5ea60830e1630a75dcb6e0c2202960426373dd1ac037a8a6961",
+      "bytes": 125404,
+      "portable": true
+    },
+    {
+      "path": "preparation-proof.json",
+      "sha256": "e35badc84e29d88ef248ed00409c658021e0132cc1ae4c7c3d8fc666df550779",
+      "bytes": 3714,
+      "portable": true
+    },
+    {
+      "path": "process-before-stop.json",
+      "sha256": "c0afe39000a94243a52409636656da13b86e961ffea2e45f8307732d363e2123",
+      "bytes": 675,
+      "portable": true
+    },
+    {
+      "path": "process-initial.json",
+      "sha256": "457cf473e2387c27b265c39170ff2ac66a072813a2cc1f8a752f6626d0857104",
+      "bytes": 671,
+      "portable": true
+    },
+    {
+      "path": "qa.py",
+      "sha256": "e6080ee656991a49b8f9e33de04e3e2817d63e5275eac030dd7d2ad7b485ade1",
+      "bytes": 5106,
+      "portable": false
+    },
+    {
+      "path": "review-report.log",
+      "sha256": "bb04062cb6b2317d6c5e6ce3540e3f6ca2eef4718b2db02ee461774ac4731280",
+      "bytes": 3200,
+      "portable": true
+    },
+    {
+      "path": "review-report.md",
+      "sha256": "bb04062cb6b2317d6c5e6ce3540e3f6ca2eef4718b2db02ee461774ac4731280",
+      "bytes": 3200,
+      "portable": false
+    },
+    {
+      "path": "runtime-proof.json",
+      "sha256": "a0bd9dc23f67f0c1658309637758468ec242e34e6790b80c495b3d7a41fef52d",
+      "bytes": 15470,
+      "portable": true
+    },
+    {
+      "path": "success-stop-request.json",
+      "sha256": "d7dc09d706c00a841f0695cfb24e8d3d38f116d91449c5cad035209eb589fe3d",
+      "bytes": 482,
+      "portable": true
+    },
+    {
+      "path": "captures/build-sidebar-restored.png",
+      "sha256": "0efcbff5856676db2719b0bd89bd1d6251d0d68d7d1c8f9821c6a24dd042838e",
+      "bytes": 71047,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/editor-second-tab-settled.png",
+      "sha256": "ca27eb78a91054ce4fb526c84337188e4988b12c153a7786ab81236b2b48b181",
+      "bytes": 216173,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/editor-second-tab.png",
+      "sha256": "9483f20b53e5040e1ea6df71d675c12c18f335ba946f111d079f391502bab909",
+      "bytes": 208516,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/editor-tab-restored.png",
+      "sha256": "c79ccecd143aa1de4dd1ed472323ab1629872ad6ba89f5cc22659c5a301cc2bc",
+      "bytes": 119410,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/fixture-trusted.png",
+      "sha256": "0df8da9f11e3d64cec878b70b3d6901b300ddc3f8659e6988c4d82a01c4b31bf",
+      "bytes": 117444,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/hide-return.png",
+      "sha256": "cfc4e571fb3fcef8291a3c1e2d4d4afc80e3088aedcedcce64602ec773235c1a",
+      "bytes": 67654,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/initial-window.png",
+      "sha256": "ae753f162354a1d5972739b7ced79bc14c26d18afb189b32a8443f5ecd925d2b",
+      "bytes": 87329,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/narrow230-output-focus.png",
+      "sha256": "bfedac8825f3dff4cf11e0de05dae492812ced3e9ea2095fbafef996bb26daa7",
+      "bytes": 47075,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/narrow230-output-selected.png",
+      "sha256": "8de2736f34bdf40f5b5e376a5a9fe07035ab5a828f034fa7521b2adf3c5bf689",
+      "bytes": 46084,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/narrow230-reverse-sync-focus.png",
+      "sha256": "e8a3e1645b44f67588fa31c40bdc7c2e5994d8f0fdd9f51fb18939c92bc9470f",
+      "bytes": 46251,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/narrow230-sync-restored.png",
+      "sha256": "0cbfdd4d990e95469fe2d7f3e560128d40205498430061cbd045b9eeec76adf4",
+      "bytes": 47283,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/narrow230-sync.png",
+      "sha256": "de9bb39299873278144f11a814c93dc27ca9aaabcb6c7bdeef3b2345ffd67fad",
+      "bytes": 49600,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/repeated-sync-loading.png",
+      "sha256": "b3045fc25955a34f713ad81a9a85045b4772e608ca480e6ec6e499c0f17cdfc6",
+      "bytes": 85718,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/repeated-sync-success.png",
+      "sha256": "26b6b0a59e6f9205796d54fdcacce9c7860eb9d8d501a43bb56cc94f42a09cd3",
+      "bytes": 118392,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/sync-console-restored.png",
+      "sha256": "df914e519c78a41356196023671c47c5083f97cf9d89eb711953e9d643b349fa",
+      "bytes": 118080,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/trusted-window.png",
+      "sha256": "ae753f162354a1d5972739b7ced79bc14c26d18afb189b32a8443f5ecd925d2b",
+      "bytes": 87329,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/wide-hide-focus.png",
+      "sha256": "833fcda828adddfccdb68ea2b49cc2ecce7a7ff8181aaba6bc13b03840d5acf6",
+      "bytes": 71054,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/wide-output-focus.png",
+      "sha256": "df914e519c78a41356196023671c47c5083f97cf9d89eb711953e9d643b349fa",
+      "bytes": 118080,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/wide-output-selected-immediate.png",
+      "sha256": "05d0c2ea68159465aa56260b2e09436c5bcb2f3bcd99b186590518983747ebf2",
+      "bytes": 118079,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/wide-output-selected.png",
+      "sha256": "0d36cdd4f0fc1bf7db3f9ac008008789d7956504744deffb57e3d781b6f6ebde",
+      "bytes": 74371,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    },
+    {
+      "path": "captures/wide-sync-restored-after-narrow.png",
+      "sha256": "8d247546fa38cc564797357745a0a6434dcc280ee2e4b875685225ab314ae694",
+      "bytes": 114470,
+      "portable": false,
+      "kind": "Fullapp screenshot, external only"
+    }
+  ],
+  "portable_policy": "JSON and raw .log receipts only. PNG/screenshots, source helper scripts, SDK init scripts, fixture and profile stay external."
+}

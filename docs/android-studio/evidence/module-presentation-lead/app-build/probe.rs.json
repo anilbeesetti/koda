@@ -1,0 +1,7 @@
+{
+  "original_path": "/workspace/android-studio-artifacts/module-presentation-integration/app-build/probe.rs",
+  "original_bytes": 82,
+  "original_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+  "encoding": "UTF-8, recovered by raw_utf8.encode(\"utf-8\") without newline conversion",
+  "raw_utf8": "fn main() { assert_eq!(19 + 23, 42); println!(\"real Rust linker probe passed\"); }\n"
+}

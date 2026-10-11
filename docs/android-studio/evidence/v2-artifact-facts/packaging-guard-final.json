@@ -1,0 +1,15 @@
+{
+  "source_commit": "830ff53de76dbecd5fc3761f1c5f5bae164763c2",
+  "whole_source_files": 4612,
+  "source_guard_passed": true,
+  "immutable_originals": 184,
+  "original_guard_passed": true,
+  "main_reference": "refs/remotes/origin/main",
+  "main_head": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+  "main_not_modified_by_task": true,
+  "metadata_only_new_files": true,
+  "fixed_exclusions_unchanged": true,
+  "canonical_matrix_unchanged": true,
+  "all_five_runtime_reviews": "PASS",
+  "normal_app_native_full_ci_parity_and_merge": "lead_pending"
+}

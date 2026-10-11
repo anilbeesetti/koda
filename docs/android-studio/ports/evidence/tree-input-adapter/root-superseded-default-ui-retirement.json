@@ -1,0 +1,16 @@
+{
+  "retired_owned_generated_old_UI_ELF": "/tmp/android-studio-frozen-executables/android-ui-371e79d3dd-default125",
+  "bytes": 451741672,
+  "sha256": "430fab503ccb41ea41f9d9939dbdec38e82c9d8b4bbeb340e3a30323041ae84d",
+  "link_count": 1,
+  "accessible_live_exe_or_fd_matches": [],
+  "unreadable_active_system_pids": [
+    "198",
+    "249"
+  ],
+  "current_33_exact_captures_PASS": true,
+  "retained_current_UI_ELF": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+  "current_UI_bytes": 451741672,
+  "current_UI_sha256": "430fab503ccb41ea41f9d9939dbdec38e82c9d8b4bbeb340e3a30323041ae84d",
+  "historical_source_tests_fixtures_logs_receipts_and_screenshots_preserved": true
+}
