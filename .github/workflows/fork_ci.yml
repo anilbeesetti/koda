@@ -95,7 +95,7 @@ jobs:
   linux:
     name: Linux build and workspace tests
     needs: checks
-    if: needs.checks.outputs.native_checks == 'true'
+    if: needs.checks.outputs.native_checks == 'true' || github.event.pull_request.number == 70
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
@@ -230,6 +230,25 @@ jobs:
           python3 script/ci-run stage 'Workspace tests (build and execution)' -- \
             cargo nextest run --locked --workspace "${filter_args[@]}" --no-fail-fast --no-tests=warn \
             --test-threads "$CI_TEST_THREADS" --status-level=fail --final-status-level=fail
+      - name: Record original module-template tests by exact name
+        id: module-template-named
+        if: ${{ !cancelled() && (hashFiles('crates/android_tools/tests/module_template.rs') != '' || github.event.pull_request.number == 70) }}
+        env:
+          CI_REFERENCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          CI_CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$CI_REFERENCE_HEAD"
+          cargo run --locked -p xtask -- android-named-module-template \
+            --expected-head "$CI_REFERENCE_HEAD" --expected-checkout "$CI_CHECKOUT_SHA" \
+            --output "$RUNNER_TEMP/android-module-template-named"
+      - name: Retain original module-template execution evidence
+        if: ${{ !cancelled() && steps.module-template-named.outcome != 'skipped' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: module-template-original-named-${{ github.sha }}
+          path: ${{ runner.temp }}/android-module-template-named
+          if-no-files-found: error
+          retention-days: 14
       - name: Build Zed
         if: success() || failure()
         run: python3 script/ci-run stage 'Linux app build' -- cargo build --locked --keep-going -p zed --bin koda

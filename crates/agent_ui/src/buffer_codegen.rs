@@ -680,11 +680,24 @@ impl CodegenAlternative {
 
         let selection_start = self.range.start.to_point(&snapshot);
 
-        // Start with the indentation of the first line in the selection
+        // An initial parse may still be running when generation starts. A grammar-backed
+        // buffer without a published syntax tree can suggest the previous line's indent,
+        // which would discard the existing indentation of the selected line.
+        let initial_parse_pending = snapshot
+            .buffer_line_for_row(MultiBufferRow(selection_start.row))
+            .is_some_and(|(buffer, _)| {
+                buffer
+                    .language()
+                    .is_some_and(|language| language.grammar().is_some())
+                    && buffer.syntax_layers().next().is_none()
+            });
+
+        // Start with the indentation of the first line in the selection.
         let mut suggested_line_indent = snapshot
             .suggested_indents(selection_start.row..=selection_start.row, cx)
             .into_values()
             .next()
+            .filter(|_| !initial_parse_pending)
             .unwrap_or_else(|| snapshot.indent_size_for_line(MultiBufferRow(selection_start.row)));
 
         // If the first line in the selection does not have indentation, check the following lines
@@ -2672,5 +2685,68 @@ mod tests {
             is_input_complete: is_complete,
             thought_signature: None,
         })
+    }
+
+    #[gpui::test]
+    async fn test_transform_autoindent_before_initial_parse(cx: &mut TestAppContext) {
+        init_test(cx);
+
+        for (indent, generated_indent) in [("    ", "       "), ("\t", "\t\t")] {
+            let text = format!(
+                "fn main() {{\n{indent}let x = 0;\n{indent}for _ in 0..10 {{\n{indent}{indent}x += 1;\n{indent}}}\n}}\n"
+            );
+            let buffer = cx.new(|cx| {
+                let mut buffer = Buffer::local(text, cx);
+                buffer.set_sync_parse_timeout(None);
+                buffer.set_language(Some(rust_lang()), cx);
+                buffer
+            });
+            assert!(buffer.read_with(cx, |buffer, _| {
+                buffer.snapshot().syntax_layers().next().is_none()
+            }));
+            let buffer = cx.new(|cx| MultiBuffer::singleton(buffer, cx));
+            let range = buffer.read_with(cx, |buffer, cx| {
+                let snapshot = buffer.snapshot(cx);
+                snapshot.anchor_before(Point::new(1, 0))
+                    ..snapshot.anchor_after(Point::new(4, indent.len() as u32 + 1))
+            });
+            let prompt_builder = Arc::new(PromptBuilder::new(None).unwrap());
+            let codegen = cx.new(|cx| {
+                CodegenAlternative::new(
+                    buffer.clone(),
+                    range,
+                    true,
+                    prompt_builder,
+                    Uuid::new_v4(),
+                    cx,
+                )
+            });
+            assert!(codegen.read_with(cx, |codegen, _| {
+                codegen
+                    .snapshot
+                    .buffer_line_for_row(MultiBufferRow(1))
+                    .unwrap()
+                    .0
+                    .syntax_layers()
+                    .next()
+                    .is_none()
+            }));
+
+            let chunks_tx = simulate_response_stream(&codegen, cx);
+            chunks_tx
+                .unbounded_send(format!(
+                    "{generated_indent}let mut x = 0;\n{generated_indent}while x < 10 {{\n{generated_indent}{indent}x += 1;\n{generated_indent}}}"
+                ))
+                .unwrap();
+            drop(chunks_tx);
+            cx.background_executor.run_until_parked();
+
+            assert_eq!(
+                buffer.read_with(cx, |buffer, cx| buffer.snapshot(cx).text()),
+                format!(
+                    "fn main() {{\n{indent}let mut x = 0;\n{indent}while x < 10 {{\n{indent}{indent}x += 1;\n{indent}}}\n}}\n"
+                )
+            );
+        }
     }
 }

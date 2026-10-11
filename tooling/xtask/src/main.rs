@@ -13,6 +13,10 @@ struct Args {
 
 #[derive(Subcommand)]
 enum CliCommand {
+    /// Retain compiler, source and exact named results for the original module-template ports.
+    AndroidNamedModuleTemplate(
+        tasks::android_named_module_template::AndroidNamedModuleTemplateArgs,
+    ),
     /// Validate Android reference-test provenance and report parity progress.
     AndroidParity(tasks::android_parity::AndroidParityArgs),
     /// Discover review candidates in pinned Android reference archives.
@@ -44,6 +48,9 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     match args.command {
+        CliCommand::AndroidNamedModuleTemplate(args) => {
+            tasks::android_named_module_template::run(args)
+        }
         CliCommand::AndroidParity(args) => tasks::android_parity::run(args),
         CliCommand::AndroidReferenceCensus(args) => tasks::android_reference_census::run(args),
         CliCommand::AndroidJunit4Declarations(args) => {
