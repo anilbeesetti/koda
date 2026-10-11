@@ -27,7 +27,7 @@ use std::{
 };
 use ui::{ContextMenu, ListItem, ListItemSpacing, PopoverMenu, prelude::*};
 use util::ResultExt as _;
-use workspace::{MultiWorkspace, MultiWorkspaceEvent, Workspace};
+use workspace::{MultiWorkspace, MultiWorkspaceEvent, Workspace, WorkspaceWindowOwnership};
 
 struct BackgroundOwned<T: Send + 'static> {
     value: Option<T>,
@@ -129,6 +129,7 @@ struct LogicalRow {
 }
 
 struct CachedLogicalRow {
+    parent: Option<usize>,
     row: LogicalRow,
     children: Vec<usize>,
 }
@@ -159,6 +160,240 @@ enum RowChange {
     Toggle(NodeKey),
     CollapseAll,
     ExpandAll,
+}
+
+#[derive(Clone, Copy)]
+enum RowReset {
+    CollapseAll,
+    ExpandAll,
+}
+
+// A persistent sparse bitset: one u64 covers 64 cache indices. Updating a toggle
+// copies only its logarithmic branch; jobs share the immutable root in O(1).
+enum ToggleNode {
+    Leaf(u64),
+    Branch {
+        left: Option<Arc<ToggleNode>>,
+        right: Option<Arc<ToggleNode>>,
+    },
+}
+
+struct IndexToggles {
+    root: Option<Arc<ToggleNode>>,
+    depth: u32,
+    count: usize,
+    #[cfg(test)]
+    drop_observer: Option<(BackgroundExecutor, futures::channel::oneshot::Sender<bool>)>,
+}
+
+#[cfg(test)]
+impl Drop for IndexToggles {
+    fn drop(&mut self) {
+        if let Some((executor, observer)) = self.drop_observer.take() {
+            observer
+                .send(executor.is_main_thread())
+                .map_err(|_| anyhow::anyhow!("Android command drop observer was released"))
+                .log_err();
+        }
+    }
+}
+
+impl IndexToggles {
+    fn empty(rows: usize) -> Self {
+        let chunks = rows.div_ceil(64).max(1);
+        Self {
+            root: None,
+            depth: usize::BITS - (chunks - 1).leading_zeros(),
+            count: 0,
+            #[cfg(test)]
+            drop_observer: None,
+        }
+    }
+
+    fn toggled(&self, index: usize) -> Self {
+        fn update(
+            node: Option<&Arc<ToggleNode>>,
+            depth: u32,
+            chunk: usize,
+            bit: u64,
+        ) -> (Option<Arc<ToggleNode>>, bool) {
+            if depth == 0 {
+                let prior = match node.map(Arc::as_ref) {
+                    Some(ToggleNode::Leaf(bits)) => *bits,
+                    _ => 0,
+                };
+                let next = prior ^ bit;
+                return (
+                    (next != 0).then(|| Arc::new(ToggleNode::Leaf(next))),
+                    prior & bit == 0,
+                );
+            }
+            let (left, right) = match node.map(Arc::as_ref) {
+                Some(ToggleNode::Branch { left, right }) => (left.clone(), right.clone()),
+                _ => (None, None),
+            };
+            let (left, right, added) = if chunk & (1 << (depth - 1)) == 0 {
+                let (next, added) = update(left.as_ref(), depth - 1, chunk, bit);
+                (next, right, added)
+            } else {
+                let (next, added) = update(right.as_ref(), depth - 1, chunk, bit);
+                (left, next, added)
+            };
+            let next = (left.is_some() || right.is_some())
+                .then(|| Arc::new(ToggleNode::Branch { left, right }));
+            (next, added)
+        }
+        let (root, added) = update(
+            self.root.as_ref(),
+            self.depth,
+            index / 64,
+            1 << (index % 64),
+        );
+        Self {
+            root,
+            depth: self.depth,
+            count: if added {
+                self.count + 1
+            } else {
+                self.count - 1
+            },
+            #[cfg(test)]
+            drop_observer: None,
+        }
+    }
+
+    fn for_each(
+        &self,
+        cancelled: &AtomicBool,
+        mut visit: impl FnMut(usize) -> Result<()>,
+    ) -> Result<()> {
+        fn walk(
+            node: &ToggleNode,
+            depth: u32,
+            chunk: usize,
+            cancelled: &AtomicBool,
+            visit: &mut impl FnMut(usize) -> Result<()>,
+        ) -> Result<()> {
+            check_rows_cancelled(cancelled)?;
+            match node {
+                ToggleNode::Leaf(bits) => {
+                    let mut remaining = *bits;
+                    while remaining != 0 {
+                        check_rows_cancelled(cancelled)?;
+                        let bit = remaining.trailing_zeros() as usize;
+                        visit(chunk * 64 + bit)?;
+                        remaining &= remaining - 1;
+                    }
+                }
+                ToggleNode::Branch { left, right } => {
+                    if let Some(left) = left {
+                        walk(left, depth - 1, chunk, cancelled, visit)?;
+                    }
+                    if let Some(right) = right {
+                        walk(
+                            right,
+                            depth - 1,
+                            chunk | (1 << (depth - 1)),
+                            cancelled,
+                            visit,
+                        )?;
+                    }
+                }
+            }
+            Ok(())
+        }
+        if let Some(root) = &self.root {
+            walk(root, self.depth, 0, cancelled, &mut visit)?;
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Default)]
+struct RowChanges {
+    reset: Option<RowReset>,
+    // Every index remains bound to this exact immutable cache, even if a later
+    // model capture inserts/reorders nodes. Materialization maps its NodeKeys
+    // into the destination projection in the background.
+    cache: Option<Arc<BackgroundOwned<LogicalRowCache>>>,
+    toggles: Option<Arc<BackgroundOwned<IndexToggles>>>,
+}
+
+impl RowChanges {
+    fn is_empty(&self) -> bool {
+        self.reset.is_none()
+            && self
+                .toggles
+                .as_ref()
+                .is_none_or(|toggles| toggles.value().is_ok_and(|toggles| toggles.count == 0))
+    }
+
+    fn queue(
+        &mut self,
+        change: RowChange,
+        cache: Arc<BackgroundOwned<LogicalRowCache>>,
+        executor: &BackgroundExecutor,
+    ) -> Result<()> {
+        match change {
+            RowChange::CollapseAll | RowChange::ExpandAll => {
+                self.reset = Some(if matches!(change, RowChange::CollapseAll) {
+                    RowReset::CollapseAll
+                } else {
+                    RowReset::ExpandAll
+                });
+                self.cache = Some(cache);
+                self.toggles = None;
+            }
+            RowChange::Toggle(key) => {
+                let source = self.cache.get_or_insert(cache).value()?;
+                let index = *source
+                    .keys
+                    .get(&key)
+                    .context("Android disclosure key is unavailable in its command cache")?;
+                let next = if let Some(toggles) = &self.toggles {
+                    toggles.value()?.toggled(index)
+                } else {
+                    IndexToggles::empty(source.rows.len()).toggled(index)
+                };
+                self.toggles = Some(Arc::new(BackgroundOwned::new(next, executor.clone())));
+            }
+        }
+        Ok(())
+    }
+
+    fn materialize(&self, cancelled: &AtomicBool) -> Result<Vec<RowChange>> {
+        check_rows_cancelled(cancelled)?;
+        let mut changes = Vec::new();
+        if let Some(reset) = self.reset {
+            changes.push(match reset {
+                RowReset::CollapseAll => RowChange::CollapseAll,
+                RowReset::ExpandAll => RowChange::ExpandAll,
+            });
+        }
+        if let Some(toggles) = &self.toggles {
+            let source = self
+                .cache
+                .as_ref()
+                .context("Android command cache is unavailable")?
+                .value()?;
+            toggles.value()?.for_each(cancelled, |index| {
+                let row = source
+                    .rows
+                    .get(index)
+                    .context("Android command index is unavailable")?;
+                changes.push(RowChange::Toggle(row.row.key.clone()));
+                Ok(())
+            })?;
+        }
+        Ok(changes)
+    }
+}
+
+#[derive(Clone, Copy)]
+struct RowJobCursor {
+    generation: u64,
+    selection_generation: u64,
+    change_generation: u64,
 }
 
 struct LogicalRowsUpdate {
@@ -195,6 +430,22 @@ fn logical_icon(key: &NodeKey) -> IconName {
 }
 
 impl LogicalRowCache {
+    fn visible_selection(
+        &self,
+        selected: Option<&NodeKey>,
+        visible: &BTreeSet<NodeKey>,
+    ) -> Option<NodeKey> {
+        let mut index = self.keys.get(selected?).copied();
+        while let Some(current) = index {
+            let row = self.rows.get(current)?;
+            if visible.contains(&row.row.key) {
+                return Some(row.row.key.clone());
+            }
+            index = row.parent;
+        }
+        None
+    }
+
     fn prepare(
         owner: RequestOwner,
         snapshot: &TreeSnapshot,
@@ -206,6 +457,7 @@ impl LogicalRowCache {
             check_rows_cancelled(cancelled)?;
             keys.insert(node.key.clone(), index);
             rows.push(CachedLogicalRow {
+                parent: None,
                 row: LogicalRow {
                     key: node.key.clone(),
                     id: format!("android-logical-row:{:?}", node.key).into(),
@@ -235,6 +487,15 @@ impl LogicalRowCache {
                         .context("Android child key is unavailable")
                 })
                 .collect::<Result<Vec<_>>>()?;
+        }
+        // Parent indices let late selection normalize in O(tree depth), rather
+        // than scanning all rows after an asynchronous disclosure publication.
+        for parent in 0..rows.len() {
+            check_rows_cancelled(cancelled)?;
+            for offset in 0..rows[parent].children.len() {
+                let child = rows[parent].children[offset];
+                rows[child].parent = Some(parent);
+            }
         }
         let roots = snapshot
             .roots
@@ -290,6 +551,9 @@ fn prepare_visible_rows(
         check_rows_cancelled(cancelled)?;
         match change {
             RowChange::Toggle(key) => {
+                if !data.keys.contains_key(&key) {
+                    continue;
+                }
                 if !expanded_keys.remove(&key) {
                     expanded_keys.insert(key);
                 }
@@ -350,6 +614,7 @@ fn prepare_visible_rows(
 
 pub(crate) struct AndroidProjectTree {
     workspace: WeakEntity<Workspace>,
+    window_ownership: Option<WorkspaceWindowOwnership>,
     window: AnyWindowHandle,
     project: Entity<Project>,
     context: Option<Entity<AndroidTreeContext>>,
@@ -371,7 +636,8 @@ pub(crate) struct AndroidProjectTree {
     logical_cache: Option<Arc<BackgroundOwned<LogicalRowCache>>>,
     visible_keys: BTreeSet<NodeKey>,
     expanded_keys: Arc<BTreeSet<NodeKey>>,
-    row_changes: Vec<RowChange>,
+    row_changes: RowChanges,
+    row_change_generation: u64,
     row_task: Option<Task<()>>,
     row_cancelled: Option<Arc<AtomicBool>>,
     row_generation: u64,
@@ -461,6 +727,7 @@ impl AndroidProjectTree {
         }
         let mut this = Self {
             workspace,
+            window_ownership: None,
             window: window.window_handle(),
             project,
             context: None,
@@ -482,7 +749,8 @@ impl AndroidProjectTree {
             logical_cache: None,
             visible_keys: BTreeSet::new(),
             expanded_keys: Arc::new(BTreeSet::new()),
-            row_changes: Vec::new(),
+            row_changes: RowChanges::default(),
+            row_change_generation: 0,
             row_task: None,
             row_cancelled: None,
             row_generation: 0,
@@ -516,6 +784,9 @@ impl AndroidProjectTree {
                 this.set_status(Status::Failed(format!("{error:#}").into()), cx);
                 log::error!("Android project tree refresh failed: {error:#}");
             }
+            if this.current_capture(window, cx).is_none() {
+                this.cancel_rows();
+            }
         });
     }
 
@@ -542,7 +813,48 @@ impl AndroidProjectTree {
         self.context = context;
     }
 
+    fn ui_window_is_current(&self, window: &Window, _cx: &App) -> bool {
+        if window.window_handle() != self.window
+            || self.workspace.upgrade().is_none()
+            || self.window_ownership.as_ref().is_none_or(|ownership| {
+                !ownership.is_active(self.workspace.entity_id(), self.project.entity_id())
+            })
+        {
+            return false;
+        }
+        match window.root::<MultiWorkspace>().flatten() {
+            Some(root) => self
+                .window_workspace_subscription
+                .as_ref()
+                .is_some_and(|(bound, _)| bound.entity_id() == root.entity_id()),
+            None => window
+                .root::<Workspace>()
+                .flatten()
+                .is_some_and(|root| root.entity_id() == self.workspace.entity_id()),
+        }
+    }
+
+    fn ui_request_is_current(&self, request: &RequestOwner, window: &Window, cx: &App) -> bool {
+        self.ui_window_is_current(window, cx)
+            && self.owner_generation == request.owner_generation
+            && self.request_generation == request.request_generation
+            && self.owner.as_ref() == Some(&request.context)
+            && self
+                .context
+                .as_ref()
+                .is_some_and(|context| context.read(cx).is_current(&request.context, cx))
+            && self
+                .project
+                .read(cx)
+                .android_model()
+                .is_current(request.model)
+    }
+
     fn bind_window_workspace(&mut self, window: &Window, cx: &mut Context<Self>) {
+        self.window_ownership = self
+            .workspace
+            .upgrade()
+            .map(|workspace| workspace.read(cx).window_ownership());
         let multi_workspace = window.root::<MultiWorkspace>().flatten();
         if self
             .window_workspace_subscription
@@ -941,7 +1253,7 @@ impl AndroidProjectTree {
 
     pub(crate) fn selector_state(&self, window: &Window, cx: &App) -> Option<SelectorState> {
         let owner = self.owner.as_ref()?;
-        if !self.window_is_current(window, cx)
+        if !self.ui_window_is_current(window, cx)
             || !self.context.as_ref()?.read(cx).is_current(owner, cx)
         {
             return None;
@@ -1014,7 +1326,7 @@ impl AndroidProjectTree {
 
     pub(crate) fn rendered_owner(&self, window: &Window, cx: &App) -> Option<RenderedOwner> {
         let context = self.owner.as_ref()?;
-        if !self.window_is_current(window, cx)
+        if !self.ui_window_is_current(window, cx)
             || !self.context.as_ref()?.read(cx).is_current(context, cx)
         {
             return None;
@@ -1173,7 +1485,16 @@ impl AndroidProjectTree {
         let selected = self.selected_key.clone();
         let selection_generation = self.selection_generation;
         let initialized = self.logical_initialized;
-        let changes = self.row_changes.clone();
+        let changes = if self.row_changes.is_empty() {
+            RowChanges::default()
+        } else {
+            self.row_changes.clone()
+        };
+        let cursor = RowJobCursor {
+            generation,
+            selection_generation,
+            change_generation: self.row_change_generation,
+        };
         let cancelled = Arc::new(AtomicBool::new(false));
         self.row_cancelled = Some(cancelled.clone());
         let executor = cx.background_executor().clone();
@@ -1200,7 +1521,7 @@ impl AndroidProjectTree {
                     expanded,
                     selected,
                     initialized,
-                    changes,
+                    changes.materialize(&cancelled)?,
                     &cancelled,
                 )?;
                 Ok::<_, anyhow::Error>(BackgroundOwned::new(rows, executor))
@@ -1209,7 +1530,7 @@ impl AndroidProjectTree {
         self.row_task = Some(cx.spawn_in(window, async move |tree, cx| {
             let result = preparation.await;
             tree.update_in(cx, |tree, window, cx| {
-                tree.finish_rows(&owner, generation, selection_generation, result, window, cx);
+                tree.finish_rows(&owner, cursor, result, window, cx);
             })
             .log_err();
         }));
@@ -1220,24 +1541,34 @@ impl AndroidProjectTree {
     fn finish_rows(
         &mut self,
         owner: &RequestOwner,
-        generation: u64,
-        selection_generation: u64,
+        cursor: RowJobCursor,
         result: Result<BackgroundOwned<LogicalRowsUpdate>>,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if self.row_generation != generation
-            || self
-                .published
-                .as_ref()
-                .is_none_or(|published| &published.owner != owner)
-            || !self.request_is_current(owner, window, cx)
-            || self.current_capture(window, cx).is_none()
-        {
+        let RowJobCursor {
+            generation,
+            selection_generation,
+            change_generation,
+        } = cursor;
+        // Completion releases only its own job slot, even if the source model
+        // became stale. Never clear a replacement job's cancellation ownership.
+        if self.row_generation != generation {
             return;
         }
         self.row_task = None;
         self.row_cancelled = None;
+        if self
+            .published
+            .as_ref()
+            .is_none_or(|published| &published.owner != owner)
+            || !self.request_is_current(owner, window, cx)
+            || self.current_capture(window, cx).is_none()
+            || self.row_change_generation != change_generation
+        {
+            cx.notify();
+            return;
+        }
         match result.and_then(BackgroundOwned::into_value) {
             Ok(update) => {
                 let obsolete_rows = std::mem::replace(&mut self.logical_rows, update.rows);
@@ -1245,16 +1576,14 @@ impl AndroidProjectTree {
                 let obsolete_expansion =
                     std::mem::replace(&mut self.expanded_keys, update.expanded_keys);
                 let obsolete_changes = std::mem::take(&mut self.row_changes);
-                let selected = if self.selection_generation == selection_generation {
-                    update.selected_key
+                let requested_selection = if self.selection_generation == selection_generation {
+                    update.selected_key.as_ref()
                 } else {
-                    self.selected_key.clone().filter(|key| {
-                        update
-                            .cache
-                            .value()
-                            .is_ok_and(|cache| cache.keys.contains_key(key))
-                    })
+                    self.selected_key.as_ref()
                 };
+                let selected = update.cache.value().ok().and_then(|cache| {
+                    cache.visible_selection(requested_selection, &self.visible_keys)
+                });
                 let obsolete_selection = std::mem::replace(&mut self.selected_key, selected);
                 self.logical_cache = Some(update.cache);
                 self.logical_initialized = true;
@@ -1361,11 +1690,27 @@ impl AndroidProjectTree {
     }
 
     fn queue_row_change(&mut self, change: RowChange, cx: &mut Context<Self>) {
-        if matches!(change, RowChange::CollapseAll | RowChange::ExpandAll) {
-            let obsolete = std::mem::take(&mut self.row_changes);
-            cx.background_spawn(async move { drop(obsolete) }).detach();
+        let Some(generation) = self.row_change_generation.checked_add(1) else {
+            self.set_status(
+                Status::Failed("Android row command generation exhausted".into()),
+                cx,
+            );
+            return;
+        };
+        let result = self
+            .logical_cache
+            .clone()
+            .context("Android command cache is unavailable")
+            .and_then(|cache| self.row_changes.queue(change, cache, &self.row_executor));
+        if let Err(error) = result {
+            self.set_status(Status::Failed(format!("{error:#}").into()), cx);
+            log::error!("Android row command failed: {error:#}");
+            return;
         }
-        self.row_changes.push(change);
+        self.row_change_generation = generation;
+        // A queued command supersedes the in-flight snapshot immediately. The
+        // deferred scheduler coalesces a burst into one replacement preparation.
+        self.cancel_rows();
     }
 
     fn select_row(
@@ -1440,6 +1785,7 @@ impl AndroidProjectTree {
                         .start_slot(Icon::new(row.icon).size(IconSize::Small))
                         .child(
                             h_flex()
+                                .debug_selector(|| "android-logical-row-text".into())
                                 .min_w_0()
                                 .gap_1()
                                 .child(
@@ -1470,7 +1816,7 @@ impl AndroidProjectTree {
         cx: &App,
     ) -> Option<&CapturedAndroidModuleTree> {
         let published = self.published.as_ref()?;
-        (self.request_is_current(&published.owner, window, cx)
+        (self.ui_request_is_current(&published.owner, window, cx)
             && published
                 .plan
                 .value()
@@ -1492,10 +1838,6 @@ impl Render for AndroidProjectTree {
             .is_some_and(|state| state.view == DefaultView::Android);
         let message: Option<SharedString> = if !available {
             Some("Android view is unavailable for this project".into())
-        } else if (self.row_reconcile_scheduled || self.row_task.is_some())
-            && !self.rows_are_current(window, cx)
-        {
-            Some("Loading Android view…".into())
         } else {
             match &self.status {
                 Status::Loading => Some("Loading Android view…".into()),
@@ -1506,6 +1848,12 @@ impl Render for AndroidProjectTree {
                     Some("Couldn't load Android view. Sync the project to retry.".into())
                 }
                 Status::Unavailable => Some("Sync the project to load Android view".into()),
+                Status::Ready
+                    if (self.row_reconcile_scheduled || self.row_task.is_some())
+                        && !self.rows_are_current(window, cx) =>
+                {
+                    Some("Loading Android view…".into())
+                }
                 Status::Ready if self.logical_rows.is_empty() => {
                     Some("No Android source groups are available".into())
                 }
@@ -1539,11 +1887,18 @@ impl Render for AndroidProjectTree {
             )
             .when_some(message, |element, message| {
                 element.child(
-                    div().px_2().py_1().child(
-                        Label::new(message)
-                            .size(LabelSize::Small)
-                            .color(Color::Muted),
-                    ),
+                    div()
+                        .debug_selector({
+                            let message = message.clone();
+                            move || format!("android-tree-message:{message}")
+                        })
+                        .px_2()
+                        .py_1()
+                        .child(
+                            Label::new(message)
+                                .size(LabelSize::Small)
+                                .color(Color::Muted),
+                        ),
                 )
             })
             .when(available, |element| {
@@ -2418,7 +2773,7 @@ mod tests {
         let workspace = window.workspace.clone();
         let panel = window.panel.clone();
         window.visual.update(|window, cx| {
-            let focus = workspace.read(cx).focus_handle(cx);
+            let focus = gpui::Focusable::focus_handle(workspace.read(cx), cx);
             focus.focus(window, cx);
             assert!(!panel.read(cx).focus_handle.contains_focused(window, cx));
         });
@@ -2810,8 +3165,9 @@ mod tests {
                     Ok::<_, anyhow::Error>(())
                 })?;
             choose(&mut window, DefaultView::Project);
+            let panel = window.panel.clone();
             window.visual.update(|window, cx| {
-                assert!(window.panel.read(cx).focus_handle.is_focused(window));
+                assert!(panel.read(cx).focus_handle.is_focused(window));
             });
             choose(&mut window, DefaultView::Android);
             window.ready().await;
@@ -3066,7 +3422,8 @@ mod tests {
                     },
                     cx,
                 );
-                physical_panel.read(cx).focus_handle.focus(window, cx);
+                let focus = physical_panel.read(cx).focus_handle.clone();
+                focus.focus(window, cx);
             });
             draw_workspace(&mut window);
             window.visual.dispatch_action(git::FileHistory);
@@ -3101,9 +3458,10 @@ mod tests {
                 .visual
                 .dispatch_action(crate::Delete { skip_prompt: true });
             let panel = window.panel.clone();
-            window
-                .visual
-                .update(|window, cx| panel.read(cx).focus_handle.focus(window, cx));
+            window.visual.update(|window, cx| {
+                let focus = panel.read(cx).focus_handle.clone();
+                focus.focus(window, cx);
+            });
             draw_workspace(&mut window);
             window.visual.dispatch_action(git::FileHistory);
             assert!(
@@ -3535,5 +3893,707 @@ mod tests {
         }
         .await;
         result.expect("Root disclosure must be visible and clickable after Collapse All");
+    }
+
+    // Round-two regressions exercise the actual GPUI window/action routes and
+    // gated jobs. They supplement, rather than replace, all prior assertions.
+    fn draw_logical_row(
+        window: &mut TestWindow,
+        key: &NodeKey,
+    ) -> Result<gpui::Bounds<gpui::Pixels>> {
+        let tree = window.tree();
+        let index = tree
+            .read_with(&window.visual, |tree, _| {
+                tree.logical_rows.iter().position(|row| &row.key == key)
+            })
+            .context("Visible row to paint")?;
+        window.visual.draw(
+            gpui::point(px(0.), px(0.)),
+            gpui::size(px(600.), px(100.)),
+            |window, cx| {
+                tree.update(cx, |tree, cx| {
+                    tree.render_row(index, window, cx)
+                        .expect("Actual logical row element")
+                })
+            },
+        );
+        window
+            .visual
+            .debug_bounds("android-logical-row-text")
+            .context("Painted logical text bounds")
+    }
+
+    #[gpui::test]
+    async fn android_full_window_project_commands_use_physical_selection_without_parent_leases(
+        cx: &mut TestAppContext,
+    ) {
+        use futures::TryStreamExt as _;
+        let result: Result<()> = async {
+            let (project, filesystem) = fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            choose(&mut window, DefaultView::Project);
+            let path = window
+                .visual
+                .update(|_, cx| {
+                    project
+                        .read(cx)
+                        .find_project_path(&Path::new(GENERIC).join("main.py"), cx)
+                })
+                .context("Physical command path")?;
+            window.panel.update(&mut window.visual, |panel, cx| {
+                panel.select_path_for_test(path.clone(), cx)
+            });
+            // This paints MultiWorkspace::actions while both parent entities are
+            // leased, including the mounted ProjectPanel FileHistory renderer.
+            let history = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+            let panel = window.panel.clone();
+            window.visual.update(|window, cx| {
+                git_ui_core::set_file_history_opener(
+                    {
+                        let history = history.clone();
+                        move |_, path, _, _| history.borrow_mut().push(path.clone())
+                    },
+                    cx,
+                );
+                let focus = panel.read(cx).focus_handle.clone();
+                focus.focus(window, cx);
+            });
+            draw_workspace(&mut window);
+            window.visual.dispatch_action(git::FileHistory);
+            assert_eq!(history.borrow().as_slice(), &[path.clone()]);
+            focus_workspace(&mut window);
+            window.visual.dispatch_action(crate::Rename);
+            window.panel.read_with(&window.visual, |panel, _| {
+                assert!(
+                    panel.state.edit_state.is_some(),
+                    "Project fallback Rename must execute"
+                );
+            });
+            window
+                .panel
+                .update_in(&mut window.visual, |panel, window, cx| {
+                    panel.cancel(&menu::Cancel, window, cx)
+                });
+            window.panel.update(&mut window.visual, |panel, cx| {
+                panel.select_path_for_test(path.clone(), cx)
+            });
+            let before = filesystem
+                .read_dir(Path::new(GENERIC))
+                .await?
+                .try_collect::<Vec<_>>()
+                .await?;
+            focus_workspace(&mut window);
+            window.visual.dispatch_action(crate::Duplicate);
+            window.visual.run_until_parked();
+            let after = filesystem
+                .read_dir(Path::new(GENERIC))
+                .await?
+                .try_collect::<Vec<_>>()
+                .await?;
+            assert_eq!(
+                after.len(),
+                before.len() + 1,
+                "Project fallback Duplicate must create a real file"
+            );
+            window.panel.read_with(&window.visual, |panel, _| {
+                assert!(panel.clipboard.is_some())
+            });
+            window
+                .panel
+                .update_in(&mut window.visual, |panel, window, cx| {
+                    panel.cancel(&menu::Cancel, window, cx)
+                });
+            focus_workspace(&mut window);
+            window.visual.dispatch_action(crate::ExpandAllEntries);
+            window.visual.run_until_parked();
+            let expanded = window.panel.read_with(&window.visual, |panel, _| {
+                panel
+                    .state
+                    .expanded_dir_ids
+                    .values()
+                    .map(Vec::len)
+                    .sum::<usize>()
+            });
+            focus_workspace(&mut window);
+            window.visual.dispatch_action(crate::CollapseAllEntries);
+            window.visual.run_until_parked();
+            let collapsed = window.panel.read_with(&window.visual, |panel, _| {
+                panel
+                    .state
+                    .expanded_dir_ids
+                    .values()
+                    .map(Vec::len)
+                    .sum::<usize>()
+            });
+            assert!(
+                expanded > collapsed,
+                "Project fallback expansion must affect physical directories"
+            );
+            window.panel.update(&mut window.visual, |panel, cx| {
+                panel.select_path_for_test(path.clone(), cx)
+            });
+            focus_workspace(&mut window);
+            window
+                .visual
+                .dispatch_action(crate::Delete { skip_prompt: true });
+            window.visual.run_until_parked();
+            assert!(
+                !filesystem
+                    .is_file(&Path::new(GENERIC).join("main.py"))
+                    .await,
+                "Project fallback Delete must execute"
+            );
+            assert_eq!(
+                selector(&mut window)
+                    .context("Explicit Project selector")?
+                    .view,
+                DefaultView::Project
+            );
+            draw_workspace(&mut window);
+            Ok(())
+        }
+        .await;
+        result.expect("Mounted explicit Project paint/actions must stay lease-safe and retain physical behavior");
+    }
+
+    #[gpui::test]
+    async fn android_stale_sync_cancels_held_row_job_and_renders_recovery(cx: &mut TestAppContext) {
+        let result: Result<()> = async {
+            let (project, _) = fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            choose(&mut window, DefaultView::Android);
+            let (release, gate) = oneshot::channel();
+            window.tree().update_in(&mut window.visual, |tree, window, cx| {
+                tree.row_gate_for_test = Some(gate);
+                tree.expand_all(window, cx);
+            });
+            window.visual.run_until_parked();
+            let cancelled = window.tree().read_with(&window.visual, |tree, _| {
+                assert!(tree.row_task.is_some());
+                tree.row_cancelled.clone().expect("Held row cancellation identity")
+            });
+            project.update(&mut window.visual, |project, cx| {
+                project.invalidate_android_model(Some(PathBuf::from(ROOT)), cx);
+            });
+            window.visual.run_until_parked();
+            assert!(cancelled.load(Ordering::Acquire));
+            assert!(release.send(()).is_err(), "Obsolete row work releases its held receiver");
+            window.tree().update_in(&mut window.visual, |tree, window, cx| {
+                assert!(tree.row_task.is_none());
+                assert!(tree.row_cancelled.is_none());
+                assert_eq!(tree.status, Status::Stale);
+                assert!(tree.current_capture(window, cx).is_none());
+                assert!(!tree.logical_rows.is_empty(), "Stale rows remain available as disabled information");
+                let selected = tree.selected_key.clone();
+                let key = tree.logical_rows[0].key.clone();
+                tree.select_row(&key, true, window, cx);
+                assert_eq!(tree.selected_key, selected);
+            });
+            draw_panel(&mut window, 480., 300.);
+            assert!(window.visual.debug_bounds("android-tree-message:Android view is out of date. Sync the project to refresh.").is_some());
+            assert!(window.visual.debug_bounds("android-tree-message:Loading Android view…").is_none());
+            window.visual.update(|_, cx| publish_model(&project, cx))?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            window.tree().update_in(&mut window.visual, |tree, window, cx| {
+                assert_eq!(tree.status, Status::Ready);
+                assert!(tree.rows_are_current(window, cx));
+                assert!(tree.row_task.is_none());
+            });
+            Ok(())
+        }.await;
+        result.expect("Invalidation during held row work must release job ownership and display sync recovery");
+    }
+
+    #[gpui::test]
+    async fn android_late_collapse_click_selects_visible_ancestor_and_keeps_new_visible_choice(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            let (project, _) = fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            expand_visible_groups(&mut window)?;
+            let (root, child) = window.tree().read_with(&window.visual, |tree, _| {
+                Ok::<_, anyhow::Error>((
+                    tree.logical_rows.first().context("Module")?.key.clone(),
+                    tree.logical_rows
+                        .iter()
+                        .find(|row| row.label.as_ref() == "Main")
+                        .context("Visible child")?
+                        .key
+                        .clone(),
+                ))
+            })?;
+            for click_visible_root_last in [false, true] {
+                window
+                    .tree()
+                    .update_in(&mut window.visual, |tree, window, cx| {
+                        tree.expand_all(window, cx)
+                    });
+                rows_ready(&mut window).await;
+                let (release, gate) = oneshot::channel();
+                window
+                    .tree()
+                    .update_in(&mut window.visual, |tree, window, cx| {
+                        tree.row_gate_for_test = Some(gate);
+                        tree.collapse_all(window, cx);
+                    });
+                window.visual.run_until_parked();
+                let before = window
+                    .tree()
+                    .read_with(&window.visual, |tree, _| tree.selection_generation);
+                let bounds = draw_logical_row(&mut window, &child)?;
+                window
+                    .visual
+                    .simulate_click(bounds.center(), gpui::Modifiers::default());
+                window.tree().read_with(&window.visual, |tree, _| {
+                    assert_eq!(
+                        tree.selected_key.as_ref(),
+                        Some(&child),
+                        "The actual old child callback fires during the held collapse"
+                    );
+                    assert!(tree.selection_generation > before);
+                });
+                if click_visible_root_last {
+                    let bounds = draw_logical_row(&mut window, &root)?;
+                    window
+                        .visual
+                        .simulate_click(bounds.center(), gpui::Modifiers::default());
+                    window.tree().read_with(&window.visual, |tree, _| {
+                        assert_eq!(tree.selected_key.as_ref(), Some(&root))
+                    });
+                }
+                release
+                    .send(())
+                    .map_err(|_| anyhow::anyhow!("Current collapse gate was cancelled"))?;
+                rows_ready(&mut window).await;
+                window.tree().read_with(&window.visual, |tree, _| {
+                    assert_eq!(tree.selected_key.as_ref(), Some(&root));
+                    assert!(
+                        tree.visible_keys
+                            .contains(tree.selected_key.as_ref().expect("Visible selection"))
+                    );
+                    assert!(!tree.visible_keys.contains(&child));
+                    assert!(tree.expanded_keys.is_empty());
+                });
+            }
+            Ok(())
+        }
+        .await;
+        result.expect(
+            "Late real pointer selection must remain visible after background collapse publication",
+        );
+    }
+
+    #[gpui::test]
+    async fn android_command_snapshots_coalesce_parity_and_keep_exact_cache_identity_on_reorder(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            let (project, filesystem) = fixture(cx).await?;
+            let directories = (0..64)
+                .map(|index| (format!("z-{index:03}"), json!({"asset.txt":"asset"})))
+                .collect::<serde_json::Map<_, _>>();
+            filesystem
+                .insert_tree("/tree-owner/app/flavor-assets", json!(directories))
+                .await;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    tree.expand_all(window, cx)
+                });
+            rows_ready(&mut window).await;
+            let (cache, keys) = window.tree().read_with(&window.visual, |tree, _| {
+                (
+                    tree.logical_cache.clone().expect("Initial cache"),
+                    tree.logical_rows
+                        .iter()
+                        .filter(|row| row.has_children && row.label.starts_with("z-"))
+                        .map(|row| row.key.clone())
+                        .collect::<Vec<_>>(),
+                )
+            });
+            assert_eq!(keys.len(), 64);
+            let mut retired = Vec::new();
+            for key in &keys {
+                let (release, gate) = oneshot::channel();
+                window
+                    .tree()
+                    .update_in(&mut window.visual, |tree, window, cx| {
+                        tree.row_gate_for_test = Some(gate);
+                        // Three toggles retain exactly one command for this key.
+                        for _ in 0..3 {
+                            tree.select_row(key, true, window, cx);
+                        }
+                        let commands = tree.row_changes.clone();
+                        assert!(Arc::ptr_eq(
+                            commands.cache.as_ref().expect("Bound command cache"),
+                            &cache
+                        ));
+                        assert!(Arc::ptr_eq(
+                            commands.toggles.as_ref().expect("Shared snapshot root"),
+                            tree.row_changes.toggles.as_ref().expect("Current root")
+                        ));
+                        assert!(
+                            commands
+                                .toggles
+                                .as_ref()
+                                .expect("Parity set")
+                                .value()
+                                .expect("Parity data")
+                                .count
+                                <= keys.len()
+                        );
+                    });
+                window.visual.run_until_parked();
+                retired.push(release);
+            }
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert_eq!(
+                    tree.row_changes
+                        .toggles
+                        .as_ref()
+                        .expect("Bounded backlog")
+                        .value()
+                        .expect("Backlog data")
+                        .count,
+                    keys.len()
+                );
+                assert!(tree.row_task.is_some());
+            });
+            let old_index = *cache
+                .value()?
+                .keys
+                .get(&keys[0])
+                .context("Old target index")?;
+            filesystem
+                .insert_tree(
+                    "/tree-owner/app/flavor-assets",
+                    json!({"000-before":{"asset.txt":"new predecessor"}}),
+                )
+                .await;
+            window.visual.run_until_parked();
+            window.ready().await;
+            rows_ready(&mut window).await;
+            for release in retired {
+                assert!(
+                    release.send(()).is_err(),
+                    "Superseded row jobs release all held gates"
+                );
+            }
+            window.tree().read_with(&window.visual, |tree, _| {
+                let current = tree.logical_cache.as_ref().expect("Replacement cache");
+                assert!(!Arc::ptr_eq(current, &cache));
+                assert_ne!(
+                    *current
+                        .value()
+                        .expect("Current data")
+                        .keys
+                        .get(&keys[0])
+                        .expect("Same target key"),
+                    old_index
+                );
+                for key in &keys {
+                    assert!(
+                        !tree.expanded_keys.contains(key),
+                        "Parity must address the original NodeKey after cache reorder"
+                    );
+                }
+                assert!(
+                    tree.row_changes.is_empty(),
+                    "Only successful matching publication acknowledges the cursor"
+                );
+            });
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    let root = tree.logical_rows[0].key.clone();
+                    tree.expand_all(window, cx);
+                    tree.select_row(&root, true, window, cx);
+                    tree.collapse_all(window, cx);
+                    tree.select_row(&root, true, window, cx);
+                });
+            rows_ready(&mut window).await;
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert_eq!(
+                    tree.expanded_keys.len(),
+                    1,
+                    "Last reset wins and subsequent toggles retain order"
+                );
+                assert!(tree.expanded_keys.contains(&tree.logical_rows[0].key));
+                assert!(tree.logical_rows.len() > 1);
+                assert!(tree.row_changes.is_empty());
+            });
+            // Once expanded again, an even burst cancels rather than accumulating.
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    tree.expand_all(window, cx)
+                });
+            rows_ready(&mut window).await;
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    for _ in 0..2048 {
+                        tree.select_row(&keys[0], true, window, cx);
+                    }
+                    assert!(
+                        tree.row_changes.is_empty(),
+                        "An even toggle burst has no retained commands"
+                    );
+                });
+            rows_ready(&mut window).await;
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert!(tree.expanded_keys.contains(&keys[0]))
+            });
+            Ok(())
+        }
+        .await;
+        result.expect("Coalesced immutable commands stay bounded, cancel superseded work, and survive actual cache reindexing");
+    }
+
+    #[gpui::test]
+    async fn android_captured_filename_and_provider_controls_render_as_single_line(
+        cx: &mut TestAppContext,
+    ) {
+        use android_tools::project_tree::{
+            FileFact, FileKind, SourceProvider, TreeFiles, TreeModel, TreeModule, TreeSourceRoot,
+            project_tree,
+        };
+        let result: Result<()> = async {
+            let (project, filesystem) = fixture(cx).await?;
+            filesystem
+                .insert_tree(
+                    "/tree-owner/app/src/main/assets",
+                    json!({"plain.txt":"plain", "odd\n\tname.txt":"control filename"}),
+                )
+                .await;
+            filesystem
+                .insert_tree(
+                    "/tree-owner/app/flavor-assets",
+                    json!({"provider.txt":"control provider", "both\n\tname.txt":"both"}),
+                )
+                .await;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    tree.expand_all(window, cx)
+                });
+            rows_ready(&mut window).await;
+            let keys = window.tree().read_with(&window.visual, |tree, _| {
+                ["plain.txt", "odd\n\tname.txt"]
+                    .into_iter()
+                    .map(|name| {
+                        let row = tree
+                            .logical_rows
+                            .iter()
+                            .find(|row| row.label.as_ref() == name)
+                            .context("Actually captured Unix filename")?;
+                        assert!(row.annotation.is_none());
+                        Ok(row.key.clone())
+                    })
+                    .collect::<Result<Vec<_>>>()
+            })?;
+            let plain_height = draw_logical_row(&mut window, &keys[0])?.size.height;
+            assert!(plain_height > px(0.));
+            let bounds = draw_logical_row(&mut window, &keys[1])?;
+            assert_eq!(
+                bounds.size.height, plain_height,
+                "Actually captured newline/tab filename retains one-line geometry"
+            );
+            window
+                .visual
+                .simulate_click(bounds.center(), gpui::Modifiers::default());
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert_eq!(tree.selected_key.as_ref(), Some(&keys[1]))
+            });
+
+            // Exported Gradle provider names reject controls. Keep that boundary
+            // intact; exercise annotation defenses through the real lower-level
+            // TreeModel producer/projection and guarded row publication instead.
+            let owner = window.published_owner()?;
+            let executor = cx.executor();
+            let update = executor
+                .clone()
+                .spawn({
+                    let owner = owner.clone();
+                    async move {
+                        let directory = PathBuf::from("/tree-owner/app/flavor-assets");
+                        let model = TreeModel {
+                            revision: 1,
+                            modules: vec![TreeModule {
+                                id: ":app".into(),
+                                display_name: "app".into(),
+                                directory: "/tree-owner/app".into(),
+                                source_roots: vec![TreeSourceRoot {
+                                    path: directory.clone(),
+                                    group: SourceGroup::Assets,
+                                    provider: SourceProvider::Named("flavor\n\tname".into()),
+                                }],
+                                compact_packages: true,
+                            }],
+                        };
+                        let entries = vec![
+                            FileFact {
+                                path: directory.clone(),
+                                kind: FileKind::Directory,
+                            },
+                            FileFact {
+                                path: directory.join("provider.txt"),
+                                kind: FileKind::File {
+                                    java_classes: Vec::new(),
+                                },
+                            },
+                            FileFact {
+                                path: directory.join("both\n\tname.txt"),
+                                kind: FileKind::File {
+                                    java_classes: Vec::new(),
+                                },
+                            },
+                        ];
+                        let snapshot = project_tree(
+                            &model,
+                            &TreeFiles {
+                                model_revision: 1,
+                                revision: 1,
+                                entries,
+                            },
+                        )?;
+                        let cancelled = AtomicBool::new(false);
+                        let cache = Arc::new(BackgroundOwned::new(
+                            LogicalRowCache::prepare(owner, &snapshot, &cancelled)?,
+                            executor.clone(),
+                        ));
+                        let update = prepare_visible_rows(
+                            cache,
+                            Arc::new(BTreeSet::new()),
+                            None,
+                            false,
+                            vec![RowChange::ExpandAll],
+                            &cancelled,
+                        )?;
+                        Ok::<_, anyhow::Error>(BackgroundOwned::new(update, executor))
+                    }
+                })
+                .await?;
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    let cursor = RowJobCursor {
+                        generation: tree.row_generation,
+                        selection_generation: tree.selection_generation,
+                        change_generation: tree.row_change_generation,
+                    };
+                    tree.finish_rows(&owner, cursor, Ok(update), window, cx);
+                });
+            window.visual.run_until_parked();
+            let keys = window.tree().read_with(&window.visual, |tree, _| {
+                ["provider.txt", "both\n\tname.txt"]
+                    .into_iter()
+                    .map(|name| {
+                        let row = tree
+                            .logical_rows
+                            .iter()
+                            .find(|row| row.label.as_ref() == name)
+                            .context("Actual producer control annotation")?;
+                        assert_eq!(row.annotation.as_deref(), Some("(flavor\n\tname)"));
+                        Ok(row.key.clone())
+                    })
+                    .collect::<Result<Vec<_>>>()
+            })?;
+            for key in &keys {
+                let bounds = draw_logical_row(&mut window, key)?;
+                assert_eq!(
+                    bounds.size.height, plain_height,
+                    "Actual provider annotation and filename controls retain one-line geometry"
+                );
+                window
+                    .visual
+                    .simulate_click(bounds.center(), gpui::Modifiers::default());
+                window.tree().read_with(&window.visual, |tree, _| {
+                    assert_eq!(tree.selected_key.as_ref(), Some(key))
+                });
+            }
+            Ok(())
+        }
+        .await;
+        result.expect("Captured filenames and producer annotations with newline/tab retain one-line geometry and actual pointer selection");
+    }
+
+    #[gpui::test]
+    async fn android_discarded_command_snapshot_releases_its_trie_off_thread(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            let (project, _) = fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            let (release, gate) = oneshot::channel();
+            let (dropped, observe_drop) = oneshot::channel();
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    let root = tree.logical_rows[0].key.clone();
+                    tree.row_gate_for_test = Some(gate);
+                    tree.select_row(&root, true, window, cx);
+                    let commands = Arc::get_mut(
+                        tree.row_changes
+                            .toggles
+                            .as_mut()
+                            .expect("Unique queued toggle root"),
+                    )
+                    .expect("Before the deferred job starts its immutable snapshot is unshared");
+                    commands
+                        .value
+                        .as_mut()
+                        .expect("Actual toggle payload")
+                        .drop_observer = Some((cx.background_executor().clone(), dropped));
+                });
+            window.visual.run_until_parked();
+            let cancelled = window.tree().read_with(&window.visual, |tree, _| {
+                tree.row_cancelled.clone().expect("Held snapshot job")
+            });
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    tree.collapse_all(window, cx)
+                });
+            rows_ready(&mut window).await;
+            assert!(cancelled.load(Ordering::Acquire));
+            assert!(release.send(()).is_err());
+            assert!(
+                !observe_drop.await?,
+                "Discarding a shared command trie must destroy it on the background executor"
+            );
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert!(tree.row_changes.is_empty());
+                assert!(tree.row_task.is_none());
+                assert!(tree.expanded_keys.is_empty());
+            });
+            Ok(())
+        }
+        .await;
+        result.expect("Command cancellation/reset preserves off-thread payload destruction");
     }
 }

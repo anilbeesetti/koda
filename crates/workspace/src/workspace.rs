@@ -1580,6 +1580,29 @@ struct DispatchingKeystrokes {
 /// A `Workspace` usually consists of 1 or more projects, a central pane group, 3 docks and a status bar.
 /// The `Workspace` owns everybody's state and serves as a default, "global context",
 /// that can be used to register a global action to be triggered from any place in the window.
+/// The current active-workspace identity, shared without leasing either window root.
+/// This handle certifies only workspace/project ownership; callers still check their
+/// window, project context, trust, and model before dispatching project operations.
+#[derive(Clone)]
+pub struct WorkspaceWindowOwnership {
+    workspace: EntityId,
+    project: EntityId,
+    active_workspace_id: Option<Rc<Cell<EntityId>>>,
+}
+
+impl WorkspaceWindowOwnership {
+    /// Check the original workspace/project identities against the live active
+    /// workspace cell, without borrowing either parent entity.
+    pub fn is_active(&self, workspace: EntityId, project: EntityId) -> bool {
+        self.workspace == workspace
+            && self.project == project
+            && self
+                .active_workspace_id
+                .as_ref()
+                .is_none_or(|active| active.get() == workspace)
+    }
+}
+
 pub struct Workspace {
     weak_self: WeakEntity<Self>,
     workspace_actions: Vec<Box<dyn Fn(Div, &Workspace, &mut Window, &mut Context<Self>) -> Div>>,
@@ -2903,6 +2926,16 @@ impl Workspace {
         });
         self.multi_workspace = Some(multi_workspace);
         self.active_workspace_id = Some(active_workspace_id);
+    }
+
+    /// Share the same ownership cell used by window chrome. Reading the handle
+    /// does not re-enter a leased Workspace or MultiWorkspace during paint/actions.
+    pub fn window_ownership(&self) -> WorkspaceWindowOwnership {
+        WorkspaceWindowOwnership {
+            workspace: self.weak_self.entity_id(),
+            project: self.project.entity_id(),
+            active_workspace_id: self.active_workspace_id.clone(),
+        }
     }
 
     pub fn app_state(&self) -> &Arc<AppState> {
