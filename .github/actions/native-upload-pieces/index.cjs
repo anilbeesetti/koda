@@ -31,5 +31,6 @@ for (const [order, piece] of manifest.pieces.entries()) {
     'INPUT_COMPRESSION-LEVEL': '0',
     'INPUT_RETENTION-DAYS': '7',
     INPUT_OVERWRITE: 'false',
+    'INPUT_INCLUDE-HIDDEN-FILES': 'false',
   }});
 }
