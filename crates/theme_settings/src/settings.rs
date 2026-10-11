@@ -318,11 +318,17 @@ pub fn set_mode(content: &mut SettingsContent, mode: ThemeAppearanceMode) {
 
     if let Some(selection) = theme.theme.as_mut() {
         match selection {
-            settings::ThemeSelection::Static(_) => {
+            settings::ThemeSelection::Static(name) => {
+                // Explicit One selections retain their family when switching to
+                // appearance modes; new profiles use the current defaults.
+                let (light, dark) = match name.0.as_ref() {
+                    "One Light" | "One Dark" => ("One Light", "One Dark"),
+                    _ => (settings::DEFAULT_LIGHT_THEME, settings::DEFAULT_DARK_THEME),
+                };
                 *selection = settings::ThemeSelection::Dynamic {
                     mode: ThemeAppearanceMode::System,
-                    light: ThemeName(settings::DEFAULT_LIGHT_THEME.into()),
-                    dark: ThemeName(settings::DEFAULT_DARK_THEME.into()),
+                    light: ThemeName(light.into()),
+                    dark: ThemeName(dark.into()),
                 };
             }
             settings::ThemeSelection::Dynamic {
@@ -860,6 +866,56 @@ mod tests {
                 .colors
                 .color(::theme::ThemeColorField::EditorCodeLensForeground),
             green
+        );
+    }
+
+    #[test]
+    fn switching_static_builtin_theme_modes_retains_the_selected_family() {
+        for (name, light, dark) in [
+            ("One Light", "One Light", "One Dark"),
+            ("One Dark", "One Light", "One Dark"),
+            ("Studio Light", "Studio Light", "Studio Dark"),
+            ("Studio Dark", "Studio Light", "Studio Dark"),
+        ] {
+            let mut content = SettingsContent::default();
+            content.theme.theme = Some(settings::ThemeSelection::Static(ThemeName(name.into())));
+            set_mode(&mut content, ThemeAppearanceMode::Dark);
+            assert_eq!(
+                content.theme.theme,
+                Some(settings::ThemeSelection::Dynamic {
+                    mode: ThemeAppearanceMode::System,
+                    light: ThemeName(light.into()),
+                    dark: ThemeName(dark.into()),
+                })
+            );
+            set_mode(&mut content, ThemeAppearanceMode::Light);
+            assert_eq!(
+                content.theme.theme,
+                Some(settings::ThemeSelection::Dynamic {
+                    mode: ThemeAppearanceMode::Light,
+                    light: ThemeName(light.into()),
+                    dark: ThemeName(dark.into()),
+                })
+            );
+        }
+    }
+
+    #[test]
+    fn switching_dynamic_theme_mode_retains_custom_theme_slots() {
+        let mut content = SettingsContent::default();
+        content.theme.theme = Some(settings::ThemeSelection::Dynamic {
+            mode: ThemeAppearanceMode::System,
+            light: ThemeName("Custom Light".into()),
+            dark: ThemeName("Custom Dark".into()),
+        });
+        set_mode(&mut content, ThemeAppearanceMode::Dark);
+        assert_eq!(
+            content.theme.theme,
+            Some(settings::ThemeSelection::Dynamic {
+                mode: ThemeAppearanceMode::Dark,
+                light: ThemeName("Custom Light".into()),
+                dark: ThemeName("Custom Dark".into()),
+            })
         );
     }
 }
