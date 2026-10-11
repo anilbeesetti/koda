@@ -25,6 +25,10 @@ use super::{
 };
 
 mod bounded_tar;
+mod gui_smoke;
+pub(super) use gui_smoke::{
+    GuiSmokeArgs, GuiSmokeWorkerArgs, run as gui_smoke, worker as gui_smoke_worker,
+};
 pub(super) mod elf;
 mod loader_policy;
 mod producer;

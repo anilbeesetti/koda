@@ -898,6 +898,8 @@ jobs:
       - name: Install unchanged Linux native bootstrap
         working-directory: ${{ runner.temp }}/owned-native-source
         run: ./script/linux
+      - name: Install native GUI smoke runtime before package identity is captured
+        run: sudo apt-get update && sudo apt-get install -y xvfb mesa-vulkan-drivers xauth fontconfig fonts-dejavu-core
       - name: Install source-pinned Rust toolchain
         working-directory: ${{ runner.temp }}/owned-native-source
         run: rustup show active-toolchain
@@ -946,7 +948,29 @@ jobs:
           --build-receipt "$RUNNER_TEMP/native-build-provenance/build-receipt.json"
           --build-receipt-sha256 "$BUILD_RECEIPT_SHA256"
           --output-dir "$RUNNER_TEMP/native-artifact"
+      - name: Exercise the exact delivered application with Rust XTEST and screenshots
+        id: gui_smoke
+        timeout-minutes: 3
+        run: >-
+          sudo --preserve-env=HOME "$CARGO_TARGET_DIR/debug/xtask" native-artifact gui-smoke
+          --request "$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json"
+          --request-sha256 "$REQUEST_SHA256" --controller-sha "$NATIVE_CONTROLLER_SHA"
+          --package-dir "$RUNNER_TEMP/native-artifact"
+          --output-dir "$RUNNER_TEMP/native-gui-smoke"
+      - name: Retain actual full-app captures and cleanup outcomes
+        if: always() && steps.package.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: native-gui-smoke-${{ needs.select_exact_native_artifact.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/native-gui-smoke/*.png
+            ${{ runner.temp }}/native-gui-smoke/*.json
+            ${{ runner.temp }}/native-gui-smoke/*.log
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
       - name: Upload metadata before payload for bounded download planning
+        if: always() && steps.package.outcome == 'success'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: native-metadata-${{ needs.select_exact_native_artifact.outputs.source_sha }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -960,6 +984,8 @@ jobs:
           compression-level: 6
           retention-days: 7
       - name: Checkout immutable official artifact uploader
+        id: native_uploader_checkout
+        if: always() && steps.package.outcome == 'success'
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
         with:
           repository: actions/upload-artifact
@@ -967,6 +993,7 @@ jobs:
           path: uploader
           persist-credentials: false
       - name: Upload one bounded ZIP per native payload piece
+        if: always() && steps.package.outcome == 'success' && steps.native_uploader_checkout.outcome == 'success'
         uses: ./control/.github/actions/native-upload-pieces
         with:
           artifact-directory: ${{ runner.temp }}/native-artifact

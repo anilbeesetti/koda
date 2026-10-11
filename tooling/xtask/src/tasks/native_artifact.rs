@@ -57,6 +57,10 @@ pub enum NativeArtifactCommand {
     Package(package::PackageArgs),
     /// Explicitly transform owned ELF copies before verifying their delivered loader closure.
     PackageWithLoaderPolicy(package::PackageWithLoaderPolicyArgs),
+    /// Run the delivered full app with real keyboard input and retain screenshots.
+    GuiSmoke(package::GuiSmokeArgs),
+    #[command(hide = true)]
+    GuiSmokeWorker(package::GuiSmokeWorkerArgs),
     /// Check bounded metadata and actual supplied GitHub sizes, without downloading.
     Admission(AdmissionArgs),
     /// Authenticate a bounded GitHub ZIP and unpack only literal declared members.
@@ -81,6 +85,8 @@ pub fn run(command: NativeArtifactCommand) -> Result<()> {
         NativeArtifactCommand::PackageWithLoaderPolicy(args) => {
             package::package_with_loader_policy(args)
         }
+        NativeArtifactCommand::GuiSmoke(args) => package::gui_smoke(args),
+        NativeArtifactCommand::GuiSmokeWorker(args) => package::gui_smoke_worker(args),
         NativeArtifactCommand::Admission(args) => admission(args),
         NativeArtifactCommand::UnpackGithubZip(args) => transport::unpack(args),
         NativeArtifactCommand::Extract(args) => package::extract(args),
