@@ -1,0 +1,3 @@
+pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+rootProject.name = 'java-only-android-context'
+include ':app', ':library'

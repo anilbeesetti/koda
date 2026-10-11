@@ -22870,6 +22870,7 @@ dependencies = [
  "agent_settings",
  "agent_skills",
  "agent_ui",
+ "android_tools",
  "android_ui",
  "anyhow",
  "ashpd",
