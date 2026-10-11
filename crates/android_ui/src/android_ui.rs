@@ -6355,7 +6355,7 @@ mod tests {
         workspace.update_in(cx, |workspace, window, cx| {
             workspace.add_panel(panel.clone(), window, cx)
         });
-        let build_panel = panel.read(cx).build_panel.clone();
+        let build_panel = panel.read_with(cx, |panel, _| panel.build_panel.clone());
         workspace.update_in(cx, |workspace, window, cx| {
             workspace.add_panel(build_panel.clone(), window, cx);
         });
