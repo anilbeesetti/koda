@@ -1,19 +1,28 @@
 use android_tools::{
     evaluated_tree_inputs::{PreparedLiveModulePlan, prepare_live_module_plan},
     project_model::{ModelState, ModelToken},
+    project_tree::{NodeId, NodeKey},
+    project_view_preferences::DefaultView,
 };
 use android_ui::{AndroidTreeContext, AndroidTreeOwner};
 use anyhow::{Context as _, Result, ensure};
 use gpui::{
-    AnyWindowHandle, App, BackgroundExecutor, Context, Entity, Subscription, Task, WeakEntity,
-    Window,
+    AnyElement, AnyWindowHandle, App, BackgroundExecutor, Context, Entity, FocusHandle,
+    ListHorizontalSizingBehavior, ListSizingBehavior, Render, SharedString, Subscription, Task,
+    UniformListScrollHandle, WeakEntity, Window, uniform_list,
 };
 use project::{
     Project,
     android_project_tree::{AndroidTreeCaptureRequest, CapturedAndroidModuleTree},
     trusted_worktrees::{PathTrust, TrustedWorktrees, TrustedWorktreesEvent},
 };
-use std::sync::Arc;
+use settings::{ProjectPanelEntrySpacing, Settings as _};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::PathBuf,
+    sync::Arc,
+};
+use ui::{ContextMenu, ListItem, ListItemSpacing, PopoverMenu, prelude::*};
 use util::ResultExt as _;
 use workspace::{MultiWorkspace, MultiWorkspaceEvent, Workspace};
 
@@ -84,6 +93,23 @@ enum Status {
     Failed(Arc<str>),
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct SelectorState {
+    pub(crate) view: DefaultView,
+    android_enabled: bool,
+    reason: Option<SharedString>,
+}
+
+#[derive(Clone, Debug)]
+struct LogicalRow {
+    key: NodeKey,
+    id: SharedString,
+    label: SharedString,
+    annotation: Option<SharedString>,
+    depth: usize,
+    has_children: bool,
+}
+
 pub(crate) struct AndroidProjectTree {
     workspace: WeakEntity<Workspace>,
     window: AnyWindowHandle,
@@ -101,6 +127,13 @@ pub(crate) struct AndroidProjectTree {
     task: Option<Task<()>>,
     published: Option<PublishedTree>,
     status: Status,
+    focus_handle: FocusHandle,
+    view_choices: BTreeMap<PathBuf, DefaultView>,
+    logical_rows: Vec<LogicalRow>,
+    expanded_keys: BTreeSet<NodeKey>,
+    selected_key: Option<NodeKey>,
+    logical_scroll: UniformListScrollHandle,
+    logical_initialized: bool,
     reconcile_scheduled: bool,
     _subscriptions: Vec<Subscription>,
     #[cfg(test)]
@@ -113,6 +146,7 @@ impl AndroidProjectTree {
     pub(crate) fn new(
         workspace: WeakEntity<Workspace>,
         project: Entity<Project>,
+        focus_handle: FocusHandle,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Self {
@@ -192,6 +226,13 @@ impl AndroidProjectTree {
             task: None,
             published: None,
             status: Status::Unavailable,
+            focus_handle,
+            view_choices: BTreeMap::new(),
+            logical_rows: Vec::new(),
+            expanded_keys: BTreeSet::new(),
+            selected_key: None,
+            logical_scroll: UniformListScrollHandle::new(),
+            logical_initialized: false,
             reconcile_scheduled: false,
             _subscriptions: subscriptions,
             #[cfg(test)]
@@ -330,6 +371,11 @@ impl AndroidProjectTree {
         self.attempted = None;
         self.retry_next = false;
         self.published = None;
+        self.logical_rows.clear();
+        self.expanded_keys.clear();
+        self.selected_key = None;
+        self.logical_scroll = UniformListScrollHandle::new();
+        self.logical_initialized = false;
         self.set_status(Status::Unavailable, cx);
         if changed {
             cx.notify();
@@ -601,6 +647,7 @@ impl AndroidProjectTree {
                     plan,
                     capture,
                 });
+                self.refresh_logical_rows();
                 self.set_status(Status::Ready, cx);
                 cx.notify();
             }
@@ -613,6 +660,303 @@ impl AndroidProjectTree {
             }
         }
         self.request_reconcile(window, cx);
+    }
+
+    pub(crate) fn selector_state(&self, window: &Window, cx: &App) -> Option<SelectorState> {
+        let owner = self.owner.as_ref()?;
+        if !self.window_is_current(window, cx)
+            || !self.context.as_ref()?.read(cx).is_current(owner, cx)
+        {
+            return None;
+        }
+        let project = self.project.read(cx);
+        let snapshot = project.android_context().snapshot(owner.root())?;
+        let supports_target = snapshot
+            .project_view_capabilities(true)
+            .is_android_view_visible();
+        let model = project.android_model();
+        let selected_model = model.root() == Some(owner.root_path())
+            && model.selected.as_ref().is_some_and(|selected| {
+                model
+                    .model
+                    .as_ref()
+                    .is_some_and(|model| Arc::ptr_eq(model, &selected.model))
+            });
+        let android_enabled = supports_target
+            && (self.published.is_some()
+                || (selected_model && matches!(self.status, Status::Loading | Status::Ready)));
+        let choice = self.view_choices.get(owner.root_path()).copied();
+        let preferred = choice.unwrap_or(DefaultView::Android);
+        Some(SelectorState {
+            view: if supports_target
+                && (selected_model
+                    || self.published.is_some()
+                    || choice == Some(DefaultView::Android))
+            {
+                preferred
+            } else {
+                DefaultView::Project
+            },
+            android_enabled,
+            reason: (!android_enabled).then(|| {
+                if supports_target {
+                    "Sync the project to load Android view".into()
+                } else {
+                    "Android view requires an evaluated Android target".into()
+                }
+            }),
+        })
+    }
+
+    fn choose_view(&mut self, view: DefaultView, window: &mut Window, cx: &mut Context<Self>) {
+        let Some(state) = self.selector_state(window, cx) else {
+            return;
+        };
+        if view == DefaultView::Android && !state.android_enabled {
+            return;
+        }
+        let Some(owner) = self.owner.as_ref() else {
+            return;
+        };
+        let path = owner.root_path().to_path_buf();
+        if self.view_choices.insert(path, view) != Some(view) {
+            self.cancel_pending();
+            if let Err(error) = self.next_request() {
+                self.set_status(Status::Failed(format!("{error:#}").into()), cx);
+                log::error!("Android project view choice failed: {error:#}");
+            } else {
+                self.attempted = None;
+                self.request_reconcile(window, cx);
+            }
+        }
+        window.focus(&self.focus_handle);
+        cx.notify();
+    }
+
+    pub(crate) fn render_selector(
+        &self,
+        state: SelectorState,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let tree = cx.weak_entity();
+        let view = state.view;
+        let enabled = state.android_enabled;
+        let reason = state.reason.clone();
+        PopoverMenu::new("android-project-view-selector")
+            .trigger(
+                Button::new(
+                    "android-project-view-trigger",
+                    match view {
+                        DefaultView::Android => "Android",
+                        DefaultView::Project => "Project",
+                    },
+                )
+                .end_icon(Icon::new(IconName::ChevronDown))
+                .label_size(LabelSize::Small)
+                .tab_index(0isize)
+                .aria_label("Project view"),
+            )
+            .menu(move |window, cx| {
+                let android_tree = tree.clone();
+                let project_tree = tree.clone();
+                Some(ContextMenu::build(window, cx, move |menu, _, _| {
+                    menu.when_some(reason.clone(), |menu, reason| menu.header(reason))
+                        .toggleable_entry_disabled_when(
+                            "Android",
+                            view == DefaultView::Android,
+                            !enabled,
+                            IconPosition::Start,
+                            None,
+                            move |window, cx| {
+                                android_tree
+                                    .update(cx, |tree, cx| {
+                                        tree.choose_view(DefaultView::Android, window, cx)
+                                    })
+                                    .log_err();
+                            },
+                        )
+                        .toggleable_entry(
+                            "Project",
+                            view == DefaultView::Project,
+                            IconPosition::Start,
+                            None,
+                            move |window, cx| {
+                                project_tree
+                                    .update(cx, |tree, cx| {
+                                        tree.choose_view(DefaultView::Project, window, cx)
+                                    })
+                                    .log_err();
+                            },
+                        )
+                }))
+            })
+            .into_any_element()
+    }
+
+    fn refresh_logical_rows(&mut self) {
+        let Some(published) = &self.published else {
+            return;
+        };
+        let snapshot = &published.capture.tree().tree;
+        let keys = snapshot
+            .nodes()
+            .map(|node| node.key.clone())
+            .collect::<BTreeSet<_>>();
+        self.expanded_keys.retain(|key| keys.contains(key));
+        if self
+            .selected_key
+            .as_ref()
+            .is_some_and(|key| !keys.contains(key))
+        {
+            self.selected_key = None;
+        }
+        if !self.logical_initialized {
+            self.expanded_keys.extend(
+                snapshot
+                    .roots
+                    .iter()
+                    .filter_map(|id| snapshot.node(*id).map(|node| node.key.clone())),
+            );
+            self.logical_initialized = true;
+        }
+        self.rebuild_visible_rows();
+    }
+
+    fn rebuild_visible_rows(&mut self) {
+        let Some(published) = &self.published else {
+            self.logical_rows.clear();
+            return;
+        };
+        let snapshot = &published.capture.tree().tree;
+        let mut pending = snapshot
+            .roots
+            .iter()
+            .rev()
+            .map(|id| (*id, 0))
+            .collect::<Vec<(NodeId, usize)>>();
+        let mut rows = Vec::new();
+        while let Some((id, depth)) = pending.pop() {
+            let Some(node) = snapshot.node(id) else {
+                continue;
+            };
+            rows.push(LogicalRow {
+                key: node.key.clone(),
+                id: format!("android-logical-row:{:?}", node.key).into(),
+                label: node.label.clone().into(),
+                annotation: node
+                    .annotation
+                    .as_ref()
+                    .map(|annotation| annotation.trim_start().to_owned().into()),
+                depth,
+                has_children: !node.children.is_empty(),
+            });
+            if self.expanded_keys.contains(&node.key) {
+                pending.extend(node.children.iter().rev().map(|child| (*child, depth + 1)));
+            }
+        }
+        self.logical_rows = rows;
+    }
+
+    pub(crate) fn collapse_all(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.current_capture(window, cx).is_none() {
+            return;
+        }
+        self.expanded_keys.clear();
+        self.selected_key = self.logical_rows.first().map(|row| row.key.clone());
+        self.rebuild_visible_rows();
+        self.logical_scroll
+            .scroll_to_item(0, gpui::ScrollStrategy::Top);
+        window.focus(&self.focus_handle);
+        cx.notify();
+    }
+
+    fn select_row(
+        &mut self,
+        key: &NodeKey,
+        expand: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.current_capture(window, cx).is_none() {
+            return;
+        }
+        let Some(row) = self.logical_rows.iter().find(|row| &row.key == key) else {
+            return;
+        };
+        let has_children = row.has_children;
+        self.selected_key = Some(key.clone());
+        if expand && has_children {
+            if !self.expanded_keys.remove(key) {
+                self.expanded_keys.insert(key.clone());
+            }
+            self.rebuild_visible_rows();
+        }
+        window.focus(&self.focus_handle);
+        cx.notify();
+    }
+
+    fn render_row(
+        &self,
+        index: usize,
+        window: &Window,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
+        let row = self.logical_rows.get(index)?;
+        let selected = self.selected_key.as_ref() == Some(&row.key);
+        let enabled = self.current_capture(window, cx).is_some();
+        let key = row.key.clone();
+        let disclosure_key = row.key.clone();
+        let settings = super::ProjectPanelSettings::get_global(cx);
+        Some(
+            div()
+                .when(index == 0, |element| {
+                    element.debug_selector(|| "android-logical-first-row".into())
+                })
+                .child(
+                    ListItem::new(row.id.clone())
+                        .indent_level(row.depth)
+                        .indent_step_size(px(settings.indent_size))
+                        .spacing(match settings.entry_spacing {
+                            ProjectPanelEntrySpacing::Comfortable => ListItemSpacing::Dense,
+                            ProjectPanelEntrySpacing::Standard => ListItemSpacing::ExtraDense,
+                        })
+                        .toggle_state(selected)
+                        .disabled(!enabled)
+                        .toggle(
+                            row.has_children
+                                .then(|| self.expanded_keys.contains(&row.key)),
+                        )
+                        .on_toggle(cx.listener(move |tree, _, window, cx| {
+                            tree.select_row(&disclosure_key, true, window, cx)
+                        }))
+                        .start_slot(
+                            Icon::new(if row.has_children {
+                                IconName::Folder
+                            } else {
+                                IconName::File
+                            })
+                            .size(IconSize::Small),
+                        )
+                        .child(
+                            h_flex()
+                                .min_w_0()
+                                .gap_1()
+                                .child(Label::new(row.label.clone()).size(LabelSize::Small))
+                                .when_some(row.annotation.clone(), |element, annotation| {
+                                    element.child(
+                                        Label::new(annotation)
+                                            .size(LabelSize::Small)
+                                            .color(Color::Muted),
+                                    )
+                                }),
+                        )
+                        .on_click(cx.listener(move |tree, _, window, cx| {
+                            tree.select_row(&key, false, window, cx)
+                        })),
+                )
+                .into_any_element(),
+        )
     }
 
     pub(crate) fn current_capture(
@@ -633,6 +977,66 @@ impl AndroidProjectTree {
                 .read(cx)
                 .is_android_tree_capture_current(&published.capture, cx))
         .then_some(&published.capture)
+    }
+}
+
+impl Render for AndroidProjectTree {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let available = self
+            .selector_state(window, cx)
+            .is_some_and(|state| state.view == DefaultView::Android);
+        let message: Option<SharedString> = if !available {
+            Some("Android view is unavailable for this project".into())
+        } else {
+            match &self.status {
+                Status::Loading => Some("Loading Android view…".into()),
+                Status::Stale => {
+                    Some("Android view is out of date. Sync the project to refresh.".into())
+                }
+                Status::Failed(_) => {
+                    Some("Couldn't load Android view. Sync the project to retry.".into())
+                }
+                Status::Unavailable => Some("Sync the project to load Android view".into()),
+                Status::Ready if self.logical_rows.is_empty() => {
+                    Some("No Android source groups are available".into())
+                }
+                Status::Ready => None,
+            }
+        };
+        v_flex()
+            .id("android-logical-tree")
+            .size_full()
+            .min_h_0()
+            .overflow_hidden()
+            .track_focus(&self.focus_handle)
+            .key_context("AndroidProjectTree")
+            .when_some(message, |element, message| {
+                element.child(
+                    div().px_2().py_1().child(
+                        Label::new(message)
+                            .size(LabelSize::Small)
+                            .color(Color::Muted),
+                    ),
+                )
+            })
+            .when(available, |element| {
+                element.child(
+                    uniform_list(
+                        "android-logical-rows",
+                        self.logical_rows.len(),
+                        cx.processor(|tree, range, window, cx| {
+                            range
+                                .filter_map(|index| tree.render_row(index, window, cx))
+                                .collect::<Vec<_>>()
+                        }),
+                    )
+                    .size_full()
+                    .flex_1()
+                    .with_sizing_behavior(ListSizingBehavior::Infer)
+                    .with_horizontal_sizing_behavior(ListHorizontalSizingBehavior::FitList)
+                    .track_scroll(&self.logical_scroll),
+                )
+            })
     }
 }
 
@@ -1383,5 +1787,604 @@ mod tests {
         result.expect(
             "Two Android windows must preserve content freshness and independent ownership",
         );
+    }
+
+    // C2 GPUI coverage is supplemental: the shared exported model is decoded
+    // above, while filesystem changes are observed through actual FakeFs worktrees.
+    // None of these tests credits the six original Gradle import workflows.
+    fn selector(window: &mut TestWindow) -> Option<SelectorState> {
+        window
+            .tree()
+            .update_in(&mut window.visual, |tree, window, cx| {
+                tree.selector_state(window, cx)
+            })
+    }
+
+    fn mount_panel(window: &mut TestWindow) {
+        let panel = window.panel.clone();
+        window
+            .workspace
+            .update_in(&mut window.visual, |workspace, window, cx| {
+                workspace.add_panel(panel, window, cx);
+                workspace.open_panel::<crate::ProjectPanel>(window, cx);
+            });
+        window.visual.run_until_parked();
+    }
+
+    fn choose(window: &mut TestWindow, view: DefaultView) {
+        window
+            .tree()
+            .update_in(&mut window.visual, |tree, window, cx| {
+                tree.choose_view(view, window, cx)
+            });
+        window.visual.run_until_parked();
+    }
+
+    fn draw_panel(window: &mut TestWindow, width: f32, height: f32) {
+        let panel = window.panel.clone();
+        window.visual.draw(
+            gpui::point(px(0.), px(0.)),
+            gpui::size(px(width), px(height)),
+            |_, _| panel.into_any_element(),
+        );
+    }
+
+    fn expand_visible_groups(window: &mut TestWindow) -> Result<()> {
+        // Exercise the same disclosure handler as rendered rows, using keys
+        // obtained from the current capture rather than invented physical IDs.
+        window
+            .tree()
+            .update_in(&mut window.visual, |tree, window, cx| {
+                for _ in 0..256 {
+                    let next = tree
+                        .logical_rows
+                        .iter()
+                        .find(|row| row.has_children && !tree.expanded_keys.contains(&row.key))
+                        .map(|row| row.key.clone());
+                    let Some(key) = next else {
+                        return Ok(());
+                    };
+                    tree.select_row(&key, true, window, cx);
+                }
+                anyhow::bail!("Supplemental fixture unexpectedly exceeds 256 expandable rows")
+            })
+    }
+
+    fn publish_non_android_kmp_context(project: &Entity<Project>, cx: &mut App) -> Result<()> {
+        let root = Path::new(ROOT);
+        let record = json!({
+            "schema": 1, "root": ROOT, "gradleVersion": "9.6.1", "phase": "complete",
+            "modules": [
+                {"path": ":", "directory": root,
+                 "plugins": PluginId::ALL.into_iter().map(|plugin| json!({
+                     "plugin": plugin, "applied": false
+                 })).collect::<Vec<_>>(),
+                 "targets": {"status": "available", "value": []}},
+                {"path": ":app", "directory": root.join("app"),
+                 "plugins": PluginId::ALL.into_iter().map(|plugin| json!({
+                     "plugin": plugin, "applied": plugin == PluginId::KotlinMultiplatform
+                 })).collect::<Vec<_>>(),
+                 "targets": {"status": "available", "value": []}}
+            ]
+        });
+        let snapshot = decode_context_record(&serde_json::to_vec(&record)?, root)?;
+        project.update(cx, |project, cx| {
+            let worktree = project
+                .visible_worktrees(cx)
+                .find(|worktree| worktree.read(cx).abs_path().as_ref() == root)
+                .context("KMP fixture root worktree")?
+                .read(cx)
+                .id();
+            let handle = project.ensure_android_context(worktree, true, cx)?;
+            let discovery = project.begin_android_context_import(handle, cx)?;
+            let mut active = ActiveContext::default();
+            active.select(Some(handle), None)?;
+            let owner = active
+                .discovery_token(project.android_context())
+                .context("KMP fixture discovery owner")?;
+            project.publish_android_context(&active, &owner, &discovery, snapshot, cx)
+        })
+    }
+
+    #[gpui::test]
+    async fn android_selector_follows_selected_root_capability(cx: &mut TestAppContext) {
+        let result: Result<()> = async {
+            let (project, _) = fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            let state = selector(&mut window).context("Android selector")?;
+            assert_eq!(state.view, DefaultView::Android);
+            assert!(state.android_enabled);
+            assert!(state.reason.is_none());
+            for name in ["main.py", "index.html", "build.gradle.kts"] {
+                window.open(&Path::new(GENERIC).join(name)).await?;
+                assert!(
+                    selector(&mut window).is_none(),
+                    "Generic files and Gradle filenames cannot establish Android capability"
+                );
+                window.tree().read_with(&window.visual, |tree, _| {
+                    assert!(tree.logical_rows.is_empty());
+                    assert!(tree.selected_key.is_none());
+                });
+            }
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            window
+                .visual
+                .update(|_, cx| publish_non_android_kmp_context(&project, cx))?;
+            window.visual.run_until_parked();
+            let state = selector(&mut window).context("KMP selector with no Android target")?;
+            assert_eq!(state.view, DefaultView::Project);
+            assert!(!state.android_enabled);
+            assert_eq!(
+                state.reason.as_deref(),
+                Some("Android view requires an evaluated Android target")
+            );
+            choose(&mut window, DefaultView::Android);
+            assert_eq!(
+                selector(&mut window).context("Disabled KMP selector")?.view,
+                DefaultView::Project
+            );
+            window.visual.update(|_, cx| {
+                publish_context(&project, cx)?;
+                publish_model(&project, cx)
+            })?;
+            window.ready().await;
+            window.visual.update(|_, cx| {
+                let root = root_id(&project, cx)?;
+                let store = project.read(cx).worktree_store();
+                TrustedWorktrees::try_get_global(cx)
+                    .context("Trust store")?
+                    .update(cx, |trust, cx| {
+                        trust.restrict(
+                            store.downgrade(),
+                            [PathTrust::Worktree(root)].into_iter().collect(),
+                            cx,
+                        )
+                    });
+                Ok::<_, anyhow::Error>(())
+            })?;
+            window.visual.run_until_parked();
+            assert!(
+                selector(&mut window).is_none(),
+                "Revoked trust must remove Android chrome immediately"
+            );
+            Ok(())
+        }
+        .await;
+        result.expect("C2 capability-driven selector fixture must complete");
+    }
+
+    #[gpui::test]
+    async fn android_selector_preserves_explicit_project_choice(cx: &mut TestAppContext) {
+        let result: Result<()> = async {
+            let (project, _) = fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            choose(&mut window, DefaultView::Project);
+            assert_eq!(
+                selector(&mut window).context("Project choice")?.view,
+                DefaultView::Project
+            );
+            let owner = window.published_owner()?;
+            window.visual.update(|_, cx| publish_model(&project, cx))?;
+            window.ready().await;
+            assert_eq!(
+                selector(&mut window)
+                    .context("Project after model refresh")?
+                    .view,
+                DefaultView::Project
+            );
+            assert!(window.published_owner()?.request_generation > owner.request_generation);
+            window.open(&Path::new(GENERIC).join("main.py")).await?;
+            assert!(selector(&mut window).is_none());
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            assert_eq!(
+                selector(&mut window)
+                    .context("Restored per-root Project choice")?
+                    .view,
+                DefaultView::Project
+            );
+            let mut independent = TestWindow::new(&project, cx)?;
+            mount_panel(&mut independent);
+            independent.open(Path::new(MAIN)).await?;
+            independent.ready().await;
+            assert_eq!(
+                selector(&mut independent)
+                    .context("Independent default")?
+                    .view,
+                DefaultView::Android,
+                "A second workspace must not inherit another panel's choice"
+            );
+            choose(&mut window, DefaultView::Android);
+            window.ready().await;
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    let root = tree
+                        .logical_rows
+                        .first()
+                        .context("Actual module row")?
+                        .key
+                        .clone();
+                    tree.select_row(&root, false, window, cx);
+                    Ok::<_, anyhow::Error>(())
+                })?;
+            project.update(&mut window.visual, |project, cx| {
+                project.invalidate_android_model(Some(PathBuf::from(ROOT)), cx);
+            });
+            window.visual.run_until_parked();
+            assert_eq!(
+                selector(&mut window)
+                    .context("Remembered Android after failure")?
+                    .view,
+                DefaultView::Android
+            );
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    assert!(tree.current_capture(window, cx).is_none());
+                    let selected = tree.selected_key.clone();
+                    let row = tree
+                        .logical_rows
+                        .first()
+                        .context("Retained disabled row")?
+                        .key
+                        .clone();
+                    let expanded = tree.expanded_keys.clone();
+                    tree.select_row(&row, true, window, cx);
+                    assert_eq!(tree.selected_key, selected);
+                    assert_eq!(
+                        tree.expanded_keys, expanded,
+                        "Failed sync must disable interactions with retained logical rows"
+                    );
+                    Ok::<_, anyhow::Error>(())
+                })?;
+            Ok(())
+        }
+        .await;
+        result.expect("C2 explicit view preference fixture must complete");
+    }
+
+    #[gpui::test]
+    async fn android_rows_preserve_labels_annotations_and_node_keys(cx: &mut TestAppContext) {
+        let result: Result<()> = async {
+            let (project, filesystem) = fixture(cx).await?;
+            filesystem
+                .insert_tree(
+                    "/tree-owner/app/src/main/java",
+                    json!({"com": {"sample": {"nested": {"Other.java":
+                    "package com.sample.nested; class Other {}"}}}}),
+                )
+                .await;
+            filesystem
+                .insert_tree(
+                    "/tree-owner/app/flavor-assets",
+                    json!({"one": {"two": {"three": {"asset.txt": "literal asset"}}}}),
+                )
+                .await;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            expand_visible_groups(&mut window)?;
+            let (selected, row_id) = window.tree().update_in(
+                &mut window.visual,
+                |tree, window, cx| {
+                    let module = tree.logical_rows.first().context("Imported module row")?;
+                    assert_eq!(module.label.as_ref(), "app");
+                    assert!(
+                        module.annotation.is_none(),
+                        "The reference (Android) suffix is not UI text"
+                    );
+                    assert!(matches!(module.key, NodeKey::Module { .. }));
+                    assert!(
+                        tree.logical_rows
+                            .iter()
+                            .any(|row| row.label.as_ref() == "java"
+                                && row.annotation.as_deref() == Some("(generated)"))
+                    );
+                    assert!(
+                        tree.logical_rows
+                            .iter()
+                            .any(|row| row.label.as_ref() == "com.sample.nested"
+                                && row.annotation.is_none())
+                    );
+                    for name in ["one", "two", "three"] {
+                        assert!(
+                            tree.logical_rows
+                                .iter()
+                                .any(|row| row.label.as_ref() == name
+                                    && row.annotation.as_deref() == Some("(demo)")),
+                            "Assets retain literal directory rows and actual provider annotations"
+                        );
+                    }
+                    assert!(
+                        !tree
+                            .logical_rows
+                            .iter()
+                            .any(|row| row.label.as_ref() == "one.two.three")
+                    );
+                    assert!(!tree.logical_rows.iter().any(|row| {
+                        row.annotation
+                            .as_deref()
+                            .is_some_and(|value| value.contains("( ("))
+                    }));
+                    let row = tree
+                        .logical_rows
+                        .iter()
+                        .find(|row| row.label.as_ref() == "Main")
+                        .context("Actual main file row")?;
+                    let key = row.key.clone();
+                    let id = row.id.clone();
+                    assert!(
+                        row.annotation.is_none(),
+                        "main is omitted in rendered annotation"
+                    );
+                    tree.select_row(&key, false, window, cx);
+                    assert_eq!(tree.selected_key.as_ref(), Some(&key));
+                    Ok::<_, anyhow::Error>((key, id))
+                },
+            )?;
+            let revision = window.current_file_revision()?;
+            filesystem
+                .insert_tree(
+                    "/tree-owner/app/src/main/java/example",
+                    json!({"Added.java": "package example; class Added {}"}),
+                )
+                .await;
+            window.visual.run_until_parked();
+            window.ready().await;
+            assert_ne!(window.current_file_revision()?, revision);
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert_eq!(tree.selected_key.as_ref(), Some(&selected));
+                let row = tree
+                    .logical_rows
+                    .iter()
+                    .find(|row| row.key == selected)
+                    .expect("Retained logical identity");
+                assert_eq!(row.id, row_id);
+                assert!(
+                    tree.logical_rows
+                        .iter()
+                        .any(|row| row.label.as_ref() == "Added")
+                );
+            });
+            Ok(())
+        }
+        .await;
+        result.expect("C2 logical labels and durable identity fixture must complete");
+    }
+
+    #[gpui::test]
+    async fn android_rows_resize_scroll_and_restore_focus(cx: &mut TestAppContext) {
+        let result: Result<()> = async {
+            let (project, filesystem) = fixture(cx).await?;
+            let files = (0..80)
+                .map(|index| {
+                    (
+                        format!("Class{index:02}.java"),
+                        json!(format!("package example; class Class{index:02} {{}}")),
+                    )
+                })
+                .collect::<serde_json::Map<_, _>>();
+            filesystem
+                .insert_tree("/tree-owner/app/src/main/java/example", json!(files))
+                .await;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            expand_visible_groups(&mut window)?;
+            let physical_scroll = window.panel.read_with(&window.visual, |panel, _| {
+                panel.scroll_handle.0.borrow().base_handle.offset()
+            });
+            for width in [180., 480.] {
+                window
+                    .visual
+                    .simulate_resize(gpui::size(px(width), px(300.)));
+                draw_panel(&mut window, width, 300.);
+                window.tree().read_with(&window.visual, |tree, _| {
+                    let handle = tree.logical_scroll.0.borrow();
+                    let geometry = handle
+                        .last_item_size
+                        .expect("Rendered uniform list geometry");
+                    assert!(geometry.item.width > px(0.));
+                    assert!(geometry.item.width <= px(width));
+                    assert!(geometry.item.height > px(0.));
+                    assert!(
+                        geometry.item.height < px(300.),
+                        "Selector reserves header space"
+                    );
+                    assert!(geometry.contents.height > geometry.item.height);
+                    assert!(tree.logical_rows.len() > 80);
+                });
+            }
+            window.tree().update(&mut window.visual, |tree, cx| {
+                tree.logical_scroll.scroll_to_item_strict(
+                    tree.logical_rows.len() - 1,
+                    gpui::ScrollStrategy::Bottom,
+                );
+                cx.notify();
+            });
+            draw_panel(&mut window, 480., 300.);
+            let scroll = window.tree().read_with(&window.visual, |tree, _| {
+                assert!(tree.logical_scroll.is_scrollable());
+                let offset = tree.logical_scroll.0.borrow().base_handle.offset();
+                assert!(
+                    offset.y < px(0.),
+                    "Logical rows actually scroll within the viewport"
+                );
+                offset
+            });
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    let key = tree
+                        .logical_rows
+                        .last()
+                        .context("Last visible logical row")?
+                        .key
+                        .clone();
+                    tree.select_row(&key, false, window, cx);
+                    assert!(tree.focus_handle.is_focused(window));
+                    Ok::<_, anyhow::Error>(())
+                })?;
+            choose(&mut window, DefaultView::Project);
+            window.visual.update(|window, cx| {
+                assert!(window.panel.read(cx).focus_handle.is_focused(window));
+            });
+            choose(&mut window, DefaultView::Android);
+            window.ready().await;
+            draw_panel(&mut window, 480., 300.);
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert_eq!(tree.logical_scroll.0.borrow().base_handle.offset(), scroll);
+                assert!(tree.selected_key.is_some());
+            });
+            assert_eq!(
+                window.panel.read_with(&window.visual, |panel, _| panel
+                    .scroll_handle
+                    .0
+                    .borrow()
+                    .base_handle
+                    .offset()),
+                physical_scroll
+            );
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    tree.collapse_all(window, cx);
+                    assert!(tree.expanded_keys.is_empty());
+                    assert_eq!(tree.logical_rows.len(), 1);
+                    assert!(matches!(tree.logical_rows[0].key, NodeKey::Module { .. }));
+                    assert_eq!(tree.selected_key.as_ref(), Some(&tree.logical_rows[0].key));
+                    assert!(tree.focus_handle.is_focused(window));
+                });
+            assert_eq!(
+                window.panel.read_with(&window.visual, |panel, _| panel
+                    .scroll_handle
+                    .0
+                    .borrow()
+                    .base_handle
+                    .offset()),
+                physical_scroll,
+                "Logical Collapse All must preserve physical Project scroll"
+            );
+            Ok(())
+        }
+        .await;
+        result.expect("C2 rendered geometry, logical scroll and panel focus fixture must complete");
+    }
+
+    #[gpui::test]
+    async fn generic_project_keeps_physical_panel_and_top_chooser(cx: &mut TestAppContext) {
+        let result: Result<()> =
+            async {
+                let (project, filesystem) = fixture(cx).await?;
+                let mut window = TestWindow::new(&project, cx)?;
+                mount_panel(&mut window);
+                window.open(&Path::new(GENERIC).join("main.py")).await?;
+                assert!(selector(&mut window).is_none());
+                let generic_path = window
+                    .visual
+                    .update(|_, cx| {
+                        project
+                            .read(cx)
+                            .find_project_path(&Path::new(GENERIC).join("main.py"), cx)
+                    })
+                    .context("Actual generic ProjectPath")?;
+                window.panel.update(&mut window.visual, |panel, cx| {
+                    panel.select_path_for_test(generic_path.clone(), cx);
+                });
+                draw_panel(&mut window, 300., 400.);
+                assert_eq!(
+                    window.panel.read_with(&window.visual, |panel, cx| panel
+                        .selected_entry_project_path(cx)),
+                    Some(generic_path.clone())
+                );
+                let workspace_id = window.workspace.entity_id();
+                let root_id = window.multi_workspace.entity_id();
+                window.open(Path::new(MAIN)).await?;
+                window.ready().await;
+                choose(&mut window, DefaultView::Project);
+                window.panel.update(&mut window.visual, |panel, cx| {
+                    panel.select_path_for_test(generic_path.clone(), cx);
+                });
+                let selection = window
+                    .panel
+                    .read_with(&window.visual, |panel, _| panel.selection);
+                let expanded = window.panel.read_with(&window.visual, |panel, _| {
+                    panel.state.expanded_dir_ids.clone()
+                });
+                choose(&mut window, DefaultView::Android);
+                window.ready().await;
+                draw_panel(&mut window, 300., 400.);
+                window
+                    .tree()
+                    .update_in(&mut window.visual, |tree, window, cx| {
+                        let module = tree
+                            .logical_rows
+                            .first()
+                            .context("Actual logical module row")?
+                            .key
+                            .clone();
+                        tree.select_row(&module, false, window, cx);
+                        Ok::<_, anyhow::Error>(())
+                    })?;
+                // A logical row must never route the physical panel's rename/copy/cut/paste
+                // actions to a retained physical selection. Leaf navigation belongs to C3.
+                window.visual.update(|window, cx| window.draw(cx).clear(cx));
+                window.visual.dispatch_action(crate::Rename);
+                window.visual.dispatch_action(crate::Copy);
+                window.visual.dispatch_action(crate::Cut);
+                window.visual.dispatch_action(crate::Paste);
+                window.panel.read_with(&window.visual, |panel, _| {
+                    assert!(panel.state.edit_state.is_none());
+                    assert!(panel.clipboard.is_none());
+                    assert_eq!(panel.selection, selection);
+                    assert_eq!(panel.state.expanded_dir_ids, expanded);
+                    assert!(panel.context_menu.is_none());
+                    assert!(panel.drag_target_entry.is_none());
+                });
+                assert!(
+                    filesystem
+                        .is_file(&Path::new(GENERIC).join("main.py"))
+                        .await
+                );
+                choose(&mut window, DefaultView::Project);
+                assert_eq!(
+                    window.panel.read_with(&window.visual, |panel, cx| panel
+                        .selected_entry_project_path(cx)),
+                    Some(generic_path)
+                );
+                for name in ["main.py", "index.html"] {
+                    window.open(&Path::new(GENERIC).join(name)).await?;
+                    assert!(selector(&mut window).is_none());
+                    window.workspace.read_with(&window.visual, |workspace, cx| {
+                        let item = workspace.active_item(cx).expect("Preserved generic editor");
+                        assert_eq!(
+                            item.project_path(cx)
+                                .expect("Generic project path")
+                                .path
+                                .as_unix_str(),
+                            name
+                        );
+                    });
+                }
+                assert_eq!(window.workspace.entity_id(), workspace_id);
+                assert_eq!(window.multi_workspace.entity_id(), root_id);
+                window.multi_workspace.read_with(&window.visual, |multi_workspace, _| {
+                assert_eq!(multi_workspace.workspace().entity_id(), workspace_id,
+                    "The workspace root and its existing project/branch chooser remain mounted");
+            });
+                Ok(())
+            }
+            .await;
+        result.expect("C2 generic editing and physical panel preservation fixture must complete");
     }
 }

@@ -890,6 +890,7 @@ impl ProjectPanel {
                 android_project_tree::AndroidProjectTree::new(
                     workspace.weak_handle(),
                     project.clone(),
+                    focus_handle.clone(),
                     window,
                     cx,
                 )
@@ -7328,8 +7329,65 @@ fn item_width_estimate(depth: usize, item_text_chars: usize, is_symlink: bool) -
     item_width
 }
 
-impl Render for ProjectPanel {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+impl ProjectPanel {
+    fn render_project_header(
+        &self,
+        selector: Option<AnyElement>,
+        logical: bool,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        h_flex()
+            .h_8()
+            .flex_none()
+            .px_2()
+            .justify_between()
+            .child(selector.unwrap_or_else(|| {
+                Label::new("Project")
+                    .weight(FontWeight::MEDIUM)
+                    .into_any_element()
+            }))
+            .child(
+                h_flex()
+                    .gap_1()
+                    .child(
+                        IconButton::new("collapse-project", IconName::ListCollapse)
+                            .tab_index(0isize)
+                            .aria_label("Collapse all folders")
+                            .tooltip(|_, cx| {
+                                Tooltip::for_action("Collapse All", &CollapseAllEntries, cx)
+                            })
+                            .on_click(cx.listener(move |panel, _, window, cx| {
+                                if logical {
+                                    panel
+                                        ._android_tree
+                                        .update(cx, |tree, cx| tree.collapse_all(window, cx));
+                                } else {
+                                    panel.collapse_all_entries(&CollapseAllEntries, window, cx);
+                                }
+                            })),
+                    )
+                    .child(
+                        IconButton::new("hide-project", IconName::Close)
+                            .tab_index(0isize)
+                            .aria_label("Hide Project")
+                            .tooltip(Tooltip::text("Hide Project"))
+                            .on_click(cx.listener(|_, _, _, cx| cx.emit(PanelEvent::Close))),
+                    ),
+            )
+            .debug_selector(|| "android-project-view-header".into())
+            .into_any_element()
+    }
+
+    fn render_physical_panel(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
+        let selector = self._android_tree.read(cx).selector_state(window, cx);
+        let view_selector = selector.map(|selector| {
+            self._android_tree
+                .update(cx, |tree, cx| tree.render_selector(selector, window, cx))
+        });
         if !cx.has_active_drag() {
             self.clear_drag_state(cx);
         }
@@ -7530,51 +7588,7 @@ impl Render for ProjectPanel {
                 .track_focus(&self.focus_handle(cx))
                 .child(
                     v_flex()
-                        .child(
-                            h_flex()
-                                .h_8()
-                                .flex_none()
-                                .px_2()
-                                .justify_between()
-                                .child(Label::new("Project").weight(FontWeight::MEDIUM))
-                                .child(
-                                    h_flex()
-                                        .gap_1()
-                                        .child(
-                                            IconButton::new(
-                                                "collapse-project",
-                                                IconName::ListCollapse,
-                                            )
-                                            .tab_index(0isize)
-                                            .aria_label("Collapse all folders")
-                                            .tooltip(|_, cx| {
-                                                Tooltip::for_action(
-                                                    "Collapse All",
-                                                    &CollapseAllEntries,
-                                                    cx,
-                                                )
-                                            })
-                                            .on_click(
-                                                cx.listener(|panel, _, window, cx| {
-                                                    panel.collapse_all_entries(
-                                                        &CollapseAllEntries,
-                                                        window,
-                                                        cx,
-                                                    );
-                                                }),
-                                            ),
-                                        )
-                                        .child(
-                                            IconButton::new("hide-project", IconName::Close)
-                                                .tab_index(0isize)
-                                                .aria_label("Hide Project")
-                                                .tooltip(Tooltip::text("Hide Project"))
-                                                .on_click(cx.listener(|_, _, _, cx| {
-                                                    cx.emit(PanelEvent::Close)
-                                                })),
-                                        ),
-                                ),
-                        )
+                        .child(self.render_project_header(view_selector, false, cx))
                         .child(
                             uniform_list("entries", item_count, {
                                 cx.processor(|this, range: Range<usize>, window, cx| {
@@ -8052,6 +8066,26 @@ impl Render for ProjectPanel {
                     })
                 })
         }
+    }
+}
+
+impl Render for ProjectPanel {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let tree = self._android_tree.clone();
+        let Some(selector) = tree.read(cx).selector_state(window, cx) else {
+            return self.render_physical_panel(window, cx).into_any_element();
+        };
+        if selector.view == android_tools::project_view_preferences::DefaultView::Project {
+            return self.render_physical_panel(window, cx).into_any_element();
+        }
+        let selector = tree.update(cx, |tree, cx| tree.render_selector(selector, window, cx));
+        let header = self.render_project_header(Some(selector), true, cx);
+        v_flex()
+            .size_full()
+            .min_h_0()
+            .child(header)
+            .child(div().size_full().min_h_0().flex_1().child(tree))
+            .into_any_element()
     }
 }
 
