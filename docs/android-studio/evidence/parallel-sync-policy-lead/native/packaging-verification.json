@@ -1,0 +1,66 @@
+{
+  "verdict": "PASS",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "utc": "2026-10-08T00:57:41.201016+00:00",
+  "all4730_source_hashes_fixed7_index_worktree_untracked_unchanged_after_packaging": true,
+  "proof_and_capture_hash_citations_verified": true,
+  "critical_evidence": [
+    {
+      "path": "runtime-proof.json",
+      "bytes": 16050,
+      "sha256": "7829ce541f287b5da34b2bfbb88078b0f004bd5f2382bdbd934ba18fd7148799"
+    },
+    {
+      "path": "native-model-proof.json",
+      "bytes": 3831,
+      "sha256": "acf1b958954fea949fe122747766f80135f2fdff93a55d869ca17f6e81f0bc50"
+    },
+    {
+      "path": "current-parallel-capability-proof.json",
+      "bytes": 5655,
+      "sha256": "edee7cd343446c4c6f9edd039e5b8b029fc81a7f5fda9946a913d4a1b23c5222"
+    },
+    {
+      "path": "final-closure-and-guard.json",
+      "bytes": 1030,
+      "sha256": "76822dc0191fc6c01993162b5146d9971443bcd01a62f402e8db4bd98ed79c6e"
+    },
+    {
+      "path": "review-report.md",
+      "bytes": 9090,
+      "sha256": "f035854d393f6c2c15dde5a1f4cde0aa80dae118f640cee2b9c5de098d76dc33"
+    },
+    {
+      "path": "events.jsonl",
+      "bytes": 49829,
+      "sha256": "fbefc5f36c22e639c83a3b9459d0c25e2ac0de349fbc1b08b887187154081986"
+    },
+    {
+      "path": "launcher-pty.log",
+      "bytes": 754,
+      "sha256": "2c9c5138e6b565751e26a6a6367cc1fdbcfcd5858e350f7cb9a88d301008f014"
+    },
+    {
+      "path": "current-decoder-build-proof.json",
+      "bytes": 1275,
+      "sha256": "b73b74504c8b76177b5af7165d4030e46207a8a838dad8ddcd62ccd0acb6ab0d"
+    },
+    {
+      "path": "current-app-binding.json",
+      "bytes": 618,
+      "sha256": "17b7401ba1dfe3860ba4c5dda70d07d3b363236d018fe6f286d0061a2d19facf"
+    },
+    {
+      "path": "cleanup-receipt.json",
+      "bytes": 246,
+      "sha256": "eae6af56b2be390f53ab43c0abdac360a510112a05b7fcac7b9eed9d757cd3e7"
+    },
+    {
+      "path": "lease-released.json",
+      "bytes": 513,
+      "sha256": "726db77f573585fbf69d00b844922a8f926027656b078237bad5908583b96f93"
+    }
+  ],
+  "runtime_released_no_compiler_JVM_Gradle_native_execution": true,
+  "manifest_self_excluded": true
+}

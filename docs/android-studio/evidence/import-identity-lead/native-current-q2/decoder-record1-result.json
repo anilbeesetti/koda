@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/runtime-probe",
+    "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project",
+    "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/native-model-record1.log"
+  ],
+  "binding_environment": {
+    "KODA_IMPORT_MODEL_REVISION": "1",
+    "KODA_IMPORT_SELECTION_REVISION": "1",
+    "KODA_IMPORT_SELECTED_MODULE": ":app",
+    "KODA_IMPORT_SELECTED_VARIANT": "demoDebug"
+  },
+  "exit_code": 0,
+  "elapsed_seconds": 0.0068792840029345825,
+  "input_record_sha256": "38d1355c7dd5687206b804423c40db7f4af9fb5c530a710709df0510a15a4278",
+  "stdout_sha256": "5a1ccf059fdf0b2b7c6c74e569fba0d716910372e0082d8fae338baa5388b59f",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

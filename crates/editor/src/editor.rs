@@ -784,6 +784,11 @@ impl BufferSerialization {
 pub trait Addon: 'static {
     fn extend_key_context(&self, _: &mut KeyContext, _: &App) {}
 
+    /// Wrap the editor's content while retaining its item, focus, and tab identity.
+    fn wrap_editor_content(&self, content: AnyElement, _: &mut Window, _: &mut App) -> AnyElement {
+        content
+    }
+
     fn render_buffer_header_controls(
         &self,
         _: &ExcerptBoundaryInfo,
@@ -12723,8 +12728,13 @@ impl Focusable for Editor {
 }
 
 impl Render for Editor {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        EditorElement::new(&cx.entity(), self.create_style(cx))
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let mut content =
+            EditorElement::new(&cx.entity(), self.create_style(cx)).into_any_element();
+        for addon in self.addons.values() {
+            content = addon.wrap_editor_content(content, window, cx);
+        }
+        content
     }
 }
 

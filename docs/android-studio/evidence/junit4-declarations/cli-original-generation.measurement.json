@@ -1,0 +1,23 @@
+{
+  "name": "original-generation",
+  "command": [
+    "/tmp/android-studio-junit4-declarations/xtask-68bfab0",
+    "android-junit4-declarations",
+    "--repository",
+    "/workspace/android-studio-junit4-declarations",
+    "--source-root",
+    "/workspace/android-studio-junit4-declarations/tooling/xtask/test_data/reference_declarations/sources",
+    "--selection",
+    "/workspace/android-studio-junit4-declarations/tooling/xtask/test_data/reference_declarations/selection.json",
+    "--output",
+    "/workspace/android-studio-artifacts/reference-census-next-task/declarations-candidate-68bfab0.json"
+  ],
+  "started_utc": "2026-10-07T18:42:21.502120+00:00",
+  "wall_seconds": 0.0055391770001733676,
+  "exit_code": 0,
+  "peak_rss_kib": 11520,
+  "measurement": "Linux wait4 per-process rusage; executable invocation only, no compilation",
+  "log": "/workspace/android-studio-artifacts/reference-census-next-task/cli-original-generation.log",
+  "log_sha256": "4282b6ec05b2b71b07e63aa0e865d44dbeafb20e29e497ef31b8f9870249ec7b",
+  "expected_exit": 0
+}

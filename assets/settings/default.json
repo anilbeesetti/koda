@@ -1,5 +1,5 @@
 {
-  "$schema": "zed://schemas/settings",
+  "$schema": "koda://schemas/settings",
   // The name of the Zed theme to use for the UI.
   //
   // `mode` is one of:
@@ -155,15 +155,17 @@
   "hover_popover_hiding_delay": 300,
   // Whether to confirm before quitting Zed.
   "confirm_quit": false,
-  // Whether to restore last closed project when fresh Zed instance is opened
-  // May take 3 values:
+  // What to show when a fresh Zed instance is opened.
+  // May take 4 values:
   //  1. All workspaces open during last session
   //         "restore_on_startup": "last_session"
   //  2. The workspace opened
   //         "restore_on_startup": "last_workspace",
-  //  3. Do not restore previous workspaces
-  //         "restore_on_startup": "none",
-  "restore_on_startup": "last_session",
+  //  3. Start with an empty editor tab
+  //         "restore_on_startup": "empty_tab",
+  //  4. Show the welcome screen with recent projects
+  //         "restore_on_startup": "launchpad",
+  "restore_on_startup": "launchpad",
   // The default behavior when opening paths from the CLI without
   // an explicit `-e` (existing window) or `-n` (new window) flag.
   //
@@ -1923,7 +1925,12 @@
       "**/*.crt",
       "**/.dev.vars",
       "**/secrets.yml",
-      "**/.zed/settings.json", // zed project settings
+      "**/.koda/settings.json", // Koda project settings
+      "/**/koda/settings.json", // Koda user settings
+      "/**/koda/keymap.json",
+      "/**/Koda/settings.json",
+      "/**/Koda/keymap.json",
+      "**/.zed/settings.json", // upstream Zed project settings
       "/**/zed/settings.json", // zed user settings
       "/**/zed/keymap.json",
     ],
@@ -2304,9 +2311,9 @@
   //
   "file_types": {
     "JSONC": [
-      "**/.zed/*.json",
+      "**/.koda/*.json",
       "**/.vscode/**/*.json",
-      "**/{zed,Zed}/{settings,keymap,tasks,debug}.json",
+      "**/{koda,Koda,zed,Zed}/{settings,keymap,tasks,debug}.json",
       "tsconfig*.json",
     ],
     "Markdown": [".rules", ".cursorrules", ".windsurfrules", ".clinerules"],

@@ -33,6 +33,7 @@ secret!(DIGITALOCEAN_SPACES_SECRET_KEY);
 secret!(GITHUB_TOKEN);
 secret!(MACOS_CERTIFICATE);
 secret!(MACOS_CERTIFICATE_PASSWORD);
+secret!(MACOS_SIGNING_IDENTITY);
 secret!(SENTRY_AUTH_TOKEN);
 secret!(ZED_CLIENT_CHECKSUM_SEED);
 secret!(ZED_CLOUD_PROVIDER_ADDITIONAL_MODELS_JSON);
@@ -67,6 +68,7 @@ pub fn bundle_envs(platform: Platform) -> Env {
         Platform::Mac => env
             .add("MACOS_CERTIFICATE", MACOS_CERTIFICATE)
             .add("MACOS_CERTIFICATE_PASSWORD", MACOS_CERTIFICATE_PASSWORD)
+            .add("MACOS_SIGNING_IDENTITY", MACOS_SIGNING_IDENTITY)
             .add("APPLE_NOTARIZATION_KEY", APPLE_NOTARIZATION_KEY)
             .add("APPLE_NOTARIZATION_KEY_ID", APPLE_NOTARIZATION_KEY_ID)
             .add("APPLE_NOTARIZATION_ISSUER_ID", APPLE_NOTARIZATION_ISSUER_ID),
@@ -370,21 +372,21 @@ impl serde::Serialize for WorkflowSecret {
 
 pub mod assets {
     // NOTE: these asset names also exist in the zed.dev codebase.
-    pub const MAC_AARCH64: &str = "Zed-aarch64.dmg";
-    pub const MAC_X86_64: &str = "Zed-x86_64.dmg";
-    pub const LINUX_AARCH64: &str = "zed-linux-aarch64.tar.gz";
-    pub const LINUX_X86_64: &str = "zed-linux-x86_64.tar.gz";
+    pub const MAC_AARCH64: &str = "Koda-aarch64.dmg";
+    pub const MAC_X86_64: &str = "Koda-x86_64.dmg";
+    pub const LINUX_AARCH64: &str = "koda-linux-aarch64.tar.gz";
+    pub const LINUX_X86_64: &str = "koda-linux-x86_64.tar.gz";
     pub const BWRAP_LINUX_AARCH64: &str = "bwrap-linux-aarch64.gz";
     pub const BWRAP_LINUX_X86_64: &str = "bwrap-linux-x86_64.gz";
-    pub const WINDOWS_X86_64: &str = "Zed-x86_64.exe";
-    pub const WINDOWS_AARCH64: &str = "Zed-aarch64.exe";
+    pub const WINDOWS_X86_64: &str = "Koda-x86_64.exe";
+    pub const WINDOWS_AARCH64: &str = "Koda-aarch64.exe";
 
-    pub const REMOTE_SERVER_MAC_AARCH64: &str = "zed-remote-server-macos-aarch64.gz";
-    pub const REMOTE_SERVER_MAC_X86_64: &str = "zed-remote-server-macos-x86_64.gz";
-    pub const REMOTE_SERVER_LINUX_AARCH64: &str = "zed-remote-server-linux-aarch64.gz";
-    pub const REMOTE_SERVER_LINUX_X86_64: &str = "zed-remote-server-linux-x86_64.gz";
-    pub const REMOTE_SERVER_WINDOWS_AARCH64: &str = "zed-remote-server-windows-aarch64.zip";
-    pub const REMOTE_SERVER_WINDOWS_X86_64: &str = "zed-remote-server-windows-x86_64.zip";
+    pub const REMOTE_SERVER_MAC_AARCH64: &str = "koda-remote-server-macos-aarch64.gz";
+    pub const REMOTE_SERVER_MAC_X86_64: &str = "koda-remote-server-macos-x86_64.gz";
+    pub const REMOTE_SERVER_LINUX_AARCH64: &str = "koda-remote-server-linux-aarch64.gz";
+    pub const REMOTE_SERVER_LINUX_X86_64: &str = "koda-remote-server-linux-x86_64.gz";
+    pub const REMOTE_SERVER_WINDOWS_AARCH64: &str = "koda-remote-server-windows-aarch64.zip";
+    pub const REMOTE_SERVER_WINDOWS_X86_64: &str = "koda-remote-server-windows-x86_64.zip";
 
     pub fn all() -> Vec<&'static str> {
         vec![

@@ -1,0 +1,8 @@
+{
+  "original_path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/app/provider-res/layout/sample.xml",
+  "original_bytes": 148,
+  "original_sha256": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208",
+  "content_preserved_byte_exact": true,
+  "encoding": "utf-8",
+  "utf8_content": "<FrameLayout xmlns:android=\"http://schemas.android.com/apk/res/android\" android:layout_width=\"match_parent\" android:layout_height=\"match_parent\" />\n"
+}

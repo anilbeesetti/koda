@@ -1,0 +1,29 @@
+{
+  "utc": "2026-10-08T01:59:48.455031+00:00",
+  "source": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source4743_unchanged": true,
+  "scope": "Atomic replace duplicate public Cargo Rlib alias with hardlink to byte-identical current deps Rlib; contents/path unchanged, no product/fixture/test change",
+  "files": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/libandroid_tools.rlib",
+      "bytes": 315735670,
+      "inode": 1051320,
+      "device": 27,
+      "nlink": 1,
+      "mode": 33152,
+      "sha256": "9c8c3235cac1fcfc10832e8af791487865164786533fb45afecac2440d0be570"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-b6087fa93a4c72f9.rlib",
+      "bytes": 315735670,
+      "inode": 1051264,
+      "device": 27,
+      "nlink": 1,
+      "mode": 33152,
+      "sha256": "9c8c3235cac1fcfc10832e8af791487865164786533fb45afecac2440d0be570"
+    }
+  ],
+  "actual_source_owners_Cargo_stopped": true,
+  "physical_bytes_potentially_recovered": 315735670,
+  "action_not_performed": true
+}

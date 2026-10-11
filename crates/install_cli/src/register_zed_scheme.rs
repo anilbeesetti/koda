@@ -4,7 +4,7 @@ use gpui::{AsyncApp, actions};
 actions!(
     cli,
     [
-        /// Registers the zed:// URL scheme handler.
+        /// Registers the koda:// URL scheme handler.
         RegisterZedScheme
     ]
 );

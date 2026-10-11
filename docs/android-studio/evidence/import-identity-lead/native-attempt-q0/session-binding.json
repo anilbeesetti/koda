@@ -1,0 +1,41 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "pid": 342467,
+  "window_id": 2097153,
+  "display": ":120",
+  "app": {
+    "pid": 342467,
+    "parent_pid": 342449,
+    "start_ticks": 6585360,
+    "exe": "/tmp/android-studio-link-output/koda-import-identity-339403",
+    "cwd": "/workspace/android-studio-import-identity-getters",
+    "command": "/workspace/android-studio-import-identity-getters/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/import-identity-native-7e3f72e/qa/user-data /workspace/android-studio-artifacts/import-identity-native-7e3f72e/generation-project /workspace/android-studio-artifacts/import-identity-native-7e3f72e/generation-project/app/custom-manifest/AndroidManifest.xml "
+  },
+  "launcher": {
+    "pid": 342449,
+    "parent_pid": 342442,
+    "start_ticks": 6585345,
+    "exe": "/usr/bin/bash",
+    "cwd": "/workspace/android-studio-import-identity-getters",
+    "command": "bash .agents/skills/koda-app-validation/scripts/run-app.sh --headless /workspace/android-studio-artifacts/import-identity-native-7e3f72e/generation-project /workspace/android-studio-artifacts/import-identity-native-7e3f72e/generation-project/app/custom-manifest/AndroidManifest.xml "
+  },
+  "xvfb": {
+    "pid": 342457,
+    "parent_pid": 342449,
+    "start_ticks": 6585349,
+    "exe": "/workspace/cloud-environment/native/usr/bin/Xvfb",
+    "cwd": "/workspace/android-studio-import-identity-getters",
+    "command": "/workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :120 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset "
+  },
+  "executable": "/tmp/android-studio-link-output/koda-import-identity-339403",
+  "executable_sha256": "09d15d2ce3bdb708692254a8365bf94dedaa33a892af2b2a8156a8b75ced60b0",
+  "window_pid_command": [
+    "/workspace/cloud-environment/native/usr/bin/xdotool",
+    "getwindowpid",
+    "2097153"
+  ],
+  "window_pid_stdout": "342467\n",
+  "window_pid_stderr": "",
+  "utc": "2026-10-08T03:14:12.359288+00:00",
+  "monotonic": 65892.428932073
+}

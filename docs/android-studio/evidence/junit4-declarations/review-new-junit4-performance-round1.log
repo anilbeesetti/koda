@@ -1,0 +1,13 @@
+**FAIL — static performance review. Two budget-enforcement findings require correction.**
+
+Reviewed source SHA: `739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec`. Independently verified production-prefix SHA: `ad2b7a478404a88511b2774b30460af5b1d9e3bc74caa9f7358fbcab610f46f7`; production is unchanged from the initially reviewed `dd66b94…` revision.
+
+- **P2: Owner metadata grows far beyond the output budget before rejection.** Lines 1049–1051 copy the entire package into each class owner; line 1285 clones that owner into each retained method. Lines 380–385 then serialize the complete metadata before checking its 16 MiB limit. A source containing a 1 MiB ASCII package identifier, one class and 512 simple annotated methods fits existing byte/token/declaration limits but retains approximately 513 MiB of owner strings, followed by a similarly sized serialization buffer. This estimate follows source operations; the stress input was not executed. Charge aggregate retained metadata bytes before allocation and use a serializer that rejects writes before exceeding its output capacity.
+
+- **P2: Expanded annotation prefixes bypass the class-header byte limit.** The current check measures from the `class` token to its opening brace. `declaration_prefix` subsequently expands that header backward over annotations, and line 1077 copies the expanded span. `@Context("<1 MiB literal>") class Suite {}` therefore passes the 16 KiB check while retaining a header exceeding 1 MiB. Check the complete expanded span before copying it. Ordinary annotation facts do not exhibit the package-owner example’s hundreds-fold multiplication.
+
+The initial suggestion that repeated `import` segments cause quadratic suffix scans is **withdrawn**: a segment’s following dot prevents that parse. It is not a finding.
+
+Other observed bounds cover source reads, token arrays, delimiter structures, class/method counts and declaration-prefix walks. Publication avoids replacement; checking compares bounded existing output. These do not resolve the two allocation findings.
+
+The owner reports **108 tests passing** after two authorized test corrections. No CLI benchmark or scanner stress run was performed for this review. Runtime census remains incomplete, applicability unresolved and new behavioral parity credit zero. No files were edited.

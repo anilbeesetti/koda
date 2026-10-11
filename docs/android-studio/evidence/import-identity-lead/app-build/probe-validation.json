@@ -1,0 +1,50 @@
+{
+  "scope": "Independently owned external Rust/link runtime probe, no Cargo/project/cache/alias/SDK changes",
+  "commands": [
+    {
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "/workspace/android-studio-artifacts/import-identity-integration/app-build/cc.rs",
+        "-o",
+        "/workspace/android-studio-artifacts/import-identity-integration/app-build/bin/cc"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.2943454370033578,
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "/workspace/android-studio-artifacts/import-identity-integration/app-build/probe.rs",
+        "--crate-name",
+        "koda_import_identity_link_probe",
+        "-C",
+        "linker=cc",
+        "-o",
+        "/workspace/android-studio-artifacts/import-identity-integration/app-build/probe-output"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.07119659199815942,
+      "raw_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "helper_source_sha256": "1be51b477135a4be865650db1b09747fc9b0b20b4a31cddcd6d0e90d609daf9f",
+  "helper_binary_sha256": "e21ba9925188f76a5872b62fba400401d1e5832e94f158e231e2f7fddf563a43",
+  "probe_source_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+  "probe_executable": "/tmp/android-studio-link-output/probe-324864",
+  "probe_executable_sha256": "6b7138922e193a430356709f59cc0e23db2a1e90a4e13437c8deac77cb494f78",
+  "probe_executable_bytes": 4507016,
+  "probe_exit": 0,
+  "probe_stdout_sha256": "09397da5e4ca42fcbaf16c84742601a70d34414c8b5322b8cb52bbfd7d1bbc2a",
+  "actual_final_cc_receipt": "/workspace/android-studio-artifacts/import-identity-integration/app-build/probe-324864.json",
+  "actual_final_cc_receipt_sha256": "25e0b94777966f82c08a9391e581c8b04fe2d3153ea58d620f9ca7a9be7f576e",
+  "actual_arguments": 47,
+  "only_changed_argument_index": 42,
+  "only_output_argument_changed": true,
+  "all_actual_args_ASCII": true,
+  "real_cc_exit": 0,
+  "actual_product_link": "pending"
+}

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/cc.rs",
+    "-o",
+    "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/cc"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.17616945100598969,
+  "log": "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/helper-build.log",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

@@ -1,0 +1,306 @@
+[
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.oneVariant",
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_one_variant",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+      },
+      "run": {
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_one_variant",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/default-variants-oneVariant.log",
+          "sha256": "ba5c2dc76d157e5e0ce64cc483cf7915ebda0fc90b98d8a81f696feb8c3d78e9"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.debugPreferred",
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_debug_preferred",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+      },
+      "run": {
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_debug_preferred",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/default-variants-debugPreferred.log",
+          "sha256": "01f23e28421df077bad505f11d98e8aee48c51c0234eba2f6d7221fc0e92655a"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_build_type",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+      },
+      "run": {
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_build_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/default-variants-preferredBuildType.log",
+          "sha256": "56ca91cacc431ac7c71d425bf1826176d85a484fb48dad1f6b4b1503562bf7de"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredProductFlavorOverDebugBuildType",
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+      },
+      "run": {
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_product_flavor_over_debug_build_type",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/default-variants-preferredProductFlavorOverDebugBuildType.log",
+          "sha256": "79d1dd25db235a42f40fa4d329fac534cd2b54486f0cc231f8cab179e4ffaa19"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorsInTwoDimensions",
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+      },
+      "run": {
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_flavors_in_two_dimensions",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/default-variants-preferredFlavorsInTwoDimensions.log",
+          "sha256": "99764b81dd3b87e85309e388c5ff10b1fd714856c50086012db23a235990dac2"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredFlavorInSecondDimensionOnly",
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+      },
+      "run": {
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_preferred_flavor_in_second_dimension_only",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/default-variants-preferredFlavorInSecondDimensionOnly.log",
+          "sha256": "2405a45bdc1a8c5c0265a5a91d91a288b35d97a56d67d7a3b715bede63e99c69"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.mismatchedProductFlavourLength",
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_mismatched_product_flavour_length",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+      },
+      "run": {
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_mismatched_product_flavour_length",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/default-variants-mismatchedProductFlavourLength.log",
+          "sha256": "ab094a77d6598e3357f47b196e5b068b44f14c3e7ef7d2f7f8e9d7692a80bad7"
+        }
+      }
+    }
+  },
+  {
+    "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.onEmpty",
+    "target": {
+      "package": "android_tools",
+      "integration_target": null,
+      "test_name": "project_model::tests::default_variants_on_empty",
+      "manifest": {
+        "path": "crates/android_tools/Cargo.toml",
+        "sha256": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+      },
+      "source": {
+        "path": "crates/android_tools/src/project_model.rs",
+        "sha256": "390dac3da8ec0407a30537c234b777b6d254762c0bd1028bc18a731372194733"
+      },
+      "run": {
+        "tested_commit": "c992461ee337253cca680554f2c18e1bced8c7e3",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "--manifest-path",
+          "crates/android_tools/Cargo.toml",
+          "-p",
+          "android_tools",
+          "--lib",
+          "project_model::tests::default_variants_on_empty",
+          "--",
+          "--exact",
+          "--show-output"
+        ],
+        "exit_code": 0,
+        "log": {
+          "path": "docs/android-studio/evidence/default-variants-onEmpty.log",
+          "sha256": "68f634707a82069c0a00399243381a0b2387960be364d2edd0019fa94b36a7f9"
+        }
+      }
+    }
+  }
+]

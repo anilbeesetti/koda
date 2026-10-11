@@ -855,8 +855,7 @@ mod tests {
     }
 
     /// End-to-end check of `read_abort_message` against a synthetic
-    /// `abort_msg_s` in this very process (`process_vm_readv` may always read
-    /// one's own memory). The message page is followed by a `PROT_NONE` guard
+    /// `abort_msg_s` in this very process. The message page is followed by a `PROT_NONE` guard
     /// page so the test fails if the read ever extends past the mapping glibc
     /// would have allocated.
     #[cfg(target_os = "linux")]
@@ -897,10 +896,32 @@ mod tests {
                 pid: process::id(),
                 address: (&raw const abort_msg) as u64,
             };
-            assert_eq!(
-                read_abort_message(location),
+            let mut pointer_bytes = [0u8; size_of::<usize>()];
+            let local = libc::iovec {
+                iov_base: pointer_bytes.as_mut_ptr().cast(),
+                iov_len: pointer_bytes.len(),
+            };
+            let remote = libc::iovec {
+                iov_base: location.address as *mut libc::c_void,
+                iov_len: pointer_bytes.len(),
+            };
+            let bytes_read =
+                libc::process_vm_readv(location.pid as libc::pid_t, &local, 1, &remote, 1, 0);
+            let expected = if bytes_read < 0 {
+                let error = io::Error::last_os_error();
+                assert!(
+                    matches!(
+                        error.raw_os_error(),
+                        Some(libc::EPERM | libc::EACCES | libc::ENOSYS)
+                    ),
+                    "unexpected process-memory read failure: {error}"
+                );
+                None
+            } else {
+                assert_eq!(bytes_read as usize, pointer_bytes.len());
                 Some("free(): invalid pointer".to_string())
-            );
+            };
+            assert_eq!(read_abort_message(location), expected);
 
             libc::munmap(mapping, 2 * page_size);
         }

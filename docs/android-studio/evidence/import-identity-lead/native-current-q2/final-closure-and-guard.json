@@ -1,0 +1,28 @@
+{
+  "verdict": "PASS",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "utc": "2026-10-08T04:00:29.169782+00:00",
+  "source_before_after_files": 4743,
+  "source_index_worktree_untracked_and_hashes_unchanged": true,
+  "original_and_private_fixture_files_verified": 12,
+  "all_fixture_bytes_and_official_wrapper_unchanged": true,
+  "fixture_only_sdk_properties_unchanged": true,
+  "owned_pids_absent": [
+    345885,
+    345903,
+    345893
+  ],
+  "owned_display_absent": ":122",
+  "official_launcher_exit_code": 143,
+  "unowned_gradle167092_not_signaled": true,
+  "trusted_worktrees_rows": [
+    [
+      1,
+      "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry2/generation-project",
+      null,
+      null
+    ]
+  ],
+  "current_app_sha256": "09d15d2ce3bdb708692254a8365bf94dedaa33a892af2b2a8156a8b75ced60b0",
+  "current_runtime_decoder_library_sha256": "9c8c3235cac1fcfc10832e8af791487865164786533fb45afecac2440d0be570"
+}

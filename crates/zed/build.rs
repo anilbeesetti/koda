@@ -2,6 +2,8 @@
 use std::process::Command;
 
 fn main() {
+    println!("cargo:rerun-if-env-changed=ZED_RELEASE_CHANNEL");
+    println!("cargo:rerun-if-changed=RELEASE_CHANNEL");
     #[cfg(target_os = "linux")]
     {
         // Add rpaths for libraries that webrtc-sys dlopens at runtime.
@@ -222,7 +224,15 @@ fn main() {
 fn icon_path() -> std::path::PathBuf {
     use std::str::FromStr;
 
-    let release_channel = option_env!("RELEASE_CHANNEL").unwrap_or("dev");
+    let release_channel = option_env!("ZED_RELEASE_CHANNEL")
+        .or(option_env!("RELEASE_CHANNEL"))
+        .or_else(|| {
+            std::env::var_os("CARGO_CFG_DEBUG_ASSERTIONS")
+                .is_some()
+                .then_some("dev")
+        })
+        .unwrap_or(include_str!("RELEASE_CHANNEL"))
+        .trim();
     let channel = match release_channel {
         "stable" => "",
         "preview" => "-preview",

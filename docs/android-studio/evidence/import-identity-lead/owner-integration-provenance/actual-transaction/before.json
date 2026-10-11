@@ -1,0 +1,20 @@
+{
+  "head": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "branch": "android-studio-task/1-import-identity-getters",
+  "source_files": 4743,
+  "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+  "index_sha256": "5b313c66758f5c2d187371ee4eb0d5b5fe6ed762882709622942f0c48f9de0ff",
+  "status_hex": "",
+  "main_ref": null,
+  "origin_main_ref": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+  "main_worktree_path": "/workspace/koda",
+  "main_worktree_head": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+  "main_worktree_branch": "work",
+  "main_worktree_status_hex": "",
+  "main_worktree_index_sha256": "16ee081c02cd9696f322258285177cb15df9d22c43d5be9439f9cd75f8c1967d",
+  "protected_ref": "c1ce5ca16a26fd59984b50500ead45fbafafa5c8",
+  "Root_only_metadata": {
+    "docs/android-studio/reference-manifest.json": "2f1e6d709e4a684aca9ca20fc43aae6826b60480f0d70cb8a9aa1b93ce9607c1",
+    "docs/android-studio/test-parity.json": "60a7bf14e904e115359188bf8aed5b067fa82af1f05571040537a345fe6c132d"
+  }
+}

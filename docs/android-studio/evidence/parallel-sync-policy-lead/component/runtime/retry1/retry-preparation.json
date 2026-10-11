@@ -1,0 +1,17 @@
+{
+  "tested_source": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "retry1_runner": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/run-checks.py",
+  "retry1_runner_sha256": "517f732f0ac9652447238998e8aac6e75e33c362250e2f19ae740e638c45aebe",
+  "parent_runner_sha256": "f40535d60187a3f4e2d08a7d9a1b8d84b4b64a13e802985f651cada287b70650",
+  "adaptations": [
+    "dedicated retry1 output directory preserving originalfailed logs",
+    "canonical env unchanged, then helperfirst PATH and CARGO_BUILD_JOBS=1 for serializedpeak"
+  ],
+  "normal_Cargo_test_arguments_unchanged": true,
+  "fixed_seven_source_guard_patterns_unchanged": true,
+  "source_guard_count": 4730,
+  "helper_source_sha256": "042e58723429235b722a41c4b342ba0c054de734e00a58fcc45dbaea5c173918",
+  "first_attempt_raw_sha256": "88c4bc56be2f85a0bc3c0b54c08cfa866b1df3a1fe5a386e73702a51de4bde25",
+  "retry_started": false,
+  "independent_probe_review": "pending"
+}

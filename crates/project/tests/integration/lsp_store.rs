@@ -41,7 +41,7 @@ async fn test_explicit_server_can_share_an_extension_adapter_across_languages(
         json!({
             "main.rs": "fn main() {}",
             "Greeting.java": "class Greeting {}",
-            ".zed": {"settings.json": json!({"languages": {
+            ".koda": {"settings.json": json!({"languages": {
                 "Rust": {"language_servers": ["kotlin-lsp"]},
                 "Java": {"language_servers": ["kotlin-lsp", "jdtls"]}
             }}).to_string()}
@@ -149,7 +149,7 @@ async fn test_explicit_server_can_share_an_extension_adapter_across_languages(
     assert_eq!(jdt_requests.load(std::sync::atomic::Ordering::SeqCst), 0);
 
     fs.save(
-        Path::new(path!("/project/.zed/settings.json")),
+        Path::new(path!("/project/.koda/settings.json")),
         &json!({"languages": {
             "Rust": {"language_servers": ["kotlin-lsp"]},
             "Java": {"language_servers": ["jdtls", "kotlin-lsp"]}
@@ -762,7 +762,7 @@ async fn test_invisible_worktree_reuses_project_lsp_and_cleans_bookkeeping(
         path!("/the-root"),
         json!({
             "main.rs": "fn main() {}",
-            ".zed": {"settings.json": json!({
+            ".koda": {"settings.json": json!({
                 "languages": {"Rust": {"language_servers": ["the-fake-language-server"]}}
             }).to_string()}
         }),
@@ -876,7 +876,7 @@ async fn test_first_archive_language_server_starts_in_project(cx: &mut TestAppCo
         path!("/the-project"),
         json!({
             "main.rs": "fn main() {}",
-            ".zed": {"settings.json": json!({
+            ".koda": {"settings.json": json!({
                 "languages": {"Rust": {"language_servers": ["project-rust"]}}
             }).to_string()}
         }),
@@ -2672,7 +2672,7 @@ async fn test_user_initialization_options_override_adapter_arrays(cx: &mut TestA
     fs.insert_tree(
         path!("/the-root"),
         json!({
-            ".zed": {
+            ".koda": {
                 "settings.json": user_settings.to_string(),
             },
             "main.rs": "fn main() {}",
@@ -2761,7 +2761,7 @@ async fn test_other_adapters_lsp_configuration_contributions_are_unioned(cx: &mu
     fs.insert_tree(
         path!("/the-root"),
         json!({
-            ".zed": {
+            ".koda": {
                 "settings.json": user_settings.to_string(),
             },
             "main.rs": "fn main() {}",

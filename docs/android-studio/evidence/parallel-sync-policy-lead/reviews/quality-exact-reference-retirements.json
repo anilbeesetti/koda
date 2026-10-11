@@ -1,0 +1,80 @@
+{
+  "verdict": "PASS",
+  "scope": "Read-only current36 exact reference captures, partial ledger, portable evidence and scoped completed-ELF retirements",
+  "reviewed_at_utc": "2026-10-08T00:30:51.907503+00:00",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "protected_metadata_baseline": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
+  "previous35_statuses_original_target_commands_sources_and_all59_remaining_unported_rows_preserved": true,
+  "only_new_original_promoted": "ModelVersionsTest.checkSupportsParallelSync",
+  "new_original_assertions": 9,
+  "new_original_cases_and_helper_semantics_exact": true,
+  "pinned_original_whole_source_sha256": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef",
+  "selected": 95,
+  "ported": 20,
+  "adapted": 16,
+  "unported": 59,
+  "passing": 36,
+  "not_applicable": 0,
+  "global_census_complete": false,
+  "mirror_coverage": "unverified",
+  "actual_exact_ui_commands": 7,
+  "actual_exact_tools_commands": 29,
+  "all36_exit_results_1passing_0failed_0ignored_and_source_commands_bindings_pass": true,
+  "fresh_normal_default_tools_no_run_targets": 5,
+  "normal_default_tools_no_run_does_not_credit_execution": true,
+  "normal_exact_cargo_commands_unmodified_no_helper": true,
+  "portable_manifest_sha256": "9d1c7592e517839e374133ab849342e14f49c2c3792aa3dcff858e03bf36166a",
+  "portable_payload_count": 133,
+  "portable_payload_bytes": 5091068,
+  "all_portable_payloads_byte_identical_to_original": true,
+  "frozen_validator_exit": 0,
+  "frozen_validator_log_sha256": "d36d3229331febf3b06cac59ec45a72913525ec6ffd2c61af326ca5c1d48b011",
+  "all4730_source_hashes_fixed7_and_at_execution_guards_pass": true,
+  "controlled_retirements": [
+    {
+      "label": "ui",
+      "before_receipt_sha256": "ce33a8dc8ec4fcbcd224b4c7ec6c76b28edae70d50ceb08261e536fd780d7493",
+      "receipt_sha256": "52d85264afc682ec284ad3d9fe346a17d211404529192ac209a0096e9ba51834",
+      "artifact_sha256": "ff714b206f2f4c062680f85ada3714812ee21b1bd36c4f0b4830fa9d58450b1a",
+      "artifact_bytes": 451815736,
+      "before_after_identity_all_facts_preserved_except_expected_retired_flag_transition": true,
+      "scope_and_noFD_limits_preserved": true
+    },
+    {
+      "label": "unit",
+      "before_receipt_sha256": "506dedc9aaad590faba8ef9b46aa2fc80f894f3ed1ae7adf781ebafa1da7bae3",
+      "receipt_sha256": "3fc400e25062c39a5add5b1a04aa3829368d827444315c556e12d0632d18a58f",
+      "artifact_sha256": "cc057a4cfa9df4f9eacda0b581803c9062697db9edd4cfd4c0c651ab86512ea1",
+      "artifact_bytes": 303989152,
+      "before_after_identity_all_facts_preserved_except_expected_retired_flag_transition": true,
+      "scope_and_noFD_limits_preserved": true
+    }
+  ],
+  "retirement_first_syntax_failure_preserved_without_actions": true,
+  "generated_ELF_paths_need_not_persist_after_documented_retirement_or_normal_Cargo_build": true,
+  "reviewer_readonly_audit_assumption_failures": [
+    {
+      "tool_chunk": "b31947",
+      "exit_code": 1,
+      "cause": "Incorrectly expected tools-then-UI concatenation",
+      "correction": "Verified all7 UI captures precede all29 tooling captures and audited each individually"
+    },
+    {
+      "tool_chunk": "ba638c",
+      "exit_code": 1,
+      "cause": "Incorrectly expected retired flag to remain invariant from before to after record",
+      "correction": "Verified all prior identity/process/guard facts remain identical while retired explicitly transitions false to true and post-unlink facts are added"
+    }
+  ],
+  "earlier_audit_assertions_were_completed_before_each_known_assumption_failure": true,
+  "reviewer_failures_before_any_report_or_product_mutation": true,
+  "reviewer_compilation_tests_native_cache_source_git_or_raw_record_mutations": false,
+  "findings": [],
+  "remaining": [
+    "Current full normal app build",
+    "Current native SDK/models/keyboard/cleanup",
+    "Full workspace CI",
+    "Lead protected merge",
+    "Remaining59 selected originals and uncompleted exhaustive census"
+  ]
+}

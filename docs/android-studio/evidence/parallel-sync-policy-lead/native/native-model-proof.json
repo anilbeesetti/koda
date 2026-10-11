@@ -1,0 +1,70 @@
+{
+  "verdict": "PASS",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "current_complete_models": 2,
+  "current_Rust_decoder_records": [
+    {
+      "command": [
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/runtime-probe",
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project",
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/native-model-record1.log"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.0052069500015932135,
+      "input_record_sha256": "1ec17fdcf1776ebe3600f29f7828ced42d2587dd96a139c518a870ec1904016d",
+      "stdout_sha256": "47ab79b91d4ef40240dbc2a81a6a1d9d870a3b7d89f34eb77f623f69c087f2bb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "complete_raw_sidecar_modules_equal_current_Rust_roundtrip": true
+    },
+    {
+      "command": [
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/runtime-probe",
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project",
+        "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/native-model-record2.log"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.004514981999818701,
+      "input_record_sha256": "1ec17fdcf1776ebe3600f29f7828ced42d2587dd96a139c518a870ec1904016d",
+      "stdout_sha256": "47ab79b91d4ef40240dbc2a81a6a1d9d870a3b7d89f34eb77f623f69c087f2bb",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "complete_raw_sidecar_modules_equal_current_Rust_roundtrip": true
+    }
+  ],
+  "previous_successful_905_full_models": [
+    {
+      "path": "/workspace/android-studio-artifacts/module-presentation-native-905012f/native-model-complete1.json",
+      "sha256": "f428a7e611d08ce513b7105b3d10c0927701f394a939929086b0c803cfe68876",
+      "complete_full_model_equal_after_only_exact_private_root_prefix_substitution": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/module-presentation-native-905012f/native-model-complete2.json",
+      "sha256": "f428a7e611d08ce513b7105b3d10c0927701f394a939929086b0c803cfe68876",
+      "complete_full_model_equal_after_only_exact_private_root_prefix_substitution": true
+    }
+  ],
+  "previous_legacy_records": 7,
+  "previous_legacy": [
+    {
+      "path": "/workspace/android-studio-artifacts/tree-native-0e15a3d/native-sync-stdout.log",
+      "sha256": "f4e0d4313886b5ea60830e1630a75dcb6e0c2202960426373dd1ac037a8a6961",
+      "records": 2,
+      "complete_legacy_projection_equal_after_only_exact_private_root_prefix_substitution": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/junit4-native-9315534/native-sync-stdout.log",
+      "sha256": "8d0ce3ce049c2d4c58a726d94a17a3eb03267786c47ba2938039e7592126f3a2",
+      "records": 2,
+      "complete_legacy_projection_equal_after_only_exact_private_root_prefix_substitution": true
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/followup-native-371e79d3dd/native-sync-restored-stdout.log",
+      "sha256": "bde003c4325f1011cdf30487eaf065d92ae97f2d38c81b795f8208334cec3e73",
+      "records": 3,
+      "complete_legacy_projection_equal_after_only_exact_private_root_prefix_substitution": true
+    }
+  ],
+  "legacy_projection": "All top-level fields except additive generatedArtifacts, all remaining nested values and list orders retained; full raw models including generatedArtifacts retained independently. Old legacy full models are NOT claimed identical to current full models.",
+  "only_normalization": "Exact respective known private project-root prefix in JSON strings; no field/list/value/order truncation within each compared projection.",
+  "source_guard_files_before_after": 4730,
+  "reference_parity_credit": 0
+}

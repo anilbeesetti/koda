@@ -1,0 +1,110 @@
+{
+  "reviewer": "/root/icon_integrity_fix/ui_review",
+  "reviewed_at_utc": "2026-10-07T16:43:43.715867+00:00",
+  "verdict": "PASS",
+  "scope": "Independent static UI review of the four-line icon registry change; this is not full-app or native-rendering validation.",
+  "worktree": "/workspace/android-studio-icon-integrity",
+  "commit": "af387f61600975d4ac4df1e2541ecb59f26af470",
+  "base_commit": "7b2bd3e7ffc07156c7193baf156c5041bef256c1",
+  "applicable_instructions": [
+    {
+      "path": "AGENTS.md",
+      "read_from": "Git at reviewed commit",
+      "content": ".rules"
+    },
+    {
+      "path": ".rules",
+      "read_from": "worktree",
+      "relevant_requirement": "Build and run full Koda app and inspect affected live UI before implementation completion."
+    },
+    {
+      "path": ".agents/skills/koda-app-validation/SKILL.md",
+      "read_from": "worktree",
+      "relevant_requirement": "A unit test or native surface capture alone does not establish full-app validation; label actual proof and unverified behavior."
+    }
+  ],
+  "changed_files": [
+    {
+      "path": "crates/icons/src/icons.rs",
+      "insertions": 4,
+      "deletions": 0
+    }
+  ],
+  "findings": [],
+  "checks": [
+    {
+      "name": "Filename serialization and resolution",
+      "status": "PASS",
+      "detail": "Enum-wide snake_case is explicitly overridden by android-studio-add and android-studio-close. IconName::path constructs icons/{serialized-stem}.svg, matching the existing toolbar literals and asset filenames."
+    },
+    {
+      "name": "SVG byte identity",
+      "status": "PASS",
+      "detail": "Both committed SVG byte sequences equal the base and their worktree copies match the reviewed commit. Canvas, clipping, path geometry, color, line caps, and embedded copyright/license text are unchanged."
+    },
+    {
+      "name": "Toolbar and reference geometry preservation",
+      "status": "PASS",
+      "path": "crates/android_ui/src/tabbed_toolbar.rs",
+      "byte_identical_to_base": true,
+      "detail": "Existing Icon::from_path literals remain unchanged. The close button retains its 24x24 sizing and accessible label/focus/callback code. Existing reference geometry assertions for 24px controls and 5px spacing are unchanged; assertions were inspected, not executed."
+    },
+    {
+      "name": "Attribution preservation",
+      "status": "PASS",
+      "path": "assets/android-studio-attribution.md",
+      "byte_identical_to_base": true,
+      "sha256": "dc15b514499662727de8c7ae8a7c0c62977bbe2d4a50d7aebf31cd6058deb32f",
+      "source_revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "detail": "The attribution document exists unchanged in both Git trees; it is omitted from this sparse worktree. Original Apache 2.0 notices remain inside both SVGs."
+    },
+    {
+      "name": "Visual design implications",
+      "status": "PASS",
+      "detail": "The registry gains two enum values for existing assets. The change introduces no new artwork and alters no existing toolbar asset selection, geometry, spacing, focus behavior, tooltip, event handler, or accessibility label. Static source and byte identity support preserved visual inputs."
+    }
+  ],
+  "assets": [
+    {
+      "variant": "AndroidStudioAdd",
+      "strum_serialization": "android-studio-add",
+      "resolved_icon_path": "icons/android-studio-add.svg",
+      "tracked_asset_path": "assets/icons/android-studio-add.svg",
+      "byte_identical_to_base": true,
+      "worktree_matches_commit": true,
+      "sha256": "90ea35fe93f58db441ccf12778af7b56f91897b3d44651b3801ec530a9dd9ba8",
+      "canvas_px": [
+        16,
+        16
+      ],
+      "view_box": "0 0 16 16",
+      "stroke": "#6C707E",
+      "stroke_linecap": "round"
+    },
+    {
+      "variant": "AndroidStudioClose",
+      "strum_serialization": "android-studio-close",
+      "resolved_icon_path": "icons/android-studio-close.svg",
+      "tracked_asset_path": "assets/icons/android-studio-close.svg",
+      "byte_identical_to_base": true,
+      "worktree_matches_commit": true,
+      "sha256": "b720c5641b67d33efb0ef3feb5c11a7c49f9d89d26909776ae99a28358c6194a",
+      "canvas_px": [
+        16,
+        16
+      ],
+      "view_box": "0 0 16 16",
+      "stroke": "#6C707E",
+      "stroke_linecap": "round"
+    }
+  ],
+  "native_proof_limits": {
+    "full_app_build": "NOT_RUN_BY_THIS_REVIEWER",
+    "full_app_launch": "NOT_RUN_BY_THIS_REVIEWER",
+    "live_screenshot_inspection": "NOT_RUN_BY_THIS_REVIEWER",
+    "native_surface_capture": "NOT_RUN_BY_THIS_REVIEWER",
+    "cargo_tests": "NOT_RUN_BY_THIS_REVIEWER",
+    "reason": "Task scope reserves Cargo and combined app/native confirmation for the parent agent. This reviewer performed read-only Git/source/asset inspection and wrote only this external review artifact.",
+    "completion_requirement": "Parent task must report actual combined app/native results before claiming implementation completion; this PASS applies only to the scoped static review."
+  }
+}

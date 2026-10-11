@@ -1,0 +1,20 @@
+{
+  "head": "1f79e48740a1face751d0c48b188793838e5a737",
+  "reason": "Recover shared Cargo relative dep-info freshness after switching from root combined worktree; byte-identical crate root mtime only",
+  "files": [
+    {
+      "path": "/workspace/android-studio-toolbar-scroll-lead/crates/android_ui/src/android_ui.rs",
+      "sha256_before": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8",
+      "sha256_after": "a5e03964c56343aae280d76fc7f67474bd2678e446f15279d7aa7e8ced682ae8",
+      "mtime_ns_before": 1791384418944180519,
+      "mtime_ns_after": 1791389555019577041
+    },
+    {
+      "path": "/workspace/android-studio-toolbar-scroll-lead/crates/android_tools/src/android_tools.rs",
+      "sha256_before": "52fa6207155f99d8d91197968af5c97ce8a57f5acc79c270f20a2374dcc32b5e",
+      "sha256_after": "52fa6207155f99d8d91197968af5c97ce8a57f5acc79c270f20a2374dcc32b5e",
+      "mtime_ns_before": 1791384418944180519,
+      "mtime_ns_after": 1791389555023577107
+    }
+  ]
+}

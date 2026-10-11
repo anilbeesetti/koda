@@ -1,0 +1,31 @@
+
+running 11 tests
+test tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener ... ok
+test tabbed_toolbar::tests::closed_is_called_when_clicked ... ok
+test tabbed_toolbar::tests::can_select_tab_by_index ... ok
+test tabbed_toolbar::tests::callbacks_can_rebuild_toolbar_after_selection_and_middle_close ... ok
+test tabbed_toolbar::tests::component_is_added_element ... ok
+test tabbed_toolbar::tests::icon_buttons_callback_when_clicked ... ok
+test tabbed_toolbar::tests::no_close_button_when_no_listener ... ok
+
+thread 'tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs' (146151) panicked at crates/android_ui/src/tabbed_toolbar.rs:849:14:
+Left arrow after scrolling
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs ... FAILED
+test tabbed_toolbar::tests::tab_is_added ... ok
+
+thread 'tabbed_toolbar::tests::pointer_space_middle_close_and_invalid_selection_use_production_callbacks' (146152) panicked at crates/android_ui/src/tabbed_toolbar.rs:687:9:
+assertion `left == right` failed: Focused close supports Space activation
+  left: 1
+ right: 2
+test tabbed_toolbar::tests::pointer_space_middle_close_and_invalid_selection_use_production_callbacks ... FAILED
+test tabbed_toolbar::tests::title_tabs_and_multiple_actions_retain_reference_geometry ... ok
+
+failures:
+
+failures:
+    tabbed_toolbar::tests::overflow_scrolls_and_resizing_retains_title_actions_and_tabs
+    tabbed_toolbar::tests::pointer_space_middle_close_and_invalid_selection_use_production_callbacks
+
+test result: FAILED. 9 passed; 2 failed; 0 ignored; 0 measured; 106 filtered out; finished in 0.15s
+

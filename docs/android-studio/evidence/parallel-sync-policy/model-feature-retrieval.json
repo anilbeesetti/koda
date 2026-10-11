@@ -1,0 +1,10 @@
+{
+  "repository": "platform/tools/adt/idea",
+  "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+  "path": "project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/BasicModules.kt",
+  "url": "https://android.googlesource.com/platform/tools/adt/idea/+/a84efec3ba9542d9bfa1255103f0dc94833a3796/project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/BasicModules.kt?format=TEXT",
+  "sha256": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed",
+  "bytes": 20824,
+  "retained_path": "/workspace/android-studio-artifacts/parallel-sync-policy/references/idea/project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/BasicModules.kt",
+  "matches_existing_pinned_fixture": true
+}

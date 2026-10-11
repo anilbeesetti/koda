@@ -1,0 +1,17 @@
++ cargo clippy --locked -p android_tools --release --all-targets --all-features -- --deny warnings
+   Compiling android_tools v0.1.0 (/workspace/android-studio-import-identity-getters/crates/android_tools)
+error: redundant clone
+   --> crates/android_tools/tests/import_facts.rs:745:34
+    |
+745 |     let mut value = fixture.value.clone();
+    |                                  ^^^^^^^^ help: remove this
+    |
+note: this value is dropped without further use
+   --> crates/android_tools/tests/import_facts.rs:745:21
+    |
+745 |     let mut value = fixture.value.clone();
+    |                     ^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#redundant_clone
+    = note: requested on the command line with `-D clippy::redundant-clone`
+
+error: could not compile `android_tools` (test "import_facts") due to 1 previous error

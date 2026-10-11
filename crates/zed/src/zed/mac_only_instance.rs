@@ -23,16 +23,16 @@ fn address() -> SocketAddr {
     // interleaving the ports between different users and different release channels.
     //
     // On macOS user IDs start at 501 and on Linux they start at 1000. The first user
-    // on a Mac with ID 501 running a dev channel build will use port 44238, and the
-    // second user with ID 502 will use port 44239, and so on. User 501 will use ports
-    // 44338, 44438, and 44538 for the preview, stable, and nightly channels,
-    // respectively. User 502 will use ports 44339, 44439, and 44539 for the preview,
+    // on a Mac with ID 501 running a dev channel build will use port 49238, and the
+    // second user with ID 502 will use port 49239, and so on. User 501 will use ports
+    // 49338, 49438, and 49538 for the preview, stable, and nightly channels,
+    // respectively. User 502 will use ports 49339, 49439, and 49539 for the preview,
     // stable, and nightly channels, respectively.
     let port = match *release_channel::RELEASE_CHANNEL {
-        ReleaseChannel::Dev => 43737,
-        ReleaseChannel::Preview => 43737 + USER_BLOCK,
-        ReleaseChannel::Stable => 43737 + (2 * USER_BLOCK),
-        ReleaseChannel::Nightly => 43737 + (3 * USER_BLOCK),
+        ReleaseChannel::Dev => 48737,
+        ReleaseChannel::Preview => 48737 + USER_BLOCK,
+        ReleaseChannel::Stable => 48737 + (2 * USER_BLOCK),
+        ReleaseChannel::Nightly => 48737 + (3 * USER_BLOCK),
     };
     let mut user_port = port;
     let mut sys = System::new_all();
@@ -72,10 +72,10 @@ fn get_uid_as_u32(uid: &sysinfo::Uid) -> u32 {
 
 fn instance_handshake() -> &'static str {
     match *release_channel::RELEASE_CHANNEL {
-        ReleaseChannel::Dev => "Zed Editor Dev Instance Running",
-        ReleaseChannel::Nightly => "Zed Editor Nightly Instance Running",
-        ReleaseChannel::Preview => "Zed Editor Preview Instance Running",
-        ReleaseChannel::Stable => "Zed Editor Stable Instance Running",
+        ReleaseChannel::Dev => "Koda Editor Dev Instance Running",
+        ReleaseChannel::Nightly => "Koda Editor Nightly Instance Running",
+        ReleaseChannel::Preview => "Koda Editor Preview Instance Running",
+        ReleaseChannel::Stable => "Koda Editor Stable Instance Running",
     }
 }
 
@@ -127,9 +127,13 @@ pub fn ensure_only_instance() -> IsOnlyInstance {
 }
 
 fn check_got_handshake() -> bool {
-    match TcpStream::connect_timeout(&address(), CONNECT_TIMEOUT) {
+    check_handshake_at(address(), instance_handshake())
+}
+
+fn check_handshake_at(address: SocketAddr, expected: &str) -> bool {
+    match TcpStream::connect_timeout(&address, CONNECT_TIMEOUT) {
         Ok(mut stream) => {
-            let mut buf = vec![0u8; instance_handshake().len()];
+            let mut buf = vec![0u8; expected.len()];
 
             stream.set_read_timeout(Some(RECEIVE_TIMEOUT)).unwrap();
             if let Err(err) = stream.read_exact(&mut buf) {
@@ -137,7 +141,7 @@ fn check_got_handshake() -> bool {
                 return false;
             }
 
-            if buf == instance_handshake().as_bytes() {
+            if buf == expected.as_bytes() {
                 log::info!("Got instance handshake");
                 return true;
             }
@@ -147,5 +151,30 @@ fn check_got_handshake() -> bool {
         }
 
         Err(_) => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn zed_instances_do_not_prevent_koda_from_launching() {
+        for (handshake, expected_match) in [
+            ("Zed Editor Stable Instance Running", false),
+            ("Koda Editor Stable Instance Running", true),
+        ] {
+            let listener = TcpListener::bind((LOCALHOST, 0)).unwrap();
+            let address = listener.local_addr().unwrap();
+            let server = thread::spawn(move || {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream.write_all(handshake.as_bytes()).unwrap();
+            });
+            assert_eq!(
+                check_handshake_at(address, "Koda Editor Stable Instance Running"),
+                expected_match
+            );
+            server.join().unwrap();
+        }
     }
 }

@@ -1,0 +1,57 @@
+{
+  "source_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "native_models": 2,
+  "model_value_equivalence_to_three_previous_actual_native_records": true,
+  "only_normalization": "Exact respective private fixture absolute project root in JSON strings; complete keys/order/flags/dependencies including evaluatedProviders preserved",
+  "raw_stdout_sha256": "8d0ce3ce049c2d4c58a726d94a17a3eb03267786c47ba2938039e7592126f3a2",
+  "previous_raw_stdout_sha256": "bde003c4325f1011cdf30487eaf065d92ae97f2d38c81b795f8208334cec3e73",
+  "bridge": {
+    "command_arguments": [
+      "--init-script",
+      "/tmp/koda-android-model-3TGiu2/export.gradle",
+      "kodaAndroidProjectModel",
+      "--no-configuration-cache",
+      "--console=plain"
+    ],
+    "init_path": "/tmp/koda-android-model-3TGiu2/export.gradle",
+    "sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+    "expected_source_bridge_sha256": "0be7902796daae305d671d70bda7f136386db57362e53187b4c3f4170bb239e3",
+    "matches_source": true
+  },
+  "summary": [
+    {
+      "variant": "demoDebug",
+      "configured_variant_java_kotlin_resource_assets_are_static": true,
+      "static_assets_inside_outside_build_are_static": true,
+      "generated_outside_build_is_generated": true,
+      "inactive_component_roots_absent": true
+    },
+    {
+      "variant": "demoRelease",
+      "configured_variant_java_kotlin_resource_assets_are_static": true,
+      "static_assets_inside_outside_build_are_static": true,
+      "generated_outside_build_is_generated": true,
+      "inactive_component_roots_absent": true
+    },
+    {
+      "variant": "demoDebug",
+      "configured_variant_java_kotlin_resource_assets_are_static": true,
+      "static_assets_inside_outside_build_are_static": true,
+      "generated_outside_build_is_generated": true,
+      "inactive_component_roots_absent": true
+    },
+    {
+      "variant": "demoRelease",
+      "configured_variant_java_kotlin_resource_assets_are_static": true,
+      "static_assets_inside_outside_build_are_static": true,
+      "generated_outside_build_is_generated": true,
+      "inactive_component_roots_absent": true
+    }
+  ],
+  "validation_preparation_failures": [
+    "model-comparison-first-attempt.json: older committed smoke model predates evaluatedProviders; complete actual model comparison replaces incorrect evidence source without dropping fields",
+    "model-comparison-second-attempt.json: fixed validation JSON access to variant.components[*].sources; no product/test/fixture edits"
+  ],
+  "runtime": "AGP9.4.0/Gradle9.6.1/JDK21/SDK37 supplementary",
+  "reference_parity_credit": 0
+}

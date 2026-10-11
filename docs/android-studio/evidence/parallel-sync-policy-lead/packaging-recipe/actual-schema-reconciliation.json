@@ -1,0 +1,16 @@
+{
+  "prior_script_sha256": "a4e17fcf1f0539c3feeb0a87a8d5e702999ef5933e9676544272601c2bbd0371",
+  "adapted_script_sha256": "344e95d1551ee2d0cd14751f0ce4c0119cc66a0d39cbe23d5c4be400b625d8f3",
+  "changes": [
+    "Actual durable_commands_started_and_finished key retains51 paired exact checks",
+    "Actual previous_successful_905_full_models key retains two full-model comparison checks plus all7 legacy comparisons",
+    "owned_pids_absent retains actual three PID list and captured app PID",
+    "Curated native subset verified against complete immutable677 manifest and17 PNG hashes",
+    "Current Rust policy two-model and Rootthree-image inspection gates added; explicit scope limits"
+  ],
+  "source_or_native_receipts_mutated": false,
+  "fixed7_guard_unchanged": true,
+  "assertions_deleted_or_weakened": false,
+  "prior_script_preserved": "package-final-lead.pre-actual-schema.py",
+  "diff": "actual-schema-reconciliation.diff"
+}

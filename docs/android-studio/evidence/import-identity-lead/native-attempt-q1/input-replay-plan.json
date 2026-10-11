@@ -1,0 +1,547 @@
+{
+  "source_reference_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "new_source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "records": [
+    {
+      "label": "discover-window",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "search",
+        "--onlyvisible",
+        "--class",
+        "koda|Zed"
+      ]
+    },
+    {
+      "label": "initial-window-focus",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "windowfocus",
+        "<WINDOW_ID>"
+      ]
+    },
+    {
+      "label": "initial-wide-geometry",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "getwindowgeometry",
+        "--shell",
+        "<WINDOW_ID>"
+      ]
+    },
+    {
+      "label": "capture-trust-prompt",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/trust-prompt.png"
+      ]
+    },
+    {
+      "label": "trust-fixture-only-return",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "Return"
+      ]
+    },
+    {
+      "label": "capture-first-sync-loading",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/sync1-loading.png"
+      ]
+    },
+    {
+      "label": "capture-first-sync-settled",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/sync1-settled.png"
+      ]
+    },
+    {
+      "label": "resync-ctrl-alt-r",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "ctrl+alt+r"
+      ]
+    },
+    {
+      "label": "capture-second-sync-loading",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/sync2-loading.png"
+      ]
+    },
+    {
+      "label": "capture-second-sync-settled",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/sync2-settled.png"
+      ]
+    },
+    {
+      "label": "wide-focus-sync-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "<WINDOW_ID>",
+        "120",
+        "674",
+        "click",
+        "1"
+      ]
+    },
+    {
+      "label": "wide-tab-to-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "Tab"
+      ]
+    },
+    {
+      "label": "settle-wide-tab",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-wide-output-focus",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/wide-output-focus.png"
+      ]
+    },
+    {
+      "label": "wide-space-select-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "space"
+      ]
+    },
+    {
+      "label": "settle-wide-space",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-wide-output-selected",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/wide-output-selected.png"
+      ]
+    },
+    {
+      "label": "restore-wide-sync-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "<WINDOW_ID>",
+        "120",
+        "674",
+        "click",
+        "1"
+      ]
+    },
+    {
+      "label": "resize-supported360",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "windowsize",
+        "<WINDOW_ID>",
+        "360",
+        "1000"
+      ]
+    },
+    {
+      "label": "narrow-geometry",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "getwindowgeometry",
+        "--shell",
+        "<WINDOW_ID>"
+      ]
+    },
+    {
+      "label": "settle-narrow-resize",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-narrow-sync",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/narrow-sync.png"
+      ]
+    },
+    {
+      "label": "narrow-tab-to-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "Tab"
+      ]
+    },
+    {
+      "label": "settle-narrow-tab",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-narrow-output-focus",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/narrow-output-focus.png"
+      ]
+    },
+    {
+      "label": "narrow-space-select-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "space"
+      ]
+    },
+    {
+      "label": "settle-narrow-space",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-narrow-output-selected",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/narrow-output-selected.png"
+      ]
+    },
+    {
+      "label": "narrow-shift-tab-to-sync",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "shift+Tab"
+      ]
+    },
+    {
+      "label": "settle-narrow-shift-tab",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-narrow-reverse-sync-focus",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/narrow-reverse-sync-focus.png"
+      ]
+    },
+    {
+      "label": "narrow-space-restore-sync",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "space"
+      ]
+    },
+    {
+      "label": "settle-narrow-sync-restore",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-narrow-sync-restored",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/narrow-sync-restored.png"
+      ]
+    },
+    {
+      "label": "restore-wide-size",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "windowsize",
+        "<WINDOW_ID>",
+        "1536",
+        "1000"
+      ]
+    },
+    {
+      "label": "restored-wide-geometry",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "getwindowgeometry",
+        "--shell",
+        "<WINDOW_ID>"
+      ]
+    },
+    {
+      "label": "settle-wide-size",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "hide-first-tab-output",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "Tab"
+      ]
+    },
+    {
+      "label": "hide-second-tab-hide",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "Tab"
+      ]
+    },
+    {
+      "label": "settle-hide-focus",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-wide-hide-focus",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/wide-hide-focus.png"
+      ]
+    },
+    {
+      "label": "hide-return",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "key",
+        "--window",
+        "<WINDOW_ID>",
+        "Return"
+      ]
+    },
+    {
+      "label": "settle-hide-return",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-hide-return",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/hide-return.png"
+      ]
+    },
+    {
+      "label": "restore-build-sidebar-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "<WINDOW_ID>",
+        "18",
+        "930",
+        "click",
+        "1"
+      ]
+    },
+    {
+      "label": "settle-build-sidebar",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-build-sidebar-restored",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/build-sidebar-restored.png"
+      ]
+    },
+    {
+      "label": "open-gradle-tab-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "<WINDOW_ID>",
+        "114",
+        "293",
+        "click",
+        "--repeat",
+        "2",
+        "--delay",
+        "100",
+        "1"
+      ]
+    },
+    {
+      "label": "settle-gradle-tab",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.7"
+      ]
+    },
+    {
+      "label": "capture-editor-gradle-tab",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/editor-gradle-tab.png"
+      ]
+    },
+    {
+      "label": "restore-xml-tab-pointer",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "mousemove",
+        "--window",
+        "<WINDOW_ID>",
+        "316",
+        "58",
+        "click",
+        "1"
+      ]
+    },
+    {
+      "label": "settle-xml-tab",
+      "command": [
+        "/workspace/cloud-environment/native/usr/bin/xdotool",
+        "sleep",
+        "0.4"
+      ]
+    },
+    {
+      "label": "capture-editor-xml-restored",
+      "command": [
+        "/usr/bin/import",
+        "-display",
+        "<DISPLAY>",
+        "-window",
+        "<WINDOW_ID>",
+        "/workspace/android-studio-artifacts/import-identity-native-7e3f72e-retry1/captures/editor-xml-restored.png"
+      ]
+    }
+  ],
+  "expected_commands": 53,
+  "supported_minimum_width": 360,
+  "historical_230_stress_not_supported_fidelity_credit": true,
+  "must_bind_actual_window_and_owned_display_before_inputs": true,
+  "coordinates_require_actual_visual_confirmation_before_input": true,
+  "plan_only_not_executed": true
+}

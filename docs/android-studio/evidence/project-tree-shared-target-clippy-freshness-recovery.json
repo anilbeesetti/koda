@@ -1,0 +1,8 @@
+{
+  "reason": "Invalidate shared release/all-feature Cargo package freshness without source-byte changes.",
+  "tested_commit": "e1dce993f70969878ab40ff77b532b031e4dd8a9",
+  "path": "crates/android_tools/src/android_tools.rs",
+  "sha256": "3384502fe3b1222533eaf71d7bf101dfb04fe58c2b5cace6e5f4a4a2b0afdd7f",
+  "mtime_before_ns": 1791378435039013211,
+  "mtime_after_ns": 1791378548764890903
+}

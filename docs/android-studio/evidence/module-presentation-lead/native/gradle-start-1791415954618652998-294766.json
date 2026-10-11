@@ -1,0 +1,19 @@
+{
+  "id": "1791415954618652998-294766",
+  "arguments": [
+    "--init-script",
+    "/tmp/koda-android-model-J4Uo8a/export.gradle",
+    "kodaAndroidProjectModel",
+    "--no-configuration-cache",
+    "--console=plain"
+  ],
+  "start_utc": "2026-10-07T23:32:34.618665+00:00",
+  "cwd": "/workspace/android-studio-artifacts/module-presentation-native-905012f/generation-project",
+  "official_wrapper": "/workspace/android-studio-artifacts/module-presentation-native-905012f/generation-project/gradlew-original",
+  "official_wrapper_sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+  "init_path": "/tmp/koda-android-model-J4Uo8a/export.gradle",
+  "saved_init_path": "/workspace/android-studio-artifacts/module-presentation-native-905012f/native-sync-export-1791415954618652998-294766.gradle",
+  "init_sha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+  "expected_source_bridge_sha256": "508ecc9987932f8d184983f551eca0cb1bc9efa6ed12806dcaff8a0a2f6880b7",
+  "matches_source": true
+}

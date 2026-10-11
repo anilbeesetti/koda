@@ -1,0 +1,167 @@
+{
+  "area": "code_quality",
+  "verdict": "PASS",
+  "scope": "Current bounded Sync-console presentation and copied output; no whole-IDE completion claim",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "protected_dependency": "f2aa51b883b2c926cb54cfe1618bc2cb8f738420",
+  "findings": [],
+  "product_fix_rounds_used": 3,
+  "changed_files_vs_protected": 8,
+  "changed_Rust_files": 3,
+  "all_eight_source_paths_equal_reviewed768": true,
+  "original_test_tail_byte_identical": true,
+  "supplemental_tests": 17,
+  "all_seventeen_actual_current_once_ok": true,
+  "all_three_full_original_fixture_bytes_sha_and_Apache_attribution_valid": true,
+  "Rust_Zed_conventions_and_scoped_docs": "PASS",
+  "normal_tooling_tests": {
+    "passed": 291,
+    "failed": 0,
+    "ignored": 0,
+    "filtered": 0,
+    "actual_binaries": 10
+  },
+  "normal_default_UI_tests": {
+    "passed": 142,
+    "failed": 0,
+    "inherited_ignored": 1,
+    "filtered": 0,
+    "actual_current_asset_bound_harness": true
+  },
+  "mapped_current_behavior_runs": {
+    "actual_Cargo_tooling": 29,
+    "fresh_current_UI_ELF": 7,
+    "all_one_pass_zero_failure": true,
+    "ELF_not_labeled_actual_Cargo": true
+  },
+  "strict_repo_script_clippy": "PASS release/all-targets/all-features/deny warnings for android_tools and android_ui",
+  "normal_cargo_fmt_all_check": "PASS",
+  "full_workspace_CI": {
+    "run": 37738240656,
+    "passed": 10557,
+    "failed": 0,
+    "existing_skipped": 23,
+    "binaries": 212,
+    "unfiltered_full_planner": true,
+    "all_three_jobs_success": true,
+    "individual_CI_17_or_36_names_not_claimed": true
+  },
+  "normal_full_app": {
+    "current_source_bound_build": "PASS",
+    "physical_executable_sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c",
+    "physical_executable_bytes": 1359525048,
+    "normal_CC_exit": 0,
+    "output_relocation_only": true
+  },
+  "actual_fullapp_native": {
+    "success_exit": 0,
+    "resync_exit": 0,
+    "failure_exit": 1,
+    "model_records_immutable_sidecars_complete": true,
+    "raw_exact_bridge_bytes_equal_Source": true,
+    "wide_narrow_copy_byte_equality": true,
+    "ordinary_midline_and_stderr_lines_preserved": true,
+    "full_model_JSON_hidden": true,
+    "real_failure_diagnostic_preserved": true,
+    "owned_actor_clients_daemon_display_closure": "PASS in retained receipts",
+    "standalone_current_Rust_native_decoder_probe_not_claimed": true
+  },
+  "limitations": [
+    "Inherited Return activation no-op: no activation credit",
+    "Inherited 360px clipping: no complete narrow fidelity credit",
+    "SDK has no emulator binary: no device/emulator credit",
+    "Software Vulkan and small fixture: no hardware GPU/startup/large-project/profiler credit"
+  ],
+  "reference_parity": {
+    "new_original_credit": 0,
+    "bounded_declarations": 112,
+    "applicable_unported": 60,
+    "user_deferred_unported": 52,
+    "global_census_complete": false,
+    "canonical_ID_status_reason_targets_unchanged_at_review": true,
+    "metadata_proposal_pending": "29 actual Cargo captures may refresh canonical; retain historical7e seven UI captures and publish fresh ELF invocations separately without schema relaxation"
+  },
+  "guards": {
+    "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+    "all6960_tracked_bytes_modes_and_followed_symlink_content_unchanged": true,
+    "fixed4748_source_set_and_bytes_unchanged": true,
+    "refs_before_after_identical": {
+      "HEAD": "f763baebb6d0970b283f759967d7980084317e67",
+      "android-studio": "f2aa51b883b2c926cb54cfe1618bc2cb8f738420",
+      "origin/main": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+      "work": "30fca99a7a015168dfe4f394f576fbe2955fb4ea"
+    },
+    "logical_stage_sha256": "0169a434622b3427f580458029286ff2a14ffed8ef0e3132db7b3bb06b2d7883",
+    "current_physical_raw_index_sha256_before": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+    "current_physical_raw_index_sha256_after": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+    "historical41ab_raw_index_drift_not_erased": true,
+    "all100_bound_evidence_inputs_before_after_unchanged": true,
+    "all_git_reads_GIT_OPTIONAL_LOCKS": "0",
+    "Source_status_index_refs_inputs_mutations": false
+  },
+  "historical_raw_index_drift": {
+    "from": "41ab8963b247461218ef316b6d5999d74fee3c60dcb761b5699c11a18ba5a2fc",
+    "to": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+    "possible_optional_lock_stat_cache_refresh_attribution_uncertain": true,
+    "original_raw_index_byte_equality_not_claimed": true,
+    "original_administrative_observer_mismatch_retained": true
+  },
+  "reviewer_execution": "Read-only source/evidence review, including actual screenshots; no compiler/native/SDK/cache/Git/index/Source mutation",
+  "full_IDE_complete": false,
+  "protected_merge_authorized_by_this_review": false,
+  "remaining_lead_actions": [
+    "all five current reviewer verdicts",
+    "metadata-only provenance reconciliation",
+    "final lead protected merge/source/main/conflict checks and ordinary push"
+  ],
+  "evidence": [
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/final-review-package.json",
+      "sha256": "b9c159b43f3e1ace5d7f92a0c2b1f5dd72600ec417e7cd71f5a5c166a9375ee6"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/current-index-observer-rebaseline.json",
+      "sha256": "0b4e575fc27644c6b25ad65789f1a06b78f11186c87570614c37a3fd4b27f272"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-tools-all-features/verified-results.json",
+      "sha256": "b7b747343b0a988b57e2326b8757231c83edafcf043024f9b6e893429ab5a80c"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/android-ui-default/verified-results.json",
+      "sha256": "574f8d56a1c9f50eca467e03de4ee51bfd18da25eb64c1ff824065919be2f395"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/strict-script-clippy/exit.json",
+      "sha256": "5e2fb6da870192b9f93788d4a6f6257ca8d19d1b29654104d31a764133481310"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/runtime-f763/format/exit.json",
+      "sha256": "ca159c00fd8a9b6c6946951ce169c8ee986ca3f86edd2ff827f15567a8e60564"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/ci-combined-f763/terminal-CI-source-review.json",
+      "sha256": "bcc0d3960678e28e0f104e5eb0439c51fcaea23bbae5673c36d49ee249c9f943"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/fullapp-build-preparation/app-runtime-attempt1/actual-current-app.json",
+      "sha256": "3acfdb9117f8eeda3cf5b8c8e9368991709a0b44578dfa60f85f76fd9fc77c34"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/native-verification-report.json",
+      "sha256": "1063375103be10dd7bd4ab67717b6f0b0eb516b6f38f9216560b5e8edfb4c8b9"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-quality-before-f763.json",
+      "sha256": "0e3d0eb2511b916e72d4ad928be9463b3643d436e0ab322e73a2b823ae314d5b"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-quality-after-f763.json",
+      "sha256": "7a39200af4e6b04ce2f0860081b4ee3f209aaf6c9da2b92ea4bfad0099ce73b8"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/sync-console-filter/reviews/final-quality-input-bindings-f763.json",
+      "sha256": "df0c0cde2a89b4dbc0f6d9cd372c37759cbb6aa49f4ca673b0cf014073aeceba"
+    }
+  ]
+}

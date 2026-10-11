@@ -1,0 +1,33 @@
+{
+  "fix_round": 3,
+  "cumulative_fix_rounds": 3,
+  "actual_failure_receipt": "all-features-tests-retry1.json",
+  "actual_failure": "NEW retained_host_roots_survive_absent_selected_artifact_without_device_or_fixture_guesses used invalid synthetic fixture provider name fixtures",
+  "change": "Synthetic name corrected to testFixtures; all previous positive assertions retained; added typed rejection assertion for invalid fixtures producer name",
+  "reference_evidence": [
+    {
+      "path": "crates/android_tools/test_data/project_tree_facts/reference/idea/project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/ModelCacheV2Impl.kt",
+      "line": 471,
+      "fact": "Pinned converter startsWith(testFixtures) maps to _test_fixtures_; otherwise unit-test artifact"
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree_facts/reference/idea/project-system-gradle/src/com/android/tools/idea/gradle/project/model/AndroidModelSourceProviderUtils.kt",
+      "line": 77,
+      "fact": "Selected fixture artifact absent means fixture providers excluded"
+    },
+    {
+      "path": "crates/android_tools/tests/project_tree_facts.rs",
+      "line": 212,
+      "fact": "Original retained-host test uses valid testFixtures container with absent selected fixture artifact"
+    }
+  ],
+  "production_unchanged_sha256": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+  "test_sha256_before": "98453f194d39b1d7129f35732c76f0718c5b5f072d5904d6004442b942efd047",
+  "test_sha256_after": "5e5927568f42cdc1247d88d16f3fdf1dcbb7b427e24b4d6240928378b6e5f79e",
+  "protected_originals_unchanged": 97,
+  "test_count": 27,
+  "expected_total_tests": 201,
+  "new_reference_credit": 0,
+  "original_test_or_assertion_modified": false,
+  "further_failure_rule": "Escalate before any additional fix if checks still fail after this round"
+}

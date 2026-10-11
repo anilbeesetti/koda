@@ -1,20 +1,18 @@
 #!/usr/bin/env sh
 set -eu
 
-# Downloads a tarball from https://zed.dev/releases and unpacks it
-# into ~/.local/. If you'd prefer to do this manually, instructions are at
-# https://zed.dev/docs/linux.
+# Installs Koda without changing an upstream Zed installation.
 
 main() {
     platform="$(uname -s)"
     arch="$(uname -m)"
-    channel="${ZED_CHANNEL:-stable}"
-    ZED_VERSION="${ZED_VERSION:-latest}"
+    channel="${KODA_CHANNEL:-stable}"
+    KODA_VERSION="${KODA_VERSION:-latest}"
     # Use TMPDIR if available (for environments with non-standard temp directories)
     if [ -n "${TMPDIR:-}" ] && [ -d "${TMPDIR}" ]; then
-        temp="$(mktemp -d "$TMPDIR/zed-XXXXXX")"
+        temp="$(mktemp -d "$TMPDIR/koda-XXXXXX")"
     else
-        temp="$(mktemp -d "/tmp/zed-XXXXXX")"
+        temp="$(mktemp -d "/tmp/koda-XXXXXX")"
     fi
 
     if [ "$platform" = "Darwin" ]; then
@@ -54,10 +52,10 @@ main() {
 
     "$platform" "$@"
 
-    if [ "$(command -v zed)" = "$HOME/.local/bin/zed" ]; then
-        echo "Zed has been installed. Run with 'zed'"
+    if [ "$(command -v koda)" = "$HOME/.local/bin/koda" ]; then
+        echo "Koda has been installed. Run with 'koda'"
     else
-        echo "To run Zed from your terminal, you must add ~/.local/bin to your PATH"
+        echo "To run Koda from your terminal, you must add ~/.local/bin to your PATH"
         echo "Run:"
 
         case "$SHELL" in
@@ -74,16 +72,16 @@ main() {
                 ;;
         esac
 
-        echo "To run Zed now, '~/.local/bin/zed'"
+        echo "To run Koda now, '~/.local/bin/koda'"
     fi
 }
 
 linux() {
-    if [ -n "${ZED_BUNDLE_PATH:-}" ]; then
-        cp "$ZED_BUNDLE_PATH" "$temp/zed-linux-$arch.tar.gz"
+    if [ -n "${KODA_BUNDLE_PATH:-}" ]; then
+        cp "$KODA_BUNDLE_PATH" "$temp/koda-linux-$arch.tar.gz"
     else
-        echo "Downloading Zed version: $ZED_VERSION"
-        curl "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&arch=$arch&os=linux&source=install.sh" > "$temp/zed-linux-$arch.tar.gz"
+        echo "Set KODA_BUNDLE_PATH to a tarball produced by script/bundle-linux." >&2
+        exit 1
     fi
 
     suffix=""
@@ -94,35 +92,35 @@ linux() {
     appid=""
     case "$channel" in
       stable)
-        appid="dev.zed.Zed"
+        appid="dev.anilbeesetti.koda"
         ;;
       nightly)
-        appid="dev.zed.Zed-Nightly"
+        appid="dev.anilbeesetti.koda-nightly"
         ;;
       preview)
-        appid="dev.zed.Zed-Preview"
+        appid="dev.anilbeesetti.koda-preview"
         ;;
       dev)
-        appid="dev.zed.Zed-Dev"
+        appid="dev.anilbeesetti.koda-dev"
         ;;
       *)
         echo "Unknown release channel: ${channel}. Using stable app ID."
-        appid="dev.zed.Zed"
+        appid="dev.anilbeesetti.koda"
         ;;
     esac
 
     # Unpack
-    rm -rf "$HOME/.local/zed$suffix.app"
-    mkdir -p "$HOME/.local/zed$suffix.app"
-    tar -xzf "$temp/zed-linux-$arch.tar.gz" -C "$HOME/.local/"
+    rm -rf "$HOME/.local/koda$suffix.app"
+    mkdir -p "$HOME/.local/koda$suffix.app"
+    tar -xzf "$temp/koda-linux-$arch.tar.gz" -C "$HOME/.local/"
 
-    zed_editor="$HOME/.local/zed$suffix.app/libexec/zed-editor"
+    zed_editor="$HOME/.local/koda$suffix.app/libexec/koda-editor"
     if [ -f "$zed_editor" ] && command -v ldd >/dev/null 2>&1; then
         missing="$(ldd "$zed_editor" 2>/dev/null | sed -n 's/^[[:space:]]*\(.*\) => not found$/\1/p')"
         if [ -n "$missing" ]; then
-            echo "Warning: your system is missing libraries that Zed needs:"
+            echo "Warning: your system is missing libraries that Koda needs:"
             echo "$missing" | sed 's/^/    /'
-            echo "Install them with your package manager, or Zed will fail to start."
+            echo "Install them with your package manager, or Koda will fail to start."
         fi
     fi
 
@@ -130,31 +128,47 @@ linux() {
     mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications"
 
     # Link the binary
-    if [ -f "$HOME/.local/zed$suffix.app/bin/zed" ]; then
-        ln -sf "$HOME/.local/zed$suffix.app/bin/zed" "$HOME/.local/bin/zed"
+    if [ -f "$HOME/.local/koda$suffix.app/bin/koda" ]; then
+        ln -sf "$HOME/.local/koda$suffix.app/bin/koda" "$HOME/.local/bin/koda"
     else
         # support for versions before 0.139.x.
-        ln -sf "$HOME/.local/zed$suffix.app/bin/cli" "$HOME/.local/bin/zed"
+        ln -sf "$HOME/.local/koda$suffix.app/bin/cli" "$HOME/.local/bin/koda"
     fi
 
     # Copy .desktop file
     desktop_file_path="$HOME/.local/share/applications/${appid}.desktop"
-    src_dir="$HOME/.local/zed$suffix.app/share/applications"
+    src_dir="$HOME/.local/koda$suffix.app/share/applications"
     if [ -f "$src_dir/${appid}.desktop" ]; then
         cp "$src_dir/${appid}.desktop" "${desktop_file_path}"
     else
         # Fallback for older tarballs
-        cp "$src_dir/zed$suffix.desktop" "${desktop_file_path}"
+        cp "$src_dir/koda$suffix.desktop" "${desktop_file_path}"
     fi
-    sed -i "s|Icon=zed|Icon=$HOME/.local/zed$suffix.app/share/icons/hicolor/512x512/apps/zed.png|g" "${desktop_file_path}"
-    sed -i "s|Exec=zed|Exec=$HOME/.local/zed$suffix.app/bin/zed|g" "${desktop_file_path}"
+    sed -i "s|Icon=koda|Icon=$HOME/.local/koda$suffix.app/share/icons/hicolor/512x512/apps/koda.png|g" "${desktop_file_path}"
+    sed -i "s|Exec=koda|Exec=$HOME/.local/koda$suffix.app/bin/koda|g" "${desktop_file_path}"
 }
 
 macos() {
-    echo "Downloading Zed version: $ZED_VERSION"
-    curl "https://cloud.zed.dev/releases/$channel/$ZED_VERSION/download?asset=zed&os=macos&arch=$arch&source=install.sh" > "$temp/Zed-$arch.dmg"
-    hdiutil attach -quiet "$temp/Zed-$arch.dmg" -mountpoint "$temp/mount"
+    if [ -n "${KODA_BUNDLE_PATH:-}" ]; then
+        cp "$KODA_BUNDLE_PATH" "$temp/Koda-$arch.dmg"
+    else
+        if [ "$channel" != stable ] || [ "$arch" != aarch64 ]; then
+            echo "Published Koda downloads currently support stable Apple Silicon builds. Set KODA_BUNDLE_PATH for other builds." >&2
+            exit 1
+        fi
+        repository="${KODA_GITHUB_REPOSITORY:-anilbeesetti/koda}"
+        if [ "$KODA_VERSION" = latest ]; then
+            KODA_VERSION=$(curl "https://api.github.com/repos/$repository/releases/latest" | python3 -c 'import json, sys; print(json.load(sys.stdin)["tag_name"])')
+        fi
+        echo "Downloading Koda version: $KODA_VERSION"
+        curl "https://github.com/$repository/releases/download/$KODA_VERSION/Koda-$KODA_VERSION-macos-$arch.dmg" > "$temp/Koda-$arch.dmg"
+    fi
+    hdiutil attach -quiet "$temp/Koda-$arch.dmg" -mountpoint "$temp/mount"
     app="$(cd "$temp/mount/"; echo *.app)"
+    case "$app" in
+        Koda.app | "Koda Dev.app" | "Koda Nightly.app" | "Koda Preview.app") ;;
+        *) echo "The disk image does not contain a Koda app." >&2; hdiutil detach -quiet "$temp/mount"; exit 1 ;;
+    esac
     echo "Installing $app"
     if [ -d "/Applications/$app" ]; then
         echo "Removing existing $app"
@@ -165,7 +179,7 @@ macos() {
 
     mkdir -p "$HOME/.local/bin"
     # Link the binary
-    ln -sf "/Applications/$app/Contents/MacOS/cli" "$HOME/.local/bin/zed"
+    ln -sf "/Applications/$app/Contents/MacOS/cli" "$HOME/.local/bin/koda"
 }
 
 main "$@"

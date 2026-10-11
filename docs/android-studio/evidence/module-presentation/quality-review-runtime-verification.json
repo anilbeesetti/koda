@@ -1,0 +1,136 @@
+{
+  "source_commit": "5e4b752a057bff25d9e281a43ce4b71a8598406f",
+  "production_sha256": "0a467aa8d96cb64dc93b23dd31526c75e4b5e2b4f8aad0c52c89025a2660208c",
+  "tests_sha256": "9977946288fed36aa169c376c722872c86d01a265b76339ae2ec7c86e8c2d924",
+  "original_paths_verified": 159,
+  "frozen_paths_verified": 172,
+  "whole_source_exact_bindings_verified": 4717,
+  "whole_source_before_after_equal": true,
+  "index_status_at_run_and_current_equal": true,
+  "exact_guard_patterns_verified": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "normal_tests_passed": 221,
+  "normal_tests_failed": 0,
+  "normal_tests_ignored": 0,
+  "normal_tests_filtered": 0,
+  "new_supplemental_tests_passed": 20,
+  "compiler_artifacts_verified": 7,
+  "shared_artifact_scope": "At-run raw CompilerJSON + identity hashes verified; mutable shared ELF paths intentionally not rehashed during Root lease. Retained exact policy ELF was rehashed.",
+  "frozen_elf": {
+    "source_artifact": {
+      "reason": "compiler-artifact",
+      "package_id": "path+file:///workspace/android-studio-module-presentation/crates/android_tools#0.1.0",
+      "manifest_path": "/workspace/android-studio-module-presentation/crates/android_tools/Cargo.toml",
+      "target": {
+        "kind": [
+          "test"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "module_presentation",
+        "src_path": "/workspace/android-studio-module-presentation/crates/android_tools/tests/module_presentation.rs",
+        "edition": "2024",
+        "doc": false,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "0",
+        "debuginfo": 0,
+        "debug_assertions": true,
+        "overflow_checks": true,
+        "test": true
+      },
+      "features": [
+        "bundled-preview"
+      ],
+      "filenames": [
+        "/workspace/.cache/zed/target/debug/deps/module_presentation-4997cb5b6a45221d"
+      ],
+      "executable": "/workspace/.cache/zed/target/debug/deps/module_presentation-4997cb5b6a45221d",
+      "fresh": false,
+      "verified_sha256": "6dcbba6ac91c0318aaa8cc7a459fd599a1d61eacbdd4ba4444b50b133f4726e4",
+      "verified_bytes": 1642216
+    },
+    "frozen_executable": "/tmp/module-presentation-verified-binaries/module-presentation-tests20",
+    "sha256": "6dcbba6ac91c0318aaa8cc7a459fd599a1d61eacbdd4ba4444b50b133f4726e4",
+    "bytes": 1642216
+  },
+  "raw_logs": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 39.16729040000064,
+      "log": "/workspace/android-studio-artifacts/module-presentation-task/all-features-tests.log",
+      "log_sha256": "f0ece135ca7cf77f8bc916dc4266bb3045c7fc387f800b871e2bdf9deeae9e38",
+      "source_bindings": 4717,
+      "whole_source_git_index_status_unchanged": true
+    },
+    {
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.67463549200329,
+      "log": "/workspace/android-studio-artifacts/module-presentation-task/library-build.log",
+      "log_sha256": "9ef92fa1048a071372ecd5e783331a115feb28a239d2f8ec04ec1eb8a84c0386",
+      "source_bindings": 4717,
+      "whole_source_git_index_status_unchanged": true
+    },
+    {
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 61.418801316998724,
+      "log": "/workspace/android-studio-artifacts/module-presentation-task/strict-clippy.log",
+      "log_sha256": "526b1f3297d109bc59478de61373899aea2b48b68062e3f3281b3ff9f476a2b2",
+      "source_bindings": 4717,
+      "whole_source_git_index_status_unchanged": true
+    },
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 28.44017281199922,
+      "log": "/workspace/android-studio-artifacts/module-presentation-task/format-check.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_bindings": 4717,
+      "whole_source_git_index_status_unchanged": true
+    }
+  ],
+  "runtime_lease_and_process_closure_receipts_verified": true,
+  "source_fixes": 0,
+  "new_canonical_credit": 0,
+  "pending": "Root combined full-app/native/full-workspace CI integration gates"
+}

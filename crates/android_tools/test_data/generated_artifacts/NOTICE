@@ -1,0 +1,7 @@
+ModelVersionsTest.kt and BasicModules.kt are retained verbatim from the Android Open Source Project tools/adt/idea repository, revision a84efec3ba9542d9bfa1255103f0dc94833a3796 (Android Studio Rabbit1 studio-2026.2.1). Their copyright and Apache License 2.0 headers remain intact.
+
+The two ordering tests and the generated assets/classpath feature ranges are adapted into Rust. Original ordering descriptions, signed Int minimum/maximum, every tuple, reversed input and ordered full-record equality are preserved. Null SDK humanReadable descriptions remain null; the original non-null ordering descriptions remain present.
+
+Original paths:
+project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/ModelVersionsTest.kt
+project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/BasicModules.kt

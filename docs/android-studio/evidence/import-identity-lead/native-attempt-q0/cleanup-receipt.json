@@ -1,0 +1,12 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "official_launcher_exit_code": 143,
+  "owned_pids_absent": {
+    "342449": true,
+    "342467": true,
+    "342457": true
+  },
+  "owned_display_socket_absent": true,
+  "unowned_daemon167092_not_signaled": true,
+  "observed_source_full_index_status_unchanged": true
+}

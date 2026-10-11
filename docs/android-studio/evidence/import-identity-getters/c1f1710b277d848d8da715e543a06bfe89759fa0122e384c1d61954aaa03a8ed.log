@@ -1,0 +1,17 @@
+Picked up JAVA_TOOL_OPTIONS: -Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy -Dhttps.proxyPort=8080 -Djavax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Initialization script '/workspace/android-studio-artifacts/import-identity-getters/sdk-runtime-buildtools37-retry/old-official-export.gradle' line: 27
+
+* What went wrong:
+Koda Android model does not yet support included builds: included-identity-build
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 12s

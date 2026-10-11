@@ -1,0 +1,51 @@
+{
+  "state": "restored-wide",
+  "pid": 235128,
+  "before": {
+    "monotonic": 34701.222191553,
+    "utc": "2026-10-07T18:34:21Z",
+    "cpu_ticks": 5026,
+    "raw_proc_stat": "235128 (koda) R 235104 235104 235104 34816 235104 4194560 138600 125803 1 0 4543 483 437 79 20 0 48 0 3434809 22841196544 167194 18446744073709551615 93900241691456 93900647572656 140735887689120 0 0 0 0 4102 1224 0 0 0 17 3 0 0 0 0 0 93900670025120 93900670184088 93901731340288 140735887691924 140735887692297 140735887692297 140735887699900 0\n",
+    "memory": {
+      "State": "R (running)",
+      "VmHWM": "669424 kB",
+      "VmRSS": "669424 kB",
+      "Threads": "48"
+    },
+    "compiler_and_graphics_processes": [
+      "  34966       1 Z Xvfb            [Xvfb] <defunct>",
+      "  37283       1 Z Xvfb            [Xvfb] <defunct>",
+      " 129167       1 Z rustc           [rustc] <defunct>",
+      " 133452       1 Z rustc           [rustc] <defunct>",
+      " 232854       1 Z koda            [koda] <defunct>",
+      " 235118  235104 S Xvfb            /workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :118 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset",
+      " 235128  235104 R koda            /workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/followup-native-371e79d3dd/qa-restored-success/user-data /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/custom-manifest/AndroidManifest.xml"
+    ]
+  },
+  "after": {
+    "monotonic": 34711.229435543,
+    "utc": "2026-10-07T18:34:31Z",
+    "cpu_ticks": 5058,
+    "raw_proc_stat": "235128 (koda) S 235104 235104 235104 34816 235104 4194560 138641 125803 1 0 4573 485 437 79 20 0 48 0 3434809 22841196544 167194 18446744073709551615 93900241691456 93900647572656 140735887689120 0 0 0 0 4102 1224 0 0 0 17 0 0 0 0 0 0 93900670025120 93900670184088 93901731340288 140735887691924 140735887692297 140735887692297 140735887699900 0\n",
+    "memory": {
+      "State": "S (sleeping)",
+      "VmHWM": "669452 kB",
+      "VmRSS": "669452 kB",
+      "Threads": "48"
+    },
+    "compiler_and_graphics_processes": [
+      "  34966       1 Z Xvfb            [Xvfb] <defunct>",
+      "  37283       1 Z Xvfb            [Xvfb] <defunct>",
+      " 129167       1 Z rustc           [rustc] <defunct>",
+      " 133452       1 Z rustc           [rustc] <defunct>",
+      " 232854       1 Z koda            [koda] <defunct>",
+      " 235118  235104 S Xvfb            /workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :118 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset",
+      " 235128  235104 S koda            /workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/followup-native-371e79d3dd/qa-restored-success/user-data /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project /workspace/android-studio-artifacts/followup-native-371e79d3dd/generation-project/app/custom-manifest/AndroidManifest.xml"
+    ]
+  },
+  "elapsed_seconds": 10.007243989995914,
+  "clock_ticks_per_second": 100,
+  "cpu_ticks_delta": 32,
+  "one_core_cpu_percent": 3.1976836011982828,
+  "scope": "10-second software Vulkan/Xvfb idle sample; no hardware/startup/large-project benchmark"
+}

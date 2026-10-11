@@ -1,0 +1,124 @@
+{
+  "verdict": "PASS",
+  "scope": "Independent read-only current output-only unit link and complete normal all-features Android tooling suite",
+  "reviewed_at_utc": "2026-10-08T00:01:56.669007+00:00",
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "android_tools",
+    "--all-features",
+    "--message-format=json"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 22.912713565994636,
+  "raw_log_sha256": "8dc03d1c16198c0b7a4aa62802e8b78541822a7fe87ee4f33fe9b22c8d0e954b",
+  "passed": 261,
+  "failed": 0,
+  "ignored": 0,
+  "filtered": 0,
+  "groups": [
+    85,
+    30,
+    20,
+    20,
+    10,
+    27,
+    21,
+    29,
+    19
+  ],
+  "fresh_current_checkout_test_targets": [
+    {
+      "name": "project_view_preferences_reference",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/project_view_preferences_reference.rs",
+      "fresh": false
+    },
+    {
+      "name": "module_presentation",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/module_presentation.rs",
+      "fresh": false
+    },
+    {
+      "name": "project_tree_facts",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/project_tree_facts.rs",
+      "fresh": false
+    },
+    {
+      "name": "parallel_sync",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/parallel_sync.rs",
+      "fresh": false
+    },
+    {
+      "name": "gradle_import_reference",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/gradle_import_reference.rs",
+      "fresh": false
+    },
+    {
+      "name": "generated_artifacts",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/generated_artifacts.rs",
+      "fresh": false
+    },
+    {
+      "name": "project_tree_component",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/project_tree_component.rs",
+      "fresh": false
+    },
+    {
+      "name": "project_tree_adapter",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/project_tree_adapter.rs",
+      "fresh": false
+    },
+    {
+      "name": "android_tools",
+      "src_path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/src/android_tools.rs",
+      "fresh": false
+    }
+  ],
+  "actual_unit_receipt": "/workspace/android-studio-artifacts/parallel-sync-integration/unit-link/android-tools-parallel-unit-298321.json",
+  "receipt_sha256": "3238b96ffe921f49570ed956fda8871db89050edcca7ae80df336c25ef3b5c88",
+  "linker_argument_count": 103,
+  "changed_argument_indexes": [
+    97
+  ],
+  "single_o_index": 96,
+  "actual_argument_strings_ascii_utf8_without_replacement": true,
+  "real_cc": "/usr/bin/cc",
+  "real_cc_exit_code": 0,
+  "regular_ELF": "/tmp/android-studio-link-output/android-tools-parallel-unit-298321",
+  "ELF_bytes": 303989152,
+  "ELF_sha256": "cc057a4cfa9df4f9eacda0b581803c9062697db9edd4cfd4c0c651ab86512ea1",
+  "current_alias_and_at_execution_Cargo_binding_match_actual_ELF": true,
+  "frozen_policy_executable": {
+    "path": "/tmp/parallel-sync-integration-verified-binaries/parallel-sync-tests10",
+    "bytes": 1762488,
+    "sha256": "18f4b143970b3ce0cab30050572d2bb781ffedf2c81780d647ace083a4f49f23"
+  },
+  "whole_source_hash_count": 4730,
+  "all_4730_hashes_fixed_seven_git_guards_and_recorded_before_after_status_match": true,
+  "first_attempt_failure": {
+    "exit_code": 101,
+    "raw_log_sha256": "88c4bc56be2f85a0bc3c0b54c08cfa866b1df3a1fe5a386e73702a51de4bde25",
+    "explicit_ENOSPC_and_SIGBUS": true,
+    "tests_executed": 0,
+    "preserved": true
+  },
+  "scoped_retirement_evidence_preserved": {
+    "obsolete_completed_905_unit_receipt_sha256": "e34e75ea0650f18e76311e41e667234acfecf3cf57839e3422b9d8cba69aa04a",
+    "owned_failed_unit_object_receipt_sha256": "f58a6c36a8c2ffb4cebaa3c566188968d73d305d728de222a3a6d7c832c78aef",
+    "failure_and_source_limitations_preserved": true
+  },
+  "findings": [],
+  "reviewer_compilation_runtime_cache_or_git_mutations": false,
+  "original_raw_logs_receipts_or_source_modified": false,
+  "remaining": [
+    "UI library test validation",
+    "Normal fresh library/clippy/fmt gates",
+    "App-helper runtime probe and full normal app build",
+    "Native runtime behavior",
+    "Exact reference parity and full CI",
+    "Lead merge gate"
+  ]
+}

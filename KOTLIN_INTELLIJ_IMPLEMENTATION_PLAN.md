@@ -577,7 +577,7 @@ also occurred in the successful larger-project probe. They refer to generated
 resource and application class outputs that were absent; they do not explain an
 empty workspace list. Generated-symbol support and cold navigation readiness
 remain open gates. The implementation is under review in
-[PR #21](https://github.com/anilbeesetti/zed/pull/21).
+[PR #21](https://github.com/anilbeesetti/koda/pull/21).
 
 ### Analysis feedback during navigation
 

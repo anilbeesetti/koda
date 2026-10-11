@@ -1,0 +1,64 @@
+{
+  "verdict": "PASS",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "scope": "Fresh retry 2 provenance/core static guard review plus added external prelaunch gate; no actual claim or native runtime",
+  "review_utc": "2026-10-08T03:52:07.343888+00:00",
+  "manifest": {
+    "sha256": "e9d4c2e8e48b7bdd09bbb3576fbe5ec34422ef6f8792352fe0cc374f5d501ff9",
+    "payload_count": 18,
+    "total_payload_bytes": 92153,
+    "all_actual_file_hashes_and_sizes_verified": true
+  },
+  "prior_replays": {
+    "initial_N3": "FAIL retained",
+    "retry1": "INTERRUPTED_NOT_COMPLETE; original PTY lost through truncation; remaining evidence retained",
+    "former_launcher_zombie_and_FD_permission_limitation_explicit": true
+  },
+  "provenance_core": {
+    "files": 12,
+    "previous_static_PASS_hash_verified": true,
+    "previous_actual_shell_forwarding_probe_hash_verified": true,
+    "all_12_bindings_verified": true,
+    "strict_models_guards_revision_order_cleanup_core_unchanged": true,
+    "plan_commands": 53,
+    "only_image_prefix_changes": 17,
+    "supported_width": 360,
+    "whole_source_files": 4743,
+    "all_source_hashes_exact_name_set_raw_index_full_untracked_status_and_HEAD_verified": true
+  },
+  "prelaunch_gate": {
+    "path": "claim-native-launch.py",
+    "sha256": "fbc5354c47970f52856cef970ee8a6447fb7ce8c52a9f7d5b667eb63974475e2",
+    "core_12_recipes_unchanged": true,
+    "one_shot_exclusive_claim_and_launcher_PTY_reservation": true,
+    "must_use_recorder_append": "script -a -q -e -f",
+    "refuses_used_launcher_session_events_profile_DB_trust_or_symlink": true,
+    "requires_exact_environment_source_index_app_lease_and_wrapper_syntax_binding": true,
+    "owned_display": ":122",
+    "owned_display_socket_and_lock_and_UNIX_socket_table_must_be_absent": true,
+    "never_clear_or_reuse_claim_after_interruption": true
+  },
+  "gate_read_only_check": {
+    "sha256": "aebfad16eafe51b4ffd5f05f9edfaaa29a6acf843df5b91e44d5b7ddb014e220",
+    "fresh_retry2_issues": [],
+    "used_retry1_rejected": true,
+    "no_claim_or_runtime_execution": true
+  },
+  "requires_Root_before_actual_launch": [
+    "Independently read the added gate",
+    "Prepare fresh fixture/profile and generated-wrapper shell receipt under exclusive lease",
+    "Bind current actual normal app/library",
+    "Set exact repository/QA/display environment",
+    "Execute gate immediately before official launcher in one set-e PTY shell command",
+    "Use script -a -q -e -f; retain claim and PTY; refuse any resumed relaunch in same directory"
+  ],
+  "reviewer_authorship_limit": "The reviewer authored the requested additional external gate; Root must independently inspect it. No product test, Cargo, SDK or app was run.",
+  "credits": {
+    "retry2_runtime": "NOT RUN",
+    "new_original_tests": 0,
+    "native_fidelity_performance_PASS": 0,
+    "full_task_complete": false
+  },
+  "mutations": "Only external gate/report/check/provenance/manifest changes, with both prior originals preserved. No Source/Git/cache/SDK/runtime mutations.",
+  "read_holds_released": true
+}

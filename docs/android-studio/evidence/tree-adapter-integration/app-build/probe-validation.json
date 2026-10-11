@@ -1,0 +1,15 @@
+{
+  "verdict": "PASS",
+  "helper_source_sha256": "7081a4f8bfd70930a9402f4e4749fd4c807f9c9a60d855d14f71d17347124b83",
+  "helper_executable_sha256": "7ac75674523cc1e52f422e627776fc61d3e903dacfbb452b30aaa047b522bd8e",
+  "probe_source_sha256": "e2dcbcec7832d5d82c7e60757ddced1f3fe5db11a96d22091231cd14b68aa941",
+  "probe_source_equal_previously_passed_original": true,
+  "probe_ELF_sha256": "0d3c3c19167e728efb66d9a495418cf73e2f6ff52d02a758509906dad6cdedd7",
+  "one_output_argument_only": true,
+  "all_other_real_cc_arguments_unchanged": true,
+  "runtime_output_bytes_equal_original": true,
+  "runtime_output": "real Rust linker probe passed\n",
+  "product_code_modified": false,
+  "receipt": "probe-256152.json",
+  "wrong_new_harness_expectation_retained": "probe-validation-attempt1.json"
+}

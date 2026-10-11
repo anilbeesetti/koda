@@ -1,0 +1,12 @@
+{
+  "attempt": "First inline retirement preparation, tool output chunkffc958",
+  "exit_code": 1,
+  "reason": "Asserted that inaccessible proc links would be PIDs1/7; this environment has live unowned dockerd/containerd and zombies with inaccessible fd directories.",
+  "original_tool_stderr": "AssertionError with inaccessible process-link list retained in tool transcript; not represented as a byte-exact raw file here.",
+  "candidate_not_deleted": true,
+  "receipt_not_written": true,
+  "source_metadata_tests_unchanged": true,
+  "no_tests_started": true,
+  "classification": "Inspection harness assumption; no product source or test failure.",
+  "recovery": "Classify observed process states before examining descriptors; retain all Z/X state observations and separately list inaccessible live infrastructure services. No broader artifact removal scope."
+}

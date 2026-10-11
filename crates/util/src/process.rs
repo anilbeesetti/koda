@@ -111,6 +111,15 @@ impl Child {
         Ok(self.process.output().await?)
     }
 
+    /// Keeps successful build daemons alive when the child handle is dropped.
+    pub fn preserve_descendants(&mut self) -> Result<()> {
+        #[cfg(windows)]
+        if let Some(job) = &self.job {
+            job.preserve_descendants()?;
+        }
+        Ok(())
+    }
+
     #[cfg(not(windows))]
     pub fn kill(&mut self) -> Result<()> {
         let pid = self.process.id();
@@ -184,6 +193,19 @@ mod windows_job {
                     .context("failed to assign process to job object");
                 CloseHandle(process).log_err();
                 result
+            }
+        }
+
+        pub(crate) fn preserve_descendants(&self) -> Result<()> {
+            unsafe {
+                let info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION::default();
+                SetInformationJobObject(
+                    self.0,
+                    JobObjectExtendedLimitInformation,
+                    &info as *const _ as *const _,
+                    size_of::<JOBOBJECT_EXTENDED_LIMIT_INFORMATION>() as u32,
+                )
+                .context("failed to preserve child processes")
             }
         }
 
@@ -279,6 +301,31 @@ mod windows_tests {
             grandchild_pid,
             "grandchild should be terminated after killing the child",
         );
+    }
+
+    #[test]
+    fn test_preserved_descendants_survive_child_drop() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let (mut child, grandchild_pid) = spawn_process_tree(temp_dir.path());
+        child
+            .preserve_descendants()
+            .expect("failed to preserve descendants");
+        drop(child);
+        assert!(
+            process_is_alive(grandchild_pid),
+            "preserved descendants should remain alive"
+        );
+        unsafe {
+            use windows::Win32::{
+                Foundation::CloseHandle,
+                System::Threading::{OpenProcess, PROCESS_TERMINATE, TerminateProcess},
+            };
+            let process = OpenProcess(PROCESS_TERMINATE, false, grandchild_pid)
+                .expect("failed to open test descendant");
+            TerminateProcess(process, 1).expect("failed to clean up test descendant");
+            CloseHandle(process).expect("failed to close test descendant handle");
+        }
+        assert_process_exits(grandchild_pid, "test descendant should exit after cleanup");
     }
 
     #[test]

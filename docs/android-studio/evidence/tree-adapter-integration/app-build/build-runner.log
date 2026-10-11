@@ -1,0 +1,21 @@
+{
+  "command": [
+    "cargo",
+    "build",
+    "--locked",
+    "-p",
+    "zed",
+    "--bin",
+    "koda"
+  ],
+  "tested_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "exit_code": 0,
+  "elapsed_seconds": 150.27082520299882,
+  "log_sha256": "322a9ddd5d27ee77b3f7af8aea3df4867f47935f8f1b3ea70b4ddfccb47eab91",
+  "executable": "/tmp/android-studio-link-output/koda-tree-adapter-258543",
+  "executable_sha256": "f5e4ae6dd711fe4b8e0001a3f4923bbe697b5b855ebd081e6631f528ea7354d4",
+  "executable_bytes": 1359383016,
+  "cargo_published_executable": "/workspace/.cache/zed/target/debug/koda",
+  "original_linker_output": "/workspace/.cache/zed/target/debug/deps/koda-145bb81fa8b08935",
+  "only_final_output_argument_changed": true
+}

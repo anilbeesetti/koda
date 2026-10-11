@@ -1,0 +1,116 @@
+{
+  "schema": 1,
+  "verdict": "PASS",
+  "review_area": "code",
+  "scope": "static_source_only_runtime_pending",
+  "source_fix_round": 1,
+  "timestamp_utc": "2026-10-08T00:48:58.135896+00:00",
+  "worktree": "/workspace/android-studio-import-identity-getters",
+  "head": "8362e8ca7187164dc7d15173994528790f100368",
+  "before_source_commit": "1cd5ff9ad9e6e057d48052e345503eef7c3bd158",
+  "changed_files": [
+    "crates/android_tools/src/import_facts.rs",
+    "crates/android_tools/tests/import_facts.rs",
+    "docs/android-studio/import-identity-getters-task-report.md",
+    "docs/android-studio/ports/import-identity-getters.json"
+  ],
+  "changed_product_source_files": [
+    "crates/android_tools/src/import_facts.rs",
+    "crates/android_tools/tests/import_facts.rs"
+  ],
+  "files": {
+    "/workspace/android-studio-import-identity-getters/crates/android_tools/src/import_facts.rs": {
+      "bytes": 23641,
+      "sha256": "36db0e332e2d981d3c3b9072ea883e1241c58cc30a184fba5a1fce5da4f3c8ad"
+    },
+    "/workspace/android-studio-import-identity-getters/crates/android_tools/tests/import_facts.rs": {
+      "bytes": 24440,
+      "sha256": "062bc0523570936375363843c840c69de44326415b8b84f8331b81bcfe0bd6f1"
+    },
+    "/workspace/android-studio-import-identity-getters/crates/android_tools/src/project_model.gradle": {
+      "bytes": 36197,
+      "sha256": "09e59928d1a1c4a8c75089f19c491589f706792ee6358ffd3bfef517cea007d6"
+    },
+    "/workspace/android-studio-import-identity-getters/crates/android_tools/src/android_tools.rs": {
+      "bytes": 33283,
+      "sha256": "3f1c28a5d58541490a34efe8e0756cc1df6dc4069b58b387db0caa5393f7925b"
+    }
+  },
+  "resolved_findings": [
+    {
+      "id": "C1",
+      "status": "resolved_static",
+      "line": 74,
+      "verification": "Explicit deserialize predicate supplies the bound in the remote derive and custom-field wrapper."
+    },
+    {
+      "id": "C2",
+      "status": "resolved_static",
+      "line_start": 261,
+      "line_end": 269,
+      "verification": "Available parent paths checked after complete duplicate-validated indexing; holder-removal regression appended."
+    }
+  ],
+  "new_blocking_findings": [],
+  "reference_hash_verification": [
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/gradle/subprojects/core-api/src/main/java/org/gradle/api/Project.java",
+      "sha256": "f259911bfff32f46c24d9bd1f6f3a577a92c599b9cd995a6e3f852367dd14346",
+      "bytes": 80144,
+      "verified": true
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/gradle/platforms/ide/tooling-api/src/main/java/org/gradle/tooling/model/gradle/BasicGradleProject.java",
+      "sha256": "b7dadfd9fa270fddd4b5d3c85d4ccab634ebddf99d0a3ec52a0b536c0bfadf18",
+      "bytes": 2676,
+      "verified": true
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleProjectUtil.java",
+      "sha256": "49312efd6eb1e7c71230d4e4e6b76a0cf48988846c506724864d8266b629b616",
+      "bytes": 1604,
+      "verified": true
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/model/projectModel/GradleExternalProjectModelBuilder.java",
+      "sha256": "b1255e9ced2ef115f3ce453d1b34d80429a1c63a76daa79575c448ceb4fb0b38",
+      "bytes": 3291,
+      "verified": true
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/src/org/jetbrains/plugins/gradle/service/project/GradleProjectResolverUtil.java",
+      "sha256": "cc99f71aa146656368b5c62fc88746747ae19d3ecd5b87fea63ef17a6214c6eb",
+      "bytes": 61012,
+      "verified": true
+    },
+    {
+      "path": "/workspace/android-studio-import-identity-getters/crates/android_tools/test_data/import_facts/references/intellij-core/plugins/gradle/tooling-extension-impl/src/com/intellij/gradle/toolingExtension/impl/util/GradleIdeaPluginUtil.java",
+      "sha256": "9f47198c20cc8e8b124c45c18fe9c9094f14079c05e17724aca920ec017d879a",
+      "bytes": 3533,
+      "verified": true
+    }
+  ],
+  "supplementary_test_functions_declared": 28,
+  "previous_supplementary_test_functions_preserved_byte_exact": 27,
+  "tests_executed": 0,
+  "runtime_executions": 0,
+  "source_mutations": 0,
+  "cache_mutations": 0,
+  "original_test_credit": 0,
+  "initial_fail_reports_preserved_byte_exact": true,
+  "before_production_and_test_sources_retained_in_git": true,
+  "evidence_bookkeeping_note": "Initial external import_facts.rs history basename contains old test source; separately named production/test history copies requested from owner. This is not a product code finding.",
+  "report": {
+    "path": "/workspace/android-studio-artifacts/import-identity-getters/reviews/code-static-round1.md",
+    "sha256": "e39c1bf3d07a87df74b1b55e562157e4c58ff550bfdc13fee2de02d3c326526c"
+  },
+  "pending_gates": [
+    "Compilation",
+    "Tests",
+    "Strict repository clippy",
+    "Formatting",
+    "Actual Gradle/JVM/SDK captures",
+    "Full app/native validation",
+    "Root final gates"
+  ]
+}

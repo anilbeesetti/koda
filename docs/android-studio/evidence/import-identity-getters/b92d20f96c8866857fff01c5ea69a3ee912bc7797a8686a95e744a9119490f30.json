@@ -1,0 +1,371 @@
+{
+  "verdict": "PASS",
+  "scope": "Exact18 generated cache files only: two already completed a418 test ELFs and sixteen failed7e3 lib-test codegen objects; retirement requires Root fresh at-action guards and exact pathname unlink only",
+  "reviewed_at_utc": "2026-10-08T02:11:17.708777+00:00",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "blocking_findings": [],
+  "exact_candidates": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2",
+      "kind": "completed_a418_tools_ELF",
+      "bytes": 303996256,
+      "allocated": 303931392,
+      "inode": 1051299,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791423571092133672,
+      "sha256": "e0bf30cddd0b389ff945ee5ea0fdafbf97f84aa752c714537c43dcf9d1c9f59f"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+      "kind": "completed_a418_UI_ELF",
+      "bytes": 451852448,
+      "allocated": 447070208,
+      "inode": 1051179,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424232831052622,
+      "sha256": "d4c29f7eba6e7e4dd77165b8fd0670dc10c076b5012e26e6fc85d302f7f1be33"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.00.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 1439272,
+      "allocated": 1441792,
+      "inode": 1051504,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362085208754,
+      "sha256": "0a21ff058546c6be3bee35edd5071229ef9f08da28ea6a8c8dc7b62d692dfed5"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.01.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 1042288,
+      "allocated": 1044480,
+      "inode": 1051513,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362301212350,
+      "sha256": "ad0d2272d46a6b3c38a20e168a63b9cdbf31ddaf93ca52351316c93b59dab187"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.02.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 401744,
+      "allocated": 405504,
+      "inode": 1051515,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362497215612,
+      "sha256": "1b092a72d0f86d1755e407646eea27ea0f1f08f1b562659fbd84f2d75074cef3"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.03.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 961008,
+      "allocated": 962560,
+      "inode": 1051518,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362737219607,
+      "sha256": "f2979abf271de4200561c196c7d4254aba1af710d20037d2bc4bf4800ceb5062"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.04.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 923848,
+      "allocated": 925696,
+      "inode": 1051520,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362945223069,
+      "sha256": "ba1555f160bd40c353a52ac60121852906cc0b05e79e2917fce99fed6647287c"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.05.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 941656,
+      "allocated": 942080,
+      "inode": 1051525,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363149226465,
+      "sha256": "18615f8b5bd670364c66136b18b866cab4d381fe32ebc411cb019c501facde1f"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.06.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 820648,
+      "allocated": 823296,
+      "inode": 1051527,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363789237118,
+      "sha256": "5c9e30d577a8d287384a2660810c9cd949142a7a9bbb0abd9bccba72ea389165"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.07.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 828072,
+      "allocated": 831488,
+      "inode": 1051529,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363989240448,
+      "sha256": "7c360e8f768794653027cac6927568b08072a2afc1a36a06d838c97de490f3da"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.08.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 593312,
+      "allocated": 593920,
+      "inode": 1051530,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424364057241579,
+      "sha256": "b3e4b7c30a9261ae7682794ff6ae88062097a67f4de02717ac510df8fa85eb0f"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.09.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 932888,
+      "allocated": 933888,
+      "inode": 1051528,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363893238849,
+      "sha256": "e077b33db11e0621d10ad8b938b60fd7c8eb03cdb923cd5071d638ed210d0e6d"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.10.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 290576408,
+      "allocated": 290582528,
+      "inode": 1051526,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363701235653,
+      "sha256": "0ce630ba7819ec79b09251161b1c24ae76fe5480d0cb702bb54adf7ec0e77209"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.11.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 929176,
+      "allocated": 929792,
+      "inode": 1051523,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424363053224867,
+      "sha256": "2417d1a0ad2ac7b59fa5175a15738c9f33ca20b01dc52bd9adcfe272bb1f5193"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.12.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 744800,
+      "allocated": 745472,
+      "inode": 1051519,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362825221072,
+      "sha256": "bbf7baaa3271f0878e59b24fad780ac572fdfe8c8e167d979294d63a1655668a"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.13.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 1525984,
+      "allocated": 1527808,
+      "inode": 1051517,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362629217809,
+      "sha256": "a85942e936f15ccf3623a3b5bcad466df840f3233eb7bed10248ebd601835496"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.14.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 982784,
+      "allocated": 983040,
+      "inode": 1051514,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362433214547,
+      "sha256": "3342dc4a2b61352d97c2bcedd02f88f2368365e824f129236378d7d9d726cf5c"
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.15.rcgu.o",
+      "kind": "failed_7e3_rustc_unit_object",
+      "bytes": 624560,
+      "allocated": 626688,
+      "inode": 1051509,
+      "device": 27,
+      "nlink": 1,
+      "mtime_ns": 1791424362149209820,
+      "sha256": "ed7249f63da57d5d6560e2c5a013ee0ed1b29df4ecb97f95fb5a2ac90968d314"
+    }
+  ],
+  "file_count": 18,
+  "total_file_bytes": 1060117152,
+  "total_allocated_bytes_estimate": 1055301632,
+  "all_candidate_regular_file_SHA256_size_inode_device_nlink_mtime_allocated_checks_pass": true,
+  "two_completed_ELFs_verified_against_actual_a418_fresh_compiler_and_passed_test_receipts": {
+    "tools_passed": 291,
+    "UI_passed": 125,
+    "UI_preexisting_ignore": 1
+  },
+  "sixteen_failed_codegen_objects": {
+    "filename_prefix": "android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.",
+    "indexes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "all_mtimes_inside_actual_failed_snapshot_window": true,
+    "association": "Exact lib-test output/cache naming, contained failed-attempt mtimes, exclusive owner runtime lease and retained no-success compile evidence; not a successful artifact/test result"
+  },
+  "failed7e3_compile": {
+    "exit_code": 101,
+    "raw_log_sha256": "2a72471d299cf90d0a486aec435d49f4e5b6ff3cd66167fd4585d77295c413e1",
+    "raw_ENOSPC_and_failed_lib_test_build_retained": true,
+    "test_result_credit": 0
+  },
+  "public_rlib_dedup_already_executed_audit": {
+    "verdict": "PASS for byte-preserving alias deduplication provenance",
+    "public_and_deps_paths_unchanged": true,
+    "both_file_bytes": 315735670,
+    "both_SHA256": "9c8c3235cac1fcfc10832e8af791487865164786533fb45afecac2440d0be570",
+    "old_public_inode": 1051320,
+    "retained_shared_inode": 1051264,
+    "current_nlink": 2,
+    "regular_file_mode_preserved": true,
+    "preflight_distinct_inodes_identical_bytes_and_actual_shared_inode_reverified": true,
+    "recorded_observed_space_increase": 243810304,
+    "no_fresh_current_Source_library_product_test_credit": true
+  },
+  "source_guards": {
+    "all4743_current_source_hashes_before_after": true,
+    "unchanged_exact7_exclusions": true,
+    "full_raw_Git_index_status_and_HEAD_match_owner_snapshot": true,
+    "main_detached_and_origin_main": "30fca99a7a015168dfe4f394f576fbe2955fb4ea",
+    "protected_android_studio": "c1ce5ca16a26fd59984b50500ead45fbafafa5c8",
+    "refs_and_main_source_clean_unchanged": true
+  },
+  "process_guards": {
+    "accessible_live_processes": 8,
+    "candidate_FD_cwd_exe_cmdline_matches": 0,
+    "active_Cargo_Rustc_cc_linkers": 0,
+    "UID0_live_service_inspection_limits": [
+      {
+        "pid": 198,
+        "state": "State:\tS (sleeping)",
+        "uid": "0",
+        "operation": "cwd"
+      },
+      {
+        "pid": 198,
+        "state": "State:\tS (sleeping)",
+        "uid": "0",
+        "operation": "exe"
+      },
+      {
+        "pid": 198,
+        "state": "State:\tS (sleeping)",
+        "uid": "0",
+        "operation": "fd"
+      },
+      {
+        "pid": 249,
+        "state": "State:\tS (sleeping)",
+        "uid": "0",
+        "operation": "cwd"
+      },
+      {
+        "pid": 249,
+        "state": "State:\tS (sleeping)",
+        "uid": "0",
+        "operation": "exe"
+      },
+      {
+        "pid": 249,
+        "state": "State:\tS (sleeping)",
+        "uid": "0",
+        "operation": "fd"
+      }
+    ],
+    "whole_system_FD_absence_claim": false,
+    "processes_signaled": []
+  },
+  "retained": {
+    "all_original_Source_tests_assertions_fixtures_logs_Gradle_SDK_Git_refs_and_probes_not_candidates": true,
+    "all_frozen_probe_hashes_verified": [
+      {
+        "path": "/tmp/import-identity-getters-frozen/all-feature-current-tests30",
+        "bytes": 5980656,
+        "sha256": "5a4355fe96de0030ae14d50885e018ae5445aed387ae4873f01637de81f9fae0"
+      },
+      {
+        "path": "/tmp/import-identity-getters-frozen/default-current-tests30",
+        "bytes": 5955440,
+        "sha256": "35a0a53780b5421d93dadb4a62829767f5a64a8f0dbd8cd872213ec901110827"
+      },
+      {
+        "path": "/tmp/import-identity-getters-frozen/diagnostic-pre-trait-fix-tests",
+        "bytes": 6022792,
+        "sha256": "52d97e2fe3545567b7d4e6e926268082f24c682eb29ab5969674f147b203b990"
+      }
+    ],
+    "previous4fb_full_app_regular_ELF_bytes": 1359451600,
+    "previous4fb_full_app_SHA256": "eac18f9a4c2ed6499406ba79b38a1ea6c290c903f7faa9c47472855aa3211e34"
+  },
+  "mandatory_Root_at_action_checks": [
+    "Recheck exact18 file bytes/SHA256/type/inode/device/nlink/mode/mtime and current process-FD/compiler barriers immediately before unlink",
+    "Retain Source4743/index/status/HEAD and main/protected guards before/after",
+    "Unlink only the eighteen exact names; no glob, recursive cache cleanup, extra paths or alternative flags/profile",
+    "Preserve all original code/tests/fixtures/assertions/raw failed and successful logs, frozen probes, both Rlib paths, SDK/Git and previous4fb physical app",
+    "Record actual free-space change; estimated allocation is not a peak-build guarantee",
+    "Rerun normal fresh currentSource library/tests/Clippy/format/UI gates without weakened tests or altered flags"
+  ],
+  "reviewer_candidate_or_Source_index_Git_cache_log_test_process_mutations": false,
+  "read_holds_released": true,
+  "initial_reviewer_recipe_error_preserved": "Initial read-only audit compared a filtered index with the owner full raw index snapshot. The prior script is retained and the corrected audit verifies the complete raw index, retaining exact7 whole-source exclusions. No deletion/product change occurred.",
+  "input_bindings": [
+    {
+      "path": "/tmp/import-identity-cache-recovery/public-rlib-dedup-preflight.json",
+      "bytes": 1034,
+      "sha256": "0d98b55873bdf7873f2908692f8caf77021a10844d8862c099205304d2934327"
+    },
+    {
+      "path": "/tmp/import-identity-cache-recovery/public-rlib-dedup-executed.json",
+      "bytes": 618,
+      "sha256": "11d346383e175d43f5b74b6906d0b31c31dfe7f363214288762601fcdac033f5"
+    },
+    {
+      "path": "/tmp/import-identity-cache-recovery/completed-ELFs-failed-objects-preflight.json",
+      "bytes": 8707,
+      "sha256": "dc422a86183fecaeb5968168122e7f43bc472a6da1fd3199aad463d64dfc7b84"
+    },
+    {
+      "path": "/tmp/import-identity-cache-recovery/independent-scoped-cache-audit-results.json",
+      "bytes": 10993,
+      "sha256": "ad3c1be1e8b0a59a108b6579af35529e5ed496dcc0a52ed35502d9f5b8b8bd1b"
+    },
+    {
+      "path": "/tmp/import-identity-cache-recovery/independent-scoped-cache-audit.py",
+      "bytes": 11825,
+      "sha256": "3d6b37fa7d70fd8296776d2a198081f69610bbaefcfc8701a6067a83651c899f"
+    }
+  ]
+}

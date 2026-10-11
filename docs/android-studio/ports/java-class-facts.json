@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "task": "Foundation Rust Java top-level declaration-fact producer",
+  "branch": "android-studio-task/1-java-class-facts",
+  "base_commit": "959992d03c4cfc928aaad01fda6f83cfc3e34994",
+  "tested_source_commit": "b0f340dc4e00268705eac00521e26c21b23d7ebd",
+  "status": "component_verified_pending_lead_integration",
+  "scope": "Pure Rust declaration facts and existing JavaClassFact conversion. No product tree wiring, semantic checker, Java language server, integrated UI fidelity or original full reference test parity credit.",
+  "reference": {
+    "repository": "https://android.googlesource.com/platform/tools/adt/idea",
+    "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "release": "studio-2026.2.1",
+    "suite": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+    "method": "testGeneratedSourceFiles_lightClasses",
+    "fixture": "crates/android_tools/test_data/java_class_facts/BuildConfig.java",
+    "fixture_bytes": 58,
+    "fixture_sha256": "425c4701302c5615019f86b12663a241a40e63d129b0f653cb4bdf52bce7e3e2",
+    "license": "Apache-2.0",
+    "provenance": "crates/android_tools/test_data/java_class_facts/provenance.json",
+    "upstream_method_status": "unported/not_run",
+    "reason": "Full pinned/environment-adapted Gradle model/generated-root discovery, exact source write, real refresh and integrated Android tree assertion remain pending. This task tests the unchanged original source bytes as a prerequisite only.",
+    "canonical_parity_changes": 0,
+    "all_five_original_tree_methods": "unported/not_run"
+  },
+  "fix_rounds": 2,
+  "retained_findings": [
+    {
+      "round": 1,
+      "source": "b30a68759d",
+      "area": "code",
+      "status": "fixed",
+      "findings": [
+        "Valid primitive array generic reference types were rejected.",
+        "Nested annotation delimiters bypassed the enclosing generic depth budget."
+      ],
+      "fix_commit": "8f2c43c83c803cbb6ef826fb1cf844125612a10b",
+      "tests": "Two additive regressions; original27unchanged."
+    },
+    {
+      "round": 2,
+      "source": "8f2c43c83c803cbb6ef826fb1cf844125612a10b",
+      "area": "quality",
+      "status": "fixed",
+      "finding": "Required repositoryClippy manual_strip lint rejected guarded comment-prefix slicing.",
+      "failure_log": "docs/android-studio/evidence/java-class-facts/clippy.log",
+      "failure_exit_code": 101,
+      "fix_commit": "b0f340dc4e00268705eac00521e26c21b23d7ebd",
+      "tests": "All29 unchanged; no lint allowance or test weakening."
+    }
+  ],
+  "reviews": [
+    {
+      "area": "code",
+      "verdict": "PASS",
+      "source_commit": "b0f340dc4e00268705eac00521e26c21b23d7ebd",
+      "agent": "/root/java_class_facts/code_review",
+      "notes": "Final b0f source re-review PASS: strip_prefix preserves comment detection, closing offsets and errors; initial primitive-array and combined-depth findings fixed."
+    },
+    {
+      "area": "ui",
+      "verdict": "PASS",
+      "source_commit": "b0f340dc4e00268705eac00521e26c21b23d7ebd",
+      "agent": "/root/java_class_facts/ui_review",
+      "notes": "Final b0f scoped UI contract PASS; no visual/live fidelity claim. Future adapter must keep file presentation for duplicate top-level names."
+    },
+    {
+      "area": "ux",
+      "verdict": "PASS",
+      "source_commit": "b0f340dc4e00268705eac00521e26c21b23d7ebd",
+      "agent": "/root/java_class_facts/ux_review",
+      "notes": "Final b0f scoped UX contract PASS; duplicate-name fallback, exact source-revision binding and offset validation remain adapter requirements."
+    },
+    {
+      "area": "performance",
+      "verdict": "PASS",
+      "source_commit": "b0f340dc4e00268705eac00521e26c21b23d7ebd",
+      "agent": "/root/java_class_facts/performance_review",
+      "notes": "Final b0f bounded parser PASS with actual child-process measurements; integrated scheduling/startup/responsiveness not claimed."
+    },
+    {
+      "area": "quality",
+      "verdict": "PASS",
+      "source_commit": "b0f340dc4e00268705eac00521e26c21b23d7ebd",
+      "agent": "/root/java_class_facts/quality_review",
+      "notes": "Final b0f quality PASS: actual focused/affected suites, strict repositoryClippy and formatting verified; initial failure retained."
+    }
+  ],
+  "validation": {
+    "commands": [
+      {
+        "label": "final-focused-tests",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "android_tools",
+          "--all-features",
+          "--lib",
+          "java_class_facts::tests::",
+          "--",
+          "--nocapture"
+        ],
+        "at_utc": "2026-10-07T14:43:27.490429+00:00",
+        "exit_code": 0,
+        "wall_seconds": 6.064,
+        "log": "/workspace/android-studio-artifacts/java-class-facts/final-focused-tests.log"
+      },
+      {
+        "label": "final-affected-tests",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "android_tools",
+          "--all-features"
+        ],
+        "at_utc": "2026-10-07T14:43:33.554594+00:00",
+        "exit_code": 0,
+        "wall_seconds": 8.594,
+        "log": "/workspace/android-studio-artifacts/java-class-facts/final-affected-tests.log"
+      },
+      {
+        "label": "final-clippy",
+        "command": [
+          "./script/clippy",
+          "--locked",
+          "-p",
+          "android_tools"
+        ],
+        "at_utc": "2026-10-07T14:43:42.148558+00:00",
+        "exit_code": 0,
+        "wall_seconds": 3.804,
+        "log": "/workspace/android-studio-artifacts/java-class-facts/final-clippy.log"
+      },
+      {
+        "label": "final-fmt",
+        "command": [
+          "cargo",
+          "fmt",
+          "--all",
+          "--",
+          "--check"
+        ],
+        "at_utc": "2026-10-07T14:43:45.952441+00:00",
+        "exit_code": 0,
+        "wall_seconds": 29.45,
+        "log": "/workspace/android-studio-artifacts/java-class-facts/final-fmt.log"
+      },
+      {
+        "label": "final-test-artifacts",
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "android_tools",
+          "--all-features",
+          "--no-run",
+          "--message-format=json"
+        ],
+        "at_utc": "2026-10-07T14:44:15.402960+00:00",
+        "exit_code": 0,
+        "wall_seconds": 0.89,
+        "log": "/workspace/android-studio-artifacts/java-class-facts/final-test-artifacts.log"
+      }
+    ],
+    "focused": {
+      "passed": 29,
+      "failed": 0,
+      "ignored": 0
+    },
+    "affected_all_features": {
+      "total_passed": 144,
+      "lib_passed": 84,
+      "gradle_import_passed": 20,
+      "tree_component_passed": 21,
+      "preferences_passed": 19,
+      "failed": 0,
+      "ignored": 0,
+      "filtered_out": 0
+    },
+    "clippy": "PASS: ./script/clippy --locked -p android_tools invokes release/all-targets/all-features/deny warnings.",
+    "formatting": "PASS: cargo fmt --all -- --check",
+    "source_bytes_unchanged": true,
+    "source_sha256": {
+      "crates/android_tools/src/android_tools.rs": "294945f7bff20d2fd60eec3e181cf8d409fb0510cb4877065d398aba4a4284e8",
+      "crates/android_tools/src/java_class_facts.rs": "5d941d6eaf53e17966ef20fe7ef334d5e8b817d0b6b6667c84ce05b0857da83d",
+      "Cargo.lock": "8b8fa07d44a4151a5c75935510eb686728e79f10bb3a6f375efdeaa8837a9c88",
+      "crates/android_tools/Cargo.toml": "c21fa3f61fafabc38772ec37735546a2c01bbfb48fafe689c4c6ac79470d0bf7"
+    },
+    "retained_executable_case_count": 29,
+    "retained_executable_manifest": "docs/android-studio/evidence/java-class-facts/retained-executables-and-bounds.json",
+    "bounds": [
+      {
+        "command": [
+          "/workspace/android-studio-java-class-facts/target/cloud-tests/java-class-facts/android_tools",
+          "--exact",
+          "java_class_facts::tests::source_size_limit_is_checked_before_utf8_or_tokenization",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 0.128575,
+        "user_cpu_seconds": 0.122041,
+        "system_cpu_seconds": 0.003978,
+        "max_rss_kib": 13272,
+        "major_page_faults": 0,
+        "minor_page_faults": 2480,
+        "label": "bounded-source"
+      },
+      {
+        "command": [
+          "/workspace/android-studio-java-class-facts/target/cloud-tests/java-class-facts/android_tools",
+          "--exact",
+          "java_class_facts::tests::large_multiple_declaration_inputs_keep_the_last_actual_navigation_target",
+          "--test-threads=1",
+          "--nocapture"
+        ],
+        "exit_code": 0,
+        "wall_seconds": 0.022091,
+        "user_cpu_seconds": 0.015125,
+        "system_cpu_seconds": 0.0034579999999999997,
+        "max_rss_kib": 9216,
+        "major_page_faults": 0,
+        "minor_page_faults": 689,
+        "label": "many-declarations"
+      }
+    ],
+    "measurement_scope": "Actual parser API regressions under frozen b0f340 source test executable. Timings/RSS include Rust test-process setup and fixture construction in a shared cloud environment; no isolated parser throughput, app startup, UI responsiveness or hardware performance claim.",
+    "initial_measurement_attempt": {
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/workspace/android-studio-java-class-facts/target/cloud-tests/java-class-facts/android_tools",
+        "--exact",
+        "java_class_facts::tests::source_size_limit_is_checked_before_utf8_or_tokenization",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "status": "not_run",
+      "reason": "/usr/bin/time is not installed; failure occurred before any test launch; replaced with per-child Python resource statistics"
+    },
+    "measurement_helper": {
+      "path": "/workspace/android-studio-artifacts/java-class-facts/measure-test.py",
+      "sha256": "3b45aba313b965bdf2a990329df27b09fd3685ca5d861d90fa47ae082daff9f0",
+      "scope": "Generated agent-side Python resource accounting only; not an IDE component, shipped helper, functional test implementation or repository source."
+    }
+  },
+  "integration_requirements": [
+    "Call the preferred discover_top_level_java_classes wrapper on actual source bytes; never infer class names from filenames.",
+    "Bind facts to exact source/buffer revision and validate offsets before navigation/publication.",
+    "Unsupported/malformed input or duplicate names incompatible with tree keys must retain ordinary file presentation for that entry. Do not merge/invent declarations or abort whole-tree publication.",
+    "Run full app with the integrated producer and full workspace suite before lead merge.",
+    "Keep original five Gradle-backed tree cases unported until their complete original setup/assertions pass."
+  ],
+  "lead_gates": {
+    "full_app_build_and_live_flow": "pending_integrated_source",
+    "full_workspace_suite": "pending_integrated_source",
+    "protected_merge_and_push": "not_performed"
+  },
+  "evidence": [
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/affected-tests.exit.log",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/affected-tests.log",
+      "sha256": "4dad823a0cbbeabc4e38c9aa17573384556d9b7fc4f29e7fef72e4bd434f30cb",
+      "bytes": 12794
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/bounded-source-python.log",
+      "sha256": "56c70b0b4ce4777cfe5e5ae02cf88d62b33de7097e7cb04418de352d5727ca54",
+      "bytes": 207
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/clippy.exit.log",
+      "sha256": "39b8dc3fc8b44765c8e6f1adee04c5b465e555ab791cc42d0d9e810d5b64297c",
+      "bytes": 4
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/clippy.log",
+      "sha256": "ee115e0074d6388019e4a09d6f5c24718a495b8f7785ffa67adc354204b811db",
+      "bytes": 1254
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/final-affected-tests.log",
+      "sha256": "2f69b844f4172645660135bb23e5810f019b804f6cd4fdb225f59eb9316eb81c",
+      "bytes": 12794
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/final-clippy.log",
+      "sha256": "a8e373cc0239bffda7bee8ef57e2415fa943b4e3cdbf28fc32e15ea8e80a583f",
+      "bytes": 316
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/final-command-results.json",
+      "sha256": "de1de7594b837e4b1e100c4a131c7e7e11bf8b5253b9b4cd4ce211835f225da1",
+      "bytes": 3043
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/final-fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/final-focused-tests.log",
+      "sha256": "6e7be7be810a23c068f61caa80c5e9812ac53074d84c8efbbac906c2bb8ae11c",
+      "bytes": 3255
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/final-test-artifacts.log",
+      "sha256": "e50f0ae017f3868a1c94e997adb15d74a6379ff0722c20ef2e4377ee57f8e7fa",
+      "bytes": 149162
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/fmt.exit.log",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/focused-tests.exit.log",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/focused-tests.log",
+      "sha256": "df5ac80c95f50571ab163ec53fa7a8601662823424ad6ceedf69345ebbda614b",
+      "bytes": 3256
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/freshness-recovery.json",
+      "sha256": "5184c506e755af1833b939dd8a218c27ac89b297744d9b89cfeb7d68e1c14c0f",
+      "bytes": 1026
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/many-declarations-python.log",
+      "sha256": "051b3aadf5d0deb9e80bbf517b503b3ee6fb52a8c6bf1fd9bf3e5a590cf48858",
+      "bytes": 223
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/retained-executables-and-bounds.json",
+      "sha256": "29a6a1c8723596576e4eec3da9335b58157f3b1a1470d42e9a24ad1976c7ef2d",
+      "bytes": 3967
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/retained-test-list.log",
+      "sha256": "26388e8907679d8fbc1ceccbd0ca40073e96f618db74821cf02bc7394329662f",
+      "bytes": 7080
+    },
+    {
+      "path": "docs/android-studio/evidence/java-class-facts/static-reviews.json",
+      "sha256": "51ee07a319927e1de2f47da4b076fcf237cf651a6916f248bbb0c33a5239028d",
+      "bytes": 2480
+    }
+  ],
+  "non_rust_ide_components_added": []
+}

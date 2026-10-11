@@ -1,0 +1,18 @@
+Import identity raw getter transport source references
+
+Gradle Project and BasicGradleProject sources:
+Copyright the original Gradle contributors, Apache License 2.0.
+Pinned supplementary Gradle 9.6.1 commit:
+309d128bd9fe8c0b71311878fc660b9cbaa07c51
+
+GradleProjectUtil, GradleIdeaPluginUtil, GradleExternalProjectModelBuilder and
+GradleProjectResolverUtil:
+Copyright 2000-2024 JetBrains s.r.o. and contributors, Apache License 2.0.
+Pinned supplementary IntelliJ Community commit:
+b75ab523e6adbe1d26112219729eacbcfd24daa0
+
+The complete original files and headers are preserved under references/.
+Their input getter boundaries inform the minimal official Gradle bridge; imported
+names, fallbacks and facet behavior are not ported by this task. Supplementary
+wire fixtures and Rust tests are authored for this transport and receive no
+original reference test credit.

@@ -1,0 +1,2786 @@
+{
+  "schema_version": 1,
+  "purpose": "bounded source facts only; neither effective runtime enumeration nor behavioral parity",
+  "effective_test_census_complete": false,
+  "new_parity_credit": 0,
+  "verified_inputs": [
+    {
+      "source": "idea",
+      "archive_sha256_verified": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+      "member_inventory_gzip_sha256_verified": "c2f5ec02bf26d5254322b284eb67cfd797058679a30958a5dde22f5858632f9a",
+      "member_inventory_raw_sha256_verified": "425511c489f57e32065c185441007ba8d9656521c7e2df4fe8e25e58988a9d0d",
+      "member_inventory_raw_bytes_verified": 29442713,
+      "selected_source_bytes": 59676
+    },
+    {
+      "source": "base",
+      "archive_sha256_verified": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4",
+      "member_inventory_gzip_sha256_verified": "67645f1b568eababc853798f02fb52e1674b6030f9aec638f7659d8a292dcfad",
+      "member_inventory_raw_sha256_verified": "c30bd69ecc3391916bbc97b6a2deb801ad108fb598b003262f35e77ea444df34",
+      "member_inventory_raw_bytes_verified": 11234145,
+      "selected_source_bytes": 173038
+    },
+    {
+      "source": "jetbrains-android",
+      "archive_sha256_verified": "d7bb6a155c077166a6aed54ddaaa7d1629cbee8c200ceced0bddc0bcedfd92e2",
+      "member_inventory_gzip_sha256_verified": "4b4fa88148cbf5b98ab282925f7d3ace83774b025a43ad64c0aab3d909fdc479",
+      "member_inventory_raw_sha256_verified": "3e5d3ae65bfea5d2de425a36fb678402015feee635ea57010e7dca6c4d9311d2",
+      "member_inventory_raw_bytes_verified": 33442395,
+      "selected_source_bytes": 28884
+    }
+  ],
+  "files": [
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui-compose/testSrc/com/android/tools/adtui/compose/grid/GridTest.kt",
+      "sha256": "92adf809f57bce0bc9f367022e1481a28947a8dbdcab3ed9fc4a6301f124a292",
+      "bytes": 13964,
+      "archive_member_name": "adt-ui-compose/testSrc/com/android/tools/adtui/compose/grid/GridTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/idea/adt-ui-compose/testSrc/com/android/tools/adtui/compose/grid/GridTest.kt",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.adtui.compose.grid"
+        },
+        {
+          "line": 18,
+          "text": "import androidx.compose.foundation.layout.Arrangement"
+        },
+        {
+          "line": 19,
+          "text": "import androidx.compose.foundation.layout.Box"
+        },
+        {
+          "line": 20,
+          "text": "import androidx.compose.foundation.layout.ExperimentalLayoutApi"
+        },
+        {
+          "line": 21,
+          "text": "import androidx.compose.foundation.layout.FlowRow"
+        },
+        {
+          "line": 22,
+          "text": "import androidx.compose.foundation.layout.size"
+        },
+        {
+          "line": 23,
+          "text": "import androidx.compose.foundation.layout.width"
+        },
+        {
+          "line": 24,
+          "text": "import androidx.compose.runtime.Composable"
+        },
+        {
+          "line": 25,
+          "text": "import androidx.compose.ui.Alignment"
+        },
+        {
+          "line": 26,
+          "text": "import androidx.compose.ui.Modifier"
+        },
+        {
+          "line": 27,
+          "text": "import androidx.compose.ui.layout.FirstBaseline"
+        },
+        {
+          "line": 28,
+          "text": "import androidx.compose.ui.layout.LastBaseline"
+        },
+        {
+          "line": 29,
+          "text": "import androidx.compose.ui.layout.Layout"
+        },
+        {
+          "line": 30,
+          "text": "import androidx.compose.ui.platform.testTag"
+        },
+        {
+          "line": 31,
+          "text": "import androidx.compose.ui.test.assertHeightIsEqualTo"
+        },
+        {
+          "line": 32,
+          "text": "import androidx.compose.ui.test.assertIsDisplayed"
+        },
+        {
+          "line": 33,
+          "text": "import androidx.compose.ui.test.assertIsNotDisplayed"
+        },
+        {
+          "line": 34,
+          "text": "import androidx.compose.ui.test.assertPositionInRootIsEqualTo"
+        },
+        {
+          "line": 35,
+          "text": "import androidx.compose.ui.test.assertTopPositionInRootIsEqualTo"
+        },
+        {
+          "line": 36,
+          "text": "import androidx.compose.ui.test.assertWidthIsEqualTo"
+        },
+        {
+          "line": 37,
+          "text": "import androidx.compose.ui.test.onNodeWithTag"
+        },
+        {
+          "line": 38,
+          "text": "import androidx.compose.ui.unit.dp"
+        },
+        {
+          "line": 39,
+          "text": "import com.android.tools.adtui.compose.utils.StudioComposeTestRule.Companion.createStudioComposeTestRule"
+        },
+        {
+          "line": 40,
+          "text": "import com.google.common.truth.Truth.assertThat"
+        },
+        {
+          "line": 41,
+          "text": "import org.jetbrains.jewel.ui.component.Text"
+        },
+        {
+          "line": 42,
+          "text": "import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer"
+        },
+        {
+          "line": 43,
+          "text": "import org.junit.Ignore"
+        },
+        {
+          "line": 44,
+          "text": "import org.junit.Rule"
+        },
+        {
+          "line": 45,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 47,
+          "text": "class GridTest {"
+        },
+        {
+          "line": 48,
+          "text": "  @get:Rule val composeTestRule = createStudioComposeTestRule()"
+        },
+        {
+          "line": 50,
+          "text": "  @Test"
+        },
+        {
+          "line": 72,
+          "text": "  @Test"
+        },
+        {
+          "line": 102,
+          "text": "  @Test"
+        },
+        {
+          "line": 120,
+          "text": "  @Test"
+        },
+        {
+          "line": 142,
+          "text": "  @Test"
+        },
+        {
+          "line": 167,
+          "text": "  @Test"
+        },
+        {
+          "line": 189,
+          "text": "  @Test"
+        },
+        {
+          "line": 211,
+          "text": "  @OptIn(ExperimentalLayoutApi::class)"
+        },
+        {
+          "line": 212,
+          "text": "  @Test"
+        },
+        {
+          "line": 231,
+          "text": "  @OptIn(ExperimentalLayoutApi::class)"
+        },
+        {
+          "line": 232,
+          "text": "  @Test"
+        },
+        {
+          "line": 261,
+          "text": "  @Test"
+        },
+        {
+          "line": 279,
+          "text": "  @Composable"
+        },
+        {
+          "line": 286,
+          "text": "  @Test"
+        },
+        {
+          "line": 313,
+          "text": "  @Ignore(\"b/377300967\")"
+        },
+        {
+          "line": 314,
+          "text": "  @Test"
+        }
+      ]
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/BUILD",
+      "sha256": "6be1f61c6600348939ad8058441de095447a8b4debba4b740c26785e249b6d92",
+      "bytes": 2403,
+      "archive_member_name": "adt-ui/BUILD",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/idea/adt-ui/BUILD",
+      "relevant_lines": [
+        {
+          "line": 20,
+          "text": "    test_class = \"com.android.tools.adtui.AdtUiTestSuite\","
+        },
+        {
+          "line": 39,
+          "text": "    test_srcs = [\"src/test/java\"],"
+        }
+      ]
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5",
+      "bytes": 879,
+      "archive_member_name": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.adtui;"
+        },
+        {
+          "line": 18,
+          "text": "import com.android.testutils.JarTestSuiteRunner;"
+        },
+        {
+          "line": 19,
+          "text": "import com.android.tools.tests.IdeaTestSuiteBase;"
+        },
+        {
+          "line": 20,
+          "text": "import org.junit.runner.RunWith;"
+        },
+        {
+          "line": 22,
+          "text": "@RunWith(JarTestSuiteRunner.class)"
+        },
+        {
+          "line": 23,
+          "text": "public class AdtUiTestSuite extends IdeaTestSuiteBase {"
+        }
+      ]
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "sha256": "7e72bbc46fb4f28872c48cfdce7c90a8c5de8e40c5136943790aa9ab6f8f963b",
+      "bytes": 4201,
+      "archive_member_name": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.adtui"
+        },
+        {
+          "line": 18,
+          "text": "import com.android.tools.adtui.stdui.CommonButton"
+        },
+        {
+          "line": 19,
+          "text": "import com.google.common.truth.Truth.assertThat"
+        },
+        {
+          "line": 20,
+          "text": "import com.intellij.testFramework.EdtRule"
+        },
+        {
+          "line": 21,
+          "text": "import com.intellij.testFramework.RunsInEdt"
+        },
+        {
+          "line": 22,
+          "text": "import com.intellij.util.containers.isEmpty"
+        },
+        {
+          "line": 23,
+          "text": "import icons.StudioIcons"
+        },
+        {
+          "line": 24,
+          "text": "import javax.swing.JLabel"
+        },
+        {
+          "line": 25,
+          "text": "import org.junit.Rule"
+        },
+        {
+          "line": 26,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 28,
+          "text": "@RunsInEdt(writeIntent = false)"
+        },
+        {
+          "line": 29,
+          "text": "class TabbedToolbarTest {"
+        },
+        {
+          "line": 30,
+          "text": "  @get:Rule val edtRule = EdtRule()"
+        },
+        {
+          "line": 32,
+          "text": "  @Test"
+        },
+        {
+          "line": 40,
+          "text": "  @Test"
+        },
+        {
+          "line": 51,
+          "text": "  @Test"
+        },
+        {
+          "line": 66,
+          "text": "  @Test"
+        },
+        {
+          "line": 79,
+          "text": "  @Test"
+        },
+        {
+          "line": 94,
+          "text": "  @Test"
+        },
+        {
+          "line": 114,
+          "text": "  @Test"
+        }
+      ]
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "sha256": "bb33303f2050fc9d86f1ae04d355a3c4e6779aa89ae5c19cfc36973057fe2e12",
+      "bytes": 2911,
+      "archive_member_name": "adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.adtui.actions"
+        },
+        {
+          "line": 18,
+          "text": "import com.android.tools.adtui.PANNABLE_KEY"
+        },
+        {
+          "line": 19,
+          "text": "import com.android.tools.adtui.Pannable"
+        },
+        {
+          "line": 20,
+          "text": "import com.intellij.openapi.actionSystem.AnActionEvent"
+        },
+        {
+          "line": 21,
+          "text": "import com.intellij.openapi.actionSystem.DataContext"
+        },
+        {
+          "line": 22,
+          "text": "import com.intellij.openapi.actionSystem.impl.SimpleDataContext"
+        },
+        {
+          "line": 23,
+          "text": "import com.intellij.testFramework.ApplicationRule"
+        },
+        {
+          "line": 24,
+          "text": "import com.intellij.testFramework.TestActionEvent"
+        },
+        {
+          "line": 25,
+          "text": "import org.junit.Assert.assertFalse"
+        },
+        {
+          "line": 26,
+          "text": "import org.junit.Assert.assertTrue"
+        },
+        {
+          "line": 27,
+          "text": "import org.junit.Before"
+        },
+        {
+          "line": 28,
+          "text": "import org.junit.Rule"
+        },
+        {
+          "line": 29,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 30,
+          "text": "import org.junit.runner.RunWith"
+        },
+        {
+          "line": 31,
+          "text": "import org.junit.runners.JUnit4"
+        },
+        {
+          "line": 32,
+          "text": "import org.mockito.Mockito.mock"
+        },
+        {
+          "line": 33,
+          "text": "import org.mockito.Mockito.verify"
+        },
+        {
+          "line": 34,
+          "text": "import org.mockito.kotlin.whenever"
+        },
+        {
+          "line": 36,
+          "text": "@RunWith(JUnit4::class)"
+        },
+        {
+          "line": 37,
+          "text": "class PanSurfaceActionTest {"
+        },
+        {
+          "line": 38,
+          "text": "  @get:Rule val applicationRule = ApplicationRule()"
+        },
+        {
+          "line": 50,
+          "text": "  @Before"
+        },
+        {
+          "line": 56,
+          "text": "  @Test"
+        },
+        {
+          "line": 64,
+          "text": "  @Test"
+        },
+        {
+          "line": 72,
+          "text": "  @Test"
+        },
+        {
+          "line": 79,
+          "text": "  @Test"
+        },
+        {
+          "line": 85,
+          "text": "  @Test"
+        },
+        {
+          "line": 91,
+          "text": "  @Test"
+        }
+      ]
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+      "sha256": "33d296249b80ad61a7de3dd25abdf44779cd2bd6ade5847024d0b30b2cb6d09e",
+      "bytes": 5447,
+      "archive_member_name": "adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/common/ColorPaletteManagerTest.kt",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.adtui.common"
+        },
+        {
+          "line": 18,
+          "text": "import com.android.testutils.TestResources"
+        },
+        {
+          "line": 19,
+          "text": "import com.android.tools.adtui.common.ColorPaletteManager.ColorPalette"
+        },
+        {
+          "line": 20,
+          "text": "import com.google.common.truth.Truth.assertThat"
+        },
+        {
+          "line": 21,
+          "text": "import com.google.gson.Gson"
+        },
+        {
+          "line": 22,
+          "text": "import com.intellij.ui.JBColor"
+        },
+        {
+          "line": 23,
+          "text": "import java.io.FileInputStream"
+        },
+        {
+          "line": 24,
+          "text": "import java.io.InputStreamReader"
+        },
+        {
+          "line": 25,
+          "text": "import org.junit.After"
+        },
+        {
+          "line": 26,
+          "text": "import org.junit.Assume.assumeFalse"
+        },
+        {
+          "line": 27,
+          "text": "import org.junit.Before"
+        },
+        {
+          "line": 28,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 29,
+          "text": "import org.junit.runner.RunWith"
+        },
+        {
+          "line": 30,
+          "text": "import org.junit.runners.Parameterized"
+        },
+        {
+          "line": 32,
+          "text": "@RunWith(Parameterized::class)"
+        },
+        {
+          "line": 33,
+          "text": "class ColorPaletteManagerTest(private val isDarkMode: Boolean) {"
+        },
+        {
+          "line": 36,
+          "text": "    @JvmStatic @Parameterized.Parameters fun data() = listOf(false, true)"
+        },
+        {
+          "line": 50,
+          "text": "  @Before"
+        },
+        {
+          "line": 56,
+          "text": "  @After"
+        },
+        {
+          "line": 66,
+          "text": "  @Test"
+        },
+        {
+          "line": 73,
+          "text": "  @Test"
+        },
+        {
+          "line": 80,
+          "text": "  @Test"
+        },
+        {
+          "line": 88,
+          "text": "  @Test"
+        },
+        {
+          "line": 96,
+          "text": "  @Test"
+        },
+        {
+          "line": 105,
+          "text": "  @Test"
+        },
+        {
+          "line": 114,
+          "text": "  @Test"
+        },
+        {
+          "line": 119,
+          "text": "  @Test"
+        },
+        {
+          "line": 125,
+          "text": "  @Test"
+        },
+        {
+          "line": 136,
+          "text": "  @Test"
+        }
+      ]
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/visualtests/VisualTest.java",
+      "sha256": "6fb03861a6996eacced7b796f02d41f589fe9b48879c9a7b3269af9ad890c253",
+      "bytes": 5495,
+      "archive_member_name": "adt-ui/src/test/java/com/android/tools/adtui/visualtests/VisualTest.java",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/idea/adt-ui/src/test/java/com/android/tools/adtui/visualtests/VisualTest.java",
+      "relevant_lines": [
+        {
+          "line": 17,
+          "text": "package com.android.tools.adtui.visualtests;"
+        },
+        {
+          "line": 19,
+          "text": "import com.android.tools.adtui.AnimatedComponent;"
+        },
+        {
+          "line": 20,
+          "text": "import com.android.tools.adtui.model.FpsTimer;"
+        },
+        {
+          "line": 21,
+          "text": "import com.android.tools.adtui.model.updater.Updatable;"
+        },
+        {
+          "line": 22,
+          "text": "import com.android.tools.adtui.model.updater.Updater;"
+        },
+        {
+          "line": 23,
+          "text": "import com.intellij.ui.components.JBPanel;"
+        },
+        {
+          "line": 24,
+          "text": "import org.jetbrains.annotations.NotNull;"
+        },
+        {
+          "line": 26,
+          "text": "import javax.swing.*;"
+        },
+        {
+          "line": 27,
+          "text": "import javax.swing.event.ChangeListener;"
+        },
+        {
+          "line": 28,
+          "text": "import java.awt.*;"
+        },
+        {
+          "line": 29,
+          "text": "import java.awt.event.ActionListener;"
+        },
+        {
+          "line": 30,
+          "text": "import java.awt.event.ItemListener;"
+        },
+        {
+          "line": 31,
+          "text": "import java.util.Collections;"
+        },
+        {
+          "line": 32,
+          "text": "import java.util.List;"
+        },
+        {
+          "line": 39,
+          "text": "public abstract class VisualTest {"
+        }
+      ]
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+      "bytes": 16649,
+      "archive_member_name": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/idea/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.idea.gradle.project;"
+        },
+        {
+          "line": 18,
+          "text": "import static com.android.tools.idea.Projects.getBaseDirPath;"
+        },
+        {
+          "line": 19,
+          "text": "import static com.android.tools.idea.gradle.util.GradleProjectSystemUtil.getDefaultPhysicalPathFromGradlePath;"
+        },
+        {
+          "line": 20,
+          "text": "import static com.google.common.base.Strings.isNullOrEmpty;"
+        },
+        {
+          "line": 21,
+          "text": "import static com.google.common.collect.Iterables.concat;"
+        },
+        {
+          "line": 22,
+          "text": "import static com.google.common.collect.Iterables.contains;"
+        },
+        {
+          "line": 23,
+          "text": "import static com.google.common.collect.Iterables.transform;"
+        },
+        {
+          "line": 24,
+          "text": "import static com.google.common.io.Files.write;"
+        },
+        {
+          "line": 25,
+          "text": "import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;"
+        },
+        {
+          "line": 26,
+          "text": "import static com.intellij.util.PathUtil.toSystemIndependentName;"
+        },
+        {
+          "line": 28,
+          "text": "import com.android.SdkConstants;"
+        },
+        {
+          "line": 29,
+          "text": "import com.android.tools.idea.gradle.dsl.api.GradleSettingsModel;"
+        },
+        {
+          "line": 30,
+          "text": "import com.android.tools.idea.gradle.dsl.api.ProjectBuildModel;"
+        },
+        {
+          "line": 31,
+          "text": "import com.android.tools.idea.projectsystem.ProjectSystemService;"
+        },
+        {
+          "line": 32,
+          "text": "import com.android.tools.idea.projectsystem.gradle.GradleProjectSystem;"
+        },
+        {
+          "line": 33,
+          "text": "import com.android.tools.idea.sdk.IdeSdks;"
+        },
+        {
+          "line": 34,
+          "text": "import com.google.common.base.Function;"
+        },
+        {
+          "line": 35,
+          "text": "import com.google.common.base.Functions;"
+        },
+        {
+          "line": 36,
+          "text": "import com.google.common.base.Joiner;"
+        },
+        {
+          "line": 37,
+          "text": "import com.google.common.collect.Maps;"
+        },
+        {
+          "line": 38,
+          "text": "import com.intellij.openapi.project.Project;"
+        },
+        {
+          "line": 39,
+          "text": "import com.intellij.openapi.vfs.VirtualFile;"
+        },
+        {
+          "line": 40,
+          "text": "import com.intellij.testFramework.HeavyPlatformTestCase;"
+        },
+        {
+          "line": 41,
+          "text": "import com.intellij.testFramework.PlatformTestUtil;"
+        },
+        {
+          "line": 42,
+          "text": "import java.io.File;"
+        },
+        {
+          "line": 43,
+          "text": "import java.io.IOException;"
+        },
+        {
+          "line": 44,
+          "text": "import java.nio.charset.Charset;"
+        },
+        {
+          "line": 45,
+          "text": "import java.util.Arrays;"
+        },
+        {
+          "line": 46,
+          "text": "import java.util.Collection;"
+        },
+        {
+          "line": 47,
+          "text": "import java.util.Collections;"
+        },
+        {
+          "line": 48,
+          "text": "import java.util.HashMap;"
+        },
+        {
+          "line": 49,
+          "text": "import java.util.LinkedList;"
+        },
+        {
+          "line": 50,
+          "text": "import java.util.Map;"
+        },
+        {
+          "line": 51,
+          "text": "import java.util.Set;"
+        },
+        {
+          "line": 52,
+          "text": "import java.util.stream.Collectors;"
+        },
+        {
+          "line": 53,
+          "text": "import org.jetbrains.annotations.NotNull;"
+        },
+        {
+          "line": 58,
+          "text": "@SuppressWarnings(\"JUnitTestCaseWithNoTests\") // Named differently, didn't want to do too much unnecessary setups"
+        },
+        {
+          "line": 59,
+          "text": "public final class GradleModuleImportTest extends HeavyPlatformTestCase {"
+        },
+        {
+          "line": 131,
+          "text": "  @NotNull"
+        },
+        {
+          "line": 150,
+          "text": "  @Override"
+        },
+        {
+          "line": 338,
+          "text": "  @Override"
+        }
+      ]
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "project-system-gradle-sync/BUILD",
+      "sha256": "5c82bd87f7cabac58ef3752e4062d03faeab4f0f9b20e88399b50207c197ff26",
+      "bytes": 3721,
+      "archive_member_name": "project-system-gradle-sync/BUILD",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/idea/project-system-gradle-sync/BUILD",
+      "relevant_lines": [
+        {
+          "line": 32,
+          "text": "    test_class = \"com.android.tools.idea.projectsystem.gradle.sync.GradleProjectSystemSyncTestSuite\","
+        },
+        {
+          "line": 63,
+          "text": "    test_srcs = [\"testSrc\"],"
+        }
+      ]
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "sha256": "c21c3dbc6fe94377ae7e82b2028d357c0ce0285793eecafa65140df63cc84b15",
+      "bytes": 4006,
+      "archive_member_name": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/idea/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.idea.gradle.project.sync"
+        },
+        {
+          "line": 18,
+          "text": "import com.android.utils.appendCapitalized"
+        },
+        {
+          "line": 19,
+          "text": "import com.android.utils.combineAsCamelCase"
+        },
+        {
+          "line": 20,
+          "text": "import com.google.common.truth.Truth.assertThat"
+        },
+        {
+          "line": 21,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 23,
+          "text": "class DefaultVariantsTest {"
+        },
+        {
+          "line": 25,
+          "text": "  @Test"
+        },
+        {
+          "line": 32,
+          "text": "  @Test"
+        },
+        {
+          "line": 39,
+          "text": "  @Test"
+        },
+        {
+          "line": 46,
+          "text": "  @Test"
+        },
+        {
+          "line": 53,
+          "text": "  @Test"
+        },
+        {
+          "line": 70,
+          "text": "  @Test"
+        },
+        {
+          "line": 87,
+          "text": "  @Test"
+        },
+        {
+          "line": 95,
+          "text": "  @Test"
+        }
+      ]
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "adblib/test/src/com/android/adblib/AdbDeviceServicesTest.kt",
+      "sha256": "c0ebb58b60813cde40ebd37d870228a0a7dd4b2eaa9aeacb13e0dba4ec78d2e8",
+      "bytes": 103375,
+      "archive_member_name": "adblib/test/src/com/android/adblib/AdbDeviceServicesTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/base/adblib/test/src/com/android/adblib/AdbDeviceServicesTest.kt",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.adblib"
+        },
+        {
+          "line": 18,
+          "text": "import com.android.adblib.impl.channels.AdbInputChannelReader"
+        },
+        {
+          "line": 19,
+          "text": "import com.android.adblib.impl.channels.AdbInputStreamChannel"
+        },
+        {
+          "line": 20,
+          "text": "import com.android.adblib.impl.channels.AdbOutputStreamChannel"
+        },
+        {
+          "line": 21,
+          "text": "import com.android.adblib.testingutils.AnyExceptionOfMatcher.Companion.anyExceptionOf"
+        },
+        {
+          "line": 22,
+          "text": "import com.android.adblib.testingutils.CoroutineTestUtils.runBlockingWithTimeout"
+        },
+        {
+          "line": 23,
+          "text": "import com.android.adblib.testingutils.CoroutineTestUtils.yieldUntil"
+        },
+        {
+          "line": 24,
+          "text": "import com.android.adblib.testingutils.FakeAdbServerProvider"
+        },
+        {
+          "line": 25,
+          "text": "import com.android.adblib.testingutils.FakeAdbServerProviderRule"
+        },
+        {
+          "line": 26,
+          "text": "import com.android.adblib.testingutils.TimeWaitSocketsThrottler"
+        },
+        {
+          "line": 27,
+          "text": "import com.android.adblib.testingutils.asAdbInputChannel"
+        },
+        {
+          "line": 28,
+          "text": "import com.android.adblib.testingutils.setTestLoggerMinLevel"
+        },
+        {
+          "line": 29,
+          "text": "import com.android.adblib.utils.AdbProtocolUtils"
+        },
+        {
+          "line": 30,
+          "text": "import com.android.adblib.utils.ResizableBuffer"
+        },
+        {
+          "line": 31,
+          "text": "import com.android.adblib.utils.launchCancellable"
+        },
+        {
+          "line": 32,
+          "text": "import com.android.fakeadbserver.ClientState"
+        },
+        {
+          "line": 33,
+          "text": "import com.android.fakeadbserver.DeviceFileState"
+        },
+        {
+          "line": 34,
+          "text": "import com.android.fakeadbserver.DeviceState"
+        },
+        {
+          "line": 35,
+          "text": "import com.android.fakeadbserver.ProfileableProcessState"
+        },
+        {
+          "line": 36,
+          "text": "import com.android.sdklib.AndroidApiLevel"
+        },
+        {
+          "line": 37,
+          "text": "import java.io.ByteArrayOutputStream"
+        },
+        {
+          "line": 38,
+          "text": "import java.io.IOException"
+        },
+        {
+          "line": 39,
+          "text": "import java.nio.ByteBuffer"
+        },
+        {
+          "line": 40,
+          "text": "import java.nio.channels.ClosedChannelException"
+        },
+        {
+          "line": 41,
+          "text": "import java.nio.file.attribute.FileTime"
+        },
+        {
+          "line": 42,
+          "text": "import java.nio.file.attribute.PosixFilePermission.OWNER_READ"
+        },
+        {
+          "line": 43,
+          "text": "import java.nio.file.attribute.PosixFilePermission.OWNER_WRITE"
+        },
+        {
+          "line": 44,
+          "text": "import java.time.Duration"
+        },
+        {
+          "line": 45,
+          "text": "import java.util.concurrent.TimeUnit"
+        },
+        {
+          "line": 46,
+          "text": "import java.util.concurrent.TimeoutException"
+        },
+        {
+          "line": 47,
+          "text": "import java.util.regex.Matcher"
+        },
+        {
+          "line": 48,
+          "text": "import java.util.regex.Pattern"
+        },
+        {
+          "line": 49,
+          "text": "import kotlin.time.DurationUnit"
+        },
+        {
+          "line": 50,
+          "text": "import kotlin.time.toDuration"
+        },
+        {
+          "line": 51,
+          "text": "import kotlinx.coroutines.CancellationException"
+        },
+        {
+          "line": 52,
+          "text": "import kotlinx.coroutines.CompletableDeferred"
+        },
+        {
+          "line": 53,
+          "text": "import kotlinx.coroutines.Dispatchers"
+        },
+        {
+          "line": 54,
+          "text": "import kotlinx.coroutines.async"
+        },
+        {
+          "line": 55,
+          "text": "import kotlinx.coroutines.cancel"
+        },
+        {
+          "line": 56,
+          "text": "import kotlinx.coroutines.cancelAndJoin"
+        },
+        {
+          "line": 57,
+          "text": "import kotlinx.coroutines.channels.Channel"
+        },
+        {
+          "line": 58,
+          "text": "import kotlinx.coroutines.coroutineScope"
+        },
+        {
+          "line": 59,
+          "text": "import kotlinx.coroutines.delay"
+        },
+        {
+          "line": 60,
+          "text": "import kotlinx.coroutines.flow.Flow"
+        },
+        {
+          "line": 61,
+          "text": "import kotlinx.coroutines.flow.FlowCollector"
+        },
+        {
+          "line": 62,
+          "text": "import kotlinx.coroutines.flow.collect"
+        },
+        {
+          "line": 63,
+          "text": "import kotlinx.coroutines.flow.collectIndexed"
+        },
+        {
+          "line": 64,
+          "text": "import kotlinx.coroutines.flow.filterIsInstance"
+        },
+        {
+          "line": 65,
+          "text": "import kotlinx.coroutines.flow.filterNotNull"
+        },
+        {
+          "line": 66,
+          "text": "import kotlinx.coroutines.flow.first"
+        },
+        {
+          "line": 67,
+          "text": "import kotlinx.coroutines.flow.flow"
+        },
+        {
+          "line": 68,
+          "text": "import kotlinx.coroutines.flow.map"
+        },
+        {
+          "line": 69,
+          "text": "import kotlinx.coroutines.flow.takeWhile"
+        },
+        {
+          "line": 70,
+          "text": "import kotlinx.coroutines.flow.toList"
+        },
+        {
+          "line": 71,
+          "text": "import kotlinx.coroutines.joinAll"
+        },
+        {
+          "line": 72,
+          "text": "import kotlinx.coroutines.launch"
+        },
+        {
+          "line": 73,
+          "text": "import kotlinx.coroutines.runBlocking"
+        },
+        {
+          "line": 74,
+          "text": "import kotlinx.coroutines.withContext"
+        },
+        {
+          "line": 75,
+          "text": "import org.junit.Assert"
+        },
+        {
+          "line": 76,
+          "text": "import org.junit.BeforeClass"
+        },
+        {
+          "line": 77,
+          "text": "import org.junit.Rule"
+        },
+        {
+          "line": 78,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 79,
+          "text": "import org.junit.rules.ExpectedException"
+        },
+        {
+          "line": 81,
+          "text": "class AdbDeviceServicesTest {"
+        },
+        {
+          "line": 83,
+          "text": "  @JvmField @Rule var exceptionRule: ExpectedException = ExpectedException.none()"
+        },
+        {
+          "line": 85,
+          "text": "  @JvmField @Rule val fakeAdbRule = FakeAdbServerProviderRule()"
+        },
+        {
+          "line": 93,
+          "text": "  @Test"
+        },
+        {
+          "line": 122,
+          "text": "  @Test"
+        },
+        {
+          "line": 137,
+          "text": "  @Test"
+        },
+        {
+          "line": 166,
+          "text": "  @Test"
+        },
+        {
+          "line": 196,
+          "text": "  @Test"
+        },
+        {
+          "line": 225,
+          "text": "  @Test"
+        },
+        {
+          "line": 257,
+          "text": "  @Test"
+        },
+        {
+          "line": 271,
+          "text": "  @Test"
+        },
+        {
+          "line": 288,
+          "text": "  @Test"
+        },
+        {
+          "line": 314,
+          "text": "  @Test"
+        },
+        {
+          "line": 333,
+          "text": "  @Test"
+        },
+        {
+          "line": 363,
+          "text": "  @Test"
+        },
+        {
+          "line": 395,
+          "text": "  @Test"
+        },
+        {
+          "line": 438,
+          "text": "  @Test"
+        },
+        {
+          "line": 497,
+          "text": "  @Test"
+        },
+        {
+          "line": 536,
+          "text": "  @Test"
+        },
+        {
+          "line": 578,
+          "text": "  @Test"
+        },
+        {
+          "line": 619,
+          "text": "  @Test"
+        },
+        {
+          "line": 664,
+          "text": "  @Test"
+        },
+        {
+          "line": 727,
+          "text": "  @Test"
+        },
+        {
+          "line": 770,
+          "text": "  @Test"
+        },
+        {
+          "line": 813,
+          "text": "  @Test"
+        },
+        {
+          "line": 861,
+          "text": "  @Test"
+        },
+        {
+          "line": 940,
+          "text": "  @Test"
+        },
+        {
+          "line": 956,
+          "text": "  @Test"
+        },
+        {
+          "line": 978,
+          "text": "  @Test"
+        },
+        {
+          "line": 1030,
+          "text": "  @Test"
+        },
+        {
+          "line": 1092,
+          "text": "  @Test"
+        },
+        {
+          "line": 1121,
+          "text": "  @Test"
+        },
+        {
+          "line": 1152,
+          "text": "  @Test"
+        },
+        {
+          "line": 1183,
+          "text": "  @Test"
+        },
+        {
+          "line": 1232,
+          "text": "  @Test"
+        },
+        {
+          "line": 1264,
+          "text": "  @Test"
+        },
+        {
+          "line": 1297,
+          "text": "  @Test"
+        },
+        {
+          "line": 1342,
+          "text": "  @Test"
+        },
+        {
+          "line": 1397,
+          "text": "  @Test"
+        },
+        {
+          "line": 1470,
+          "text": "  @Test"
+        },
+        {
+          "line": 1497,
+          "text": "  @Test"
+        },
+        {
+          "line": 1526,
+          "text": "  @Test"
+        },
+        {
+          "line": 1584,
+          "text": "  @Test"
+        },
+        {
+          "line": 1619,
+          "text": "  @Test"
+        },
+        {
+          "line": 1654,
+          "text": "  @Test"
+        },
+        {
+          "line": 1714,
+          "text": "  @Test"
+        },
+        {
+          "line": 1758,
+          "text": "  @Test"
+        },
+        {
+          "line": 1795,
+          "text": "  @Test"
+        },
+        {
+          "line": 1819,
+          "text": "  @Test"
+        },
+        {
+          "line": 1842,
+          "text": "  @Test"
+        },
+        {
+          "line": 1867,
+          "text": "  @Test"
+        },
+        {
+          "line": 1891,
+          "text": "  @Test"
+        },
+        {
+          "line": 1906,
+          "text": "  @Test"
+        },
+        {
+          "line": 1922,
+          "text": "  @Test"
+        },
+        {
+          "line": 1950,
+          "text": "  @Test"
+        },
+        {
+          "line": 1987,
+          "text": "  @Test"
+        },
+        {
+          "line": 1994,
+          "text": "  @Test"
+        },
+        {
+          "line": 2009,
+          "text": "  @Test"
+        },
+        {
+          "line": 2024,
+          "text": "  @Test"
+        },
+        {
+          "line": 2052,
+          "text": "  @Test"
+        },
+        {
+          "line": 2065,
+          "text": "  @Test"
+        },
+        {
+          "line": 2102,
+          "text": "  @Test"
+        },
+        {
+          "line": 2128,
+          "text": "  @Test"
+        },
+        {
+          "line": 2150,
+          "text": "  @Test"
+        },
+        {
+          "line": 2178,
+          "text": "  @Test"
+        },
+        {
+          "line": 2191,
+          "text": "  @Test"
+        },
+        {
+          "line": 2209,
+          "text": "  @Test"
+        },
+        {
+          "line": 2226,
+          "text": "  @Test"
+        },
+        {
+          "line": 2244,
+          "text": "  @Test"
+        },
+        {
+          "line": 2260,
+          "text": "  @Test"
+        },
+        {
+          "line": 2282,
+          "text": "  @Test"
+        },
+        {
+          "line": 2298,
+          "text": "  @Test"
+        },
+        {
+          "line": 2316,
+          "text": "  @Test"
+        },
+        {
+          "line": 2345,
+          "text": "  @Test"
+        },
+        {
+          "line": 2379,
+          "text": "  @Test"
+        },
+        {
+          "line": 2394,
+          "text": "  @Test"
+        },
+        {
+          "line": 2409,
+          "text": "  @Test"
+        },
+        {
+          "line": 2425,
+          "text": "  @Test"
+        },
+        {
+          "line": 2439,
+          "text": "  @Test"
+        },
+        {
+          "line": 2458,
+          "text": "  @Test"
+        },
+        {
+          "line": 2478,
+          "text": "  @Test"
+        },
+        {
+          "line": 2500,
+          "text": "  @Test"
+        },
+        {
+          "line": 2522,
+          "text": "  @Test"
+        },
+        {
+          "line": 2585,
+          "text": "  @Test"
+        },
+        {
+          "line": 2599,
+          "text": "  @Test"
+        },
+        {
+          "line": 2611,
+          "text": "  @Test"
+        },
+        {
+          "line": 2627,
+          "text": "  @Test"
+        },
+        {
+          "line": 2643,
+          "text": "  @Test"
+        },
+        {
+          "line": 2658,
+          "text": "  @Test"
+        },
+        {
+          "line": 2681,
+          "text": "  @Test"
+        },
+        {
+          "line": 2704,
+          "text": "  @Test"
+        },
+        {
+          "line": 2727,
+          "text": "  @Test"
+        },
+        {
+          "line": 2750,
+          "text": "  @Test"
+        },
+        {
+          "line": 2764,
+          "text": "  @Test"
+        },
+        {
+          "line": 2778,
+          "text": "  @Test"
+        },
+        {
+          "line": 2793,
+          "text": "  @Test"
+        },
+        {
+          "line": 2821,
+          "text": "  @Test"
+        },
+        {
+          "line": 2841,
+          "text": "  @Test"
+        },
+        {
+          "line": 2861,
+          "text": "  @Test"
+        },
+        {
+          "line": 2883,
+          "text": "  @Test"
+        },
+        {
+          "line": 2905,
+          "text": "  @Test"
+        },
+        {
+          "line": 2948,
+          "text": "  open class TestSyncProgress : SyncProgress {"
+        },
+        {
+          "line": 2996,
+          "text": "  class ByteBufferShellCollector : ShellCollector<ByteBuffer> {"
+        },
+        {
+          "line": 3011,
+          "text": "  class ShellV2ResultCollector : ShellV2Collector<ShellV2Result> {"
+        },
+        {
+          "line": 3032,
+          "text": "  class ShellV2Result(val stdout: ByteBuffer, val stderr: ByteBuffer, val exitCode: Int)"
+        },
+        {
+          "line": 3034,
+          "text": "  class MyTestException(message: String) : IOException(message)"
+        },
+        {
+          "line": 3036,
+          "text": "  class MyCancellationException(message: String) : CancellationException(message)"
+        },
+        {
+          "line": 3040,
+          "text": "    @JvmStatic"
+        },
+        {
+          "line": 3041,
+          "text": "    @BeforeClass"
+        }
+      ]
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "android-test/android-test-junit-engine/src/test/java/com/android/tools/androidtest/testengine/instrument/AmInstrumentationParserTest.kt",
+      "sha256": "56d9dfe6749b121ed28b51f8e81cb5c18193856224a291c150a7874fb5887127",
+      "bytes": 37424,
+      "archive_member_name": "android-test/android-test-junit-engine/src/test/java/com/android/tools/androidtest/testengine/instrument/AmInstrumentationParserTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/base/android-test/android-test-junit-engine/src/test/java/com/android/tools/androidtest/testengine/instrument/AmInstrumentationParserTest.kt",
+      "relevant_lines": [
+        {
+          "line": 17,
+          "text": "package com.android.tools.androidtest.testengine.instrument"
+        },
+        {
+          "line": 19,
+          "text": "import com.android.tools.androidtest.testengine.instrument.AmInstrumentationParser.Companion.STATUS_CODE_ASSUMPTION_FAILURE"
+        },
+        {
+          "line": 20,
+          "text": "import com.android.tools.androidtest.testengine.instrument.AmInstrumentationParser.Companion.STATUS_CODE_ERROR"
+        },
+        {
+          "line": 21,
+          "text": "import com.android.tools.androidtest.testengine.instrument.AmInstrumentationParser.Companion.STATUS_CODE_FAILURE"
+        },
+        {
+          "line": 22,
+          "text": "import com.android.tools.androidtest.testengine.instrument.AmInstrumentationParser.Companion.STATUS_CODE_IGNORED"
+        },
+        {
+          "line": 23,
+          "text": "import com.android.tools.androidtest.testengine.instrument.AmInstrumentationParser.Companion.STATUS_CODE_OK"
+        },
+        {
+          "line": 24,
+          "text": "import com.google.common.truth.Truth.assertThat"
+        },
+        {
+          "line": 25,
+          "text": "import java.time.Duration"
+        },
+        {
+          "line": 26,
+          "text": "import java.time.Instant"
+        },
+        {
+          "line": 27,
+          "text": "import kotlin.test.assertFailsWith"
+        },
+        {
+          "line": 28,
+          "text": "import org.junit.Before"
+        },
+        {
+          "line": 29,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 30,
+          "text": "import org.junit.runner.RunWith"
+        },
+        {
+          "line": 31,
+          "text": "import org.junit.runners.JUnit4"
+        },
+        {
+          "line": 32,
+          "text": "import org.mockito.ArgumentMatchers.matches"
+        },
+        {
+          "line": 33,
+          "text": "import org.mockito.kotlin.any"
+        },
+        {
+          "line": 34,
+          "text": "import org.mockito.kotlin.argumentCaptor"
+        },
+        {
+          "line": 35,
+          "text": "import org.mockito.kotlin.inOrder"
+        },
+        {
+          "line": 36,
+          "text": "import org.mockito.kotlin.mock"
+        },
+        {
+          "line": 37,
+          "text": "import org.mockito.kotlin.reset"
+        },
+        {
+          "line": 38,
+          "text": "import org.mockito.kotlin.verify"
+        },
+        {
+          "line": 39,
+          "text": "import org.mockito.kotlin.verifyNoMoreInteractions"
+        },
+        {
+          "line": 41,
+          "text": "@RunWith(JUnit4::class)"
+        },
+        {
+          "line": 42,
+          "text": "class AmInstrumentationParserTest {"
+        },
+        {
+          "line": 44,
+          "text": "  private class FakeTime(private var now: Instant, private val autoAdvance: Duration) {"
+        },
+        {
+          "line": 55,
+          "text": "  @Before"
+        },
+        {
+          "line": 62,
+          "text": "  @Test"
+        },
+        {
+          "line": 81,
+          "text": "  @Test"
+        },
+        {
+          "line": 96,
+          "text": "  @Test"
+        },
+        {
+          "line": 117,
+          "text": "  @Test"
+        },
+        {
+          "line": 130,
+          "text": "  @Test"
+        },
+        {
+          "line": 146,
+          "text": "  @Test"
+        },
+        {
+          "line": 159,
+          "text": "  @Test"
+        },
+        {
+          "line": 175,
+          "text": "  @Test"
+        },
+        {
+          "line": 205,
+          "text": "  @Test"
+        },
+        {
+          "line": 224,
+          "text": "  @Test"
+        },
+        {
+          "line": 230,
+          "text": "  @Test"
+        },
+        {
+          "line": 236,
+          "text": "  @Test"
+        },
+        {
+          "line": 248,
+          "text": "  @Test"
+        },
+        {
+          "line": 266,
+          "text": "  @Test"
+        },
+        {
+          "line": 284,
+          "text": "  @Test"
+        },
+        {
+          "line": 302,
+          "text": "  @Test"
+        },
+        {
+          "line": 319,
+          "text": "  @Test"
+        },
+        {
+          "line": 338,
+          "text": "  @Test"
+        },
+        {
+          "line": 353,
+          "text": "  @Test"
+        },
+        {
+          "line": 372,
+          "text": "  @Test"
+        },
+        {
+          "line": 389,
+          "text": "  @Test"
+        },
+        {
+          "line": 408,
+          "text": "  @Test"
+        },
+        {
+          "line": 429,
+          "text": "  @Test"
+        },
+        {
+          "line": 449,
+          "text": "  @Test"
+        },
+        {
+          "line": 466,
+          "text": "  @Test"
+        },
+        {
+          "line": 494,
+          "text": "  @Test"
+        },
+        {
+          "line": 513,
+          "text": "  @Test"
+        },
+        {
+          "line": 535,
+          "text": "  @Test"
+        },
+        {
+          "line": 556,
+          "text": "  @Test"
+        },
+        {
+          "line": 611,
+          "text": "  @Test"
+        },
+        {
+          "line": 645,
+          "text": "  @Test"
+        },
+        {
+          "line": 700,
+          "text": "  @Test"
+        },
+        {
+          "line": 750,
+          "text": "  @Test"
+        },
+        {
+          "line": 815,
+          "text": "  @Test"
+        },
+        {
+          "line": 846,
+          "text": "  @Test"
+        },
+        {
+          "line": 875,
+          "text": "  @Test"
+        },
+        {
+          "line": 891,
+          "text": "  @Test"
+        },
+        {
+          "line": 938,
+          "text": "  @Test"
+        }
+      ]
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "apkparser/analyzer/src/test/java/com/android/tools/apk/analyzer/PathUtilsTest.java",
+      "sha256": "7ff6be795341e7ecd7b68f2f93291db882fedce11e9709e2cf8f714b58bd6a82",
+      "bytes": 2533,
+      "archive_member_name": "apkparser/analyzer/src/test/java/com/android/tools/apk/analyzer/PathUtilsTest.java",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/base/apkparser/analyzer/src/test/java/com/android/tools/apk/analyzer/PathUtilsTest.java",
+      "relevant_lines": [
+        {
+          "line": 17,
+          "text": "package com.android.tools.apk.analyzer;"
+        },
+        {
+          "line": 19,
+          "text": "import static com.google.common.truth.Truth.assertThat;"
+        },
+        {
+          "line": 21,
+          "text": "import com.android.testutils.TestResources;"
+        },
+        {
+          "line": 22,
+          "text": "import java.io.File;"
+        },
+        {
+          "line": 23,
+          "text": "import java.io.IOException;"
+        },
+        {
+          "line": 24,
+          "text": "import java.nio.file.Path;"
+        },
+        {
+          "line": 25,
+          "text": "import org.junit.Test;"
+        },
+        {
+          "line": 26,
+          "text": "import org.junit.runner.RunWith;"
+        },
+        {
+          "line": 27,
+          "text": "import org.junit.runners.JUnit4;"
+        },
+        {
+          "line": 29,
+          "text": "@RunWith(JUnit4.class)"
+        },
+        {
+          "line": 30,
+          "text": "public class PathUtilsTest {"
+        },
+        {
+          "line": 31,
+          "text": "    @Test"
+        },
+        {
+          "line": 44,
+          "text": "    @Test"
+        }
+      ]
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "build-system/aaptcompiler/src/test/java/com/android/aaptcompiler/FloatParsingTest.kt",
+      "sha256": "63773368c6e7c381bf91f4e4f53f45ff331962adea69c91c596dfbc10ee01413",
+      "bytes": 10743,
+      "archive_member_name": "build-system/aaptcompiler/src/test/java/com/android/aaptcompiler/FloatParsingTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/base/build-system/aaptcompiler/src/test/java/com/android/aaptcompiler/FloatParsingTest.kt",
+      "relevant_lines": [
+        {
+          "line": 1,
+          "text": "package com.android.aaptcompiler"
+        },
+        {
+          "line": 3,
+          "text": "import com.google.common.truth.Truth"
+        },
+        {
+          "line": 4,
+          "text": "import org.junit.Ignore"
+        },
+        {
+          "line": 5,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 7,
+          "text": "class FloatParsingTest {"
+        },
+        {
+          "line": 9,
+          "text": "  @Test"
+        },
+        {
+          "line": 29,
+          "text": "  @Test"
+        },
+        {
+          "line": 55,
+          "text": "  @Test"
+        },
+        {
+          "line": 75,
+          "text": "  @Test"
+        },
+        {
+          "line": 112,
+          "text": "  @Test"
+        },
+        {
+          "line": 135,
+          "text": "  @Test"
+        },
+        {
+          "line": 163,
+          "text": "  @Test"
+        },
+        {
+          "line": 187,
+          "text": "  @Test"
+        },
+        {
+          "line": 232,
+          "text": "  @Test"
+        },
+        {
+          "line": 233,
+          "text": "  @Ignore(\"b/303076368\")"
+        }
+      ]
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "build-system/gradle-api/src/main/java/com/android/build/api/instrumentation/AsmClassVisitorFactory.kt",
+      "sha256": "aa1c2f1fcdf6ee6e4db97cd69bd9ce57618b59c3b8891829ac8f83c42316692f",
+      "bytes": 3173,
+      "archive_member_name": "build-system/gradle-api/src/main/java/com/android/build/api/instrumentation/AsmClassVisitorFactory.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/base/build-system/gradle-api/src/main/java/com/android/build/api/instrumentation/AsmClassVisitorFactory.kt",
+      "relevant_lines": [
+        {
+          "line": 17,
+          "text": "package com.android.build.api.instrumentation"
+        },
+        {
+          "line": 19,
+          "text": "import java.io.Serializable"
+        },
+        {
+          "line": 20,
+          "text": "import org.gradle.api.provider.Property"
+        },
+        {
+          "line": 21,
+          "text": "import org.gradle.api.tasks.Nested"
+        },
+        {
+          "line": 22,
+          "text": "import org.objectweb.asm.ClassVisitor"
+        },
+        {
+          "line": 38,
+          "text": "  @get:Nested val parameters: Property<ParametersT>"
+        },
+        {
+          "line": 45,
+          "text": "  @get:Nested val instrumentationContext: InstrumentationContext"
+        }
+      ]
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "path": "build-system/gradle-core/src/test/java/com/android/build/api/artifact/impl/AbstractMultipleArtifactTest.kt",
+      "sha256": "e1034120d26bf31de9e7abe7de26a2342d04bd91c16ae56dbd4d4a6641f0be30",
+      "bytes": 15790,
+      "archive_member_name": "build-system/gradle-core/src/test/java/com/android/build/api/artifact/impl/AbstractMultipleArtifactTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/base/build-system/gradle-core/src/test/java/com/android/build/api/artifact/impl/AbstractMultipleArtifactTest.kt",
+      "relevant_lines": [
+        {
+          "line": 17,
+          "text": "package com.android.build.api.artifact.impl"
+        },
+        {
+          "line": 19,
+          "text": "import com.google.common.truth.Truth.assertThat"
+        },
+        {
+          "line": 20,
+          "text": "import java.lang.RuntimeException"
+        },
+        {
+          "line": 21,
+          "text": "import java.util.concurrent.atomic.AtomicBoolean"
+        },
+        {
+          "line": 22,
+          "text": "import kotlin.test.fail"
+        },
+        {
+          "line": 23,
+          "text": "import org.gradle.api.DefaultTask"
+        },
+        {
+          "line": 24,
+          "text": "import org.gradle.api.Project"
+        },
+        {
+          "line": 25,
+          "text": "import org.gradle.api.file.DirectoryProperty"
+        },
+        {
+          "line": 26,
+          "text": "import org.gradle.api.file.FileSystemLocation"
+        },
+        {
+          "line": 27,
+          "text": "import org.gradle.api.file.FileSystemLocationProperty"
+        },
+        {
+          "line": 28,
+          "text": "import org.gradle.api.model.ObjectFactory"
+        },
+        {
+          "line": 29,
+          "text": "import org.gradle.api.provider.ListProperty"
+        },
+        {
+          "line": 30,
+          "text": "import org.gradle.api.provider.Provider"
+        },
+        {
+          "line": 31,
+          "text": "import org.gradle.api.tasks.OutputFile"
+        },
+        {
+          "line": 32,
+          "text": "import org.gradle.api.tasks.OutputFiles"
+        },
+        {
+          "line": 33,
+          "text": "import org.gradle.api.tasks.TaskContainer"
+        },
+        {
+          "line": 34,
+          "text": "import org.gradle.api.tasks.TaskProvider"
+        },
+        {
+          "line": 35,
+          "text": "import org.gradle.testfixtures.ProjectBuilder"
+        },
+        {
+          "line": 36,
+          "text": "import org.junit.Before"
+        },
+        {
+          "line": 37,
+          "text": "import org.junit.Ignore"
+        },
+        {
+          "line": 38,
+          "text": "import org.junit.Rule"
+        },
+        {
+          "line": 39,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 40,
+          "text": "import org.junit.rules.TemporaryFolder"
+        },
+        {
+          "line": 42,
+          "text": "@Ignore"
+        },
+        {
+          "line": 43,
+          "text": "abstract class AbstractMultipleArtifactTest<T : FileSystemLocation>("
+        },
+        {
+          "line": 49,
+          "text": "  @Rule @JvmField val tmpDir: TemporaryFolder = TemporaryFolder()"
+        },
+        {
+          "line": 52,
+          "text": "  @Before"
+        },
+        {
+          "line": 66,
+          "text": "  @Test"
+        },
+        {
+          "line": 86,
+          "text": "  @Test"
+        },
+        {
+          "line": 101,
+          "text": "  @Test(expected = RuntimeException::class)"
+        },
+        {
+          "line": 121,
+          "text": "  @Test"
+        },
+        {
+          "line": 140,
+          "text": "        @Suppress(\"Unchecked_cast\") final.add(allocateValue(\"foo\") as Provider<out Nothing>)"
+        },
+        {
+          "line": 148,
+          "text": "  @Test"
+        },
+        {
+          "line": 173,
+          "text": "        @Suppress(\"Unchecked_cast\") currentValues.add(allocateValue(\"foo\") as Provider<out Nothing>)"
+        },
+        {
+          "line": 181,
+          "text": "  @Test"
+        },
+        {
+          "line": 209,
+          "text": "  @Test"
+        },
+        {
+          "line": 235,
+          "text": "  @Test"
+        },
+        {
+          "line": 389,
+          "text": "  abstract class MultipleProducerTask<T : FileSystemLocation> : DefaultTask() {"
+        },
+        {
+          "line": 390,
+          "text": "    @OutputFiles abstract fun getOutputFiles(): ListProperty<T>"
+        },
+        {
+          "line": 393,
+          "text": "  abstract class MultipleArtifactTransformTask<T : FileSystemLocation> : DefaultTask() {"
+        },
+        {
+          "line": 394,
+          "text": "    @get:OutputFile abstract val transformedOutput: FileSystemLocationProperty<T>"
+        }
+      ]
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "sha256": "16a828d742ef6bec8b5cf52c813624c3c3a99d97dafcc40f9e1c5b89d06462b5",
+      "bytes": 879,
+      "archive_member_name": "android-132bc7c3cf52598117590637d00e81b929444bde/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/AdtUiTestSuite.java",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.adtui;"
+        },
+        {
+          "line": 18,
+          "text": "import com.android.testutils.JarTestSuiteRunner;"
+        },
+        {
+          "line": 19,
+          "text": "import com.android.tools.tests.IdeaTestSuiteBase;"
+        },
+        {
+          "line": 20,
+          "text": "import org.junit.runner.RunWith;"
+        },
+        {
+          "line": 22,
+          "text": "@RunWith(JarTestSuiteRunner.class)"
+        },
+        {
+          "line": 23,
+          "text": "public class AdtUiTestSuite extends IdeaTestSuiteBase {"
+        }
+      ]
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "sha256": "f524898eb42526b57242d0c79db1ecf88ead8105a623eb7c64d57cea45d47bb6",
+      "bytes": 4236,
+      "archive_member_name": "android-132bc7c3cf52598117590637d00e81b929444bde/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/TabbedToolbarTest.kt",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.adtui"
+        },
+        {
+          "line": 18,
+          "text": "import com.android.tools.adtui.stdui.CommonButton"
+        },
+        {
+          "line": 19,
+          "text": "import com.google.common.truth.Truth.assertThat"
+        },
+        {
+          "line": 20,
+          "text": "import com.intellij.testFramework.EdtRule"
+        },
+        {
+          "line": 21,
+          "text": "import com.intellij.testFramework.RunsInEdt"
+        },
+        {
+          "line": 22,
+          "text": "import com.intellij.util.containers.isEmpty"
+        },
+        {
+          "line": 23,
+          "text": "import icons.StudioIcons"
+        },
+        {
+          "line": 24,
+          "text": "import javax.swing.JLabel"
+        },
+        {
+          "line": 25,
+          "text": "import org.junit.Rule"
+        },
+        {
+          "line": 26,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 28,
+          "text": "@RunsInEdt(writeIntent = false)"
+        },
+        {
+          "line": 29,
+          "text": "class TabbedToolbarTest {"
+        },
+        {
+          "line": 30,
+          "text": "  @get:Rule val edtRule = EdtRule()"
+        },
+        {
+          "line": 32,
+          "text": "  @Test"
+        },
+        {
+          "line": 40,
+          "text": "  @Test"
+        },
+        {
+          "line": 55,
+          "text": "  @Test"
+        },
+        {
+          "line": 71,
+          "text": "  @Test"
+        },
+        {
+          "line": 85,
+          "text": "  @Test"
+        },
+        {
+          "line": 101,
+          "text": "  @Test"
+        },
+        {
+          "line": 121,
+          "text": "  @Test"
+        }
+      ]
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "path": "adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "sha256": "bb4496f6f969e846da2b1970fb79067148ddb44f881fee95980ccd18bcf5cddc",
+      "bytes": 2923,
+      "archive_member_name": "android-132bc7c3cf52598117590637d00e81b929444bde/adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/jetbrains-android/adt-ui/src/test/java/com/android/tools/adtui/actions/PanSurfaceActionTest.kt",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.adtui.actions"
+        },
+        {
+          "line": 18,
+          "text": "import com.android.tools.adtui.PANNABLE_KEY"
+        },
+        {
+          "line": 19,
+          "text": "import com.android.tools.adtui.Pannable"
+        },
+        {
+          "line": 20,
+          "text": "import com.intellij.openapi.actionSystem.AnActionEvent"
+        },
+        {
+          "line": 21,
+          "text": "import com.intellij.openapi.actionSystem.DataContext"
+        },
+        {
+          "line": 22,
+          "text": "import com.intellij.openapi.actionSystem.impl.SimpleDataContext"
+        },
+        {
+          "line": 23,
+          "text": "import com.intellij.testFramework.ApplicationRule"
+        },
+        {
+          "line": 24,
+          "text": "import com.intellij.testFramework.TestActionEvent"
+        },
+        {
+          "line": 25,
+          "text": "import org.junit.Assert.assertFalse"
+        },
+        {
+          "line": 26,
+          "text": "import org.junit.Assert.assertTrue"
+        },
+        {
+          "line": 27,
+          "text": "import org.junit.Before"
+        },
+        {
+          "line": 28,
+          "text": "import org.junit.Rule"
+        },
+        {
+          "line": 29,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 30,
+          "text": "import org.junit.runner.RunWith"
+        },
+        {
+          "line": 31,
+          "text": "import org.junit.runners.JUnit4"
+        },
+        {
+          "line": 32,
+          "text": "import org.mockito.Mockito.mock"
+        },
+        {
+          "line": 33,
+          "text": "import org.mockito.Mockito.verify"
+        },
+        {
+          "line": 34,
+          "text": "import org.mockito.kotlin.whenever"
+        },
+        {
+          "line": 36,
+          "text": "@RunWith(JUnit4::class)"
+        },
+        {
+          "line": 37,
+          "text": "class PanSurfaceActionTest {"
+        },
+        {
+          "line": 38,
+          "text": "  @get:Rule val applicationRule = ApplicationRule()"
+        },
+        {
+          "line": 52,
+          "text": "  @Before"
+        },
+        {
+          "line": 58,
+          "text": "  @Test"
+        },
+        {
+          "line": 66,
+          "text": "  @Test"
+        },
+        {
+          "line": 74,
+          "text": "  @Test"
+        },
+        {
+          "line": 81,
+          "text": "  @Test"
+        },
+        {
+          "line": 87,
+          "text": "  @Test"
+        },
+        {
+          "line": 93,
+          "text": "  @Test"
+        }
+      ]
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "path": "android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "sha256": "e63aa8bcd300922c731ba1c27be470dcafd808021c8906082d62f8f0e7e6c762",
+      "bytes": 16649,
+      "archive_member_name": "android-132bc7c3cf52598117590637d00e81b929444bde/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/jetbrains-android/android/gradle/testSrc/com/android/tools/idea/gradle/project/GradleModuleImportTest.java",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.idea.gradle.project;"
+        },
+        {
+          "line": 18,
+          "text": "import static com.android.tools.idea.Projects.getBaseDirPath;"
+        },
+        {
+          "line": 19,
+          "text": "import static com.android.tools.idea.gradle.util.GradleProjectSystemUtil.getDefaultPhysicalPathFromGradlePath;"
+        },
+        {
+          "line": 20,
+          "text": "import static com.google.common.base.Strings.isNullOrEmpty;"
+        },
+        {
+          "line": 21,
+          "text": "import static com.google.common.collect.Iterables.concat;"
+        },
+        {
+          "line": 22,
+          "text": "import static com.google.common.collect.Iterables.contains;"
+        },
+        {
+          "line": 23,
+          "text": "import static com.google.common.collect.Iterables.transform;"
+        },
+        {
+          "line": 24,
+          "text": "import static com.google.common.io.Files.write;"
+        },
+        {
+          "line": 25,
+          "text": "import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;"
+        },
+        {
+          "line": 26,
+          "text": "import static com.intellij.util.PathUtil.toSystemIndependentName;"
+        },
+        {
+          "line": 28,
+          "text": "import com.android.SdkConstants;"
+        },
+        {
+          "line": 29,
+          "text": "import com.android.tools.idea.gradle.dsl.api.GradleSettingsModel;"
+        },
+        {
+          "line": 30,
+          "text": "import com.android.tools.idea.gradle.dsl.api.ProjectBuildModel;"
+        },
+        {
+          "line": 31,
+          "text": "import com.android.tools.idea.projectsystem.ProjectSystemService;"
+        },
+        {
+          "line": 32,
+          "text": "import com.android.tools.idea.projectsystem.gradle.GradleProjectSystem;"
+        },
+        {
+          "line": 33,
+          "text": "import com.android.tools.idea.sdk.IdeSdks;"
+        },
+        {
+          "line": 34,
+          "text": "import com.google.common.base.Function;"
+        },
+        {
+          "line": 35,
+          "text": "import com.google.common.base.Functions;"
+        },
+        {
+          "line": 36,
+          "text": "import com.google.common.base.Joiner;"
+        },
+        {
+          "line": 37,
+          "text": "import com.google.common.collect.Maps;"
+        },
+        {
+          "line": 38,
+          "text": "import com.intellij.openapi.project.Project;"
+        },
+        {
+          "line": 39,
+          "text": "import com.intellij.openapi.vfs.VirtualFile;"
+        },
+        {
+          "line": 40,
+          "text": "import com.intellij.testFramework.HeavyPlatformTestCase;"
+        },
+        {
+          "line": 41,
+          "text": "import com.intellij.testFramework.PlatformTestUtil;"
+        },
+        {
+          "line": 42,
+          "text": "import java.io.File;"
+        },
+        {
+          "line": 43,
+          "text": "import java.io.IOException;"
+        },
+        {
+          "line": 44,
+          "text": "import java.nio.charset.Charset;"
+        },
+        {
+          "line": 45,
+          "text": "import java.util.Arrays;"
+        },
+        {
+          "line": 46,
+          "text": "import java.util.Collection;"
+        },
+        {
+          "line": 47,
+          "text": "import java.util.Collections;"
+        },
+        {
+          "line": 48,
+          "text": "import java.util.HashMap;"
+        },
+        {
+          "line": 49,
+          "text": "import java.util.LinkedList;"
+        },
+        {
+          "line": 50,
+          "text": "import java.util.Map;"
+        },
+        {
+          "line": 51,
+          "text": "import java.util.Set;"
+        },
+        {
+          "line": 52,
+          "text": "import java.util.stream.Collectors;"
+        },
+        {
+          "line": 53,
+          "text": "import org.jetbrains.annotations.NotNull;"
+        },
+        {
+          "line": 58,
+          "text": "@SuppressWarnings(\"JUnitTestCaseWithNoTests\") // Named differently, didn't want to do too much unnecessary setups"
+        },
+        {
+          "line": 59,
+          "text": "public final class GradleModuleImportTest extends HeavyPlatformTestCase {"
+        },
+        {
+          "line": 131,
+          "text": "  @NotNull"
+        },
+        {
+          "line": 150,
+          "text": "  @Override"
+        },
+        {
+          "line": 338,
+          "text": "  @Override"
+        }
+      ]
+    },
+    {
+      "source": "jetbrains-android",
+      "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+      "path": "project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "sha256": "e79c781a5e7f96a24a1f55278351cb708d8f2a5417ad676f78b925b47430544a",
+      "bytes": 4197,
+      "archive_member_name": "android-132bc7c3cf52598117590637d00e81b929444bde/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "license": "Apache-2.0",
+      "artifact_path": "/workspace/android-studio-artifacts/reference-census-next-task/sources/jetbrains-android/project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt",
+      "relevant_lines": [
+        {
+          "line": 16,
+          "text": "package com.android.tools.idea.gradle.project.sync"
+        },
+        {
+          "line": 18,
+          "text": "import com.android.utils.appendCapitalized"
+        },
+        {
+          "line": 19,
+          "text": "import com.android.utils.combineAsCamelCase"
+        },
+        {
+          "line": 20,
+          "text": "import com.google.common.truth.Truth.assertThat"
+        },
+        {
+          "line": 21,
+          "text": "import org.junit.Test"
+        },
+        {
+          "line": 23,
+          "text": "class DefaultVariantsTest {"
+        },
+        {
+          "line": 25,
+          "text": "  @Test"
+        },
+        {
+          "line": 37,
+          "text": "  @Test"
+        },
+        {
+          "line": 50,
+          "text": "  @Test"
+        },
+        {
+          "line": 63,
+          "text": "  @Test"
+        },
+        {
+          "line": 77,
+          "text": "  @Test"
+        },
+        {
+          "line": 96,
+          "text": "  @Test"
+        },
+        {
+          "line": 115,
+          "text": "  @Test"
+        },
+        {
+          "line": 129,
+          "text": "  @Test"
+        }
+      ]
+    }
+  ]
+}

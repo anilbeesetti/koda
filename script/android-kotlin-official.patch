@@ -1,6 +1,6 @@
 --- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/androidUtils.kt
 +++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/androidUtils.kt
-@@ -2,30 +2,77 @@
+@@ -2,30 +2,87 @@
  package com.jetbrains.ls.imports.gradle.model.builder.android
  
  import com.jetbrains.ls.imports.gradle.utils.AndroidVariantReflection
@@ -33,6 +33,16 @@
 +internal fun Iterable<AndroidVariantReflection>.selectActiveVariant(): AndroidVariantReflection? {
 +    val variants = toList()
 +    val project = variants.firstOrNull()?.project ?: return null
++    val sharedSelection = project.selection("lsp.android.variants", "LSP_ANDROID_VARIANTS")
++        ?.takeIf { it.isNotBlank() }?.split(';')?.associate { entry ->
++            val parts = entry.split('=', limit = 2)
++            if (parts.size != 2 || parts.any { it.isBlank() }) throw GradleException("Invalid shared Android variant selection: $entry")
++            parts[0] to parts[1]
++        }
++    sharedSelection?.get(project.path)?.let { name ->
++        return variants.singleOrNull { it.name == name }
++            ?: throw GradleException("Shared Android variant $name does not exist in ${project.path}; sync Koda again")
++    }
 +    val selectedName = project.selection(SELECTED_ANDROID_VARIANT_KEY, SELECTED_ANDROID_VARIANT_ENV_KEY)
 +    val selectedModule = project.selection("lsp.android.module", "LSP_ANDROID_MODULE")
 +    val selectedProject = selectedModule?.let { module ->
@@ -244,36 +254,80 @@
                  // if a user has some java support installed, then the hover results will be duplicated
 --- a/workspace-import/src/com/jetbrains/ls/imports/gradle/GradleWorkspaceImporter.kt
 +++ b/workspace-import/src/com/jetbrains/ls/imports/gradle/GradleWorkspaceImporter.kt
-@@ -5,6 +5,12 @@
- 
- import com.intellij.openapi.diagnostic.logger
- import com.intellij.openapi.project.Project
+@@ -7,0 +8,6 @@
 +import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 +import com.intellij.java.workspace.entities.javaSourceRoots
 +import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 +import com.intellij.platform.workspace.jps.entities.modifySourceRootEntity
 +import com.intellij.platform.workspace.jps.serialization.impl.toPath
 +import com.intellij.platform.workspace.storage.entities
- import com.intellij.platform.workspace.storage.EntityStorage
- import com.intellij.platform.workspace.storage.MutableEntityStorage
- import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
-@@ -117,6 +123,16 @@
-                 ignoreDuplicateLibsAndSdks = true,
-                 "GRADLE"
-             )
+@@ -31,0 +38,6 @@
++import kotlinx.serialization.json.Json
++import kotlinx.serialization.json.JsonArray
++import kotlinx.serialization.json.JsonObject
++import kotlinx.serialization.json.JsonPrimitive
++import kotlinx.serialization.json.booleanOrNull
++import kotlinx.serialization.json.contentOrNull
+@@ -119,0 +132,3 @@
 +            val buildDirectories = gradleProjectData.includedProjects.flatMap { it.modules }
 +                .map { it.gradleProject.buildDirectory.toPath().toAbsolutePath().normalize() }
-+            for (sourceRoot in entities<SourceRootEntity>().toList()) {
-+                if (sourceRoot.rootTypeId.name in setOf("java-source", "java-test") &&
-+                    buildDirectories.any { sourceRoot.url.toPath().toAbsolutePath().normalize().startsWith(it) }) {
-+                    modifySourceRootEntity(sourceRoot) {
-+                        javaSourceRoots = listOf(JavaSourceRootPropertiesEntity(true, "", entitySource))
-+                    }
-+                }
++            markGeneratedSources(buildDirectories, sharedGeneratedSources(parameters, gradleProjectData))
+@@ -152,0 +168,55 @@
++
++
++private fun MutableEntityStorage.markGeneratedSources(buildDirectories: List<Path>, sharedSources: Map<Path, Boolean>) {
++    for (sourceRoot in entities<SourceRootEntity>().toList()) {
++        if (sourceRoot.rootTypeId.name !in setOf("java-source", "java-test")) continue
++        val path = sourceRoot.url.toPath().toAbsolutePath().normalize()
++        // Explicit task/static registration wins over the fallback for native modules outside the shared selection.
++        val generated = sharedSources[path] ?: buildDirectories.any { path.startsWith(it) }
++        if (generated) {
++            modifySourceRootEntity(sourceRoot) {
++                javaSourceRoots = listOf(JavaSourceRootPropertiesEntity(true,
++                    sourceRoot.javaSourceRoots.singleOrNull()?.packagePrefix ?: "", sourceRoot.entitySource))
 +            }
-             fixMissingProjectSdk(parameters.options.javaHome ?: defaultSdkPath, virtualFileUrlManager)
-         }
-     }
++        }
++    }
++}
++
++private fun sharedGeneratedSources(parameters: WorkspaceImportParameters, metadata: ProjectMetadata): Map<Path, Boolean> {
++    val path = (parameters.options.systemProperties["lsp.android.model"]
++        ?: parameters.options.environment["LSP_ANDROID_MODEL"] ?: System.getenv("LSP_ANDROID_MODEL"))
++        ?.takeIf { it.isNotBlank() } ?: return emptyMap()
++    fun invalid(): Nothing = throw IllegalArgumentException("Invalid shared Android generated-source model; sync Koda again")
++    fun JsonObject.string(key: String): String = (this[key] as? JsonPrimitive)?.contentOrNull ?: invalid()
++    val root = parameters.projectDirectory.toFile().canonicalFile.toPath()
++    val records = Json.parseToJsonElement(File(path).readText()) as? JsonArray ?: invalid()
++    val importedModules = metadata.includedProjects.flatMap { it.modules }
++    val seen = hashSetOf<String>()
++    val result = linkedMapOf<Path, Boolean>()
++    for (entry in records) {
++        val module = entry as? JsonObject ?: invalid()
++        val modulePath = module.string("project")
++        if (!seen.add(modulePath)) invalid()
++        val directory = File(module.string("directory")).canonicalFile
++        val imported = importedModules.singleOrNull {
++            it.gradleProject.path == modulePath && it.gradleProject.projectDirectory.canonicalFile == directory
++        } ?: invalid()
++        if (module.string("kind") != "jvm") {
++            val android = metadata.androidProjects.values.singleOrNull { it.buildTreePath == imported.gradleProject.buildTreePath }
++            if (android?.activeVariant != module.string("variant")) invalid()
++        }
++        for (entry in module["components"] as? JsonArray ?: invalid()) {
++            val component = entry as? JsonObject ?: invalid()
++            for (entry in component["sources"] as? JsonArray ?: invalid()) {
++                val source = entry as? JsonObject ?: invalid()
++                if (source.string("kind") !in setOf("java", "kotlin")) continue
++                val file = File(source.string("path"))
++                val sourcePath = file.canonicalFile.toPath()
++                if (!file.isAbsolute || !sourcePath.startsWith(root)) invalid()
++                val generated = (source["generated"] as? JsonPrimitive)?.booleanOrNull ?: invalid()
++                result[sourcePath] = result[sourcePath] == true || generated
++            }
++        }
++    }
++    return result
++}
 --- a/features-impl/common/src/com/jetbrains/ls/api/features/impl/common/processors/LSRenameProcessor.kt
 +++ b/features-impl/common/src/com/jetbrains/ls/api/features/impl/common/processors/LSRenameProcessor.kt
 @@ -3,6 +3,7 @@
@@ -663,4 +717,99 @@
 +
 +    val UnregisterCapabilityRequestType: RequestType<UnregistrationParams, Unit, Unit> =
 +      RequestType("client/unregisterCapability", UnregistrationParams.serializer(), Unit.serializer(), Unit.serializer())
++}
+--- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/utils/androidReflection.kt
++++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/utils/androidReflection.kt
+@@ -62,19 +62,2 @@
+-            runCatching {
+-                val hostTestClass = Class.forName("com.android.build.api.variant.HostTest", true, source.javaClass.classLoader)
+-                if (hostTestClass.isInstance(source)) {
+-                    return@mapNotNull AndroidHostTestComponentReflection(project, source.reflected)
+-                }
+-            }.onFailure {
+-                project.logger.error("Failed to resolve Android component", it)
+-            }
+-
+-            runCatching {
+-                val hostTestClass = Class.forName("com.android.build.api.variant.DeviceTest", true, source.javaClass.classLoader)
+-                if (hostTestClass.isInstance(source)) {
+-                    return@mapNotNull AndroidDeviceTestComponentReflection(project, source.reflected)
+-                }
+-            }.onFailure {
+-                project.logger.error("Failed to resolve Android component", it)
+-            }
+-
+-            null
++            // All nested components expose the same source/configuration API, including legacy tests and fixtures.
++            AndroidNestedComponentReflection(project, source.reflected)
+@@ -140 +123,2 @@
+-class AndroidDeviceTestComponentReflection(project: Project, reflected: Reflected.Instance) : AndroidComponentReflection(project, reflected)
+\ No newline at end of file
++class AndroidDeviceTestComponentReflection(project: Project, reflected: Reflected.Instance) : AndroidComponentReflection(project, reflected)
++class AndroidNestedComponentReflection(project: Project, reflected: Reflected.Instance) : AndroidComponentReflection(project, reflected)
+--- a/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/resolveAndroidSourceSets.kt
++++ b/workspace-import/gradle-plugin/src/com/jetbrains/ls/imports/gradle/model/builder/android/resolveAndroidSourceSets.kt
+@@ -16,0 +17,2 @@
++import groovy.json.JsonSlurper
++import org.gradle.api.GradleException
+@@ -31 +33,6 @@
+-    val main = variant.resolveToModuleSourceSet() ?: return null
++    val sharedSources = variant.project.sharedAndroidSources(variant.name)
++    val components = listOf(variant) + variant.nestedComponents.orEmpty()
++    if (sharedSources != null && sharedSources.keys != components.mapNotNull { it.name }.toSet()) {
++        throw GradleException("Shared Android components changed in ${variant.project.path}; sync Koda again")
++    }
++    val main = variant.resolveToModuleSourceSet(sharedSources?.get(variant.name)) ?: return null
+@@ -33 +40 @@
+-        .mapNotNull { nested -> nested.resolveToModuleSourceSet() }
++        .mapNotNull { nested -> nested.resolveToModuleSourceSet(sharedSources?.get(nested.name)) }
+@@ -38 +45 @@
+-private fun AndroidComponentReflection.resolveToModuleSourceSet(): ModuleSourceSet? {
++private fun AndroidComponentReflection.resolveToModuleSourceSet(sharedSources: SharedAndroidSources?): ModuleSourceSet? {
+@@ -76 +83 @@
+-        /* sources = */ buildMutableSet {
++        /* sources = */ sharedSources?.sources ?: buildMutableSet {
+@@ -80 +87 @@
+-        /* resources = */sources?.resources?.get().orEmpty().map { it.asFile }.toMutableSet(),
++        /* resources = */ sharedSources?.resources ?: sources?.resources?.get().orEmpty().map { it.asFile }.toMutableSet(),
+@@ -107 +114,38 @@
+-}
+\ No newline at end of file
++}
++
++private data class SharedAndroidSources(val sources: MutableSet<File>, val resources: MutableSet<File>)
++
++private fun Project.sharedAndroidSources(variant: String?): Map<String, SharedAndroidSources>? {
++    val path = providers.gradleProperty("lsp.android.model").orElse(providers.systemProperty("lsp.android.model"))
++        .orElse(providers.environmentVariable("LSP_ANDROID_MODEL")).orNull?.takeIf { it.isNotBlank() } ?: return null
++    fun invalid(): Nothing = throw GradleException("Invalid shared Android source model for $this; sync Koda again")
++    val records = JsonSlurper().parse(File(path)) as? List<*> ?: invalid()
++    val modules = records.map { it as? Map<*, *> ?: invalid() }.filter { it["project"] == this.path }
++    if (modules.isEmpty()) return null
++    val module = modules.singleOrNull() ?: invalid()
++    val directory = module["directory"] as? String ?: invalid()
++    if (module["variant"] != variant || File(directory).canonicalFile != projectDir.canonicalFile) {
++        throw GradleException("Shared Android variant or directory changed in ${this.path}; sync Koda again")
++    }
++    val result = linkedMapOf<String, SharedAndroidSources>()
++    for (entry in module["components"] as? List<*> ?: invalid()) {
++        val component = entry as? Map<*, *> ?: invalid()
++        val name = component["name"] as? String ?: invalid()
++        val sourceFiles = linkedSetOf<File>()
++        val resourceFiles = linkedSetOf<File>()
++        for (entry in component["sources"] as? List<*> ?: invalid()) {
++            val source = entry as? Map<*, *> ?: invalid()
++            val sourcePath = source["path"] as? String ?: invalid()
++            val file = File(sourcePath)
++            if (!file.isAbsolute || source["generated"] !is Boolean) invalid()
++            when (source["kind"]) {
++                "java", "kotlin" -> sourceFiles.add(file)
++                "resources" -> resourceFiles.add(file)
++                "manifest" -> Unit
++                else -> invalid()
++            }
++        }
++        if (name.isBlank() || result.put(name, SharedAndroidSources(sourceFiles, resourceFiles)) != null) invalid()
++    }
++    return result
 +}

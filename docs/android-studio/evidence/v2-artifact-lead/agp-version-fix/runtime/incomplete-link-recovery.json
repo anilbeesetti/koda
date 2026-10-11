@@ -1,0 +1,29 @@
+{
+  "tested_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "reason": "Normal unit-test final linker terminated with SIGBUS before any test execution; limited overlay output capacity suspected, not proven by an explicit ENOSPC message. Retire exactly the owned incomplete linker output and oversized unit codegen object for an unchanged-source normal retry.",
+  "first_raw_failure_sha256": "78a2c836810d67af6edc2effe48944bcc999d45f359827bc7d7e4a58c24e6e83",
+  "test_executions_in_failed_attempt": 0,
+  "no_live_compiler_or_open_artifact_found": true,
+  "files": [
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.tmp4cc1fbe",
+      "bytes": 303989152,
+      "allocated_bytes": 14311424,
+      "sha256": "6ac4dea204c4b12ceb5c935506cc4c12ba2e3377d808c4307ccdbb3243934020",
+      "nlink": 1,
+      "mtime": 1791411476.088036
+    },
+    {
+      "path": "/workspace/.cache/zed/target/debug/deps/android_tools-7334319486a8ebb2.android_tools.2180e8a756bf797d-cgu.10.rcgu.o",
+      "bytes": 290576408,
+      "allocated_bytes": 290582528,
+      "sha256": "c967916caaa6042d435fc4acf9bba3621cf99da517654034a21da1cf1eb2ba6a",
+      "nlink": 1,
+      "mtime": 1791411475.6680288
+    }
+  ],
+  "available_bytes_before": 299913216,
+  "source_fixtures_tests_and_logs_removed": false,
+  "available_bytes_after": 604803072,
+  "retired_only_identified_incomplete_caches": true
+}

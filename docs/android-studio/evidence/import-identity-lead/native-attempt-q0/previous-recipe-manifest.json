@@ -1,0 +1,60 @@
+{
+  "executed": false,
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "unchanged_prior_recipes": [
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/prepare.py",
+      "retained_copy": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/previous-recipes/prepare.py",
+      "bytes": 4985,
+      "sha256": "6b0c5a16f2182f342d11c6b925f792a27b08992809883b474f9fc1695c01babf"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/guard.py",
+      "retained_copy": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/previous-recipes/guard.py",
+      "bytes": 2181,
+      "sha256": "50325449b6005756e508a827c6b6f1818a2f668e7dc033f2bde7e6bb69fd36a4"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/capture-gradle.py",
+      "retained_copy": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/previous-recipes/capture-gradle.py",
+      "bytes": 1950,
+      "sha256": "2c71815a6addad3da116c1e8ed4924e2ea6a7b40960c413a12884cfbf6b0335e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/events.py",
+      "retained_copy": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/previous-recipes/events.py",
+      "bytes": 3833,
+      "sha256": "687e73bd962eeac9d87cdef1abd790b225e56bd56c640d1ad85802234d2a6ba0"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/verify-models.py",
+      "retained_copy": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/previous-recipes/verify-models.py",
+      "bytes": 4533,
+      "sha256": "08051c9733bdb074a7cf884815c4d2aaa057874fcafcc6381db6d4109e19ae0e"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/finalize-proof.py",
+      "retained_copy": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/previous-recipes/finalize-proof.py",
+      "bytes": 11035,
+      "sha256": "dd7ae82e5fb3dccedc5431d37d122c29c45c533204fe88ce8e9f666f70fba64c"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/stop-owned-app.py",
+      "retained_copy": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/previous-recipes/stop-owned-app.py",
+      "bytes": 1970,
+      "sha256": "62d0df10364be8addc7fb8605148ce95ac0fe3827c6973f50cbfc4bd6675f3ce"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/input-replay-plan.json",
+      "retained_copy": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/previous-recipes/input-replay-plan.json",
+      "bytes": 12343,
+      "sha256": "1200f28c64278a8c39c90eb6f795126842b79a74ecc9ffc64ae5dcfb35f039f2"
+    },
+    {
+      "path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/runtime-probe.rs",
+      "retained_copy": "/workspace/android-studio-artifacts/import-identity-native-7e3f72e/previous-recipes/runtime-probe.rs",
+      "bytes": 9689,
+      "sha256": "0e6cb4ff731f9b228334e6dc19094d04b2e247dc1e93ebf709c0cbd7e6c1e5cc"
+    }
+  ]
+}

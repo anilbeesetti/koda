@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "scope": "Current-source V2 lead integration gates; protected merge follows final metadata equivalence.",
+  "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "exact_exclusions": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "whole_source_files": 4712,
+  "checks": {
+    "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+    "all_features_tests": 231,
+    "UI_tests_passed": 125,
+    "UI_pre_existing_ignored": 1,
+    "exact_reference_cases_passed": 35,
+    "whole_source_files": 4712,
+    "full_app_build": "PASS",
+    "native_SDK_models": "PASS",
+    "keyboard_replay_paired_commands": 48,
+    "cleanup": "PASS",
+    "library_build": "PASS",
+    "strict_clippy": "PASS",
+    "format": "PASS",
+    "full_workspace_CI": {
+      "run_id": 37695121709,
+      "head_sha": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+      "all_three_jobs": "success",
+      "workspace_tests": {
+        "passed": 10480,
+        "failed": 0,
+        "pre_existing_skipped": 23,
+        "execution_seconds": 2300.758
+      },
+      "CI_synthetic_merge": "d34988bd9c8535f4499a99164c2130d47c2c66b4",
+      "CI_synthetic_tree": "6b84b2d512405eba30658cc9d92577570f4e4796",
+      "synthetic_tree_equals_tested_source_tree": true,
+      "raw_log_bytes": 425715,
+      "raw_log_sha256": "4b636089a7a2cfbf8888f1d0a6390cd48f8903e583d2eeb42a99534a3ed97d39",
+      "app_build_step": "success"
+    }
+  },
+  "reviews": {
+    "code": {
+      "verdict": "PASS",
+      "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-lead/agp-version-fix/code-runtime-addendum-round3.json",
+      "sha256": "dab98e48bea110cd1b84b15580b72cabbda54ad5e4e804c2f05db9ab5258f7d1",
+      "scope": "Corrected product source and completed local/runtime gates; full CI separately passed."
+    },
+    "ui": {
+      "verdict": "PASS",
+      "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-lead/agp-version-fix/ui-runtime-addendum-round3.json",
+      "sha256": "81205fd06b17d0d3cea3d80e6b64f8e8262a453051e26f97d248cbe981b7ebeb",
+      "scope": "Corrected product source and completed local/runtime gates; full CI separately passed."
+    },
+    "ux": {
+      "verdict": "PASS",
+      "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-lead/agp-version-fix/ux-runtime-addendum-round3.json",
+      "sha256": "766bbeb18ff1436032b91892614cee2a53cc90817d52c801dc2ba4490e1aadb0",
+      "scope": "Corrected product source and completed local/runtime gates; full CI separately passed."
+    },
+    "performance": {
+      "verdict": "PASS",
+      "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-lead/agp-version-fix/performance-runtime-addendum-round3.json",
+      "sha256": "bd74b44280978be2df73412543eb50a8165981046b332a5012b9788560c81699",
+      "scope": "Corrected product source and completed local/runtime gates; full CI separately passed."
+    },
+    "quality": {
+      "verdict": "PASS",
+      "source_commit": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+      "portable_report": "docs/android-studio/evidence/v2-artifact-lead/agp-version-fix/code-quality-runtime-addendum-round3.json",
+      "sha256": "0e97021b0df6175d3211ad3440c9303f9ad66e6aceefe8f89628b32e05843394",
+      "scope": "Corrected product source and completed local/runtime gates; full CI separately passed."
+    }
+  },
+  "selected_parity": {
+    "selected": 95,
+    "ported": 19,
+    "adapted": 16,
+    "unported": 60,
+    "not_applicable": 0,
+    "passing": 35,
+    "failing": 0,
+    "global_census_complete": false
+  },
+  "original_reference_tests_deleted_skipped_or_weakened": false,
+  "wrong_supplemental_DEV_tuple_correction": [
+    {
+      "test": "classpaths_use_model_or_exact_legacy_agp_boundary",
+      "prior_case": [
+        8,
+        8,
+        "8.2.0-dev",
+        false
+      ],
+      "corrected_case": [
+        8,
+        8,
+        "8.2.0-dev",
+        true
+      ],
+      "reason": "The supplemental expected false value was wrong: pinned AgpVersion places DEV after RC and before stable, so it meets >=8.2.0-alpha07. The original upstream tests are untouched; the prior full supplemental test source remains preserved and no case/assertion was removed.",
+      "source_snapshot_commit": "b23db3d372fe3e9d01c223bdce3e65e55ff2b186",
+      "new_supplemental_tests": [
+        "classpath_dev_versions_follow_pinned_preview_ordering",
+        "agp_versions_preserve_pinned_numeric_limits_and_historical_preview_padding"
+      ],
+      "reference_test_status_changed_to_not_applicable": false
+    }
+  ],
+  "existing_limitations": [
+    "Physical project tree; five original generated-tree flows unported",
+    "Raw sync model JSON visible; independent console filter tracked",
+    "External Java Gradle indentation query diagnostic",
+    "230px captions clipped; focus routes verified only",
+    "No LSP, debugger, device/emulator, performance budget or full IDE completion"
+  ],
+  "global_census_complete": false,
+  "phase_1_complete": false,
+  "full_IDE_complete": false
+}

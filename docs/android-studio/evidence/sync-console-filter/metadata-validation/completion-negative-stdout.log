@@ -1,0 +1,5 @@
+Baseline: Android Studio Rabbit1 stable, studio-2026.2.1; matching IntelliJ build family 262.9437.185. Source repositories are independently pinned, and mirror coverage remains unverified.
+Census: PARTIAL (95 individually identified reference tests; exhaustive total unknown unless complete)
+Ports: {Unported: 59, Ported: 20, Adapted: 16}
+Runs: {NotRun: 59, Passing: 36}
+Mirror omissions: UNVERIFIED

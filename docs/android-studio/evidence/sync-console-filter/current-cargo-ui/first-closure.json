@@ -1,0 +1,26 @@
+{
+  "state": "FIRST_EXACT_NORMAL_CARGO_PASS; ONE gate complete and exclusive compiler lease released",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "closed_utc": "2026-10-08T11:54:06.457966+00:00",
+  "actual_pid": 416202,
+  "actual_pgid": 416202,
+  "owned_live_group_after": [],
+  "remaining_six_run": false,
+  "Cargo_diagnostic_JSON_run": false,
+  "metadata_Source_index_refs_modified": false,
+  "all_current_Source_metadata_refs_index_apps_CLIs_guard_after": "PASS",
+  "asset_resolution": "unmodified normal Cargo test passed; no runner/asset env/alias was introduced",
+  "receipts": {
+    "started.json": "f44181973a171e0fe0d2fc75c615e20ec06c7beebb78654eb1f12fdd9376cc29",
+    "exit.json": "52b2410a5e5c7197f41fe0106a99152d1892310ede0cf04a1579c36cad7639a5",
+    "validation.json": "02176512899b4c256f35a40d443cc9f893198a129b2ab70441c42530e4414918",
+    "guard-before.json": "b3bd466c582850bdaa2aa9ca93997b8096ec85cbe6ab5715eae7492cc03c03d5",
+    "guard-after.json": "59d1ba8dea6742cc0bee2185c153df212aa49fdda8ef6fb310d28acbcc27a634",
+    "process-before.json": "d8277137e70bd65b1cff81bb2891247398872d85667a1ad4802ae2f314a5740d",
+    "process-after.json": "d8277137e70bd65b1cff81bb2891247398872d85667a1ad4802ae2f314a5740d",
+    "compiler-state-before.json": "c91204d8377183d9af741177c0ff1f6fdbf1755217a3116df6056f467a987b79",
+    "compiler-state-after.json": "c50af8d28749178cf6099229fe181067cc0b1b5064a9488676244265d2ddc74b",
+    "raw.log": "4bc31f4566dbe304f60803dc1777a378cffb54627940e29e2e56b4ffd73f5998",
+    "capacity.json": "3324d07698da284e41e717e578f17f36042f702bba60ef31c146bf893fbbf865"
+  }
+}

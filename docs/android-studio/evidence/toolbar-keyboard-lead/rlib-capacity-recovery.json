@@ -1,0 +1,16 @@
+[
+  {
+    "original": "/workspace/.cache/zed/target/debug/deps/libandroid_tools-6d8abc02ff6a24e4.rlib",
+    "relocated": "/tmp/android-studio-relocated-debug-cache/libandroid_tools-6d8abc02ff6a24e4.rlib",
+    "sha256": "7118e35ed7435541a62abdf2a5305a96abed9b3a2d5b6455c603e1d8d766fac2",
+    "bytes": 304319088,
+    "purpose": "Generated cache capacity recovery; original linker path remains valid via symlink. Source/tests/evidence unchanged."
+  },
+  {
+    "original": "/workspace/.cache/zed/target/debug/deps/libproject-b609e879b91d0e9f.rlib",
+    "relocated": "/tmp/android-studio-relocated-debug-cache/libproject-b609e879b91d0e9f.rlib",
+    "sha256": "19b92b48b747d72a4afe51939b188ce7b5ebc32de3f6197bde4dd5fe4d314e3d",
+    "bytes": 287810584,
+    "purpose": "Generated cache capacity recovery; original linker path remains valid via symlink. Source/tests/evidence unchanged."
+  }
+]

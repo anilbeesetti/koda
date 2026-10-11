@@ -1,0 +1,416 @@
+{
+  "version": 1,
+  "root": "$ROOT",
+  "modules": [
+    {
+      "path": ":android",
+      "directory": "$ROOT/android",
+      "namespace": "dev.fixture",
+      "kind": "library",
+      "variants": [
+        {
+          "name": "debug",
+          "outputListing": null,
+          "components": [
+            {
+              "name": "debug",
+              "scope": "main",
+              "sources": [],
+              "dependencies": []
+            }
+          ]
+        },
+        {
+          "name": "release",
+          "outputListing": null,
+          "components": [
+            {
+              "name": "release",
+              "scope": "main",
+              "sources": [],
+              "dependencies": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": ":nested:library",
+      "directory": "$ROOT/shared-directory",
+      "namespace": null,
+      "kind": "jvm",
+      "variants": [
+        {
+          "name": "jvm",
+          "outputListing": null,
+          "components": [
+            {
+              "name": "jvm",
+              "scope": "main",
+              "sources": [],
+              "dependencies": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diagnostics": [],
+  "importFacts": {
+    "schema": 1,
+    "root": "$ROOT",
+    "gradleVersion": "9.6.1",
+    "modules": [
+      {
+        "module": ":android",
+        "directory": "$ROOT/android",
+        "kind": "library",
+        "variants": [
+          "debug",
+          "release"
+        ]
+      },
+      {
+        "module": ":nested:library",
+        "directory": "$ROOT/shared-directory",
+        "kind": "jvm",
+        "variants": [
+          "jvm"
+        ]
+      }
+    ],
+    "buildIdentity": {
+      "rootName": {
+        "getter": "org.gradle.api.Project.getRootProject().getName()",
+        "result": {
+          "status": "available",
+          "value": "declared-root"
+        }
+      },
+      "rootDirectory": {
+        "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+        "result": {
+          "status": "available",
+          "value": "$ROOT"
+        }
+      },
+      "projectPath": {
+        "getter": "org.gradle.api.Project.getPath()",
+        "result": {
+          "status": "available",
+          "value": ":"
+        }
+      },
+      "buildTreePath": {
+        "getter": "org.gradle.api.Project.getBuildTreePath()",
+        "result": {
+          "status": "available",
+          "value": ":"
+        }
+      },
+      "referenceIdentityPath": {
+        "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+        "result": {
+          "status": "available",
+          "value": ":"
+        }
+      }
+    },
+    "projectCatalogue": {
+      "getter": "org.gradle.api.Project.getAllprojects()",
+      "result": {
+        "status": "available",
+        "value": [
+          {
+            "projectName": {
+              "getter": "org.gradle.api.Project.getName()",
+              "result": {
+                "status": "available",
+                "value": "declared-root"
+              }
+            },
+            "projectPath": {
+              "getter": "org.gradle.api.Project.getPath()",
+              "result": {
+                "status": "available",
+                "value": ":"
+              }
+            },
+            "projectDirectory": {
+              "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+              "result": {
+                "status": "available",
+                "value": "$ROOT"
+              }
+            },
+            "rootName": {
+              "getter": "org.gradle.api.Project.getRootProject().getName()",
+              "result": {
+                "status": "available",
+                "value": "declared-root"
+              }
+            },
+            "rootDirectory": {
+              "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+              "result": {
+                "status": "available",
+                "value": "$ROOT"
+              }
+            },
+            "parentProjectPath": {
+              "getter": "org.gradle.api.Project.getParent()?.getPath()",
+              "result": {
+                "status": "available",
+                "value": null
+              }
+            },
+            "buildTreePath": {
+              "getter": "org.gradle.api.Project.getBuildTreePath()",
+              "result": {
+                "status": "available",
+                "value": ":"
+              }
+            },
+            "referenceIdentityPath": {
+              "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+              "result": {
+                "status": "available",
+                "value": ":"
+              }
+            },
+            "ideaPluginPresent": {
+              "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+              "result": {
+                "status": "available",
+                "value": false
+              }
+            },
+            "ideaModuleName": {
+              "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+              "result": {
+                "status": "available",
+                "value": null
+              }
+            }
+          },
+          {
+            "projectName": {
+              "getter": "org.gradle.api.Project.getName()",
+              "result": {
+                "status": "available",
+                "value": "nested"
+              }
+            },
+            "projectPath": {
+              "getter": "org.gradle.api.Project.getPath()",
+              "result": {
+                "status": "available",
+                "value": ":nested"
+              }
+            },
+            "projectDirectory": {
+              "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+              "result": {
+                "status": "available",
+                "value": "$ROOT/strange-parent"
+              }
+            },
+            "rootName": {
+              "getter": "org.gradle.api.Project.getRootProject().getName()",
+              "result": {
+                "status": "available",
+                "value": "declared-root"
+              }
+            },
+            "rootDirectory": {
+              "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+              "result": {
+                "status": "available",
+                "value": "$ROOT"
+              }
+            },
+            "parentProjectPath": {
+              "getter": "org.gradle.api.Project.getParent()?.getPath()",
+              "result": {
+                "status": "available",
+                "value": ":"
+              }
+            },
+            "buildTreePath": {
+              "getter": "org.gradle.api.Project.getBuildTreePath()",
+              "result": {
+                "status": "available",
+                "value": ":nested"
+              }
+            },
+            "referenceIdentityPath": {
+              "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+              "result": {
+                "status": "available",
+                "value": ":nested"
+              }
+            },
+            "ideaPluginPresent": {
+              "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+              "result": {
+                "status": "available",
+                "value": false
+              }
+            },
+            "ideaModuleName": {
+              "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+              "result": {
+                "status": "available",
+                "value": null
+              }
+            }
+          },
+          {
+            "projectName": {
+              "getter": "org.gradle.api.Project.getName()",
+              "result": {
+                "status": "available",
+                "value": "library"
+              }
+            },
+            "projectPath": {
+              "getter": "org.gradle.api.Project.getPath()",
+              "result": {
+                "status": "available",
+                "value": ":nested:library"
+              }
+            },
+            "projectDirectory": {
+              "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+              "result": {
+                "status": "available",
+                "value": "$ROOT/shared-directory"
+              }
+            },
+            "rootName": {
+              "getter": "org.gradle.api.Project.getRootProject().getName()",
+              "result": {
+                "status": "available",
+                "value": "declared-root"
+              }
+            },
+            "rootDirectory": {
+              "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+              "result": {
+                "status": "available",
+                "value": "$ROOT"
+              }
+            },
+            "parentProjectPath": {
+              "getter": "org.gradle.api.Project.getParent()?.getPath()",
+              "result": {
+                "status": "available",
+                "value": ":nested"
+              }
+            },
+            "buildTreePath": {
+              "getter": "org.gradle.api.Project.getBuildTreePath()",
+              "result": {
+                "status": "available",
+                "value": ":nested:library"
+              }
+            },
+            "referenceIdentityPath": {
+              "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+              "result": {
+                "status": "available",
+                "value": ":nested:library"
+              }
+            },
+            "ideaPluginPresent": {
+              "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+              "result": {
+                "status": "available",
+                "value": false
+              }
+            },
+            "ideaModuleName": {
+              "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+              "result": {
+                "status": "available",
+                "value": null
+              }
+            }
+          },
+          {
+            "projectName": {
+              "getter": "org.gradle.api.Project.getName()",
+              "result": {
+                "status": "available",
+                "value": "android"
+              }
+            },
+            "projectPath": {
+              "getter": "org.gradle.api.Project.getPath()",
+              "result": {
+                "status": "available",
+                "value": ":android"
+              }
+            },
+            "projectDirectory": {
+              "getter": "org.gradle.api.Project.getProjectDir().getCanonicalPath()",
+              "result": {
+                "status": "available",
+                "value": "$ROOT/android"
+              }
+            },
+            "rootName": {
+              "getter": "org.gradle.api.Project.getRootProject().getName()",
+              "result": {
+                "status": "available",
+                "value": "declared-root"
+              }
+            },
+            "rootDirectory": {
+              "getter": "org.gradle.api.Project.getRootDir().getCanonicalPath()",
+              "result": {
+                "status": "available",
+                "value": "$ROOT"
+              }
+            },
+            "parentProjectPath": {
+              "getter": "org.gradle.api.Project.getParent()?.getPath()",
+              "result": {
+                "status": "available",
+                "value": ":"
+              }
+            },
+            "buildTreePath": {
+              "getter": "org.gradle.api.Project.getBuildTreePath()",
+              "result": {
+                "status": "available",
+                "value": ":android"
+              }
+            },
+            "referenceIdentityPath": {
+              "getter": "org.gradle.api.internal.project.ProjectInternal.getIdentityPath().getPath()",
+              "result": {
+                "status": "available",
+                "value": ":android"
+              }
+            },
+            "ideaPluginPresent": {
+              "getter": "org.gradle.api.plugins.PluginContainer.findPlugin(org.gradle.plugins.ide.idea.IdeaPlugin.class)",
+              "result": {
+                "status": "available",
+                "value": false
+              }
+            },
+            "ideaModuleName": {
+              "getter": "org.gradle.plugins.ide.idea.IdeaPlugin.getModel()?.getModule()?.getName()",
+              "result": {
+                "status": "available",
+                "value": null
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

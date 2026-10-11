@@ -1,0 +1,84 @@
+**PASS — independent static output/UI review, scoped.** No blocking findings on
+module SHA-256
+`68bfab04874226583230716ecbb59b7291ba73a4fc54ae62ee1ebc6f19f4700f`.
+
+This review covers the current CLI help declarations, JSON schema/values, status
+text, and memory/header/bounded-output error presentation. The round-one PASS
+on `dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed`
+is historical evidence and was not treated as verification of this source.
+
+- The command description identifies bounded, hash-bound source annotation
+  declarations (`main.rs:20`). Option help identifies an explicit selection,
+  excludes exhaustive discovery, requires external output without replacement,
+  and describes `--check` as a byte-identical comparison that never updates
+  evidence (`android_junit4_declarations.rs:127-138`). The success message says
+  the effective test census remains incomplete (`:357-359`). These are source
+  inspections; rendered help and normal CLI execution remain owner checks.
+- Metadata exhaustion/overflow explicitly reports declaration evidence as
+  unresolved and not published (`:35-42`). The bounded JSON writer reports
+  `evidence exceeds the bounded output budget`, checks before buffer growth,
+  and applies the same limit to the final newline (`:92-114`). Serialization,
+  newline, and metadata failures propagate from generation before staging is
+  created (`:326-348`, `:529-531`); no success status is printed on these paths.
+- The full annotation/modifier class-header limit reports
+  `class declaration/header budget exhausted; ownership unresolved` before
+  header/owner copies (`:1199-1244`). Unbound test annotations remain visible as
+  unresolved (`:1476-1490`). Token, annotation, class/header, and method limits
+  retain explicit unresolved explanations; they do not become complete zero
+  counts. A successful partial evidence write still reports incomplete census.
+- JSON retains `selected_archive_membership_reverified: false`, both global
+  completeness flags `false`, effective runtime counts `null`, and new
+  behavioral parity credit `0` (`:509-526`). Every method retains applicability
+  `unreviewed`, runtime cases `null`, and a status identifying a supported source
+  annotation declaration or unresolved candidate (`:1464-1472`). Ignored and
+  abstract declarations, aliases/shadowing, inheritance, custom runners/rules,
+  providers, build membership, classpath symbols, other frameworks, and
+  out-of-selection candidates remain explicitly unresolved.
+- Source provenance remains auditable: source id, pinned revision, original
+  path, full-file hash/length, Apache license, repository/archive identity,
+  annotation facts, byte spans, one-based lines, owners, names, and parameter
+  header hashes remain represented. The archive-origin explanation explicitly
+  relies on reviewed capture and says this command does not reverify membership
+  (`:519-520`). This review did not reread the pinned archives or authenticate
+  arbitrary supplied member hashes.
+- Publication requires external output, refuses an existing output in create
+  mode, requires a regular file for `--check`, and reports changed evidence
+  without writing it (`:318-335`). Create mode uses exclusive staging creation
+  and a hard link, with an explicit publication-without-replacement error
+  (`:337-355`). The new budget checks preserve these existing contracts.
+
+Independently checked all **16 original files / 100,711 bytes** against their
+selection hashes, lengths, pinned revisions, source-id/path layout, Apache
+license records, and retained capture bytes. All 16 source/path identities stay
+distinct, including identical-byte AOSP/JetBrains originals. Original copyright
+and license headers remain unchanged where present; `NOTICE.md` and the Apache
+license preserve attribution and explicitly exclude behavioral parity credit.
+Selection SHA-256 remains
+`e87a079f5564a47cb975b5d065ca3a77b5b26eeb949ac249f782ad07371db523`.
+
+The existing 34 regression tests and helpers are byte-identical to the retained
+`739d29d71996845ac671ea870d266383cf3cba73b4c9b910537d515267ac3aec`
+snapshot. Independently computed preserved-region SHA-256:
+`cf2d1d526e84f37be306586d0b0152ce1baf8e65e289f50519e191103b0d1781`.
+Six stress tests are appended, producing 40 authored component tests; no ignored
+test annotations appear. Frozen discovery source, the reference manifest, and
+the canonical ledger remain byte-identical to base
+`7b2bd3e7ffc07156c7193baf156c5041bef256c1`.
+
+The task document and retained history preserve three owner fix rounds, the two
+subsequent escalated lead test/helper corrections, the performance FAIL, the
+independent design PASS, and the authorized lead production correction. This
+PASS does not erase those earlier results or permit unreviewed further fixes.
+No finding requiring escalation or source correction arose in this review.
+
+Visual/product UI relevance is limited: this is an xtask evidence command and
+fixture/documentation work. No product screen, layout, styling, interaction, or
+Android UI code changes are present in the reviewed change set; emulator or
+visual screenshot validation would not validate the changed behavior.
+
+No Cargo/rustc, CLI execution, tests, benchmarks, shared-cache writes, source
+edits, commits, or archive revalidation occurred. Only this report was written.
+The current 114-test suite, formatting/Clippy, normal CLI help/create/check/error
+execution, and full-app/workspace gates are separate owner/lead validation.
+This scoped static PASS grants no runtime census, completeness, applicability,
+behavioral parity, or overall task-completion credit.

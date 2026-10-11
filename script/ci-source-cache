@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+"""Move portable Cargo sources into their original home without changing mtimes."""
+
+import argparse
+import errno
+import os
+from pathlib import Path
+import shutil
+import subprocess
+
+
+PARTS = ("registry", "git")
+TARGETS = ("x86_64-unknown-linux-gnu", "aarch64-apple-darwin", "wasm32-wasip2")
+
+
+def merge_tree(source, destination):
+    """Hard-link where possible; preserve metadata when volumes require a copy."""
+    source, destination = Path(source), Path(destination)
+    if source.is_symlink():
+        if destination.is_symlink() or destination.is_file():
+            destination.unlink()
+        os.symlink(os.readlink(source), destination)
+        shutil.copystat(source, destination, follow_symlinks=False)
+    elif source.is_dir():
+        if destination.is_symlink() or destination.is_file():
+            destination.unlink()
+        destination.mkdir(parents=True, exist_ok=True)
+        for child in source.iterdir():
+            merge_tree(child, destination / child.name)
+        shutil.copystat(source, destination)
+    else:
+        if destination.exists() and os.path.samefile(source, destination):
+            return
+        if destination.is_symlink() or destination.is_file():
+            destination.unlink()
+        try:
+            os.link(source, destination)
+        except OSError as error:
+            if error.errno != errno.EXDEV:
+                raise
+            shutil.copy2(source, destination)
+
+
+def move_sources(source, destination):
+    for part in PARTS:
+        if (Path(source) / part).exists():
+            merge_tree(Path(source) / part, Path(destination) / part)
+
+
+def prefetch(cargo_home=None):
+    # Fetch only; no target installation, SDK use or Rust compilation is needed.
+    for manifest in ("Cargo.toml", "extensions/test-extension/Cargo.toml"):
+        command = ["cargo", "fetch", "--locked", "--manifest-path", manifest]
+        for target in TARGETS:
+            command += ["--target", target]
+        env = {**os.environ, "CARGO_HOME": str(cargo_home)} if cargo_home else None
+        subprocess.run(command, check=True, env=env)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("action", choices=("restore", "stage", "prefetch"))
+    parser.add_argument("--cargo-home", type=Path,
+                        default=Path(os.environ.get("CARGO_HOME", Path.home() / ".cargo")))
+    parser.add_argument("--cache-dir", type=Path, default=Path(".ci-cache/cargo-sources"))
+    args = parser.parse_args()
+    if args.action == "prefetch":
+        prefetch(args.cargo_home)
+    elif args.action == "restore":
+        move_sources(args.cache_dir, args.cargo_home)
+    else:
+        move_sources(args.cargo_home, args.cache_dir)
+
+
+if __name__ == "__main__":
+    main()

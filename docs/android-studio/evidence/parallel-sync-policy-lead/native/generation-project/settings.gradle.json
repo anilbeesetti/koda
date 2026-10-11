@@ -1,0 +1,8 @@
+{
+  "original_path": "/workspace/android-studio-artifacts/parallel-sync-native-4fb7a80/generation-project/settings.gradle",
+  "original_bytes": 57,
+  "original_sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c",
+  "content_preserved_byte_exact": true,
+  "encoding": "utf-8",
+  "utf8_content": "rootProject.name = 'SourceProvidersSmoke'\ninclude ':app'\n"
+}

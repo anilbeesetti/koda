@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "task": "P2a authoritative raw import identity getter transport",
+  "branch": "android-studio-task/1-import-identity-getters",
+  "worktree": "/workspace/android-studio-import-identity-getters",
+  "base": "0d72037ca895893e8cf338d5ade8b37b1bb645b8",
+  "state": "read_only_design_pending_capacity_and_runtime_lease",
+  "dependencies": [
+    "Merged P1 module presentation",
+    "Root capacity grant for isolated worktree/source changes",
+    "Root exclusive runtime grant for Cargo/JVM/Gradle/SDK/native execution"
+  ],
+  "files": [
+    "crates/android_tools/src/project_model.gradle",
+    "crates/android_tools/src/import_facts.rs",
+    "crates/android_tools/src/android_tools.rs",
+    "crates/android_tools/tests/import_facts.rs",
+    "crates/android_tools/test_data/import_facts/",
+    "docs/android-studio/import-identity-getters-task-report.md",
+    "docs/android-studio/ports/import-identity-getters.json",
+    "docs/android-studio/evidence/import-identity-getters/"
+  ],
+  "protocol": {
+    "sidecar": "importFacts",
+    "schema": 1,
+    "objects_only": true,
+    "basic_identity": "Exact model root and ordered compiled module path/directory/variant list; independent all-project catalogue may additionally contain root holders.",
+    "provenance": "Actual Gradle version and exact invoked getter API for each observation; capture failures retain capability and exception detail.",
+    "projects": [
+      "projectName",
+      "projectPath",
+      "projectDirectory",
+      "rootProjectName",
+      "rootDirectory",
+      "parentProjectPath",
+      "publicBuildTreePath",
+      "referenceIdentityPath",
+      "ideaPluginPresent",
+      "ideaModuleName"
+    ],
+    "build_identity": "Raw root directory/root project identity; public full-tree and internal reference root paths retained independently. No synthetic imported ID.",
+    "presence": "Missing wire member distinct from unavailable getter, available nullable payload, available empty string/list. Bare-null wrappers and positional arrays rejected.",
+    "order": "Named-entry vectors preserve observed order/duplicates before Rust identity validation. No JVM naming, collision resolution, facet decisions or filtering.",
+    "freshness": "Rust model revision, selection revision and exact selected module/variant IDs, plus Basic root/module/directory/variant identity.",
+    "bounds": "Existing 16 MiB model-record boundary; no additional arbitrary corpus limits.",
+    "capture_timing": "taskGraph.whenReady after all projectsEvaluated callbacks; exact late Java+Idea callback fixture/actual getter oracle required."
+  },
+  "acceptance_cases": [
+    "Object-only sidecar, envelopes, projects, named vectors and capture wrappers; reject positional forms.",
+    "Missing sidecar/schema vs unsupported schema vs malformed null distinguished with typed FactsUnavailable.",
+    "Missing observation vs unavailable vs available null vs available empty preserved.",
+    "Root name differing from directory name captured from official getters, without folder fallback.",
+    "Nested project path and custom projectDir captured independently.",
+    "Colliding raw project/Idea names retained exactly; Rust detects duplicate project identities without collapsing vectors.",
+    "Root holders retained although Basic model only includes compiled JVM/Android modules.",
+    "Public build-tree and internal reference identity paths retained separately with getter provenance.",
+    "Idea plugin absent yields successful false and nullable name; present explicit empty/nondefault names retained without applying plugin.",
+    "Missing/failed optional getter does not erase valid Basic model or another successful field.",
+    "Basic root/module/directory/variant identity mismatch rejected; catalogue cardinality not forced to Basic module count.",
+    "Model/selection revision and selected module/variant mismatch rejected as stale; unknown/duplicate selection rejected explicitly.",
+    "Ordered project catalogue preserved; duplicate project identities flagged after decode.",
+    "Single model-record requirement, malformed JSON and 16 MiB boundary enforced.",
+    "Legacy Basic model and generatedArtifacts exact projections unchanged in actual Java/Android supplementary Gradle/SDK captures.",
+    "Included-build rejection remains unchanged; no unsupported shipping capability enabled.",
+    "All existing Android tooling tests, strict repository clippy, workspace formatting and normal library build pass.",
+    "Five independent code/UI/UX/performance/quality reviews pass; Root lead full app/full CI/native gates remain required before merge."
+  ],
+  "reference_credit": {
+    "new_original_credit": 0,
+    "policy": "Reference helpers are behavioral inputs; original naming/facet/Kotlin/tree semantic methods remain applicable/unported until corresponding behavior truly ports and passes.",
+    "helpers": [
+      "GradleProjectUtil.getProjectIdentityPath",
+      "GradleProjectUtil.getProjectIdentifier",
+      "GradleIdeaPluginUtil.getIdeaModuleName",
+      "GradleExternalProjectModelBuilder raw getter inputs"
+    ],
+    "precedence": [
+      "/workspace/android-studio-artifacts/p2-reference-runner-recovery/report.md",
+      "/workspace/android-studio-artifacts/p2-reference-runner-recovery/correction-receipt.json"
+    ],
+    "kotlin_assertion": "Active compiler-argument map keys, not KAPT sourceSets; outside P2a.",
+    "latest_stable": "Literal checker token; outside P2a.",
+    "original_agp_jdk": "Conditional selected source-driver values, not assumed runtime defaults."
+  },
+  "exception": {
+    "component": "Official Gradle JVM getter serialization only",
+    "reason": "Evaluate authoritative external Gradle/AGP getters; Rust owns all IDE identity/import policy. No IntelliJ importer/facet host."
+  },
+  "fix_round_limit": 3,
+  "current_validation": {
+    "runtime_executions": 0,
+    "source_changes": 0,
+    "repository_changes": 0,
+    "test_credit": 0
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "task": "1-junit4-declarations",
+  "module_sha256": "dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed",
+  "owner_static_fix_rounds": 3,
+  "runtime": "cargo test --locked -p xtask --release",
+  "executed": 108,
+  "passed": 107,
+  "failed": 1,
+  "ignored": 0,
+  "filtered_out": 0,
+  "failure_test": "tasks::android_junit4_declarations::tests::junit3_style_original_retains_nine_methods_without_guessing_inheritance",
+  "failure_assertion": "facts.classes[0].header.contains(\"extends GradleImportingTestCase\")",
+  "original_actual_declaration": "public final class GradleModuleImportTest extends HeavyPlatformTestCase {",
+  "original_line": 59,
+  "failure_category": "wrong newly-authored Rust regression expected superclass; no original fixture changed",
+  "proposed_narrow_correction": "replace only new expected literal GradleImportingTestCase with HeavyPlatformTestCase; retain assertion",
+  "correction_status": "not applied; parent escalation sent before source/test edits",
+  "log_sha256": "839a53b6e0010035223f97c9a56a06f9a289b4a5b55eab5e3b932eb428b4c6aa",
+  "measurement": {
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "xtask",
+      "--release"
+    ],
+    "started_utc": "2026-10-07T16:51:52.260480+00:00",
+    "wall_seconds": 154.7226362729998,
+    "exit_code": 101,
+    "peak_child_rss_kib": 1345136,
+    "measurement": "Linux RUSAGE_CHILDREN maxrss and monotonic wall time; full command including compilation for Cargo invocations",
+    "log": "/workspace/android-studio-artifacts/reference-census-next-task/xtask-tests-dd66b94.log"
+  },
+  "effective_test_census_complete": false,
+  "new_behavioral_parity_credit": 0
+}

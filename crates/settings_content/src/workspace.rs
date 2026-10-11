@@ -47,7 +47,7 @@ pub struct WorkspaceSettingsContent {
     pub autosave: Option<AutosaveSetting>,
     /// Controls previous session restoration in freshly launched Zed instance.
     /// Values: empty_tab, last_workspace, last_session, launchpad
-    /// Default: last_session
+    /// Default: launchpad
     pub restore_on_startup: Option<RestoreOnStartupBehavior>,
     /// The default behavior when opening paths from the CLI without
     /// an explicit `-e` or `-n` flag.
@@ -525,9 +525,9 @@ pub enum RestoreOnStartupBehavior {
     /// Restore the workspace that was closed last.
     LastWorkspace,
     /// Restore all workspaces that were open when quitting Zed.
-    #[default]
     LastSession,
     /// Show the launchpad with recent projects (no tabs).
+    #[default]
     Launchpad,
 }
 

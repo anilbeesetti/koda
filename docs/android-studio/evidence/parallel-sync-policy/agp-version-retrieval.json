@@ -1,0 +1,10 @@
+{
+  "repository": "platform/tools/base",
+  "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+  "path": "sdk-common/src/main/java/com/android/ide/common/repository/AgpVersion.kt",
+  "url": "https://android.googlesource.com/platform/tools/base/+/4a5d2ec9571e2021fc9a4621e24a195f966ee6dd/sdk-common/src/main/java/com/android/ide/common/repository/AgpVersion.kt?format=TEXT",
+  "sha256": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb",
+  "bytes": 11692,
+  "retained_path": "/workspace/android-studio-artifacts/parallel-sync-policy/references/base/sdk-common/src/main/java/com/android/ide/common/repository/AgpVersion.kt",
+  "http": 200
+}

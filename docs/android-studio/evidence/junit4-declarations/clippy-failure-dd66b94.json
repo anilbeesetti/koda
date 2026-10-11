@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "task": "1-junit4-declarations",
+  "module_sha256": "dd66b94dd4936cb440559cd7b58b10c60f8de2509581d9ec59e107fa7d6b4fed",
+  "owner_static_fix_rounds": 3,
+  "command": "./script/clippy --locked -p xtask",
+  "required_scope": "release all-targets all-features deny warnings",
+  "finding": "redundant selected.clone() at line2158 in new FixtureHarness::new",
+  "proposed_narrow_correction": "remove ONLY .clone() in serde_json::json!([selected.clone()]); keep earlier owned selection clone and all assertions/source fixtures",
+  "correction_status": "not applied; parent escalation sent before source/test edits",
+  "log_sha256": "861645c44008b4c001f781874ea8129b192c5d5f54123bf90c7f61fd96aef28d",
+  "measurement": {
+    "command": [
+      "./script/clippy",
+      "--locked",
+      "-p",
+      "xtask"
+    ],
+    "started_utc": "2026-10-07T16:58:24.624459+00:00",
+    "wall_seconds": 22.228649340999254,
+    "exit_code": 101,
+    "peak_child_rss_kib": 1080612,
+    "measurement": "Linux RUSAGE_CHILDREN maxrss and monotonic wall time; full command including compilation for Cargo invocations",
+    "log": "/workspace/android-studio-artifacts/reference-census-next-task/xtask-clippy-dd66b94.log"
+  },
+  "effective_test_census_complete": false,
+  "new_behavioral_parity_credit": 0
+}

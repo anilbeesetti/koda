@@ -1,7 +1,7 @@
 # Stacked pull request review guide
 
 The changes are reviewed as draft pull requests in
-[GitHub stacked PRs](https://github.com/anilbeesetti/zed/pulls) (stack #16).
+[GitHub stacked PRs](https://github.com/anilbeesetti/koda/pulls) (stack #16).
 The original fifteen layers remain in order; this review adds navigation,
 Search Everywhere, floating Find/Replace, and validation layers. The combined
 application is on `codex/android-ide/review-validation`. The base is `main` at
@@ -22,25 +22,25 @@ has not refreshed after a commit.
 
 | Layer | Branch suffix under `codex/android-ide/` | Parent | Draft PR |
 | --- | --- | --- | --- |
-| 1 | `research` | `main` | [#1](https://github.com/anilbeesetti/zed/pull/1) |
-| 2 | `studio-defaults` | `research` | [#2](https://github.com/anilbeesetti/zed/pull/2) |
-| 3 | `android-tools` | `studio-defaults` | [#3](https://github.com/anilbeesetti/zed/pull/3) |
-| 4 | `android-workflow` | `android-tools` | [#4](https://github.com/anilbeesetti/zed/pull/4) |
-| 5 | `studio-shell` | `android-workflow` | [#5](https://github.com/anilbeesetti/zed/pull/5) |
-| 6 | `kotlin-setup` | `studio-shell` | [#6](https://github.com/anilbeesetti/zed/pull/6) |
-| 7 | `dev-launcher` | `kotlin-setup` | [#7](https://github.com/anilbeesetti/zed/pull/7) |
-| 8 | `emulator-start` | `dev-launcher` | [#8](https://github.com/anilbeesetti/zed/pull/8) |
-| 9 | `smoke-project` | `emulator-start` | [#9](https://github.com/anilbeesetti/zed/pull/9) |
-| 10 | `validation` | `smoke-project` | [#10](https://github.com/anilbeesetti/zed/pull/10) |
-| 11 | `java-support` | `validation` | [#11](https://github.com/anilbeesetti/zed/pull/11) |
-| 12 | `kotlin-runtime` | `java-support` | [#12](https://github.com/anilbeesetti/zed/pull/12) |
-| 13 | `debugger` | `kotlin-runtime` | [#13](https://github.com/anilbeesetti/zed/pull/13) |
-| 14 | `compose-preview` | `debugger` | [#14](https://github.com/anilbeesetti/zed/pull/14) |
-| 15 | `final-validation` | `compose-preview` | [#15](https://github.com/anilbeesetti/zed/pull/15) |
-| 16 | `navigation` | `final-validation` | [#17](https://github.com/anilbeesetti/zed/pull/17) |
-| 17 | `search-everywhere` | `navigation` | [#18](https://github.com/anilbeesetti/zed/pull/18) |
-| 18 | `find-replace-popup` | `search-everywhere` | [#19](https://github.com/anilbeesetti/zed/pull/19) |
-| 19 | `review-validation` | `find-replace-popup` | [#20](https://github.com/anilbeesetti/zed/pull/20) |
+| 1 | `research` | `main` | [#1](https://github.com/anilbeesetti/koda/pull/1) |
+| 2 | `studio-defaults` | `research` | [#2](https://github.com/anilbeesetti/koda/pull/2) |
+| 3 | `android-tools` | `studio-defaults` | [#3](https://github.com/anilbeesetti/koda/pull/3) |
+| 4 | `android-workflow` | `android-tools` | [#4](https://github.com/anilbeesetti/koda/pull/4) |
+| 5 | `studio-shell` | `android-workflow` | [#5](https://github.com/anilbeesetti/koda/pull/5) |
+| 6 | `kotlin-setup` | `studio-shell` | [#6](https://github.com/anilbeesetti/koda/pull/6) |
+| 7 | `dev-launcher` | `kotlin-setup` | [#7](https://github.com/anilbeesetti/koda/pull/7) |
+| 8 | `emulator-start` | `dev-launcher` | [#8](https://github.com/anilbeesetti/koda/pull/8) |
+| 9 | `smoke-project` | `emulator-start` | [#9](https://github.com/anilbeesetti/koda/pull/9) |
+| 10 | `validation` | `smoke-project` | [#10](https://github.com/anilbeesetti/koda/pull/10) |
+| 11 | `java-support` | `validation` | [#11](https://github.com/anilbeesetti/koda/pull/11) |
+| 12 | `kotlin-runtime` | `java-support` | [#12](https://github.com/anilbeesetti/koda/pull/12) |
+| 13 | `debugger` | `kotlin-runtime` | [#13](https://github.com/anilbeesetti/koda/pull/13) |
+| 14 | `compose-preview` | `debugger` | [#14](https://github.com/anilbeesetti/koda/pull/14) |
+| 15 | `final-validation` | `compose-preview` | [#15](https://github.com/anilbeesetti/koda/pull/15) |
+| 16 | `navigation` | `final-validation` | [#17](https://github.com/anilbeesetti/koda/pull/17) |
+| 17 | `search-everywhere` | `navigation` | [#18](https://github.com/anilbeesetti/koda/pull/18) |
+| 18 | `find-replace-popup` | `search-everywhere` | [#19](https://github.com/anilbeesetti/koda/pull/19) |
+| 19 | `review-validation` | `find-replace-popup` | [#20](https://github.com/anilbeesetti/koda/pull/20) |
 
 For example:
 

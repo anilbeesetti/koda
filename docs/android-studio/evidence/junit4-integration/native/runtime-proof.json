@@ -1,0 +1,199 @@
+{
+  "verdict": "PASS",
+  "scope": "Full app regression gate for the JUnit4 tooling integration at 93155342. App/UI/assets/manifests bytes match protected ac588. JUnit4 CLI behavior is validated separately by Root; exhaustive IDE completion is not claimed.",
+  "source_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "executable": "/tmp/android-studio-link-output/koda-junit4-244335",
+  "executable_sha256": "f2f7bfab6bff00a0b0759ede8399e28f1d72a918bae9f0c470b7438e2d1dd0bd",
+  "executable_bytes": 1359369480,
+  "normal_build_proof": "/workspace/android-studio-artifacts/junit4-link/new-app-executable.json",
+  "PTY_launcher": "Official .agents/skills/koda-app-validation/scripts/run-app.sh --headless in a PTY; no --build because Root validated the matching normal build, and no --foreground.",
+  "qa_directory": "/workspace/android-studio-artifacts/junit4-native-9315534/qa-success",
+  "display": ":119",
+  "owned_pids": [
+    245594,
+    245615,
+    245607
+  ],
+  "checks": [
+    {
+      "name": "open_fixture_and_XML_source",
+      "status": "passing",
+      "captures": [
+        "initial-window.png",
+        "sync-progress.png"
+      ],
+      "observation": "Fresh isolated profile; trust checkbox for all sibling projects remained unchecked. XML source appears in fullapp editor."
+    },
+    {
+      "name": "actual_SDK_sync_loading_and_success",
+      "status": "passing",
+      "captures": [
+        "repeated-sync-loading.png",
+        "sync-progress.png",
+        "sync-console-restored.png"
+      ],
+      "observation": "Ctrl+Alt+R initiates the actual Gradle model task; loading spinner at 308 ms, then Successful, two variants discovered, and :app demoDebug selected."
+    },
+    {
+      "name": "editor_tab_switching",
+      "status": "passing",
+      "captures": [
+        "editor-second-tab.png",
+        "editor-tab-restored.png"
+      ],
+      "observation": "Open app/build.gradle from physical tree in second tab; XML tab pointer activation restores source and syntax highlighting; original copied fixture bytes unchanged."
+    },
+    {
+      "name": "wide_tool_window_keyboard_empty_and_restoration",
+      "status": "passing",
+      "captures": [
+        "wide-output-focus.png",
+        "wide-output-selected.png",
+        "sync-console-restored.png"
+      ],
+      "observation": "Tab focuses Build Output while Sync remains selected; Space selects empty Output; pointer selection of Sync restores complete previous success console."
+    },
+    {
+      "name": "narrow230_focus_reveal",
+      "status": "passing",
+      "captures": [
+        "narrow230-sync.png",
+        "narrow230-output-focus.png",
+        "narrow230-output-selected.png",
+        "narrow230-reverse-sync-focus.png",
+        "narrow230-sync-restored.png"
+      ],
+      "observation": "At 230 px, forward Tab reveals clipped Output focus before selection. Space selects empty Output. Shift+Tab reveals Sync focus while preserving Output content; Space restores Sync. Labels truncate within this tiny viewport, below the normal minimum width; general window design fidelity is unverified."
+    },
+    {
+      "name": "hide_return_and_sidebar_restore",
+      "status": "passing",
+      "captures": [
+        "wide-hide-focus.png",
+        "hide-return.png",
+        "build-sidebar-restored.png"
+      ],
+      "observation": "After restoring wide1536px window, Tab focuses Hide;Return hides panel. Actual Build sidebar button restores selected Output."
+    },
+    {
+      "name": "native_model_capture",
+      "status": "passing",
+      "proof": "native-model-proof.json",
+      "observation": "Both fresh complete models equal all three previous actual native models after replacing only the exact private project prefix. Provider ordering, evaluatedProviders, dependencies, configured static roots and authoritative generation flags are preserved."
+    },
+    {
+      "name": "whole_source_and_process_cleanup",
+      "status": "passing",
+      "proof": "final-closure.json",
+      "observation": "All 4626 bound file hashes, worktree/index/untracked source guards and the executable identity remain unchanged. All 12 original and copied source fixture hashes match. Owned launcher/app/Xvfb processes exited and display :119 is released."
+    }
+  ],
+  "source_guard_files": 4626,
+  "source_guard_receipts": [
+    "guard-before-launch.json",
+    "guard-after-controls.json",
+    "guard-final-after-native.json"
+  ],
+  "native_model_proof": "native-model-proof.json",
+  "performance": {
+    "state": "settled-wide",
+    "pid": 245615,
+    "before": {
+      "monotonic": 39000.931824433,
+      "utc": "2026-10-07T19:46:00Z",
+      "cpu_ticks": 9617,
+      "raw_proc_stat": "245615 (koda) S 245594 245594 245594 34816 245594 4194560 150862 96356 1 30 9156 461 306 68 20 0 51 0 3853916 22862553088 177992 18446744073709551615 94614941557568 94615347438768 140720777539536 0 0 0 0 4102 1224 0 0 0 17 4 0 0 0 0 0 94615369891232 94615370050200 94615840768000 140720777548721 140720777549070 140720777549070 140720777555900 0\n",
+      "memory": {
+        "State": "S (sleeping)",
+        "VmHWM": "712784 kB",
+        "VmRSS": "712784 kB",
+        "Threads": "51"
+      },
+      "compiler_and_graphics_processes": [
+        "  34966       1 Z Xvfb            [Xvfb] <defunct>",
+        "  37283       1 Z Xvfb            [Xvfb] <defunct>",
+        " 129167       1 Z rustc           [rustc] <defunct>",
+        " 133452       1 Z rustc           [rustc] <defunct>",
+        " 232854       1 Z koda            [koda] <defunct>",
+        " 245607  245594 S Xvfb            /workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :119 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset",
+        " 245615  245594 S koda            /workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/junit4-native-9315534/qa-success/user-data /workspace/android-studio-artifacts/junit4-native-9315534/generation-project /workspace/android-studio-artifacts/junit4-native-9315534/generation-project/app/custom-manifest/AndroidManifest.xml"
+      ]
+    },
+    "after": {
+      "monotonic": 39010.943066121,
+      "utc": "2026-10-07T19:46:10Z",
+      "cpu_ticks": 9634,
+      "raw_proc_stat": "245615 (koda) S 245594 245594 245594 34816 245594 4194560 150871 96356 1 30 9171 463 306 68 20 0 51 0 3853916 22862553088 177992 18446744073709551615 94614941557568 94615347438768 140720777539536 0 0 0 0 4102 1224 0 0 0 17 4 0 0 0 0 0 94615369891232 94615370050200 94615840768000 140720777548721 140720777549070 140720777549070 140720777555900 0\n",
+      "memory": {
+        "State": "S (sleeping)",
+        "VmHWM": "712816 kB",
+        "VmRSS": "712816 kB",
+        "Threads": "51"
+      },
+      "compiler_and_graphics_processes": [
+        "  34966       1 Z Xvfb            [Xvfb] <defunct>",
+        "  37283       1 Z Xvfb            [Xvfb] <defunct>",
+        " 129167       1 Z rustc           [rustc] <defunct>",
+        " 133452       1 Z rustc           [rustc] <defunct>",
+        " 232854       1 Z koda            [koda] <defunct>",
+        " 245607  245594 S Xvfb            /workspace/android-studio-artifacts/source-providers-smoke/app-runtime/gui-sysroot/usr/bin/Xvfb :119 -screen 0 1600x1000x24 -nolisten tcp -nolisten local -ac -noreset",
+        " 245615  245594 S koda            /workspace/android-studio-integration/target/cloud-app/koda --user-data-dir /workspace/android-studio-artifacts/junit4-native-9315534/qa-success/user-data /workspace/android-studio-artifacts/junit4-native-9315534/generation-project /workspace/android-studio-artifacts/junit4-native-9315534/generation-project/app/custom-manifest/AndroidManifest.xml"
+      ]
+    },
+    "elapsed_seconds": 10.011241688000155,
+    "clock_ticks_per_second": 100,
+    "cpu_ticks_delta": 17,
+    "one_core_cpu_percent": 1.6980910590118736,
+    "scope": "10-second software Vulkan/Xvfb idle sample; no hardware/startup/large-project benchmark"
+  },
+  "performance_limits": "One settled 10-second Xvfb/software Vulkan observation: 17 ticks over 10.01124 seconds, 1.698% of one core, RSS 712816 kB. Root coordinated a quiet CPU window. No hardware, startup, large-project, redraw-storm, or fair predecessor memory comparison claim.",
+  "diagnostics": {
+    "warning": "missing required capture(s) in Gradle indents TreeSitter query: indent",
+    "external_installed_extension": "Java6.8.27",
+    "same_extension_manifest_and_query_as_previous_371_profile": [
+      {
+        "path": "/workspace/android-studio-artifacts/junit4-native-9315534/qa-success/user-data/extensions/installed/java/extension.toml",
+        "sha256": "eca1da859606b77db3cc9129d7caa7885670422aa89ce303d8f0190e614e895b",
+        "byte_identical_previous_371_profile": true
+      },
+      {
+        "path": "/workspace/android-studio-artifacts/junit4-native-9315534/qa-success/user-data/extensions/installed/java/languages/gradle/indents.scm",
+        "sha256": "fff0db02df15470940a2601b06d747c9181bd31ed4aecefd505980cabe312d81",
+        "byte_identical_previous_371_profile": true
+      }
+    ],
+    "implementation_scope": "JUnit4 tooling change does not modify language_core grammar or external extension. XML and Gradle files open and highlight; Gradle indentation fidelity unverified and needs editingphase tracking.",
+    "app_crash_observed": false
+  },
+  "PTY_log": "app-pty-output.log preserves the observed PTY output chunks without normalization. native-sync-stdout.log captures actual official Gradle output unmodified.",
+  "validation_history": [
+    "The first immediate loading screenshot captured a black frame and receives no credit. A repeated actual sync captured the visible spinner.",
+    "The first external model comparison used an older committed smoke model that predates evaluatedProviders. The corrected comparison retains all fields and uses complete actual predecessor models.",
+    "The second external comparison used the wrong JSON path, variant.sources. The corrected script uses variant.components[*].sources. Neither preparation error changed product, tests or fixtures."
+  ],
+  "unverified": [
+    "Error-state, close-control and arrow-button flows were not repeated in this tooling-only slice; predecessor evidence remains separate.",
+    "Virtual Android project grouping and generated-group UI wiring.",
+    "Rust Kotlin/Java/XML LSP and faithful Gradle indentation, refactoring and navigation. Existing installed extensions provide highlighting; this is not editing phase completion.",
+    "Full Android Studio appearance and workflow fidelity.",
+    "Hardware, startup and large-project performance.",
+    "Android device and emulator execution; no target is available."
+  ],
+  "new_reference_parity_credit": 0,
+  "source_fixture_or_product_changes": false,
+  "cleanup": {
+    "source_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+    "original_and_copied_source_fixture_hashes_unchanged": true,
+    "source_fixture_files": 12,
+    "owned_pids_absent": [
+      245594,
+      245615,
+      245607
+    ],
+    "display119_socket_absent": true,
+    "unrelated_processes_signaled": false,
+    "source_guard": "guard-final-after-native.json",
+    "launcher_exit_code": 143,
+    "expected_generated_gradle_cache_build_dirs_changes": "Private copy only"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "stage": "format-check",
+  "lease_granted": "Root-exclusive-combined-Cargo-lease-4fb7a80e",
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 28.453732686997682,
+  "log": "/workspace/android-studio-artifacts/parallel-sync-integration/runtime/retry1/format-check.log",
+  "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "whole_source_bindings": 4730,
+  "source_index_status_unchanged": true
+}

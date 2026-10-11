@@ -1,0 +1,24 @@
+{
+  "source_commit": "4fb7a80eacc598a786b4b98c809d1df24a1b02ee",
+  "reference_id": "idea@a84efec3ba9542d9bfa1255103f0dc94833a3796:project-system-gradle-sync/testSrc/com/android/tools/idea/gradle/project/sync/DefaultVariantsTest.kt#com.android.tools.idea.gradle.project.sync.DefaultVariantsTest.preferredBuildType",
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/android_tools/Cargo.toml",
+    "-p",
+    "android_tools",
+    "--lib",
+    "project_model::tests::default_variants_preferred_build_type",
+    "--",
+    "--exact",
+    "--show-output"
+  ],
+  "exit_code": 0,
+  "elapsed_seconds": 0.7030044370039832,
+  "log": {
+    "path": "docs/android-studio/evidence/parallel-sync-integration-DefaultVariantsTest-preferredBuildType.log",
+    "sha256": "86948bf6753a355c6f84da73e980126db2f473a6fda0256c5dc7ee802f8869c1"
+  }
+}

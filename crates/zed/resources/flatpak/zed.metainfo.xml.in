@@ -6,12 +6,12 @@
 
     <name>$APP_NAME</name>
     <summary>High-performance, multiplayer code editor</summary>
-    <developer id="dev.zed">
-        <name translate="no">Zed Industries, Inc.</name>
+    <developer id="dev.anilbeesetti">
+        <name translate="no">Anil Beesetti</name>
     </developer>
     <description>
         <p>
-            Productive coding starts with a tool that stays out of your way. Zed blends the power of an IDE with the speed of a lightweight editor for productivity you can feel under your fingertips.
+            Koda is an Android-focused IDE fork of Zed. It combines Android tooling with a fast code editor.
         </p>
         <p>Features:</p>
         <ul>
@@ -34,13 +34,13 @@
         <content_attribute id="social-audio">intense</content_attribute>
     </content_rating>
 
-    <url type="homepage">https://zed.dev</url>
-    <url type="bugtracker">https://github.com/zed-industries/zed/issues</url>
+    <url type="homepage">https://github.com/anilbeesetti/koda</url>
+    <url type="bugtracker">https://github.com/anilbeesetti/koda/issues</url>
     <url type="faq">https://zed.dev/faq</url>
     <url type="help">https://zed.dev/docs/getting-started</url>
     <url type="contact">https://zed.dev/community-links</url>
-    <url type="vcs-browser">https://github.com/zed-industries/zed</url>
-    <url type="contribute">https://github.com/zed-industries/zed/blob/main/CONTRIBUTING.md</url>
+    <url type="vcs-browser">https://github.com/anilbeesetti/koda</url>
+    <url type="contribute">https://github.com/anilbeesetti/koda/blob/main/CONTRIBUTING.md</url>
 
     <supports>
         <internet>offline-only</internet>

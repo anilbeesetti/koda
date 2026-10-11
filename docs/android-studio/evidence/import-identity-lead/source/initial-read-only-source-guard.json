@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "verdict": "PASS",
+  "scope": "External metadata preparation initial read-only frozen-source guard; final metadata HEAD equivalence remains Root pending",
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "source_tree": "f18fa92ba5a951f71bb66bbf28e218b9aa179ed9",
+  "source_files": 4743,
+  "source_digest": "d64467aee29afb00a1a009cf94cdcdad10600160fc529dfcf3c91e9648e064f1",
+  "fixed_source_pathspec": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "all4743_file_SHA256_rehashed": true,
+  "full_raw_index_before_after_sha256": "5b313c66758f5c2d187371ee4eb0d5b5fe6ed762882709622942f0c48f9de0ff",
+  "full_raw_index_bytes": 646959,
+  "full_raw_status_before_after_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "full_raw_status_bytes": 0,
+  "source_index_status_HEAD_before_after_unchanged": true,
+  "snapshot_path": "/workspace/android-studio-artifacts/import-identity-integration/combined-whole-source-snapshot.json",
+  "snapshot_sha256": "22c88471ad50da82ede705265412388dbca33f66f5967b9fc3641892cc63cec0",
+  "repository_mutations": false,
+  "runtime_or_shared_cache_reads": false,
+  "source_read_hold_released": true
+}

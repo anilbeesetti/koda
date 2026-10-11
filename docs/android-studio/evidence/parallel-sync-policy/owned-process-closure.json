@@ -1,0 +1,10 @@
+{
+  "source_commit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+  "all_stage_processes_exited": true,
+  "active_owned_processes": [],
+  "git_clean": true,
+  "cargo_gradle_native_lease": "released to Root",
+  "generated_artifacts_removed_by_owner": [],
+  "overlay_available_bytes": 688369664,
+  "tmp_available_bytes": 1508995072
+}

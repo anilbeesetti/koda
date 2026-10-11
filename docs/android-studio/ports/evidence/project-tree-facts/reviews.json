@@ -1,0 +1,39 @@
+{
+  "source_commit": "0f28d7c178abc738bd94b7f88e28a8e11637bf62",
+  "reviewed_source_manifest": "review-source-lead-correction6.json",
+  "scope": "Final backend/source/runtime evidence; no GPUI/product performance or original integration parity claim",
+  "owner_fix_rounds": 3,
+  "lead_correction_rounds": 6,
+  "verdicts": {
+    "code": {
+      "verdict": "PASS",
+      "source_stage": 6,
+      "findings": [],
+      "evidence": "Corrected supplemental expectations agree with pinned source and actual model; original inactive assertion retained; production sources unchanged."
+    },
+    "ui": {
+      "verdict": "PASS",
+      "source_stage": 6,
+      "findings": [],
+      "evidence": "Provider/annotation/navigation/group contract unchanged; source/header/fixture hashes verified; no rendering checks."
+    },
+    "ux": {
+      "verdict": "PASS",
+      "source_stage": 6,
+      "findings": [],
+      "evidence": "Actual DSL/Basic/variant outcomes and independent provider/native order match; failure flagged; original cases remain unported."
+    },
+    "performance": {
+      "verdict": "PASS",
+      "source_stage": 6,
+      "findings": [],
+      "evidence": "Indexed lookup, per-root ancestor caching and keyed encounters unchanged.144 tests/stress cases and11s supplemental Gradle capture support functional evidence; no product benchmark."
+    },
+    "quality": {
+      "verdict": "PASS",
+      "source_stage": 6,
+      "findings": [],
+      "evidence": "Exact hashes and fixture bytes,144 tests, strict lint, actual capture/probe and flagged expectation validated; original64sources intact."
+    }
+  }
+}

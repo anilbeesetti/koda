@@ -1,0 +1,287 @@
+{
+  "scope": "Original26fixtures21sourcesunchanged",
+  "files": [
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/.gitignore",
+      "bytes": 291,
+      "sha256": "95a1fc27ea7f2d6a07644b9e3cf0527336f31475d78c4ef7f6f6b16e71a0be97",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/.gitignore",
+      "bytes": 7,
+      "sha256": "5b46eb48d96e8571e8c93e4ef4f6ffbe6807b6d7350664a36a064e1167a32718",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/build.gradle",
+      "bytes": 1061,
+      "sha256": "bd42bb1aa37765b1171205d610e8b31b2753b26bb2d7fe9ed7e1d0ed93434bde",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/proguard-rules.pro",
+      "bytes": 679,
+      "sha256": "424ed6b88d7a3c2cdf42873d4239a8807efecd10962fdf57d754c6effe57d567",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/androidTest/java/google/simpleapplication/ApplicationTest.java",
+      "bytes": 354,
+      "sha256": "898da7821aca5ab722a81732552a41835337bb0735152d353894f4371dcdbeb8",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/AndroidManifest.xml",
+      "bytes": 735,
+      "sha256": "e8f2b5df76ab8d6cad681b62530cd83cc73dabdd29ed53603a64fd6773087a56",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/java/google/simpleapplication/MyActivity.java",
+      "bytes": 1035,
+      "sha256": "8b3d3d74d3ae78ffc1e5ef6b4aa8d1d2bd71bba4c9d8bd1d87adb836a9a62c5b",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/drawable/ic_launcher.xml",
+      "bytes": 132,
+      "sha256": "7c5a85c37a32734ba31b023ce2b02719b5f57527699f93afd5fc656fc004c45e",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/layout/absolute.xml",
+      "bytes": 1963,
+      "sha256": "b3604ca13e86b000cbba64abd719f0cb38f8648f42f4d8dbd78ee2744e023fc4",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/layout/activity_my.xml",
+      "bytes": 647,
+      "sha256": "12259e8896f2330590a403d512ebf62035acac749f4107f9dc4ea057959c7a01",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/layout/frames.xml",
+      "bytes": 1810,
+      "sha256": "b58d51c44b81c702c68dc3f2216949894bf534750e4ffe5d4f7bcd40296bc8cc",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/menu/my.xml",
+      "bytes": 328,
+      "sha256": "14b117883545b4f7c62e9637703a3284f6c8e2dfe8e725c3ffdcff1a70b69e0e",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values/dimens.xml",
+      "bytes": 211,
+      "sha256": "cca11cdbc1aaa8ff649c496469963f27150695f16fe0dcc558eacd6e7fc30c69",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values/strings.xml",
+      "bytes": 228,
+      "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values/styles.xml",
+      "bytes": 333,
+      "sha256": "b28d10ad00cd2b71106d96ff2094760f280a13d51bb25194297434e60887138e",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-en/strings.xml",
+      "bytes": 228,
+      "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-en-rGB/strings.xml",
+      "bytes": 812,
+      "sha256": "a76e361a7fc90c70dcfac01dca015492f889058deffa0ba8d079c10cae1e6e61",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-ta/strings.xml",
+      "bytes": 228,
+      "sha256": "602a632a068fcd7b445bf278fe0ca688a99b22df15c2d7f748bf6463bb12cc7a",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-v19/styles.xml",
+      "bytes": 100,
+      "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-v20/styles.xml",
+      "bytes": 100,
+      "sha256": "78f06bccb4dac7f3bbcc46bb8ed0bc6d4360b8850acde574ae37e4b585da73f0",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-w820dp/dimens.xml",
+      "bytes": 358,
+      "sha256": "84726c95be47d72108ff64829270ade6c367476f945e40b9f1930d8e90241b7d",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/main/res/values-zh-rCN/strings.xml",
+      "bytes": 897,
+      "sha256": "994aaa84849c8253d00278c41df42e8b90cf21b826306036c8f39dbe8ef8d173",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/app/src/test/java/google/simpleapplication/UnitTest.java",
+      "bytes": 1003,
+      "sha256": "a4ed37536b1e6385660a67b169deed000f51bb1e592073e0e6d576f3bde916c9",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/build.gradle",
+      "bytes": 518,
+      "sha256": "2c4facdd32bf7c5cb84c1b818940d37fcfc778acddb50d4a070c6cfb4650b51f",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/gradle.properties",
+      "bytes": 636,
+      "sha256": "fee76081a03167908a02c0752a84cbeda54badd894588c81f834aa586df47553",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/simpleApplication/settings.gradle",
+      "bytes": 15,
+      "sha256": "4b919cfffaed71637d1ee9c89f21f4247273e14eb8433afdcd0672eba906b41f",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+      "bytes": 34018,
+      "sha256": "ceb1129a679f0028b6c3889b99d273a114b01ab752efb56bd6b165f8c1cc814e",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/AndroidViewProjectNode.java",
+      "bytes": 5644,
+      "sha256": "6d242f2c51a5bba361f173d91d968d1eb23f3887b70ee8a1309bd4f481704a03",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/AndroidViewModuleNode.java",
+      "bytes": 5797,
+      "sha256": "f1b28f0b2fb54b4c419af27521e674210c7a2ab213324f15648de67d9bd7eb99",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/AndroidViewNodeDefaultProvider.kt",
+      "bytes": 9782,
+      "sha256": "adce8443235ca948092d5a3ca71bcfbb9d9180d356ae36d64d2e1d82b47cce1d",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/ModuleNodeUtils.kt",
+      "bytes": 2662,
+      "sha256": "536ec0ca4925a63a32107d6168857a61b9526cf4897e2f15e5f856a13df04b55",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidModuleNode.kt",
+      "bytes": 5519,
+      "sha256": "0df6ce40e8d8a51b84d547cda3a459bb1be47e77fc1653f6c78ae76a7283f2cd",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidSourceTypeNode.kt",
+      "bytes": 5966,
+      "sha256": "3a8496f744bdc6d7355919c3de83f7a25dbcdfd78c3f554c0bf0ba456c1d0f11",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidPsiDirectoryNode.java",
+      "bytes": 5237,
+      "sha256": "0bc236578a648bad1f6c7d8f0c4305b75b24dda765206a8c48f5081b1d8244dd",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidPsiFileNode.java",
+      "bytes": 2732,
+      "sha256": "8c5877319887fec897dc4630223219c6351836bc0cf86cb07087c49f8e48334a",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidResFolderNode.kt",
+      "bytes": 2569,
+      "sha256": "f77c412765c8f3b3a8e6e3166fdea8be6d15420858cc7fe5e2a3885f04cc9816",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidResFolderTypeNode.java",
+      "bytes": 4919,
+      "sha256": "5ba1849fbbe99567985d2db3d95970d09ada03b6ab75ad047606d1f9794980ae",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidResGroupNode.java",
+      "bytes": 6668,
+      "sha256": "007c7f82be2ffc5c088a0f58405cb020014bb5b5034632b2a7a6215758d0a80e",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidResFileNode.java",
+      "bytes": 5553,
+      "sha256": "c9bf766eb36ac02eeb31fe93e4f4420f072f6eedb8c765593717e3a3d373e512",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidResComparator.java",
+      "bytes": 3138,
+      "sha256": "b162b6fb6b14f8302a8e82fcb47f5c3772bf9aca20b78aec577443588f1c436a",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidManifestsGroupNode.java",
+      "bytes": 4491,
+      "sha256": "9b775b1fb61964f294c4c74b89e53303b5410acd58a02c89adbaa20f201303b3",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/AndroidManifestFileNode.java",
+      "bytes": 4390,
+      "sha256": "b9d494290b6a319a0fcb3224e935884cbb6241493e5b0525bf62a939ef2513a7",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/nodes/android/BuildScriptTreeStructureProvider.java",
+      "bytes": 2150,
+      "sha256": "a43056f1937621a443b58a6476916c9f3c42d0dd0aad1866f5c84878ce685a99",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/org/jetbrains/android/facet/AndroidSourceType.kt",
+      "bytes": 7854,
+      "sha256": "2fa40619a269c1de937853a18c54b91dcfe087b77d274b0739fb826933ca3425",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-navigator/src/com/android/tools/idea/navigator/AndroidViewNodes.java",
+      "bytes": 2934,
+      "sha256": "bb4a8691a165359c5f1b46f33a94475404f5a4e5a8cc57557171512509a4e621",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleProjectRule.kt",
+      "bytes": 9616,
+      "sha256": "4477e6abc68902ec168539de8bddb6fa72b0d1af56f57b0810ceb7a2babdfe71",
+      "matches": true
+    },
+    {
+      "path": "crates/android_tools/test_data/project_tree/reference/android-test-framework/testSrc/com/android/tools/idea/testing/AndroidGradleTestCase.java",
+      "bytes": 13540,
+      "sha256": "7342fdc1b7fadf14dfe757bf305be329ab4286da4bd291432668c87f3e78ee83",
+      "matches": true
+    }
+  ]
+}

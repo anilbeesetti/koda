@@ -1,5 +1,6 @@
 use crate::{LocationLink, Project, ProjectPath};
 use anyhow::Result;
+use futures::StreamExt as _;
 use gpui::{Context, Entity, Task};
 use language::{Buffer, Location, PointUtf16, ToOffset};
 use quick_xml::{Reader, events::Event};
@@ -18,6 +19,41 @@ static IMPORT: LazyLock<Result<Regex, regex::Error>> =
     LazyLock::new(|| Regex::new(r"(?m)^\s*import\s+([\w.]+)\.R\s*;?\s*$"));
 
 impl Project {
+    pub fn android_model(&self) -> &android_tools::project_model::ModelState {
+        &self.android_model
+    }
+
+    pub fn invalidate_android_model(
+        &mut self,
+        root: Option<std::path::PathBuf>,
+        cx: &mut Context<Self>,
+    ) -> android_tools::project_model::ModelToken {
+        let token = self.android_model.invalidate(root);
+        cx.notify();
+        token
+    }
+
+    pub fn publish_android_model(
+        &mut self,
+        token: &android_tools::project_model::ModelToken,
+        model: android_tools::project_model::ProjectModel,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
+        self.android_model.publish(token, model)?;
+        cx.notify();
+        Ok(())
+    }
+
+    pub fn select_android_variant(
+        &mut self,
+        id: Option<android_tools::project_model::VariantId>,
+        cx: &mut Context<Self>,
+    ) -> Result<()> {
+        let result = self.android_model.select(id);
+        cx.notify();
+        result
+    }
+
     pub(crate) fn android_resource_definitions(
         &mut self,
         buffer: &Entity<Buffer>,
@@ -75,57 +111,158 @@ impl Project {
         if namespace.as_deref() == Some("android") {
             return None;
         }
-        let module = path
-            .split_once("/src/")
-            .map(|(module, _)| module)
-            .or_else(|| path.starts_with("src/").then_some(""))?;
-        let prefix = if module.is_empty() {
-            "src/".to_owned()
-        } else {
-            format!("{module}/src/")
-        };
-        let build_prefix = if module.is_empty() {
-            String::new()
-        } else {
-            format!("{module}/")
-        };
         let worktree_id = file.worktree_id(cx);
         let worktree = self.worktree_for_id(worktree_id, cx)?.read(cx).snapshot();
-        let build = ["build.gradle.kts", "build.gradle"]
-            .into_iter()
-            .find_map(|name| {
-                let path_text = format!("{build_prefix}{name}");
-                let path = util::rel_path::RelPath::from_unix_str(&path_text).ok()?;
-                worktree
-                    .entry_for_path(path)
-                    .map(|entry| entry.path.clone())
+        let token = self.android_model.token();
+        if self.android_model.root().is_some() && self.android_model.selected.is_none() {
+            return Some(Task::ready(Ok(Vec::new())));
+        }
+        let (mut paths, build, resource_roots) = if self.android_model.model.is_some() {
+            let selected = self.android_model.selected.as_ref()?;
+            let model_root = if self.android_model.root() == Some(worktree.abs_path().as_ref()) {
+                selected.model.root.as_path()
+            } else {
+                worktree.abs_path().as_ref()
+            };
+            let absolute = model_root.join(file.path().as_std_path());
+            let (owner, component) = selected.modules().find_map(|(module, variant)| {
+                variant
+                    .components
+                    .iter()
+                    .find(|component| {
+                        component
+                            .sources
+                            .iter()
+                            .any(|source| absolute.starts_with(&source.path))
+                    })
+                    .map(|component| (module, component))
             })?;
-        let paths = worktree
-            .files(false, 0)
-            .filter_map(|entry| {
-                let relative = entry.path.as_unix_str().strip_prefix(&prefix)?;
-                let (_, resource) = relative.split_once("/res/")?;
-                let (directory, filename) = resource.split_once('/')?;
-                if filename.contains('/') {
-                    return None;
-                }
-                let folder_kind = directory.split('-').next()?;
-                ((folder_kind == "values" && filename.ends_with(".xml"))
-                    || (folder_kind == kind
-                        && filename.ends_with(".xml")
-                        && filename.split('.').next() == Some(name.as_str())))
-                .then_some((entry.path.clone(), folder_kind == "values"))
-            })
-            .collect::<Vec<_>>();
-        if paths.is_empty() {
+            let scope = component.scope;
+            let namespace = namespace
+                .as_deref()
+                .or(component.namespace.as_deref())
+                .or(owner.namespace.as_deref());
+            let visible = selected.visible_modules(&owner.path, scope);
+            let roots = selected
+                .modules()
+                .filter(|(module, _)| visible.contains(&module.path))
+                .flat_map(|(module, variant)| {
+                    variant.components.iter().filter(move |component| {
+                        (component.scope == android_tools::project_model::SourceScope::Main
+                            || (module.path == owner.path && component.scope == scope))
+                            && component
+                                .namespace
+                                .as_deref()
+                                .or(module.namespace.as_deref())
+                                == namespace
+                    })
+                })
+                .flat_map(|component| &component.sources)
+                .filter(|source| source.kind == android_tools::project_model::SourceKind::Resources)
+                .collect::<Vec<_>>();
+            let roots = roots
+                .iter()
+                .map(|source| source.path.clone())
+                .collect::<Vec<_>>();
+            (Vec::new(), None, Some((model_root.to_path_buf(), roots)))
+        } else {
+            let module = path
+                .split_once("/src/")
+                .map(|(module, _)| module)
+                .or_else(|| path.starts_with("src/").then_some(""))?;
+            let prefix = if module.is_empty() {
+                "src/".to_owned()
+            } else {
+                format!("{module}/src/")
+            };
+            let build_prefix = if module.is_empty() {
+                String::new()
+            } else {
+                format!("{module}/")
+            };
+            let build = ["build.gradle.kts", "build.gradle"]
+                .into_iter()
+                .find_map(|name| {
+                    let path_text = format!("{build_prefix}{name}");
+                    let path = util::rel_path::RelPath::from_unix_str(&path_text).ok()?;
+                    worktree
+                        .entry_for_path(path)
+                        .map(|entry| entry.path.clone())
+                })?;
+            let paths = worktree
+                .files(false, 0)
+                .filter_map(|entry| {
+                    let relative = entry.path.as_unix_str().strip_prefix(&prefix)?;
+                    let (_, resource) = relative.split_once("/res/")?;
+                    let (directory, filename) = resource.split_once('/')?;
+                    if filename.contains('/') {
+                        return None;
+                    }
+                    let folder_kind = directory.split('-').next()?;
+                    ((folder_kind == "values" && filename.ends_with(".xml"))
+                        || (folder_kind == kind
+                            && filename.ends_with(".xml")
+                            && filename.split('.').next() == Some(name.as_str())))
+                    .then_some((entry.path.clone(), folder_kind == "values"))
+                })
+                .collect::<Vec<_>>();
+            (paths, Some(build), None)
+        };
+        if paths.is_empty() && resource_roots.is_none() {
             return None;
         }
         let origin = Location {
             buffer: buffer.clone(),
             range: snapshot.anchor_before(found.start())..snapshot.anchor_after(found.end()),
         };
+        let filesystem = self.fs.clone();
+        let path_style = self.path_style(cx);
         Some(cx.spawn(async move |project, cx| {
-            if let Some(namespace) = namespace {
+            if let Some((model_root, roots)) = resource_roots {
+                for root in roots {
+                    if !filesystem.is_dir(&root).await {
+                        continue;
+                    }
+                    let mut folders = filesystem.read_dir(&root).await?;
+                    while let Some(folder) = folders.next().await {
+                        let folder = folder?;
+                        let Some(folder_kind) = folder
+                            .file_name()
+                            .and_then(|name| name.to_str())
+                            .and_then(|name| name.split('-').next())
+                        else {
+                            continue;
+                        };
+                        if (folder_kind != "values" && folder_kind != kind)
+                            || !filesystem.is_dir(&folder).await
+                        {
+                            continue;
+                        }
+                        let mut files = filesystem.read_dir(&folder).await?;
+                        while let Some(file) = files.next().await {
+                            let file = file?;
+                            if file.extension().is_none_or(|extension| extension != "xml")
+                                || (folder_kind != "values"
+                                    && file.file_stem().is_none_or(|stem| stem != name.as_str()))
+                                || !filesystem.is_file(&file).await
+                            {
+                                continue;
+                            }
+                            if let Ok(relative) = file.strip_prefix(&model_root) {
+                                paths.push((
+                                    util::rel_path::RelPath::new(relative, path_style)?.into_arc(),
+                                    folder_kind == "values",
+                                ));
+                            }
+                        }
+                    }
+                }
+                paths.sort();
+                paths.dedup();
+            }
+            if let Some(namespace) = namespace
+                && let Some(build) = build
+            {
                 let build = project
                     .update(cx, |project, cx| {
                         project.open_buffer(
@@ -153,8 +290,7 @@ impl Project {
                 }
             }
             let mut locations = Vec::new();
-            // ponytail: show all module source-set/locale declarations; use the Gradle
-            // resource overlay model when selecting one active resource becomes necessary.
+            // Keep locale/qualifier alternatives; only the selected component roots participate.
             for (path, values) in paths {
                 let buffer = project
                     .update(cx, |project, cx| {
@@ -178,6 +314,9 @@ impl Project {
                             ..snapshot.anchor_after(range.end),
                     },
                 }));
+            }
+            if !project.read_with(cx, |project, _| project.android_model.is_current(&token))? {
+                return Ok(Vec::new());
             }
             Ok(locations)
         }))

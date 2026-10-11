@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+"""Install and validate the exact tools used by the macOS release producer."""
+
+import argparse
+from pathlib import Path
+import subprocess
+
+
+CARGO_BUNDLE_REVISION = "2be2669972dff3ddd4daf89a2cb29d2d06cad7c7"
+TOOLS = (
+    (
+        "cargo-bundle",
+        "--help",
+        "cargo-bundle v0.6.1-zed",
+        [
+            "cargo-bundle",
+            "--git",
+            "https://github.com/zed-industries/cargo-bundle.git",
+            "--rev",
+            CARGO_BUNDLE_REVISION,
+        ],
+    ),
+    ("cargo-about", "--version", "cargo-about 0.8.2", ["cargo-about@0.8.2"]),
+)
+
+
+def valid_tool(path, argument, expected):
+    if not path.is_file():
+        return False
+    try:
+        result = subprocess.run([str(path), argument], capture_output=True, text=True)
+    except OSError:
+        return False
+    return result.returncode == 0 and result.stdout.splitlines()[:1] == [expected]
+
+
+def install_tools(root):
+    root = root.resolve()
+    for name, argument, expected, install_args in TOOLS:
+        binary = root / "bin" / name
+        if not valid_tool(binary, argument, expected):
+            subprocess.run(
+                ["cargo", "install", "--force", "--root", str(root), *install_args],
+                check=True,
+            )
+        if not valid_tool(binary, argument, expected):
+            raise RuntimeError(f"Installed {name} did not report {expected}")
+        print(f"Validated {expected}", flush=True)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, required=True)
+    args = parser.parse_args()
+    install_tools(args.root)
+
+
+if __name__ == "__main__":
+    main()

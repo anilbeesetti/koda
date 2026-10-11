@@ -1,0 +1,39 @@
+{
+  "source_commit": "7e3f72ebfaef39d6e6630dd11fa7dc91c8985d4a",
+  "status": "metadata_validation_pass_final_HEAD_CI_pending",
+  "allowed_changes": "Only status, lead metadata-equivalence/validator fields and opening report paragraph; all owner assertions/raw evidence/limitations/reference statuses unchanged.",
+  "prior_effective_manifest_sha256": "fa2eac4d290a44c5cf96da5f8cfce51c001337037fae119a49cc0a620403aac3",
+  "prior_report_sha256": "56fafda04ee2d7a8e78de252ecd30dd47c47abf5478354ce14859466d2e59f2b",
+  "prior_port_sha256": "a90d03e69294e9526afabe27c93295c32f9935a464075846ad802c0d1789f832",
+  "new_evidence": [
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/final-application/Root-staged-metadata-source-equivalence.json",
+      "bytes": 78623,
+      "sha256": "db28d664dedec0c5fc8fbe1fbe49fdfb9d5bca2fc6925f6949251bf6e365e234"
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/final-application/Root-lead-copy-and-source-equivalence.json",
+      "bytes": 200459,
+      "sha256": "9b9a87ff0fe91eef6ebbe1fb84194a1e10555e9817294671647b778a5c3781de"
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/final-application/canonical-parity-validator-exit.json",
+      "bytes": 632,
+      "sha256": "b678896e963b20c73f77897f1c0b01180e43a4aaf6133c1585619ad2280598bc"
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/final-application/canonical-parity-validator.log",
+      "bytes": 400,
+      "sha256": "d36d3229331febf3b06cac59ec45a72913525ec6ffd2c61af326ca5c1d48b011"
+    },
+    {
+      "path": "docs/android-studio/evidence/import-identity-lead/final-application/preparation-review.json",
+      "bytes": 8223,
+      "sha256": "dd733cbdbd1d180125aae05c99e73c0a1c1e77887b1137d92aab49cf32b183e1"
+    }
+  ],
+  "final_HEAD_CI": "NOT_RUN",
+  "new_original_credit": 0,
+  "full_IDE_complete": false,
+  "utc": "2026-10-08T04:30:49.144482+00:00"
+}

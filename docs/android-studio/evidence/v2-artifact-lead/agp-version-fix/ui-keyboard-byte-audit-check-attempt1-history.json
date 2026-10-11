@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "check_attempt": 1,
+  "exit_code": 1,
+  "raw_tool_output": "Traceback (most recent call last):\n  File \"<stdin>\", line 9, in <module>\nKeyError: 'cwd'\n",
+  "cause": "Reviewer assumed session-binding record used command-event cwd/display fields; actual schema deliberately binds executable/window/source directly.",
+  "correction": "Validate exactly one complete session-binding record against its separate receipt, and validate cwd/display on every actual command start/finish pair. No input evidence, source, fixture, test or guard is changed.",
+  "new_runtime_started": false,
+  "output_proof_written_by_failed_attempt": false
+}

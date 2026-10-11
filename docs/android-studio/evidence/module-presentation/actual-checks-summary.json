@@ -1,0 +1,74 @@
+{
+  "checks": [
+    {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 39.16729040000064,
+      "log": "/workspace/android-studio-artifacts/module-presentation-task/all-features-tests.log",
+      "log_sha256": "f0ece135ca7cf77f8bc916dc4266bb3045c7fc387f800b871e2bdf9deeae9e38",
+      "source_bindings": 4717,
+      "whole_source_git_index_status_unchanged": true
+    },
+    {
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "android_tools",
+        "--all-features",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.67463549200329,
+      "log": "/workspace/android-studio-artifacts/module-presentation-task/library-build.log",
+      "log_sha256": "9ef92fa1048a071372ecd5e783331a115feb28a239d2f8ec04ec1eb8a84c0386",
+      "source_bindings": 4717,
+      "whole_source_git_index_status_unchanged": true
+    },
+    {
+      "command": [
+        "./script/clippy",
+        "--locked",
+        "-p",
+        "android_tools"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 61.418801316998724,
+      "log": "/workspace/android-studio-artifacts/module-presentation-task/strict-clippy.log",
+      "log_sha256": "526b1f3297d109bc59478de61373899aea2b48b68062e3f3281b3ff9f476a2b2",
+      "source_bindings": 4717,
+      "whole_source_git_index_status_unchanged": true
+    },
+    {
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 28.44017281199922,
+      "log": "/workspace/android-studio-artifacts/module-presentation-task/format-check.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_bindings": 4717,
+      "whole_source_git_index_status_unchanged": true
+    }
+  ],
+  "supplemental_test_total": 20,
+  "all_features_test_total": 221,
+  "whole_source_bindings": 4717,
+  "whole_source_git_index_status_unchanged": true,
+  "five_original_tree_tests": "unported/not_run",
+  "new_parity_credit": 0,
+  "full_app_live_ci": "pending lead integration"
+}

@@ -1,0 +1,13 @@
+{
+  "source": "jetbrains-android",
+  "revision": "132bc7c3cf52598117590637d00e81b929444bde",
+  "repository": "https://github.com/JetBrains/android",
+  "archive_sha256": "d7bb6a155c077166a6aed54ddaaa7d1629cbee8c200ceced0bddc0bcedfd92e2",
+  "decompressed_offset": 0,
+  "bytes": 1536,
+  "sha256": "cd3d6c0175e3992cc0cda497fc3c531a4b81173e7af5aeb7a82555d1f050f311",
+  "local_path": "tooling/xtask/test_data/reference_census/jetbrains-android/archive-prefix.tar",
+  "contents": "Original global PAX header, exact pinned Git comment payload and padding, and pinned wrapper directory header; all1536bytes unchanged. No source file payload is copied.",
+  "license": "Apache-2.0 source archive; original metadata retained without alteration",
+  "adaptation": "The test appends a synthetic JVM child and terminator; original prefix bytes remain intact."
+}

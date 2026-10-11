@@ -1,0 +1,15 @@
+{
+  "source_commit": "93155342aa84f5d14d2d75b89d406414110757f3",
+  "original_and_copied_source_fixture_hashes_unchanged": true,
+  "source_fixture_files": 12,
+  "owned_pids_absent": [
+    245594,
+    245615,
+    245607
+  ],
+  "display119_socket_absent": true,
+  "unrelated_processes_signaled": false,
+  "source_guard": "guard-final-after-native.json",
+  "launcher_exit_code": 143,
+  "expected_generated_gradle_cache_build_dirs_changes": "Private copy only"
+}

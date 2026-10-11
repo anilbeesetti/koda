@@ -1,0 +1,19 @@
+{
+  "result": "ADMINISTRATIVE_WRAPPER_FAIL_CLOSED; applied140 preserved; required_catalog_ACTUAL_PASS",
+  "actual_metadata_apply_sha256": "24225d153aa4e1609f6567389a878c33cf9091bc6b94a30ec7e38fd3885945ef",
+  "actual_catalog_exit_sha256": "7e3187cf6618b8073e6b615c92a05e6c62a97330cd4d2ba637925c88cbca3b96",
+  "actual_wrapper_failure_sha256": "d6fc4cd6e9cec34e0e4b890aa01c5afedf8f5ca59999bb76b9cac8dc47f95694",
+  "source_guard_sha256": "2b1607d96494d33afac6d8876e12afa7ee671a5682bdf381db33c3ef32ca5d8c",
+  "current_process_guard_sha256": "d8277137e70bd65b1cff81bb2891247398872d85667a1ad4802ae2f314a5740d",
+  "raw_index": "a4cb0db91a4e3dab28b0b2e4def4f10b30492635e922c72b384c503573df3927",
+  "Source4748_allmetadata_main_protected_16keepers_alias_ADB": "PASS",
+  "pending": [
+    "reference validation",
+    "expected incomplete completion negative"
+  ],
+  "runtime_and_Git_write_pause": true,
+  "free": {
+    "/workspace": 331354112,
+    "/tmp": 90435584
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "protocol": "2",
+  "artifacts": [
+    {
+      "path": "renderer.jar",
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/compose/compose-preview-renderer/0.0.1-alpha15/compose-preview-renderer-0.0.1-alpha15.jar",
+      "sha256": "0f5ebdac5c0b4fa2bfe1528fcf8cf1aa86921311f30c67e183921551aaed93ba"
+    },
+    {
+      "path": "layoutlib.jar",
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib/16.2.4/layoutlib-16.2.4.jar",
+      "sha256": "7ba5541db4c9e9c1104ce7e5d22bb3e738818e88d9bba86796bf16ff30a3b3eb"
+    },
+    {
+      "path": "layoutlib/data/framework_res.jar",
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-resources/16.2.4/layoutlib-resources-16.2.4.jar",
+      "sha256": "6cd14a88b4b00bca9b342a07d9be80c6c13399c31dd54c43ee2974aac4106d8d"
+    }
+  ],
+  "compiler": {
+    "url": "https://repo.maven.apache.org/maven2/org/eclipse/jdt/ecj/3.41.0/ecj-3.41.0.jar",
+    "sha256": "47bda183cd94a8bdb704f5b35690224f75b7d2fb563c8b8f9bbcfab987c3029b"
+  },
+  "java": {
+    "linux-aarch64": {
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_aarch64_linux_hotspot_21.0.12.1_1.tar.gz",
+      "sha256": "14be1f35ebdbd1f6e8d57eb911a3ffb74d6d9aa255abc5daf2b1302002cf2cf2"
+    },
+    "linux-x86_64": {
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_x64_linux_hotspot_21.0.12.1_1.tar.gz",
+      "sha256": "2413149700df0f7d440500a84a8f764c535f21e5a5e87d38328b64eec2c5b500"
+    },
+    "macos-aarch64": {
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.12.1_1.tar.gz",
+      "sha256": "dec50fc6f9fcd4fe3ae8cabf5a5fa68f6afc48841f7698e468e9aa5d54beed84"
+    },
+    "macos-x86_64": {
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_x64_mac_hotspot_21.0.12.1_1.tar.gz",
+      "sha256": "6717ec641fd9ce0bb209ca083ee23b42202ac68cb6fcc5753496e0e4a0f41989"
+    },
+    "windows-x86_64": {
+      "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_x64_windows_hotspot_21.0.12.1_1.zip",
+      "sha256": "d35f31e712f0fcf6ac5a093edc90204fbff22f720ba3950bd09d331d5e621636"
+    }
+  },
+  "layoutlib": {
+    "linux-x86_64": {
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-runtime/16.2.4/layoutlib-runtime-16.2.4-linux.jar",
+      "sha256": "9259303b3395894f25e2c7d402dccf66ac5cd80c7345e6036d58997291c55931"
+    },
+    "windows-x86_64": {
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-runtime/16.2.4/layoutlib-runtime-16.2.4-win.jar",
+      "sha256": "86178da9dd5a69852a5fb12b465ffd018480c091dc03bef3401f115cd681e97f"
+    },
+    "macos-x86_64": {
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-runtime/16.2.4/layoutlib-runtime-16.2.4-mac.jar",
+      "sha256": "b1453ca1bff5dc10769b9672a21fe47936af1a8ba2f2cf8cf18b8790e3e77d5d"
+    },
+    "macos-aarch64": {
+      "url": "https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-runtime/16.2.4/layoutlib-runtime-16.2.4-mac-arm.jar",
+      "sha256": "0119fc087f58e363dd0a6df5b1c585f4d7bf0bbb1e5dd5129c2e3f324e244492"
+    }
+  },
+  "java_source": "https://github.com/adoptium/jdk21u/archive/1c417fbfc2f70ab03a565b0af0a5a3c6f5e15ad6.tar.gz"
+}

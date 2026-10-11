@@ -1,0 +1,25 @@
++ cargo clippy --locked -p android_tools --release --all-targets --all-features -- --deny warnings
+   Compiling android_tools v0.1.0 (/workspace/android-studio-java-class-facts/crates/android_tools)
+error: stripping a prefix manually
+   --> crates/android_tools/src/java_class_facts.rs:238:27
+    |
+238 |                 let end = remaining[2..]
+    |                           ^^^^^^^^^^^^^^
+    |
+note: the prefix was tested here
+   --> crates/android_tools/src/java_class_facts.rs:237:20
+    |
+237 |             } else if remaining.starts_with("/*") {
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#manual_strip
+    = note: `-D clippy::manual-strip` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::manual_strip)]`
+help: try using the `strip_prefix` method
+    |
+237 ~             } else if let Some(<stripped>) = remaining.strip_prefix("/*") {
+238 ~                 let end = <stripped>
+    |
+
+error: could not compile `android_tools` (lib) due to 1 previous error
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `android_tools` (lib test) due to 1 previous error

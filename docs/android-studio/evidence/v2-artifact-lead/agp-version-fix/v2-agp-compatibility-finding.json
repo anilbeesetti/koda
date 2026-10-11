@@ -1,0 +1,110 @@
+{
+  "kind": "blocking_pinned_agp_ordering_and_parser_discrepancy",
+  "read_only": true,
+  "no_runtime_or_product_edit": true,
+  "pinned_agp": {
+    "path": "/workspace/android-studio-artifacts/parallel-sync-policy/references/base/sdk-common/src/main/java/com/android/ide/common/repository/AgpVersion.kt",
+    "sha256": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb"
+  },
+  "pinned_feature": {
+    "path": "/workspace/android-studio-artifacts/parallel-sync-policy/references/idea/project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/BasicModules.kt",
+    "sha256": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed"
+  },
+  "current_source": {
+    "path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/src/generated_artifacts.rs",
+    "sha256": "5264e4c00d8958a4aaee250c7d924ae89e4665f778b893156442f6af3ed52be0"
+  },
+  "current_new_test": {
+    "path": "/workspace/android-studio-parallel-sync-policy/crates/android_tools/tests/generated_artifacts.rs",
+    "sha256": "9900069b1a993875795c4be1feadf5f4a8da2a5750f486beb4596ae6b45efbf1"
+  },
+  "pinned_lines": {
+    "preview_kind_order": [
+      36,
+      41
+    ],
+    "comparator": [
+      109,
+      117
+    ],
+    "numeric_regex": [
+      175,
+      182
+    ],
+    "historic_preview_format": [
+      186,
+      199
+    ],
+    "signed_numeric_parse": [
+      221,
+      239
+    ],
+    "classpath_feature": [
+      85,
+      85
+    ],
+    "legacy_model_or_agp_rule": [
+      130,
+      138
+    ]
+  },
+  "concrete_counterexample": {
+    "producer": [
+      8,
+      8
+    ],
+    "agp": "8.2.0-dev",
+    "feature": "HAS_GENERATED_CLASSPATHS",
+    "current_rust": "false: dev rank0 is below alpha rank1/preview7; producer8.8 is below8.9",
+    "pinned_result": "true: DEV enumordinal3 is greater than ALPHA enumordinal0; alsoEnabledForAgpVersions contains version>=8.2.0-alpha07",
+    "existing_test_line": 148,
+    "original_test_expectation": "false",
+    "expected_test_correction": "true, retaining old wrong assertion and source bytes in failure-history evidence; no upstream original assertion is changed"
+  },
+  "parser_discrepancies": [
+    {
+      "input": "8.2.0-alpha7",
+      "current": "accepted as alpha7",
+      "pinned": "invalid: modern previews require two digits",
+      "classification": "invalid spelling, not a valid supported-version difference"
+    },
+    {
+      "input": "8.2.0-alpha007",
+      "current": "accepted as alpha7",
+      "pinned": "invalid: regex permits one or two digits only",
+      "classification": "invalid spelling"
+    },
+    {
+      "input": "08.2.0-alpha07",
+      "current": "accepted as major8",
+      "pinned": "invalid: NUM excludes leading zeroes",
+      "classification": "invalid spelling"
+    },
+    {
+      "input": "2147483648.0.0",
+      "current": "accepted in u32",
+      "pinned": "invalid: numeric components parse signed Int",
+      "classification": "invalid spelling/domain overflow"
+    },
+    {
+      "input": "3.0.0-alpha01",
+      "current": "accepted",
+      "pinned": "invalid: historic preview series rejects padding",
+      "classification": "invalid spelling"
+    },
+    {
+      "input": "3.1.0-beta01",
+      "current": "accepted",
+      "pinned": "invalid: historic3.1.0-beta series rejects padding",
+      "classification": "invalid spelling"
+    },
+    {
+      "input": "3.1.1-alpha01",
+      "current": "accepted",
+      "pinned": "invalid: literal isTwoDigitPreviewFormat condition requires minor>1 or micro==0/nonbeta for3.1",
+      "classification": "invalid spelling per exact code even though prose says all later versions"
+    }
+  ],
+  "real_supported_version_difference": "8.2.0-dev is valid in both parsers. Ordering disagreement changes fallback capability for producer<8.9. Other examples are strings the current Rust accepts but pinned AgpVersion.parse rejects. No actual SDK model emits these strings in retained five stable9.4 probes.",
+  "scope": "Root current V2 integration requires correction and affected5reviews/gates; parallel-policy task keeps original V2 source/tests immutable and uses proven pinned ordering/parser independently."
+}

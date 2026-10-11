@@ -1,0 +1,30 @@
+{
+  "round": 2,
+  "base": "b23db3d372fe3e9d01c223bdce3e65e55ff2b186",
+  "sources": {
+    "crates/android_tools/src/android_tools.rs": "d9cf7abf8b1c18ed3dc3f047d95aa97f439739c19a19a8211532ee2c46f0c67e",
+    "crates/android_tools/src/parallel_sync.rs": "943e61b9d6e3256275b38750a7f8595cc4aa270a099093f6df8404f6270998e7",
+    "crates/android_tools/tests/parallel_sync.rs": "6e1571c51990e0bf8c23b42299a1a8f1c046838779368b7b21c1f18aa6deba77",
+    "crates/android_tools/test_data/parallel_sync/AgpVersion.kt": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb",
+    "crates/android_tools/test_data/parallel_sync/LICENSE-APACHE": "752daf2fb234ca4a1fa372c073fe127f44b7b90fd2529ae44273a64f9d53da7a",
+    "crates/android_tools/test_data/parallel_sync/NOTICE": "96fe5c3fbdbdfe71b4b00a6a979f0d96fc248be3e921893b9908a3014de6c6dc"
+  },
+  "immutableOriginalsPreserved": 148,
+  "newRustTests": 10,
+  "testsExecuted": false,
+  "compilerGradleAppLease": false,
+  "knownV2IssueRootOwned": "Corrected by approved normalmerge9b9cbbc, Root combined runtime gates pending",
+  "references": {
+    "/workspace/android-studio-artifacts/parallel-sync-policy/references/base/sdk-common/src/main/java/com/android/ide/common/repository/AgpVersion.kt": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb",
+    "/workspace/android-studio-artifacts/parallel-sync-policy/references/idea/project-system-gradle-sync/src/com/android/tools/idea/gradle/project/sync/BasicModules.kt": "eddaa76c66ff68b5b13fd625fdc8e44adf422fe3ce2a220c3af5bc27bf6293ed",
+    "/workspace/android-studio-parallel-sync-policy/crates/android_tools/test_data/generated_artifacts/ModelVersionsTest.kt": "9239c0688b3066bf964d801ba7b231dd5f70719a97331645fd53f10060252aef"
+  },
+  "sourceCommit": "63c88dcf0eb7364521c5ea79b8cd67e63e4990b0",
+  "approvedCorrectedBase": "9b9cbbc78e2ee035fe3f48f447f0072bd3aa17e2",
+  "importedCorrectedSource": {
+    "crates/android_tools/src/generated_artifacts.rs": "2d56897f92de26bed4f556e6a2bea2cb3a4220a1da5b8eb83231aa8317dd7a52",
+    "crates/android_tools/test_data/generated_artifacts/AGP-VERSION-NOTICE.md": "8433d749e6d56e4e16df936c1086210342deb077eac7d0c5fce83b698933d794",
+    "crates/android_tools/test_data/generated_artifacts/AgpVersion.kt": "e689e8d93c9b78f77bcfb94c41b97c5a0bb825537e576e84a30f5ffbbed0edfb",
+    "crates/android_tools/tests/generated_artifacts.rs": "0692a1860b01f5040f56799727ece650f77fbeb349600326e2ee5e214a56447c"
+  }
+}

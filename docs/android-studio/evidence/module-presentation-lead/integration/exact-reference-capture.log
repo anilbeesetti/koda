@@ -1,0 +1,36 @@
+PASS DefaultVariantsTest.oneVariant @ 905012f11885
+PASS DefaultVariantsTest.debugPreferred @ 905012f11885
+PASS DefaultVariantsTest.preferredBuildType @ 905012f11885
+PASS DefaultVariantsTest.preferredProductFlavorOverDebugBuildType @ 905012f11885
+PASS DefaultVariantsTest.preferredFlavorsInTwoDimensions @ 905012f11885
+PASS DefaultVariantsTest.preferredFlavorInSecondDimensionOnly @ 905012f11885
+PASS DefaultVariantsTest.mismatchedProductFlavourLength @ 905012f11885
+PASS DefaultVariantsTest.onEmpty @ 905012f11885
+PASS GradleModuleImportTest.testImportSimpleGradleProject @ 905012f11885
+PASS GradleModuleImportTest.testImportSubprojects @ 905012f11885
+PASS GradleModuleImportTest.testImportSubProjectsWithMissingSubModule @ 905012f11885
+PASS GradleModuleImportTest.testImportSubProjectWithCustomLocation @ 905012f11885
+PASS GradleModuleImportTest.testRequiredProjects @ 905012f11885
+PASS GradleModuleImportTest.testMissingRequiredProjects @ 905012f11885
+PASS GradleModuleImportTest.testMissingEnclosingProject @ 905012f11885
+PASS GradleModuleImportTest.testTransitiveDependencies @ 905012f11885
+PASS GradleModuleImportTest.testCircularDependencies @ 905012f11885
+PASS AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsSelected @ 905012f11885
+PASS AndroidProjectViewTest.testShowVisibilityIconsWhenOptionIsUnselected @ 905012f11885
+PASS AndroidProjectViewTest.testAndroidViewIsDefault @ 905012f11885
+PASS AndroidProjectViewTest.testAndroidViewNotVisibleInUnsupportedProjectSystem @ 905012f11885
+PASS AndroidProjectViewTest.testAndroidViewNotVisibleInNonAndroidProject @ 905012f11885
+PASS AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandling @ 905012f11885
+PASS AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomPropertiesFile @ 905012f11885
+PASS AndroidProjectViewTest.testAndroidViewIsDefaultCustomPropertyHandlingWithCustomVMPropertiesFile @ 905012f11885
+PASS AndroidProjectViewTest.testAndroidViewIsDefaultMetrics @ 905012f11885
+PASS TabbedToolbarTest.componentIsAddedElement @ 905012f11885
+PASS TabbedToolbarTest.tabIsAdded @ 905012f11885
+PASS TabbedToolbarTest.closedIsCalledWhenClicked @ 905012f11885
+PASS TabbedToolbarTest.noCloseButtonWhenNoListener @ 905012f11885
+PASS TabbedToolbarTest.iconButtonsCallbackWhenClicked @ 905012f11885
+PASS TabbedToolbarTest.can select tab by index @ 905012f11885
+PASS TabbedToolbarTest.adding tab should not trigger select listener @ 905012f11885
+PASS ModelVersionsTest.checkModelConsumerVersionOrdering @ 905012f11885
+PASS ModelVersionsTest.checkModelVersionOrdering @ 905012f11885
+PASS 35 exact manifest-bound tests; whole source/index/untracked guards and fixture hashes unchanged.

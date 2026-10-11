@@ -1,0 +1,9 @@
+{
+  "inspection_only": true,
+  "no_retirements_performed": true,
+  "V2_lease_held": true,
+  "known_Root_frozen_current_app": "/tmp/android-studio-link-output/koda-junit4-244335",
+  "known_Root_current_default_UI": "/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf",
+  "known_Tree_frozen_adapter": "/tmp/tree-input-adapter-verified-binaries/project_tree_adapter-tests27",
+  "possible_future_capacity_actions": "After V2 release only: determine exact prior default UI retirement with preserved proof and fresh replacement test requirement; byte-verified move of owned frozen adapter from tmp to workspace with retained symlink only if space requires. No source fixture/reference/package deletion."
+}

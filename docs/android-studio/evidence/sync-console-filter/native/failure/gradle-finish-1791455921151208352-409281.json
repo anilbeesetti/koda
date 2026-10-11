@@ -1,0 +1,31 @@
+{
+  "id": "1791455921151208352-409281",
+  "case": "failure",
+  "source_commit": "f763baebb6d0970b283f759967d7980084317e67",
+  "normal_app_sha256": "d062901fa63e80c1d442f8d12e8c5653ba42c54827c75ae830ba2743af36b11c",
+  "arguments": [
+    "--init-script",
+    "/tmp/koda-android-model-nxydrp/export.gradle",
+    "kodaAndroidProjectModel",
+    "--no-configuration-cache",
+    "--console=plain"
+  ],
+  "argument_bytes_hex": [
+    "2d2d696e69742d736372697074",
+    "2f746d702f6b6f64612d616e64726f69642d6d6f64656c2d6e78796472702f6578706f72742e677261646c65",
+    "6b6f6461416e64726f696450726f6a6563744d6f64656c",
+    "2d2d6e6f2d636f6e66696775726174696f6e2d6361636865",
+    "2d2d636f6e736f6c653d706c61696e"
+  ],
+  "cwd": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/generation-project",
+  "official_wrapper_sha256": "a5a5c199ba02189ae8c46a334223371a20599d9c298ef65e7540ede4a3f72d59",
+  "saved_init_path": "/workspace/android-studio-artifacts/sync-console-filter/native-preparation/native-runtime-attempt1/failure/native-sync-export-1791455921151208352-409281.gradle",
+  "init_sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+  "expected_source_bridge_sha256": "887ddeb4ff9564792f648f4221f8b8738a31bc9434a876091ad012bd1defc2b9",
+  "start_utc": "2026-10-08T10:38:41.151473+00:00",
+  "actual_gradle_client_pid": 409307,
+  "return_code": 1,
+  "finish_utc": "2026-10-08T10:38:42.732967+00:00",
+  "raw_stdout_sha256": "5f5ea739471f64097402e7e1c25d69f97b3a8edc607b2899b0e276c96cafe0e7",
+  "raw_stderr_sha256": "86a64562a7da87048cd78ccd9e0fa4d38aa5b091e9366337d609b0a51b36c01c"
+}

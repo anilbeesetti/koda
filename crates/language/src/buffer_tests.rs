@@ -1588,7 +1588,9 @@ fn test_enclosing_bracket_ranges(cx: &mut App) {
 }
 
 #[gpui::test]
-fn test_bracket_colorization_indices_remain_stable_across_row_chunks(cx: &mut App) {
+async fn test_bracket_colorization_indices_remain_stable_across_row_chunks(
+    cx: &mut TestAppContext,
+) {
     let mut text = String::from("{\n  \"theme\": {\n");
     let mut property_object_open_offsets = Vec::new();
     for index in 0..500 {
@@ -1602,8 +1604,15 @@ fn test_bracket_colorization_indices_remain_stable_across_row_chunks(cx: &mut Ap
         "fixture should exceed the bounded tree-sitter query window"
     );
 
-    let buffer = cx.new(|cx| Buffer::local(text.clone(), cx).with_language(json_lang(), cx));
-    let snapshot = buffer.update(cx, |buffer, _| buffer.snapshot());
+    let buffer = cx.new(|cx| {
+        let mut buffer = Buffer::local(text.clone(), cx);
+        buffer.set_sync_parse_timeout(Some(Duration::ZERO));
+        buffer.with_language(json_lang(), cx)
+    });
+    buffer
+        .read_with(cx, |buffer, _| buffer.parsing_idle())
+        .await;
+    let snapshot = buffer.read_with(cx, |buffer, _| buffer.snapshot());
 
     let late_open_offset = property_object_open_offsets[400];
     let late_matches = snapshot.fetch_bracket_ranges(late_open_offset..late_open_offset + 1, None);

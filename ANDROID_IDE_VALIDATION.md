@@ -359,19 +359,20 @@ quiet. Full parity is ongoing work.
 
 ## Run it
 
-The optional language/debug/preview tools are installed in this checkout. To
+The optional language/debug tools are installed in this checkout. To
 reproduce their installation on Apple Silicon with JDK 21, run:
 
 ```sh
 script/install-android-kotlin
 script/install-android-debugger
-script/install-android-preview
 ```
 
 Each script verifies pinned source/artifact checksums, preserves an unmanaged
 installation, and is repeatable. Kotlin and the debugger build with a task-local
-JDK 11; execution uses JDK 21. Preview uses a separate short-lived JVM, without
-starting Android Studio or an emulator.
+JDK 11; execution uses JDK 21. Preview tools and their Java runtime are bundled
+automatically by Cargo. `cargo run --locked -p zed --bin koda` enables previews
+without an installer or launcher; rendering uses a separate short-lived JVM,
+without starting Android Studio or an emulator.
 
 From this checkout, launch the optimized app:
 
@@ -434,7 +435,7 @@ SDK packages.
 | Devices | Explicit serial selection; offline and unauthorized entries retained. Missing device state is visible. Physical-device stop is rejected in tests. |
 | Emulator lifecycle | Native Start/Stop exercised on the existing `medium_phone` AVD. The optimized build also started `Pixel_6a` and deployed both flavors there. Stop refreshes the device list without deleting or recreating AVDs. |
 | Build and Run | Save-before-build, selected variant, AGP output metadata, explicit device, and visible output. Build failure prevents deployment. Repeated run after fixing an intentional Kotlin type error showed the changed greeting on the emulator. |
-| APK selection | Existing AGP metadata/redirects are read. The implementation accepts a single universal APK and rejects ambiguous, filtered/split, missing, traversing, or variant-mismatched artifacts. Split APK installation is deferred. |
+| APK selection | Existing AGP metadata/redirects are read. Run/Debug select one standalone APK using the selected device’s ABIs, version code, and Android Studio’s ABI preference. Device-independent tools select a universal APK even when ABI alternatives exist. Ambiguous, missing, traversing, and variant-mismatched selections are rejected. Base/configuration split-set installation remains deferred; see `examples/android-ide/APK_SELECTION.md`. |
 | Test and Lint | Native task actions passed. Direct smoke-project builds/test tasks passed for both debug flavors; lint passed with warnings listed below. |
 | Logcat | Real selected-device `adb logcat -v threadtime` in a terminal with bounded history. Ctrl+C stops the stream. No dedicated filter/table UI yet. |
 | Kotlin Android APIs | Android/Compose resolution, useful hover/completion, and deliberate type-error diagnostics exercised on the reference project. |

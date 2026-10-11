@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+"""Select bounded CI concurrency and report wall time without shell evaluation."""
+
+import argparse
+import os
+from pathlib import Path
+import platform
+import subprocess
+import time
+
+
+def concurrency(cpu_count, memory_bytes, system):
+    cpu_count = max(1, cpu_count)
+    # Leave OS/services headroom; macOS jobs do not start the database service.
+    reserve_gib = 1 if system == "Darwin" else 2
+    usable_gib = max(1, memory_bytes // (1024**3) - reserve_gib)
+    compile_gib = 3 if system == "Darwin" else 2
+    build_jobs = max(1, min(cpu_count, 4, usable_gib // compile_gib))
+    test_threads = max(1, min(cpu_count, usable_gib // 2))
+    return build_jobs, test_threads
+
+
+def memory_bytes(system):
+    if system == "Darwin":
+        return int(subprocess.check_output(["sysctl", "-n", "hw.memsize"], text=True))
+    for line in Path("/proc/meminfo").read_text().splitlines():
+        if line.startswith("MemTotal:"):
+            return int(line.split()[1]) * 1024
+    raise RuntimeError("Unable to determine runner memory")
+
+
+def summary(text):
+    if path := os.environ.get("GITHUB_STEP_SUMMARY"):
+        with open(path, "a") as output:
+            output.write(text + "\n")
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="action", required=True)
+    resources = commands.add_parser("resources")
+    resources.add_argument("--github-env", required=True)
+    stage = commands.add_parser("stage")
+    stage.add_argument("label")
+    stage.add_argument("command", nargs=argparse.REMAINDER)
+    args = parser.parse_args()
+    if args.action == "resources":
+        system = platform.system()
+        cpus = os.cpu_count() or 1
+        memory = memory_bytes(system)
+        jobs, threads = concurrency(cpus, memory, system)
+        message = (
+            f"{system}: {cpus} CPUs, {memory / 1024**3:.1f} GiB RAM; "
+            f"Cargo jobs={jobs}, nextest threads={threads}"
+        )
+        print(message, flush=True)
+        summary(message)
+        with open(args.github_env, "a") as output:
+            output.write(f"CARGO_BUILD_JOBS={jobs}\nCI_TEST_THREADS={threads}\n")
+        return 0
+    command = args.command
+    if command[:1] == ["--"]:
+        command = command[1:]
+    if not command:
+        parser.error("stage requires a command")
+    started = time.monotonic()
+    result = subprocess.run(command, check=False)
+    elapsed = time.monotonic() - started
+    message = f"{args.label}: {elapsed:.1f}s (exit {result.returncode})"
+    print(message, flush=True)
+    summary(f"- {message}")
+    return result.returncode if result.returncode >= 0 else 128 - result.returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

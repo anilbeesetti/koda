@@ -1,0 +1,161 @@
++ cargo clippy --locked -p android_tools --release --all-targets --all-features -- --deny warnings
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling libc v0.2.186
+   Compiling cfg-if v1.0.4
+   Compiling stable_deref_trait v1.2.1
+   Compiling pin-project-lite v0.2.16
+   Compiling bytes v1.11.1
+   Compiling serde_core v1.0.229
+   Compiling futures-core v0.3.34
+   Compiling itoa v1.0.18
+   Compiling shlex v2.0.1
+   Compiling once_cell v1.21.4
+   Compiling find-msvc-tools v0.1.11
+   Compiling syn v2.0.117
+   Compiling syn v3.0.3
+   Compiling futures-sink v0.3.34
+   Compiling cc v1.4.3
+   Compiling socket2 v0.6.5
+   Compiling mio v1.2.0
+   Compiling tokio v1.52.1
+   Compiling ring v0.17.14
+   Compiling serde v1.0.229
+   Compiling synstructure v0.13.2
+   Compiling writeable v0.6.4
+   Compiling smallvec v1.16.1
+   Compiling zerovec-derive v0.11.5
+   Compiling zerofrom-derive v0.1.6
+   Compiling yoke-derive v0.8.2
+   Compiling zerofrom v0.1.6
+   Compiling displaydoc v0.2.5
+   Compiling yoke v0.8.3
+   Compiling fnv v1.0.7
+   Compiling zerovec v0.11.8
+   Compiling slab v0.4.11
+   Compiling crc32fast v1.5.0
+   Compiling litemap v0.8.0
+   Compiling rustix v1.1.4
+   Compiling zeroize v1.8.2
+   Compiling tinystr v0.8.4
+   Compiling potential_utf v0.1.3
+   Compiling rustls-pki-types v1.12.0
+   Compiling zerotrie v0.2.5
+   Compiling icu_locale_core v2.3.0
+   Compiling http v1.3.1
+   Compiling icu_properties_data v2.3.0
+   Compiling icu_normalizer_data v2.3.0
+   Compiling version_check v0.9.5
+   Compiling equivalent v1.0.2
+   Compiling typenum v1.19.0
+   Compiling hashbrown v0.17.1
+   Compiling utf8_iter v1.0.4
+   Compiling memchr v2.8.3
+   Compiling icu_collections v2.3.0
+   Compiling indexmap v2.14.0
+   Compiling generic-array v0.14.7
+   Compiling icu_provider v2.3.0
+   Compiling serde_derive v1.0.229
+   Compiling getrandom v0.2.16
+   Compiling tracing-core v0.1.35
+   Compiling futures-task v0.3.34
+   Compiling getrandom v0.4.1
+   Compiling untrusted v0.9.0
+   Compiling httparse v1.10.1
+   Compiling futures-io v0.3.34
+   Compiling zmij v1.0.23
+   Compiling futures-util v0.3.34
+   Compiling tracing v0.1.43
+   Compiling http-body v1.0.1
+   Compiling tokio-util v0.7.18
+   Compiling rustls v0.23.40
+   Compiling atomic-waker v1.1.2
+   Compiling try-lock v0.2.5
+   Compiling want v0.3.1
+   Compiling h2 v0.4.19
+   Compiling icu_properties v2.3.0
+   Compiling icu_normalizer v2.3.0
+   Compiling rustls-webpki v0.103.13
+   Compiling futures-channel v0.3.34
+   Compiling serde_json v1.0.151
+   Compiling subtle v2.6.1
+   Compiling tower-service v0.3.3
+   Compiling thiserror v1.0.69
+   Compiling unicase v2.8.1
+   Compiling bitflags v2.13.1
+   Compiling percent-encoding v2.3.2
+   Compiling linux-raw-sys v0.12.1
+   Compiling anyhow v1.0.104
+   Compiling form_urlencoded v1.2.2
+   Compiling mime_guess v2.0.5
+   Compiling hyper v1.11.1
+   Compiling idna_adapter v1.2.1
+   Compiling thiserror-impl v1.0.69
+   Compiling openssl-probe v0.2.1
+   Compiling simd-adler32 v0.3.7
+   Compiling adler2 v2.0.1
+   Compiling rustls-native-certs v0.8.3
+   Compiling miniz_oxide v0.8.9
+   Compiling hyper-util v0.1.17
+   Compiling idna v1.1.0
+   Compiling block-buffer v0.10.4
+   Compiling crypto-common v0.1.6
+   Compiling sync_wrapper v1.0.2
+   Compiling autocfg v1.5.0
+   Compiling tower-layer v0.3.3
+   Compiling either v1.15.0
+   Compiling tokio-rustls v0.26.4
+   Compiling mime v0.3.17
+   Compiling ryu v1.0.23
+   Compiling hyper-rustls v0.27.9
+   Compiling serde_urlencoded v0.7.1
+   Compiling tokio-socks v0.5.2
+   Compiling num-traits v0.2.19
+   Compiling tower v0.5.2
+   Compiling digest v0.10.7
+   Compiling url v2.5.7
+   Compiling flate2 v1.1.8
+   Compiling xattr v1.6.1
+   Compiling http-body-util v0.1.3
+   Compiling rustls-pemfile v2.2.0
+   Compiling filetime v0.2.29
+   Compiling encoding_rs v0.8.35
+   Compiling fastrand v2.3.0
+   Compiling ipnet v2.11.0
+   Compiling log v0.4.29
+   Compiling base64 v0.22.1
+   Compiling cpufeatures v0.2.17
+   Compiling byteorder v1.5.0
+   Compiling zip v0.6.6
+   Compiling sha2 v0.10.9
+   Compiling zed-reqwest v0.12.15-zed (https://github.com/zed-industries/reqwest.git?rev=33bc764aa15ff7b200bf7c93bd96e24878d53e14#33bc764a)
+   Compiling tempfile v3.27.0
+   Compiling tar v0.4.46
+    Checking aho-corasick v1.1.3
+   Compiling fs2 v0.4.3
+    Checking option-ext v0.2.0
+    Checking regex-syntax v0.8.11
+    Checking dirs-sys v0.5.0
+    Checking regex-automata v0.4.18
+    Checking iana-time-zone v0.1.64
+   Compiling android_tools v0.1.0 (/workspace/android-studio-source-providers/crates/android_tools)
+    Checking chrono v0.4.42
+    Checking dirs v6.0.0
+    Checking which v8.0.5
+    Checking regex v1.12.3
+error: redundant clone
+    --> crates/android_tools/src/project_model.rs:1213:41
+     |
+1213 | ...                   path: shared.clone(),
+     |                                   ^^^^^^^^ help: remove this
+     |
+note: this value is dropped without further use
+    --> crates/android_tools/src/project_model.rs:1213:35
+     |
+1213 | ...                   path: shared.clone(),
+     |                             ^^^^^^
+     = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#redundant_clone
+     = note: requested on the command line with `-D clippy::redundant-clone`
+
+error: could not compile `android_tools` (lib test) due to 1 previous error

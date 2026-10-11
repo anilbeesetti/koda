@@ -1,0 +1,13 @@
+    Finished `test` profile [unoptimized] target(s) in 0.95s
+     Running unittests src/android_ui.rs (/workspace/.cache/zed/target/debug/deps/android_ui-0a1e421ffc75c4cf)
+
+running 1 test
+test tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener ... ok
+
+successes:
+
+successes:
+    tabbed_toolbar::tests::adding_tab_should_not_trigger_select_listener
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 142 filtered out; finished in 0.05s
+

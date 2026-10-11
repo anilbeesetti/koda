@@ -1,0 +1,18 @@
+{
+  "source_commit": "0e15a3d2b6eff51451b5f30d4c62ab0edde608ab",
+  "stage": "final-after-native",
+  "source_files": 4704,
+  "fixed_metadata_exclusions": [
+    ".",
+    ":(glob,exclude)docs/android-studio/*.md",
+    ":(exclude)docs/android-studio/reference-manifest.json",
+    ":(exclude)docs/android-studio/test-parity.json",
+    ":(glob,exclude)docs/android-studio/ports/*.json",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.log",
+    ":(glob,exclude)docs/android-studio/evidence/**/*.json"
+  ],
+  "git_tree": "ea0dd3b90fe66c30e6c7debd336cc708a4bbf0ec",
+  "whole_source_index_worktree_untracked_and_file_hashes_match": true,
+  "executable": "/tmp/android-studio-link-output/koda-tree-adapter-258543",
+  "executable_sha256": "f5e4ae6dd711fe4b8e0001a3f4923bbe697b5b855ebd081e6631f528ea7354d4"
+}

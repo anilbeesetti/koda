@@ -1,0 +1,29 @@
+{
+  "status": "all_five_scoped_static_pass_actual_tests_blocked_by_retained_ENOSPC",
+  "fix_rounds": 2,
+  "production_sha256": "d57ba8070321039cdd8b9749bc43df923e694a31c27299a1ec577b5974edfc3b",
+  "tests_sha256": "98453f194d39b1d7129f35732c76f0718c5b5f072d5904d6004442b942efd047",
+  "expected_unfiltered_tests": 201,
+  "new_tests": 27,
+  "reports": {
+    "code-review-round2.md": "64f43e9628265a1c814eb9aed0656eed83601e6d3b5a7047846859f9578d6620",
+    "ui-review-round2.md": "ce6a7eb0a3d10a296f4470421d1e06cc0a518e6bf4f434fc0795eca6fcf95166",
+    "ux-review-round2.md": "67e57f724e1c2d57e961af8d80b9a81a1cd3dff59d6d706c5e82d54ad1b0c724",
+    "performance-review-round2.md": "b39de224e3146e48d00d3d7ce93974efaf576b9519eed469ca28628c66add2fa",
+    "quality-review-round3.md": "329005e224577c4fcbce0d527332e0fe5016b9349626097c989a6d1d9a596ba9"
+  },
+  "actual_failed_attempt": {
+    "receipt": "all-features-tests.json",
+    "reason": "ENOSPC in unchanged bundled-preview build before tests",
+    "product_fix_round": false
+  },
+  "actual_format_check": "passed",
+  "actual_format_receipt": "format-check.json",
+  "capacity_recovery_receipt": "out-dir-relocation.json",
+  "remaining_actual_checks": [
+    "same locked all-features test retry",
+    "strict repository Clippy",
+    "all-features library build",
+    "fresh executable stress timing/RSS"
+  ]
+}

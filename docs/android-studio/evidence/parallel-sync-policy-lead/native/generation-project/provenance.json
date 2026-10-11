@@ -1,0 +1,58 @@
+{
+  "raw_model": "raw-model-round3.json",
+  "raw_sha256": "4495284fc28ac956867fd99deaa07a65e38d7bf5eaec2e756479f80c2211b9fd",
+  "fixture_sha256": "0aa94781d801b3b00b3d00e5e2bd7d6b0cb5e5c0c35eaae920b6cff16e9640f8",
+  "only_normalization": "Replace exact absolute isolated project prefix in JSON string values with ${project_root}; preserve all flags,keys,values,order and dependencies.",
+  "runtime": "AGP9.4/Gradle9.6.1/JDK21/SDK37 supplemental, no pinned helper or parity credit.",
+  "round2_failure": "Actual flat directories expose both covariant method and JVM bridge; method lookup now explicitly excludes bridge methods.",
+  "captured_runtime": "AGP9.4.0/Gradle9.6.1/JDK21/SDK37/buildtools37.0.0",
+  "fresh_capture_raw_sha256": "307b96583763863aceee769cf991ab15cf65babb2843ec4fc22d1e62454ac431",
+  "fresh_capture_values_equal_original": true,
+  "task_fixture_attribution": {
+    "source": "android/navigator/testSrc/com/android/tools/idea/navigator/AndroidProjectViewTest.java",
+    "test": "testGeneratedAssets",
+    "idea_revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+    "license": "Apache-2.0",
+    "original_full_test_status": "unported",
+    "canonical_credit": 0
+  },
+  "exporter_sha256": "7c8a928444c502d880be3a1a0c92b28254084f3e2e69f1f12d0f59f6be14acb6",
+  "input_files": [
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/build.gradle",
+      "sha256": "522e77481cf8d0f3ef0d379373c665447aaa99d5f7b40ec43de3dfa601243564"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/custom-manifest/AndroidManifest.xml",
+      "sha256": "04b0035bfbb75cdf2e1ca08522a873ec17c57c7c4d504db5141791950a2fdd3e"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/flavor-assets/demo.txt",
+      "sha256": "4c868ef8cdcb0a56d4abaaf91dd8d0a6a988d240f51bb1d66199a9878896abbd"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/main/resources/resources.properties",
+      "sha256": "72d958098df4c5df21975090a9c0d3063ebdb8b4e442eee5382457debd8f739c"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/provider-res/layout/sample.xml",
+      "sha256": "b006e542fe5eb593b47fbbc4ca8fd62e2d40d099d6e18d60cfffe4747bed9208"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/app/unrelated-assets/sample.txt",
+      "sha256": "19ec6c66372d3e1bc08dd445af03d8008abea25d07fc7a6e30f24e21a7e78950"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/build.gradle",
+      "sha256": "921d89275ff70763fc2ce315d6a4d1e479bcd65e0ba1ed19b633073977a483c2"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/gradle.properties",
+      "sha256": "0beaaf135e68180d14b3e75e227dbf0219361d835fdef5ee0a7e28e85b6e9fe2"
+    },
+    {
+      "path": "crates/android_tools/test_data/source_providers/gradle-smoke-generation/settings.gradle",
+      "sha256": "759c155c8627fb4a4834ad79522d4de158d994363820e57b3d6d533d0068974c"
+    }
+  ]
+}
