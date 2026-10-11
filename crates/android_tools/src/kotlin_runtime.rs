@@ -558,10 +558,9 @@ fn manage_at(
         &mut 0,
         &mut 0,
     )?;
-    ensure!(
-        fs::read_dir(staging.path())?.count() == 1,
-        "Unexpected Kotlin archive roots"
-    );
+    let roots = fs::read_dir(staging.path())?.collect::<std::io::Result<Vec<_>>>()?;
+    ensure!(roots.len() == 1, "Unexpected Kotlin archive roots");
+    managed::validate_storage_budget(profile, 0, 0)?;
     validate_distribution(staging.path(), &runtime)?;
     report("Checking Kotlin language server initialization…".into());
     probe(staging.path(), &runtime, cancel)?;
