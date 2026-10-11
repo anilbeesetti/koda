@@ -2117,13 +2117,106 @@ mod tests {
     }
 
     #[cfg(unix)]
+    struct FreshPageMapping {
+        address: *mut libc::c_void,
+        bytes: usize,
+        page_size: usize,
+    }
+
+    #[cfg(unix)]
+    impl FreshPageMapping {
+        fn new() -> Result<Self> {
+            // SAFETY: sysconf only queries this process's OS page size.
+            let page_size = unsafe { libc::sysconf(libc::_SC_PAGESIZE) };
+            anyhow::ensure!(
+                page_size > 0,
+                "OS page-size query failed: {}",
+                std::io::Error::last_os_error()
+            );
+            let page_size = usize::try_from(page_size)
+                .map_err(|error| anyhow!("OS page size does not fit usize: {error}"))?;
+            let bytes = page_size
+                .checked_mul(512)
+                .ok_or_else(|| anyhow!("fresh page mapping size overflow"))?;
+            // SAFETY: private anonymous memory has no file descriptor; the OS
+            // chooses an address for a nonempty read/write mapping.
+            let address = unsafe {
+                libc::mmap(
+                    std::ptr::null_mut(),
+                    bytes,
+                    libc::PROT_READ | libc::PROT_WRITE,
+                    libc::MAP_PRIVATE | libc::MAP_ANON,
+                    -1,
+                    0,
+                )
+            };
+            anyhow::ensure!(
+                address != libc::MAP_FAILED,
+                "fresh anonymous mapping failed: {}",
+                std::io::Error::last_os_error()
+            );
+            let mapping = Self {
+                address,
+                bytes,
+                page_size,
+            };
+            anyhow::ensure!(
+                !mapping.address.is_null(),
+                "fresh mapping has a null address"
+            );
+            #[cfg(target_os = "linux")]
+            {
+                // SAFETY: the complete range belongs to this live mapping.
+                // Disable transparent huge pages before any page is touched,
+                // so each OS page has its own demand fault.
+                let status =
+                    unsafe { libc::madvise(mapping.address, mapping.bytes, libc::MADV_NOHUGEPAGE) };
+                anyhow::ensure!(
+                    status == 0,
+                    "disabling huge pages for the fixture failed: {}",
+                    std::io::Error::last_os_error()
+                );
+            }
+            Ok(mapping)
+        }
+
+        fn touch(&mut self) {
+            for offset in (0..self.bytes).step_by(self.page_size) {
+                // SAFETY: construction validated a non-null mapping and a
+                // positive page size; every offset is within its exclusive
+                // writable range. Volatile writes cannot be optimized away.
+                unsafe { std::ptr::write_volatile(self.address.cast::<u8>().add(offset), 1) };
+            }
+        }
+    }
+
+    #[cfg(unix)]
+    impl Drop for FreshPageMapping {
+        fn drop(&mut self) {
+            // SAFETY: this fixture owns the original address/length and
+            // releases them exactly once, including on a failed assertion.
+            let status = unsafe { libc::munmap(self.address, self.bytes) };
+            if status != 0 {
+                let error = std::io::Error::last_os_error();
+                if std::thread::panicking() {
+                    eprintln!("fresh page mapping cleanup failed while unwinding: {error}");
+                } else {
+                    panic!("fresh page mapping cleanup failed: {error}");
+                }
+            }
+        }
+    }
+
+    #[cfg(unix)]
     #[test]
     fn resource_counter_counts_page_faults_and_context_switches() {
         let faults = ResourceCounter::new(ResourceMetric::MinorPageFaults, MetricScope::Process)
             .expect("RUSAGE_SELF is always available");
         let start = faults.start();
-        // Touch fresh pages: a 4 MiB allocation faults in ~1000 pages.
-        let buffer = vec![1_u8; 4 << 20];
+        // A heap allocation can reuse resident pages or use huge pages. A
+        // fresh mapping supplies 512 demand-faulting OS pages on every Unix.
+        let mut buffer = FreshPageMapping::new().expect("fresh OS pages are available");
+        buffer.touch();
         std::hint::black_box(&buffer);
         assert!(faults.end(start) > 100.0);
 
