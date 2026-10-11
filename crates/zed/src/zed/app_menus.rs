@@ -446,9 +446,6 @@ mod tests {
                     "plugins":PluginId::ALL.map(|plugin|json!({"plugin":plugin,"applied":matches!(plugin, PluginId::AndroidApplication | PluginId::KotlinAndroid)})),
                     "targets":{"status":"available","value":[{"name":"android","platform":"androidJvm"}]}}]});
             let snapshot = decode_context_record(&serde_json::to_vec(&record).expect("Catalogue bytes"), root).expect("Evaluated fixture catalogue");
-            let model = serde_json::from_value(json!({"version":1,"root":root,"diagnostics":[],
-                "modules":[{"path":":","directory":root,"namespace":"example.app","kind":"application",
-                    "variants":[{"name":"debug","outputListing":root.join("output.json"),"components":[]}]}]})).expect("Application model");
             project.update(cx, |project, cx| {
                 let worktree = project.visible_worktrees(cx).next().expect("Fixture worktree").read(cx).id();
                 let handle = project.ensure_android_context(worktree, true, cx).expect("Owner handle");
@@ -457,6 +454,17 @@ mod tests {
                 active.select(Some(handle), None).expect("Selected owner");
                 let owner = active.discovery_token(project.android_context()).expect("Current owner");
                 project.publish_android_context(&active, &owner, &discovery, snapshot, cx).expect("Publish catalogue");
+            });
+        });
+        // Publishing the catalogue schedules startup sync, which invalidates the
+        // current model. Settle that work before simulating its completed model.
+        visual.run_until_parked();
+        visual.update(|_, cx| {
+            let root = Path::new("/pr42-menu-owner");
+            let model = serde_json::from_value(json!({"version":1,"root":root,"diagnostics":[],
+                "modules":[{"path":":","directory":root,"namespace":"example.app","kind":"application",
+                    "variants":[{"name":"debug","outputListing":root.join("output.json"),"components":[]}]}]})).expect("Application model");
+            project.update(cx, |project, cx| {
                 let token = project.invalidate_android_model(Some(root.to_path_buf()), cx);
                 project.publish_android_model(&token, model, cx).expect("Publish model");
                 project.select_android_variant(Some(android_tools::project_model::VariantId { module:":".into(), variant:"debug".into() }), cx).expect("Selected model variant");
