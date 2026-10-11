@@ -1305,7 +1305,9 @@ mod native_owned_source_workflow_regression {
                 .matches("--request \"$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json\"")
                 .count()
                 - native_gui_step(native)
-                    .matches("--request \"$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json\"")
+                    .matches(
+                        "--request \"$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json\""
+                    )
                     .count(),
             3
         );
@@ -1328,7 +1330,8 @@ mod native_owned_source_workflow_regression {
     }
 
     #[test]
-    fn native_gui_operation_authenticates_the_delivered_owned_source_and_retains_failure_evidence() {
+    fn native_gui_operation_authenticates_the_delivered_owned_source_and_retains_failure_evidence()
+    {
         let workflow = include_str!("../../../../../.github/workflows/fork_ci.yml");
         let native = workflow
             .split("  exact_source_native_artifact:\n")
@@ -1375,12 +1378,13 @@ mod native_owned_source_workflow_regression {
         let runner = include_str!("package/gui_smoke.rs");
         assert!(runner.contains("metadata.validate(&request)?"));
         assert!(runner.contains("metadata.controller_sha == args.controller_sha"));
-        assert!(runner.contains(".find(|entry| entry.path == \"runtime/source/target/debug/koda\")"));
+        assert!(
+            runner.contains(".find(|entry| entry.path == \"runtime/source/target/debug/koda\")")
+        );
         assert!(runner.contains("working_directory: args.package_dir.join(\"runtime/source\")"));
         assert!(
             runner.contains("source_sha: request.source_sha.clone()")
                 && runner.contains("source_tree: request.source_tree.clone()")
         );
     }
-
 }
