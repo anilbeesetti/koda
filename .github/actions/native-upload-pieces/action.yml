@@ -1,0 +1,15 @@
+name: Upload bounded native artifact pieces
+description: Invoke the exact pinned official upload-artifact bundle per 30MiB piece
+inputs:
+  artifact-directory:
+    required: true
+    description: Prepared artifact directory under the runner temp directory
+  uploader-directory:
+    required: true
+    description: Checkout of actions/upload-artifact at the recorded immutable commit
+  source-sha:
+    required: true
+    description: Exact source commit
+runs:
+  using: node20
+  main: index.cjs

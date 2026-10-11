@@ -1,0 +1,3319 @@
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs::{self, File, OpenOptions},
+    io::{BufReader, Read, Seek, SeekFrom, Write},
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+    time::{Duration, Instant},
+};
+
+use anyhow::{Context as _, Result, bail, ensure};
+use clap::Args;
+use flate2::{
+    Compression,
+    write::{GzEncoder, ZlibEncoder},
+};
+use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
+
+use super::{
+    Authentication, FileDigest, GitBatch, MAX_MANIFEST_BYTES, MAX_METADATA_BYTES, MAX_PIECES,
+    MAX_ZIP_BYTES, OwnedChild, PIECE_BYTES, Physical13, PhysicalEntry, REPOSITORY, Request,
+    SourceArgs, SourceManifest, SourceObservation, authenticated_json, bounded_line, command,
+    create_file, digest_file, link_bytes, normalized_link, observe, open_beneath, open_noatime,
+    payload_relative, physical, read_bounded, require_hex, sha256, validate_link_graph, write_json,
+};
+
+mod bounded_tar;
+pub(super) mod elf;
+mod producer;
+
+const MAX_BINARY_BYTES: u64 = 4 * 1024 * 1024 * 1024;
+const MAX_BUILD_LOG_BYTES: u64 = 64 * 1024 * 1024;
+const MAX_BUILD_LINE_BYTES: usize = 2 * 1024 * 1024;
+const MAX_BUILD_EVIDENCE_BYTES: u64 = 16 * 1024 * 1024;
+const MAX_PAYLOAD_ENTRIES: usize = 60_000;
+const MAX_PAYLOAD_BYTES: u64 = 12 * 1024 * 1024 * 1024;
+const MAX_ARCHIVE_BYTES: u64 = PIECE_BYTES * MAX_PIECES as u64;
+
+pub(super) fn inspect_bootstrap(path: &Path) -> Result<serde_json::Value> {
+    Ok(serde_json::to_value(elf::inspect(path)?)?)
+}
+
+#[derive(Args)]
+pub struct BuildArgs {
+    #[command(flatten)]
+    source: SourceArgs,
+    #[arg(long)]
+    request: PathBuf,
+    #[arg(long)]
+    request_sha256: String,
+    #[arg(long)]
+    controller_sha: String,
+    #[arg(long)]
+    run_id: String,
+    #[arg(long)]
+    run_attempt: String,
+    /// New directory; partial failures remain here and are never called PASS.
+    #[arg(long)]
+    output_dir: PathBuf,
+    /// Optional CI output file; receives only the completed actual receipt digest.
+    #[arg(long)]
+    github_output: Option<PathBuf>,
+}
+
+#[derive(Args)]
+pub struct PackageArgs {
+    #[command(flatten)]
+    source: SourceArgs,
+    #[arg(long)]
+    request: PathBuf,
+    #[arg(long)]
+    request_sha256: String,
+    #[arg(long)]
+    build_receipt: PathBuf,
+    #[arg(long)]
+    build_receipt_sha256: String,
+    /// New directory containing runtime, manifests, archive and ordered pieces.
+    #[arg(long)]
+    output_dir: PathBuf,
+}
+
+#[derive(Args)]
+pub struct ExtractArgs {
+    #[arg(long)]
+    metadata: PathBuf,
+    #[arg(long)]
+    metadata_sha256: String,
+    #[arg(long)]
+    request: PathBuf,
+    #[arg(long)]
+    request_sha256: String,
+    #[arg(long)]
+    payload_manifest: PathBuf,
+    #[arg(long)]
+    pieces: PathBuf,
+    /// New directory on the separately admitted staging filesystem.
+    #[arg(long)]
+    output_dir: PathBuf,
+    #[arg(long)]
+    receipt: PathBuf,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub(super) struct Piece {
+    pub(super) order: usize,
+    pub(super) file: String,
+    pub(super) bytes: u64,
+    pub(super) sha256: String,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct ArtifactMetadata {
+    pub(super) schema_version: u32,
+    pub(super) repository: String,
+    pub(super) source_sha: String,
+    pub(super) source_tree: String,
+    pub(super) source_manifest_sha256: String,
+    pub(super) source_owner_receipt_sha256: String,
+    pub(super) controller_sha: String,
+    pub(super) run_id: String,
+    pub(super) run_attempt: String,
+    pub(super) runtime_archive: FileDigest,
+    pub(super) payload_manifest: FileDigest,
+    pub(super) build_evidence: FileDigest,
+    pub(super) piece_manifest: FileDigest,
+    pub(super) pieces: Vec<Piece>,
+    pub(super) unpacked_regular_bytes: u64,
+    pub(super) directory_count: u64,
+    pub(super) symlink_count: u64,
+    pub(super) regular_file_count: u64,
+}
+
+impl ArtifactMetadata {
+    pub(super) fn validate(&self, request: &Request) -> Result<()> {
+        ensure!(
+            self.schema_version == 1
+                && self.repository == REPOSITORY
+                && self.source_sha == request.source_sha
+                && self.source_tree == request.source_tree
+                && self.source_manifest_sha256 == request.source_manifest_sha256
+                && self.source_owner_receipt_sha256 == request.source_owner_receipt_sha256,
+            "artifact/request identity differs"
+        );
+        require_hex(&self.controller_sha, 40)?;
+        numeric_identity(&self.run_id)?;
+        numeric_identity(&self.run_attempt)?;
+        validate_pieces(&self.pieces, &self.runtime_archive)?;
+        for digest in [
+            &self.payload_manifest,
+            &self.build_evidence,
+            &self.piece_manifest,
+        ] {
+            ensure!(
+                digest.bytes > 0 && digest.bytes <= MAX_MANIFEST_BYTES,
+                "empty or oversized metadata member"
+            );
+            require_hex(&digest.sha256, 64)?;
+        }
+        ensure!(
+            self.unpacked_regular_bytes > 0
+                && self.unpacked_regular_bytes <= MAX_PAYLOAD_BYTES
+                && self.regular_file_count > 0
+                && self.directory_count > 0
+                && self
+                    .regular_file_count
+                    .checked_add(self.directory_count)
+                    .and_then(|count| count.checked_add(self.symlink_count))
+                    .is_some_and(|count| count <= MAX_PAYLOAD_ENTRIES as u64),
+            "unpacked count/size budget differs"
+        );
+        Ok(())
+    }
+}
+
+pub(super) fn validate_metadata_members(
+    metadata: &ArtifactMetadata,
+    request: &Request,
+    payload_path: &Path,
+    source_path: &Path,
+    pieces_path: &Path,
+    evidence_path: &Path,
+) -> Result<()> {
+    let payload: PayloadManifest = authenticated_json(
+        payload_path,
+        &metadata.payload_manifest.sha256,
+        MAX_MANIFEST_BYTES,
+    )?;
+    payload.validate()?;
+    ensure!(
+        digest_file(payload_path, MAX_MANIFEST_BYTES)?.0 == metadata.payload_manifest
+            && payload.unpacked_regular_bytes == metadata.unpacked_regular_bytes
+            && payload.directory_count == metadata.directory_count
+            && payload.symlink_count == metadata.symlink_count
+            && payload.regular_file_count == metadata.regular_file_count,
+        "metadata payload totals/digest differ"
+    );
+    let source: SourceManifest = authenticated_json(
+        source_path,
+        &request.source_manifest_sha256,
+        MAX_MANIFEST_BYTES,
+    )?;
+    source.validate()?;
+    ensure!(
+        source.commit == request.source_sha && source.tree == request.source_tree,
+        "downloaded source manifest identity differs"
+    );
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Pieces {
+        schema_version: u32,
+        source_sha: String,
+        source_tree: String,
+        source_owner_receipt_sha256: String,
+        concatenated_archive: FileDigest,
+        maximum_github_zip_bytes: u64,
+        pieces: Vec<Piece>,
+    }
+    let pieces: Pieces = authenticated_json(
+        pieces_path,
+        &metadata.piece_manifest.sha256,
+        MAX_METADATA_BYTES,
+    )?;
+    ensure!(
+        digest_file(pieces_path, MAX_METADATA_BYTES)?.0 == metadata.piece_manifest
+            && pieces.schema_version == 1
+            && pieces.source_sha == request.source_sha
+            && pieces.source_tree == request.source_tree
+            && pieces.source_owner_receipt_sha256 == request.source_owner_receipt_sha256
+            && pieces.concatenated_archive == metadata.runtime_archive
+            && pieces.maximum_github_zip_bytes == MAX_ZIP_BYTES
+            && pieces.pieces == metadata.pieces,
+        "downloaded piece manifest differs"
+    );
+    ensure!(
+        digest_file(evidence_path, MAX_BUILD_EVIDENCE_BYTES)?.0 == metadata.build_evidence,
+        "downloaded build/ELF evidence digest differs"
+    );
+    Ok(())
+}
+
+fn numeric_identity(value: &str) -> Result<()> {
+    ensure!(
+        !value.is_empty()
+            && value.len() <= 20
+            && value.bytes().all(|byte| byte.is_ascii_digit())
+            && value.parse::<u64>().is_ok_and(|value| value > 0),
+        "invalid run identity"
+    );
+    Ok(())
+}
+
+pub(super) fn validate_pieces(pieces: &[Piece], archive: &FileDigest) -> Result<()> {
+    ensure!(
+        !pieces.is_empty()
+            && pieces.len() <= MAX_PIECES
+            && archive.bytes > 0
+            && archive.bytes <= MAX_ARCHIVE_BYTES,
+        "piece/archive limits differ"
+    );
+    require_hex(&archive.sha256, 64)?;
+    let mut total = 0_u64;
+    for (order, piece) in pieces.iter().enumerate() {
+        ensure!(
+            piece.order == order
+                && piece.file == format!("{order:06}.part")
+                && piece.bytes > 0
+                && piece.bytes <= PIECE_BYTES
+                && (order + 1 == pieces.len() || piece.bytes == PIECE_BYTES),
+            "piece order/name/size differs"
+        );
+        require_hex(&piece.sha256, 64)?;
+        total = total
+            .checked_add(piece.bytes)
+            .context("piece total overflow")?;
+    }
+    ensure!(
+        total == archive.bytes,
+        "piece total differs from archive size"
+    );
+    Ok(())
+}
+
+#[derive(Deserialize)]
+struct CargoArtifact {
+    package_id: String,
+    target: CargoTarget,
+    profile: CargoProfile,
+    features: Vec<String>,
+    executable: Option<PathBuf>,
+}
+
+#[derive(Deserialize)]
+struct CargoTarget {
+    name: String,
+    kind: Vec<String>,
+}
+
+#[derive(Deserialize)]
+struct CargoProfile {
+    test: bool,
+    debuginfo: serde_json::Value,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct FeatureReceipt {
+    package_id: String,
+    target: String,
+    features: Vec<String>,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct BuildReceipt {
+    schema_version: u32,
+    state: String,
+    request: Request,
+    controller_sha: String,
+    run_id: String,
+    run_attempt: String,
+    observed_command: Vec<String>,
+    actual_child_exit: i32,
+    actual_build_finished_success: bool,
+    elapsed_millis: u64,
+    source_before: BoundFile,
+    source_after: BoundFile,
+    tracked_atime_only_transitions: Vec<AtimeTransition>,
+    build_log: BoundFile,
+    process_closure: BoundFile,
+    binary: BoundFile,
+    feature_receipts: Vec<FeatureReceipt>,
+    default_features: bool,
+    removed_features: Vec<String>,
+    profile: String,
+    debug: u32,
+    incremental: bool,
+    rustc: String,
+    cargo: String,
+    clang: String,
+    runtime_test_and_reference_credit: u32,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct BoundFile {
+    path: PathBuf,
+    digest: FileDigest,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+struct AtimeTransition {
+    path: String,
+    before_atime_ns: i64,
+    after_atime_ns: i64,
+}
+
+fn request_input(path: &Path, expected_sha: &str, source: Option<&SourceArgs>) -> Result<Request> {
+    require_hex(expected_sha, 64)?;
+    let bytes = read_bounded(path, super::MAX_REQUEST_BYTES)?.0;
+    ensure!(sha256(&bytes) == expected_sha, "request digest differs");
+    let request = Request::parse(&bytes)?;
+    if let Some(source) = source {
+        ensure!(
+            source.sha == request.source_sha && source.tree == request.source_tree,
+            "source CLI identity differs from the pinned request"
+        );
+    }
+    Ok(request)
+}
+
+fn source_transitions(
+    before: &[PhysicalEntry],
+    after: &[PhysicalEntry],
+) -> Result<Vec<AtimeTransition>> {
+    ensure!(
+        before.len() == after.len() && !before.is_empty(),
+        "source observation set changed"
+    );
+    let mut transitions = Vec::new();
+    for (before, after) in before.iter().zip(after) {
+        ensure!(before.path == after.path, "observed source path changed");
+        let mut comparison = after.identity.clone();
+        comparison.atime_ns = before.identity.atime_ns;
+        ensure!(
+            before.identity == comparison,
+            "build changed a tracked physical source field other than atime"
+        );
+        if before.identity.atime_ns != after.identity.atime_ns {
+            transitions.push(AtimeTransition {
+                path: before.path.clone(),
+                before_atime_ns: before.identity.atime_ns,
+                after_atime_ns: after.identity.atime_ns,
+            });
+        }
+    }
+    Ok(transitions)
+}
+
+fn fixed_build_command() -> Vec<String> {
+    [
+        "cargo",
+        "build",
+        "--locked",
+        "--keep-going",
+        "-p",
+        "zed",
+        "--bin",
+        "koda",
+        "--message-format=json-render-diagnostics",
+    ]
+    .iter()
+    .map(|value| (*value).to_owned())
+    .collect()
+}
+
+fn validate_features(receipts: &[FeatureReceipt]) -> Result<()> {
+    for target in ["koda", "call", "livekit_client", "libwebrtc", "webrtc_sys"] {
+        ensure!(
+            receipts.iter().any(|receipt| receipt.target == target),
+            "default-feature artifact lacks {target}"
+        );
+    }
+    let application = receipts
+        .iter()
+        .find(|receipt| receipt.target == "koda")
+        .context("application feature receipt absent")?;
+    ensure!(
+        !application
+            .features
+            .iter()
+            .any(|feature| matches!(feature.as_str(), "test-support" | "visual-tests")),
+        "test-only application features enabled"
+    );
+    Ok(())
+}
+
+pub(super) fn build(args: BuildArgs) -> Result<()> {
+    let output = args.output_dir.clone();
+    let mut owned = false;
+    let result = build_inner(args, &mut owned);
+    preserve_failure(&output, owned, "build-command-failure.json", &result)?;
+    result
+}
+
+fn preserve_failure(output: &Path, owned: bool, name: &str, result: &Result<()>) -> Result<()> {
+    if let Err(error) = result {
+        if owned {
+            #[derive(Serialize)]
+            struct Failure {
+                state: &'static str,
+                actual_error: String,
+                build_test_runtime_reference_credit: u32,
+                retained_partial_evidence: bool,
+            }
+            write_json(
+                &output.join(name),
+                &Failure {
+                    state: "ACTUAL_COMMAND_FAILURE_RETAINED_ZERO_CREDIT",
+                    actual_error: format!("{error:#}"),
+                    build_test_runtime_reference_credit: 0,
+                    retained_partial_evidence: true,
+                },
+                MAX_METADATA_BYTES,
+            )?;
+        }
+    }
+    Ok(())
+}
+
+fn build_inner(args: BuildArgs, owned: &mut bool) -> Result<()> {
+    let request = request_input(&args.request, &args.request_sha256, Some(&args.source))?;
+    require_hex(&args.controller_sha, 40)?;
+    numeric_identity(&args.run_id)?;
+    numeric_identity(&args.run_attempt)?;
+    for (key, expected) in [
+        ("CARGO_INCREMENTAL", "0"),
+        ("CARGO_PROFILE_DEV_DEBUG", "0"),
+        ("CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG", "0"),
+    ] {
+        ensure!(
+            std::env::var(key).as_deref() == Ok(expected),
+            "fixed native build requires {key}={expected}"
+        );
+    }
+    for key in [
+        "RUSTFLAGS",
+        "CARGO_ENCODED_RUSTFLAGS",
+        "CARGO_BUILD_RUSTFLAGS",
+    ] {
+        ensure!(
+            std::env::var_os(key).is_none(),
+            "unreviewed build flag environment {key}"
+        );
+    }
+    fs::create_dir(&args.output_dir).context("build output directory must be new")?;
+    *owned = true;
+    let (_, before) = observe(&args.source, Authentication::Materialized)?;
+    ensure!(
+        before.canonical_manifest.sha256 == request.source_manifest_sha256,
+        "pre-build source identity differs"
+    );
+    let before_path = args.output_dir.join("source-before-build-observation.json");
+    write_json(&before_path, &before, MAX_MANIFEST_BYTES)?;
+    let build_log_path = args.output_dir.join("cargo-build.jsonl");
+    let mut build_log = OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .open(&build_log_path)?;
+    let observed_command = fixed_build_command();
+    let start = Instant::now();
+    let mut cargo_command = Command::new(&observed_command[0]);
+    cargo_command
+        .args(&observed_command[1..])
+        .current_dir(&args.source.source)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit());
+    let mut child = OwnedChild::spawn(&mut cargo_command, Duration::from_secs(150 * 60))
+        .context("spawn fixed Cargo native build")?;
+    child.set_receipt(args.output_dir.join("cargo-process-closure.json"));
+    let mut bytes = 0_u64;
+    let mut features = BTreeMap::new();
+    let mut executable: Option<PathBuf> = None;
+    let mut finished = None;
+    let diagnostics: Result<()> = (|| {
+        let mut stdout = BufReader::new(child.stdout()?);
+        while let Some(line) = bounded_line(&mut stdout, MAX_BUILD_LINE_BYTES)? {
+            bytes = bytes
+                .checked_add(line.len() as u64)
+                .context("build log size overflow")?;
+            ensure!(
+                bytes <= MAX_BUILD_LOG_BYTES,
+                "build log budget exhausted; partial evidence retained"
+            );
+            build_log.write_all(&line)?;
+            let message: serde_json::Value = serde_json::from_slice(&line)
+                .context("Cargo emitted malformed JSON diagnostics")?;
+            match message.get("reason").and_then(serde_json::Value::as_str) {
+                Some("compiler-artifact") => {
+                    let artifact: CargoArtifact = serde_json::from_value(message)?;
+                    ensure!(
+                        !artifact.profile.test
+                            && artifact.features.len() <= 512
+                            && artifact.package_id.len() <= 4096
+                            && artifact.target.name.len() <= 256,
+                        "unexpected or oversized compiler artifact"
+                    );
+                    let mut observed_features = artifact.features;
+                    observed_features.sort();
+                    observed_features.dedup();
+                    if artifact.target.name == "koda"
+                        && artifact.target.kind.iter().any(|kind| kind == "bin")
+                    {
+                        ensure!(
+                            artifact.profile.debuginfo.as_u64() == Some(0) && executable.is_none(),
+                            "application debug profile or unique executable differs"
+                        );
+                        executable = Some(
+                            artifact
+                                .executable
+                                .context("application executable receipt absent")?,
+                        );
+                    }
+                    let key = format!("{}:{}", artifact.package_id, artifact.target.name);
+                    ensure!(
+                        features.len() < 4096 || features.contains_key(&key),
+                        "compiler feature receipt budget exhausted"
+                    );
+                    features.insert(
+                        key,
+                        FeatureReceipt {
+                            package_id: artifact.package_id,
+                            target: artifact.target.name,
+                            features: observed_features,
+                        },
+                    );
+                }
+                Some("build-finished") => {
+                    ensure!(finished.is_none(), "duplicate Cargo build-finished receipt");
+                    finished = Some(
+                        message
+                            .get("success")
+                            .and_then(serde_json::Value::as_bool)
+                            .context("Cargo build-finished success is not boolean")?,
+                    );
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    })();
+    build_log.sync_all()?;
+    drop(build_log);
+    let process_closure = child.finish(diagnostics.is_err())?;
+    if diagnostics.is_err() || process_closure.require_success().is_err() || finished != Some(true)
+    {
+        #[derive(Serialize)]
+        struct Failure<'a> {
+            state: &'static str,
+            observed_command: &'a [String],
+            actual_child_exit: Option<i32>,
+            actual_build_finished_success: Option<bool>,
+            diagnostic_error: Option<String>,
+            process_closure: &'a super::process::CloseReceipt,
+            build_log: FileDigest,
+            build_test_and_runtime_credit: u32,
+        }
+        write_json(
+            &args.output_dir.join("build-failure.json"),
+            &Failure {
+                state: "ACTUAL_CARGO_BUILD_FAILURE_RETAINED_ZERO_CREDIT",
+                observed_command: &observed_command,
+                actual_child_exit: process_closure.leader_exit_code,
+                actual_build_finished_success: finished,
+                diagnostic_error: diagnostics.as_ref().err().map(|error| format!("{error:#}")),
+                process_closure: &process_closure,
+                build_log: digest_file(&build_log_path, MAX_BUILD_LOG_BYTES)?.0,
+                build_test_and_runtime_credit: 0,
+            },
+            MAX_METADATA_BYTES,
+        )?;
+        if let Err(error) = diagnostics {
+            return Err(
+                error.context("actual Cargo diagnostics failed; cleanup/failure receipts retained")
+            );
+        }
+        process_closure.require_success()?;
+        bail!(
+            "actual Cargo build-finished receipt failed; actual closure/failure receipts retained"
+        );
+    }
+    let executable = executable.context("actual application executable absent")?;
+    ensure!(
+        executable.is_absolute(),
+        "Cargo executable path must be absolute"
+    );
+    let feature_receipts: Vec<_> = features.into_values().collect();
+    validate_features(&feature_receipts)?;
+    let (_, after) = observe(&args.source, Authentication::Materialized)?;
+    ensure!(
+        after.canonical_manifest == before.canonical_manifest,
+        "Cargo changed tracked source bytes or modes"
+    );
+    let transitions = source_transitions(&before.physical, &after.physical)?;
+    let after_path = args.output_dir.join("source-after-build-observation.json");
+    write_json(&after_path, &after, MAX_MANIFEST_BYTES)?;
+    let tool = |program: &str, arguments: &[&str]| -> Result<String> {
+        String::from_utf8(command(
+            Some(&args.source.source),
+            program,
+            arguments,
+            64 * 1024,
+        )?)
+        .context("non-UTF8 toolchain facts")
+    };
+    let receipt = BuildReceipt {
+        schema_version: 1,
+        state: "ACTUAL_FIXED_CARGO_CHILD_WAIT_ZERO_NOT_TEST_OR_RUNTIME_ACCEPTANCE".to_owned(),
+        request,
+        controller_sha: args.controller_sha,
+        run_id: args.run_id,
+        run_attempt: args.run_attempt,
+        observed_command,
+        actual_child_exit: 0,
+        actual_build_finished_success: true,
+        elapsed_millis: u64::try_from(start.elapsed().as_millis())?,
+        source_before: BoundFile {
+            digest: digest_file(&before_path, MAX_MANIFEST_BYTES)?.0,
+            path: before_path,
+        },
+        source_after: BoundFile {
+            digest: digest_file(&after_path, MAX_MANIFEST_BYTES)?.0,
+            path: after_path,
+        },
+        tracked_atime_only_transitions: transitions,
+        build_log: BoundFile {
+            digest: digest_file(&build_log_path, MAX_BUILD_LOG_BYTES)?.0,
+            path: build_log_path,
+        },
+        process_closure: BoundFile {
+            digest: digest_file(
+                &args.output_dir.join("cargo-process-closure.json"),
+                MAX_METADATA_BYTES,
+            )?
+            .0,
+            path: args.output_dir.join("cargo-process-closure.json"),
+        },
+        binary: BoundFile {
+            digest: digest_file(&executable, MAX_BINARY_BYTES)?.0,
+            path: executable,
+        },
+        feature_receipts,
+        default_features: true,
+        removed_features: Vec::new(),
+        profile: "dev".to_owned(),
+        debug: 0,
+        incremental: false,
+        rustc: tool("rustc", &["-vV"])?,
+        cargo: tool("cargo", &["-V"])?,
+        clang: tool("clang", &["--version"])?,
+        runtime_test_and_reference_credit: 0,
+    };
+    let receipt_path = args.output_dir.join("build-receipt.json");
+    write_json(&receipt_path, &receipt, MAX_BUILD_EVIDENCE_BYTES)?;
+    if let Some(output_path) = &args.github_output {
+        let mut output = OpenOptions::new().append(true).open(output_path)?;
+        writeln!(
+            output,
+            "native_build_receipt_sha256={}",
+            digest_file(&receipt_path, MAX_BUILD_EVIDENCE_BYTES)?
+                .0
+                .sha256
+        )?;
+    }
+    Ok(())
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub(super) enum PayloadKind {
+    Directory,
+    File,
+    Symlink,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub(super) struct PayloadEntry {
+    pub(super) path: String,
+    pub(super) kind: PayloadKind,
+    pub(super) mode: u32,
+    pub(super) bytes: u64,
+    pub(super) sha256: Option<String>,
+    pub(super) link_target: Option<String>,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct PayloadManifest {
+    schema_version: u32,
+    entries: Vec<PayloadEntry>,
+    unpacked_regular_bytes: u64,
+    directory_count: u64,
+    symlink_count: u64,
+    regular_file_count: u64,
+}
+
+impl PayloadManifest {
+    fn validate(&self) -> Result<()> {
+        ensure!(
+            self.schema_version == 1
+                && !self.entries.is_empty()
+                && self.entries.len() <= MAX_PAYLOAD_ENTRIES,
+            "payload set/schema budget differs"
+        );
+        let mut previous: Option<&str> = None;
+        let mut links = BTreeMap::new();
+        let mut regular = 0_u64;
+        let mut directories = 0_u64;
+        let mut symlinks = 0_u64;
+        let mut bytes = 0_u64;
+        let declared: BTreeMap<_, _> = self
+            .entries
+            .iter()
+            .map(|entry| (entry.path.as_str(), &entry.kind))
+            .collect();
+        for entry in &self.entries {
+            payload_relative(&entry.path)?;
+            ensure!(
+                entry.path == "runtime" || entry.path.starts_with("runtime/"),
+                "payload leaves runtime root"
+            );
+            ensure!(
+                previous.is_none_or(|old| old.as_bytes() < entry.path.as_bytes()),
+                "payload paths duplicate or unsorted"
+            );
+            previous = Some(&entry.path);
+            let mut parent = Path::new(&entry.path).parent();
+            while let Some(path) = parent.filter(|path| !path.as_os_str().is_empty()) {
+                ensure!(
+                    declared.get(path.to_str().context("non-UTF8 payload parent")?)
+                        == Some(&&PayloadKind::Directory),
+                    "payload parent is missing or is not a directory"
+                );
+                parent = path.parent();
+            }
+            match entry.kind {
+                PayloadKind::Directory => {
+                    ensure!(
+                        entry.mode == 0o755
+                            && entry.bytes == 0
+                            && entry.sha256.is_none()
+                            && entry.link_target.is_none(),
+                        "directory metadata differs"
+                    );
+                    directories += 1;
+                }
+                PayloadKind::File => {
+                    ensure!(
+                        matches!(entry.mode, 0o644 | 0o755) && entry.link_target.is_none(),
+                        "unsafe file mode or link target"
+                    );
+                    require_hex(entry.sha256.as_deref().context("file digest absent")?, 64)?;
+                    bytes = bytes
+                        .checked_add(entry.bytes)
+                        .context("payload byte overflow")?;
+                    regular += 1;
+                }
+                PayloadKind::Symlink => {
+                    let target = entry
+                        .link_target
+                        .as_deref()
+                        .context("payload link target absent")?;
+                    ensure!(
+                        entry.mode == 0o777
+                            && entry.bytes == target.len() as u64
+                            && entry.sha256.as_deref() == Some(sha256(target.as_bytes()).as_str()),
+                        "payload link identity differs"
+                    );
+                    links.insert(entry.path.clone(), normalized_link(&entry.path, target)?);
+                    symlinks += 1;
+                }
+            }
+        }
+        ensure!(
+            self.entries[0].path == "runtime"
+                && self.entries[0].kind == PayloadKind::Directory
+                && bytes > 0
+                && bytes <= MAX_PAYLOAD_BYTES
+                && bytes == self.unpacked_regular_bytes
+                && regular == self.regular_file_count
+                && directories == self.directory_count
+                && symlinks == self.symlink_count,
+            "payload counts/logical bytes differ"
+        );
+        validate_link_graph(self.entries.iter().map(|entry| entry.path.as_str()), &links)
+    }
+}
+
+fn set_mode(path: &Path, mode: u32) -> Result<()> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        fs::set_permissions(path, fs::Permissions::from_mode(mode))?;
+        Ok(())
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = (path, mode);
+        bail!("native packaging requires Unix")
+    }
+}
+
+pub(super) fn copy_verified(
+    input: &Path,
+    output: &Path,
+    expected: &FileDigest,
+    mode: u32,
+) -> Result<Physical13> {
+    let before = copy_verified_descriptor(open_noatime(input, false)?, output, expected, mode)?;
+    ensure!(
+        before == physical(&fs::symlink_metadata(input)?)?,
+        "copy input path changed"
+    );
+    Ok(before)
+}
+
+fn copy_verified_descriptor(
+    mut source: File,
+    output: &Path,
+    expected: &FileDigest,
+    mode: u32,
+) -> Result<Physical13> {
+    let before = physical(&source.metadata()?)?;
+    ensure!(
+        source.metadata()?.is_file() && before.bytes == expected.bytes,
+        "copy source size/type differs"
+    );
+    let mut destination = OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .open(output)?;
+    let mut digest = Sha256::new();
+    let mut count = 0_u64;
+    let mut buffer = vec![0; 256 * 1024];
+    loop {
+        let read = source.read(&mut buffer)?;
+        if read == 0 {
+            break;
+        }
+        count = count
+            .checked_add(read as u64)
+            .context("copy size overflow")?;
+        ensure!(count <= expected.bytes, "copy source grew");
+        digest.update(&buffer[..read]);
+        destination.write_all(&buffer[..read])?;
+    }
+    ensure!(
+        count == expected.bytes
+            && format!("{:x}", digest.finalize()) == expected.sha256
+            && before == physical(&source.metadata()?)?,
+        "copy input inverse differs"
+    );
+    destination.sync_all()?;
+    drop(destination);
+    set_mode(output, mode)?;
+    Ok(before)
+}
+
+fn ensure_parents(path: &Path) -> Result<()> {
+    fs::create_dir_all(path.parent().context("output has no parent")?)?;
+    Ok(())
+}
+
+fn copy_source(source: &SourceArgs, manifest: &SourceManifest, destination: &Path) -> Result<()> {
+    fs::create_dir(destination)?;
+    let root = open_noatime(&source.source, true)?;
+    // All regular files are copied before any links; no archive-controlled parent
+    // can redirect a later write outside the private destination.
+    for entry in &manifest.entries {
+        if entry.mode == "120000" {
+            continue;
+        }
+        let path = destination.join(&entry.path);
+        ensure_parents(&path)?;
+        let before = copy_verified_descriptor(
+            open_beneath(&root, &entry.path, false)?,
+            &path,
+            &FileDigest {
+                bytes: entry.bytes,
+                sha256: entry.sha256.clone(),
+            },
+            if entry.mode == "100755" { 0o755 } else { 0o644 },
+        )?;
+        ensure!(
+            before == physical(&open_beneath(&root, &entry.path, false)?.metadata()?)?,
+            "copied source path changed"
+        );
+    }
+    for entry in &manifest.entries {
+        if entry.mode != "120000" {
+            continue;
+        }
+        let file = open_beneath(&root, &entry.path, true)?;
+        let before = physical(&file.metadata()?)?;
+        let bytes = link_bytes(&file)?;
+        ensure!(
+            sha256(&bytes) == entry.sha256
+                && before == physical(&file.metadata()?)?
+                && before == physical(&open_beneath(&root, &entry.path, true)?.metadata()?)?,
+            "source link changed"
+        );
+        let path = destination.join(&entry.path);
+        ensure_parents(&path)?;
+        create_symlink(
+            entry.link_target.as_deref().context("link target absent")?,
+            &path,
+        )?;
+    }
+    Ok(())
+}
+
+fn create_symlink(target: &str, path: &Path) -> Result<()> {
+    #[cfg(unix)]
+    {
+        std::os::unix::fs::symlink(target, path)?;
+        Ok(())
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = (target, path);
+        bail!("native symlink creation requires Unix")
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+fn reconstruct_git(source: &SourceArgs, destination: &Path) -> Result<()> {
+    let plan = producer::git_plan(source)?;
+    reconstruct_git_with_plan(source, destination, &plan)
+}
+
+fn reconstruct_git_with_plan(
+    source: &SourceArgs,
+    destination: &Path,
+    plan: &producer::GitPlan,
+) -> Result<()> {
+    let git = destination.join(".git");
+    fs::create_dir(&git)?;
+    for directory in ["objects", "refs"] {
+        fs::create_dir(git.join(directory))?;
+    }
+    create_file(&git.join("HEAD"), format!("{}\n", source.sha).as_bytes())?;
+    create_file(&git.join("shallow"), format!("{}\n", source.sha).as_bytes())?;
+    create_file(&git.join("config"), b"[core]\nrepositoryformatversion = 0\nfilemode = true\nbare = false\nlogallrefupdates = false\n")?;
+    let mut batch = GitBatch::new(&source.source)?;
+    let mut total = 0_u64;
+    let mut compressed = 0_u64;
+    for (oid, kind) in &plan.objects {
+        let bytes = batch.object(oid, kind)?;
+        total = total
+            .checked_add(bytes.len() as u64)
+            .context("Git reconstruction size overflow")?;
+        ensure!(
+            total <= super::MAX_SOURCE_BYTES + super::MAX_TREE_BYTES,
+            "Git reconstruction byte budget exhausted"
+        );
+        let header = format!("{kind} {}\0", bytes.len());
+        let cap = producer::compression_bound(bytes.len() as u64 + header.len() as u64)?;
+        let directory = git.join("objects").join(&oid[..2]);
+        fs::create_dir_all(&directory)?;
+        let path = directory.join(&oid[2..]);
+        let output = OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(&path)?;
+        let limited = producer::LimitedWriter::new(output, cap);
+        let mut encoder = ZlibEncoder::new(limited, Compression::fast());
+        encoder.write_all(header.as_bytes())?;
+        encoder.write_all(&bytes)?;
+        encoder.finish()?.into_inner().sync_all()?;
+        compressed = compressed
+            .checked_add(fs::symlink_metadata(&path)?.len())
+            .context("Git compressed total overflow")?;
+        ensure!(
+            compressed <= plan.compressed_upper_bytes,
+            "Git compressed plan exhausted before further writes"
+        );
+    }
+    batch.finish()?;
+    command(Some(destination), "git", &["read-tree", &source.sha], 1024)?;
+    let head = command(
+        Some(destination),
+        "git",
+        &["rev-parse", "HEAD^{tree}"],
+        1024,
+    )?;
+    ensure!(
+        std::str::from_utf8(&head)?.trim() == source.tree,
+        "reconstructed Git tree differs"
+    );
+    Ok(())
+}
+
+#[cfg(all(test, target_os = "linux", target_arch = "x86_64", target_env = "gnu"))]
+fn resolve_noatime(path: &Path) -> Result<PathBuf> {
+    resolve_noatime_with_budget(path, &mut elf::MetadataBudget::new())
+}
+fn resolve_noatime_with_budget(path: &Path, budget: &mut elf::MetadataBudget) -> Result<PathBuf> {
+    ensure!(
+        path.is_absolute(),
+        "host dependency must have an absolute loader path"
+    );
+    ensure!(
+        path.as_os_str().len() <= super::MAX_PATH_BYTES,
+        "host dependency input path budget exhausted"
+    );
+    budget.charge(
+        path.as_os_str().len() as u64 * 128 + 1024,
+        "host dependency path component queue",
+    )?;
+    let mut pending: std::collections::VecDeque<_> = path
+        .components()
+        .skip(1)
+        .map(|part| part.as_os_str().to_owned())
+        .collect();
+    let mut result = PathBuf::from("/");
+    let mut followed = 0;
+    while let Some(component) = pending.pop_front() {
+        if component == "." {
+            continue;
+        }
+        if component == ".." {
+            ensure!(result.pop(), "host path escapes root");
+            continue;
+        }
+        budget.charge(
+            (result.as_os_str().len() as u64 + component.len() as u64 + 1) * 2 + 256,
+            "host dependency resolution path growth",
+        )?;
+        result.push(component);
+        let metadata = fs::symlink_metadata(&result)?;
+        if metadata.file_type().is_symlink() {
+            followed += 1;
+            ensure!(followed <= 64, "host symlink chain too deep");
+            budget.charge(
+                super::MAX_PATH_BYTES as u64 * 2 + 1024,
+                "host dependency symlink target buffer",
+            )?;
+            let target = host_link(&result)?;
+            budget.charge(
+                target.len() as u64 * 128 + 1024,
+                "host dependency symlink component queue",
+            )?;
+            result.pop();
+            let target = PathBuf::from(String::from_utf8(target)?);
+            if target.is_absolute() {
+                result = PathBuf::from("/");
+            }
+            for part in target.components().rev() {
+                if matches!(part, std::path::Component::RootDir) {
+                    continue;
+                }
+                pending.push_front(part.as_os_str().to_owned());
+            }
+        } else if !pending.is_empty() {
+            ensure!(metadata.is_dir(), "host path ancestor is not a directory");
+        }
+    }
+    Ok(result)
+}
+
+#[cfg(target_os = "linux")]
+fn host_link(path: &Path) -> Result<Vec<u8>> {
+    use std::os::unix::fs::OpenOptionsExt as _;
+    let file = OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_PATH | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+        .open(path)?;
+    let before = physical(&file.metadata()?)?;
+    let bytes = link_bytes(&file)?;
+    ensure!(
+        before == physical(&file.metadata()?)? && before == physical(&fs::symlink_metadata(path)?)?,
+        "host symlink inverse differs"
+    );
+    Ok(bytes)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn host_link(_: &Path) -> Result<Vec<u8>> {
+    bail!("native host symlink authentication requires Linux")
+}
+
+#[derive(Serialize)]
+struct Dependency {
+    soname: String,
+    loader_path: PathBuf,
+    resolved_path: PathBuf,
+    digest: FileDigest,
+    physical: Physical13,
+    delivery: &'static str,
+    elf: elf::SharedEvidence,
+    copied_identity: Option<Physical13>,
+}
+
+fn host_family(soname: &str) -> bool {
+    // Existing script/bundle-linux exclusions plus the platform loader and the
+    // glibc rt family. libstdc++ is intentionally bundled when dynamically needed.
+    [
+        "ld-linux",
+        "libc.so",
+        "libm.so",
+        "libpthread.so",
+        "libdl.so",
+        "librt.so",
+        "libgcc_s.so",
+        "libresolv.so",
+        "libasound.so",
+        "libglib-2.0.so",
+        "libgobject-2.0.so",
+        "libgio-2.0.so",
+        "libgmodule-2.0.so",
+        "libpcre.so",
+        "libpcre2-8.so",
+        "libmount.so",
+        "libblkid.so",
+        "libselinux.so",
+        "libffi.so",
+        "libz.so",
+    ]
+    .iter()
+    .any(|prefix| soname.starts_with(prefix))
+}
+
+struct PlannedDependency {
+    file: File,
+    soname: String,
+    loader_path: PathBuf,
+    resolved_path: PathBuf,
+    digest: FileDigest,
+    physical: Physical13,
+    preliminary_elf: elf::SharedEvidence,
+}
+
+fn descriptor_digest(file: &File, cap: u64) -> Result<(FileDigest, Physical13)> {
+    let before = physical(&file.metadata()?)?;
+    ensure!(
+        file.metadata()?.is_file() && before.bytes > 0 && before.bytes <= cap,
+        "descriptor size/type differs"
+    );
+    let mut input = file.try_clone()?;
+    input.seek(SeekFrom::Start(0))?;
+    let mut digest = Sha256::new();
+    let mut count = 0_u64;
+    let mut buffer = vec![0; 256 * 1024];
+    loop {
+        let read = input.read(&mut buffer)?;
+        if read == 0 {
+            break;
+        }
+        count = count
+            .checked_add(read as u64)
+            .context("descriptor size overflow")?;
+        ensure!(
+            count <= before.bytes && count <= cap,
+            "descriptor grew during authentication"
+        );
+        digest.update(&buffer[..read]);
+    }
+    input.seek(SeekFrom::Start(0))?;
+    ensure!(
+        count == before.bytes && before == physical(&file.metadata()?)?,
+        "descriptor full13 inverse differs"
+    );
+    Ok((
+        FileDigest {
+            bytes: count,
+            sha256: format!("{:x}", digest.finalize()),
+        },
+        before,
+    ))
+}
+
+fn require_loader_inverse(before: &Physical13, after: &Physical13) -> Result<()> {
+    let mut comparison = after.clone();
+    comparison.atime_ns = before.atime_ns;
+    ensure!(
+        *before == comparison,
+        "official loader changed a byte/identity field beyond observed atime"
+    );
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+fn loader_paths(
+    binary: &File,
+    binary_elf: &elf::ElfEvidence,
+    budget: &mut elf::MetadataBudget,
+) -> Result<(String, BTreeMap<String, PathBuf>)> {
+    use std::os::fd::AsRawFd as _;
+    let interpreter = binary_elf
+        .interpreter
+        .as_deref()
+        .context("dynamic application interpreter absent")?;
+    ensure!(
+        matches!(
+            interpreter,
+            "/lib64/ld-linux-x86-64.so.2" | "/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
+        ),
+        "unrecognized platform loader; explicit host support required"
+    );
+    budget.charge(512 * 1024, "bounded loader output transport buffer")?;
+    let retained_path = format!("/proc/{}/fd/{}", std::process::id(), binary.as_raw_fd());
+    let text = String::from_utf8(command(
+        None,
+        interpreter,
+        &["--list", &retained_path],
+        256 * 1024,
+    )?)?;
+    let paths = parse_loader_paths(&text, interpreter, binary_elf, budget)?;
+    Ok((text, paths))
+}
+#[cfg(any(target_os = "linux", test))]
+fn parse_loader_paths(
+    text: &str,
+    interpreter: &str,
+    binary_elf: &elf::ElfEvidence,
+    budget: &mut elf::MetadataBudget,
+) -> Result<BTreeMap<String, PathBuf>> {
+    ensure!(
+        text.len() <= 256 * 1024 && !text.contains("not found"),
+        "unresolved/oversized native dependencies"
+    );
+    let mut paths = BTreeMap::new();
+    for line in text.lines().map(str::trim).filter(|line| !line.is_empty()) {
+        if line.starts_with("linux-vdso.so.1 (") {
+            continue;
+        }
+        if let Some((soname, right)) = line.split_once(" => ") {
+            let path = right
+                .split_once(" (")
+                .context("malformed loader dependency")?
+                .0;
+            ensure!(
+                !soname.is_empty()
+                    && soname.len() <= 256
+                    && !soname.contains('/')
+                    && !soname.chars().any(char::is_control)
+                    && path.starts_with('/'),
+                "unconfined loader dependency"
+            );
+            ensure!(
+                path.len() <= super::MAX_PATH_BYTES && paths.len() < 256,
+                "loader dependency path/count budget differs"
+            );
+            budget.charge(
+                (soname.len() as u64 + path.len() as u64) * 2 + 4096,
+                "loader resolution strings/map growth",
+            )?;
+            ensure!(
+                paths
+                    .insert(soname.to_owned(), PathBuf::from(path))
+                    .is_none(),
+                "duplicate loader SONAME"
+            );
+        } else {
+            let path = line
+                .split_once(" (")
+                .context("unrecognized loader output")?
+                .0;
+            ensure!(path == interpreter, "unrecognized direct loader member");
+            budget.charge(
+                (path.len() as u64 + 64) * 2 + 4096,
+                "direct loader resolution strings/map growth",
+            )?;
+            ensure!(
+                paths
+                    .insert("ld-linux-x86-64.so.2".to_owned(), PathBuf::from(path))
+                    .is_none(),
+                "duplicate direct loader"
+            );
+        }
+    }
+    ensure!(
+        !paths.is_empty() && paths.len() <= 256,
+        "loader dependency budget differs"
+    );
+    for needed in &binary_elf.needed {
+        ensure!(
+            paths.contains_key(needed),
+            "missing direct ELF dependency {needed}"
+        );
+    }
+    Ok(paths)
+}
+#[cfg(target_os = "linux")]
+fn plan_dependencies(
+    binary: &File,
+    binary_elf: &elf::ElfEvidence,
+    budget: &mut elf::MetadataBudget,
+) -> Result<(String, Vec<PlannedDependency>)> {
+    let (text, paths) = loader_paths(binary, binary_elf, budget)?;
+    budget.charge(
+        (paths.len() as u64) * std::mem::size_of::<PlannedDependency>() as u64 * 2 + 256,
+        "retained dependency-plan vector",
+    )?;
+    let mut dependencies = Vec::new();
+    dependencies.try_reserve_exact(paths.len())?;
+    for (soname, loader_path) in paths {
+        let resolved_path = resolve_noatime_with_budget(&loader_path, budget)?;
+        let file = open_noatime(&resolved_path, false)?;
+        let (digest, physical) = descriptor_digest(&file, MAX_BINARY_BYTES)?;
+        let library_elf = elf::inspect_file_with_budget(file.try_clone()?, budget)?;
+        ensure!(
+            descriptor_digest(&file, MAX_BINARY_BYTES)? == (digest.clone(), physical.clone()),
+            "planned dependency digest/physical inverse differs"
+        );
+        if let Some(actual) = &library_elf.soname {
+            ensure!(actual == &soname, "resolved library SONAME differs");
+        }
+        let preliminary_elf = elf::SharedEvidence::new(library_elf, budget)?;
+        dependencies.push(PlannedDependency {
+            file,
+            soname,
+            loader_path,
+            resolved_path,
+            digest,
+            physical,
+            preliminary_elf,
+        });
+    }
+    Ok((text, dependencies))
+}
+#[cfg(not(target_os = "linux"))]
+fn plan_dependencies(
+    _: &File,
+    _: &elf::ElfEvidence,
+    _: &mut elf::MetadataBudget,
+) -> Result<(String, Vec<PlannedDependency>)> {
+    bail!("retained-descriptor native loader resolution requires Linux")
+}
+#[cfg(target_os = "linux")]
+fn verify_copied_resolution(
+    binary: &File,
+    binary_elf: &elf::ElfEvidence,
+    planned: &[PlannedDependency],
+    budget: &mut elf::MetadataBudget,
+) -> Result<()> {
+    let (_, paths) = loader_paths(binary, binary_elf, budget)?;
+    ensure!(
+        paths.len() == planned.len(),
+        "copied executable dependency closure differs"
+    );
+    // One new descriptor at a time; do not retain a second full ELF evidence vector.
+    for plan in planned {
+        let path = paths
+            .get(&plan.soname)
+            .context("copied resolution omitted dependency")?;
+        let resolved = resolve_noatime_with_budget(path, budget)?;
+        let file = open_noatime(&resolved, false)?;
+        ensure!(
+            descriptor_digest(&file, MAX_BINARY_BYTES)?
+                == (plan.digest.clone(), plan.physical.clone()),
+            "copied executable loader dependency bytes/identity changed since admission"
+        );
+    }
+    Ok(())
+}
+#[cfg(not(target_os = "linux"))]
+fn verify_copied_resolution(
+    _: &File,
+    _: &elf::ElfEvidence,
+    _: &[PlannedDependency],
+    _: &mut elf::MetadataBudget,
+) -> Result<()> {
+    bail!("copied native loader resolution requires Linux")
+}
+
+#[cfg(all(test, target_os = "linux"))]
+fn deliver_dependencies(
+    planned: &[PlannedDependency],
+    directory: &Path,
+) -> Result<Vec<Dependency>> {
+    deliver_dependencies_with_budget(planned, directory, &mut elf::MetadataBudget::new())
+}
+fn deliver_dependencies_with_budget(
+    planned: &[PlannedDependency],
+    directory: &Path,
+    budget: &mut elf::MetadataBudget,
+) -> Result<Vec<Dependency>> {
+    budget.charge(
+        planned.len() as u64 * std::mem::size_of::<Dependency>() as u64 * 2 + 256,
+        "delivered dependency vector",
+    )?;
+    let mut dependencies = Vec::new();
+    dependencies.try_reserve_exact(planned.len())?;
+    for plan in planned {
+        ensure!(
+            descriptor_digest(&plan.file, MAX_BINARY_BYTES)?
+                == (plan.digest.clone(), plan.physical.clone()),
+            "dependency changed since admission"
+        );
+        let delivery = if host_family(&plan.soname) {
+            "host"
+        } else {
+            "bundled"
+        };
+        let (library_elf, copied_identity) = if delivery == "bundled" {
+            let path = directory.join(&plan.soname);
+            let mut input = plan.file.try_clone()?;
+            input.seek(SeekFrom::Start(0))?;
+            copy_verified_descriptor(input, &path, &plan.digest, 0o555)?;
+            let copied = open_noatime(&path, false)?;
+            let (actual, identity) = descriptor_digest(&copied, MAX_BINARY_BYTES)?;
+            ensure!(actual == plan.digest, "copied dependency digest differs");
+            let facts = elf::inspect_file_with_budget(copied.try_clone()?, budget)?;
+            ensure!(
+                descriptor_digest(&copied, MAX_BINARY_BYTES)? == (actual, identity.clone())
+                    && identity == physical(&fs::symlink_metadata(&path)?)?,
+                "copied dependency ELF/descriptor inverse differs"
+            );
+            set_mode(&path, 0o755)?;
+            ensure!(
+                facts == *plan.preliminary_elf,
+                "actual copied dependency ELF differs from immutable admitted evidence"
+            );
+            (plan.preliminary_elf.clone(), Some(identity))
+        } else {
+            (plan.preliminary_elf.clone(), None)
+        };
+        ensure!(
+            *library_elf == *plan.preliminary_elf
+                && descriptor_digest(&plan.file, MAX_BINARY_BYTES)?
+                    == (plan.digest.clone(), plan.physical.clone()),
+            "admitted/source dependency and actual delivered ELF differ"
+        );
+        budget.charge(
+            (plan.soname.len() as u64
+                + plan.loader_path.as_os_str().len() as u64
+                + plan.resolved_path.as_os_str().len() as u64)
+                * 2
+                + 512,
+            "delivered dependency identity strings",
+        )?;
+        dependencies.push(Dependency {
+            soname: plan.soname.clone(),
+            loader_path: plan.loader_path.clone(),
+            resolved_path: plan.resolved_path.clone(),
+            digest: plan.digest.clone(),
+            physical: plan.physical.clone(),
+            delivery,
+            elf: library_elf,
+            copied_identity,
+        });
+    }
+    Ok(dependencies)
+}
+
+#[derive(Serialize)]
+struct BoundDependencyObservation {
+    soname: String,
+    actual_descriptor_target: String,
+    delivery: &'static str,
+    digest: FileDigest,
+    before_loader: Physical13,
+    after_loader: Physical13,
+}
+#[derive(Serialize)]
+struct BoundLoaderEvidence {
+    actual_command: Vec<String>,
+    actual_stdout: String,
+    binary_digest: FileDigest,
+    binary_before_loader: Physical13,
+    binary_after_loader: Physical13,
+    dependencies: Vec<BoundDependencyObservation>,
+    constructors_entered: bool,
+    runtime_compatibility_or_test_acceptance_credit: u32,
+}
+
+#[cfg(all(test, target_os = "linux", target_arch = "x86_64", target_env = "gnu"))]
+fn verify_bound_loader(
+    binary: &File,
+    binary_elf: &elf::ElfEvidence,
+    planned: &[PlannedDependency],
+    bundled: &Path,
+    probe: &Path,
+) -> Result<BoundLoaderEvidence> {
+    verify_bound_loader_with_budget(
+        binary,
+        binary_elf,
+        planned,
+        bundled,
+        probe,
+        &mut elf::MetadataBudget::new(),
+    )
+}
+#[cfg(target_os = "linux")]
+fn verify_bound_loader_with_budget(
+    binary: &File,
+    binary_elf: &elf::ElfEvidence,
+    planned: &[PlannedDependency],
+    bundled: &Path,
+    probe: &Path,
+    budget: &mut elf::MetadataBudget,
+) -> Result<BoundLoaderEvidence> {
+    use std::os::fd::AsRawFd as _;
+    ensure!(
+        !planned.is_empty() && planned.len() <= 256,
+        "bound loader dependency count differs"
+    );
+    // The admission plan reserves this private directory and at most 256 links.
+    // It is outside runtime; failures retain it and prevent artifact acceptance.
+    fs::create_dir(probe).context("bound loader probe directory must be new")?;
+    budget.charge(
+        planned.len() as u64 * 512 + 1024,
+        "bound-loader retained descriptor vector",
+    )?;
+    let mut delivered = Vec::new();
+    delivered.try_reserve_exact(planned.len())?;
+    for plan in planned {
+        let file = if host_family(&plan.soname) {
+            plan.file.try_clone()?
+        } else {
+            open_noatime(&bundled.join(&plan.soname), false)?
+        };
+        let (digest, identity) = descriptor_digest(&file, MAX_BINARY_BYTES)?;
+        // Equal complete bytes bind immutable parsed evidence; delivery already
+        // parsed each actual copied dependency once, without evidence duplication.
+        ensure!(
+            digest == plan.digest,
+            "actual delivered dependency bytes/ELF identity differs before bound loader probe"
+        );
+        let target = format!("/proc/{}/fd/{}", std::process::id(), file.as_raw_fd());
+        create_symlink(&target, &probe.join(&plan.soname))?;
+        delivered.push((file, digest, identity, plan));
+    }
+    let probe = std::path::absolute(probe)?;
+    let probe_text = probe
+        .to_str()
+        .context("bound loader probe path must be UTF-8")?;
+    let binary_path = format!("/proc/{}/fd/{}", std::process::id(), binary.as_raw_fd());
+    let interpreter = binary_elf
+        .interpreter
+        .as_deref()
+        .context("bound loader interpreter absent")?;
+    let (binary_digest, binary_before) = descriptor_digest(binary, MAX_BINARY_BYTES)?;
+    budget.charge(512 * 1024, "bound-loader output transport buffer")?;
+    let text = String::from_utf8(command(
+        None,
+        interpreter,
+        &[
+            "--inhibit-cache",
+            "--library-path",
+            probe_text,
+            "--list",
+            &binary_path,
+        ],
+        256 * 1024,
+    )?)?;
+    ensure!(
+        !text.contains("not found"),
+        "bound loader has an unresolved dependency"
+    );
+    let mut resolved = BTreeSet::new();
+    for line in text.lines().map(str::trim).filter(|line| !line.is_empty()) {
+        if line.starts_with("linux-vdso.so.1 (") {
+            continue;
+        }
+        if let Some((soname, right)) = line.split_once(" => ") {
+            let path = right
+                .split_once(" (")
+                .context("malformed bound loader resolution")?
+                .0;
+            ensure!(
+                soname.len() <= 256 && path.len() <= super::MAX_PATH_BYTES,
+                "bound loader member string budget differs"
+            );
+            budget.charge(
+                (soname.len() as u64 + probe.as_os_str().len() as u64) * 4 + 4096,
+                "bound-loader resolution set/path growth",
+            )?;
+            ensure!(
+                planned.iter().any(|plan| plan.soname == soname)
+                    && Path::new(path) == probe.join(soname)
+                    && resolved.insert(soname.to_owned()),
+                "bound loader escaped a retained dependency descriptor"
+            );
+        } else {
+            ensure!(
+                line.split_once(" (")
+                    .context("malformed direct bound loader member")?
+                    .0
+                    == interpreter,
+                "unrecognized direct bound loader member"
+            );
+            budget.charge(4096, "bound-loader direct resolution set growth")?;
+            resolved.insert("ld-linux-x86-64.so.2".to_owned());
+        }
+    }
+    ensure!(
+        resolved.len() == planned.len()
+            && planned.iter().all(|plan| resolved.contains(&plan.soname)),
+        "bound loader did not resolve the complete planned dependency closure"
+    );
+    let (binary_after_digest, binary_after) = descriptor_digest(binary, MAX_BINARY_BYTES)?;
+    ensure!(
+        binary_after_digest == binary_digest,
+        "bound loader binary bytes changed"
+    );
+    require_loader_inverse(&binary_before, &binary_after)?;
+    budget.charge(
+        planned.len() as u64 * std::mem::size_of::<BoundDependencyObservation>() as u64 * 2 + 256,
+        "bound-loader dependency observation vector",
+    )?;
+    let mut observations = Vec::new();
+    observations.try_reserve_exact(planned.len())?;
+    for (file, digest, before, plan) in &delivered {
+        let (after_digest, after) = descriptor_digest(file, MAX_BINARY_BYTES)?;
+        ensure!(
+            after_digest == *digest,
+            "bound loader delivered dependency bytes changed"
+        );
+        require_loader_inverse(before, &after)?;
+        budget.charge(
+            plan.soname.len() as u64 * 2 + 1024,
+            "bound-loader observation identity strings",
+        )?;
+        observations.push(BoundDependencyObservation {
+            soname: plan.soname.clone(),
+            actual_descriptor_target: format!(
+                "/proc/{}/fd/{}",
+                std::process::id(),
+                file.as_raw_fd()
+            ),
+            delivery: if host_family(&plan.soname) {
+                "retained_host_descriptor"
+            } else {
+                "actual_copied_descriptor"
+            },
+            digest: digest.clone(),
+            before_loader: before.clone(),
+            after_loader: after.clone(),
+        });
+        if !host_family(&plan.soname) {
+            ensure!(
+                after == physical(&fs::symlink_metadata(bundled.join(&plan.soname))?)?,
+                "bundled dependency pathname changed during bound loader probe"
+            );
+        }
+    }
+    // Cleanup errors are actual packaging failures; no TempDir Drop discards one.
+    for plan in planned {
+        fs::remove_file(probe.join(&plan.soname))?;
+    }
+    fs::remove_dir(&probe)?;
+    budget.charge(
+        (interpreter.len() as u64 + probe_text.len() as u64 + 128) * 4 + 2048,
+        "bound-loader actual command evidence strings/vector",
+    )?;
+    Ok(BoundLoaderEvidence {
+        actual_command: vec![
+            interpreter.to_owned(),
+            "--inhibit-cache".to_owned(),
+            "--library-path".to_owned(),
+            probe_text.to_owned(),
+            "--list".to_owned(),
+            binary_path,
+        ],
+        actual_stdout: text,
+        binary_digest,
+        binary_before_loader: binary_before,
+        binary_after_loader: binary_after,
+        dependencies: observations,
+        constructors_entered: false,
+        runtime_compatibility_or_test_acceptance_credit: 0,
+    })
+}
+
+#[cfg(not(target_os = "linux"))]
+fn verify_bound_loader_with_budget(
+    _: &File,
+    _: &elf::ElfEvidence,
+    _: &[PlannedDependency],
+    _: &Path,
+    _: &Path,
+    _: &mut elf::MetadataBudget,
+) -> Result<BoundLoaderEvidence> {
+    bail!("bound native loader verification requires Linux")
+}
+
+#[derive(Serialize)]
+struct NativeEvidence {
+    schema_version: u32,
+    source_manifest_sha256: String,
+    source_owner_receipt_sha256: String,
+    source_owner_receipt_role: &'static str,
+    build_receipt_sha256: String,
+    build: BuildReceipt,
+    binary_elf: elf::ElfEvidence,
+    copied_binary_digest: FileDigest,
+    copied_binary_before_loader: Physical13,
+    copied_binary_after_loader: Physical13,
+    copied_identity_role: &'static str,
+    original_binary_before_loader: Physical13,
+    original_binary_after_loader: Physical13,
+    official_loader_list: String,
+    bound_loader_probe: BoundLoaderEvidence,
+    dependencies: Vec<Dependency>,
+    runner_glibc: String,
+    runner_os_release: String,
+    cargo_lock: FileDigest,
+    rust_toolchain: FileDigest,
+    source_package_policy: &'static str,
+    executable_relative_path: &'static str,
+    library_directory_relative_path: &'static str,
+    dev_asset_root: &'static str,
+    dlopen_host_requirements: Vec<&'static str>,
+    host_compatibility_and_native_resource_admission_pending: bool,
+    build_success_is_not_tests_or_runtime_acceptance: bool,
+}
+
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
+fn host_glibc() -> Result<String> {
+    // SAFETY: glibc returns an immutable NUL-terminated static version string.
+    Ok(
+        unsafe { std::ffi::CStr::from_ptr(libc::gnu_get_libc_version()) }
+            .to_str()?
+            .to_owned(),
+    )
+}
+
+#[cfg(not(all(target_os = "linux", target_env = "gnu")))]
+fn host_glibc() -> Result<String> {
+    bail!("artifact packaging requires the admitted GNU/Linux loader")
+}
+
+fn payload_inventory(root: &Path) -> Result<PayloadManifest> {
+    fn visit(root: &Path, path: &Path, rows: &mut Vec<PayloadEntry>) -> Result<()> {
+        ensure!(
+            rows.len() < MAX_PAYLOAD_ENTRIES,
+            "payload entry budget exhausted"
+        );
+        let name = if path == root {
+            "runtime".to_owned()
+        } else {
+            format!(
+                "runtime/{}",
+                path.strip_prefix(root)?
+                    .to_str()
+                    .context("non-UTF8 payload member")?
+            )
+        };
+        payload_relative(&name)?;
+        let metadata = fs::symlink_metadata(path)?;
+        if metadata.is_dir() {
+            set_mode(path, 0o755)?;
+            rows.push(PayloadEntry {
+                path: name,
+                kind: PayloadKind::Directory,
+                mode: 0o755,
+                bytes: 0,
+                sha256: None,
+                link_target: None,
+            });
+            // This is owned generated payload, never a foreign source tree.
+            let mut children: Vec<_> = fs::read_dir(path)?.collect::<std::io::Result<Vec<_>>>()?;
+            children.sort_by_key(|entry| entry.file_name());
+            for child in children {
+                visit(root, &child.path(), rows)?;
+            }
+        } else if metadata.file_type().is_symlink() {
+            let target = String::from_utf8(host_link(path)?)?;
+            normalized_link(&name, &target)?;
+            rows.push(PayloadEntry {
+                path: name,
+                kind: PayloadKind::Symlink,
+                mode: 0o777,
+                bytes: target.len() as u64,
+                sha256: Some(sha256(target.as_bytes())),
+                link_target: Some(target),
+            });
+        } else {
+            ensure!(metadata.is_file(), "unsupported payload inode");
+            let mode = physical(&metadata)?.mode & 0o777;
+            ensure!(
+                matches!(mode, 0o644 | 0o755),
+                "unsupported generated file mode"
+            );
+            // Empty tracked files are valid; unlike ELF or metadata they need no
+            // nonempty-content requirement. Their SHA remains authenticated.
+            let mut file = open_noatime(path, false)?;
+            let before = physical(&file.metadata()?)?;
+            let mut digest = Sha256::new();
+            let mut size = 0_u64;
+            let mut buffer = vec![0; 256 * 1024];
+            loop {
+                let read = file.read(&mut buffer)?;
+                if read == 0 {
+                    break;
+                }
+                size = size
+                    .checked_add(read as u64)
+                    .context("payload size overflow")?;
+                ensure!(
+                    size <= MAX_BINARY_BYTES,
+                    "payload member byte budget exhausted"
+                );
+                digest.update(&buffer[..read]);
+            }
+            ensure!(
+                size == before.bytes && before == physical(&file.metadata()?)?,
+                "payload changed during inventory"
+            );
+            rows.push(PayloadEntry {
+                path: name,
+                kind: PayloadKind::File,
+                mode,
+                bytes: size,
+                sha256: Some(format!("{:x}", digest.finalize())),
+                link_target: None,
+            });
+        }
+        Ok(())
+    }
+    let mut rows = Vec::new();
+    visit(root, root, &mut rows)?;
+    rows.sort_by(|left, right| left.path.as_bytes().cmp(right.path.as_bytes()));
+    let mut bytes = 0_u64;
+    let mut directories = 0;
+    let mut symlinks = 0;
+    let mut files = 0;
+    for row in &rows {
+        match row.kind {
+            PayloadKind::File => {
+                files += 1;
+                bytes = bytes
+                    .checked_add(row.bytes)
+                    .context("payload total overflow")?;
+            }
+            PayloadKind::Directory => directories += 1,
+            PayloadKind::Symlink => symlinks += 1,
+        }
+    }
+    let manifest = PayloadManifest {
+        schema_version: 1,
+        entries: rows,
+        unpacked_regular_bytes: bytes,
+        directory_count: directories,
+        symlink_count: symlinks,
+        regular_file_count: files,
+    };
+    manifest.validate()?;
+    Ok(manifest)
+}
+
+fn archive_payload(runtime: &Path, manifest: &PayloadManifest, archive: &Path) -> Result<()> {
+    let file = OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .open(archive)?;
+    let bound = producer::compression_bound(bounded_tar::expanded_limit(manifest)?)?;
+    ensure!(
+        bound <= MAX_ARCHIVE_BYTES,
+        "archive worst-case bound exceeds transport cap"
+    );
+    let encoder = GzEncoder::new(
+        producer::LimitedWriter::new(file, bound),
+        Compression::new(6),
+    );
+    let mut builder = tar::Builder::new(encoder);
+    for entry in &manifest.entries {
+        let mut header = tar::Header::new_gnu();
+        header.set_uid(0);
+        header.set_gid(0);
+        header.set_mtime(0);
+        header.set_mode(entry.mode);
+        match entry.kind {
+            PayloadKind::Directory => {
+                header.set_entry_type(tar::EntryType::Directory);
+                header.set_size(0);
+            }
+            PayloadKind::Symlink => {
+                header.set_entry_type(tar::EntryType::Symlink);
+                header.set_size(0);
+            }
+            PayloadKind::File => {
+                header.set_entry_type(tar::EntryType::Regular);
+                header.set_size(entry.bytes);
+            }
+        }
+        header.set_cksum();
+        if entry.kind == PayloadKind::File {
+            let path = runtime
+                .parent()
+                .context("runtime parent absent")?
+                .join(&entry.path);
+            builder.append_data(&mut header, &entry.path, open_noatime(&path, false)?)?;
+        } else if entry.kind == PayloadKind::Symlink {
+            builder.append_link(
+                &mut header,
+                &entry.path,
+                entry
+                    .link_target
+                    .as_deref()
+                    .context("archive link target absent")?,
+            )?;
+        } else {
+            builder.append_data(&mut header, &entry.path, std::io::empty())?;
+        }
+    }
+    builder.into_inner()?.finish()?.into_inner().sync_all()?;
+    ensure!(
+        digest_file(archive, MAX_ARCHIVE_BYTES)?.0.bytes > 0,
+        "archive is empty"
+    );
+    Ok(())
+}
+
+fn split_archive(archive: &Path, directory: &Path) -> Result<Vec<Piece>> {
+    fs::create_dir(directory)?;
+    let mut source = open_noatime(archive, false)?;
+    let before = physical(&source.metadata()?)?;
+    ensure!(
+        before.bytes > 0 && before.bytes <= MAX_ARCHIVE_BYTES,
+        "archive byte budget differs"
+    );
+    let mut pieces = Vec::new();
+    let mut buffer = vec![0; 256 * 1024];
+    loop {
+        let order = pieces.len();
+        let name = format!("{order:06}.part");
+        let first = source.read(&mut buffer)?;
+        if first == 0 {
+            break;
+        }
+        ensure!(order < MAX_PIECES, "piece count budget exhausted");
+        let mut piece = OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .open(directory.join(&name))?;
+        let mut bytes = 0_u64;
+        let mut digest = Sha256::new();
+        let mut next = first;
+        loop {
+            piece.write_all(&buffer[..next])?;
+            digest.update(&buffer[..next]);
+            bytes += next as u64;
+            if bytes == PIECE_BYTES {
+                break;
+            }
+            let remaining = usize::try_from((PIECE_BYTES - bytes).min(buffer.len() as u64))?;
+            next = source.read(&mut buffer[..remaining])?;
+            if next == 0 {
+                break;
+            }
+        }
+        piece.sync_all()?;
+        pieces.push(Piece {
+            order,
+            file: name,
+            bytes,
+            sha256: format!("{:x}", digest.finalize()),
+        });
+    }
+    ensure!(
+        before == physical(&source.metadata()?)?,
+        "archive inverse changed while splitting"
+    );
+    validate_pieces(&pieces, &digest_file(archive, MAX_ARCHIVE_BYTES)?.0)?;
+    Ok(pieces)
+}
+
+pub(super) fn package(args: PackageArgs) -> Result<()> {
+    let output = args.output_dir.clone();
+    let mut owned = false;
+    let result = package_inner(args, &mut owned);
+    preserve_failure(&output, owned, "package-command-failure.json", &result)?;
+    result
+}
+
+fn package_inner(args: PackageArgs, owned: &mut bool) -> Result<()> {
+    let request = request_input(&args.request, &args.request_sha256, Some(&args.source))?;
+    let build: BuildReceipt = authenticated_json(
+        &args.build_receipt,
+        &args.build_receipt_sha256,
+        MAX_BUILD_EVIDENCE_BYTES,
+    )?;
+    ensure!(
+        build.schema_version == 1
+            && build.request.schema_version == 1
+            && build.request.repository == REPOSITORY
+            && build.state == "ACTUAL_FIXED_CARGO_CHILD_WAIT_ZERO_NOT_TEST_OR_RUNTIME_ACCEPTANCE"
+            && build.request.source_sha == request.source_sha
+            && build.request.source_tree == request.source_tree
+            && build.request.source_manifest_sha256 == request.source_manifest_sha256
+            && build.request.source_owner_receipt_sha256 == request.source_owner_receipt_sha256
+            && build.actual_child_exit == 0
+            && build.actual_build_finished_success
+            && build.observed_command == fixed_build_command()
+            && build.default_features
+            && build.removed_features.is_empty()
+            && build.profile == "dev"
+            && build.debug == 0
+            && !build.incremental
+            && build.binary.digest.bytes > 0
+            && build.runtime_test_and_reference_credit == 0,
+        "build receipt does not bind the fixed successful native build"
+    );
+    require_hex(&build.controller_sha, 40)?;
+    numeric_identity(&build.run_id)?;
+    numeric_identity(&build.run_attempt)?;
+    validate_features(&build.feature_receipts)?;
+    for binding in [
+        &build.source_before,
+        &build.source_after,
+        &build.build_log,
+        &build.binary,
+        &build.process_closure,
+    ] {
+        ensure!(
+            digest_file(&binding.path, MAX_BINARY_BYTES)?.0 == binding.digest,
+            "named build input digest differs"
+        );
+    }
+    let process_closure: serde_json::Value = authenticated_json(
+        &build.process_closure.path,
+        &build.process_closure.digest.sha256,
+        MAX_METADATA_BYTES,
+    )?;
+    ensure!(
+        process_closure["state"] == "ACTUAL_OWNED_PROCESS_SESSION_CLOSED0"
+            && process_closure["leader_exit_code"] == 0
+            && process_closure["deadline_exhausted"] == false
+            && process_closure["actual_remaining_owned_processes"] == 0
+            && process_closure["cleanup_errors"]
+                .as_array()
+                .is_some_and(Vec::is_empty),
+        "actual build process closure cannot grant successful packaging"
+    );
+    let source_after: SourceObservation = authenticated_json(
+        &build.source_after.path,
+        &build.source_after.digest.sha256,
+        MAX_MANIFEST_BYTES,
+    )?;
+    ensure!(
+        source_after.authentication == Authentication::Materialized
+            && source_after.canonical_manifest.sha256 == request.source_manifest_sha256
+            && source_after.source_commit == request.source_sha
+            && source_after.source_tree == request.source_tree
+            && source_after.tracked_entries > 0
+            && source_after.tracked_entries == source_after.physically_materialized_entries
+            && source_after.physically_materialized_entries == source_after.physical.len()
+            && source_after.full_physical_noatime_inverses_equal
+            && !source_after.sparse_files_were_not_materialized
+            && source_after.closure == "CLOSED0"
+            && source_after.runtime_test_or_reference_credit == 0,
+        "build physical source observation differs"
+    );
+    let (manifest, before) = observe(&args.source, Authentication::Materialized)?;
+    ensure!(
+        before.canonical_manifest.sha256 == request.source_manifest_sha256,
+        "package source identity differs"
+    );
+    // Package may run under sudo for O_NOATIME on root-owned system libraries.
+    // Reading the initial source and artifacts never restores their timestamps.
+    let package_atime_transitions = source_transitions(&source_after.physical, &before.physical)?;
+    // The official loader receives a retained descriptor, not a mutable original
+    // pathname. No payload has been copied while resolving this admission plan.
+    let binary_source = open_noatime(&build.binary.path, false)?;
+    let (source_digest, original_binary_before_loader) =
+        descriptor_digest(&binary_source, MAX_BINARY_BYTES)?;
+    ensure!(
+        source_digest == build.binary.digest,
+        "admission binary differs from actual build receipt"
+    );
+    let mut elf_budget = elf::MetadataBudget::new();
+    let preliminary_binary_elf =
+        elf::inspect_file_with_budget(binary_source.try_clone()?, &mut elf_budget)?;
+    ensure!(
+        preliminary_binary_elf.rpath.is_none() && preliminary_binary_elf.runpath.is_none(),
+        "relocating an ELF with RPATH/RUNPATH requires an explicit loader policy"
+    );
+    let (_, planned_dependencies) =
+        plan_dependencies(&binary_source, &preliminary_binary_elf, &mut elf_budget)?;
+    let (after_loader_digest, original_binary_after_loader) =
+        descriptor_digest(&binary_source, MAX_BINARY_BYTES)?;
+    ensure!(
+        after_loader_digest == source_digest,
+        "original binary changed during official loader resolution"
+    );
+    require_loader_inverse(
+        &original_binary_before_loader,
+        &original_binary_after_loader,
+    )?;
+    ensure!(
+        original_binary_after_loader == physical(&fs::symlink_metadata(&build.binary.path)?)?,
+        "original binary pathname changed during admission"
+    );
+    let git_plan = producer::git_plan(&args.source)?;
+    let evidence_upper = build
+        .source_before
+        .digest
+        .bytes
+        .checked_add(build.source_after.digest.bytes)
+        .and_then(|n| n.checked_add(build.build_log.digest.bytes))
+        .and_then(|n| n.checked_add(build.process_closure.digest.bytes))
+        .and_then(|n| {
+            n.checked_add(3 * MAX_MANIFEST_BYTES + MAX_BUILD_EVIDENCE_BYTES + MAX_METADATA_BYTES)
+        })
+        .context("producer evidence bound overflow")?;
+    let parent = args
+        .output_dir
+        .parent()
+        .context("producer output parent absent")?;
+    let (block, available, inodes) = super::filesystem_space(parent)?;
+    elf_budget.charge(
+        planned_dependencies.len() as u64 * 1024 + 256,
+        "producer dependency-name admission copies",
+    )?;
+    let admission = producer::plan(
+        &manifest,
+        &git_plan,
+        &build.binary.digest,
+        planned_dependencies
+            .iter()
+            .filter(|plan| !host_family(&plan.soname))
+            .map(|plan| (plan.soname.clone(), plan.digest.bytes)),
+        evidence_upper,
+        block,
+        available,
+        inodes,
+    )?;
+    fs::create_dir(&args.output_dir).context("artifact output directory must be new")?;
+    *owned = true;
+    let admission_path = args.output_dir.join("producer-admission.json");
+    write_json(&admission_path, &admission, MAX_METADATA_BYTES)?;
+    ensure!(
+        admission.fits,
+        "producer disk/inode reserve does not fit; genuine failure preflight retained"
+    );
+    let runtime = args.output_dir.join("runtime");
+    fs::create_dir(&runtime)?;
+    fs::create_dir(runtime.join("lib"))?;
+    fs::create_dir(runtime.join("evidence"))?;
+    let source_destination = runtime.join("source");
+    copy_source(&args.source, &manifest, &source_destination)?;
+    reconstruct_git_with_plan(&args.source, &source_destination, &git_plan)?;
+    let executable_destination = source_destination.join("target/debug/koda");
+    ensure_parents(&executable_destination)?;
+    let mut binary_copy_source = binary_source.try_clone()?;
+    binary_copy_source.seek(SeekFrom::Start(0))?;
+    copy_verified_descriptor(
+        binary_copy_source,
+        &executable_destination,
+        &build.binary.digest,
+        0o555,
+    )?;
+    let copied_binary = open_noatime(&executable_destination, false)?;
+    let (copied_binary_digest, copied_binary_before_loader) =
+        descriptor_digest(&copied_binary, MAX_BINARY_BYTES)?;
+    ensure!(
+        copied_binary_digest == build.binary.digest,
+        "packaged executable digest differs"
+    );
+    let binary_elf = elf::inspect_file_with_budget(copied_binary.try_clone()?, &mut elf_budget)?;
+    ensure!(
+        binary_elf == preliminary_binary_elf,
+        "actual copied ELF differs from admitted build bytes"
+    );
+    drop(preliminary_binary_elf);
+    verify_copied_resolution(
+        &copied_binary,
+        &binary_elf,
+        &planned_dependencies,
+        &mut elf_budget,
+    )?;
+    let (copied_after_digest, copied_binary_after_loader) =
+        descriptor_digest(&copied_binary, MAX_BINARY_BYTES)?;
+    require_loader_inverse(&copied_binary_before_loader, &copied_binary_after_loader)?;
+    ensure!(
+        copied_after_digest == copied_binary_digest
+            && copied_binary_after_loader
+                == physical(&fs::symlink_metadata(&executable_destination)?)?,
+        "copied executable loader/ELF identity inverse differs"
+    );
+    set_mode(&executable_destination, 0o755)?;
+    let dependencies = deliver_dependencies_with_budget(
+        &planned_dependencies,
+        &runtime.join("lib"),
+        &mut elf_budget,
+    )?;
+    let bound_loader_probe = verify_bound_loader_with_budget(
+        &copied_binary,
+        &binary_elf,
+        &planned_dependencies,
+        &runtime.join("lib"),
+        &args.output_dir.join("loader-fd-probe"),
+        &mut elf_budget,
+    )?;
+    copy_verified(
+        &admission_path,
+        &runtime.join("evidence/producer-admission.json"),
+        &digest_file(&admission_path, MAX_METADATA_BYTES)?.0,
+        0o644,
+    )?;
+    let source_manifest_path = runtime.join("evidence/source-manifest.json");
+    write_json(&source_manifest_path, &manifest, MAX_MANIFEST_BYTES)?;
+    ensure!(
+        digest_file(&source_manifest_path, MAX_MANIFEST_BYTES)?
+            .0
+            .sha256
+            == request.source_manifest_sha256,
+        "copied source manifest digest differs"
+    );
+    for (binding, name) in [
+        (&build.source_before, "source-before-build-observation.json"),
+        (&build.source_after, "source-after-build-observation.json"),
+        (&build.build_log, "cargo-build.jsonl"),
+        (&build.process_closure, "cargo-process-closure.json"),
+    ] {
+        copy_verified(
+            &binding.path,
+            &runtime.join("evidence").join(name),
+            &binding.digest,
+            0o644,
+        )?;
+    }
+    write_json(
+        &runtime.join("evidence/package-atime-transitions.json"),
+        &package_atime_transitions,
+        MAX_MANIFEST_BYTES,
+    )?;
+    elf_budget.charge(
+        1024 * 1024,
+        "native evidence retained loader output/system metadata",
+    )?;
+    let runner_os_release_path =
+        resolve_noatime_with_budget(Path::new("/etc/os-release"), &mut elf_budget)?;
+    let evidence = NativeEvidence {
+        schema_version: 1,
+        source_manifest_sha256: request.source_manifest_sha256.clone(),
+        source_owner_receipt_sha256: request.source_owner_receipt_sha256.clone(),
+        source_owner_receipt_role: "Root-declared immutable identity; CI does not authenticate local owner/checkpoint receipt bytes",
+        build_receipt_sha256: args.build_receipt_sha256,
+        binary_elf,
+        copied_binary_digest,
+        copied_binary_before_loader,
+        copied_binary_after_loader,
+        copied_identity_role: "full13 during read-only 0555 ELF/loader inspection; explicit final packaging permission restoration to 0755 is authenticated by payload manifest",
+        original_binary_before_loader,
+        original_binary_after_loader,
+        official_loader_list: bound_loader_probe.actual_stdout.clone(),
+        bound_loader_probe,
+        dependencies,
+        runner_glibc: host_glibc()?,
+        runner_os_release: String::from_utf8(read_bounded(&runner_os_release_path, 64 * 1024)?.0)?,
+        cargo_lock: digest_file(&args.source.source.join("Cargo.lock"), MAX_MANIFEST_BYTES)?.0,
+        rust_toolchain: digest_file(
+            &args.source.source.join("rust-toolchain.toml"),
+            MAX_METADATA_BYTES,
+        )?
+        .0,
+        source_package_policy: "exact tracked source plus reconstructed commit/tree/blob objects, detached HEAD, shallow boundary, safe core-only config and generated index; no original Git controls copied",
+        executable_relative_path: "source/target/debug/koda",
+        library_directory_relative_path: "lib",
+        dev_asset_root: "source; discovered through executable ancestors containing its real .git directory",
+        dlopen_host_requirements: vec![
+            "libva.so.2",
+            "libva-drm.so.2",
+            "libEGL.so.1",
+            "Vulkan loader and an independently admitted ICD",
+        ],
+        host_compatibility_and_native_resource_admission_pending: true,
+        build_success_is_not_tests_or_runtime_acceptance: true,
+        build,
+    };
+    let native_evidence = runtime.join("evidence/native-build.json");
+    write_json(&native_evidence, &evidence, MAX_BUILD_EVIDENCE_BYTES)?;
+    let (_, after) = observe(&args.source, Authentication::Materialized)?;
+    ensure!(
+        after.canonical_manifest == before.canonical_manifest && after.physical == before.physical,
+        "complete package source inverses differ"
+    );
+    write_json(
+        &runtime.join("evidence/source-package-observation.json"),
+        &after,
+        MAX_MANIFEST_BYTES,
+    )?;
+    let payload = payload_inventory(&runtime)?;
+    ensure!(
+        payload.unpacked_regular_bytes <= admission.payload_upper_bytes,
+        "admitted producer payload upper bound differs"
+    );
+    let payload_path = args.output_dir.join("payload-manifest.json");
+    write_json(&payload_path, &payload, MAX_MANIFEST_BYTES)?;
+    let archive = args.output_dir.join("runtime.tar.gz");
+    archive_payload(&runtime, &payload, &archive)?;
+    // Inventory is authenticated again after archive creation; no archived source,
+    // dependency or build-evidence byte can drift unnoticed before publication.
+    ensure!(
+        payload_inventory(&runtime)?.entries == payload.entries,
+        "complete archived payload inverse differs"
+    );
+    let archive_digest = digest_file(&archive, MAX_ARCHIVE_BYTES)?.0;
+    let pieces = split_archive(&archive, &args.output_dir.join("pieces"))?;
+    #[derive(Serialize)]
+    struct PieceManifest<'a> {
+        schema_version: u32,
+        source_sha: &'a str,
+        source_tree: &'a str,
+        source_owner_receipt_sha256: &'a str,
+        concatenated_archive: &'a FileDigest,
+        maximum_github_zip_bytes: u64,
+        pieces: &'a [Piece],
+    }
+    let piece_path = args.output_dir.join("piece-manifest.json");
+    write_json(
+        &piece_path,
+        &PieceManifest {
+            schema_version: 1,
+            source_sha: &request.source_sha,
+            source_tree: &request.source_tree,
+            source_owner_receipt_sha256: &request.source_owner_receipt_sha256,
+            concatenated_archive: &archive_digest,
+            maximum_github_zip_bytes: MAX_ZIP_BYTES,
+            pieces: &pieces,
+        },
+        MAX_METADATA_BYTES,
+    )?;
+    let metadata = ArtifactMetadata {
+        schema_version: 1,
+        repository: REPOSITORY.to_owned(),
+        source_sha: request.source_sha.clone(),
+        source_tree: request.source_tree.clone(),
+        source_manifest_sha256: request.source_manifest_sha256.clone(),
+        source_owner_receipt_sha256: request.source_owner_receipt_sha256.clone(),
+        controller_sha: evidence.build.controller_sha.clone(),
+        run_id: evidence.build.run_id.clone(),
+        run_attempt: evidence.build.run_attempt.clone(),
+        runtime_archive: archive_digest,
+        payload_manifest: digest_file(&payload_path, MAX_MANIFEST_BYTES)?.0,
+        build_evidence: digest_file(&native_evidence, MAX_BUILD_EVIDENCE_BYTES)?.0,
+        piece_manifest: digest_file(&piece_path, MAX_METADATA_BYTES)?.0,
+        pieces,
+        unpacked_regular_bytes: payload.unpacked_regular_bytes,
+        directory_count: payload.directory_count,
+        symlink_count: payload.symlink_count,
+        regular_file_count: payload.regular_file_count,
+    };
+    metadata.validate(&request)?;
+    write_json(
+        &args.output_dir.join("artifact-metadata.json"),
+        &metadata,
+        MAX_METADATA_BYTES,
+    )?;
+    Ok(())
+}
+
+pub(super) fn extract(args: ExtractArgs) -> Result<()> {
+    let request = request_input(&args.request, &args.request_sha256, None)?;
+    let metadata: ArtifactMetadata =
+        authenticated_json(&args.metadata, &args.metadata_sha256, MAX_METADATA_BYTES)?;
+    metadata.validate(&request)?;
+    let payload: PayloadManifest = authenticated_json(
+        &args.payload_manifest,
+        &metadata.payload_manifest.sha256,
+        MAX_MANIFEST_BYTES,
+    )?;
+    payload.validate()?;
+    ensure!(
+        payload.unpacked_regular_bytes == metadata.unpacked_regular_bytes
+            && payload.directory_count == metadata.directory_count
+            && payload.symlink_count == metadata.symlink_count
+            && payload.regular_file_count == metadata.regular_file_count,
+        "payload/metadata totals differ"
+    );
+    // This command starts no app. Root must perform disk preflight before this
+    // write and separately admit cgroup/host ABI/graphics/actors before launch.
+    fs::create_dir(&args.output_dir).context("extraction destination must be new")?;
+    let archive_path = args.output_dir.join("authenticated-runtime.tar.gz");
+    let mut archive_file = OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .open(&archive_path)?;
+    let mut archive_hash = Sha256::new();
+    let mut archive_bytes = 0_u64;
+    let mut pieces_before = Vec::new();
+    let mut buffer = vec![0; 256 * 1024];
+    for piece in &metadata.pieces {
+        let path = args.pieces.join(&piece.file);
+        let mut input = open_noatime(&path, false)?;
+        let before = physical(&input.metadata()?)?;
+        ensure!(
+            input.metadata()?.is_file() && before.bytes == piece.bytes,
+            "received piece size/type differs"
+        );
+        let mut piece_hash = Sha256::new();
+        let mut count = 0_u64;
+        loop {
+            let read = input.read(&mut buffer)?;
+            if read == 0 {
+                break;
+            }
+            count = count
+                .checked_add(read as u64)
+                .context("piece size overflow")?;
+            ensure!(count <= piece.bytes, "received piece grew");
+            piece_hash.update(&buffer[..read]);
+            archive_hash.update(&buffer[..read]);
+            archive_file.write_all(&buffer[..read])?;
+        }
+        ensure!(
+            count == piece.bytes
+                && format!("{:x}", piece_hash.finalize()) == piece.sha256
+                && before == physical(&input.metadata()?)?,
+            "received piece digest or inverse differs"
+        );
+        archive_bytes = archive_bytes
+            .checked_add(count)
+            .context("archive size overflow")?;
+        pieces_before.push((path, before));
+    }
+    ensure!(
+        archive_bytes == metadata.runtime_archive.bytes
+            && format!("{:x}", archive_hash.finalize()) == metadata.runtime_archive.sha256,
+        "reassembled archive identity differs"
+    );
+    archive_file.sync_all()?;
+    drop(archive_file);
+    let archive_identity = physical(&open_noatime(&archive_path, false)?.metadata()?)?;
+    let decoder = bounded_tar::decoder(BufReader::new(open_noatime(&archive_path, false)?))?;
+    let mut archive = bounded_tar::RawTar::new(
+        decoder,
+        bounded_tar::expanded_limit(&payload)?,
+        payload
+            .entries
+            .len()
+            .checked_mul(3)
+            .context("raw tar member bound overflow")?,
+    );
+    let declared: BTreeMap<_, _> = payload
+        .entries
+        .iter()
+        .map(|entry| (entry.path.as_str(), entry))
+        .collect();
+    let mut observed = BTreeSet::new();
+    let mut deferred_links = Vec::new();
+    let mut regular_bytes = 0_u64;
+    while let Some(member) = archive.next()? {
+        let name = member.name.trim_end_matches('/').to_owned();
+        payload_relative(&name)?;
+        let expected = declared
+            .get(name.as_str())
+            .context("undeclared archive member")?;
+        ensure!(
+            observed.insert(name.clone()) && observed.len() <= payload.entries.len(),
+            "duplicate archive member"
+        );
+        let mode = member.header.mode()?;
+        ensure!(
+            mode == expected.mode && member.header.uid()? == 0 && member.header.gid()? == 0,
+            "archive ownership/mode differs"
+        );
+        let destination = args.output_dir.join(&name);
+        match expected.kind {
+            PayloadKind::Directory => {
+                ensure!(
+                    member.header.entry_type().is_dir() && member.header.size()? == 0,
+                    "archive directory type/size differs"
+                );
+                fs::create_dir(&destination)?;
+                set_mode(&destination, 0o755)?;
+            }
+            PayloadKind::File => {
+                ensure!(
+                    member.header.entry_type().is_file() && member.header.size()? == expected.bytes,
+                    "archive regular type/size differs"
+                );
+                let mut output = OpenOptions::new()
+                    .create_new(true)
+                    .write(true)
+                    .open(&destination)?;
+                let mut digest = Sha256::new();
+                let mut size = 0_u64;
+                loop {
+                    let read = archive.body(&mut buffer)?;
+                    if read == 0 {
+                        break;
+                    }
+                    size = size
+                        .checked_add(read as u64)
+                        .context("extracted member overflow")?;
+                    regular_bytes = regular_bytes
+                        .checked_add(read as u64)
+                        .context("extracted total overflow")?;
+                    ensure!(
+                        size <= expected.bytes && regular_bytes <= metadata.unpacked_regular_bytes,
+                        "unpacked budget exceeded"
+                    );
+                    digest.update(&buffer[..read]);
+                    output.write_all(&buffer[..read])?;
+                }
+                ensure!(
+                    size == expected.bytes
+                        && expected.sha256.as_deref()
+                            == Some(format!("{:x}", digest.finalize()).as_str()),
+                    "extracted content digest differs"
+                );
+                output.sync_all()?;
+                drop(output);
+                set_mode(&destination, mode)?;
+            }
+            PayloadKind::Symlink => {
+                ensure!(
+                    member.header.entry_type().is_symlink() && member.header.size()? == 0,
+                    "archive link type/size differs"
+                );
+                let target = member
+                    .link
+                    .as_deref()
+                    .context("archive link target missing")?;
+                ensure!(
+                    expected.link_target.as_deref() == Some(target),
+                    "archive link target differs"
+                );
+                deferred_links.push((
+                    destination,
+                    expected
+                        .link_target
+                        .clone()
+                        .context("declared link target absent")?,
+                ));
+            }
+        }
+    }
+    let compressed = archive.finish_gzip()?;
+    ensure!(
+        archive_identity == physical(&compressed.get_ref().metadata()?)?
+            && digest_file(&archive_path, MAX_ARCHIVE_BYTES)?.0 == metadata.runtime_archive,
+        "complete reassembled gzip inverse differs"
+    );
+    drop(compressed);
+    ensure!(
+        observed.len() == payload.entries.len() && regular_bytes == metadata.unpacked_regular_bytes,
+        "archive omitted declared members or logical bytes"
+    );
+    for (destination, target) in deferred_links {
+        create_symlink(&target, &destination)?;
+    }
+    let runtime = args.output_dir.join("runtime");
+    let actual = payload_inventory(&runtime)?;
+    ensure!(
+        actual.entries == payload.entries,
+        "complete extracted payload identity differs"
+    );
+    ensure!(
+        digest_file(
+            &runtime.join("evidence/native-build.json"),
+            MAX_BUILD_EVIDENCE_BYTES
+        )?
+        .0 == metadata.build_evidence,
+        "extracted native build/ELF evidence differs"
+    );
+    ensure!(
+        digest_file(
+            &runtime.join("evidence/source-manifest.json"),
+            MAX_MANIFEST_BYTES
+        )?
+        .0
+        .sha256
+            == request.source_manifest_sha256,
+        "extracted canonical source manifest differs"
+    );
+    let source = SourceArgs {
+        source: runtime.join("source"),
+        sha: request.source_sha.clone(),
+        tree: request.source_tree.clone(),
+    };
+    let (_, observation) = observe(&source, Authentication::Materialized)?;
+    ensure!(
+        observation.canonical_manifest.sha256 == request.source_manifest_sha256,
+        "complete extracted tracked source identity differs"
+    );
+    for (path, before) in pieces_before {
+        ensure!(
+            before == physical(&open_noatime(&path, false)?.metadata()?)?,
+            "complete received piece inverse differs"
+        );
+    }
+    #[derive(Serialize)]
+    struct ExtractionReceipt<'a> {
+        state: &'static str,
+        source_sha: &'a str,
+        source_tree: &'a str,
+        archive: &'a FileDigest,
+        payload_members: usize,
+        complete_source_observation: SourceObservation,
+        native_host_elf_memory_and_actor_admission_pending: bool,
+        application_launches: u32,
+        runtime_ui_performance_and_reference_credit: u32,
+    }
+    write_json(
+        &args.receipt,
+        &ExtractionReceipt {
+            state: "AUTHENTICATED_CONFINED_EXTRACTION_NOT_RUNTIME_ADMISSION",
+            source_sha: &request.source_sha,
+            source_tree: &request.source_tree,
+            archive: &metadata.runtime_archive,
+            payload_members: payload.entries.len(),
+            complete_source_observation: observation,
+            native_host_elf_memory_and_actor_admission_pending: true,
+            application_launches: 0,
+            runtime_ui_performance_and_reference_credit: 0,
+        },
+        MAX_MANIFEST_BYTES,
+    )?;
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_features_require_the_actual_media_stack_and_reject_app_test_features() {
+        let mut features: Vec<_> = ["koda", "call", "livekit_client", "libwebrtc", "webrtc_sys"]
+            .into_iter()
+            .map(|target| FeatureReceipt {
+                package_id: format!("fixture#{target}@0.1.0"),
+                target: target.to_owned(),
+                features: Vec::new(),
+            })
+            .collect();
+        assert!(validate_features(&features).is_ok());
+        let media = features.pop().unwrap();
+        assert!(validate_features(&features).is_err());
+        features.push(media);
+        features[0].features.push("test-support".to_owned());
+        assert!(validate_features(&features).is_err());
+        features[0].features = vec!["visual-tests".to_owned()];
+        assert!(validate_features(&features).is_err());
+    }
+
+    #[test]
+    fn atime_transitions_cannot_hide_mtime_size_mode_or_inode_changes() {
+        let original = PhysicalEntry {
+            path: "source.rs".to_owned(),
+            identity: Physical13 {
+                dev: 1,
+                ino: 2,
+                mode: 0o100644,
+                uid: 3,
+                gid: 4,
+                nlink: 1,
+                bytes: 5,
+                atime_ns: 6,
+                mtime_ns: 7,
+                ctime_ns: 8,
+                blocks: 9,
+                blksize: 4096,
+                rdev: 0,
+            },
+        };
+        let mut read = original.clone();
+        read.identity.atime_ns += 1;
+        assert_eq!(
+            source_transitions(&[original.clone()], &[read.clone()])
+                .unwrap()
+                .len(),
+            1
+        );
+        for changed in [
+            Physical13 {
+                mtime_ns: 10,
+                ..read.identity.clone()
+            },
+            Physical13 {
+                bytes: 10,
+                ..read.identity.clone()
+            },
+            Physical13 {
+                mode: 0o100755,
+                ..read.identity.clone()
+            },
+            Physical13 {
+                ino: 10,
+                ..read.identity.clone()
+            },
+        ] {
+            assert!(
+                source_transitions(
+                    &[original.clone()],
+                    &[PhysicalEntry {
+                        path: read.path.clone(),
+                        identity: changed
+                    }]
+                )
+                .is_err()
+            );
+        }
+        assert!(source_transitions(&[], &[]).is_err());
+    }
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn reconstructed_git_retains_exact_tree_and_source_without_config_hooks_or_untracked_files() {
+        let (_temporary, source) = super::super::tests::fixture();
+        fs::write(
+            source.source.join("untracked-secret"),
+            b"fictional test data",
+        )
+        .unwrap();
+        let mut config = OpenOptions::new()
+            .append(true)
+            .open(source.source.join(".git/config"))
+            .unwrap();
+        config
+            .write_all(b"\n[http]\nextraheader = fictional-test-header\n")
+            .unwrap();
+        drop(config);
+        fs::write(
+            source.source.join(".git/hooks/fixture-hook"),
+            b"fictional hook, not executed",
+        )
+        .unwrap();
+        let (original, _) = observe(&source, Authentication::Materialized).unwrap();
+        let destination = tempfile::tempdir().unwrap();
+        let checkout = destination.path().join("source");
+        copy_source(&source, &original, &checkout).unwrap();
+        reconstruct_git(&source, &checkout).unwrap();
+        let relocated = SourceArgs {
+            source: checkout.clone(),
+            sha: source.sha.clone(),
+            tree: source.tree.clone(),
+        };
+        let (actual, _) = observe(&relocated, Authentication::Materialized).unwrap();
+        assert_eq!(actual, original);
+        assert!(!checkout.join("untracked-secret").exists());
+        assert!(!checkout.join(".git/hooks").exists());
+        let config = read_bounded(&checkout.join(".git/config"), 1024).unwrap().0;
+        assert!(!String::from_utf8(config).unwrap().contains("extraheader"));
+        assert_eq!(
+            command(Some(&checkout), "git", &["rev-parse", "HEAD^{tree}"], 1024).unwrap(),
+            format!("{}\n", source.tree).as_bytes()
+        );
+    }
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn complete_payload_roundtrip_authenticates_real_source_and_retains_tampered_piece_failure() {
+        let (_temporary, source) = super::super::tests::fixture();
+        let staging = tempfile::tempdir().unwrap();
+        let out = staging.path();
+        let runtime = out.join("runtime");
+        fs::create_dir(&runtime).unwrap();
+        fs::create_dir(runtime.join("evidence")).unwrap();
+        let (original, _) = observe(&source, Authentication::Materialized).unwrap();
+        copy_source(&source, &original, &runtime.join("source")).unwrap();
+        reconstruct_git(&source, &runtime.join("source")).unwrap();
+        // This is an extraction-mechanics fixture, never a native build receipt.
+        write_json(
+            &runtime.join("evidence/source-manifest.json"),
+            &original,
+            MAX_MANIFEST_BYTES,
+        )
+        .unwrap();
+        create_file(
+            &runtime.join("evidence/native-build.json"),
+            b"{\"fixture_only\":true,\"native_credit\":0}\n",
+        )
+        .unwrap();
+        let payload = payload_inventory(&runtime).unwrap();
+        let payload_path = out.join("payload-manifest.json");
+        write_json(&payload_path, &payload, MAX_MANIFEST_BYTES).unwrap();
+        let archive = out.join("runtime.tar.gz");
+        archive_payload(&runtime, &payload, &archive).unwrap();
+        let pieces = split_archive(&archive, &out.join("pieces")).unwrap();
+        let request = Request {
+            schema_version: 1,
+            repository: REPOSITORY.to_owned(),
+            source_sha: source.sha.clone(),
+            source_tree: source.tree.clone(),
+            source_manifest_sha256: super::super::sha256(
+                &super::super::canonical(&original, MAX_MANIFEST_BYTES).unwrap(),
+            ),
+            source_owner_receipt_sha256: "4".repeat(64),
+        };
+        let request_path = out.join("request.json");
+        write_json(&request_path, &request, super::super::MAX_REQUEST_BYTES).unwrap();
+        let request_sha = digest_file(&request_path, super::super::MAX_REQUEST_BYTES)
+            .unwrap()
+            .0
+            .sha256;
+        let metadata = ArtifactMetadata {
+            schema_version: 1,
+            repository: REPOSITORY.to_owned(),
+            source_sha: source.sha,
+            source_tree: source.tree,
+            source_manifest_sha256: request.source_manifest_sha256.clone(),
+            source_owner_receipt_sha256: request.source_owner_receipt_sha256.clone(),
+            controller_sha: "6".repeat(40),
+            run_id: "1".to_owned(),
+            run_attempt: "1".to_owned(),
+            runtime_archive: digest_file(&archive, MAX_ARCHIVE_BYTES).unwrap().0,
+            payload_manifest: digest_file(&payload_path, MAX_MANIFEST_BYTES).unwrap().0,
+            build_evidence: digest_file(
+                &runtime.join("evidence/native-build.json"),
+                MAX_METADATA_BYTES,
+            )
+            .unwrap()
+            .0,
+            piece_manifest: FileDigest {
+                bytes: 1,
+                sha256: "5".repeat(64),
+            },
+            pieces,
+            unpacked_regular_bytes: payload.unpacked_regular_bytes,
+            directory_count: payload.directory_count,
+            symlink_count: payload.symlink_count,
+            regular_file_count: payload.regular_file_count,
+        };
+        let metadata_path = out.join("artifact-metadata.json");
+        write_json(&metadata_path, &metadata, MAX_METADATA_BYTES).unwrap();
+        let metadata_sha = digest_file(&metadata_path, MAX_METADATA_BYTES)
+            .unwrap()
+            .0
+            .sha256;
+        extract(ExtractArgs {
+            metadata: metadata_path.clone(),
+            metadata_sha256: metadata_sha.clone(),
+            request: request_path.clone(),
+            request_sha256: request_sha.clone(),
+            payload_manifest: payload_path.clone(),
+            pieces: out.join("pieces"),
+            output_dir: out.join("received"),
+            receipt: out.join("extraction-receipt.json"),
+        })
+        .unwrap();
+        assert!(out.join("received/runtime/source/README.md").is_file());
+        assert!(out.join("received/authenticated-runtime.tar.gz").is_file());
+        fs::write(out.join("pieces/000000.part"), b"tampered").unwrap();
+        assert!(
+            extract(ExtractArgs {
+                metadata: metadata_path,
+                metadata_sha256: metadata_sha,
+                request: request_path,
+                request_sha256: request_sha,
+                payload_manifest: payload_path,
+                pieces: out.join("pieces"),
+                output_dir: out.join("received-failure"),
+                receipt: out.join("false-pass.json")
+            })
+            .is_err()
+        );
+        assert!(out.join("received-failure").is_dir());
+        assert!(!out.join("false-pass.json").exists());
+        assert_eq!(
+            fs::read(out.join("pieces/000000.part")).unwrap(),
+            b"tampered"
+        );
+    }
+}
+
+#[cfg(all(test, target_os = "linux", target_arch = "x86_64", target_env = "gnu"))]
+mod descriptor_regression_tests {
+    use super::*;
+
+    #[test]
+    fn retained_descriptor_copy_and_elf_evidence_stay_bound_when_original_name_is_replaced() {
+        let temporary = tempfile::tempdir().unwrap();
+        let actual_executable = std::env::current_exe().unwrap();
+        let actual_digest = digest_file(&actual_executable, MAX_BINARY_BYTES).unwrap().0;
+        let original = temporary.path().join("original");
+        copy_verified(&actual_executable, &original, &actual_digest, 0o755).unwrap();
+        let held = open_noatime(&original, false).unwrap();
+        fs::rename(&original, temporary.path().join("retained-inode")).unwrap();
+        fs::write(&original, b"a replacement pathname is not the admitted ELF").unwrap();
+        let copied = temporary.path().join("copied");
+        let mut source = held.try_clone().unwrap();
+        source.seek(SeekFrom::Start(0)).unwrap();
+        copy_verified_descriptor(source, &copied, &actual_digest, 0o555).unwrap();
+        let copy = open_noatime(&copied, false).unwrap();
+        let before = descriptor_digest(&copy, MAX_BINARY_BYTES).unwrap();
+        let copied_elf = elf::inspect_file(copy.try_clone().unwrap()).unwrap();
+        assert_eq!(copied_elf, elf::inspect(&actual_executable).unwrap());
+        assert_eq!(before.0, actual_digest);
+        assert_eq!(descriptor_digest(&copy, MAX_BINARY_BYTES).unwrap(), before);
+        assert!(
+            copy_verified(
+                &original,
+                &temporary.path().join("wrong-copy"),
+                &actual_digest,
+                0o755
+            )
+            .is_err()
+        );
+        assert!(!temporary.path().join("wrong-copy").exists());
+        assert_eq!(
+            fs::read(&original).unwrap(),
+            b"a replacement pathname is not the admitted ELF"
+        );
+    }
+
+    #[test]
+    fn dependency_drift_fails_before_a_bundle_can_be_reported_delivered() {
+        let temporary = tempfile::tempdir().unwrap();
+        let actual_executable = std::env::current_exe().unwrap();
+        let actual_digest = digest_file(&actual_executable, MAX_BINARY_BYTES).unwrap().0;
+        let original = temporary.path().join("library");
+        copy_verified(&actual_executable, &original, &actual_digest, 0o755).unwrap();
+        let file = open_noatime(&original, false).unwrap();
+        let (digest, identity) = descriptor_digest(&file, MAX_BINARY_BYTES).unwrap();
+        let preliminary_elf = elf::inspect_file(file.try_clone().unwrap()).unwrap();
+        let planned = PlannedDependency {
+            file,
+            soname: "libfixture.so".to_owned(),
+            loader_path: original.clone(),
+            resolved_path: original.clone(),
+            digest,
+            physical: identity,
+            preliminary_elf: elf::SharedEvidence::new(
+                preliminary_elf,
+                &mut elf::MetadataBudget::new(),
+            )
+            .unwrap(),
+        };
+        fs::write(&original, b"changed after dependency admission").unwrap();
+        let directory = temporary.path().join("bundle");
+        fs::create_dir(&directory).unwrap();
+        assert!(deliver_dependencies(&[planned], &directory).is_err());
+        assert_eq!(fs::read_dir(&directory).unwrap().count(), 0);
+        assert_eq!(
+            fs::read(&original).unwrap(),
+            b"changed after dependency admission"
+        );
+    }
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    #[test]
+    fn actual_loader_resolves_only_retained_dependency_descriptors() {
+        let temporary = tempfile::tempdir().unwrap();
+        let original = std::env::current_exe().unwrap();
+        let source = open_noatime(&original, false).unwrap();
+        let facts = elf::inspect_file(source.try_clone().unwrap()).unwrap();
+        assert!(facts.rpath.is_none() && facts.runpath.is_none());
+        // Fixture preparation copies official runtime libraries into test-owned
+        // files. Production O_NOATIME policy is unchanged and no test needs root
+        // privileges. These ordinary fixture reads may observe host-library atime
+        // changes; no timestamp is restored and no source identity credit is taken.
+        use std::os::fd::AsRawFd as _;
+        let interpreter = facts.interpreter.as_deref().unwrap();
+        let binary_fd = format!("/proc/{}/fd/{}", std::process::id(), source.as_raw_fd());
+        let initial = String::from_utf8(
+            command(None, interpreter, &["--list", &binary_fd], 256 * 1024).unwrap(),
+        )
+        .unwrap();
+        let fixture_libraries = temporary.path().join("fixture-libraries");
+        fs::create_dir(&fixture_libraries).unwrap();
+        let mut plan = Vec::new();
+        for line in initial.lines().map(str::trim) {
+            if line.is_empty() || line.starts_with("linux-vdso.so.1 (") {
+                continue;
+            }
+            let (soname, loader_path) = match line.split_once(" => ") {
+                Some((name, right)) => (name, right.split_once(" (").unwrap().0),
+                None => ("ld-linux-x86-64.so.2", line.split_once(" (").unwrap().0),
+            };
+            let original = resolve_noatime(Path::new(loader_path)).unwrap();
+            let fixture_path = fixture_libraries.join(soname);
+            fs::copy(&original, &fixture_path).unwrap();
+            let file = open_noatime(&fixture_path, false).unwrap();
+            let (digest, physical) = descriptor_digest(&file, MAX_BINARY_BYTES).unwrap();
+            let preliminary_elf = elf::inspect_file(file.try_clone().unwrap()).unwrap();
+            plan.push(PlannedDependency {
+                file,
+                soname: soname.to_owned(),
+                loader_path: PathBuf::from(loader_path),
+                resolved_path: fixture_path,
+                digest,
+                physical,
+                preliminary_elf: elf::SharedEvidence::new(
+                    preliminary_elf,
+                    &mut elf::MetadataBudget::new(),
+                )
+                .unwrap(),
+            });
+        }
+        assert!(!plan.is_empty() && plan.len() <= 256);
+        let directory = temporary.path().join("lib");
+        fs::create_dir(&directory).unwrap();
+        deliver_dependencies(&plan, &directory).unwrap();
+        let probe = temporary.path().join("descriptor-probe");
+        let receipt = verify_bound_loader(&source, &facts, &plan, &directory, &probe).unwrap();
+        assert!(!receipt.constructors_entered);
+        assert_eq!(receipt.runtime_compatibility_or_test_acceptance_credit, 0);
+        assert_eq!(receipt.dependencies.len(), plan.len());
+        for row in receipt.dependencies {
+            assert!(row.actual_descriptor_target.starts_with("/proc/"));
+            require_loader_inverse(&row.before_loader, &row.after_loader).unwrap();
+        }
+        assert!(!probe.exists());
+    }
+}
+
+#[cfg(test)]
+mod round2_budget_regressions {
+    use super::*;
+
+    #[test]
+    fn bounded_loader_paths_charge_the_shared_budget_before_owned_resolution_allocations() {
+        let facts = elf::ElfEvidence {
+            class: "ELF64",
+            endian: "little",
+            machine: 62,
+            file_type: 3,
+            interpreter: None,
+            soname: None,
+            needed: Vec::new(),
+            rpath: None,
+            runpath: None,
+            version_requirements: Vec::new(),
+            version_definitions: Vec::new(),
+        };
+        let path = format!("/{}", "x".repeat(super::super::MAX_PATH_BYTES - 1));
+        let text = format!("libfixture.so => {path} (0x1)\n");
+        let mut budget = elf::MetadataBudget::limited(4096);
+        assert!(
+            parse_loader_paths(&text, "/lib64/ld-linux-x86-64.so.2", &facts, &mut budget).is_err()
+        );
+        assert_eq!(budget.charged(), 0);
+        assert_eq!(
+            budget.rejected_phase(),
+            Some("loader resolution strings/map growth")
+        );
+        let mut permitted = elf::MetadataBudget::new();
+        let actual =
+            parse_loader_paths(&text, "/lib64/ld-linux-x86-64.so.2", &facts, &mut permitted)
+                .unwrap();
+        assert_eq!(actual.get("libfixture.so").unwrap(), &PathBuf::from(&path));
+        assert!(permitted.charged() > 4096);
+    }
+
+    #[test]
+    #[cfg(target_os = "linux")]
+    fn multiple_retained_dependencies_and_actual_delivered_copies_share_one_elf_budget() {
+        let temporary = tempfile::tempdir().unwrap();
+        let fixture = temporary.path().join("fixture.so");
+        let bytes = elf::valid_repeated_version_fixture(64, 4096);
+        fs::write(&fixture, &bytes).unwrap();
+        let mut measured = elf::MetadataBudget::new();
+        let facts =
+            elf::inspect_file_with_budget(open_noatime(&fixture, false).unwrap(), &mut measured)
+                .unwrap();
+        assert_eq!(facts.version_definitions.len(), 64);
+        let one = measured.charged();
+        let cap = one * 3 + one / 2 + 64 * 1024;
+        let mut budget = elf::MetadataBudget::limited(cap);
+        let mut planned = Vec::new();
+        for soname in ["libfixture-one.so", "libfixture-two.so"] {
+            let file = open_noatime(&fixture, false).unwrap();
+            let (digest, physical) = descriptor_digest(&file, MAX_BINARY_BYTES).unwrap();
+            let actual =
+                elf::inspect_file_with_budget(file.try_clone().unwrap(), &mut budget).unwrap();
+            assert_eq!(actual, facts);
+            let preliminary_elf = elf::SharedEvidence::new(actual, &mut budget).unwrap();
+            planned.push(PlannedDependency {
+                file,
+                soname: soname.to_owned(),
+                loader_path: fixture.clone(),
+                resolved_path: fixture.clone(),
+                digest,
+                physical,
+                preliminary_elf,
+            });
+        }
+        let before_delivery = budget.charged();
+        assert!(before_delivery >= 2 * one);
+        let directory = temporary.path().join("bundle");
+        fs::create_dir(&directory).unwrap();
+        assert!(deliver_dependencies_with_budget(&planned, &directory, &mut budget).is_err());
+        assert!(budget.charged() <= cap && budget.charged() > before_delivery);
+        assert!(budget.rejected_phase().is_some());
+        // The genuine partial copies remain as failure evidence; no delivered
+        // vector or successful package receipt is returned after budget failure.
+        assert_eq!(
+            fs::read(directory.join("libfixture-one.so")).unwrap(),
+            bytes
+        );
+        assert_eq!(
+            fs::read(directory.join("libfixture-two.so")).unwrap(),
+            bytes
+        );
+        assert_eq!(read_bounded(&fixture, bytes.len() as u64).unwrap().0, bytes);
+        // The same genuine files succeed with the normal shared budget. This
+        // tests that aggregate failure is admission-specific and exercises the
+        // Linux convenience wrapper on every Linux test architecture.
+        let admitted = temporary.path().join("admitted-bundle");
+        fs::create_dir(&admitted).unwrap();
+        let delivered = deliver_dependencies(&planned, &admitted).unwrap();
+        assert_eq!(delivered.len(), 2);
+        assert!(
+            delivered
+                .iter()
+                .all(|entry| entry.elf.version_definitions.len() == 64)
+        );
+        assert_eq!(fs::read(admitted.join("libfixture-one.so")).unwrap(), bytes);
+        assert_eq!(fs::read(admitted.join("libfixture-two.so")).unwrap(), bytes);
+        for plan in planned {
+            assert_eq!(
+                descriptor_digest(&plan.file, MAX_BINARY_BYTES).unwrap(),
+                (plan.digest, plan.physical)
+            );
+        }
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod gnu_long_symlink_roundtrip_regression {
+    use super::*;
+
+    #[test]
+    fn actual_tracked_long_link_and_source_path_survive_producer_and_cli_extraction() {
+        let (_temporary, mut source) = super::super::tests::fixture();
+        let component = "long-".repeat(40);
+        let target = format!("{component}/target.txt");
+        assert!(target.len() > 100 && target.len() <= super::super::MAX_PATH_BYTES);
+        fs::create_dir(source.source.join(&component)).unwrap();
+        fs::write(
+            source.source.join(&target),
+            b"actual tracked long-link target\n",
+        )
+        .unwrap();
+        std::os::unix::fs::symlink(&target, source.source.join("LONG-LINK")).unwrap();
+        command(Some(&source.source), "git", &["add", "--all"], 4096).unwrap();
+        command(
+            Some(&source.source),
+            "git",
+            &[
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-q",
+                "--no-gpg-sign",
+                "-m",
+                "tracked GNU long-link fixture",
+            ],
+            4096,
+        )
+        .unwrap();
+        source.sha = String::from_utf8(
+            command(Some(&source.source), "git", &["rev-parse", "HEAD"], 1024).unwrap(),
+        )
+        .unwrap()
+        .trim()
+        .to_owned();
+        source.tree = String::from_utf8(
+            command(
+                Some(&source.source),
+                "git",
+                &["rev-parse", "HEAD^{tree}"],
+                1024,
+            )
+            .unwrap(),
+        )
+        .unwrap()
+        .trim()
+        .to_owned();
+        let (original, _) = observe(&source, Authentication::Materialized).unwrap();
+        let link = original
+            .entries
+            .iter()
+            .find(|entry| entry.path == "LONG-LINK")
+            .unwrap();
+        assert_eq!(link.mode, "120000");
+        assert_eq!(link.link_target.as_deref(), Some(target.as_str()));
+        let staging = tempfile::tempdir().unwrap();
+        let out = staging.path();
+        let runtime = out.join("runtime");
+        fs::create_dir(&runtime).unwrap();
+        fs::create_dir(runtime.join("evidence")).unwrap();
+        copy_source(&source, &original, &runtime.join("source")).unwrap();
+        reconstruct_git(&source, &runtime.join("source")).unwrap();
+        write_json(
+            &runtime.join("evidence/source-manifest.json"),
+            &original,
+            MAX_MANIFEST_BYTES,
+        )
+        .unwrap();
+        create_file(
+            &runtime.join("evidence/native-build.json"),
+            b"{\"fixture_only\":true,\"native_credit\":0}\n",
+        )
+        .unwrap();
+        let payload = payload_inventory(&runtime).unwrap();
+        let payload_path = out.join("payload-manifest.json");
+        write_json(&payload_path, &payload, MAX_MANIFEST_BYTES).unwrap();
+        let archive = out.join("runtime.tar.gz");
+        archive_payload(&runtime, &payload, &archive).unwrap();
+        let pieces = split_archive(&archive, &out.join("pieces")).unwrap();
+        let request = Request {
+            schema_version: 1,
+            repository: REPOSITORY.to_owned(),
+            source_sha: source.sha.clone(),
+            source_tree: source.tree.clone(),
+            source_manifest_sha256: super::super::sha256(
+                &super::super::canonical(&original, MAX_MANIFEST_BYTES).unwrap(),
+            ),
+            source_owner_receipt_sha256: "4".repeat(64),
+        };
+        let request_path = out.join("request.json");
+        write_json(&request_path, &request, super::super::MAX_REQUEST_BYTES).unwrap();
+        let request_sha = digest_file(&request_path, super::super::MAX_REQUEST_BYTES)
+            .unwrap()
+            .0
+            .sha256;
+        let metadata = ArtifactMetadata {
+            schema_version: 1,
+            repository: REPOSITORY.to_owned(),
+            source_sha: source.sha,
+            source_tree: source.tree,
+            source_manifest_sha256: request.source_manifest_sha256.clone(),
+            source_owner_receipt_sha256: request.source_owner_receipt_sha256.clone(),
+            controller_sha: "6".repeat(40),
+            run_id: "1".to_owned(),
+            run_attempt: "1".to_owned(),
+            runtime_archive: digest_file(&archive, MAX_ARCHIVE_BYTES).unwrap().0,
+            payload_manifest: digest_file(&payload_path, MAX_MANIFEST_BYTES).unwrap().0,
+            build_evidence: digest_file(
+                &runtime.join("evidence/native-build.json"),
+                MAX_METADATA_BYTES,
+            )
+            .unwrap()
+            .0,
+            piece_manifest: FileDigest {
+                bytes: 1,
+                sha256: "5".repeat(64),
+            },
+            pieces,
+            unpacked_regular_bytes: payload.unpacked_regular_bytes,
+            directory_count: payload.directory_count,
+            symlink_count: payload.symlink_count,
+            regular_file_count: payload.regular_file_count,
+        };
+        let metadata_path = out.join("artifact-metadata.json");
+        write_json(&metadata_path, &metadata, MAX_METADATA_BYTES).unwrap();
+        let metadata_sha = digest_file(&metadata_path, MAX_METADATA_BYTES)
+            .unwrap()
+            .0
+            .sha256;
+        extract(ExtractArgs {
+            metadata: metadata_path,
+            metadata_sha256: metadata_sha,
+            request: request_path,
+            request_sha256: request_sha,
+            payload_manifest: payload_path,
+            pieces: out.join("pieces"),
+            output_dir: out.join("received"),
+            receipt: out.join("extraction-receipt.json"),
+        })
+        .unwrap();
+        let received = out.join("received/runtime/source");
+        assert_eq!(
+            fs::read_link(received.join("LONG-LINK")).unwrap(),
+            PathBuf::from(&target)
+        );
+        assert_eq!(
+            fs::read(received.join("LONG-LINK")).unwrap(),
+            b"actual tracked long-link target\n"
+        );
+        assert_eq!(
+            fs::read(received.join(&target)).unwrap(),
+            b"actual tracked long-link target\n"
+        );
+        assert!(out.join("extraction-receipt.json").is_file());
+    }
+}
