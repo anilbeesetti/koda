@@ -3151,9 +3151,17 @@ mod tests {
             window.open(Path::new(MAIN)).await?;
             window.ready().await;
             expand_visible_groups(&mut window)?;
+            // First layout consumes the physical list's active-entry auto-reveal.
+            // Measure its retained scroll only after painting the Project view.
+            choose(&mut window, DefaultView::Project);
+            window
+                .visual
+                .simulate_resize(gpui::size(px(480.), px(300.)));
+            draw_panel(&mut window, 480., 300.);
             let physical_scroll = window.panel.read_with(&window.visual, |panel, _| {
                 panel.scroll_handle.0.borrow().base_handle.offset()
             });
+            choose(&mut window, DefaultView::Android);
             for width in [180., 480.] {
                 window
                     .visual
@@ -3470,7 +3478,7 @@ mod tests {
             window.visual.dispatch_action(git::FileHistory);
             assert_eq!(
                 history.borrow().as_slice(),
-                &[generic.clone()],
+                std::slice::from_ref(&generic),
                 "The mounted physical File History ancestor route must actually execute"
             );
             history.borrow_mut().clear();
@@ -3938,6 +3946,27 @@ mod tests {
 
     // Round-two regressions exercise the actual GPUI window/action routes and
     // gated jobs. They supplement, rather than replace, all prior assertions.
+    // Row listeners record Window::current_view during paint. Give isolated row
+    // draws their real tree identity through GPUI's regular view pipeline.
+    struct LogicalRowView {
+        tree: Entity<AndroidProjectTree>,
+        index: usize,
+    }
+
+    impl gpui::View for LogicalRowView {
+        fn entity_id(&self) -> Option<gpui::EntityId> {
+            Some(self.tree.entity_id())
+        }
+
+        fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+            let Self { tree, index } = self;
+            tree.update(cx, |tree, cx| {
+                tree.render_row(index, window, cx)
+                    .expect("Actual logical row element")
+            })
+        }
+    }
+
     fn draw_logical_row(
         window: &mut TestWindow,
         key: &NodeKey,
@@ -3951,12 +3980,7 @@ mod tests {
         window.visual.draw(
             gpui::point(px(0.), px(0.)),
             gpui::size(px(600.), px(100.)),
-            |window, cx| {
-                tree.update(cx, |tree, cx| {
-                    tree.render_row(index, window, cx)
-                        .expect("Actual logical row element")
-                })
-            },
+            |_, _| gpui::ViewElement::new(LogicalRowView { tree, index }),
         );
         window
             .visual
@@ -4005,7 +4029,7 @@ mod tests {
             });
             draw_workspace(&mut window);
             window.visual.dispatch_action(git::FileHistory);
-            assert_eq!(history.borrow().as_slice(), &[path.clone()]);
+            assert_eq!(history.borrow().as_slice(), std::slice::from_ref(&path));
             focus_workspace(&mut window);
             window.visual.dispatch_action(crate::Rename);
             window.panel.read_with(&window.visual, |panel, _| {
@@ -4088,6 +4112,10 @@ mod tests {
                     .await,
                 "Project fallback Delete must execute"
             );
+            // Duplicate opens the generic copy. Restore Android ownership before
+            // checking this root's retained explicit Project presentation choice.
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
             assert_eq!(
                 selector(&mut window)
                     .context("Explicit Project selector")?
@@ -4420,7 +4448,7 @@ mod tests {
             let (project, filesystem) = fixture(cx).await?;
             filesystem
                 .insert_tree(
-                    "/tree-owner/app/src/main/assets",
+                    "/tree-owner/app/unrelated-assets",
                     json!({"plain.txt":"plain", "odd\n\tname.txt":"control filename"}),
                 )
                 .await;
@@ -4643,54 +4671,72 @@ mod tests {
         roots: &[PathBuf],
         cx: &mut App,
     ) -> Result<()> {
-        fn add_roots(value: &mut serde_json::Value, roots: &[PathBuf]) -> (usize, usize) {
+        fn add_roots(
+            value: &mut serde_json::Value,
+            roots: &[PathBuf],
+            in_evaluated_providers: bool,
+        ) -> (usize, usize, usize) {
             let mut providers = 0;
             let mut components = 0;
+            let mut evaluated_providers = 0;
             match value {
                 serde_json::Value::Object(object) => {
                     if object.get("name").and_then(|value| value.as_str()) == Some("main")
                         && let Some(serde_json::Value::Array(entries)) = object.get_mut("roots")
                     {
-                        entries.extend(
-                            roots
-                                .iter()
-                                .map(|path| json!({"path": path, "kind": "assets"})),
-                        );
+                        if in_evaluated_providers {
+                            entries.extend(
+                                roots
+                                    .iter()
+                                    .map(|path| json!({"path": path, "kind": "assets"})),
+                            );
+                            evaluated_providers += 1;
+                        }
                         providers += 1;
                     }
                     if object.get("scope").and_then(|value| value.as_str()) == Some("main")
-                        && let Some(serde_json::Value::Array(entries)) = object.get_mut("sources")
+                        && matches!(object.get("sources"), Some(serde_json::Value::Array(_)))
                     {
-                        entries.extend(roots.iter().map(|path| {
-                            json!({
-                                "path": path, "kind": "assets", "generated": false
-                            })
-                        }));
                         components += 1;
                     }
-                    for value in object.values_mut() {
-                        let (added_providers, added_components) = add_roots(value, roots);
+                    for (name, value) in object.iter_mut() {
+                        let (added_providers, added_components, added_evaluated_providers) =
+                            add_roots(
+                                value,
+                                roots,
+                                in_evaluated_providers || name == "evaluatedProviders",
+                            );
                         providers += added_providers;
                         components += added_components;
+                        evaluated_providers += added_evaluated_providers;
                     }
                 }
                 serde_json::Value::Array(values) => {
                     for value in values {
-                        let (added_providers, added_components) = add_roots(value, roots);
+                        let (added_providers, added_components, added_evaluated_providers) =
+                            add_roots(value, roots, in_evaluated_providers);
                         providers += added_providers;
                         components += added_components;
+                        evaluated_providers += added_evaluated_providers;
                     }
                 }
                 _ => {}
             }
-            (providers, components)
+            (providers, components, evaluated_providers)
         }
         let mut record: serde_json::Value =
             serde_json::from_str(&EXPORTED_MODEL.replace(ORIGINAL_ROOT, ROOT))?;
-        let (providers, components) = add_roots(&mut record, roots);
+        // Static tree roots come from evaluated providers, independently of component
+        // membership. Keep legacy/component paths within their validated project boundary;
+        // external provider paths still require real captured worktree membership and trust.
+        let (providers, components, evaluated_providers) = add_roots(&mut record, roots, false);
         ensure!(
             providers >= 2 && components >= 1,
             "Fixture must exercise both evaluated providers and component roots"
+        );
+        ensure!(
+            evaluated_providers >= 1 && !roots.is_empty(),
+            "Fixture must add mounted external assets to an evaluated main provider"
         );
         project.update(cx, |project, cx| {
             let token = project.invalidate_android_model(Some(PathBuf::from(ROOT)), cx);
@@ -4795,7 +4841,7 @@ mod tests {
             window.tree().update_in(&mut window.visual, |tree, window, cx| {
                 assert!(tree.rows_are_current(window, cx));
                 let capture = tree.current_capture(window, cx).context("Mounted current capture")?;
-                assert!(capture.captured_worktree_count() >= worktrees.len() + 1);
+                assert!(capture.captured_worktree_count() > worktrees.len());
                 for root in &roots {
                     let path = root.join("asset-00.txt");
                     assert!(capture.tree().tree.nodes().any(|node| node.navigation.as_ref().is_some_and(|target| target.path == path)),
