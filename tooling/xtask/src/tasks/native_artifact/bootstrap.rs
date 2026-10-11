@@ -82,6 +82,9 @@ struct CompileEvidence {
     actual_build_finished_success: bool,
     artifact_features: Vec<String>,
     artifact_debug: u64,
+    // Internal observation; keep the existing exported compile schema unchanged.
+    #[serde(skip)]
+    artifact_size_optimized: Option<bool>,
     actual_cargo_exit_requires_independent_terminal_ci_step_binding: bool,
     actual_local_package_directories: Vec<PathBuf>,
 }
@@ -162,7 +165,11 @@ fn compile_evidence(log: &Path, executable: &Path) -> Result<CompileEvidence> {
                     debug == 0,
                     "bootstrap export requires the observed debug-zero profile"
                 );
-                artifact = Some((path, features, debug));
+                let size_optimized = message
+                    .pointer("/profile/opt_level")
+                    .and_then(serde_json::Value::as_str)
+                    .map(|value| value == "s");
+                artifact = Some((path, features, debug, size_optimized));
             }
             Some("build-finished") => {
                 ensure!(
@@ -185,7 +192,8 @@ fn compile_evidence(log: &Path, executable: &Path) -> Result<CompileEvidence> {
             && digest_file(log, MAX_BOOTSTRAP_LOG_BYTES)? == (digest.clone(), before),
         "bootstrap log completion or complete physical/digest inverse differs"
     );
-    let (path, features, debug) = artifact.context("bootstrap xtask compiler artifact absent")?;
+    let (path, features, debug, size_optimized) =
+        artifact.context("bootstrap xtask compiler artifact absent")?;
     Ok(CompileEvidence {
         command: [
             "cargo",
@@ -205,9 +213,20 @@ fn compile_evidence(log: &Path, executable: &Path) -> Result<CompileEvidence> {
         actual_build_finished_success: true,
         artifact_features: features,
         artifact_debug: debug,
+        artifact_size_optimized: size_optimized,
         actual_cargo_exit_requires_independent_terminal_ci_step_binding: true,
         actual_local_package_directories: local_packages.into_iter().collect(),
     })
+}
+
+// Parser compatibility and export admission are separate: a legacy log may
+// omit opt_level, but an exported controller executable must observe it as s.
+fn require_export_profile(compile: &CompileEvidence) -> Result<()> {
+    ensure!(
+        compile.artifact_size_optimized == Some(true),
+        "bootstrap export requires the actual Cargo-observed size-optimized profile opt_level=s"
+    );
+    Ok(())
 }
 
 // Cargo reports every actually compiled workspace/path package. Export the full
@@ -336,6 +355,8 @@ pub(super) fn export(args: ExportArgs) -> Result<()> {
         ("CARGO_INCREMENTAL", "0"),
         ("CARGO_PROFILE_DEV_DEBUG", "0"),
         ("CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG", "0"),
+        ("CARGO_PROFILE_DEV_OPT_LEVEL", "s"),
+        ("CARGO_PROFILE_DEV_STRIP", "symbols"),
     ] {
         ensure!(
             std::env::var(name).as_deref() == Ok(expected),
@@ -353,7 +374,10 @@ pub(super) fn export(args: ExportArgs) -> Result<()> {
     );
     let executable = std::env::current_exe()?;
     let compile = compile_evidence(&args.cargo_build_log, &executable)?;
-    let (binary, binary_identity) = digest_file(&executable, MAX_TOOL_BYTES)?;
+    require_export_profile(&compile)?;
+    let (binary, binary_identity) = digest_file(&executable, MAX_TOOL_BYTES).context(
+        "authenticate actual Cargo-emitted bootstrap executable under the unchanged tool cap",
+    )?;
     let (manifest, observation) = observe(&args.source, Authentication::Materialized)?;
     let controller = std::path::absolute(&args.source.source)?;
     let (compile_package_roots, sources) = compile_inputs(
@@ -824,5 +848,162 @@ mod compile_closure_regressions {
         assert!(compile_inputs(&manifest, &[root.join("tooling/missing")], root).is_err());
         manifest.entries.retain(|entry| entry.path != "Cargo.lock");
         assert!(compile_inputs(&manifest, &directories, root).is_err());
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn bootstrap_tool_cap_kind_and_symlink_failures_preserve_full_physical_identity() {
+        let temporary = tempfile::tempdir().unwrap();
+        let executable = temporary.path().join("bootstrap-executable");
+        let writer = OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&executable)
+            .unwrap();
+        writer.set_len(MAX_TOOL_BYTES + 1).unwrap();
+        writer.sync_all().unwrap();
+        drop(writer);
+        let before = physical(&fs::symlink_metadata(&executable).unwrap()).unwrap();
+        let error = digest_file(&executable, MAX_TOOL_BYTES).unwrap_err();
+        let message = format!("{error:#}");
+        assert!(message.contains("expected a bounded regular file"));
+        assert!(message.contains("is_regular=true"));
+        assert!(message.contains(&format!("observed_bytes={}", MAX_TOOL_BYTES + 1)));
+        assert!(message.contains(&format!("maximum_bytes={MAX_TOOL_BYTES}")));
+        assert!(message.contains(&executable.display().to_string()));
+        assert_eq!(
+            physical(&fs::symlink_metadata(&executable).unwrap()).unwrap(),
+            before
+        );
+
+        // This fixture mutation precedes the next physical-identity capture.
+        let writer = OpenOptions::new().write(true).open(&executable).unwrap();
+        writer.set_len(MAX_TOOL_BYTES).unwrap();
+        writer.sync_all().unwrap();
+        drop(writer);
+        let boundary = physical(&fs::symlink_metadata(&executable).unwrap()).unwrap();
+        let (digest, observed) = digest_file(&executable, MAX_TOOL_BYTES).unwrap();
+        assert_eq!(digest.bytes, MAX_TOOL_BYTES);
+        assert_eq!(
+            digest.sha256,
+            "95aeaae03b56c171cf88753c821630a3c24f1fcf406cec3e17d56781aa3f8369"
+        );
+        assert_eq!(observed, boundary);
+        assert_eq!(
+            physical(&fs::symlink_metadata(&executable).unwrap()).unwrap(),
+            boundary
+        );
+
+        let directory = temporary.path().join("directory");
+        fs::create_dir(&directory).unwrap();
+        let directory_before = physical(&fs::symlink_metadata(&directory).unwrap()).unwrap();
+        let error = digest_file(&directory, MAX_TOOL_BYTES).unwrap_err();
+        assert!(format!("{error:#}").contains("is_regular=false"));
+        assert_eq!(
+            physical(&fs::symlink_metadata(&directory).unwrap()).unwrap(),
+            directory_before
+        );
+
+        let link = temporary.path().join("link");
+        std::os::unix::fs::symlink(&executable, &link).unwrap();
+        let link_before = physical(&fs::symlink_metadata(&link).unwrap()).unwrap();
+        let target_before = physical(&fs::symlink_metadata(&executable).unwrap()).unwrap();
+        assert!(digest_file(&link, MAX_TOOL_BYTES).is_err());
+        assert_eq!(
+            physical(&fs::symlink_metadata(&link).unwrap()).unwrap(),
+            link_before
+        );
+        assert_eq!(
+            physical(&fs::symlink_metadata(&executable).unwrap()).unwrap(),
+            target_before
+        );
+    }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn bootstrap_compile_evidence_binds_actual_size_profile_and_rejects_profile_tampering() {
+        let temporary = tempfile::tempdir().unwrap();
+        let log = temporary.path().join("cargo-build.jsonl");
+        let executable = PathBuf::from("/controller-target/debug/xtask");
+        let artifact = serde_json::json!({
+            "reason": "compiler-artifact",
+            "package_id": "path+file:///controller/tooling/xtask#0.1.0",
+            "target": { "name": "xtask" },
+            "executable": executable,
+            "features": [],
+            "profile": { "test": false, "debuginfo": 0, "opt_level": "s" },
+        });
+        let write_log = |artifact: &serde_json::Value| {
+            let finished = serde_json::json!({ "reason": "build-finished", "success": true });
+            fs::write(&log, format!("{artifact}\n{finished}\n")).unwrap();
+        };
+        write_log(&artifact);
+        let before = physical(&fs::symlink_metadata(&log).unwrap()).unwrap();
+        let evidence = compile_evidence(&log, &executable)
+            .and_then(|compile| {
+                require_export_profile(&compile)?;
+                Ok(compile)
+            })
+            .unwrap();
+        assert_eq!(evidence.actual_unique_executable, executable);
+        assert_eq!(evidence.artifact_debug, 0);
+        assert!(evidence.actual_build_finished_success);
+        assert_eq!(
+            evidence.actual_local_package_directories,
+            vec![PathBuf::from("/controller/tooling/xtask")]
+        );
+        assert_eq!(
+            physical(&fs::symlink_metadata(&log).unwrap()).unwrap(),
+            before
+        );
+
+        let mut unoptimized = artifact.clone();
+        unoptimized["profile"]["opt_level"] = serde_json::json!("0");
+        write_log(&unoptimized);
+        let before = physical(&fs::symlink_metadata(&log).unwrap()).unwrap();
+        let error = compile_evidence(&log, &executable)
+            .and_then(|compile| require_export_profile(&compile))
+            .unwrap_err();
+        assert!(
+            format!("{error:#}")
+                .contains("actual Cargo-observed size-optimized profile opt_level=s")
+        );
+        assert_eq!(
+            physical(&fs::symlink_metadata(&log).unwrap()).unwrap(),
+            before
+        );
+
+        let mut missing = artifact.clone();
+        assert!(
+            missing["profile"]
+                .as_object_mut()
+                .unwrap()
+                .remove("opt_level")
+                .is_some()
+        );
+        write_log(&missing);
+        let before = physical(&fs::symlink_metadata(&log).unwrap()).unwrap();
+        assert!(
+            compile_evidence(&log, &executable)
+                .and_then(|compile| require_export_profile(&compile))
+                .is_err()
+        );
+        assert_eq!(
+            physical(&fs::symlink_metadata(&log).unwrap()).unwrap(),
+            before
+        );
+        let mut test_artifact = artifact.clone();
+        test_artifact["profile"]["test"] = serde_json::json!(true);
+        write_log(&test_artifact);
+        let before = physical(&fs::symlink_metadata(&log).unwrap()).unwrap();
+        assert!(
+            compile_evidence(&log, &executable)
+                .and_then(|compile| require_export_profile(&compile))
+                .is_err()
+        );
+        assert_eq!(
+            physical(&fs::symlink_metadata(&log).unwrap()).unwrap(),
+            before
+        );
     }
 }

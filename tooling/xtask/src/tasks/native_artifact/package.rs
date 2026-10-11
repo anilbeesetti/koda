@@ -967,6 +967,36 @@ fn create_symlink(target: &str, path: &Path) -> Result<()> {
     #[cfg(unix)]
     {
         std::os::unix::fs::symlink(target, path)?;
+        #[cfg(target_os = "linux")]
+        {
+            use std::os::unix::fs::OpenOptionsExt as _;
+            let file = OpenOptions::new()
+                .read(true)
+                .custom_flags(libc::O_PATH | libc::O_NOFOLLOW | libc::O_CLOEXEC)
+                .open(path)?;
+            ensure!(
+                file.metadata()?.file_type().is_symlink(),
+                "newly created link changed type"
+            );
+            // This readback initializes only an output we just created. Linux
+            // may update link atime even through O_PATH; capture its baseline
+            // after initialization, before any frozen observation admits it.
+            let readback = link_bytes(&file)?;
+            ensure!(readback == target.as_bytes(), "created link target differs");
+            let initialized = physical(&file.metadata()?)?;
+            let strict_readback = host_link(path)?;
+            let descriptor_after = physical(&file.metadata()?)?;
+            let path_after = physical(&fs::symlink_metadata(path)?)?;
+            ensure!(
+                strict_readback == readback
+                    && initialized == descriptor_after
+                    && initialized == path_after,
+                "created link initialization inverse differs for {}: descriptor fields {:?}, path fields {:?}",
+                path.display(),
+                initialized.changed_fields(&descriptor_after),
+                initialized.changed_fields(&path_after)
+            );
+        }
         Ok(())
     }
     #[cfg(not(unix))]
@@ -1121,9 +1151,14 @@ fn host_link(path: &Path) -> Result<Vec<u8>> {
         .open(path)?;
     let before = physical(&file.metadata()?)?;
     let bytes = link_bytes(&file)?;
+    let descriptor_after = physical(&file.metadata()?)?;
+    let path_after = physical(&fs::symlink_metadata(path)?)?;
     ensure!(
-        before == physical(&file.metadata()?)? && before == physical(&fs::symlink_metadata(path)?)?,
-        "host symlink inverse differs"
+        before == descriptor_after && before == path_after,
+        "host symlink inverse differs for {}: descriptor fields {:?}, path fields {:?}",
+        path.display(),
+        before.changed_fields(&descriptor_after),
+        before.changed_fields(&path_after)
     );
     Ok(bytes)
 }
@@ -3315,5 +3350,53 @@ mod gnu_long_symlink_roundtrip_regression {
             b"actual tracked long-link target\n"
         );
         assert!(out.join("extraction-receipt.json").is_file());
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod owned_symlink_initialization_regression {
+    use super::*;
+
+    #[test]
+    fn newly_created_links_are_initialized_before_frozen_full13_observations() {
+        let temporary = tempfile::tempdir().unwrap();
+        let root = temporary.path();
+        let target_path = root.join("target.txt");
+        fs::write(&target_path, b"owned link target remains untouched\n").unwrap();
+        let target_before = physical(&fs::metadata(&target_path).unwrap()).unwrap();
+        let long_target = format!("{}missing.txt", "missing-component/".repeat(12));
+        for (name, target) in [
+            ("short-link", "target.txt"),
+            ("long-link", long_target.as_str()),
+        ] {
+            let path = root.join(name);
+            create_symlink(target, &path).unwrap();
+            let before = physical(&fs::symlink_metadata(&path).unwrap()).unwrap();
+            for _ in 0..3 {
+                assert_eq!(host_link(&path).unwrap(), target.as_bytes());
+                assert_eq!(
+                    physical(&fs::symlink_metadata(&path).unwrap()).unwrap(),
+                    before
+                );
+                let directory = open_noatime(root, true).unwrap();
+                let file = open_beneath(&directory, name, true).unwrap();
+                assert_eq!(link_bytes(&file).unwrap(), target.as_bytes());
+                assert_eq!(physical(&file.metadata().unwrap()).unwrap(), before);
+                assert_eq!(
+                    physical(&fs::symlink_metadata(&path).unwrap()).unwrap(),
+                    before
+                );
+            }
+            assert!(create_symlink("replacement-target", &path).is_err());
+            assert_eq!(host_link(&path).unwrap(), target.as_bytes());
+            assert_eq!(
+                physical(&fs::symlink_metadata(&path).unwrap()).unwrap(),
+                before
+            );
+        }
+        assert_eq!(
+            physical(&fs::metadata(&target_path).unwrap()).unwrap(),
+            target_before
+        );
     }
 }

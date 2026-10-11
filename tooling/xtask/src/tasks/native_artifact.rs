@@ -442,6 +442,24 @@ struct Physical13 {
     rdev: u64,
 }
 
+impl Physical13 {
+    fn changed_fields(&self, after: &Self) -> Vec<&'static str> {
+        let mut changed = Vec::new();
+        macro_rules! compare {
+            ($($field:ident),+ $(,)?) => {
+                $(if self.$field != after.$field {
+                    changed.push(stringify!($field));
+                })+
+            };
+        }
+        compare!(
+            dev, ino, mode, uid, gid, nlink, bytes, atime_ns, mtime_ns, ctime_ns, blocks, blksize,
+            rdev,
+        );
+        changed
+    }
+}
+
 #[cfg(unix)]
 fn physical(metadata: &fs::Metadata) -> Result<Physical13> {
     use std::os::unix::fs::MetadataExt as _;
@@ -540,7 +558,9 @@ fn link_bytes(file: &File) -> Result<Vec<u8>> {
     use std::os::fd::AsRawFd as _;
     let mut bytes = vec![0; MAX_PATH_BYTES + 1];
     // SAFETY: O_PATH descriptor points at the link itself; empty-path readlinkat
-    // reads that inode without pathname following or atime-changing readlink.
+    // reads that inode without pathname following. Linux may still update link
+    // atime; readers retain strict full13 inverses, and newly owned output links
+    // complete their creation readback before admission freezes a baseline.
     let count = unsafe {
         libc::readlinkat(
             file.as_raw_fd(),
@@ -583,10 +603,16 @@ fn read_bounded(path: &Path, limit: u64) -> Result<(Vec<u8>, Physical13)> {
 
 fn digest_file(path: &Path, maximum: u64) -> Result<(FileDigest, Physical13)> {
     let mut file = open_noatime(path, false)?;
-    let before = physical(&file.metadata()?)?;
+    let metadata = file.metadata()?;
+    let before = physical(&metadata)?;
     ensure!(
-        file.metadata()?.is_file() && before.bytes <= maximum,
-        "expected a bounded regular file"
+        metadata.is_file() && before.bytes <= maximum,
+        "expected a bounded regular file: path={} file_type={:?} is_regular={} observed_bytes={} maximum_bytes={}",
+        path.display(),
+        metadata.file_type(),
+        metadata.is_file(),
+        before.bytes,
+        maximum
     );
     let mut digest = Sha256::new();
     let mut count = 0_u64;
@@ -899,16 +925,24 @@ fn observe(
                         .read_to_end(&mut bytes)?;
                     bytes
                 };
+                let after = physical(&file.metadata()?)?;
                 ensure!(
                     bytes.len() as u64 == before.bytes
                         && bytes.len() as u64 <= MAX_OBJECT_BYTES
-                        && before == physical(&file.metadata()?)?,
-                    "physical input changed during read"
+                        && before == after,
+                    "physical input changed during read for {}: bytes {} (expected {}), fields {:?}",
+                    entry.path,
+                    bytes.len(),
+                    before.bytes,
+                    before.changed_fields(&after)
                 );
                 let again = open_beneath(root, &entry.path, entry.mode == "120000")?;
+                let path_after = physical(&again.metadata()?)?;
                 ensure!(
-                    before == physical(&again.metadata()?)?,
-                    "physical path was replaced"
+                    before == path_after,
+                    "physical path was replaced for {}: fields {:?}",
+                    entry.path,
+                    before.changed_fields(&path_after)
                 );
                 physical_rows.push(PhysicalEntry {
                     path: entry.path.clone(),
@@ -1383,4 +1417,57 @@ fn filesystem_space(path: &Path) -> Result<(u64, u64, u64)> {
 #[cfg(not(target_os = "linux"))]
 fn filesystem_space(_: &Path) -> Result<(u64, u64, u64)> {
     bail!("native artifact admission requires Linux")
+}
+
+#[cfg(test)]
+mod physical_change_diagnostic_regression {
+    use super::*;
+
+    #[test]
+    fn diagnostic_fields_identify_each_actual_physical_difference() {
+        let before = Physical13 {
+            dev: 1,
+            ino: 2,
+            mode: 0o120777,
+            uid: 3,
+            gid: 4,
+            nlink: 1,
+            bytes: 5,
+            atime_ns: 6,
+            mtime_ns: 7,
+            ctime_ns: 8,
+            blocks: 9,
+            blksize: 4096,
+            rdev: 0,
+        };
+        assert!(before.changed_fields(&before).is_empty());
+        macro_rules! changed {
+            ($field:ident) => {
+                let mut after = before.clone();
+                after.$field += 1;
+                assert_eq!(before.changed_fields(&after), vec![stringify!($field)]);
+            };
+        }
+        changed!(dev);
+        changed!(ino);
+        changed!(mode);
+        changed!(uid);
+        changed!(gid);
+        changed!(nlink);
+        changed!(bytes);
+        changed!(atime_ns);
+        changed!(mtime_ns);
+        changed!(ctime_ns);
+        changed!(blocks);
+        changed!(blksize);
+        changed!(rdev);
+        let mut after = before.clone();
+        after.atime_ns += 1;
+        after.bytes += 1;
+        after.ino += 1;
+        assert_eq!(
+            before.changed_fields(&after),
+            vec!["ino", "bytes", "atime_ns"]
+        );
+    }
 }

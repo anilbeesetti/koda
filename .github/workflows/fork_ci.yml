@@ -479,6 +479,8 @@ jobs:
       CARGO_INCREMENTAL: '0'
       CARGO_PROFILE_DEV_DEBUG: '0'
       CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+      CARGO_PROFILE_DEV_OPT_LEVEL: 's'
+      CARGO_PROFILE_DEV_STRIP: symbols
     steps:
       - name: Set runner-local Cargo target directory
         shell: bash
@@ -583,6 +585,8 @@ jobs:
       CARGO_INCREMENTAL: '0'
       CARGO_PROFILE_DEV_DEBUG: '0'
       CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: '0'
+      CARGO_PROFILE_DEV_OPT_LEVEL: 's'
+      CARGO_PROFILE_DEV_STRIP: symbols
     outputs:
       selected: ${{ steps.select.outputs.selected || steps.presence.outputs.selected }}
       source_sha: ${{ steps.select.outputs.source_sha }}
