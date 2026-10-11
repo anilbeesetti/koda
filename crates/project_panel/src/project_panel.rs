@@ -1,3 +1,4 @@
+mod android_project_tree;
 pub mod project_panel_settings;
 mod undo;
 mod utils;
@@ -173,6 +174,8 @@ pub struct ProjectPanel {
     update_visible_entries_task: UpdateVisibleEntriesTask,
     undo_manager: UndoManager,
     state: State,
+    _android_tree: Entity<android_project_tree::AndroidProjectTree>,
+    _android_tree_subscription: Subscription,
 }
 
 struct UpdateVisibleEntriesTask {
@@ -560,6 +563,9 @@ pub fn init(cx: &mut App) {
             workspace.open_panel::<ProjectPanel>(window, cx);
             if let Some(panel) = workspace.panel::<ProjectPanel>(cx) {
                 panel.update(cx, |panel, cx| {
+                    if panel.uses_logical_view(window, cx) {
+                        return;
+                    }
                     if let Some(first_marked) = panel.marked_entries.first() {
                         let first_marked = *first_marked;
                         panel.marked_entries.clear();
@@ -593,7 +599,9 @@ pub fn init(cx: &mut App) {
             let Some(panel) = workspace.panel::<ProjectPanel>(cx) else {
                 return div;
             };
-            if !panel.read(cx).focus_handle(cx).contains_focused(window, cx) {
+            if panel.read(cx).uses_logical_view(window, cx)
+                || !panel.read(cx).focus_handle(cx).contains_focused(window, cx)
+            {
                 return div;
             }
             if panel.read(cx).selected_entry_project_path(cx).is_none() {
@@ -606,6 +614,9 @@ pub fn init(cx: &mut App) {
                         let Some(panel) = workspace.panel::<ProjectPanel>(cx) else {
                             return;
                         };
+                        if panel.read(cx).uses_logical_view(window, cx) {
+                            return;
+                        }
                         let Some(project_path) = panel.read(cx).selected_entry_project_path(cx)
                         else {
                             return;
@@ -883,8 +894,20 @@ impl ProjectPanel {
 
             let scroll_handle = UniformListScrollHandle::new();
             let weak_project_panel = cx.weak_entity();
+            let android_tree = cx.new(|cx| {
+                android_project_tree::AndroidProjectTree::new(
+                    workspace.weak_handle(),
+                    project.clone(),
+                    focus_handle.clone(),
+                    window,
+                    cx,
+                )
+            });
+            let android_tree_subscription = cx.observe(&android_tree, |_, _, cx| cx.notify());
             let mut this = Self {
                 project: project.clone(),
+                _android_tree: android_tree,
+                _android_tree_subscription: android_tree_subscription,
                 hover_scroll_task: None,
                 fs: workspace.app_state().fs.clone(),
                 focus_handle,
@@ -1660,6 +1683,11 @@ impl ProjectPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self.uses_logical_view(window, cx) {
+            self._android_tree
+                .update(cx, |tree, cx| tree.collapse_all(window, cx));
+            return;
+        }
         let roots = self.all_worktree_roots(cx);
         self.collapse_worktree_roots(roots, window, cx);
     }
@@ -1670,6 +1698,11 @@ impl ProjectPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self.uses_logical_view(window, cx) {
+            self._android_tree
+                .update(cx, |tree, cx| tree.expand_all(window, cx));
+            return;
+        }
         let roots = self.all_worktree_roots(cx);
         self.expand_worktree_roots(roots, window, cx);
     }
@@ -2580,14 +2613,23 @@ impl ProjectPanel {
     }
 
     fn rename(&mut self, _: &Rename, window: &mut Window, cx: &mut Context<Self>) {
+        if self.uses_logical_view(window, cx) {
+            return;
+        }
         self.rename_impl(None, window, cx);
     }
 
     fn trash(&mut self, action: &Trash, window: &mut Window, cx: &mut Context<Self>) {
+        if self.uses_logical_view(window, cx) {
+            return;
+        }
         self.remove(true, action.skip_prompt, window, cx);
     }
 
     fn delete(&mut self, action: &Delete, window: &mut Window, cx: &mut Context<Self>) {
+        if self.uses_logical_view(window, cx) {
+            return;
+        }
         self.remove(false, action.skip_prompt, window, cx);
     }
 
@@ -3939,6 +3981,9 @@ impl ProjectPanel {
     }
 
     fn duplicate(&mut self, _: &Duplicate, window: &mut Window, cx: &mut Context<Self>) {
+        if self.uses_logical_view(window, cx) {
+            return;
+        }
         self.copy(&Copy {}, window, cx);
         self.paste(&Paste {}, window, cx);
     }
@@ -7314,13 +7359,80 @@ fn item_width_estimate(depth: usize, item_text_chars: usize, is_symlink: bool) -
     item_width
 }
 
-impl Render for ProjectPanel {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+impl ProjectPanel {
+    fn uses_logical_view(&self, window: &Window, cx: &App) -> bool {
+        self._android_tree
+            .read(cx)
+            .selector_state(window, cx)
+            .is_some_and(|state| {
+                state.view == android_tools::project_view_preferences::DefaultView::Android
+            })
+    }
+
+    fn render_project_header(
+        &self,
+        selector: Option<AnyElement>,
+        logical_owner: Option<android_project_tree::RenderedOwner>,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        h_flex()
+            .h_8()
+            .flex_none()
+            .px_2()
+            .justify_between()
+            .child(selector.unwrap_or_else(|| {
+                Label::new("Project")
+                    .weight(FontWeight::MEDIUM)
+                    .into_any_element()
+            }))
+            .child(
+                h_flex()
+                    .gap_1()
+                    .child(
+                        IconButton::new("collapse-project", IconName::ListCollapse)
+                            .tab_index(0isize)
+                            .aria_label("Collapse all folders")
+                            .tooltip(|_, cx| {
+                                Tooltip::for_action("Collapse All", &CollapseAllEntries, cx)
+                            })
+                            .on_click(cx.listener(move |panel, _, window, cx| {
+                                if let Some(owner) = &logical_owner {
+                                    panel._android_tree.update(cx, |tree, cx| {
+                                        tree.collapse_all_rendered(owner, window, cx);
+                                    });
+                                } else if !panel.uses_logical_view(window, cx) {
+                                    panel.collapse_all_entries(&CollapseAllEntries, window, cx);
+                                }
+                            })),
+                    )
+                    .child(
+                        IconButton::new("hide-project", IconName::Close)
+                            .tab_index(0isize)
+                            .aria_label("Hide Project")
+                            .tooltip(Tooltip::text("Hide Project"))
+                            .on_click(cx.listener(|_, _, _, cx| cx.emit(PanelEvent::Close))),
+                    ),
+            )
+            .debug_selector(|| "android-project-view-header".into())
+            .into_any_element()
+    }
+
+    fn render_physical_panel(
+        &mut self,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
+        let selector = self._android_tree.read(cx).selector_state(window, cx);
+        let view_selector = selector.map(|selector| {
+            self._android_tree
+                .update(cx, |tree, cx| tree.render_selector(selector, window, cx))
+        });
         if !cx.has_active_drag() {
             self.clear_drag_state(cx);
         }
 
         let has_worktree = !self.state.visible_entries.is_empty();
+        let header = self.render_project_header(view_selector, None, cx);
         let project = self.project.read(cx);
         let panel_settings = ProjectPanelSettings::get_global(cx);
         let indent_size = panel_settings.indent_size;
@@ -7516,51 +7628,7 @@ impl Render for ProjectPanel {
                 .track_focus(&self.focus_handle(cx))
                 .child(
                     v_flex()
-                        .child(
-                            h_flex()
-                                .h_8()
-                                .flex_none()
-                                .px_2()
-                                .justify_between()
-                                .child(Label::new("Project").weight(FontWeight::MEDIUM))
-                                .child(
-                                    h_flex()
-                                        .gap_1()
-                                        .child(
-                                            IconButton::new(
-                                                "collapse-project",
-                                                IconName::ListCollapse,
-                                            )
-                                            .tab_index(0isize)
-                                            .aria_label("Collapse all folders")
-                                            .tooltip(|_, cx| {
-                                                Tooltip::for_action(
-                                                    "Collapse All",
-                                                    &CollapseAllEntries,
-                                                    cx,
-                                                )
-                                            })
-                                            .on_click(
-                                                cx.listener(|panel, _, window, cx| {
-                                                    panel.collapse_all_entries(
-                                                        &CollapseAllEntries,
-                                                        window,
-                                                        cx,
-                                                    );
-                                                }),
-                                            ),
-                                        )
-                                        .child(
-                                            IconButton::new("hide-project", IconName::Close)
-                                                .tab_index(0isize)
-                                                .aria_label("Hide Project")
-                                                .tooltip(Tooltip::text("Hide Project"))
-                                                .on_click(cx.listener(|_, _, _, cx| {
-                                                    cx.emit(PanelEvent::Close)
-                                                })),
-                                        ),
-                                ),
-                        )
+                        .child(header)
                         .child(
                             uniform_list("entries", item_count, {
                                 cx.processor(|this, range: Range<usize>, window, cx| {
@@ -8038,6 +8106,27 @@ impl Render for ProjectPanel {
                     })
                 })
         }
+    }
+}
+
+impl Render for ProjectPanel {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let tree = self._android_tree.clone();
+        let Some(selector) = tree.read(cx).selector_state(window, cx) else {
+            return self.render_physical_panel(window, cx).into_any_element();
+        };
+        if selector.view == android_tools::project_view_preferences::DefaultView::Project {
+            return self.render_physical_panel(window, cx).into_any_element();
+        }
+        let selector = tree.update(cx, |tree, cx| tree.render_selector(selector, window, cx));
+        let owner = tree.read(cx).rendered_owner(window, cx);
+        let header = self.render_project_header(Some(selector), owner, cx);
+        v_flex()
+            .size_full()
+            .min_h_0()
+            .child(header)
+            .child(div().size_full().min_h_0().flex_1().child(tree))
+            .into_any_element()
     }
 }
 

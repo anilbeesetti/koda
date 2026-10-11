@@ -46,6 +46,8 @@ pub(crate) struct TestWindowState {
     appearance_change_callback: Option<Box<dyn FnMut()>>,
     request_frame_callback: Option<Box<dyn FnMut(RequestFrameOptions)>>,
     frame_wake_count: Rc<Cell<usize>>,
+    presentation_count: usize,
+    gpu_specs: Option<GpuSpecs>,
     frame_scheduled: bool,
     frame_callback_pending: bool,
     input_handler: Option<PlatformInputHandler>,
@@ -119,6 +121,8 @@ impl TestWindow {
             appearance_change_callback: None,
             request_frame_callback: None,
             frame_wake_count: Rc::new(Cell::new(0)),
+            presentation_count: 0,
+            gpu_specs: None,
             frame_scheduled: false,
             frame_callback_pending: false,
             input_handler: None,
@@ -255,6 +259,16 @@ impl TestWindow {
     /// Returns how many times this window's frame waker has been invoked.
     pub fn frame_wake_count(&self) -> usize {
         self.0.lock().frame_wake_count.get()
+    }
+
+    /// Returns how many scenes have been submitted to the platform renderer.
+    pub fn presentation_count(&self) -> usize {
+        self.0.lock().presentation_count
+    }
+
+    /// Sets the selected adapter capability reported by this test window.
+    pub fn set_gpu_specs(&self, specs: Option<GpuSpecs>) {
+        self.0.lock().gpu_specs = specs;
     }
 
     /// Delivers a frame request to the window, as the platform's frame source
@@ -527,6 +541,7 @@ impl PlatformWindow for TestWindow {
     fn draw(&self, scene: &Scene) {
         let scale_factor = self.scale_factor();
         let mut state = self.0.lock();
+        state.presentation_count += 1;
         state.frame_callback_pending = true;
         state.frame_scheduled = true;
         let device_size: Size<DevicePixels> = state.bounds.size.to_device_pixels(scale_factor);
@@ -586,6 +601,6 @@ impl PlatformWindow for TestWindow {
     fn update_ime_position(&self, _bounds: Bounds<Pixels>) {}
 
     fn gpu_specs(&self) -> Option<GpuSpecs> {
-        None
+        self.0.lock().gpu_specs.clone()
     }
 }

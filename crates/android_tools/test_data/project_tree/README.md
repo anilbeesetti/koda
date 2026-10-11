@@ -12,8 +12,10 @@ The Rust component tests read the original file inventory and supply explicit
 typed source/provider/class facts. Additional generated folders and files are
 immutable test inputs. No Gradle import, generated-root discovery, Java parser,
 file watcher, GPUI tree, or sample application test execution occurs here.
-The five Gradle-backed `AndroidProjectViewTest` methods remain unported; matching
-a tree path from supplied facts does not satisfy their model assertions.
+The six Gradle-backed workflows (five `AndroidProjectViewTest` methods and
+`AndroidSourceTypeNodeTest.testNodeFoldersOrder`) and their twelve original
+assertions remain **UNPORTED / NOT_RUN**. Matching a tree path or passing a
+supplemental GPUI test does not satisfy their evaluated-import/model assertions.
 
 The original sample `UnitTest.java` intentionally expects `5` for `2 + 2`.
 Its bytes are preserved. The raw project uses AGP 1.5; the upstream test loader

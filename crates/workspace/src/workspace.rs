@@ -1426,7 +1426,7 @@ impl AppState {
         let client = Client::new(clock, http_client, cx);
         let session = cx.new(|cx| AppSession::new(Session::test(), cx));
         let user_store = cx.new(|cx| UserStore::new(client.clone(), cx));
-        let workspace_store = cx.new(|cx| WorkspaceStore::new(client.clone(), cx));
+        let workspace_store = WorkspaceStore::test(client.clone(), cx);
 
         theme_settings::init(theme::LoadThemes::JustBase, cx);
         client::init(&client, cx);
@@ -1504,6 +1504,7 @@ pub enum Event {
         item: Box<dyn ItemHandle>,
     },
     ActiveItemChanged,
+    ActiveProjectPathChanged(Option<ProjectPath>),
     ItemRemoved {
         item_id: EntityId,
     },
@@ -1571,6 +1572,29 @@ struct DispatchingKeystrokes {
     dispatched: HashSet<Vec<Keystroke>>,
     queue: VecDeque<Keystroke>,
     task: Option<Shared<Task<()>>>,
+}
+
+/// The current active-workspace identity, shared without leasing either window root.
+/// This handle certifies only workspace/project ownership; callers still check their
+/// window, project context, trust, and model before dispatching project operations.
+#[derive(Clone)]
+pub struct WorkspaceWindowOwnership {
+    workspace: EntityId,
+    project: EntityId,
+    active_workspace_id: Option<Rc<Cell<EntityId>>>,
+}
+
+impl WorkspaceWindowOwnership {
+    /// Check the original workspace/project identities against the live active
+    /// workspace cell, without borrowing either parent entity.
+    pub fn is_active(&self, workspace: EntityId, project: EntityId) -> bool {
+        self.workspace == workspace
+            && self.project == project
+            && self
+                .active_workspace_id
+                .as_ref()
+                .is_none_or(|active| active.get() == workspace)
+    }
 }
 
 /// Collects everything project-related for a certain window opened.
@@ -2902,6 +2926,16 @@ impl Workspace {
         });
         self.multi_workspace = Some(multi_workspace);
         self.active_workspace_id = Some(active_workspace_id);
+    }
+
+    /// Share the same ownership cell used by window chrome. Reading the handle
+    /// does not re-enter a leased Workspace or MultiWorkspace during paint/actions.
+    pub fn window_ownership(&self) -> WorkspaceWindowOwnership {
+        WorkspaceWindowOwnership {
+            workspace: self.weak_self.entity_id(),
+            project: self.project.entity_id(),
+            active_workspace_id: self.active_workspace_id.clone(),
+        }
     }
 
     pub fn app_state(&self) -> &Arc<AppState> {
@@ -4607,17 +4641,18 @@ impl Workspace {
 
         let dock = self.dock_at_position(dock_side);
         dock.update(cx, |dock, cx| {
-            dock.set_open(!was_visible, window, cx);
-
-            if dock.active_panel().is_none() {
+            if dock.active_panel().is_none_or(|panel| !panel.enabled(cx)) {
                 let Some(panel_ix) = dock
                     .first_enabled_panel_idx(cx)
                     .log_with_level(log::Level::Info)
                 else {
+                    dock.set_open(false, window, cx);
                     return;
                 };
                 dock.activate_panel(panel_ix, window, cx);
             }
+
+            dock.set_open(!was_visible, window, cx);
 
             if let Some(active_panel) = dock.active_panel() {
                 if was_visible {
@@ -4759,6 +4794,12 @@ impl Workspace {
         cx: &mut Context<Self>,
     ) -> bool {
         let mut did_focus_panel = false;
+        if self
+            .panel::<T>(cx)
+            .is_none_or(|panel| !panel.read(cx).enabled(cx))
+        {
+            return false;
+        }
         self.focus_or_unfocus_panel::<T>(window, cx, &mut |panel, window, cx| {
             did_focus_panel = !panel.panel_focus_handle(cx).contains_focused(window, cx);
             did_focus_panel
@@ -4794,6 +4835,9 @@ impl Workspace {
         let mut panel = None;
         for dock in self.all_docks() {
             if let Some(panel_index) = dock.read(cx).panel_index_for_proto_id(panel_id) {
+                if !dock.read(cx).is_panel_enabled(panel_index, cx) {
+                    return None;
+                }
                 panel = dock.update(cx, |dock, cx| {
                     dock.activate_panel(panel_index, window, cx);
                     dock.set_open(true, window, cx);
@@ -4818,6 +4862,12 @@ impl Workspace {
         cx: &mut Context<Self>,
         should_focus: &mut dyn FnMut(&dyn PanelHandle, &mut Window, &mut Context<Dock>) -> bool,
     ) -> Option<Arc<dyn PanelHandle>> {
+        if self
+            .panel::<T>(cx)
+            .is_none_or(|panel| !panel.read(cx).enabled(cx))
+        {
+            return None;
+        }
         let mut result_panel = None;
         let mut serialize = false;
         for dock in self.all_docks() {
@@ -4861,6 +4911,9 @@ impl Workspace {
     pub fn open_panel<T: Panel>(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         for dock in self.all_docks() {
             if let Some(panel_index) = dock.read(cx).panel_index_for_type::<T>() {
+                if !dock.read(cx).is_panel_enabled(panel_index, cx) {
+                    continue;
+                }
                 dock.update(cx, |dock, cx| {
                     dock.activate_panel(panel_index, window, cx);
                     dock.set_open(true, window, cx);
@@ -4874,16 +4927,24 @@ impl Workspace {
     pub fn reveal_panel<T: Panel>(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         let dock_position = self.all_docks().iter().find_map(|dock| {
             let dock = dock.read(cx);
-            dock.panel_index_for_type::<T>().map(|_| dock.position())
+            dock.panel_index_for_type::<T>()
+                .filter(|index| dock.is_panel_enabled(*index, cx))
+                .map(|_| dock.position())
         });
-        self.dismiss_zoomed_items_to_reveal(dock_position, window, cx);
+        let Some(dock_position) = dock_position else {
+            return;
+        };
+        self.dismiss_zoomed_items_to_reveal(Some(dock_position), window, cx);
         self.open_panel::<T>(window, cx);
     }
 
     pub fn close_panel<T: Panel>(&self, window: &mut Window, cx: &mut Context<Self>) {
         for dock in self.all_docks().iter() {
             dock.update(cx, |dock, cx| {
-                if dock.panel::<T>().is_some() {
+                if dock
+                    .panel::<T>()
+                    .is_some_and(|panel| panel.read(cx).enabled(cx))
+                {
                     dock.set_open(false, window, cx)
                 }
             })
@@ -6161,6 +6222,12 @@ impl Workspace {
     ) {
         let mut serialize_workspace = true;
         match event {
+            pane::Event::ActivateProjectPath { path, local } => {
+                if pane == self.active_pane() || *local {
+                    cx.emit(Event::ActiveProjectPathChanged(path.clone()));
+                }
+                serialize_workspace = false;
+            }
             pane::Event::AddItem { item } => {
                 item.added_to_pane(self, pane.clone(), window, cx);
                 cx.emit(Event::ItemAdded {
@@ -6226,6 +6293,12 @@ impl Workspace {
                 serialize_workspace = false;
             }
             pane::Event::RemovedItem { item } => {
+                // Surviving items already emit their captured activation path.
+                // Re-emitting it on background removal would invalidate an
+                // unchanged source owner; the last active item still loses it.
+                if pane == self.active_pane() && pane.read(cx).active_item().is_none() {
+                    cx.emit(Event::ActiveProjectPathChanged(None));
+                }
                 cx.emit(Event::ActiveItemChanged);
                 self.update_window_edited(window, cx);
                 if let hash_map::Entry::Occupied(entry) = self.panes_by_item.entry(item.item_id())
@@ -6693,8 +6766,9 @@ impl Workspace {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        cx.emit(Event::ActiveItemChanged);
         let active_entry = self.active_project_path(cx);
+        cx.emit(Event::ActiveProjectPathChanged(active_entry.clone()));
+        cx.emit(Event::ActiveItemChanged);
         let active_project_path_changed =
             self.last_active_project_path.as_ref() != active_entry.as_ref();
         self.project.update(cx, |project, cx| {
@@ -8542,7 +8616,7 @@ impl Workspace {
 
         let client = project.read(cx).client();
         let user_store = project.read(cx).user_store();
-        let workspace_store = cx.new(|cx| WorkspaceStore::new(client.clone(), cx));
+        let workspace_store = WorkspaceStore::test(client.clone(), cx);
         let session = cx.new(|cx| AppSession::new(Session::test(), cx));
         window.activate_window();
         let app_state = Arc::new(AppState {
@@ -10175,6 +10249,61 @@ impl Render for Workspace {
 }
 
 impl WorkspaceStore {
+    #[cfg(any(test, feature = "test-support"))]
+    fn test(client: Arc<Client>, cx: &mut App) -> Entity<Self> {
+        struct TestWorkspaceStore {
+            client: std::sync::Weak<Client>,
+            store: WeakEntity<WorkspaceStore>,
+            _subscriptions: Vec<client::Subscription>,
+        }
+        #[derive(Default)]
+        struct TestWorkspaceStores(Vec<TestWorkspaceStore>);
+        impl Global for TestWorkspaceStores {}
+
+        // Follow handlers belong to one store per client. Keep both cache handles
+        // weak and scoped to this App so fixtures cannot retain or cross App entities.
+        let existing = cx.try_global::<TestWorkspaceStores>().and_then(|stores| {
+            stores.0.iter().find_map(|cached| {
+                let cached_client = cached.client.upgrade()?;
+                if Arc::ptr_eq(&cached_client, &client) {
+                    cached.store.upgrade()
+                } else {
+                    None
+                }
+            })
+        });
+        if let Some(store) = existing {
+            return store;
+        }
+
+        // GPUI defers entity destruction until the outer update finishes. Owning
+        // fixture subscriptions here lets replacement unregister expired handlers
+        // before their old entity body is dropped. Subscriptions hold clients weakly.
+        cx.default_global::<TestWorkspaceStores>()
+            .0
+            .retain(|cached| cached.store.is_upgradable());
+        let cached_client = Arc::downgrade(&client);
+        cx.new(|cx| {
+            let mut store = Self::new(client, cx);
+            let cached = TestWorkspaceStore {
+                client: cached_client,
+                store: cx.weak_entity(),
+                _subscriptions: std::mem::take(&mut store._subscriptions),
+            };
+            let store_id = cached.store.entity_id();
+            cx.default_global::<TestWorkspaceStores>().0.push(cached);
+            cx.on_release(move |_, cx| {
+                if cx.has_global::<TestWorkspaceStores>() {
+                    cx.global_mut::<TestWorkspaceStores>()
+                        .0
+                        .retain(|cached| cached.store.entity_id() != store_id);
+                }
+            })
+            .detach();
+            store
+        })
+    }
+
     pub fn new(client: Arc<Client>, cx: &mut Context<Self>) -> Self {
         Self {
             workspaces: Default::default(),
@@ -20653,5 +20782,90 @@ mod tests {
         fn set_zoomed(&mut self, zoomed: bool, _: &mut Window, _: &mut Context<Self>) {
             self.zoomed = zoomed;
         }
+    }
+}
+
+#[cfg(test)]
+mod workspace_store_fixture_tests {
+    use super::{AppState, WorkspaceStore};
+    use gpui::TestAppContext;
+
+    #[gpui::test]
+    fn fixture_workspace_stores_share_a_client_and_isolate_other_clients(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            let first = AppState::test(cx);
+            let same_client = WorkspaceStore::test(first.client.clone(), cx);
+            let other = AppState::test(cx);
+            assert_eq!(same_client.entity_id(), first.workspace_store.entity_id());
+            assert_ne!(same_client.entity_id(), other.workspace_store.entity_id());
+            assert_eq!(
+                WorkspaceStore::test(other.client.clone(), cx).entity_id(),
+                other.workspace_store.entity_id()
+            );
+        });
+    }
+
+    #[gpui::test]
+    fn fixture_workspace_store_cache_does_not_retain_released_stores(cx: &mut TestAppContext) {
+        let store = cx.update(|cx| {
+            let state = AppState::test(cx);
+            state.workspace_store.downgrade()
+        });
+        cx.run_until_parked();
+        assert!(store.upgrade().is_none());
+    }
+
+    #[gpui::test]
+    fn fixture_workspace_store_can_be_recreated_before_update_finishes(cx: &mut TestAppContext) {
+        let (client, store) = cx.update(|cx| {
+            let state = AppState::test(cx);
+            (state.client.clone(), state.workspace_store.clone())
+        });
+        let old_store = store.downgrade();
+        let old_store_id = store.entity_id();
+        let replacement = cx.update(|cx| {
+            drop(store);
+            assert!(old_store.upgrade().is_none());
+            let replacement = WorkspaceStore::test(client.clone(), cx);
+            assert_ne!(replacement.entity_id(), old_store_id);
+            assert_eq!(
+                WorkspaceStore::test(client.clone(), cx).entity_id(),
+                replacement.entity_id()
+            );
+            replacement
+        });
+        cx.update(|cx| {
+            assert_eq!(
+                WorkspaceStore::test(client, cx).entity_id(),
+                replacement.entity_id()
+            );
+        });
+    }
+
+    #[gpui::test]
+    fn fixture_workspace_store_can_be_recreated_from_a_release_callback(cx: &mut TestAppContext) {
+        let (client, store) = cx.update(|cx| {
+            let state = AppState::test(cx);
+            (state.client.clone(), state.workspace_store.clone())
+        });
+        let old_store = store.downgrade();
+        let replacement = std::rc::Rc::new(std::cell::RefCell::new(None));
+        cx.update(|cx| {
+            let replacement = replacement.clone();
+            let client = client.clone();
+            cx.observe_release(&store, move |_, cx| {
+                *replacement.borrow_mut() = Some(WorkspaceStore::test(client, cx));
+            })
+            .detach();
+            drop(store);
+        });
+        assert!(old_store.upgrade().is_none());
+        assert!(replacement.borrow().is_some());
+        cx.update(|cx| {
+            assert_eq!(
+                replacement.borrow().as_ref().map(|store| store.entity_id()),
+                Some(WorkspaceStore::test(client, cx).entity_id())
+            );
+        });
     }
 }

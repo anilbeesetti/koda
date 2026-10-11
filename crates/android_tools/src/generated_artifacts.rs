@@ -462,6 +462,18 @@ pub fn parse_generated_artifacts(
     revision: u64,
     consumer: &ModelConsumerVersion,
 ) -> FactsResult<GeneratedArtifactSnapshot> {
+    parse_generated_artifacts_with_consumer(output, model, revision, Some(consumer))
+}
+
+/// An unknown consumer does not hide malformed/stale input. Validate the raw
+/// model first, then retain explicit unavailable capability without guessing a
+/// supported version from the producer's minimum requirement.
+pub fn parse_generated_artifacts_with_consumer(
+    output: &str,
+    model: &ProjectModel,
+    revision: u64,
+    consumer: Option<&ModelConsumerVersion>,
+) -> FactsResult<GeneratedArtifactSnapshot> {
     let mut records = output
         .lines()
         .filter_map(|line| line.strip_prefix("KODA_ANDROID_PROJECT_MODEL="));
@@ -600,7 +612,9 @@ pub fn parse_generated_artifacts(
                     "Versions.minimum_model_consumer contradicts the retained consumer identity",
                 ));
             }
-            if required.compare_version(consumer) == Ordering::Greater {
+            if let Some(consumer) = consumer
+                && required.compare_version(consumer) == Ordering::Greater
+            {
                 return Err(unavailable(
                     FactsUnavailableReason::UnsupportedSchema,
                     format!(
@@ -649,6 +663,12 @@ pub fn parse_generated_artifacts(
                 )?;
             }
         }
+    }
+    if consumer.is_none() {
+        return Err(unavailable(
+            FactsUnavailableReason::Capability,
+            "Rust generated-artifact model consumer identity is unavailable; evaluated raw record retained",
+        ));
     }
     Ok(GeneratedArtifactSnapshot {
         revision,
