@@ -24102,7 +24102,7 @@ async fn test_android_resource_large_completion_discards_a_changed_source_and_st
         "package example.app\n/*{}*/\nval value = R.string.ti",
         "x".repeat(1_000_000)
     );
-    source.update(cx, |buffer, cx| buffer.set_text(&text, cx));
+    source.update(cx, |buffer, cx| buffer.set_text(text.as_str(), cx));
     let completion = project.update(cx, |project, cx| {
         project.completions(
             &source,
@@ -24133,7 +24133,7 @@ async fn test_android_resource_large_completion_discards_a_changed_source_and_st
         "package example.app\n/*{}*/\nval value = R.string.title",
         "x".repeat(1_000_000)
     );
-    source.update(cx, |buffer, cx| buffer.set_text(&text, cx));
+    source.update(cx, |buffer, cx| buffer.set_text(text.as_str(), cx));
     let rename = project
         .update(cx, |project, cx| {
             project.prepare_android_resource_rename(
@@ -24295,7 +24295,7 @@ async fn test_android_resource_cursor_classification_discards_stale_unavailable_
 ) {
     let (project, _, source) = android_resource_semantics_fixture(cx).await;
     let text = format!("/*{}*/\nval value = R.string.title", "x".repeat(1_000_000));
-    source.update(cx, |buffer, cx| buffer.set_text(&text, cx));
+    source.update(cx, |buffer, cx| buffer.set_text(text.as_str(), cx));
     let (prepare, rename) = project.update(cx, |project, cx| {
         let position = source.read(cx).len() - 2;
         let path = path!("/android-resources/app/code/Activity.kt");
@@ -24325,7 +24325,7 @@ async fn test_android_resource_cursor_classification_discards_stale_unavailable_
             .to_string()
             .contains("changed")
     );
-    source.update(cx, |buffer, cx| buffer.set_text(&text, cx));
+    source.update(cx, |buffer, cx| buffer.set_text(text.as_str(), cx));
     project.update(cx, |project, cx| {
         project.invalidate_android_model(Some(path!("/android-resources").into()), cx);
     });
@@ -24388,7 +24388,7 @@ async fn test_android_resource_ordinary_kotlin_and_java_rename_reaches_the_langu
                 capabilities: lsp::ServerCapabilities {
                     rename_provider: Some(lsp::OneOf::Right(lsp::RenameOptions {
                         prepare_provider: Some(true),
-                        ..Default::default()
+                        work_done_progress_options: Default::default(),
                     })),
                     ..Default::default()
                 },
@@ -24430,7 +24430,7 @@ async fn test_android_resource_ordinary_kotlin_and_java_rename_reaches_the_langu
                 async move {
                     Ok(Some(lsp::WorkspaceEdit::new(
                         std::collections::HashMap::from_iter([(
-                            params.text_document.uri,
+                            params.text_document_position.text_document.uri,
                             vec![lsp::TextEdit {
                                 range: lsp::Range::new(
                                     lsp::Position::new(0, 4),
@@ -24790,8 +24790,10 @@ async fn test_android_resource_legacy_qualified_navigation_rechecks_unsaved_grad
         cx.subscribe(&store, move |_, _, event, cx| {
             if let project::buffer_store::BufferStoreEvent::BufferAdded(buffer) = event
                 && buffer.read(cx).file().is_some_and(|file| {
-                    file.full_path(cx)
-                        == path!("/legacy-namespace/app/src/main/res/values/strings.xml")
+                    file.full_path(cx).as_path()
+                        == Path::new(path!(
+                            "/legacy-namespace/app/src/main/res/values/strings.xml"
+                        ))
                 })
             {
                 // The qualified lookup has already captured the Gradle namespace

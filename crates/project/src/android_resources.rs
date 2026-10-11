@@ -945,11 +945,14 @@ impl Project {
 
     #[cfg(any(test, feature = "test-support"))]
     #[doc(hidden)]
-    pub fn android_resource_context_parse_count_for_test(&self, path: &std::path::Path) -> usize {
+    pub fn android_resource_context_parse_count_for_test(
+        &self,
+        path: impl AsRef<std::path::Path>,
+    ) -> usize {
         RESOURCE_CONTEXT_PARSE_COUNTS
             .lock()
             .expect("Resource parser test counters")
-            .get(path)
+            .get(path.as_ref())
             .copied()
             .unwrap_or(0)
     }
@@ -958,12 +961,12 @@ impl Project {
     #[doc(hidden)]
     pub fn android_resource_legacy_validation_batch_count_for_test(
         &self,
-        path: &std::path::Path,
+        path: impl AsRef<std::path::Path>,
     ) -> usize {
         LEGACY_RESOURCE_VALIDATION_BATCH_COUNTS
             .lock()
             .expect("Legacy validation test counters")
-            .get(path)
+            .get(path.as_ref())
             .copied()
             .unwrap_or(0)
     }
@@ -3454,6 +3457,7 @@ async fn canonical_resource_metadata(
     Ok(Some((metadata.inode, metadata.mtime, metadata.len)))
 }
 
+#[cfg(test)]
 fn resource_public_symbols(text: &str) -> Result<Option<BTreeSet<(String, String)>>> {
     resource_public_symbols_limited(text, usize::MAX)
 }

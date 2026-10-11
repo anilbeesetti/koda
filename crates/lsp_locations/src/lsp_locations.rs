@@ -1137,6 +1137,8 @@ mod tests {
                                     }],
                                 }],
                             }],
+                            source_providers: None,
+                            evaluated_providers: None,
                             resource_models: std::collections::BTreeMap::from_iter([(
                                 ":app/debug".into(),
                                 ResourceModel {
