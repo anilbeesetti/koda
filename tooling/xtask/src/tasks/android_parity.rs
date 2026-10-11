@@ -772,7 +772,31 @@ impl RustTarget {
     }
 }
 
-fn verify_test_output(output: &str, name: &str, passing: bool) -> Result<()> {
+/// Reuse the ledger's literal selector without constructing run evidence.
+/// The supplied hashes identify the recorder's actual source snapshot.
+pub(super) fn module_template_arguments(
+    name: &str,
+    manifest_sha256: &str,
+    source_sha256: &str,
+) -> Vec<String> {
+    RustTarget {
+        package: "android_tools".into(),
+        integration_target: Some("module_template".into()),
+        test_name: name.into(),
+        manifest: Artifact {
+            path: "crates/android_tools/Cargo.toml".into(),
+            sha256: manifest_sha256.into(),
+        },
+        source: Artifact {
+            path: "crates/android_tools/tests/module_template.rs".into(),
+            sha256: source_sha256.into(),
+        },
+        run: None,
+    }
+    .arguments()
+}
+
+pub(super) fn verify_test_output(output: &str, name: &str, passing: bool) -> Result<()> {
     let outcome = if passing { "ok" } else { "FAILED" };
     let result = if passing {
         "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured;"

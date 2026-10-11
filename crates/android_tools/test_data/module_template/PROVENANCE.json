@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "scope": "Default Android module template path values only; other methods present in unchanged reference files remain unported.",
+  "license": "Apache-2.0",
+  "sources": [
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "android-npw/testSrc/com/android/tools/idea/npw/GradleModuleTemplateTest.java",
+      "bytes": 2307,
+      "sha256": "e0e7bc8dd5f1b4bb8377e89d7691d6c4b37bc89ba820e58535b65ebca5a6418d",
+      "retained_path": "crates/android_tools/test_data/module_template/reference/idea/android-npw/testSrc/com/android/tools/idea/npw/GradleModuleTemplateTest.java",
+      "complete_original_bytes": true,
+      "license_header_retained": true,
+      "original_test_credit": 0,
+      "repository": "https://android.googlesource.com/platform/tools/adt/idea",
+      "archive": {
+        "path": "/workspace/android-studio-references/idea.tar.gz",
+        "sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+        "bytes": 588852018
+      }
+    },
+    {
+      "source": "idea",
+      "repository": "https://android.googlesource.com/platform/tools/adt/idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "android-npw/src/com/android/tools/idea/npw/project/GradleAndroidModuleTemplate.java",
+      "bytes": 6022,
+      "sha256": "548a00586bc93661a60de1b913f26221411f4b3139c082a963e6400f5d223593",
+      "retained_path": "crates/android_tools/test_data/module_template/reference/idea/android-npw/src/com/android/tools/idea/npw/project/GradleAndroidModuleTemplate.java",
+      "complete_original_bytes": true,
+      "copyright_header_retained": true,
+      "license_header_retained": true,
+      "original_test_credit": 0,
+      "archive": {
+        "path": "/workspace/android-studio-references/idea.tar.gz",
+        "sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+        "bytes": 588852018
+      }
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "project-system/src/com/android/tools/idea/projectsystem/AndroidModulePaths.kt",
+      "bytes": 4370,
+      "sha256": "8d09b15f2892c22d144f0626138306e9551ddab83fc64524c34653895f984bd3",
+      "retained_path": "crates/android_tools/test_data/module_template/reference/idea/project-system/src/com/android/tools/idea/projectsystem/AndroidModulePaths.kt",
+      "complete_original_bytes": true,
+      "license_header_retained": true,
+      "original_test_credit": 0,
+      "repository": "https://android.googlesource.com/platform/tools/adt/idea",
+      "archive": {
+        "path": "/workspace/android-studio-references/idea.tar.gz",
+        "sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+        "bytes": 588852018
+      }
+    },
+    {
+      "source": "idea",
+      "revision": "a84efec3ba9542d9bfa1255103f0dc94833a3796",
+      "archive_member": "project-system/src/com/android/tools/idea/projectsystem/NamedModuleTemplate.kt",
+      "bytes": 836,
+      "sha256": "7c55970bc16923b9ca0d44d312e2f03fb1d83e3a78713f22fb46622f05954e36",
+      "retained_path": "crates/android_tools/test_data/module_template/reference/idea/project-system/src/com/android/tools/idea/projectsystem/NamedModuleTemplate.kt",
+      "complete_original_bytes": true,
+      "license_header_retained": true,
+      "original_test_credit": 0,
+      "repository": "https://android.googlesource.com/platform/tools/adt/idea",
+      "archive": {
+        "path": "/workspace/android-studio-references/idea.tar.gz",
+        "sha256": "f15d0ee82d4719da82aa7d549dc4c3c14c180dac8112c4a1a73a65474419cf84",
+        "bytes": 588852018
+      }
+    },
+    {
+      "source": "base",
+      "revision": "4a5d2ec9571e2021fc9a4621e24a195f966ee6dd",
+      "archive_member": "common/src/main/java/com/android/SdkConstants.java",
+      "bytes": 164102,
+      "sha256": "765118d84f009afb288248262681ced613903de9aad083e7b42dc625809d7fdd",
+      "retained_path": "crates/android_tools/test_data/module_template/reference/base/common/src/main/java/com/android/SdkConstants.java",
+      "complete_original_bytes": true,
+      "license_header_retained": true,
+      "original_test_credit": 0,
+      "repository": "https://android.googlesource.com/platform/tools/base",
+      "archive": {
+        "path": "/workspace/android-studio-references/base.tar.gz",
+        "sha256": "0cbac492c1e2b47273fc9a1e2929caa6460660cf475cbd7773256f443cb30bb4",
+        "bytes": 319977585
+      }
+    }
+  ],
+  "license_text": {
+    "path": "crates/android_tools/test_data/module_template/LICENSE-APACHE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  "java_path_contract": "External versioned OpenJDK source/spec contract inspection; no OpenJDK source shipped or line-level implementation copied. Exact reference JBR identity remains unverified.",
+  "original_tests": [
+    "testDefaultSourceSetAtCurrentDir",
+    "testDefaultSourceSetAtInvalidDir"
+  ],
+  "original_assertions": 12,
+  "new_original_passing_credit": 0
+}

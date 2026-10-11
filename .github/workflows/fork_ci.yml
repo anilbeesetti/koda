@@ -95,7 +95,7 @@ jobs:
   linux:
     name: Linux build and workspace tests
     needs: checks
-    if: needs.checks.outputs.native_checks == 'true'
+    if: needs.checks.outputs.native_checks == 'true' || github.event.pull_request.number == 70
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
@@ -134,15 +134,25 @@ jobs:
           echo "VK_DRIVER_FILES=$vulkan_icd" >> "$GITHUB_ENV"
       - name: Install repository Rust toolchain
         run: rustup show active-toolchain
+      - name: Locate portable Cargo sources outside the checkout
+        id: source-cache-directory
+        run: |
+          python3 - <<'PY'
+          import os
+          path = os.path.join(os.environ["RUNNER_TEMP"], "fork-ci-cache", "cargo-sources")
+          relative = os.path.relpath(path, os.environ["GITHUB_WORKSPACE"])
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"path={relative}\n")
+          PY
       - name: Restore shared portable Cargo sources
         id: source-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         continue-on-error: true
         with:
-          # Identical relative paths keep archive contents and cache versions portable.
+          # Identical relative paths keep cache versions shared without adding checkout files.
           path: |
-            .ci-cache/cargo-sources/registry
-            .ci-cache/cargo-sources/git
+            ${{ steps.source-cache-directory.outputs.path }}/registry
+            ${{ steps.source-cache-directory.outputs.path }}/git
           enableCrossOsArchive: true
           key: fork-ci-source-v3-shared-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock', 'extensions/test-extension/Cargo.lock') }}
           restore-keys: fork-ci-source-v3-shared-${{ hashFiles('rust-toolchain.toml') }}-
@@ -150,7 +160,7 @@ jobs:
         id: materialize-sources
         if: steps.source-cache.outputs.cache-matched-key != ''
         continue-on-error: true
-        run: python3 script/ci-source-cache restore
+        run: python3 script/ci-source-cache restore --cache-dir "$RUNNER_TEMP/fork-ci-cache/cargo-sources"
       - name: Restore legacy Cargo sources during cache migration
         id: legacy-source-cache
         if: steps.source-cache.outputs.cache-matched-key == '' || steps.materialize-sources.outcome == 'failure'
@@ -230,6 +240,25 @@ jobs:
           python3 script/ci-run stage 'Workspace tests (build and execution)' -- \
             cargo nextest run --locked --workspace "${filter_args[@]}" --no-fail-fast --no-tests=warn \
             --test-threads "$CI_TEST_THREADS" --status-level=fail --final-status-level=fail
+      - name: Record original module-template tests by exact name
+        id: module-template-named
+        if: ${{ !cancelled() && (hashFiles('crates/android_tools/tests/module_template.rs') != '' || github.event.pull_request.number == 70) }}
+        env:
+          CI_REFERENCE_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          CI_CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          git fetch --no-tags --depth=1 origin "$CI_REFERENCE_HEAD"
+          cargo run --locked -p xtask -- android-named-module-template \
+            --expected-head "$CI_REFERENCE_HEAD" --expected-checkout "$CI_CHECKOUT_SHA" \
+            --output "$RUNNER_TEMP/android-module-template-named"
+      - name: Retain original module-template execution evidence
+        if: ${{ !cancelled() && steps.module-template-named.outcome != 'skipped' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: module-template-original-named-${{ github.sha }}
+          path: ${{ runner.temp }}/android-module-template-named
+          if-no-files-found: error
+          retention-days: 14
       - name: Build Zed
         if: success() || failure()
         run: python3 script/ci-run stage 'Linux app build' -- cargo build --locked --keep-going -p zed --bin koda
@@ -237,15 +266,15 @@ jobs:
         id: stage-sources
         if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.prefetch-sources.outcome == 'success' && steps.source-cache.outputs.cache-hit != 'true' }}
         continue-on-error: true
-        run: python3 script/ci-source-cache stage
+        run: python3 script/ci-source-cache stage --cache-dir "$RUNNER_TEMP/fork-ci-cache/cargo-sources"
       - name: Save shared Cargo source cache (Linux main/manual writer)
         if: ${{ !cancelled() && github.event_name != 'pull_request' && steps.stage-sources.outcome == 'success' }}
         continue-on-error: true
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: |
-            .ci-cache/cargo-sources/registry
-            .ci-cache/cargo-sources/git
+            ${{ steps.source-cache-directory.outputs.path }}/registry
+            ${{ steps.source-cache-directory.outputs.path }}/git
           enableCrossOsArchive: true
           key: ${{ steps.source-cache.outputs.cache-primary-key }}
       - name: Save Linux build cache
@@ -291,15 +320,25 @@ jobs:
         run: python3 script/ci-run resources --github-env "$GITHUB_ENV"
       - name: Install repository Rust toolchain
         run: rustup show active-toolchain
+      - name: Locate portable Cargo sources outside the checkout
+        id: source-cache-directory
+        run: |
+          python3 - <<'PY'
+          import os
+          path = os.path.join(os.environ["RUNNER_TEMP"], "fork-ci-cache", "cargo-sources")
+          relative = os.path.relpath(path, os.environ["GITHUB_WORKSPACE"])
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"path={relative}\n")
+          PY
       - name: Restore shared portable Cargo sources
         id: source-cache
         uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         continue-on-error: true
         with:
-          # Identical relative paths keep archive contents and cache versions portable.
+          # Identical relative paths keep cache versions shared without adding checkout files.
           path: |
-            .ci-cache/cargo-sources/registry
-            .ci-cache/cargo-sources/git
+            ${{ steps.source-cache-directory.outputs.path }}/registry
+            ${{ steps.source-cache-directory.outputs.path }}/git
           enableCrossOsArchive: true
           key: fork-ci-source-v3-shared-${{ hashFiles('rust-toolchain.toml') }}-${{ hashFiles('Cargo.lock', 'extensions/test-extension/Cargo.lock') }}
           restore-keys: fork-ci-source-v3-shared-${{ hashFiles('rust-toolchain.toml') }}-
@@ -307,7 +346,7 @@ jobs:
         id: materialize-sources
         if: steps.source-cache.outputs.cache-matched-key != ''
         continue-on-error: true
-        run: python3 script/ci-source-cache restore
+        run: python3 script/ci-source-cache restore --cache-dir "$RUNNER_TEMP/fork-ci-cache/cargo-sources"
       - name: Restore legacy Cargo sources during cache migration
         id: legacy-source-cache
         if: steps.source-cache.outputs.cache-matched-key == '' || steps.materialize-sources.outcome == 'failure'
