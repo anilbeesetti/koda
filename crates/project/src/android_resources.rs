@@ -1,12 +1,11 @@
 use crate::{LocationLink, Project, ProjectPath};
 use anyhow::Result;
 use futures::StreamExt as _;
-use gpui::{Context, Entity, Task};
+use gpui::{AppContext as _, Context, Entity, Task};
 use language::{Buffer, Location, PointUtf16, ToOffset};
 use quick_xml::{Reader, events::Event};
 use regex::Regex;
 use std::{ops::Range, sync::LazyLock};
-use util::ResultExt;
 
 static NAMESPACE: LazyLock<Result<Regex, regex::Error>> =
     LazyLock::new(|| Regex::new(r#"\bnamespace\s*(?:=\s*|\(\s*)?["']([^"']+)["']"#));
@@ -453,7 +452,7 @@ impl Project {
                             && buffer.file().is_some_and(|file| {
                                 !file.disk_state().is_deleted()
                                     && file.worktree_id(cx) == worktree_id
-                                    && file.path() == path.as_ref()
+                                    && file.path().as_ref() == path.as_ref()
                                     && project.worktree_for_id(worktree_id, cx).is_some()
                             })
                     })
@@ -1065,7 +1064,7 @@ impl Project {
                                 buffer: buffer.clone(),
                                 snapshot: snapshot.clone(),
                                 path: declaration.path.clone(),
-                                namespace: declaration.symbol.namespace.clone(),
+                                namespace: Arc::from(declaration.symbol.namespace.as_str()),
                                 generated: declaration.generated,
                                 disk_text: None,
                                 disk_metadata: metadata,
@@ -2072,7 +2071,7 @@ fn observe_legacy_input(
                 && buffer.file().is_some_and(|file| {
                     !file.disk_state().is_deleted()
                         && file.worktree_id(cx) == worktree_id
-                        && file.path() == path.as_ref()
+                        && file.path().as_ref() == path.as_ref()
                         && project.worktree_for_id(worktree_id, cx).is_some()
                 });
             if !current {

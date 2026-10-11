@@ -4920,7 +4920,7 @@ impl Project {
         let position = position.to_point_utf16(buffer.read(cx));
         if let Some(resource) = self.android_query_is_resource(&buffer, position, cx) {
             return cx.spawn(async move |project, cx| {
-                ensure!(
+                anyhow::ensure!(
                     !resource.await?,
                     "Android resource rename requires a reviewed resource edit plan"
                 );
