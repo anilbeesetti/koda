@@ -13,6 +13,8 @@ pub mod project_tree;
 pub mod project_tree_adapter;
 pub mod project_tree_facts;
 pub mod project_view_preferences;
+#[cfg(any(test, feature = "test-support"))]
+pub mod reference_project_view;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
 pub mod kotlin;

@@ -9,6 +9,7 @@ license = "GPL-3.0-or-later"
 workspace = true
 
 [features]
+test-support = ["dep:sha2"]
 bundled-preview = ["dep:fs2", "dep:sha2", "dep:zip", "dep:flate2", "dep:reqwest", "dep:tar"]
 
 [lib]
@@ -23,6 +24,7 @@ fs2 = { version = "0.4.3", optional = true }
 regex.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+sha2 = { workspace = true, optional = true }
 tempfile.workspace = true
 which.workspace = true
 zip = { version = "0.6.6", default-features = false, features = ["deflate"], optional = true }
@@ -38,3 +40,6 @@ sha2 = { workspace = true, optional = true }
 tar = { version = "0.4.44", optional = true }
 tempfile.workspace = true
 zip = { version = "0.6.6", default-features = false, features = ["deflate"], optional = true }
+
+[dev-dependencies]
+sha2.workspace = true
