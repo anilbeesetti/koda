@@ -35,8 +35,10 @@ const FAILURE_MEMBERS: &[(&str, u64)] = &[
     ("package-command-failure.json", MAX_METADATA_BYTES),
 ];
 
-/// The first tool only constructs a new source directory. Its build is not
-/// exported or accepted; the workflow recompiles the export candidate here.
+/// Construct a fresh exact source directory from authenticated Git objects.
+/// The first workflow tool is bootstrap-only; its build is not exported or
+/// accepted. The second bound controller tool can construct a selected app tree.
+/// Optional paired native diagnostics preserve the original cold working tree.
 #[derive(Args)]
 pub struct PrepareCheckoutArgs {
     #[command(flatten)]
@@ -45,6 +47,10 @@ pub struct PrepareCheckoutArgs {
     output_dir: PathBuf,
     #[arg(long)]
     receipt: PathBuf,
+    #[arg(long, requires = "borrowed_physical_after")]
+    borrowed_physical_before: Option<PathBuf>,
+    #[arg(long, requires = "borrowed_physical_before")]
+    borrowed_physical_after: Option<PathBuf>,
 }
 
 pub(super) fn prepare_checkout(args: PrepareCheckoutArgs) -> Result<()> {
@@ -54,8 +60,22 @@ pub(super) fn prepare_checkout(args: PrepareCheckoutArgs) -> Result<()> {
             && args.receipt != args.output_dir,
         "checkout receipt must be a new sibling outside the constructed checkout"
     );
-    let receipt = super::package::prepare_owned_checkout(&args.source, &args.output_dir)?;
-    receipt.write_new_receipt(&args.receipt)
+    match (args.borrowed_physical_before, args.borrowed_physical_after) {
+        (Some(before), Some(after)) => super::package::prepare_checkout_with_borrowed_physical(
+            &args.source,
+            &args.output_dir,
+            &args.receipt,
+            &before,
+            &after,
+        ),
+        (None, None) => {
+            let receipt = super::package::prepare_owned_checkout(&args.source, &args.output_dir)?;
+            receipt.write_new_receipt(&args.receipt)
+        }
+        _ => anyhow::bail!(
+            "borrowed physical diagnostics require both before and after receipt paths"
+        ),
+    }
 }
 
 #[derive(Args)]
@@ -1142,5 +1162,116 @@ mod constructed_checkout_compile_binding_regression {
                 );
             }
         }
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod native_owned_source_workflow_regression {
+    use super::*;
+
+    #[test]
+    fn borrowed_physical_diagnostic_flags_require_both_new_sibling_receipts() {
+        use clap::Parser as _;
+        #[derive(clap::Parser)]
+        struct Cli {
+            #[command(flatten)]
+            args: PrepareCheckoutArgs,
+        }
+        let base = [
+            "test",
+            "--source",
+            "/borrowed",
+            "--sha",
+            "1111111111111111111111111111111111111111",
+            "--tree",
+            "2222222222222222222222222222222222222222",
+            "--output-dir",
+            "/owned",
+            "--receipt",
+            "/checkout.json",
+        ];
+        assert!(Cli::try_parse_from(base).is_ok());
+        let mut before_only = base.to_vec();
+        before_only.extend(["--borrowed-physical-before", "/before.json"]);
+        assert!(Cli::try_parse_from(&before_only).is_err());
+        let mut after_only = base.to_vec();
+        after_only.extend(["--borrowed-physical-after", "/after.json"]);
+        assert!(Cli::try_parse_from(&after_only).is_err());
+        before_only.extend(["--borrowed-physical-after", "/after.json"]);
+        let both = Cli::try_parse_from(before_only).unwrap();
+        assert_eq!(
+            both.args.borrowed_physical_before,
+            Some(PathBuf::from("/before.json"))
+        );
+        assert_eq!(
+            both.args.borrowed_physical_after,
+            Some(PathBuf::from("/after.json"))
+        );
+    }
+
+    #[test]
+    fn native_workflow_binds_second_controller_and_routes_every_application_operation_to_owned_source()
+     {
+        let workflow = include_str!("../../../../../.github/workflows/fork_ci.yml");
+        let native = workflow
+            .split("  exact_source_native_artifact:\n")
+            .nth(1)
+            .unwrap();
+        let ordered = [
+            "id: native_constructor_compile",
+            "id: native_controller_checkout",
+            "id: controller_tool",
+            "id: native_controller_export",
+            "id: native_source_checkout",
+            "id: native_source_verify",
+            "Select unchanged bounded CI concurrency",
+            "id: build",
+            "id: package",
+        ];
+        let positions: Vec<_> = ordered
+            .iter()
+            .map(|name| native.find(name).unwrap())
+            .collect();
+        assert!(positions.windows(2).all(|pair| pair[0] < pair[1]));
+        assert_eq!(native.matches("cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics").count(), 2);
+        assert_eq!(
+            native.matches("CARGO_PROFILE_DEV_OPT_LEVEL: 's'").count(),
+            3
+        );
+        assert_eq!(
+            native.matches("CARGO_PROFILE_DEV_STRIP: symbols").count(),
+            3
+        );
+        let job_environment = native.split("    steps:\n").next().unwrap();
+        assert!(!job_environment.contains("CARGO_PROFILE_DEV_OPT_LEVEL"));
+        assert!(!job_environment.contains("CARGO_PROFILE_DEV_STRIP"));
+        assert!(native.contains("--source \"$RUNNER_TEMP/owned-native-controller\" --sha \"$NATIVE_CONTROLLER_SHA\" --tree \"$CONTROLLER_TREE\"\n          --cargo-build-log \"$RUNNER_TEMP/native-app-controller-build.jsonl\""));
+        assert_eq!(
+            native
+                .matches("--source \"$GITHUB_WORKSPACE/source-objects\"")
+                .count(),
+            1
+        );
+        assert!(!native.contains("working-directory: source"));
+        assert!(!native.contains("--source \"$GITHUB_WORKSPACE/source\""));
+        assert!(native.contains(
+            "--borrowed-physical-before \"$RUNNER_TEMP/native-source-borrowed-before.json\""
+        ));
+        assert!(native.contains(
+            "--borrowed-physical-after \"$RUNNER_TEMP/native-source-borrowed-after.json\""
+        ));
+        assert_eq!(native.matches("--source \"$RUNNER_TEMP/owned-native-source\" --sha \"$SOURCE_SHA\" --tree \"$SOURCE_TREE\"").count(), 4);
+        assert_eq!(
+            native
+                .matches("--request \"$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json\"")
+                .count(),
+            3
+        );
+        assert!(native.contains("steps.native_controller_export.outcome == 'success' && steps.native_source_checkout.outcome == 'success'"));
+        assert!(native.contains("--cache-dir \"$GITHUB_WORKSPACE/.ci-cache/cargo-sources\""));
+        assert!(!native.contains("hashFiles('source/"));
+        assert!(native.contains("${{ runner.temp }}/native-source-borrowed-before.json"));
+        assert!(native.contains("${{ runner.temp }}/native-source-borrowed-after.json"));
+        assert!(native.contains("${{ runner.temp }}/owned-native-source-checkout.json"));
     }
 }

@@ -1449,6 +1449,15 @@ pub(super) fn prepare_owned_checkout(
     source: &SourceArgs,
     destination: &Path,
 ) -> Result<OwnedCheckoutReceipt> {
+    prepare_owned_checkout_with_receipt_reserve(source, destination, None)
+}
+
+#[cfg(target_os = "linux")]
+fn prepare_owned_checkout_with_receipt_reserve(
+    source: &SourceArgs,
+    destination: &Path,
+    receipts: Option<&BorrowedPhysicalGuard>,
+) -> Result<OwnedCheckoutReceipt> {
     use std::path::Component;
     let absolute_confined = |path: &Path| {
         path.is_absolute()
@@ -1473,7 +1482,20 @@ pub(super) fn prepare_owned_checkout(
     let parent = destination.parent().context("checkout parent absent")?;
     let (manifest, object_observation) = observe(source, Authentication::GitObjects)?;
     let git = producer::git_plan(source)?;
-    let (block, available, available_inodes) = super::filesystem_space(parent)?;
+    let (block, available, available_inodes) = match receipts {
+        Some(guard) => {
+            ensure!(
+                parent == guard.output_parent.path && guard.pending_receipts.get() == 1,
+                "checkout receipt reservation parent or pending state differs"
+            );
+            guard.receipt_filesystem_space()?
+        }
+        None => super::filesystem_space(parent)?,
+    };
+    let (receipt_bytes, receipt_inodes) = match receipts {
+        Some(guard) => guard.pending_receipt_reserve(block)?,
+        None => (0, 0),
+    };
     ensure!(
         block > 0 && block <= 1024 * 1024,
         "invalid checkout block size"
@@ -1510,6 +1532,7 @@ pub(super) fn prepare_owned_checkout(
         .checked_add(git.objects.len() as u64)
         .and_then(|n| n.checked_add(directories.len() as u64))
         .and_then(|n| n.checked_add(37))
+        .and_then(|n| n.checked_add(receipt_inodes))
         .context("checkout inode bound overflow")?;
     ensure!(
         required_inodes <= MAX_PAYLOAD_ENTRIES as u64,
@@ -1522,6 +1545,7 @@ pub(super) fn prepare_owned_checkout(
         .and_then(|n| n.checked_add(index_upper))
         .and_then(|n| n.checked_add(MAX_METADATA_BYTES))
         .and_then(|n| n.checked_add(64 * 1024 * 1024))
+        .and_then(|n| n.checked_add(receipt_bytes))
         .and_then(|n| n.checked_add(super::ORIGINAL_FLOOR))
         .context("checkout disk preflight overflow")?;
     ensure!(
@@ -4555,5 +4579,918 @@ mod ancestor_directory_capability_regression {
             physical(&fs::symlink_metadata(&target).unwrap()).unwrap(),
             target_before
         );
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn borrowed_receipt_reserve(block: u64, count: u64) -> Result<(u64, u64)> {
+    ensure!(
+        block > 0 && block <= 1024 * 1024 && (1..=2).contains(&count),
+        "invalid borrowed receipt block size or pending count"
+    );
+    let bytes = MAX_MANIFEST_BYTES
+        .checked_mul(count)
+        .and_then(|bytes| {
+            block
+                .checked_mul(count)
+                .and_then(|padding| bytes.checked_add(padding))
+        })
+        .context("borrowed receipt reserve overflow")?;
+    Ok((bytes, count))
+}
+
+#[cfg(target_os = "linux")]
+fn require_borrowed_receipt_capacity(
+    reserve: (u64, u64),
+    available: u64,
+    available_inodes: u64,
+) -> Result<()> {
+    let bytes = reserve
+        .0
+        .checked_add(super::ORIGINAL_FLOOR)
+        .context("borrowed receipt floor overflow")?;
+    // Keep the existing 32-inode headroom in addition to both new diagnostics.
+    let inodes = reserve
+        .1
+        .checked_add(32)
+        .context("borrowed receipt inode reserve overflow")?;
+    ensure!(
+        available >= bytes && available_inodes >= inodes,
+        "borrowed receipt disk/inode reserve does not fit before creation"
+    );
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+struct BorrowedPhysicalEntry {
+    path: String,
+    identity: Option<Physical13>,
+}
+
+#[cfg(target_os = "linux")]
+struct BorrowedPhysicalGuard {
+    source: SourceArgs,
+    root: File,
+    root_identity: Physical13,
+    paths: Vec<String>,
+    before: Vec<BorrowedPhysicalEntry>,
+    canonical_manifest: FileDigest,
+    output_parent: TrustedCreationParent,
+    pending_receipts: std::cell::Cell<u64>,
+    #[cfg(test)]
+    receipt_capacity_ceiling: Option<(u64, u64)>,
+}
+
+#[cfg(target_os = "linux")]
+fn borrowed_metadata_at(root: &File, path: &str) -> Result<Option<Physical13>> {
+    use std::os::fd::{AsRawFd as _, FromRawFd as _};
+    if path.is_empty() {
+        return Ok(Some(physical(&root.metadata()?)?));
+    }
+    payload_relative(path)?;
+    let parts: Vec<_> = path.split('/').collect();
+    let mut directory = root.try_clone()?;
+    for (index, part) in parts.iter().enumerate() {
+        let name = std::ffi::CString::new(*part)?;
+        let mut flags = libc::O_PATH | libc::O_NOFOLLOW | libc::O_CLOEXEC;
+        if index + 1 != parts.len() {
+            flags |= libc::O_DIRECTORY;
+        }
+        // SAFETY: retained directory FD and terminated confined component.
+        // O_PATH observes metadata without reading regular files or cold links;
+        // intermediate symlinks are refused, and no inode is claimed as owned.
+        let fd = unsafe { libc::openat(directory.as_raw_fd(), name.as_ptr(), flags) };
+        if fd < 0 {
+            let error = std::io::Error::last_os_error();
+            if error.raw_os_error() == Some(libc::ENOENT) {
+                return Ok(None);
+            }
+            return Err(error).with_context(|| format!("borrowed metadata component: {path}"));
+        }
+        // SAFETY: successful openat transferred a new descriptor.
+        directory = unsafe { File::from_raw_fd(fd) };
+    }
+    Ok(Some(physical(&directory.metadata()?)?))
+}
+
+#[cfg(target_os = "linux")]
+impl BorrowedPhysicalGuard {
+    fn capture(source: &SourceArgs, output_parent: TrustedCreationParent) -> Result<Self> {
+        let root = open_absolute_directory(&source.source)?;
+        let root_identity = physical(&root.metadata()?)?;
+        let (manifest, observation) = observe(source, Authentication::GitObjects)?;
+        let mut paths = BTreeSet::new();
+        let mut path_bytes = 0_u64;
+        let mut insert = |path: String| -> Result<()> {
+            if !paths.contains(&path) {
+                ensure!(
+                    paths.len() < super::MAX_ENTRIES * 2 + 1,
+                    "borrowed metadata entry budget exhausted"
+                );
+                let next = path_bytes
+                    .checked_add(path.len() as u64)
+                    .context("borrowed metadata path byte overflow")?;
+                ensure!(
+                    next <= MAX_MANIFEST_BYTES / 4,
+                    "borrowed metadata path byte budget exhausted"
+                );
+                paths.insert(path);
+                path_bytes = next;
+            }
+            Ok(())
+        };
+        insert(String::new())?;
+        for entry in &manifest.entries {
+            insert(entry.path.clone())?;
+            let mut parent = Path::new(&entry.path).parent();
+            while let Some(path) = parent.filter(|path| !path.as_os_str().is_empty()) {
+                insert(
+                    path.to_str()
+                        .context("non-UTF8 borrowed parent")?
+                        .to_owned(),
+                )?;
+                parent = path.parent();
+            }
+        }
+        let mut guard = Self {
+            source: source.clone(),
+            root,
+            root_identity,
+            paths: paths.into_iter().collect(),
+            before: Vec::new(),
+            canonical_manifest: observation.canonical_manifest,
+            output_parent,
+            pending_receipts: std::cell::Cell::new(2),
+            #[cfg(test)]
+            receipt_capacity_ceiling: None,
+        };
+        let before = guard.snapshot()?;
+        ensure!(
+            before == guard.snapshot()?,
+            "borrowed metadata changed during initial capture"
+        );
+        guard.before = before;
+        Ok(guard)
+    }
+
+    fn require_root(&self) -> Result<()> {
+        ensure!(
+            self.root_identity == physical(&self.root.metadata()?)?
+                && self.root_identity
+                    == physical(&open_absolute_directory(&self.source.source)?.metadata()?)?,
+            "cold borrowed source root changed"
+        );
+        Ok(())
+    }
+
+    fn snapshot(&self) -> Result<Vec<BorrowedPhysicalEntry>> {
+        self.require_root()?;
+        let entries = self
+            .paths
+            .iter()
+            .map(|path| {
+                Ok(BorrowedPhysicalEntry {
+                    path: path.clone(),
+                    identity: borrowed_metadata_at(&self.root, path)?,
+                })
+            })
+            .collect::<Result<Vec<_>>>()?;
+        self.require_root()?;
+        Ok(entries)
+    }
+
+    fn receipt_filesystem_space(&self) -> Result<(u64, u64, u64)> {
+        self.output_parent.require_current()?;
+        // Every receipt is a sibling below this retained protected parent.
+        // Sample its filesystem capability, never the borrowed source's volume
+        // or a public pathname that could refer to a different filesystem.
+        let (block, available, available_inodes) =
+            super::filesystem_space(&descriptor_path(&self.output_parent.file))?;
+        self.output_parent.require_current()?;
+        #[cfg(test)]
+        let (available, available_inodes) = match self.receipt_capacity_ceiling {
+            Some((bytes, inodes)) => (available.min(bytes), available_inodes.min(inodes)),
+            None => (available, available_inodes),
+        };
+        Ok((block, available, available_inodes))
+    }
+
+    fn pending_receipt_reserve(&self, block: u64) -> Result<(u64, u64)> {
+        borrowed_receipt_reserve(block, self.pending_receipts.get())
+    }
+
+    fn require_new_receipt_names(&self, paths: &[&Path]) -> Result<()> {
+        use std::os::{fd::AsRawFd as _, unix::ffi::OsStrExt as _};
+        self.output_parent.require_current()?;
+        for path in paths {
+            ensure!(
+                path.parent() == Some(self.output_parent.path.as_path()),
+                "borrowed receipt parent differs"
+            );
+            let name = std::ffi::CString::new(
+                path.file_name()
+                    .context("borrowed receipt name absent")?
+                    .as_bytes(),
+            )?;
+            let mut metadata = std::mem::MaybeUninit::<libc::stat>::uninit();
+            // SAFETY: retained parent and terminated one-component name, with
+            // correctly sized output. No link is followed or read. O_EXCL in
+            // the actual writer remains authoritative if a name later appears.
+            let status = unsafe {
+                libc::fstatat(
+                    self.output_parent.file.as_raw_fd(),
+                    name.as_ptr(),
+                    metadata.as_mut_ptr(),
+                    libc::AT_SYMLINK_NOFOLLOW,
+                )
+            };
+            if status == 0 {
+                bail!("borrowed receipt output must be new");
+            }
+            let error = std::io::Error::last_os_error();
+            ensure!(
+                error.raw_os_error() == Some(libc::ENOENT),
+                "borrowed receipt output lookup failed: {error}"
+            );
+        }
+        self.output_parent.require_current()?;
+        Ok(())
+    }
+
+    fn write_capture(
+        &self,
+        path: &Path,
+        state: &'static str,
+        entries: Option<&[BorrowedPhysicalEntry]>,
+        complete_inverse_equal: bool,
+        actual_error: Option<String>,
+    ) -> Result<()> {
+        use std::os::unix::ffi::OsStrExt as _;
+        #[derive(Serialize)]
+        struct Receipt<'a> {
+            schema_version: u32,
+            state: &'static str,
+            source_commit: &'a str,
+            source_tree: &'a str,
+            canonical_manifest: &'a FileDigest,
+            tracked_and_parent_metadata: Option<&'a [BorrowedPhysicalEntry]>,
+            complete_original_cold_full13_inverse_equal: bool,
+            actual_error: Option<String>,
+            borrowed_bytes_or_link_targets_read: bool,
+            missing_or_sparse_states_preserved: bool,
+            runtime_test_or_reference_credit: u32,
+            closure: &'static str,
+        }
+        ensure!(
+            path.parent() == Some(self.output_parent.path.as_path()),
+            "borrowed receipt parent differs"
+        );
+        let bytes = super::canonical(
+            &Receipt {
+                schema_version: 1,
+                state,
+                source_commit: &self.source.sha,
+                source_tree: &self.source.tree,
+                canonical_manifest: &self.canonical_manifest,
+                tracked_and_parent_metadata: entries,
+                complete_original_cold_full13_inverse_equal: complete_inverse_equal,
+                actual_error,
+                borrowed_bytes_or_link_targets_read: false,
+                missing_or_sparse_states_preserved: complete_inverse_equal,
+                runtime_test_or_reference_credit: 0,
+                closure: "CLOSED0",
+            },
+            MAX_MANIFEST_BYTES,
+        )?;
+        let (block, available, available_inodes) = self.receipt_filesystem_space()?;
+        let reserve = self.pending_receipt_reserve(block)?;
+        require_borrowed_receipt_capacity(reserve, available, available_inodes)?;
+        self.output_parent.require_current()?;
+        let name = std::ffi::CString::new(
+            path.file_name()
+                .context("borrowed receipt name absent")?
+                .as_bytes(),
+        )?;
+        let mut output = create_file_at(&self.output_parent.file, &name)?;
+        output.write_all(&bytes)?;
+        output.sync_all()?;
+        self.pending_receipts.set(self.pending_receipts.get() - 1);
+        self.output_parent.require_current()?;
+        Ok(())
+    }
+
+    fn write_before(&self, path: &Path) -> Result<()> {
+        self.require_root()?;
+        self.write_capture(
+            path,
+            "ORIGINAL_COLD_BORROWED_METADATA_BEFORE_OWNED_CONSTRUCTION",
+            Some(&self.before),
+            false,
+            None,
+        )?;
+        ensure!(
+            self.before == self.snapshot()?,
+            "cold borrowed source changed before construction"
+        );
+        Ok(())
+    }
+
+    fn finish(&self, path: &Path) -> Result<()> {
+        let observation = self.snapshot().and_then(|after| {
+            ensure!(
+                after == self.snapshot()?,
+                "borrowed metadata changed during final capture"
+            );
+            Ok(after)
+        });
+        match observation {
+            Ok(after) => {
+                let equal = self.before == after;
+                self.write_capture(
+                    path,
+                    "ACTUAL_BORROWED_METADATA_AFTER_OWNED_CONSTRUCTION",
+                    Some(&after),
+                    equal,
+                    None,
+                )?;
+                ensure!(
+                    equal,
+                    "owned construction changed the original cold borrowed full13 or missing state"
+                );
+                Ok(())
+            }
+            Err(error) => {
+                self.write_capture(
+                    path,
+                    "BORROWED_METADATA_AFTER_CAPTURE_FAILED_ZERO_CREDIT",
+                    None,
+                    false,
+                    Some(format!("{error:#}")),
+                )?;
+                Err(error)
+            }
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn prepare_checkout_with_guard(
+    source: &SourceArgs,
+    destination: &Path,
+    receipt: &Path,
+    before: &Path,
+    after: &Path,
+    guard: &BorrowedPhysicalGuard,
+) -> Result<()> {
+    // Admit both capped diagnostics before creating either inode. An already
+    // borrowed receipt name is refused without overwriting it or constructing
+    // the checkout. The retained destination parent is shared by all outputs.
+    guard.require_new_receipt_names(&[receipt, before, after])?;
+    guard.write_before(before)?;
+    let constructed = prepare_owned_checkout_with_receipt_reserve(source, destination, Some(guard))
+        .and_then(|checkout| checkout.write_new_receipt(receipt));
+    // Remaining AFTER capacity was included in construction's admission, even
+    // if it failed before creating the checkout. Recheck actual free space on
+    // every receipt write; unrelated disk use cannot authorize spending floor.
+    let inverse = guard.finish(after);
+    match (constructed, inverse) {
+        (Ok(()), Ok(())) => Ok(()),
+        (Err(error), Ok(())) | (Ok(()), Err(error)) => Err(error),
+        (Err(error), Err(inverse)) => {
+            Err(error.context(format!("borrowed full13 inverse also failed: {inverse:#}")))
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+/// Optional native-job diagnostics, separate from the portable canonical source
+/// manifest. The borrowed working tree is only inspected through O_PATH; regular
+/// bytes and symlink targets come from Git objects in the unchanged constructor.
+/// The retained protected output parent has the same documented effective-user
+/// trust boundary as OwnedCheckout. No borrowed inode becomes an owned checkout.
+pub(super) fn prepare_checkout_with_borrowed_physical(
+    source: &SourceArgs,
+    destination: &Path,
+    receipt: &Path,
+    before: &Path,
+    after: &Path,
+) -> Result<()> {
+    use std::path::Component;
+    let confined = |path: &Path| {
+        path.is_absolute()
+            && path
+                .components()
+                .all(|part| matches!(part, Component::RootDir | Component::Normal(_)))
+    };
+    ensure!(
+        confined(&source.source)
+            && confined(destination)
+            && !destination.starts_with(&source.source)
+            && !source.source.starts_with(destination)
+            && [receipt, before, after].iter().all(|path| confined(path)
+                && path.parent() == destination.parent()
+                && !path.starts_with(&source.source)
+                && *path != destination)
+            && receipt != before
+            && receipt != after
+            && before != after,
+        "borrowed physical receipts must be distinct new confined siblings outside the source and checkout"
+    );
+    let parent =
+        TrustedCreationParent::open(destination.parent().context("checkout parent absent")?)?;
+    let guard = BorrowedPhysicalGuard::capture(source, parent)?;
+    prepare_checkout_with_guard(source, destination, receipt, before, after, &guard)
+}
+
+#[cfg(not(target_os = "linux"))]
+pub(super) fn prepare_checkout_with_borrowed_physical(
+    _: &SourceArgs,
+    _: &Path,
+    _: &Path,
+    _: &Path,
+    _: &Path,
+) -> Result<()> {
+    bail!("cold borrowed metadata guard requires Linux")
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod native_owned_source_regression {
+    use super::*;
+
+    fn cold_link(source: &SourceArgs) -> Physical13 {
+        use std::os::unix::ffi::OsStrExt as _;
+        let path = source.source.join("AGENTS.md");
+        fs::remove_file(&path).unwrap();
+        std::os::unix::fs::symlink("README.md", &path).unwrap();
+        let name = std::ffi::CString::new(path.as_os_str().as_bytes()).unwrap();
+        let times = [
+            libc::timespec {
+                tv_sec: 1,
+                tv_nsec: 0,
+            },
+            libc::timespec {
+                tv_sec: 2,
+                tv_nsec: 0,
+            },
+        ];
+        // SAFETY: this fixture owns the newly created link. Initialize the cold
+        // precondition before observation; never restore a captured timestamp.
+        let result = unsafe {
+            libc::utimensat(
+                libc::AT_FDCWD,
+                name.as_ptr(),
+                times.as_ptr(),
+                libc::AT_SYMLINK_NOFOLLOW,
+            )
+        };
+        ensure!(result == 0, "cold fixture initialization failed").unwrap();
+        physical(&fs::symlink_metadata(path).unwrap()).unwrap()
+    }
+
+    fn receipt_json(path: &Path) -> serde_json::Value {
+        serde_json::from_slice(&read_bounded(path, MAX_MANIFEST_BYTES).unwrap().0).unwrap()
+    }
+
+    #[test]
+    fn selected_source_independent_of_controller_preserves_cold_full13_and_exact_manifest() {
+        let (_controller_directory, controller) = super::super::tests::fixture();
+        let (_borrowed_directory, mut selected) = super::super::tests::fixture();
+        fs::write(
+            selected.source.join("native-source-marker"),
+            b"different selected application tree\n",
+        )
+        .unwrap();
+        command(
+            Some(&selected.source),
+            "git",
+            &["add", "native-source-marker"],
+            4096,
+        )
+        .unwrap();
+        command(
+            Some(&selected.source),
+            "git",
+            &[
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-q",
+                "--no-gpg-sign",
+                "-m",
+                "independent application",
+            ],
+            4096,
+        )
+        .unwrap();
+        selected.sha = String::from_utf8(
+            command(Some(&selected.source), "git", &["rev-parse", "HEAD"], 1024).unwrap(),
+        )
+        .unwrap()
+        .trim()
+        .to_owned();
+        selected.tree = String::from_utf8(
+            command(
+                Some(&selected.source),
+                "git",
+                &["rev-parse", "HEAD^{tree}"],
+                1024,
+            )
+            .unwrap(),
+        )
+        .unwrap()
+        .trim()
+        .to_owned();
+        assert_ne!(selected.sha, controller.sha);
+        assert_ne!(selected.tree, controller.tree);
+        let cold = cold_link(&selected);
+        let (expected, expected_observation) =
+            observe(&selected, Authentication::GitObjects).unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let destination = output.path().join("owned-source");
+        let checkout_receipt = output.path().join("checkout.json");
+        let before_path = output.path().join("borrowed-before.json");
+        let after_path = output.path().join("borrowed-after.json");
+        prepare_checkout_with_borrowed_physical(
+            &selected,
+            &destination,
+            &checkout_receipt,
+            &before_path,
+            &after_path,
+        )
+        .unwrap();
+        let before = receipt_json(&before_path);
+        let after = receipt_json(&after_path);
+        assert_eq!(
+            before["tracked_and_parent_metadata"],
+            after["tracked_and_parent_metadata"]
+        );
+        assert_eq!(after["complete_original_cold_full13_inverse_equal"], true);
+        assert_eq!(after["borrowed_bytes_or_link_targets_read"], false);
+        assert_eq!(after["source_commit"], selected.sha);
+        assert_eq!(after["source_tree"], selected.tree);
+        assert_eq!(
+            after["canonical_manifest"],
+            serde_json::to_value(expected_observation.canonical_manifest).unwrap()
+        );
+        assert_eq!(
+            physical(&fs::symlink_metadata(selected.source.join("AGENTS.md")).unwrap()).unwrap(),
+            cold
+        );
+        let actual = observe(
+            &SourceArgs {
+                source: destination.clone(),
+                sha: selected.sha.clone(),
+                tree: selected.tree.clone(),
+            },
+            Authentication::Materialized,
+        )
+        .unwrap();
+        assert_eq!(actual.0, expected);
+        let constructed = receipt_json(&checkout_receipt);
+        assert_eq!(constructed["source_commit"], selected.sha);
+        assert_eq!(constructed["source_tree"], selected.tree);
+        assert_eq!(constructed["runtime_test_or_reference_credit"], 0);
+        assert!(constructed["initialized_new_symlinks"].as_u64().unwrap() > 0);
+    }
+
+    #[test]
+    fn cold_borrowed_link_atime_change_fails_and_retains_both_original_and_actual_metadata() {
+        let (_borrowed_directory, source) = super::super::tests::fixture();
+        let cold = cold_link(&source);
+        let output = tempfile::tempdir().unwrap();
+        let before_path = output.path().join("before.json");
+        let after_path = output.path().join("after.json");
+        let guard = BorrowedPhysicalGuard::capture(
+            &source,
+            TrustedCreationParent::open(output.path()).unwrap(),
+        )
+        .unwrap();
+        guard.write_before(&before_path).unwrap();
+        let original_receipt = digest_file(&before_path, MAX_MANIFEST_BYTES).unwrap();
+        assert_eq!(
+            physical(&fs::symlink_metadata(source.source.join("AGENTS.md")).unwrap()).unwrap(),
+            cold
+        );
+        assert_eq!(
+            fs::read_link(source.source.join("AGENTS.md")).unwrap(),
+            Path::new("README.md")
+        );
+        let changed =
+            physical(&fs::symlink_metadata(source.source.join("AGENTS.md")).unwrap()).unwrap();
+        assert_eq!(cold.changed_fields(&changed), ["atime_ns"]);
+        assert!(guard.finish(&after_path).is_err());
+        assert_eq!(
+            digest_file(&before_path, MAX_MANIFEST_BYTES).unwrap(),
+            original_receipt
+        );
+        let before = receipt_json(&before_path);
+        let after = receipt_json(&after_path);
+        assert_ne!(
+            before["tracked_and_parent_metadata"],
+            after["tracked_and_parent_metadata"]
+        );
+        assert_eq!(after["complete_original_cold_full13_inverse_equal"], false);
+        assert_eq!(after["runtime_test_or_reference_credit"], 0);
+        assert_eq!(
+            physical(&fs::symlink_metadata(source.source.join("AGENTS.md")).unwrap()).unwrap(),
+            changed
+        );
+    }
+
+    #[test]
+    fn missing_borrowed_tracked_file_is_preserved_and_materialized_only_in_owned_destination() {
+        let (_borrowed_directory, source) = super::super::tests::fixture();
+        cold_link(&source);
+        fs::remove_file(source.source.join("README.md")).unwrap();
+        let output = tempfile::tempdir().unwrap();
+        let destination = output.path().join("owned");
+        let before_path = output.path().join("before.json");
+        let after_path = output.path().join("after.json");
+        prepare_checkout_with_borrowed_physical(
+            &source,
+            &destination,
+            &output.path().join("checkout.json"),
+            &before_path,
+            &after_path,
+        )
+        .unwrap();
+        let before = receipt_json(&before_path);
+        let after = receipt_json(&after_path);
+        let missing = before["tracked_and_parent_metadata"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["path"] == "README.md")
+            .unwrap();
+        assert!(missing["identity"].is_null());
+        assert_eq!(
+            before["tracked_and_parent_metadata"],
+            after["tracked_and_parent_metadata"]
+        );
+        assert_eq!(after["missing_or_sparse_states_preserved"], true);
+        assert!(!source.source.join("README.md").exists());
+        assert!(destination.join("README.md").exists());
+        assert!(
+            observe(
+                &SourceArgs {
+                    source: destination,
+                    sha: source.sha,
+                    tree: source.tree
+                },
+                Authentication::Materialized
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn existing_destination_constructor_failure_still_retains_strict_borrowed_inverse() {
+        let (_borrowed_directory, source) = super::super::tests::fixture();
+        cold_link(&source);
+        let output = tempfile::tempdir().unwrap();
+        let destination = output.path().join("existing");
+        fs::create_dir(&destination).unwrap();
+        fs::write(
+            destination.join("sentinel"),
+            b"borrowed tree remains intact",
+        )
+        .unwrap();
+        let sentinel = digest_file(&destination.join("sentinel"), 4096).unwrap();
+        let before_path = output.path().join("before.json");
+        let after_path = output.path().join("after.json");
+        let checkout_receipt = output.path().join("checkout.json");
+        assert!(
+            prepare_checkout_with_borrowed_physical(
+                &source,
+                &destination,
+                &checkout_receipt,
+                &before_path,
+                &after_path
+            )
+            .is_err()
+        );
+        assert_eq!(
+            digest_file(&destination.join("sentinel"), 4096).unwrap(),
+            sentinel
+        );
+        assert!(!checkout_receipt.exists());
+        assert_eq!(
+            receipt_json(&before_path)["tracked_and_parent_metadata"],
+            receipt_json(&after_path)["tracked_and_parent_metadata"]
+        );
+        assert_eq!(
+            receipt_json(&after_path)["complete_original_cold_full13_inverse_equal"],
+            true
+        );
+        assert_eq!(
+            receipt_json(&after_path)["runtime_test_or_reference_credit"],
+            0
+        );
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod borrowed_receipt_capacity_regression {
+    use super::*;
+
+    fn guard_with_ceiling(
+        source: &SourceArgs,
+        parent: &Path,
+        bytes: u64,
+        inodes: u64,
+    ) -> BorrowedPhysicalGuard {
+        let mut guard =
+            BorrowedPhysicalGuard::capture(source, TrustedCreationParent::open(parent).unwrap())
+                .unwrap();
+        // Test-only limits reduce the real filesystem sample, never increase it.
+        // This makes refusal deterministic without filling disks or changing a
+        // global environment, filesystem, cache, or other test's budget.
+        guard.receipt_capacity_ceiling = Some((bytes, inodes));
+        guard
+    }
+
+    #[test]
+    fn both_receipts_require_exact_caps_padding_floor_and_inode_headroom() {
+        let reserve = borrowed_receipt_reserve(4096, 2).unwrap();
+        assert_eq!(reserve, (2 * MAX_MANIFEST_BYTES + 8192, 2));
+        let required = super::super::ORIGINAL_FLOOR + reserve.0;
+        assert!(require_borrowed_receipt_capacity(reserve, required, 34).is_ok());
+        assert!(require_borrowed_receipt_capacity(reserve, required - 1, 34).is_err());
+        assert!(require_borrowed_receipt_capacity(reserve, required, 33).is_err());
+        assert!(require_borrowed_receipt_capacity(reserve, required + 1, 35).is_ok());
+        assert!(borrowed_receipt_reserve(0, 2).is_err());
+        assert!(borrowed_receipt_reserve(1024 * 1024 + 1, 2).is_err());
+        assert!(borrowed_receipt_reserve(4096, 0).is_err());
+        assert!(borrowed_receipt_reserve(4096, 3).is_err());
+        assert!(require_borrowed_receipt_capacity((u64::MAX, 2), u64::MAX, 34).is_err());
+        assert!(require_borrowed_receipt_capacity((1, u64::MAX), u64::MAX, u64::MAX).is_err());
+    }
+
+    #[test]
+    fn below_both_receipt_space_creates_no_diagnostic_or_checkout_inode() {
+        let (_borrowed, source) = super::super::tests::fixture();
+        let output = tempfile::tempdir().unwrap();
+        let guard = guard_with_ceiling(
+            &source,
+            output.path(),
+            super::super::ORIGINAL_FLOOR + MAX_MANIFEST_BYTES,
+            u64::MAX,
+        );
+        let original = guard.snapshot().unwrap();
+        let before = output.path().join("before.json");
+        let after = output.path().join("after.json");
+        let receipt = output.path().join("checkout.json");
+        let destination = output.path().join("owned");
+        let error =
+            prepare_checkout_with_guard(&source, &destination, &receipt, &before, &after, &guard)
+                .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("borrowed receipt disk/inode reserve")
+        );
+        assert_eq!(guard.pending_receipts.get(), 2);
+        assert_eq!(guard.snapshot().unwrap(), original);
+        assert!(!before.exists());
+        assert!(!after.exists());
+        assert!(!receipt.exists());
+        assert!(!destination.exists());
+    }
+
+    #[test]
+    fn insufficient_receipt_inodes_creates_no_diagnostic_or_checkout_inode() {
+        let (_borrowed, source) = super::super::tests::fixture();
+        let output = tempfile::tempdir().unwrap();
+        let guard = guard_with_ceiling(&source, output.path(), u64::MAX, 33);
+        let original = guard.snapshot().unwrap();
+        let before = output.path().join("before.json");
+        let after = output.path().join("after.json");
+        let receipt = output.path().join("checkout.json");
+        let destination = output.path().join("owned");
+        let error =
+            prepare_checkout_with_guard(&source, &destination, &receipt, &before, &after, &guard)
+                .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("borrowed receipt disk/inode reserve")
+        );
+        assert_eq!(guard.pending_receipts.get(), 2);
+        assert_eq!(guard.snapshot().unwrap(), original);
+        assert!(!before.exists());
+        assert!(!after.exists());
+        assert!(!receipt.exists());
+        assert!(!destination.exists());
+    }
+
+    #[test]
+    fn admitted_receipts_survive_constructor_disk_failure_without_spending_floor() {
+        let (_borrowed, source) = super::super::tests::fixture();
+        let output = tempfile::tempdir().unwrap();
+        let mut guard = BorrowedPhysicalGuard::capture(
+            &source,
+            TrustedCreationParent::open(output.path()).unwrap(),
+        )
+        .unwrap();
+        let (block, _, _) = guard.receipt_filesystem_space().unwrap();
+        let reserve = borrowed_receipt_reserve(block, 2).unwrap();
+        let initial = super::super::ORIGINAL_FLOOR + reserve.0;
+        guard.receipt_capacity_ceiling = Some((initial, u64::MAX));
+        let original = guard.snapshot().unwrap();
+        let before = output.path().join("before.json");
+        let after = output.path().join("after.json");
+        let receipt = output.path().join("checkout.json");
+        let destination = output.path().join("owned");
+        let error =
+            prepare_checkout_with_guard(&source, &destination, &receipt, &before, &after, &guard)
+                .unwrap_err();
+        assert!(format!("{error:#}").contains("owned checkout disk/inode reserve"));
+        assert_eq!(guard.pending_receipts.get(), 0);
+        assert!(!receipt.exists());
+        assert!(!destination.exists());
+        let before_bytes = read_bounded(&before, MAX_MANIFEST_BYTES).unwrap().0;
+        let after_bytes = read_bounded(&after, MAX_MANIFEST_BYTES).unwrap().0;
+        let before_json: serde_json::Value = serde_json::from_slice(&before_bytes).unwrap();
+        let after_json: serde_json::Value = serde_json::from_slice(&after_bytes).unwrap();
+        assert_eq!(
+            before_json["tracked_and_parent_metadata"],
+            after_json["tracked_and_parent_metadata"]
+        );
+        assert_eq!(
+            after_json["complete_original_cold_full13_inverse_equal"],
+            true
+        );
+        assert_eq!(after_json["runtime_test_or_reference_credit"], 0);
+        assert_eq!(guard.snapshot().unwrap(), original);
+        let consumed = before_bytes.len() as u64 + after_bytes.len() as u64 + 2 * block;
+        assert!(initial - consumed >= super::super::ORIGINAL_FLOOR);
+        assert!(
+            guard
+                .write_before(&output.path().join("third.json"))
+                .is_err()
+        );
+        assert!(!output.path().join("third.json").exists());
+    }
+
+    #[test]
+    fn preexisting_after_receipt_is_refused_without_overwrite_or_other_outputs() {
+        let (_borrowed, source) = super::super::tests::fixture();
+        let output = tempfile::tempdir().unwrap();
+        let after = output.path().join("after.json");
+        fs::write(&after, b"borrowed diagnostic remains unchanged").unwrap();
+        let sentinel = digest_file(&after, 4096).unwrap();
+        let guard = BorrowedPhysicalGuard::capture(
+            &source,
+            TrustedCreationParent::open(output.path()).unwrap(),
+        )
+        .unwrap();
+        let original = guard.snapshot().unwrap();
+        let before = output.path().join("before.json");
+        let receipt = output.path().join("checkout.json");
+        let destination = output.path().join("owned");
+        let error =
+            prepare_checkout_with_guard(&source, &destination, &receipt, &before, &after, &guard)
+                .unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("borrowed receipt output must be new")
+        );
+        assert_eq!(guard.pending_receipts.get(), 2);
+        assert_eq!(digest_file(&after, 4096).unwrap(), sentinel);
+        assert_eq!(guard.snapshot().unwrap(), original);
+        assert!(!before.exists());
+        assert!(!receipt.exists());
+        assert!(!destination.exists());
+    }
+
+    #[test]
+    fn replaced_output_parent_cannot_redirect_capacity_or_receipt_creation() {
+        let (_borrowed, source) = super::super::tests::fixture();
+        let temporary = tempfile::tempdir().unwrap();
+        let parent = temporary.path().join("output");
+        fs::create_dir(&parent).unwrap();
+        let guard =
+            BorrowedPhysicalGuard::capture(&source, TrustedCreationParent::open(&parent).unwrap())
+                .unwrap();
+        let original = guard.snapshot().unwrap();
+        let retained = temporary.path().join("retained-output");
+        fs::rename(&parent, &retained).unwrap();
+        fs::create_dir(&parent).unwrap();
+        fs::write(parent.join("sentinel"), b"replacement remains unchanged").unwrap();
+        let sentinel = digest_file(&parent.join("sentinel"), 4096).unwrap();
+        assert!(guard.receipt_filesystem_space().is_err());
+        assert!(guard.write_before(&parent.join("before.json")).is_err());
+        assert_eq!(guard.pending_receipts.get(), 2);
+        assert_eq!(
+            digest_file(&parent.join("sentinel"), 4096).unwrap(),
+            sentinel
+        );
+        assert_eq!(guard.snapshot().unwrap(), original);
+        assert!(!parent.join("before.json").exists());
+        assert!(!retained.join("before.json").exists());
     }
 }
