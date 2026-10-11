@@ -1,7 +1,7 @@
 use android_tools::{
     evaluated_tree_inputs::{PreparedLiveModulePlan, prepare_live_module_plan},
     project_model::{ModelState, ModelToken},
-    project_tree::{NodeId, NodeKey},
+    project_tree::{NodeKey, SourceGroup, TreeSnapshot},
     project_view_preferences::DefaultView,
 };
 use android_ui::{AndroidTreeContext, AndroidTreeOwner};
@@ -20,7 +20,10 @@ use settings::{ProjectPanelEntrySpacing, Settings as _};
 use std::{
     collections::{BTreeMap, BTreeSet},
     path::PathBuf,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
 };
 use ui::{ContextMenu, ListItem, ListItemSpacing, PopoverMenu, prelude::*};
 use util::ResultExt as _;
@@ -43,6 +46,10 @@ impl<T: Send + 'static> BackgroundOwned<T> {
         self.value
             .as_ref()
             .context("Android tree data was released")
+    }
+
+    fn into_value(mut self) -> Result<T> {
+        self.value.take().context("Android tree data was released")
     }
 }
 
@@ -100,6 +107,16 @@ pub(crate) struct SelectorState {
     reason: Option<SharedString>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct RenderedOwner {
+    context: AndroidTreeOwner,
+    model: ModelToken,
+    owner_generation: u64,
+    request_generation: u64,
+    presentation_generation: u64,
+    row_generation: u64,
+}
+
 #[derive(Clone, Debug)]
 struct LogicalRow {
     key: NodeKey,
@@ -108,6 +125,227 @@ struct LogicalRow {
     annotation: Option<SharedString>,
     depth: usize,
     has_children: bool,
+    icon: IconName,
+}
+
+struct CachedLogicalRow {
+    row: LogicalRow,
+    children: Vec<usize>,
+}
+
+struct LogicalRowCache {
+    owner: RequestOwner,
+    rows: Vec<CachedLogicalRow>,
+    roots: Vec<usize>,
+    keys: BTreeMap<NodeKey, usize>,
+    #[cfg(test)]
+    drop_observer: Option<(BackgroundExecutor, futures::channel::oneshot::Sender<bool>)>,
+}
+
+#[cfg(test)]
+impl Drop for LogicalRowCache {
+    fn drop(&mut self) {
+        if let Some((executor, observer)) = self.drop_observer.take() {
+            observer
+                .send(executor.is_main_thread())
+                .map_err(|_| anyhow::anyhow!("Android row drop observer was released"))
+                .log_err();
+        }
+    }
+}
+
+#[derive(Clone)]
+enum RowChange {
+    Toggle(NodeKey),
+    CollapseAll,
+    ExpandAll,
+}
+
+struct LogicalRowsUpdate {
+    cache: Arc<BackgroundOwned<LogicalRowCache>>,
+    rows: Vec<LogicalRow>,
+    visible_keys: BTreeSet<NodeKey>,
+    expanded_keys: Arc<BTreeSet<NodeKey>>,
+    selected_key: Option<NodeKey>,
+}
+
+fn check_rows_cancelled(cancelled: &AtomicBool) -> Result<()> {
+    ensure!(
+        !cancelled.load(Ordering::Acquire),
+        "Android row preparation was cancelled"
+    );
+    Ok(())
+}
+
+fn logical_icon(key: &NodeKey) -> IconName {
+    match key {
+        NodeKey::Module { .. } => IconName::BoxOpen,
+        NodeKey::Source { .. } | NodeKey::ResourceType { .. } => IconName::Folder,
+        NodeKey::Directory { group, .. } => match group {
+            SourceGroup::Java
+            | SourceGroup::Kotlin
+            | SourceGroup::KotlinAndJava
+            | SourceGroup::GeneratedJava => IconName::Box,
+            _ => IconName::Folder,
+        },
+        NodeKey::ResourceGroup { .. } => IconName::FileMultiple,
+        NodeKey::JavaClass { .. } => IconName::Code,
+        NodeKey::File { .. } => IconName::File,
+    }
+}
+
+impl LogicalRowCache {
+    fn prepare(
+        owner: RequestOwner,
+        snapshot: &TreeSnapshot,
+        cancelled: &AtomicBool,
+    ) -> Result<Self> {
+        let mut keys = BTreeMap::new();
+        let mut rows = Vec::new();
+        for (index, node) in snapshot.nodes().enumerate() {
+            check_rows_cancelled(cancelled)?;
+            keys.insert(node.key.clone(), index);
+            rows.push(CachedLogicalRow {
+                row: LogicalRow {
+                    key: node.key.clone(),
+                    id: format!("android-logical-row:{:?}", node.key).into(),
+                    label: node.label.clone().into(),
+                    annotation: node
+                        .annotation
+                        .as_ref()
+                        .map(|annotation| annotation.trim_start().to_owned().into()),
+                    depth: 0,
+                    has_children: !node.children.is_empty(),
+                    icon: logical_icon(&node.key),
+                },
+                children: Vec::new(),
+            });
+        }
+        for (node, row) in snapshot.nodes().zip(&mut rows) {
+            check_rows_cancelled(cancelled)?;
+            row.children = node
+                .children
+                .iter()
+                .map(|id| {
+                    let child = snapshot
+                        .node(*id)
+                        .context("Android tree child is unavailable")?;
+                    keys.get(&child.key)
+                        .copied()
+                        .context("Android child key is unavailable")
+                })
+                .collect::<Result<Vec<_>>>()?;
+        }
+        let roots = snapshot
+            .roots
+            .iter()
+            .map(|id| {
+                let root = snapshot
+                    .node(*id)
+                    .context("Android tree root is unavailable")?;
+                keys.get(&root.key)
+                    .copied()
+                    .context("Android root key is unavailable")
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(Self {
+            owner,
+            rows,
+            roots,
+            keys,
+            #[cfg(test)]
+            drop_observer: None,
+        })
+    }
+}
+
+fn prepare_visible_rows(
+    cache: Arc<BackgroundOwned<LogicalRowCache>>,
+    expanded: Arc<BTreeSet<NodeKey>>,
+    mut selected_key: Option<NodeKey>,
+    initialized: bool,
+    changes: Vec<RowChange>,
+    cancelled: &AtomicBool,
+) -> Result<LogicalRowsUpdate> {
+    check_rows_cancelled(cancelled)?;
+    let data = cache.value()?;
+    let mut expanded_keys = expanded.as_ref().clone();
+    check_rows_cancelled(cancelled)?;
+    expanded_keys.retain(|key| !cancelled.load(Ordering::Acquire) && data.keys.contains_key(key));
+    check_rows_cancelled(cancelled)?;
+    if selected_key
+        .as_ref()
+        .is_some_and(|key| !data.keys.contains_key(key))
+    {
+        selected_key = None;
+    }
+    if !initialized {
+        expanded_keys.extend(
+            data.roots
+                .iter()
+                .filter_map(|index| data.rows.get(*index).map(|row| row.row.key.clone())),
+        );
+    }
+    for change in changes {
+        check_rows_cancelled(cancelled)?;
+        match change {
+            RowChange::Toggle(key) => {
+                if !expanded_keys.remove(&key) {
+                    expanded_keys.insert(key);
+                }
+            }
+            RowChange::CollapseAll => {
+                expanded_keys.clear();
+                selected_key = data
+                    .roots
+                    .first()
+                    .and_then(|index| data.rows.get(*index).map(|row| row.row.key.clone()));
+            }
+            RowChange::ExpandAll => {
+                for row in &data.rows {
+                    check_rows_cancelled(cancelled)?;
+                    if row.row.has_children {
+                        expanded_keys.insert(row.row.key.clone());
+                    }
+                }
+            }
+        }
+    }
+    let mut pending = data
+        .roots
+        .iter()
+        .rev()
+        .map(|index| (*index, 0))
+        .collect::<Vec<_>>();
+    let mut rows = Vec::new();
+    let mut visible_keys = BTreeSet::new();
+    while let Some((index, depth)) = pending.pop() {
+        check_rows_cancelled(cancelled)?;
+        let cached = data
+            .rows
+            .get(index)
+            .context("Android cached row is unavailable")?;
+        let mut row = cached.row.clone();
+        row.depth = depth;
+        visible_keys.insert(row.key.clone());
+        if expanded_keys.contains(&row.key) {
+            pending.extend(
+                cached
+                    .children
+                    .iter()
+                    .rev()
+                    .map(|child| (*child, depth + 1)),
+            );
+        }
+        rows.push(row);
+    }
+    Ok(LogicalRowsUpdate {
+        cache,
+        rows,
+        visible_keys,
+        expanded_keys: Arc::new(expanded_keys),
+        selected_key,
+    })
 }
 
 pub(crate) struct AndroidProjectTree {
@@ -130,12 +368,24 @@ pub(crate) struct AndroidProjectTree {
     focus_handle: FocusHandle,
     view_choices: BTreeMap<PathBuf, DefaultView>,
     logical_rows: Vec<LogicalRow>,
-    expanded_keys: BTreeSet<NodeKey>,
+    logical_cache: Option<Arc<BackgroundOwned<LogicalRowCache>>>,
+    visible_keys: BTreeSet<NodeKey>,
+    expanded_keys: Arc<BTreeSet<NodeKey>>,
+    row_changes: Vec<RowChange>,
+    row_task: Option<Task<()>>,
+    row_cancelled: Option<Arc<AtomicBool>>,
+    row_generation: u64,
+    row_executor: BackgroundExecutor,
+    row_reconcile_scheduled: bool,
+    presentation_generation: u64,
     selected_key: Option<NodeKey>,
+    selection_generation: u64,
     logical_scroll: UniformListScrollHandle,
     logical_initialized: bool,
     reconcile_scheduled: bool,
     _subscriptions: Vec<Subscription>,
+    #[cfg(test)]
+    row_gate_for_test: Option<futures::channel::oneshot::Receiver<()>>,
     #[cfg(test)]
     completion_for_test: Option<
         futures::channel::oneshot::Sender<(RequestOwner, Result<CapturedAndroidModuleTree>)>,
@@ -229,12 +479,24 @@ impl AndroidProjectTree {
             focus_handle,
             view_choices: BTreeMap::new(),
             logical_rows: Vec::new(),
-            expanded_keys: BTreeSet::new(),
+            logical_cache: None,
+            visible_keys: BTreeSet::new(),
+            expanded_keys: Arc::new(BTreeSet::new()),
+            row_changes: Vec::new(),
+            row_task: None,
+            row_cancelled: None,
+            row_generation: 0,
+            row_executor: cx.background_executor().clone(),
+            row_reconcile_scheduled: false,
+            presentation_generation: 0,
             selected_key: None,
+            selection_generation: 0,
             logical_scroll: UniformListScrollHandle::new(),
             logical_initialized: false,
             reconcile_scheduled: false,
             _subscriptions: subscriptions,
+            #[cfg(test)]
+            row_gate_for_test: None,
             #[cfg(test)]
             completion_for_test: None,
         };
@@ -371,9 +633,24 @@ impl AndroidProjectTree {
         self.attempted = None;
         self.retry_next = false;
         self.published = None;
-        self.logical_rows.clear();
-        self.expanded_keys.clear();
-        self.selected_key = None;
+        self.cancel_rows();
+        let obsolete_rows = std::mem::take(&mut self.logical_rows);
+        let obsolete_keys = std::mem::take(&mut self.visible_keys);
+        let obsolete_expansion =
+            std::mem::replace(&mut self.expanded_keys, Arc::new(BTreeSet::new()));
+        let obsolete_changes = std::mem::take(&mut self.row_changes);
+        let obsolete_selection = self.selected_key.take();
+        self.logical_cache = None;
+        cx.background_spawn(async move {
+            drop((
+                obsolete_rows,
+                obsolete_keys,
+                obsolete_expansion,
+                obsolete_changes,
+                obsolete_selection,
+            ));
+        })
+        .detach();
         self.logical_scroll = UniformListScrollHandle::new();
         self.logical_initialized = false;
         self.set_status(Status::Unavailable, cx);
@@ -647,7 +924,7 @@ impl AndroidProjectTree {
                     plan,
                     capture,
                 });
-                self.refresh_logical_rows();
+                self.refresh_logical_rows(window, cx);
                 self.set_status(Status::Ready, cx);
                 cx.notify();
             }
@@ -719,156 +996,376 @@ impl AndroidProjectTree {
             return;
         };
         let path = owner.root_path().to_path_buf();
-        if self.view_choices.insert(path, view) != Some(view) {
-            self.cancel_pending();
-            if let Err(error) = self.next_request() {
-                self.set_status(Status::Failed(format!("{error:#}").into()), cx);
-                log::error!("Android project view choice failed: {error:#}");
-            } else {
-                self.attempted = None;
-                self.request_reconcile(window, cx);
-            }
+        if self.view_choices.get(&path).copied() != Some(view) {
+            let Some(generation) = self.presentation_generation.checked_add(1) else {
+                self.set_status(
+                    Status::Failed("Android presentation generation exhausted".into()),
+                    cx,
+                );
+                log::error!("Android presentation generation exhausted");
+                return;
+            };
+            self.view_choices.insert(path, view);
+            self.presentation_generation = generation;
         }
-        window.focus(&self.focus_handle);
+        window.focus(&self.focus_handle, cx);
         cx.notify();
+    }
+
+    pub(crate) fn rendered_owner(&self, window: &Window, cx: &App) -> Option<RenderedOwner> {
+        let context = self.owner.as_ref()?;
+        if !self.window_is_current(window, cx)
+            || !self.context.as_ref()?.read(cx).is_current(context, cx)
+        {
+            return None;
+        }
+        Some(RenderedOwner {
+            context: context.clone(),
+            model: self.project.read(cx).android_model().token(),
+            owner_generation: self.owner_generation,
+            request_generation: self.request_generation,
+            presentation_generation: self.presentation_generation,
+            row_generation: self.row_generation,
+        })
+    }
+
+    fn rendered_owner_is_current(&self, owner: &RenderedOwner, window: &Window, cx: &App) -> bool {
+        self.rendered_owner(window, cx).as_ref() == Some(owner)
+    }
+
+    fn choose_rendered_view(
+        &mut self,
+        owner: &RenderedOwner,
+        view: DefaultView,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.rendered_owner_is_current(owner, window, cx) {
+            self.choose_view(view, window, cx);
+        }
     }
 
     pub(crate) fn render_selector(
         &self,
         state: SelectorState,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
+        let Some(owner) = self.rendered_owner(window, cx) else {
+            return div().into_any_element();
+        };
         let tree = cx.weak_entity();
         let view = state.view;
         let enabled = state.android_enabled;
         let reason = state.reason.clone();
-        PopoverMenu::new("android-project-view-selector")
-            .trigger(
-                Button::new(
-                    "android-project-view-trigger",
-                    match view {
-                        DefaultView::Android => "Android",
-                        DefaultView::Project => "Project",
-                    },
-                )
-                .end_icon(Icon::new(IconName::ChevronDown))
-                .label_size(LabelSize::Small)
-                .tab_index(0isize)
-                .aria_label("Project view"),
+        PopoverMenu::new(SharedString::from(format!(
+            "android-project-view-selector:{}:{}:{}:{}",
+            owner.owner_generation,
+            owner.request_generation,
+            owner.presentation_generation,
+            owner.row_generation,
+        )))
+        .trigger(
+            Button::new(
+                "android-project-view-trigger",
+                match view {
+                    DefaultView::Android => "Android",
+                    DefaultView::Project => "Project",
+                },
             )
-            .menu(move |window, cx| {
-                let android_tree = tree.clone();
-                let project_tree = tree.clone();
-                Some(ContextMenu::build(window, cx, move |menu, _, _| {
-                    menu.when_some(reason.clone(), |menu, reason| menu.header(reason))
-                        .toggleable_entry_disabled_when(
-                            "Android",
-                            view == DefaultView::Android,
-                            !enabled,
-                            IconPosition::Start,
-                            None,
-                            move |window, cx| {
-                                android_tree
-                                    .update(cx, |tree, cx| {
-                                        tree.choose_view(DefaultView::Android, window, cx)
-                                    })
-                                    .log_err();
-                            },
-                        )
-                        .toggleable_entry(
-                            "Project",
-                            view == DefaultView::Project,
-                            IconPosition::Start,
-                            None,
-                            move |window, cx| {
-                                project_tree
-                                    .update(cx, |tree, cx| {
-                                        tree.choose_view(DefaultView::Project, window, cx)
-                                    })
-                                    .log_err();
-                            },
-                        )
-                }))
-            })
-            .into_any_element()
+            .end_icon(Icon::new(IconName::ChevronDown))
+            .label_size(LabelSize::Small)
+            .tab_index(0isize)
+            .aria_label("Project view"),
+        )
+        .menu(move |window, cx| {
+            let android_tree = tree.clone();
+            let project_tree = tree.clone();
+            let android_owner = owner.clone();
+            let project_owner = owner.clone();
+            let reason = reason.clone();
+            Some(ContextMenu::build(window, cx, move |menu, _, _| {
+                menu.when_some(reason, |menu, reason| menu.header(reason))
+                    .toggleable_entry_disabled_when(
+                        "Android",
+                        view == DefaultView::Android,
+                        !enabled,
+                        IconPosition::Start,
+                        None,
+                        move |window, cx| {
+                            android_tree
+                                .update(cx, |tree, cx| {
+                                    tree.choose_rendered_view(
+                                        &android_owner,
+                                        DefaultView::Android,
+                                        window,
+                                        cx,
+                                    )
+                                })
+                                .log_err();
+                        },
+                    )
+                    .toggleable_entry(
+                        "Project",
+                        view == DefaultView::Project,
+                        IconPosition::Start,
+                        None,
+                        move |window, cx| {
+                            project_tree
+                                .update(cx, |tree, cx| {
+                                    tree.choose_rendered_view(
+                                        &project_owner,
+                                        DefaultView::Project,
+                                        window,
+                                        cx,
+                                    )
+                                })
+                                .log_err();
+                        },
+                    )
+            }))
+        })
+        .into_any_element()
     }
 
-    fn refresh_logical_rows(&mut self) {
-        let Some(published) = &self.published else {
+    fn cancel_rows(&mut self) {
+        if let Some(cancelled) = self.row_cancelled.take() {
+            cancelled.store(true, Ordering::Release);
+        }
+        self.row_task = None;
+    }
+
+    fn refresh_logical_rows(&mut self, window: &Window, cx: &mut Context<Self>) {
+        if self.row_reconcile_scheduled {
             return;
-        };
-        let snapshot = &published.capture.tree().tree;
-        let keys = snapshot
-            .nodes()
-            .map(|node| node.key.clone())
-            .collect::<BTreeSet<_>>();
-        self.expanded_keys.retain(|key| keys.contains(key));
-        if self
-            .selected_key
+        }
+        self.row_reconcile_scheduled = true;
+        cx.defer_in(window, |tree, window, cx| {
+            tree.row_reconcile_scheduled = false;
+            if let Err(error) = tree.start_rows(window, cx) {
+                tree.set_status(Status::Failed(format!("{error:#}").into()), cx);
+                log::error!("Android row preparation failed: {error:#}");
+            }
+        });
+    }
+
+    fn start_rows(&mut self, window: &mut Window, cx: &mut Context<Self>) -> Result<()> {
+        if self.current_capture(window, cx).is_none() {
+            return Ok(());
+        }
+        self.cancel_rows();
+        let published = self
+            .published
             .as_ref()
-            .is_some_and(|key| !keys.contains(key))
-        {
-            self.selected_key = None;
-        }
-        if !self.logical_initialized {
-            self.expanded_keys.extend(
-                snapshot
-                    .roots
-                    .iter()
-                    .filter_map(|id| snapshot.node(*id).map(|node| node.key.clone())),
-            );
-            self.logical_initialized = true;
-        }
-        self.rebuild_visible_rows();
+            .context("Android rows have no capture")?;
+        let owner = published.owner.clone();
+        let snapshot = published.capture.shared_tree();
+        let cache = self
+            .logical_cache
+            .clone()
+            .filter(|cache| cache.value().is_ok_and(|cache| cache.owner == owner));
+        let generation = self
+            .row_generation
+            .checked_add(1)
+            .context("Android row generation exhausted")?;
+        self.row_generation = generation;
+        let expanded = self.expanded_keys.clone();
+        let selected = self.selected_key.clone();
+        let selection_generation = self.selection_generation;
+        let initialized = self.logical_initialized;
+        let changes = self.row_changes.clone();
+        let cancelled = Arc::new(AtomicBool::new(false));
+        self.row_cancelled = Some(cancelled.clone());
+        let executor = cx.background_executor().clone();
+        #[cfg(test)]
+        let gate = self.row_gate_for_test.take();
+        let preparation = cx.background_spawn({
+            let owner = owner.clone();
+            async move {
+                check_rows_cancelled(&cancelled)?;
+                #[cfg(test)]
+                if let Some(gate) = gate {
+                    gate.await.context("Android row test gate was released")?;
+                    check_rows_cancelled(&cancelled)?;
+                }
+                let cache = match cache {
+                    Some(cache) => cache,
+                    None => Arc::new(BackgroundOwned::new(
+                        LogicalRowCache::prepare(owner, &snapshot.tree, &cancelled)?,
+                        executor.clone(),
+                    )),
+                };
+                let rows = prepare_visible_rows(
+                    cache,
+                    expanded,
+                    selected,
+                    initialized,
+                    changes,
+                    &cancelled,
+                )?;
+                Ok::<_, anyhow::Error>(BackgroundOwned::new(rows, executor))
+            }
+        });
+        self.row_task = Some(cx.spawn_in(window, async move |tree, cx| {
+            let result = preparation.await;
+            tree.update_in(cx, |tree, window, cx| {
+                tree.finish_rows(&owner, generation, selection_generation, result, window, cx);
+            })
+            .log_err();
+        }));
+        cx.notify();
+        Ok(())
     }
 
-    fn rebuild_visible_rows(&mut self) {
-        let Some(published) = &self.published else {
-            self.logical_rows.clear();
+    fn finish_rows(
+        &mut self,
+        owner: &RequestOwner,
+        generation: u64,
+        selection_generation: u64,
+        result: Result<BackgroundOwned<LogicalRowsUpdate>>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.row_generation != generation
+            || self
+                .published
+                .as_ref()
+                .is_none_or(|published| &published.owner != owner)
+            || !self.request_is_current(owner, window, cx)
+            || self.current_capture(window, cx).is_none()
+        {
             return;
-        };
-        let snapshot = &published.capture.tree().tree;
-        let mut pending = snapshot
-            .roots
-            .iter()
-            .rev()
-            .map(|id| (*id, 0))
-            .collect::<Vec<(NodeId, usize)>>();
-        let mut rows = Vec::new();
-        while let Some((id, depth)) = pending.pop() {
-            let Some(node) = snapshot.node(id) else {
-                continue;
-            };
-            rows.push(LogicalRow {
-                key: node.key.clone(),
-                id: format!("android-logical-row:{:?}", node.key).into(),
-                label: node.label.clone().into(),
-                annotation: node
-                    .annotation
-                    .as_ref()
-                    .map(|annotation| annotation.trim_start().to_owned().into()),
-                depth,
-                has_children: !node.children.is_empty(),
-            });
-            if self.expanded_keys.contains(&node.key) {
-                pending.extend(node.children.iter().rev().map(|child| (*child, depth + 1)));
+        }
+        self.row_task = None;
+        self.row_cancelled = None;
+        match result.and_then(BackgroundOwned::into_value) {
+            Ok(update) => {
+                let obsolete_rows = std::mem::replace(&mut self.logical_rows, update.rows);
+                let obsolete_keys = std::mem::replace(&mut self.visible_keys, update.visible_keys);
+                let obsolete_expansion =
+                    std::mem::replace(&mut self.expanded_keys, update.expanded_keys);
+                let obsolete_changes = std::mem::take(&mut self.row_changes);
+                let selected = if self.selection_generation == selection_generation {
+                    update.selected_key
+                } else {
+                    self.selected_key.clone().filter(|key| {
+                        update
+                            .cache
+                            .value()
+                            .is_ok_and(|cache| cache.keys.contains_key(key))
+                    })
+                };
+                let obsolete_selection = std::mem::replace(&mut self.selected_key, selected);
+                self.logical_cache = Some(update.cache);
+                self.logical_initialized = true;
+                cx.background_spawn(async move {
+                    drop((
+                        obsolete_rows,
+                        obsolete_keys,
+                        obsolete_expansion,
+                        obsolete_changes,
+                        obsolete_selection,
+                    ));
+                })
+                .detach();
+                cx.notify();
+            }
+            Err(error) => {
+                self.set_status(Status::Failed(format!("{error:#}").into()), cx);
+                log::error!("Android row preparation failed: {error:#}");
             }
         }
-        self.logical_rows = rows;
+    }
+
+    fn rows_are_current(&self, window: &Window, cx: &App) -> bool {
+        self.current_capture(window, cx).is_some()
+            && self.published.as_ref().is_some_and(|published| {
+                self.logical_cache.as_ref().is_some_and(|cache| {
+                    cache
+                        .value()
+                        .is_ok_and(|cache| cache.owner == published.owner)
+                })
+            })
+    }
+
+    pub(crate) fn collapse_all_rendered(
+        &mut self,
+        owner: &RenderedOwner,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.rendered_owner_is_current(owner, window, cx) {
+            self.collapse_all(window, cx);
+        }
     }
 
     pub(crate) fn collapse_all(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.current_capture(window, cx).is_none() {
+        if !self.rows_are_current(window, cx) {
             return;
         }
-        self.expanded_keys.clear();
-        self.selected_key = self.logical_rows.first().map(|row| row.key.clone());
-        self.rebuild_visible_rows();
+        let selected = self
+            .logical_cache
+            .as_ref()
+            .and_then(|cache| cache.value().ok())
+            .and_then(|cache| cache.roots.first().and_then(|index| cache.rows.get(*index)))
+            .map(|row| row.row.key.clone());
+        if !self.set_selected_key(selected, cx) {
+            return;
+        }
+        self.queue_row_change(RowChange::CollapseAll, cx);
+        self.refresh_logical_rows(window, cx);
         self.logical_scroll
             .scroll_to_item(0, gpui::ScrollStrategy::Top);
-        window.focus(&self.focus_handle);
+        window.focus(&self.focus_handle, cx);
         cx.notify();
+    }
+
+    pub(crate) fn expand_all(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if !self.rows_are_current(window, cx) {
+            return;
+        }
+        self.queue_row_change(RowChange::ExpandAll, cx);
+        self.refresh_logical_rows(window, cx);
+        window.focus(&self.focus_handle, cx);
+        cx.notify();
+    }
+
+    fn select_rendered_row(
+        &mut self,
+        owner: &RenderedOwner,
+        key: &NodeKey,
+        expand: bool,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if self.rendered_owner_is_current(owner, window, cx) {
+            self.select_row(key, expand, window, cx);
+        }
+    }
+
+    fn set_selected_key(&mut self, key: Option<NodeKey>, cx: &mut Context<Self>) -> bool {
+        if self.selected_key == key {
+            return true;
+        }
+        let Some(generation) = self.selection_generation.checked_add(1) else {
+            self.set_status(
+                Status::Failed("Android selection generation exhausted".into()),
+                cx,
+            );
+            log::error!("Android selection generation exhausted");
+            return false;
+        };
+        self.selection_generation = generation;
+        self.selected_key = key;
+        true
+    }
+
+    fn queue_row_change(&mut self, change: RowChange, cx: &mut Context<Self>) {
+        if matches!(change, RowChange::CollapseAll | RowChange::ExpandAll) {
+            let obsolete = std::mem::take(&mut self.row_changes);
+            cx.background_spawn(async move { drop(obsolete) }).detach();
+        }
+        self.row_changes.push(change);
     }
 
     fn select_row(
@@ -878,21 +1375,23 @@ impl AndroidProjectTree {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if self.current_capture(window, cx).is_none() {
+        if !self.rows_are_current(window, cx) || !self.visible_keys.contains(key) {
             return;
         }
-        let Some(row) = self.logical_rows.iter().find(|row| &row.key == key) else {
+        let has_children = self
+            .logical_cache
+            .as_ref()
+            .and_then(|cache| cache.value().ok())
+            .and_then(|cache| cache.keys.get(key).and_then(|index| cache.rows.get(*index)))
+            .is_some_and(|row| row.row.has_children);
+        if !self.set_selected_key(Some(key.clone()), cx) {
             return;
-        };
-        let has_children = row.has_children;
-        self.selected_key = Some(key.clone());
+        }
         if expand && has_children {
-            if !self.expanded_keys.remove(key) {
-                self.expanded_keys.insert(key.clone());
-            }
-            self.rebuild_visible_rows();
+            self.queue_row_change(RowChange::Toggle(key.clone()), cx);
+            self.refresh_logical_rows(window, cx);
         }
-        window.focus(&self.focus_handle);
+        window.focus(&self.focus_handle, cx);
         cx.notify();
     }
 
@@ -904,7 +1403,9 @@ impl AndroidProjectTree {
     ) -> Option<AnyElement> {
         let row = self.logical_rows.get(index)?;
         let selected = self.selected_key.as_ref() == Some(&row.key);
-        let enabled = self.current_capture(window, cx).is_some();
+        let enabled = self.rows_are_current(window, cx);
+        let owner = self.rendered_owner(window, cx)?;
+        let disclosure_owner = owner.clone();
         let key = row.key.clone();
         let disclosure_key = row.key.clone();
         let settings = super::ProjectPanelSettings::get_global(cx);
@@ -928,31 +1429,35 @@ impl AndroidProjectTree {
                                 .then(|| self.expanded_keys.contains(&row.key)),
                         )
                         .on_toggle(cx.listener(move |tree, _, window, cx| {
-                            tree.select_row(&disclosure_key, true, window, cx)
+                            tree.select_rendered_row(
+                                &disclosure_owner,
+                                &disclosure_key,
+                                true,
+                                window,
+                                cx,
+                            )
                         }))
-                        .start_slot(
-                            Icon::new(if row.has_children {
-                                IconName::Folder
-                            } else {
-                                IconName::File
-                            })
-                            .size(IconSize::Small),
-                        )
+                        .start_slot(Icon::new(row.icon).size(IconSize::Small))
                         .child(
                             h_flex()
                                 .min_w_0()
                                 .gap_1()
-                                .child(Label::new(row.label.clone()).size(LabelSize::Small))
+                                .child(
+                                    Label::new(row.label.clone())
+                                        .single_line()
+                                        .size(LabelSize::Small),
+                                )
                                 .when_some(row.annotation.clone(), |element, annotation| {
                                     element.child(
                                         Label::new(annotation)
+                                            .single_line()
                                             .size(LabelSize::Small)
                                             .color(Color::Muted),
                                     )
                                 }),
                         )
                         .on_click(cx.listener(move |tree, _, window, cx| {
-                            tree.select_row(&key, false, window, cx)
+                            tree.select_rendered_row(&owner, &key, false, window, cx)
                         })),
                 )
                 .into_any_element(),
@@ -987,6 +1492,10 @@ impl Render for AndroidProjectTree {
             .is_some_and(|state| state.view == DefaultView::Android);
         let message: Option<SharedString> = if !available {
             Some("Android view is unavailable for this project".into())
+        } else if (self.row_reconcile_scheduled || self.row_task.is_some())
+            && !self.rows_are_current(window, cx)
+        {
+            Some("Loading Android view…".into())
         } else {
             match &self.status {
                 Status::Loading => Some("Loading Android view…".into()),
@@ -1010,6 +1519,24 @@ impl Render for AndroidProjectTree {
             .overflow_hidden()
             .track_focus(&self.focus_handle)
             .key_context("AndroidProjectTree")
+            .on_action(|_: &super::Rename, _, cx| cx.stop_propagation())
+            .on_action(|_: &super::Duplicate, _, cx| cx.stop_propagation())
+            .on_action(|_: &super::Delete, _, cx| cx.stop_propagation())
+            .on_action(|_: &super::Trash, _, cx| cx.stop_propagation())
+            .on_action(|_: &super::Copy, _, cx| cx.stop_propagation())
+            .on_action(|_: &super::Cut, _, cx| cx.stop_propagation())
+            .on_action(|_: &super::Paste, _, cx| cx.stop_propagation())
+            .on_action(|_: &git::FileHistory, _, cx| cx.stop_propagation())
+            .on_action(
+                cx.listener(|tree, _: &super::CollapseAllEntries, window, cx| {
+                    tree.collapse_all(window, cx)
+                }),
+            )
+            .on_action(
+                cx.listener(|tree, _: &super::ExpandAllEntries, window, cx| {
+                    tree.expand_all(window, cx)
+                }),
+            )
             .when_some(message, |element, message| {
                 element.child(
                     div().px_2().py_1().child(
@@ -1024,13 +1551,14 @@ impl Render for AndroidProjectTree {
                     uniform_list(
                         "android-logical-rows",
                         self.logical_rows.len(),
-                        cx.processor(|tree, range, window, cx| {
+                        cx.processor(|tree, range: std::ops::Range<usize>, window, cx| {
                             range
                                 .filter_map(|index| tree.render_row(index, window, cx))
                                 .collect::<Vec<_>>()
                         }),
                     )
                     .size_full()
+                    .pl(rems(1.))
                     .flex_1()
                     .with_sizing_behavior(ListSizingBehavior::Infer)
                     .with_horizontal_sizing_behavior(ListHorizontalSizingBehavior::FitList)
@@ -1043,6 +1571,17 @@ impl Render for AndroidProjectTree {
 impl Drop for AndroidProjectTree {
     fn drop(&mut self) {
         self.cancel_pending();
+        self.cancel_rows();
+        let rows = std::mem::take(&mut self.logical_rows);
+        let keys = std::mem::take(&mut self.visible_keys);
+        let expansion = std::mem::replace(&mut self.expanded_keys, Arc::new(BTreeSet::new()));
+        let changes = std::mem::take(&mut self.row_changes);
+        let selection = self.selected_key.take();
+        self.row_executor
+            .spawn(async move {
+                drop((rows, keys, expansion, changes, selection));
+            })
+            .detach();
     }
 }
 
@@ -1830,24 +2369,59 @@ mod tests {
     }
 
     fn expand_visible_groups(window: &mut TestWindow) -> Result<()> {
-        // Exercise the same disclosure handler as rendered rows, using keys
-        // obtained from the current capture rather than invented physical IDs.
-        window
-            .tree()
-            .update_in(&mut window.visual, |tree, window, cx| {
-                for _ in 0..256 {
+        for _ in 0..256 {
+            let next = window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
                     let next = tree
                         .logical_rows
                         .iter()
                         .find(|row| row.has_children && !tree.expanded_keys.contains(&row.key))
                         .map(|row| row.key.clone());
-                    let Some(key) = next else {
-                        return Ok(());
-                    };
-                    tree.select_row(&key, true, window, cx);
-                }
-                anyhow::bail!("Supplemental fixture unexpectedly exceeds 256 expandable rows")
+                    if let Some(key) = &next {
+                        tree.select_row(key, true, window, cx);
+                    }
+                    next
+                });
+            window.visual.run_until_parked();
+            if next.is_none() {
+                return Ok(());
+            }
+        }
+        anyhow::bail!("Supplemental fixture unexpectedly exceeds 256 expandable rows")
+    }
+
+    async fn rows_ready(window: &mut TestWindow) {
+        let tree = window.tree();
+        window
+            .visual
+            .condition(&tree, |tree, _| {
+                tree.row_task.is_none()
+                    && !tree.row_reconcile_scheduled
+                    && tree.logical_cache.as_ref().is_some_and(|cache| {
+                        cache.value().is_ok_and(|cache| {
+                            tree.published
+                                .as_ref()
+                                .is_some_and(|published| cache.owner == published.owner)
+                        })
+                    })
             })
+            .await;
+        window.visual.run_until_parked();
+    }
+
+    fn draw_workspace(window: &mut TestWindow) {
+        window.visual.update(|window, cx| window.draw(cx).clear(cx));
+    }
+
+    fn focus_workspace(window: &mut TestWindow) {
+        let workspace = window.workspace.clone();
+        let panel = window.panel.clone();
+        window.visual.update(|window, cx| {
+            let focus = workspace.read(cx).focus_handle(cx);
+            focus.focus(window, cx);
+            assert!(!panel.read(cx).focus_handle.contains_focused(window, cx));
+        });
     }
 
     fn publish_non_android_kmp_context(project: &Entity<Project>, cx: &mut App) -> Result<()> {
@@ -2259,6 +2833,11 @@ mod tests {
                 .tree()
                 .update_in(&mut window.visual, |tree, window, cx| {
                     tree.collapse_all(window, cx);
+                });
+            rows_ready(&mut window).await;
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, _cx| {
                     assert!(tree.expanded_keys.is_empty());
                     assert_eq!(tree.logical_rows.len(), 1);
                     assert!(matches!(tree.logical_rows[0].key, NodeKey::Module { .. }));
@@ -2386,5 +2965,575 @@ mod tests {
             }
             .await;
         result.expect("C2 generic editing and physical panel preservation fixture must complete");
+    }
+    fn publish_context_at(root_path: &str, project: &Entity<Project>, cx: &mut App) -> Result<()> {
+        let root = Path::new(root_path);
+        // Complete Gradle observations include the root even when it applies no supported plugin.
+        let record = json!({
+            "schema": 1, "root": root_path, "gradleVersion": "9.6.1", "phase": "complete",
+            "modules": [{
+                "path": ":", "directory": root,
+                "plugins": PluginId::ALL.into_iter().map(|plugin| json!({
+                    "plugin": plugin, "applied": false
+                })).collect::<Vec<_>>(),
+                "targets": {"status": "unavailable", "value": {
+                    "detail": "No evaluated Kotlin target extension"
+                }}
+            }, {"path": ":app", "directory": root.join("app"),
+                "plugins": PluginId::ALL.into_iter().map(|plugin| json!({
+                    "plugin": plugin, "applied": plugin == PluginId::AndroidApplication
+                })).collect::<Vec<_>>(),
+                "targets": {"status": "available", "value": []}
+            }]
+        });
+        let snapshot = decode_context_record(&serde_json::to_vec(&record)?, root)?;
+        project.update(cx, |project, cx| {
+            let worktree = project
+                .visible_worktrees(cx)
+                .find(|worktree| worktree.read(cx).abs_path().as_ref() == root)
+                .context("Fixture context root")?
+                .read(cx)
+                .id();
+            let handle = project.ensure_android_context(worktree, true, cx)?;
+            let discovery = project.begin_android_context_import(handle, cx)?;
+            let mut active = ActiveContext::default();
+            active.select(Some(handle), None)?;
+            let owner = active
+                .discovery_token(project.android_context())
+                .context("Fixture discovery owner")?;
+            project.publish_android_context(&active, &owner, &discovery, snapshot, cx)
+        })
+    }
+
+    fn publish_model_at(root_path: &str, project: &Entity<Project>, cx: &mut App) -> Result<()> {
+        project.update(cx, |project, cx| {
+            let token = project.invalidate_android_model(Some(PathBuf::from(root_path)), cx);
+            let record = format!(
+                "{MODEL_OUTPUT_PREFIX}{}",
+                EXPORTED_MODEL.replace(ORIGINAL_ROOT, root_path)
+            );
+            // These fixture directories exist in FakeFs and contain no symlinks;
+            // std::fs cannot canonicalize them during model decoding.
+            let root = Path::new(root_path);
+            let directories = [root.to_path_buf(), root.join("app")]
+                .into_iter()
+                .map(|path| (path.clone(), path))
+                .collect();
+            let capture = EvaluatedTreeInputs::decode_fixture(&record, root, &directories, &token)?;
+            project.publish_evaluated_android_model(&token, capture, cx)?;
+            project.select_android_variant(
+                Some(VariantId {
+                    module: ":app".into(),
+                    variant: "demoDebug".into(),
+                }),
+                cx,
+            )
+        })
+    }
+
+    #[gpui::test]
+    async fn android_workspace_fallbacks_preserve_hidden_physical_selection(
+        cx: &mut TestAppContext,
+    ) {
+        use futures::TryStreamExt as _;
+        let result: Result<()> = async {
+            let (project, filesystem) = fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            choose(&mut window, DefaultView::Project);
+            let generic = window
+                .visual
+                .update(|_, cx| {
+                    project
+                        .read(cx)
+                        .find_project_path(&Path::new(GENERIC).join("main.py"), cx)
+                })
+                .context("Retained generic physical path")?;
+            window.panel.update(&mut window.visual, |panel, cx| {
+                panel.select_path_for_test(generic.clone(), cx);
+                panel.marked_entries = panel.selection.into_iter().collect();
+            });
+            let history = std::rc::Rc::new(std::cell::RefCell::new(Vec::new()));
+            let physical_panel = window.panel.clone();
+            window.visual.update(|window, cx| {
+                git_ui_core::set_file_history_opener(
+                    {
+                        let history = history.clone();
+                        move |_, path, _, _| history.borrow_mut().push(path.clone())
+                    },
+                    cx,
+                );
+                physical_panel.read(cx).focus_handle.focus(window, cx);
+            });
+            draw_workspace(&mut window);
+            window.visual.dispatch_action(git::FileHistory);
+            assert_eq!(
+                history.borrow().as_slice(),
+                &[generic.clone()],
+                "The mounted physical File History ancestor route must actually execute"
+            );
+            history.borrow_mut().clear();
+            let (selection, marked, expanded) =
+                window.panel.read_with(&window.visual, |panel, _| {
+                    (
+                        panel.selection,
+                        panel.marked_entries.clone(),
+                        panel.state.expanded_dir_ids.clone(),
+                    )
+                });
+            let files_before = filesystem
+                .read_dir(Path::new(GENERIC))
+                .await?
+                .try_collect::<Vec<_>>()
+                .await?;
+            choose(&mut window, DefaultView::Android);
+            rows_ready(&mut window).await;
+            draw_workspace(&mut window);
+            focus_workspace(&mut window);
+            window.visual.dispatch_action(crate::Rename);
+            focus_workspace(&mut window);
+            window.visual.dispatch_action(crate::Duplicate);
+            focus_workspace(&mut window);
+            window
+                .visual
+                .dispatch_action(crate::Delete { skip_prompt: true });
+            let panel = window.panel.clone();
+            window
+                .visual
+                .update(|window, cx| panel.read(cx).focus_handle.focus(window, cx));
+            draw_workspace(&mut window);
+            window.visual.dispatch_action(git::FileHistory);
+            assert!(
+                history.borrow().is_empty(),
+                "Android rows cannot open hidden physical File History"
+            );
+            window.panel.read_with(&window.visual, |panel, _| {
+                assert!(panel.state.edit_state.is_none());
+                assert!(panel.clipboard.is_none());
+                assert_eq!(panel.selection, selection);
+                assert_eq!(panel.marked_entries, marked);
+                assert_eq!(panel.state.expanded_dir_ids, expanded);
+            });
+            let files_after = filesystem
+                .read_dir(Path::new(GENERIC))
+                .await?
+                .try_collect::<Vec<_>>()
+                .await?;
+            assert_eq!(
+                files_after, files_before,
+                "Duplicate/Delete must leave actual physical files unchanged"
+            );
+            assert!(
+                filesystem
+                    .is_file(&Path::new(GENERIC).join("main.py"))
+                    .await
+            );
+            focus_workspace(&mut window);
+            window.visual.dispatch_action(crate::CollapseAllEntries);
+            rows_ready(&mut window).await;
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert!(tree.expanded_keys.is_empty());
+                assert_eq!(tree.logical_rows.len(), 1);
+            });
+            focus_workspace(&mut window);
+            window.visual.dispatch_action(crate::ExpandAllEntries);
+            rows_ready(&mut window).await;
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert!(tree.logical_rows.len() > 1);
+                assert!(
+                    tree.logical_rows
+                        .iter()
+                        .any(|row| row.label.as_ref() == "Main")
+                );
+            });
+            window.panel.read_with(&window.visual, |panel, _| {
+                assert_eq!(panel.state.expanded_dir_ids, expanded);
+            });
+            Ok(())
+        }
+        .await;
+        result.expect("Mounted workspace commands must respect the visible logical view");
+    }
+
+    #[gpui::test]
+    async fn android_rendered_callbacks_reject_replacement_root_with_repeated_keys(
+        cx: &mut TestAppContext,
+    ) {
+        const SECOND: &str = "/tree-owner-second";
+        let result: Result<()> = async {
+            let (project, filesystem) = fixture(cx).await?;
+            filesystem
+                .insert_tree(
+                    SECOND,
+                    json!({"app": {"src": {"main": {
+                        "AndroidManifest.xml": "<manifest package=\"example\"/>",
+                        "java": {"example": {"Main.java": "package example; class Main {}"}}
+                    }}}}),
+                )
+                .await;
+            let (worktree, _) = project
+                .update(cx, |project, cx| {
+                    project.find_or_create_worktree(Path::new(SECOND), true, cx)
+                })
+                .await?;
+            cx.update(|cx| {
+                let store = project.read(cx).worktree_store();
+                TrustedWorktrees::try_get_global(cx)
+                    .context("Trust store")?
+                    .update(cx, |trust, cx| {
+                        trust.trust(
+                            &store,
+                            [PathTrust::Worktree(worktree.read(cx).id())]
+                                .into_iter()
+                                .collect(),
+                            cx,
+                        )
+                    });
+                Ok::<_, anyhow::Error>(())
+            })?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            let (obsolete_owner, repeated_key) =
+                window
+                    .tree()
+                    .update_in(&mut window.visual, |tree, window, cx| {
+                        Ok::<_, anyhow::Error>((
+                            tree.rendered_owner(window, cx)
+                                .context("Rendered first owner")?,
+                            tree.logical_rows
+                                .first()
+                                .context("First module row")?
+                                .key
+                                .clone(),
+                        ))
+                    })?;
+            window.visual.update(|_, cx| {
+                publish_context_at(SECOND, &project, cx)?;
+                publish_model_at(SECOND, &project, cx)
+            })?;
+            window
+                .open(&Path::new(SECOND).join("app/src/main/java/example/Main.java"))
+                .await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            let current_owner = window.published_owner()?;
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    assert_eq!(
+                        tree.logical_rows.first().expect("Replacement module").key,
+                        repeated_key
+                    );
+                    let selected = tree.selected_key.clone();
+                    let expanded = tree.expanded_keys.clone();
+                    tree.choose_rendered_view(&obsolete_owner, DefaultView::Project, window, cx);
+                    tree.select_rendered_row(&obsolete_owner, &repeated_key, true, window, cx);
+                    tree.collapse_all_rendered(&obsolete_owner, window, cx);
+                    assert_eq!(tree.selected_key, selected);
+                    assert_eq!(tree.expanded_keys, expanded);
+                    assert!(tree.row_changes.is_empty());
+                    assert_eq!(
+                        tree.selector_state(window, cx)
+                            .expect("Replacement selector")
+                            .view,
+                        DefaultView::Android
+                    );
+                });
+            assert_eq!(window.published_owner()?, current_owner);
+            Ok(())
+        }
+        .await;
+        result.expect("Rendered callbacks must retain their original root/capture owner");
+    }
+
+    #[gpui::test]
+    async fn android_view_switches_reuse_capture_and_row_jobs_coalesce_cancel_and_drop_off_thread(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            let (project, _) = fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            let owner = window.published_owner()?;
+            let file_revision = window.current_file_revision()?;
+            for _ in 0..3 {
+                choose(&mut window, DefaultView::Project);
+                choose(&mut window, DefaultView::Android);
+                assert_eq!(window.published_owner()?, owner);
+                assert_eq!(window.current_file_revision()?, file_revision);
+            }
+            let initial_generation = window
+                .tree()
+                .read_with(&window.visual, |tree, _| tree.row_generation);
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    tree.collapse_all(window, cx);
+                    tree.expand_all(window, cx);
+                });
+            rows_ready(&mut window).await;
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert_eq!(
+                    tree.row_generation,
+                    initial_generation + 1,
+                    "Same-turn disclosure jobs coalesce"
+                );
+                assert_eq!(
+                    tree.logical_rows.len(),
+                    tree.logical_cache
+                        .as_ref()
+                        .expect("Cache")
+                        .value()
+                        .expect("Cache data")
+                        .rows
+                        .len()
+                );
+            });
+            let (release, gate) = oneshot::channel();
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    tree.row_gate_for_test = Some(gate);
+                    tree.collapse_all(window, cx);
+                });
+            window.visual.run_until_parked();
+            let cancelled = window.tree().read_with(&window.visual, |tree, _| {
+                tree.row_cancelled.clone().expect("Running gated row job")
+            });
+            assert!(!cancelled.load(Ordering::Acquire));
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    tree.expand_all(window, cx)
+                });
+            rows_ready(&mut window).await;
+            assert!(cancelled.load(Ordering::Acquire));
+            assert!(
+                release.send(()).is_err(),
+                "Superseded background row future releases its pending gate"
+            );
+            assert_eq!(window.published_owner()?, owner);
+            assert_eq!(window.current_file_revision()?, file_revision);
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert_eq!(
+                    tree.logical_rows.len(),
+                    tree.logical_cache
+                        .as_ref()
+                        .expect("Cache")
+                        .value()
+                        .expect("Cache data")
+                        .rows
+                        .len()
+                );
+            });
+            let (dropped, observe_drop) = oneshot::channel();
+            window.tree().update(&mut window.visual, |tree, cx| {
+                let cached = Arc::get_mut(tree.logical_cache.as_mut().expect("Current row cache"))
+                    .expect("Completed row cache has one owner");
+                cached.value.as_mut().expect("Cached rows").drop_observer =
+                    Some((cx.background_executor().clone(), dropped));
+            });
+            window.open(&Path::new(GENERIC).join("main.py")).await?;
+            assert!(
+                !observe_drop.await?,
+                "Released cached rows are destroyed on the background executor"
+            );
+            window.tree().read_with(&window.visual, |tree, _| {
+                assert!(tree.logical_rows.is_empty());
+                assert!(tree.logical_cache.is_none());
+                assert!(tree.row_task.is_none());
+            });
+            Ok(())
+        }
+        .await;
+        result.expect("Presentation changes and row scheduling must preserve capture ownership and UI responsiveness");
+    }
+
+    #[gpui::test]
+    async fn android_row_projection_handles_capture_entry_cap_on_background_executor(
+        cx: &mut TestAppContext,
+    ) {
+        use android_tools::project_tree::{
+            FileFact, FileKind, SourceProvider, TreeFiles, TreeModel, TreeModule, TreeSourceRoot,
+            project_tree,
+        };
+        let result: Result<()> = async {
+            let (project, _) = fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            let owner = window.published_owner()?;
+            let executor = cx.executor();
+            executor
+                .clone()
+                .spawn(async move {
+                    assert!(!executor.is_main_thread());
+                    let directory = PathBuf::from("/large/app/src/main/assets");
+                    let model = TreeModel {
+                        revision: 1,
+                        modules: vec![TreeModule {
+                            id: ":app".into(),
+                            display_name: "app".into(),
+                            directory: "/large/app".into(),
+                            source_roots: vec![TreeSourceRoot {
+                                path: directory.clone(),
+                                group: SourceGroup::Assets,
+                                provider: SourceProvider::Named("main".into()),
+                            }],
+                            compact_packages: true,
+                        }],
+                    };
+                    let mut entries = Vec::with_capacity(100_000);
+                    entries.push(FileFact {
+                        path: directory.clone(),
+                        kind: FileKind::Directory,
+                    });
+                    for index in 0..99_999 {
+                        entries.push(FileFact {
+                            path: directory.join(format!("asset-{index:06}.txt")),
+                            kind: FileKind::File {
+                                java_classes: Vec::new(),
+                            },
+                        });
+                    }
+                    assert_eq!(entries.len(), 100_000);
+                    let snapshot = project_tree(
+                        &model,
+                        &TreeFiles {
+                            model_revision: 1,
+                            revision: 1,
+                            entries,
+                        },
+                    )?;
+                    let node_count = snapshot.nodes().count();
+                    let cancelled = AtomicBool::new(false);
+                    let cache = Arc::new(BackgroundOwned::new(
+                        LogicalRowCache::prepare(owner.clone(), &snapshot, &cancelled)?,
+                        executor.clone(),
+                    ));
+                    let update = prepare_visible_rows(
+                        cache.clone(),
+                        Arc::new(BTreeSet::new()),
+                        None,
+                        false,
+                        vec![RowChange::ExpandAll],
+                        &cancelled,
+                    )?;
+                    assert_eq!(update.rows.len(), node_count);
+                    assert_eq!(update.visible_keys.len(), node_count);
+                    assert_eq!(
+                        update
+                            .rows
+                            .iter()
+                            .filter(|row| matches!(row.key, NodeKey::File { .. }))
+                            .count(),
+                        99_999
+                    );
+                    let cancelled = AtomicBool::new(true);
+                    assert!(LogicalRowCache::prepare(owner, &snapshot, &cancelled).is_err());
+                    assert!(
+                        prepare_visible_rows(
+                            cache,
+                            Arc::new(BTreeSet::new()),
+                            None,
+                            false,
+                            vec![RowChange::ExpandAll],
+                            &cancelled
+                        )
+                        .is_err()
+                    );
+                    Ok::<_, anyhow::Error>(())
+                })
+                .await?;
+            Ok(())
+        }
+        .await;
+        result
+            .expect("The physical capture entry cap must remain usable by background logical rows");
+    }
+
+    #[gpui::test]
+    async fn android_collapsed_root_disclosure_remains_inside_viewport_and_accepts_pointer(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            let (project, _) = fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    tree.collapse_all(window, cx)
+                });
+            rows_ready(&mut window).await;
+            for width in [180., 480.] {
+                draw_panel(&mut window, width, 300.);
+                let root = window
+                    .visual
+                    .debug_bounds("android-logical-first-row")
+                    .context("Rendered collapsed module")?;
+                let half_rem = window.visual.update(|window, _| window.rem_size() * 0.5);
+                let disclosure = gpui::point(root.origin.x - half_rem, root.center().y);
+                assert!(
+                    disclosure.x >= px(0.),
+                    "Disclosure gutter must stay inside the clipped viewport"
+                );
+                window.visual.simulate_click(disclosure, Default::default());
+                rows_ready(&mut window).await;
+                window.tree().read_with(&window.visual, |tree, _| {
+                    assert!(
+                        tree.logical_rows.len() > 1,
+                        "Actual root disclosure pointer expands rows"
+                    );
+                });
+                window
+                    .tree()
+                    .update_in(&mut window.visual, |tree, window, cx| {
+                        tree.collapse_all(window, cx)
+                    });
+                rows_ready(&mut window).await;
+            }
+            window.tree().read_with(&window.visual, |tree, _| {
+                let cache = tree
+                    .logical_cache
+                    .as_ref()
+                    .expect("Cached kinds")
+                    .value()
+                    .expect("Cached rows");
+                assert_eq!(
+                    cache.rows.first().expect("Module row").row.icon,
+                    IconName::BoxOpen
+                );
+                assert!(
+                    cache
+                        .rows
+                        .iter()
+                        .filter(|row| matches!(row.row.key, NodeKey::Directory { .. }))
+                        .all(|row| row.row.icon != IconName::File)
+                );
+                assert!(
+                    cache
+                        .rows
+                        .iter()
+                        .filter(|row| matches!(row.row.key, NodeKey::JavaClass { .. }))
+                        .all(|row| row.row.icon == IconName::Code)
+                );
+            });
+            Ok(())
+        }
+        .await;
+        result.expect("Root disclosure must be visible and clickable after Collapse All");
     }
 }

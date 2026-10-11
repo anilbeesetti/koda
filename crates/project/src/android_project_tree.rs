@@ -226,6 +226,18 @@ pub enum AndroidTreeReadLimit {
     JavaCaptureBudget(PathBuf),
 }
 
+/// A shared immutable projection whose final allocation is released off the UI thread.
+#[derive(Clone)]
+pub struct SharedAndroidModuleTree(Arc<BackgroundDrop<AdaptedModuleTree>>);
+
+impl Deref for SharedAndroidModuleTree {
+    type Target = AdaptedModuleTree;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 /// Immutable projection and the actual physical handles/revisions it used.
 /// It has not been installed in any panel. Consumers check their window's owner
 /// and request generations as well as `is_android_tree_capture_current`.
@@ -235,7 +247,7 @@ pub struct CapturedAndroidModuleTree {
     worktrees: Vec<WorktreeCapture>,
     entries: SharedEntries,
     java_sources: SharedJavaSources,
-    tree: BackgroundDrop<AdaptedModuleTree>,
+    tree: SharedAndroidModuleTree,
     read_limits: BackgroundDrop<Vec<AndroidTreeReadLimit>>,
     _trust_observer: Option<Subscription>,
     _worktree_observers: Vec<Subscription>,
@@ -244,6 +256,12 @@ pub struct CapturedAndroidModuleTree {
 impl CapturedAndroidModuleTree {
     pub fn tree(&self) -> &AdaptedModuleTree {
         &self.tree
+    }
+
+    /// Sharing the projection does not certify that this capture is current.
+    /// Consumers still validate capture ownership before publication or dispatch.
+    pub fn shared_tree(&self) -> SharedAndroidModuleTree {
+        self.tree.clone()
     }
 
     pub fn owner_generation(&self) -> u64 {
@@ -502,7 +520,9 @@ impl Project {
                                     .collect(),
                             };
                             let tree = adapt_captured_module(&request.plan, &capture)?;
-                            Ok::<_, anyhow::Error>(BackgroundDrop::new(tree, release_executor))
+                            Ok::<_, anyhow::Error>(SharedAndroidModuleTree(Arc::new(
+                                BackgroundDrop::new(tree, release_executor),
+                            )))
                         }
                     })
                     .await?;

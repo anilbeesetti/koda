@@ -563,6 +563,9 @@ pub fn init(cx: &mut App) {
             workspace.open_panel::<ProjectPanel>(window, cx);
             if let Some(panel) = workspace.panel::<ProjectPanel>(cx) {
                 panel.update(cx, |panel, cx| {
+                    if panel.uses_logical_view(window, cx) {
+                        return;
+                    }
                     if let Some(first_marked) = panel.marked_entries.first() {
                         let first_marked = *first_marked;
                         panel.marked_entries.clear();
@@ -596,7 +599,9 @@ pub fn init(cx: &mut App) {
             let Some(panel) = workspace.panel::<ProjectPanel>(cx) else {
                 return div;
             };
-            if !panel.read(cx).focus_handle(cx).contains_focused(window, cx) {
+            if panel.read(cx).uses_logical_view(window, cx)
+                || !panel.read(cx).focus_handle(cx).contains_focused(window, cx)
+            {
                 return div;
             }
             if panel.read(cx).selected_entry_project_path(cx).is_none() {
@@ -609,6 +614,9 @@ pub fn init(cx: &mut App) {
                         let Some(panel) = workspace.panel::<ProjectPanel>(cx) else {
                             return;
                         };
+                        if panel.read(cx).uses_logical_view(window, cx) {
+                            return;
+                        }
                         let Some(project_path) = panel.read(cx).selected_entry_project_path(cx)
                         else {
                             return;
@@ -1675,6 +1683,11 @@ impl ProjectPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self.uses_logical_view(window, cx) {
+            self._android_tree
+                .update(cx, |tree, cx| tree.collapse_all(window, cx));
+            return;
+        }
         let roots = self.all_worktree_roots(cx);
         self.collapse_worktree_roots(roots, window, cx);
     }
@@ -1685,6 +1698,11 @@ impl ProjectPanel {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        if self.uses_logical_view(window, cx) {
+            self._android_tree
+                .update(cx, |tree, cx| tree.expand_all(window, cx));
+            return;
+        }
         let roots = self.all_worktree_roots(cx);
         self.expand_worktree_roots(roots, window, cx);
     }
@@ -2595,14 +2613,23 @@ impl ProjectPanel {
     }
 
     fn rename(&mut self, _: &Rename, window: &mut Window, cx: &mut Context<Self>) {
+        if self.uses_logical_view(window, cx) {
+            return;
+        }
         self.rename_impl(None, window, cx);
     }
 
     fn trash(&mut self, action: &Trash, window: &mut Window, cx: &mut Context<Self>) {
+        if self.uses_logical_view(window, cx) {
+            return;
+        }
         self.remove(true, action.skip_prompt, window, cx);
     }
 
     fn delete(&mut self, action: &Delete, window: &mut Window, cx: &mut Context<Self>) {
+        if self.uses_logical_view(window, cx) {
+            return;
+        }
         self.remove(false, action.skip_prompt, window, cx);
     }
 
@@ -3954,6 +3981,9 @@ impl ProjectPanel {
     }
 
     fn duplicate(&mut self, _: &Duplicate, window: &mut Window, cx: &mut Context<Self>) {
+        if self.uses_logical_view(window, cx) {
+            return;
+        }
         self.copy(&Copy {}, window, cx);
         self.paste(&Paste {}, window, cx);
     }
@@ -7330,10 +7360,19 @@ fn item_width_estimate(depth: usize, item_text_chars: usize, is_symlink: bool) -
 }
 
 impl ProjectPanel {
+    fn uses_logical_view(&self, window: &Window, cx: &App) -> bool {
+        self._android_tree
+            .read(cx)
+            .selector_state(window, cx)
+            .is_some_and(|state| {
+                state.view == android_tools::project_view_preferences::DefaultView::Android
+            })
+    }
+
     fn render_project_header(
         &self,
         selector: Option<AnyElement>,
-        logical: bool,
+        logical_owner: Option<android_project_tree::RenderedOwner>,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         h_flex()
@@ -7357,11 +7396,11 @@ impl ProjectPanel {
                                 Tooltip::for_action("Collapse All", &CollapseAllEntries, cx)
                             })
                             .on_click(cx.listener(move |panel, _, window, cx| {
-                                if logical {
-                                    panel
-                                        ._android_tree
-                                        .update(cx, |tree, cx| tree.collapse_all(window, cx));
-                                } else {
+                                if let Some(owner) = &logical_owner {
+                                    panel._android_tree.update(cx, |tree, cx| {
+                                        tree.collapse_all_rendered(owner, window, cx);
+                                    });
+                                } else if !panel.uses_logical_view(window, cx) {
                                     panel.collapse_all_entries(&CollapseAllEntries, window, cx);
                                 }
                             })),
@@ -7393,6 +7432,7 @@ impl ProjectPanel {
         }
 
         let has_worktree = !self.state.visible_entries.is_empty();
+        let header = self.render_project_header(view_selector, None, cx);
         let project = self.project.read(cx);
         let panel_settings = ProjectPanelSettings::get_global(cx);
         let indent_size = panel_settings.indent_size;
@@ -7588,7 +7628,7 @@ impl ProjectPanel {
                 .track_focus(&self.focus_handle(cx))
                 .child(
                     v_flex()
-                        .child(self.render_project_header(view_selector, false, cx))
+                        .child(header)
                         .child(
                             uniform_list("entries", item_count, {
                                 cx.processor(|this, range: Range<usize>, window, cx| {
@@ -8079,7 +8119,8 @@ impl Render for ProjectPanel {
             return self.render_physical_panel(window, cx).into_any_element();
         }
         let selector = tree.update(cx, |tree, cx| tree.render_selector(selector, window, cx));
-        let header = self.render_project_header(Some(selector), true, cx);
+        let owner = tree.read(cx).rendered_owner(window, cx);
+        let header = self.render_project_header(Some(selector), owner, cx);
         v_flex()
             .size_full()
             .min_h_0()
