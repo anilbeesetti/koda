@@ -8,6 +8,7 @@ pub(crate) mod shared_sdk;
 use anyhow::{Context as _, Result, bail, ensure};
 pub mod java;
 pub mod kotlin;
+pub mod kotlin_runtime;
 use serde::Deserialize;
 use std::{
     env, fs,

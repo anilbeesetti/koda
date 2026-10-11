@@ -2846,7 +2846,7 @@ impl AndroidPanel {
                 });
                 match result {
                     Ok(generation_error) => {
-                        panel.status = format!("Official Kotlin {} configured. Open a Kotlin file and wait for import and indexing. Variant and Gradle input changes refresh automatically.", kotlin::OFFICIAL_REVISION).into();
+                        panel.status = "Managed Kotlin configured. Open a Kotlin file and wait for import and indexing. Variant and Gradle input changes refresh automatically.".into();
                         panel.error = generation_error.map(|error| format!("Android resource generation failed; generated symbols may be unavailable. Kotlin import can still proceed.\n{error:#}"));
                         if android_tools::java::is_configured(&root) {
                             panel.configure_java(target, window, cx);

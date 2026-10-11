@@ -2805,6 +2805,9 @@ impl AndroidPanel {
         let executor = cx.background_executor().clone();
         self.tool_setup.operation = Some(cx.spawn_in(window, async move |panel, cx| {
             let result = cx.background_spawn(async move {
+                if tool == Tool::Kotlin {
+                    return super::startup_kotlin::manage_runtime(operation, offline, executor, output, cancelled).await;
+                }
                 let prepared = managed::prepare(tool, operation, offline)?;
                 let mut command = util::command::new_std_command(&prepared.program);
                 command.args(&prepared.arguments).envs(&prepared.environment).current_dir(&root);
@@ -2851,8 +2854,8 @@ impl AndroidPanel {
             || super::startup_kotlin::busy(cx);
         let details = v_flex().gap_2()
             .child(Label::new("Advanced Kotlin and debugger tools: Apple Silicon macOS. Preview uses the configured Java 21 runtime.").size(LabelSize::Small))
-            .child(Label::new("These advanced installers require Python 3.12+ and Apple's Command Line Tools. Java and Android SDK setup uses Koda's native installer.").size(LabelSize::Small).color(Color::Muted))
-            .child(Label::new("Verified pinned downloads: JetBrains Kotlin server, fwcd debugger sources and Adoptium JDK. Debugger builds also fetch Gradle dependencies over HTTPS.").size(LabelSize::Small).color(Color::Muted))
+            .child(Label::new("Kotlin downloads and updates automatically. Debugger builds require Python 3.12+ and Apple's Command Line Tools.").size(LabelSize::Small).color(Color::Muted))
+            .child(Label::new("Verified downloads: Koda Kotlin server releases, fwcd debugger sources and Adoptium JDK. Debugger builds also fetch Gradle dependencies over HTTPS.").size(LabelSize::Small).color(Color::Muted))
             .children(self.tool_setup.lines.iter().map(|line| Label::new(line.clone()).size(LabelSize::Small).line_clamp(4)))
             .child(h_flex().gap_1().flex_wrap()
                 .child(wizard.focus_row("advanced-choose-sdk", setup_button("choose-sdk", "Choose SDK", cx).disabled(busy).tab_index(0isize).on_click(cx.listener(|panel, _, window, cx| panel.choose_dependency(Dependency::Sdk, window, cx))), cx))

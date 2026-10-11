@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "release_tag": "koda-263.6379.0-android-9-73ff96331a2e",
+  "upstream_version": "263.6379.0",
+  "upstream_source_commit": "4acdb6ec74bbcfe0d30f7ecbcae053bf729b1748",
+  "upstream_archive_sha256": "ebef2e13cd4adc4ec9e04084b848000a3ec7a9d2917c64f269574ce2efe9ecad",
+  "patch_revision": "android-9",
+  "recipe_sha256": "73ff96331a2ef585fd4daf58e72170070a753e7ad33dbef08f452d71a7419709",
+  "build_commit": "2835058127480f18308caa8f7c0c7456ceef5af2",
+  "artifacts": [
+    {
+      "platform": "macos-aarch64",
+      "name": "koda-263.6379.0-android-9-73ff96331a2e-macos-aarch64.tar.gz",
+      "sha256": "d8c9ec97ed0101c5d956e9f6433de7097a41671a8c84fc04e79438148c7f63d7",
+      "size": 357899963,
+      "entrypoint": "kotlin-server/bin/intellij-server"
+    }
+  ]
+}

@@ -63,6 +63,21 @@ Both workflows currently build Apple Silicon macOS downloads. Stable tags use
 leave GitHub's latest stable release unchanged. Failed runs can be retried with
 their reserved tag.
 
+### Kotlin language server
+
+On Apple Silicon macOS, Koda downloads the patched Kotlin server from
+[anilbeesetti/kotlin-lsp](https://github.com/anilbeesetti/kotlin-lsp/releases).
+It checks for compatible published releases at startup and every six hours.
+Custom Kotlin server settings disable this automatic management.
+
+Archives are checked against the release checksum and staged beside the installed
+runtime. Koda tests LSP initialization before activating an update. Failed downloads,
+expired builds and cancelled updates leave the previous installation available;
+running language servers keep using their current installation until restarted.
+Android: Setup → Customize → Advanced tools provides Install / repair, Validate,
+Rollback and offline controls. Kotlin downloads include their private Java runtime;
+Android Gradle builds still need Java 21.
+
 ### GitHub Actions
 
 This fork keeps five workflows:

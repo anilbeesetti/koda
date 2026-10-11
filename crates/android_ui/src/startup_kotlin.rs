@@ -1,5 +1,5 @@
 use super::{android_build, default_kotlin_server_settings};
-use android_tools::{kotlin, managed};
+use android_tools::{kotlin, kotlin_runtime, managed};
 use anyhow::Result;
 use futures::{
     FutureExt as _, StreamExt as _,
@@ -8,7 +8,7 @@ use futures::{
 };
 use gpui::{App, AppContext as _, BackgroundExecutor, Global, Task};
 use settings::Settings as _;
-use std::{collections::VecDeque, sync::Arc, time::Duration};
+use std::{collections::VecDeque, sync::Arc};
 
 const OUTPUT_CAPACITY: usize = 32;
 const MAX_DETAILS_BYTES: usize = 16 * 1024;
@@ -28,6 +28,7 @@ pub(super) enum State {
 pub(super) struct StartupKotlin {
     state: Option<State>,
     task: Option<Task<()>>,
+    updates: Option<Task<()>>,
     cancel: Option<oneshot::Sender<()>>,
     cancel_requested: bool,
     operation: u64,
@@ -42,10 +43,13 @@ trait RuntimeProvider: Send + Sync {
     fn supported(&self) -> bool;
     fn runtime(&self) -> Result<()>;
     fn java(&self) -> Result<()>;
-    fn prepare(&self, offline: bool) -> BoxFuture<'static, Result<managed::Prepared>>;
+    fn updates_enabled(&self) -> bool {
+        false
+    }
+    fn prepare(&self, offline: bool) -> BoxFuture<'static, Result<()>>;
     fn install(
         &self,
-        prepared: managed::Prepared,
+        offline: bool,
         executor: BackgroundExecutor,
         output: mpsc::Sender<android_build::OutputLine>,
         cancel: oneshot::Receiver<()>,
@@ -72,37 +76,73 @@ impl RuntimeProvider for ManagedRuntime {
         Ok(())
     }
 
-    fn prepare(&self, offline: bool) -> BoxFuture<'static, Result<managed::Prepared>> {
-        async move { managed::prepare(managed::Tool::Kotlin, "install", offline) }.boxed()
+    fn updates_enabled(&self) -> bool {
+        true
+    }
+
+    fn prepare(&self, _: bool) -> BoxFuture<'static, Result<()>> {
+        async { Ok(()) }.boxed()
     }
 
     fn install(
         &self,
-        prepared: managed::Prepared,
+        offline: bool,
         executor: BackgroundExecutor,
         output: mpsc::Sender<android_build::OutputLine>,
         cancel: oneshot::Receiver<()>,
     ) -> BoxFuture<'static, Result<android_build::ProcessOutput>> {
-        async move {
-            let mut command = util::command::new_std_command(&prepared.program);
-            command
-                .args(&prepared.arguments)
-                .envs(&prepared.environment)
-                .current_dir(prepared.directory.path());
-            let result = android_build::command_output_with_cleanup(
-                command,
-                &executor,
-                Duration::from_secs(1800),
-                output,
-                cancel,
-                false,
-            )
-            .await;
-            // Recipes must survive until the managed process group has been stopped.
-            drop(prepared.directory);
-            result
+        manage_runtime("update", offline, executor, output, cancel).boxed()
+    }
+}
+
+/// Keep cancellation cooperative until the downloader has released its profile lock.
+pub(super) async fn manage_runtime(
+    operation: &'static str,
+    offline: bool,
+    executor: BackgroundExecutor,
+    output: mpsc::Sender<android_build::OutputLine>,
+    cancel: oneshot::Receiver<()>,
+) -> Result<android_build::ProcessOutput> {
+    use futures::future::{Either, select};
+    use std::sync::{
+        Mutex,
+        atomic::{AtomicBool, Ordering},
+    };
+    let flag = Arc::new(AtomicBool::new(false));
+    let worker_flag = flag.clone();
+    let output = Mutex::new(output);
+    let worker = executor.spawn(async move {
+        kotlin_runtime::manage(operation, offline, &worker_flag, |progress| {
+            match output.lock() {
+                Ok(mut output) => {
+                    if let Err(error) = output.try_send(android_build::OutputLine {
+                        text: progress.message,
+                        stderr: false,
+                    }) {
+                        if error.is_disconnected() {
+                            worker_flag.store(true, Ordering::Relaxed);
+                        }
+                        // A full bounded channel retains earlier progress; the final result is awaited.
+                    }
+                }
+                Err(error) => {
+                    log::error!("Kotlin progress channel failed: {error}");
+                    worker_flag.store(true, Ordering::Relaxed);
+                }
+            }
+        })
+    });
+    match select(worker, cancel).await {
+        Either::Left((result, _)) => {
+            result.map(|_| android_build::ProcessOutput::Success(String::new()))
         }
-        .boxed()
+        Either::Right((_, worker)) => {
+            flag.store(true, Ordering::Relaxed);
+            if let Err(error) = worker.await {
+                log::debug!("Kotlin operation stopped after cancellation: {error:#}");
+            }
+            Ok(android_build::ProcessOutput::Cancelled)
+        }
     }
 }
 
@@ -111,12 +151,25 @@ pub(super) fn initialize(cx: &mut App) {
         return;
     }
     initialize_with_provider(Arc::new(ManagedRuntime), cx);
+    let executor = cx.background_executor().clone();
+    let updates = cx.spawn(async move |cx| {
+        loop {
+            executor.timer(kotlin_runtime::UPDATE_INTERVAL).await;
+            cx.update(|cx| {
+                if matches!(state(cx), Some(State::Ready | State::Failed(_))) {
+                    retry(offline(cx).unwrap_or(false), cx);
+                }
+            });
+        }
+    });
+    cx.global_mut::<StartupKotlin>().updates = Some(updates);
 }
 
 fn initialize_with_provider(provider: Arc<dyn RuntimeProvider>, cx: &mut App) {
     cx.set_global(StartupKotlin {
         state: None,
         task: None,
+        updates: None,
         cancel: None,
         cancel_requested: false,
         operation: 0,
@@ -131,7 +184,9 @@ fn initialize_with_provider(provider: Arc<dyn RuntimeProvider>, cx: &mut App) {
 fn shutdown(cx: &mut App) -> impl Future<Output = ()> + use<> {
     cancel(cx);
     let task = if cx.has_global::<StartupKotlin>() {
-        cx.global_mut::<StartupKotlin>().task.take()
+        let startup = cx.global_mut::<StartupKotlin>();
+        drop(startup.updates.take());
+        startup.task.take()
     } else {
         None
     };
@@ -159,6 +214,7 @@ pub(super) fn set_state_for_test(state: State, cx: &mut App) {
     cx.set_global(StartupKotlin {
         state: Some(state),
         task: active.then(|| Task::ready(())),
+        updates: None,
         cancel: None,
         cancel_requested: false,
         operation: 0,
@@ -274,20 +330,21 @@ pub(super) fn retry(offline: bool, cx: &mut App) {
         if !cx.update(|cx| continue_operation(operation, false, cx)) {
             return;
         }
-        if runtime.is_ok() {
+        if runtime.is_ok() && !provider.updates_enabled() {
             cx.update(|cx| finish(operation, Some(State::Ready), cx));
             return;
         }
-        if !cx.update(|cx| continue_operation(operation, true, cx)) {
+        let requires_setup = runtime.is_err();
+        if !cx.update(|cx| continue_operation(operation, requires_setup, cx)) {
             return;
         }
-        let java = cx
+        let java = if requires_setup { cx
             .background_spawn({
                 let provider = provider.clone();
                 async move { provider.java() }
             })
-            .await;
-        if !cx.update(|cx| continue_operation(operation, true, cx)) {
+            .await } else { Ok(()) };
+        if !cx.update(|cx| continue_operation(operation, requires_setup, cx)) {
             return;
         }
         if let Err(error) = java {
@@ -313,11 +370,11 @@ pub(super) fn retry(offline: bool, cx: &mut App) {
                 async move { provider.prepare(offline).await }
             })
             .await;
-        if !cx.update(|cx| continue_operation(operation, true, cx)) {
+        if !cx.update(|cx| continue_operation(operation, requires_setup, cx)) {
             return;
         }
-        let prepared = match prepared {
-            Ok(prepared) => prepared,
+        match prepared {
+            Ok(()) => (),
             Err(error) => {
                 cx.update(|cx| fail(operation, error, cx));
                 return;
@@ -335,7 +392,7 @@ pub(super) fn retry(offline: bool, cx: &mut App) {
         });
         let installation = cx.background_spawn({
             let provider = provider.clone();
-            async move { provider.install(prepared, executor, output, cancelled).await }
+            async move { provider.install(offline, executor, output, cancelled).await }
         });
         let mut details = OutputDetails::default();
         while let Some(line) = lines.next().await {
@@ -495,19 +552,16 @@ mod tests {
         future::{Either, select},
     };
     use gpui::{BorrowAppContext as _, TestAppContext};
-    use std::{
-        collections::BTreeMap,
-        path::PathBuf,
-        sync::{
-            Mutex,
-            atomic::{AtomicBool, AtomicUsize, Ordering},
-        },
+    use std::sync::{
+        Mutex,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
     };
 
     #[derive(Default)]
     struct FakeRuntime {
         ready: Arc<AtomicBool>,
         java_ready: AtomicBool,
+        updates_enabled: AtomicBool,
         fail_install: Arc<AtomicBool>,
         checks: AtomicUsize,
         java_checks: AtomicUsize,
@@ -524,6 +578,10 @@ mod tests {
             true
         }
 
+        fn updates_enabled(&self) -> bool {
+            self.updates_enabled.load(Ordering::SeqCst)
+        }
+
         fn runtime(&self) -> Result<()> {
             self.checks.fetch_add(1, Ordering::SeqCst);
             anyhow::ensure!(self.ready.load(Ordering::SeqCst), "Missing managed runtime");
@@ -536,7 +594,7 @@ mod tests {
             Ok(())
         }
 
-        fn prepare(&self, offline: bool) -> BoxFuture<'static, Result<managed::Prepared>> {
+        fn prepare(&self, offline: bool) -> BoxFuture<'static, Result<()>> {
             self.preparations.fetch_add(1, Ordering::SeqCst);
             self.offline.lock().unwrap().push(offline);
             let gate = self.prepare_gate.lock().unwrap().take();
@@ -544,19 +602,14 @@ mod tests {
                 if let Some(gate) = gate {
                     gate.await?;
                 }
-                Ok(managed::Prepared {
-                    directory: tempfile::tempdir()?,
-                    program: PathBuf::from("unused-test-installer"),
-                    arguments: Vec::new(),
-                    environment: BTreeMap::new(),
-                })
+                Ok(())
             }
             .boxed()
         }
 
         fn install(
             &self,
-            prepared: managed::Prepared,
+            _: bool,
             _: BackgroundExecutor,
             mut output: mpsc::Sender<android_build::OutputLine>,
             cancel: oneshot::Receiver<()>,
@@ -580,13 +633,11 @@ mod tests {
                     match select(gate, cancel).await {
                         Either::Left((result, _)) => result?,
                         Either::Right(_) => {
-                            drop(prepared);
                             cleanups.fetch_add(1, Ordering::SeqCst);
                             return Ok(android_build::ProcessOutput::Cancelled);
                         }
                     }
                 }
-                drop(prepared);
                 cleanups.fetch_add(1, Ordering::SeqCst);
                 anyhow::ensure!(!fail.load(Ordering::SeqCst), "Simulated failed download");
                 ready.store(true, Ordering::SeqCst);
@@ -633,6 +684,33 @@ mod tests {
         assert_eq!(provider.checks.load(Ordering::SeqCst), 1);
         assert_eq!(provider.java_checks.load(Ordering::SeqCst), 0);
         assert_eq!(provider.installations.load(Ordering::SeqCst), 0);
+    }
+
+    #[gpui::test]
+    fn installed_runtime_updates_without_first_launch_setup_or_gradle_java(
+        cx: &mut TestAppContext,
+    ) {
+        let provider = Arc::new(FakeRuntime::default());
+        provider.ready.store(true, Ordering::SeqCst);
+        provider.updates_enabled.store(true, Ordering::SeqCst);
+        setup(provider.clone(), false, cx);
+        cx.run_until_parked();
+        cx.read(|cx| assert_eq!(state(cx), Some(&State::Ready)));
+        assert_eq!(provider.java_checks.load(Ordering::SeqCst), 0);
+        assert_eq!(provider.installations.load(Ordering::SeqCst), 1);
+    }
+
+    #[gpui::test]
+    fn failed_update_keeps_existing_runtime_available(cx: &mut TestAppContext) {
+        let provider = Arc::new(FakeRuntime::default());
+        provider.ready.store(true, Ordering::SeqCst);
+        provider.updates_enabled.store(true, Ordering::SeqCst);
+        provider.fail_install.store(true, Ordering::SeqCst);
+        setup(provider.clone(), false, cx);
+        cx.run_until_parked();
+        cx.read(|cx| assert!(matches!(state(cx), Some(State::Failed(_)))));
+        assert!(provider.runtime().is_ok());
+        assert_eq!(provider.java_checks.load(Ordering::SeqCst), 0);
     }
 
     #[gpui::test]
