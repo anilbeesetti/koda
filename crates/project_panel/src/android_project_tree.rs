@@ -1378,7 +1378,7 @@ impl AndroidProjectTree {
         let tree = cx.weak_entity();
         let view = state.view;
         let enabled = state.android_enabled;
-        let reason = state.reason.clone();
+        let reason = state.reason;
         PopoverMenu::new(SharedString::from(format!(
             "android-project-view-selector:{}:{}:{}:{}",
             owner.owner_generation,
@@ -4839,6 +4839,7 @@ mod tests {
     async fn android_external_roots_completed_scans_removal_and_model_staleness(
         cx: &mut TestAppContext,
     ) {
+        use futures::StreamExt as _;
         let result: Result<()> = async {
             let (project, _, worktrees, roots) = external_assets_fixture(cx).await?;
             let mut window = TestWindow::new(&project, cx)?;
@@ -4853,7 +4854,7 @@ mod tests {
                     Ok::<_, anyhow::Error>((worktree.scan_id(), worktree.as_local().context("Real local external worktree")?
                         .refresh_entries_for_paths(vec![Arc::from(util::rel_path::RelPath::empty())])))
                 })?;
-                barrier.recv().await;
+                barrier.next().await;
                 worktree.read_with(&window.visual, |worktree, _| {
                     assert!(worktree.scan_id() > before_scan, "A real additional scan must have occurred");
                     assert!(worktree.completed_scan_id() >= worktree.scan_id());
