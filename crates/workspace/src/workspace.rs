@@ -1574,12 +1574,6 @@ struct DispatchingKeystrokes {
     task: Option<Shared<Task<()>>>,
 }
 
-/// Collects everything project-related for a certain window opened.
-/// In some way, is a counterpart of a window, as the [`WindowHandle`] could be downcast into `Workspace`.
-///
-/// A `Workspace` usually consists of 1 or more projects, a central pane group, 3 docks and a status bar.
-/// The `Workspace` owns everybody's state and serves as a default, "global context",
-/// that can be used to register a global action to be triggered from any place in the window.
 /// The current active-workspace identity, shared without leasing either window root.
 /// This handle certifies only workspace/project ownership; callers still check their
 /// window, project context, trust, and model before dispatching project operations.
@@ -1603,6 +1597,12 @@ impl WorkspaceWindowOwnership {
     }
 }
 
+/// Collects everything project-related for a certain window opened.
+/// In some way, is a counterpart of a window, as the [`WindowHandle`] could be downcast into `Workspace`.
+///
+/// A `Workspace` usually consists of 1 or more projects, a central pane group, 3 docks and a status bar.
+/// The `Workspace` owns everybody's state and serves as a default, "global context",
+/// that can be used to register a global action to be triggered from any place in the window.
 pub struct Workspace {
     weak_self: WeakEntity<Self>,
     workspace_actions: Vec<Box<dyn Fn(Div, &Workspace, &mut Window, &mut Context<Self>) -> Div>>,

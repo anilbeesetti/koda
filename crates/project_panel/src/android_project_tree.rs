@@ -117,6 +117,11 @@ pub(crate) struct RenderedOwner {
     row_generation: u64,
 }
 
+struct RowPaintContext {
+    enabled: bool,
+    owner: RenderedOwner,
+}
+
 #[derive(Clone, Debug)]
 struct LogicalRow {
     key: NodeKey,
@@ -653,6 +658,8 @@ pub(crate) struct AndroidProjectTree {
     #[cfg(test)]
     row_gate_for_test: Option<futures::channel::oneshot::Receiver<()>>,
     #[cfg(test)]
+    row_paints_for_test: std::cell::Cell<usize>,
+    #[cfg(test)]
     completion_for_test: Option<
         futures::channel::oneshot::Sender<(RequestOwner, Result<CapturedAndroidModuleTree>)>,
     >,
@@ -766,6 +773,8 @@ impl AndroidProjectTree {
             #[cfg(test)]
             row_gate_for_test: None,
             #[cfg(test)]
+            row_paints_for_test: std::cell::Cell::new(0),
+            #[cfg(test)]
             completion_for_test: None,
         };
         this.request_reconcile(window, cx);
@@ -847,7 +856,7 @@ impl AndroidProjectTree {
                 .project
                 .read(cx)
                 .android_model()
-                .is_current(request.model)
+                .is_current(&request.model)
     }
 
     fn bind_window_workspace(&mut self, window: &Window, cx: &mut Context<Self>) {
@@ -1740,16 +1749,50 @@ impl AndroidProjectTree {
         cx.notify();
     }
 
+    fn row_paint_context(&self, window: &Window, cx: &App) -> Option<RowPaintContext> {
+        Some(RowPaintContext {
+            owner: self.rendered_owner(window, cx)?,
+            enabled: self.rows_are_current(window, cx),
+        })
+    }
+
+    fn render_rows(
+        &self,
+        range: std::ops::Range<usize>,
+        window: &Window,
+        cx: &mut Context<Self>,
+    ) -> Vec<AnyElement> {
+        let Some(paint) = self.row_paint_context(window, cx) else {
+            return Vec::new();
+        };
+        range
+            .filter_map(|index| self.render_prepared_row(index, &paint, cx))
+            .collect()
+    }
+
+    #[cfg(test)]
     fn render_row(
         &self,
         index: usize,
         window: &Window,
         cx: &mut Context<Self>,
     ) -> Option<AnyElement> {
+        self.render_prepared_row(index, &self.row_paint_context(window, cx)?, cx)
+    }
+
+    fn render_prepared_row(
+        &self,
+        index: usize,
+        paint: &RowPaintContext,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
         let row = self.logical_rows.get(index)?;
+        #[cfg(test)]
+        self.row_paints_for_test
+            .set(self.row_paints_for_test.get() + 1);
         let selected = self.selected_key.as_ref() == Some(&row.key);
-        let enabled = self.rows_are_current(window, cx);
-        let owner = self.rendered_owner(window, cx)?;
+        let enabled = paint.enabled;
+        let owner = paint.owner.clone();
         let disclosure_owner = owner.clone();
         let key = row.key.clone();
         let disclosure_key = row.key.clone();
@@ -1907,9 +1950,7 @@ impl Render for AndroidProjectTree {
                         "android-logical-rows",
                         self.logical_rows.len(),
                         cx.processor(|tree, range: std::ops::Range<usize>, window, cx| {
-                            range
-                                .filter_map(|index| tree.render_row(index, window, cx))
-                                .collect::<Vec<_>>()
+                            tree.render_rows(range, window, cx)
                         }),
                     )
                     .size_full()
@@ -4595,5 +4636,392 @@ mod tests {
         }
         .await;
         result.expect("Command cancellation/reset preserves off-thread payload destruction");
+    }
+
+    fn publish_external_assets_model(
+        project: &Entity<Project>,
+        roots: &[PathBuf],
+        cx: &mut App,
+    ) -> Result<()> {
+        fn add_roots(value: &mut serde_json::Value, roots: &[PathBuf]) -> (usize, usize) {
+            let mut providers = 0;
+            let mut components = 0;
+            match value {
+                serde_json::Value::Object(object) => {
+                    if object.get("name").and_then(|value| value.as_str()) == Some("main")
+                        && let Some(serde_json::Value::Array(entries)) = object.get_mut("roots")
+                    {
+                        entries.extend(
+                            roots
+                                .iter()
+                                .map(|path| json!({"path": path, "kind": "assets"})),
+                        );
+                        providers += 1;
+                    }
+                    if object.get("scope").and_then(|value| value.as_str()) == Some("main")
+                        && let Some(serde_json::Value::Array(entries)) = object.get_mut("sources")
+                    {
+                        entries.extend(roots.iter().map(|path| {
+                            json!({
+                                "path": path, "kind": "assets", "generated": false
+                            })
+                        }));
+                        components += 1;
+                    }
+                    for value in object.values_mut() {
+                        let (added_providers, added_components) = add_roots(value, roots);
+                        providers += added_providers;
+                        components += added_components;
+                    }
+                }
+                serde_json::Value::Array(values) => {
+                    for value in values {
+                        let (added_providers, added_components) = add_roots(value, roots);
+                        providers += added_providers;
+                        components += added_components;
+                    }
+                }
+                _ => {}
+            }
+            (providers, components)
+        }
+        let mut record: serde_json::Value =
+            serde_json::from_str(&EXPORTED_MODEL.replace(ORIGINAL_ROOT, ROOT))?;
+        let (providers, components) = add_roots(&mut record, roots);
+        ensure!(
+            providers >= 2 && components >= 1,
+            "Fixture must exercise both evaluated providers and component roots"
+        );
+        project.update(cx, |project, cx| {
+            let token = project.invalidate_android_model(Some(PathBuf::from(ROOT)), cx);
+            let record = format!("{MODEL_OUTPUT_PREFIX}{}", serde_json::to_string(&record)?);
+            let root = Path::new(ROOT);
+            let directories = [root.to_path_buf(), root.join("app")]
+                .into_iter()
+                .chain(roots.iter().cloned())
+                .map(|path| (path.clone(), path))
+                .collect();
+            let capture = EvaluatedTreeInputs::decode_fixture(&record, root, &directories, &token)?;
+            project.publish_evaluated_android_model(&token, capture, cx)?;
+            project.select_android_variant(
+                Some(VariantId {
+                    module: ":app".into(),
+                    variant: "demoDebug".into(),
+                }),
+                cx,
+            )
+        })
+    }
+
+    async fn external_assets_fixture(
+        cx: &mut TestAppContext,
+    ) -> Result<(
+        Entity<Project>,
+        Arc<FakeFs>,
+        Vec<Entity<worktree::Worktree>>,
+        Vec<PathBuf>,
+    )> {
+        let (project, filesystem) = fixture(cx).await?;
+        let roots = (0..12)
+            .map(|index| PathBuf::from(format!("/tree-external-assets-{index:02}")))
+            .collect::<Vec<_>>();
+        let mut worktrees = Vec::new();
+        for root in &roots {
+            let files = (0..32)
+                .map(|index| {
+                    (
+                        format!("asset-{index:02}.txt"),
+                        json!(format!("external asset {index}")),
+                    )
+                })
+                .collect::<serde_json::Map<_, _>>();
+            filesystem
+                .insert_tree(root, serde_json::Value::Object(files))
+                .await;
+            let (worktree, _) = project
+                .update(cx, |project, cx| {
+                    project.find_or_create_worktree(root, false, cx)
+                })
+                .await?;
+            worktrees.push(worktree);
+        }
+        cx.update(|cx| {
+            let store = project.read(cx).worktree_store();
+            let paths = worktrees
+                .iter()
+                .map(|worktree| PathTrust::Worktree(worktree.read(cx).id()))
+                .collect();
+            TrustedWorktrees::try_get_global(cx)
+                .context("Trust store")?
+                .update(cx, |trust, cx| trust.trust(&store, paths, cx));
+            publish_external_assets_model(&project, &roots, cx)
+        })?;
+        Ok((project, filesystem, worktrees, roots))
+    }
+
+    fn paint_operation_counts(
+        window: &TestWindow,
+    ) -> Result<(
+        RequestOwner,
+        project::android_project_tree::AndroidTreeFreshnessOperationCounts,
+        usize,
+        usize,
+    )> {
+        window.tree().read_with(&window.visual, |tree, _| {
+            let published = tree
+                .published
+                .as_ref()
+                .context("Published external-root capture")?;
+            Ok((
+                published.owner.clone(),
+                published.capture.freshness_operation_counts(),
+                tree.row_paints_for_test.get(),
+                published.capture.captured_worktree_count(),
+            ))
+        })
+    }
+
+    #[gpui::test]
+    async fn android_many_external_roots_paint_has_bounded_freshness_work(cx: &mut TestAppContext) {
+        let result: Result<()> = async {
+            let (project, _, worktrees, roots) = external_assets_fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            window.tree().update_in(&mut window.visual, |tree, window, cx| tree.expand_all(window, cx));
+            rows_ready(&mut window).await;
+            window.tree().update_in(&mut window.visual, |tree, window, cx| {
+                assert!(tree.rows_are_current(window, cx));
+                let capture = tree.current_capture(window, cx).context("Mounted current capture")?;
+                assert!(capture.captured_worktree_count() >= worktrees.len() + 1);
+                for root in &roots {
+                    let path = root.join("asset-00.txt");
+                    assert!(capture.tree().tree.nodes().any(|node| node.navigation.as_ref().is_some_and(|target| target.path == path)),
+                        "Each external worktree must contribute an actual captured row");
+                    let physical = project.read(cx).android_tree_project_path(capture, &path, cx)?;
+                    assert!(project.read(cx).entry_for_path(&physical, cx).is_some());
+                }
+                Ok::<_, anyhow::Error>(())
+            })?;
+            let current_worktrees = project.read_with(&window.visual, |project, cx| project.worktrees(cx).count());
+            let (owner, before, before_rows, captured_worktrees) = paint_operation_counts(&window)?;
+            draw_panel(&mut window, 520., 1600.);
+            let (after_owner, after, after_rows, after_captured) = paint_operation_counts(&window)?;
+            let queries = after.queries - before.queries;
+            let painted_rows = after_rows - before_rows;
+            assert_eq!(owner, after_owner, "Painting cannot replace the immutable capture");
+            assert_eq!(captured_worktrees, after_captured);
+            assert!(painted_rows >= 24, "The mounted uniform list must actually prepare many visible rows");
+            assert!(queries > 0 && queries <= 8, "Freshness must be bounded by render ranges, not visible rows: {queries} queries for {painted_rows} rows");
+            assert!(queries < painted_rows);
+            assert_eq!(after.registry_visits - before.registry_visits, queries * current_worktrees,
+                "Each real query visits current membership once");
+            assert_eq!(after.captured_lookups - before.captured_lookups, queries * captured_worktrees,
+                "Each capture root uses one indexed lookup per real query");
+            let (owner, before, before_rows, _) = paint_operation_counts(&window)?;
+            draw_panel(&mut window, 520., 180.);
+            let (after_owner, after, after_rows, _) = paint_operation_counts(&window)?;
+            assert_eq!(owner, after_owner);
+            assert!(after_rows > before_rows, "The resized mounted list must really paint");
+            assert!(after_rows - before_rows < painted_rows);
+            assert!(after.queries - before.queries <= 8, "Resizing preserves the same bounded query cost");
+            draw_workspace(&mut window);
+            Ok(())
+        }.await;
+        result.expect(
+            "Actual mounted external worktrees must have range-bounded linear freshness validation",
+        );
+    }
+
+    #[gpui::test]
+    async fn android_external_roots_completed_scans_removal_and_model_staleness(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            let (project, _, worktrees, roots) = external_assets_fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            let original_owner = window.published_owner()?;
+            let original_revision = window.current_file_revision()?;
+            for worktree in &worktrees {
+                let (before_scan, mut barrier) = worktree.read_with(&window.visual, |worktree, _| {
+                    Ok::<_, anyhow::Error>((worktree.scan_id(), worktree.as_local().context("Real local external worktree")?
+                        .refresh_entries_for_paths(vec![Arc::from(util::rel_path::RelPath::empty())])))
+                })?;
+                barrier.recv().await;
+                worktree.read_with(&window.visual, |worktree, _| {
+                    assert!(worktree.scan_id() > before_scan, "A real additional scan must have occurred");
+                    assert!(worktree.completed_scan_id() >= worktree.scan_id());
+                });
+                window.tree().update_in(&mut window.visual, |tree, window, cx| {
+                    assert!(tree.rows_are_current(window, cx), "Completed unchanged external scans retain the capture");
+                    Ok::<_, anyhow::Error>(())
+                })?;
+            }
+            assert_eq!(window.published_owner()?, original_owner);
+            assert_eq!(window.current_file_revision()?, original_revision);
+            let retained = worktrees.first().context("Retained external entity")?.clone();
+            let removed_id = retained.read_with(&window.visual, |worktree, _| worktree.id());
+            let target = roots.first().context("External root")?.join("asset-00.txt");
+            let delayed = window.hold_next_completion();
+            let tree = window.tree();
+            window.visual.update(|window_handle, cx| {
+                project.update(cx, |project, cx| project.remove_worktree(removed_id, cx));
+                assert!(project.read(cx).worktree_for_id(removed_id, cx).is_none());
+                assert_eq!(retained.read(cx).id(), removed_id, "The captured physical entity remains alive after removal");
+                assert_eq!(retained.read(cx).abs_path().as_ref(), target.parent().context("External root path")?);
+                tree.read_with(cx, |tree, cx| {
+                    let capture = &tree.published.as_ref().context("Retained immutable capture")?.capture;
+                    assert!(!project.read(cx).is_android_tree_capture_current(capture, cx), "A live retained entity does not prove current project membership");
+                    assert!(project.read(cx).android_tree_project_path(capture, &target, cx).is_err());
+                    assert!(tree.current_capture(window_handle, cx).is_none());
+                    Ok::<_, anyhow::Error>(())
+                })
+            })?;
+            let (new_owner, replacement) = delayed.await?;
+            let replacement = replacement?;
+            let replacement_worktree = project.read_with(&window.visual, |project, cx| project.find_worktree(&target, cx))
+                .context("Actual recreated external worktree")?.0;
+            assert_ne!(replacement_worktree, retained, "The same path can belong to a replacement physical entity");
+            assert!(project.read_with(&window.visual, |project, cx| project.is_android_tree_capture_current(&replacement, cx)));
+            window.tree().update_in(&mut window.visual, |tree, window, cx| tree.finish_capture(&new_owner, Ok(replacement), window, cx));
+            rows_ready(&mut window).await;
+            let current_owner = window.published_owner()?;
+            let tree = window.tree();
+            window.visual.update(|window_handle, cx| {
+                project.update(cx, |project, cx| { project.invalidate_android_model(Some(PathBuf::from(ROOT)), cx); });
+                tree.read_with(cx, |tree, cx| {
+                    let published = tree.published.as_ref().context("Last good capture after invalidation")?;
+                    assert_eq!(published.owner, current_owner);
+                    assert!(!project.read(cx).is_android_tree_capture_current(&published.capture, cx));
+                    assert!(tree.current_capture(window_handle, cx).is_none());
+                    assert!(tree.context.as_ref().context("Root context")?.read(cx).is_current(&current_owner.context, cx),
+                        "The model fence rejects stale data even with the original root context");
+                    Ok::<_, anyhow::Error>(())
+                })
+            })?;
+            window.visual.run_until_parked();
+            draw_panel(&mut window, 520., 400.);
+            assert!(window.visual.debug_bounds("android-tree-message:Android view is out of date. Sync the project to refresh.").is_some());
+            assert!(window.visual.debug_bounds("android-tree-message:Loading Android view…").is_none());
+            Ok(())
+        }.await;
+        result.expect(
+            "Real external-root scans, removal and stale models must preserve all freshness fences",
+        );
+    }
+
+    #[gpui::test]
+    async fn android_external_root_content_scans_and_trust_revoke_old_capture(
+        cx: &mut TestAppContext,
+    ) {
+        let result: Result<()> = async {
+            let (project, filesystem, worktrees, roots) = external_assets_fixture(cx).await?;
+            let mut window = TestWindow::new(&project, cx)?;
+            mount_panel(&mut window);
+            window.open(Path::new(MAIN)).await?;
+            window.ready().await;
+            rows_ready(&mut window).await;
+            draw_workspace(&mut window);
+            let original = window.published_owner()?;
+            let target = roots
+                .first()
+                .context("External asset root")?
+                .join("asset-00.txt");
+            let changed_worktree = worktrees.first().context("External asset worktree")?;
+            let before_scan =
+                changed_worktree.read_with(&window.visual, |worktree, _| worktree.scan_id());
+            let completion = window.hold_next_completion();
+            filesystem
+                .insert_file(target.clone(), b"Changed external asset contents".to_vec())
+                .await;
+            let (new_owner, fresh) = completion.await?;
+            let fresh = fresh?;
+            changed_worktree.read_with(&window.visual, |worktree, _| {
+                assert!(
+                    worktree.scan_id() > before_scan,
+                    "Content changes must be observed by a real scan"
+                );
+                assert!(worktree.completed_scan_id() >= worktree.scan_id());
+            });
+            window
+                .tree()
+                .update_in(&mut window.visual, |tree, window, cx| {
+                    let published = tree
+                        .published
+                        .as_ref()
+                        .context("Old mounted external capture")?;
+                    assert_eq!(published.owner, original);
+                    assert!(
+                        !project
+                            .read(cx)
+                            .is_android_tree_capture_current(&published.capture, cx)
+                    );
+                    assert!(
+                        project
+                            .read(cx)
+                            .android_tree_project_path(&published.capture, &target, cx)
+                            .is_err()
+                    );
+                    assert!(tree.current_capture(window, cx).is_none());
+                    assert!(project.read(cx).is_android_tree_capture_current(&fresh, cx));
+                    project
+                        .read(cx)
+                        .android_tree_project_path(&fresh, &target, cx)?;
+                    assert_eq!(new_owner.context, original.context);
+                    assert_eq!(new_owner.model, original.model);
+                    Ok::<_, anyhow::Error>(())
+                })?;
+            let restricted_id = worktrees
+                .get(1)
+                .context("Independent external trust root")?
+                .read_with(&window.visual, |worktree, _| worktree.id());
+            window.visual.update(|_, cx| {
+                let store = project.read(cx).worktree_store();
+                let trust = TrustedWorktrees::try_get_global(cx).context("Trust store")?;
+                trust.update(cx, |trust, cx| {
+                    trust.restrict(
+                        store.downgrade(),
+                        [PathTrust::Worktree(restricted_id)].into_iter().collect(),
+                        cx,
+                    )
+                });
+                assert!(
+                    !project.read(cx).is_android_tree_capture_current(&fresh, cx),
+                    "An external-root restriction invalidates a previously fresh actual capture"
+                );
+                assert!(
+                    project
+                        .read(cx)
+                        .android_tree_project_path(&fresh, &target, cx)
+                        .is_err()
+                );
+                assert_eq!(project.read(cx).android_model().token(), new_owner.model);
+                trust.update(cx, |trust, cx| {
+                    trust.trust(
+                        &store,
+                        [PathTrust::Worktree(restricted_id)].into_iter().collect(),
+                        cx,
+                    )
+                });
+                Ok::<_, anyhow::Error>(())
+            })?;
+            window.visual.run_until_parked();
+            assert!(
+                !project.read_with(&window.visual, |project, cx| project
+                    .is_android_tree_capture_current(&fresh, cx)),
+                "Regranting trust cannot revive the original cancelled capture request"
+            );
+            Ok(())
+        }
+        .await;
+        result.expect(
+            "Mounted external-root content and trust changes must reject stale immutable captures",
+        );
     }
 }

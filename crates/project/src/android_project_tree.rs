@@ -14,6 +14,7 @@ use android_tools::{
     project_tree_facts::RootPresence,
 };
 use anyhow::{Context as _, Result, ensure};
+use collections::HashMap;
 use fs::{Fs, MTime, Metadata};
 use futures::{
     StreamExt as _,
@@ -39,6 +40,9 @@ use std::{
 };
 use util::{paths::PathStyle, rel_path::RelPath};
 use worktree::{Entry, EntryKind, Snapshot, Worktree, WorktreeId};
+
+#[cfg(any(test, feature = "test-support"))]
+use std::sync::atomic::AtomicUsize;
 
 const MAX_CAPTURE_ROOTS: usize = 4096;
 const MAX_CAPTURE_ENTRIES: usize = 100_000;
@@ -251,6 +255,25 @@ pub struct CapturedAndroidModuleTree {
     read_limits: BackgroundDrop<Vec<AndroidTreeReadLimit>>,
     _trust_observer: Option<Subscription>,
     _worktree_observers: Vec<Subscription>,
+    #[cfg(any(test, feature = "test-support"))]
+    freshness_operations: AndroidTreeFreshnessOperations,
+}
+
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Default)]
+struct AndroidTreeFreshnessOperations {
+    queries: AtomicUsize,
+    registry_visits: AtomicUsize,
+    captured_lookups: AtomicUsize,
+}
+
+/// Counts actual freshness queries and current-worktree registry operations.
+#[cfg(any(test, feature = "test-support"))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct AndroidTreeFreshnessOperationCounts {
+    pub queries: usize,
+    pub registry_visits: usize,
+    pub captured_lookups: usize,
 }
 
 impl CapturedAndroidModuleTree {
@@ -262,6 +285,26 @@ impl CapturedAndroidModuleTree {
     /// Consumers still validate capture ownership before publication or dispatch.
     pub fn shared_tree(&self) -> SharedAndroidModuleTree {
         self.tree.clone()
+    }
+
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn freshness_operation_counts(&self) -> AndroidTreeFreshnessOperationCounts {
+        AndroidTreeFreshnessOperationCounts {
+            queries: self.freshness_operations.queries.load(Ordering::Relaxed),
+            registry_visits: self
+                .freshness_operations
+                .registry_visits
+                .load(Ordering::Relaxed),
+            captured_lookups: self
+                .freshness_operations
+                .captured_lookups
+                .load(Ordering::Relaxed),
+        }
+    }
+
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn captured_worktree_count(&self) -> usize {
+        self.worktrees.len()
     }
 
     pub fn owner_generation(&self) -> u64 {
@@ -538,6 +581,8 @@ impl Project {
                     read_limits,
                     _trust_observer: trust_observer,
                     _worktree_observers: worktrees.observers,
+                    #[cfg(any(test, feature = "test-support"))]
+                    freshness_operations: AndroidTreeFreshnessOperations::default(),
                 })
             };
             let stop = async move {
@@ -564,11 +609,38 @@ impl Project {
         capture: &CapturedAndroidModuleTree,
         cx: &App,
     ) -> bool {
-        self.android_tree_owner_is_current(&capture.owner, &capture.request, cx)
-            && capture
-                .worktrees
-                .iter()
-                .all(|captured| worktree_capture_is_current(self, captured, cx))
+        #[cfg(any(test, feature = "test-support"))]
+        capture
+            .freshness_operations
+            .queries
+            .fetch_add(1, Ordering::Relaxed);
+        if !self.android_tree_owner_is_current(&capture.owner, &capture.request, cx) {
+            return false;
+        }
+        // Captured handles can survive removal from the project. Build this registry
+        // from live membership once per query, rather than searching the store for
+        // every captured worktree or treating a retained handle as membership.
+        let worktrees: HashMap<_, _> = self
+            .worktrees(cx)
+            .map(|worktree| {
+                #[cfg(any(test, feature = "test-support"))]
+                capture
+                    .freshness_operations
+                    .registry_visits
+                    .fetch_add(1, Ordering::Relaxed);
+                (worktree.read(cx).id(), worktree)
+            })
+            .collect();
+        capture.worktrees.iter().all(|captured| {
+            #[cfg(any(test, feature = "test-support"))]
+            capture
+                .freshness_operations
+                .captured_lookups
+                .fetch_add(1, Ordering::Relaxed);
+            worktrees.get(&captured.id).is_some_and(|worktree| {
+                worktree_capture_is_current(self, captured, worktree.clone(), cx)
+            })
+        })
     }
 
     /// Resolves only actual captured entries; virtual groups have no filesystem ID.
@@ -1061,6 +1133,18 @@ fn unchanged_worktree(
         return None;
     }
     let worktree = project.worktree_for_id(captured.id, cx)?;
+    unchanged_registered_worktree(project, captured, worktree, cx)
+}
+
+fn unchanged_registered_worktree(
+    project: &Project,
+    captured: &WorktreeCapture,
+    worktree: Entity<Worktree>,
+    cx: &App,
+) -> Option<Entity<Worktree>> {
+    if captured.changed.load(Ordering::Acquire) {
+        return None;
+    }
     if worktree != captured.scope.worktree || worktree_is_restricted(project, captured.id, cx) {
         return None;
     }
@@ -1071,8 +1155,13 @@ fn unchanged_worktree(
         .then_some(worktree)
 }
 
-fn worktree_capture_is_current(project: &Project, captured: &WorktreeCapture, cx: &App) -> bool {
-    unchanged_worktree(project, captured, cx).is_some_and(|worktree| {
+fn worktree_capture_is_current(
+    project: &Project,
+    captured: &WorktreeCapture,
+    worktree: Entity<Worktree>,
+    cx: &App,
+) -> bool {
+    unchanged_registered_worktree(project, captured, worktree, cx).is_some_and(|worktree| {
         // Pending scans have unknown contents; completed no-op scans retain
         // the same content snapshot despite advancing the scheduling IDs.
         let worktree = worktree.read(cx);
