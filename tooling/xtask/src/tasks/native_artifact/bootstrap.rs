@@ -1298,10 +1298,15 @@ mod native_owned_source_workflow_regression {
             "--borrowed-physical-after \"$RUNNER_TEMP/native-source-borrowed-after.json\""
         ));
         assert_eq!(native.matches("--source \"$RUNNER_TEMP/owned-native-source\" --sha \"$SOURCE_SHA\" --tree \"$SOURCE_TREE\"").count(), 4);
+        // Preserve the three original routes; the new GUI route has
+        // a separate mandatory owned-source and evidence contract.
         assert_eq!(
             native
                 .matches("--request \"$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json\"")
-                .count(),
+                .count()
+                - native_gui_step(native)
+                    .matches("--request \"$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json\"")
+                    .count(),
             3
         );
         assert!(native.contains("steps.native_controller_export.outcome == 'success' && steps.native_source_checkout.outcome == 'success'"));
@@ -1311,4 +1316,71 @@ mod native_owned_source_workflow_regression {
         assert!(native.contains("${{ runner.temp }}/native-source-borrowed-after.json"));
         assert!(native.contains("${{ runner.temp }}/owned-native-source-checkout.json"));
     }
+    fn native_gui_step(native: &str) -> &str {
+        assert_eq!(native.matches("        id: gui_smoke\n").count(), 1);
+        native
+            .split("        id: gui_smoke\n")
+            .nth(1)
+            .expect("Mandatory GUI operation")
+            .split("\n      - name:")
+            .next()
+            .expect("GUI step body")
+    }
+
+    #[test]
+    fn native_gui_operation_authenticates_the_delivered_owned_source_and_retains_failure_evidence() {
+        let workflow = include_str!("../../../../../.github/workflows/fork_ci.yml");
+        let native = workflow
+            .split("  exact_source_native_artifact:\n")
+            .nth(1)
+            .expect("Native job");
+        let gui = native_gui_step(native);
+        let request = "--request \"$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json\"";
+        assert_eq!(gui.matches(request).count(), 1);
+        assert_eq!(native.matches(request).count(), 4);
+        assert!(gui.contains("timeout-minutes: 3"));
+        assert!(gui.contains(
+            "sudo --preserve-env=HOME \"$CARGO_TARGET_DIR/debug/xtask\" native-artifact gui-smoke"
+        ));
+        assert!(gui.contains(
+            "--request-sha256 \"$REQUEST_SHA256\" --controller-sha \"$NATIVE_CONTROLLER_SHA\""
+        ));
+        assert!(gui.contains("--package-dir \"$RUNNER_TEMP/native-artifact\""));
+        assert!(gui.contains("--output-dir \"$RUNNER_TEMP/native-gui-smoke\""));
+        assert!(!gui.contains("cargo build"));
+        let order = [
+            "id: package",
+            "id: gui_smoke",
+            "Retain actual full-app captures and cleanup outcomes",
+            "Upload metadata before payload",
+        ];
+        let positions: Vec<_> = order
+            .iter()
+            .map(|name| native.find(name).expect("Required step"))
+            .collect();
+        assert!(positions.windows(2).all(|pair| pair[0] < pair[1]));
+        let retention = native
+            .split("Retain actual full-app captures and cleanup outcomes\n")
+            .nth(1)
+            .expect("GUI retention")
+            .split("\n      - name:")
+            .next()
+            .expect("Retention body");
+        assert!(retention.contains("if: always() && steps.package.outcome == 'success'"));
+        assert!(
+            retention.contains(concat!("$", "{{ runner.temp }}/native-gui-smoke/*.png"))
+                && retention.contains(concat!("$", "{{ runner.temp }}/native-gui-smoke/*.json"))
+                && retention.contains(concat!("$", "{{ runner.temp }}/native-gui-smoke/*.log"))
+        );
+        let runner = include_str!("package/gui_smoke.rs");
+        assert!(runner.contains("metadata.validate(&request)?"));
+        assert!(runner.contains("metadata.controller_sha == args.controller_sha"));
+        assert!(runner.contains(".find(|entry| entry.path == \"runtime/source/target/debug/koda\")"));
+        assert!(runner.contains("working_directory: args.package_dir.join(\"runtime/source\")"));
+        assert!(
+            runner.contains("source_sha: request.source_sha.clone()")
+                && runner.contains("source_tree: request.source_tree.clone()")
+        );
+    }
+
 }
