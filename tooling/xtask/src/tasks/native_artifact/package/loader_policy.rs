@@ -161,12 +161,17 @@ fn compact_dynamic(original: &[u8], budget: &mut elf::MetadataBudget) -> Result<
     for (index, entry) in original.chunks_exact(16).enumerate() {
         let tag = word64(entry, 0)?;
         if tag == 0 {
-            // A nonzero tail cannot be silently reinterpreted as padding. Keeping
-            // one terminator and the remaining zero slots preserves DT_NULL.
-            ensure!(
-                original[index * 16..].iter().all(|byte| *byte == 0),
-                "policy dynamic terminator/tail is not zero padding"
-            );
+            // The ELF ABI ignores DT_NULL's d_un value. Reserved null entries can
+            // carry nonzero values (as in system libgio); preserve those bytes
+            // without admitting a non-null tag after the logical terminator.
+            let padding = &original[index * 16..];
+            for slot in padding.chunks_exact(16) {
+                ensure!(
+                    word64(slot, 0)? == 0,
+                    "policy dynamic tail contains a non-null tag"
+                );
+            }
+            delivered[output..output + padding.len()].copy_from_slice(padding);
             terminated = true;
             break;
         }
@@ -922,6 +927,84 @@ mod tests {
             assert!(compact_dynamic(&entries, &mut elf::MetadataBudget::new()).is_err());
             assert_eq!(entries, before);
         }
+    }
+
+    #[test]
+    fn null_padding_values_are_ignored_and_preserved_when_search_paths_are_removed() {
+        // libgio's reserved DT_NULL slots include an ignored nonzero d_un value.
+        let original = dynamic(&[(5, 700), (29, 11), (1, 9), (0, 0), (0, 81160), (0, 0)]);
+        let before = original.clone();
+        let (delivered, removed) =
+            compact_dynamic(&original, &mut elf::MetadataBudget::new()).unwrap();
+        assert_eq!(removed, 1);
+        assert_eq!(
+            delivered,
+            dynamic(&[(5, 700), (1, 9), (0, 0), (0, 81160), (0, 0), (0, 0)])
+        );
+        assert_eq!(delivered.len(), original.len());
+        assert_eq!(original, before);
+    }
+
+    #[test]
+    fn an_ignored_terminator_value_does_not_change_a_table_without_search_paths() {
+        let original = dynamic(&[(1, 9), (0, u64::MAX), (0, 81160)]);
+        let (delivered, removed) =
+            compact_dynamic(&original, &mut elf::MetadataBudget::new()).unwrap();
+        assert_eq!(removed, 0);
+        assert_eq!(delivered, original);
+    }
+
+    #[test]
+    fn non_null_tail_tags_remain_refused_even_after_an_ignored_null_value() {
+        for tag in [1, 15, 29, 0x6fff_fefc] {
+            let original = dynamic(&[(5, 700), (0, u64::MAX), (tag, 3)]);
+            let before = original.clone();
+            assert!(compact_dynamic(&original, &mut elf::MetadataBudget::new()).is_err());
+            assert_eq!(original, before);
+        }
+    }
+
+    #[test]
+    fn owned_copy_preserves_ignored_null_values_and_every_other_elf_byte() {
+        let temporary = tempfile::tempdir().unwrap();
+        let source = temporary.path().join("null-padding-source");
+        let destination = temporary.path().join("null-padding-owned");
+        let mut bytes = fixture();
+        bytes[152..160].copy_from_slice(&128_u64.to_le_bytes());
+        bytes[160..168].copy_from_slice(&128_u64.to_le_bytes());
+        bytes[360..368].copy_from_slice(&u64::MAX.to_le_bytes());
+        bytes[368..384].copy_from_slice(&dynamic(&[(0, 81160)]));
+        create_file(&source, &bytes).unwrap();
+        let input = open_noatime(&source, false).unwrap();
+        let before = descriptor_digest(&input, MAX_BINARY_BYTES).unwrap();
+        let original_table = table(&input, &mut elf::MetadataBudget::new()).unwrap();
+        let facts = elf::inspect_file_with_budget(
+            input.try_clone().unwrap(),
+            &mut elf::MetadataBudget::new(),
+        )
+        .unwrap();
+        let copied = copy(
+            &input,
+            &source,
+            &destination,
+            &before.0,
+            &facts,
+            &mut elf::MetadataBudget::new(),
+        )
+        .unwrap();
+        assert_eq!(descriptor_digest(&input, MAX_BINARY_BYTES).unwrap(), before);
+        assert_eq!(copied.transformation.removed_entries, 2);
+        assert!(copied.elf.rpath.is_none() && copied.elf.runpath.is_none());
+        assert_eq!(copied.elf.needed, facts.needed);
+        assert_eq!(copied.elf.soname, facts.soname);
+        assert!(copied.transformation.all_other_file_bytes_equal);
+        assert!(copied.transformation.all_other_elf_metadata_equal);
+        let delivered_table = table(&copied.file, &mut elf::MetadataBudget::new()).unwrap();
+        assert_eq!(delivered_table.original, original_table.delivered);
+        assert_eq!(
+            &delivered_table.original[64..96],
+            &dynamic(&[(0, u64::MAX), (0, 81160)])
+        );
     }
 
     #[test]
