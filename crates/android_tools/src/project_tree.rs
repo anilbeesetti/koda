@@ -211,6 +211,7 @@ pub struct TreeSnapshot {
     pub file_revision: u64,
     pub roots: Vec<NodeId>,
     nodes: Vec<TreeNode>,
+    source_folder_paths: BTreeMap<NodeKey, Vec<PathBuf>>,
 }
 
 impl TreeSnapshot {
@@ -220,6 +221,12 @@ impl TreeSnapshot {
 
     pub fn nodes(&self) -> impl Iterator<Item = &TreeNode> {
         self.nodes.iter()
+    }
+
+    /// Existing captured directories in the order used by this source group.
+    /// Manifests and absent groups have no folders.
+    pub fn source_folders(&self, key: &NodeKey) -> Option<&[PathBuf]> {
+        self.source_folder_paths.get(key).map(Vec::as_slice)
     }
 
     fn add(&mut self, parent: Option<NodeId>, node: TreeNode) -> NodeId {
@@ -429,6 +436,7 @@ fn project_tree_internal(
         file_revision: files.revision,
         roots: Vec::new(),
         nodes: Vec::new(),
+        source_folder_paths: BTreeMap::new(),
     };
     for module in modules {
         ensure!(
@@ -477,10 +485,27 @@ fn project_tree_internal(
                 let root = by_occurrence
                     .get(occurrence)
                     .context("Source-root encounter is absent from evaluated roots")?;
-                ordered.push(*root);
+                // A known missing root is omitted below. Existing roots need
+                // the same first matching provider as their displayed entries.
+                let name = if entries.contains_key(&root.path) {
+                    entry_provider(root, module, &root.path, provider_names)?
+                } else {
+                    None
+                };
+                let key = match name {
+                    Some(name) if name != "main" => name,
+                    _ => "",
+                };
+                ordered.push((*root, key.encode_utf16().collect::<Vec<_>>()));
             }
-            roots = ordered;
-            roots.sort_by_key(|root| root.group);
+            // AndroidSourceTypeNode sorts by provider name while retaining the
+            // input set's encounters for equal keys, including main/unnamed.
+            ordered.sort_by(|(left, left_key), (right, right_key)| {
+                left.group
+                    .cmp(&right.group)
+                    .then_with(|| left_key.cmp(right_key))
+            });
+            roots = ordered.into_iter().map(|(root, _)| root).collect();
         } else {
             roots.sort_by(|left, right| {
                 left.group
@@ -523,13 +548,14 @@ fn project_tree_internal(
         }
         for (group, roots) in grouped {
             let generated = group.is_generated().then(|| " (generated)".to_owned());
+            let source_key = NodeKey::Source {
+                module: module.id.clone(),
+                group,
+            };
             let group_node = tree.add(
                 Some(module_node),
                 TreeNode {
-                    key: NodeKey::Source {
-                        module: module.id.clone(),
-                        group,
-                    },
+                    key: source_key.clone(),
                     label: group.label().into(),
                     reference_label: format!(
                         "{}{}",
@@ -541,6 +567,12 @@ fn project_tree_internal(
                     children: Vec::new(),
                 },
             );
+            if group != SourceGroup::Manifests {
+                tree.source_folder_paths.insert(
+                    source_key,
+                    roots.iter().map(|root| root.path.clone()).collect(),
+                );
+            }
             match group {
                 SourceGroup::Resources | SourceGroup::GeneratedResources => resource_nodes(
                     &mut tree,

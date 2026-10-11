@@ -24,6 +24,17 @@ pub struct VariantId {
     pub variant: String,
 }
 
+impl VariantId {
+    pub fn label(&self) -> String {
+        format!("{} · {}", self.module, self.variant)
+    }
+
+    /// A Gradle task identity does not require an application APK output.
+    pub fn gradle_task(&self, prefix: &str, suffix: &str) -> String {
+        crate::gradle_variant_task(&self.module, &self.variant, prefix, suffix)
+    }
+}
+
 impl From<&AndroidTarget> for VariantId {
     fn from(target: &AndroidTarget) -> Self {
         Self {
@@ -446,6 +457,41 @@ pub struct SelectedProject {
 }
 
 impl ProjectModel {
+    pub fn library_variants(&self) -> Vec<VariantId> {
+        let mut variants = self
+            .modules
+            .iter()
+            .filter(|module| module.kind == ModuleKind::Library)
+            .flat_map(|module| {
+                module.variants.iter().map(move |variant| VariantId {
+                    module: module.path.clone(),
+                    variant: variant.name.clone(),
+                })
+            })
+            .collect::<Vec<_>>();
+        variants.sort();
+        variants
+    }
+
+    pub fn default_library_variant(&self) -> Option<VariantId> {
+        self.modules
+            .iter()
+            .filter(|module| module.kind == ModuleKind::Library)
+            .flat_map(|module| module.variants.iter().map(move |variant| (module, variant)))
+            .min_by_key(|(module, variant)| {
+                (
+                    &module.path,
+                    module.default_variant.as_ref() != Some(&variant.name),
+                    !(variant.name == "debug" || variant.name.ends_with("Debug")),
+                    &variant.name,
+                )
+            })
+            .map(|(module, variant)| VariantId {
+                module: module.path.clone(),
+                variant: variant.name.clone(),
+            })
+    }
+
     pub fn default_target(&self) -> Option<AndroidTarget> {
         self.modules
             .iter()
@@ -623,15 +669,33 @@ pub struct ModelToken {
     root: Option<PathBuf>,
 }
 
+impl ModelToken {
+    pub(crate) fn revision(&self) -> u64 {
+        self.generation
+    }
+}
+
 #[derive(Default)]
 pub struct ModelState {
     generation: u64,
     root: Option<PathBuf>,
     pub model: Option<Arc<ProjectModel>>,
     pub selected: Option<Arc<SelectedProject>>,
+    model_revision: Option<u64>,
+    evaluated_inputs: Option<Arc<crate::evaluated_tree_inputs::EvaluatedTreeInputs>>,
 }
 
 impl ModelState {
+    pub fn model_revision(&self) -> Option<u64> {
+        self.model_revision
+    }
+
+    pub fn evaluated_inputs(
+        &self,
+    ) -> Option<&Arc<crate::evaluated_tree_inputs::EvaluatedTreeInputs>> {
+        self.evaluated_inputs.as_ref()
+    }
+
     pub fn root(&self) -> Option<&Path> {
         self.root.as_deref()
     }
@@ -650,6 +714,8 @@ impl ModelState {
         self.root = root;
         self.model = None;
         self.selected = None;
+        self.model_revision = None;
+        self.evaluated_inputs = None;
         self.token()
     }
     pub fn publish(&mut self, token: &ModelToken, model: ProjectModel) -> Result<()> {
@@ -660,6 +726,32 @@ impl ModelState {
             "Discarded an outdated Android sync result"
         );
         self.model = Some(Arc::new(model));
+        self.model_revision = Some(token.revision());
+        self.evaluated_inputs = None;
+        Ok(())
+    }
+
+    pub fn publish_evaluated(
+        &mut self,
+        token: &ModelToken,
+        capture: crate::evaluated_tree_inputs::EvaluatedTreeInputs,
+    ) -> Result<()> {
+        ensure!(
+            self.is_current(token)
+                && capture.token() == token
+                && self
+                    .root
+                    .as_ref()
+                    .is_some_and(|root| root == &capture.model().root
+                        || root
+                            .canonicalize()
+                            .is_ok_and(|root| root == capture.model().root)),
+            "Discarded an outdated evaluated Android sync result"
+        );
+        self.model = Some(capture.model().clone());
+        self.selected = None;
+        self.model_revision = Some(token.revision());
+        self.evaluated_inputs = Some(Arc::new(capture));
         Ok(())
     }
     pub fn select(&mut self, id: Option<VariantId>) -> Result<()> {
@@ -694,7 +786,85 @@ fn valid_variant(name: &str) -> bool {
             .all(|character| character.is_ascii_alphanumeric() || "_-".contains(character))
 }
 
+/// Evaluated directory provenance captured from one current, trusted Gradle root.
+///
+/// This immutable value cannot detect later store changes by itself. Callers must
+/// check `is_current` before dispatch and before applying a parsed model.
+#[derive(Clone)]
+pub struct EvaluatedModelPaths {
+    root: PathBuf,
+    token: crate::project_context::RootToken,
+    modules: BTreeMap<String, PathBuf>,
+}
+
+impl EvaluatedModelPaths {
+    pub fn capture(
+        store: &crate::project_context::ContextStore,
+        token: &crate::project_context::RootToken,
+        root: &Path,
+    ) -> Result<Self> {
+        use crate::project_context::{ModuleOwner, ObservationPhase};
+        ensure!(
+            store.is_current(token),
+            "Evaluated model paths require a current trusted root"
+        );
+        let handle = store
+            .handles()
+            .find(|handle| store.token(*handle).as_ref() == Some(token))
+            .context("Evaluated model root was removed")?;
+        let snapshot = store
+            .snapshot(handle)
+            .context("Import the evaluated project context first")?;
+        ensure!(
+            store.root_path(handle) == Some(root)
+                && snapshot.root() == root
+                && snapshot.phase() == ObservationPhase::Complete,
+            "Evaluated model paths belong to an incomplete or different root"
+        );
+        let mut modules = BTreeMap::new();
+        for module in snapshot.modules() {
+            ensure!(
+                matches!(snapshot.module_owner(module.directory()), ModuleOwner::Module(owner) if owner == module.path()),
+                "Evaluated module {} has ambiguous directory ownership",
+                module.path()
+            );
+            modules.insert(module.path().to_owned(), module.directory().to_path_buf());
+        }
+        Ok(Self {
+            root: root.to_path_buf(),
+            token: token.clone(),
+            modules,
+        })
+    }
+
+    pub fn is_current(&self, store: &crate::project_context::ContextStore) -> bool {
+        store.is_current(&self.token)
+    }
+}
+
 pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
+    parse_model_with_paths(output, root, None)
+}
+
+/// Parse paths proven by evaluated Gradle module getters. The caller retains
+/// responsibility for rejecting a result after the captured context expires.
+pub fn parse_model_with_context(
+    output: &str,
+    root: &Path,
+    paths: &EvaluatedModelPaths,
+) -> Result<ProjectModel> {
+    ensure!(
+        paths.root == root,
+        "Evaluated model paths belong to a different root"
+    );
+    parse_model_with_paths(output, root, Some(paths))
+}
+
+fn parse_model_with_paths(
+    output: &str,
+    root: &Path,
+    paths: Option<&EvaluatedModelPaths>,
+) -> Result<ProjectModel> {
     let mut records = output.lines().filter_map(|line| line.strip_prefix(OUTPUT));
     let exported: ExportedProjectModel = serde_json::from_str(
         records
@@ -732,6 +902,32 @@ pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
             "Invalid or duplicate Android module {}",
             module.path
         );
+        let boundary = if let Some(paths) = paths {
+            let directory = paths
+                .modules
+                .get(&module.path)
+                .context("Android model module has no evaluated directory provenance")?;
+            ensure!(
+                module.directory == *directory
+                    && directory.is_absolute()
+                    && directory.canonicalize()? == *directory,
+                "Android model module {} does not match its evaluated canonical directory",
+                module.path
+            );
+            if directory.starts_with(&root) {
+                root.as_path()
+            } else {
+                directory.as_path()
+            }
+        } else {
+            ensure!(
+                module.directory.is_absolute()
+                    && module.directory.canonicalize()?.starts_with(&root),
+                "Module {} is outside the selected build; included builds and external project directories are unsupported",
+                module.path
+            );
+            root.as_path()
+        };
         if let Some(catalog) = &module.source_providers {
             let mut providers = BTreeSet::new();
             for provider in &catalog.providers {
@@ -743,15 +939,10 @@ pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
                     module.path
                 );
                 for source in &provider.roots {
-                    validate_project_path(&source.path, &root)?;
+                    validate_project_path(&source.path, boundary)?;
                 }
             }
         }
-        ensure!(
-            module.directory.is_absolute() && module.directory.canonicalize()?.starts_with(&root),
-            "Module {} is outside the selected build; included builds and external project directories are unsupported",
-            module.path
-        );
         let mut variants = BTreeSet::new();
         ensure!(
             module.default_variant.as_ref().is_none_or(|default| {
@@ -787,7 +978,7 @@ pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
                     component.name
                 );
                 for source in &component.sources {
-                    validate_project_path(&source.path, &root)?;
+                    validate_project_path(&source.path, boundary)?;
                 }
                 for dependency in &component.dependencies {
                     if let Dependency::Project { module, variant } = dependency {
@@ -804,7 +995,7 @@ pub fn parse_model(output: &str, root: &Path) -> Result<ProjectModel> {
                 }
             }
             if let Some(path) = &variant.output_listing {
-                validate_project_path(path, &root)?;
+                validate_project_path(path, boundary)?;
             }
         }
     }
