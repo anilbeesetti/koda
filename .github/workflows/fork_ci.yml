@@ -938,7 +938,8 @@ jobs:
         env:
           BUILD_RECEIPT_SHA256: ${{ steps.build.outputs.native_build_receipt_sha256 }}
         run: >-
-          sudo "$CARGO_TARGET_DIR/debug/xtask" native-artifact package
+          sudo "$CARGO_TARGET_DIR/debug/xtask" native-artifact package-with-loader-policy
+          --loader-policy strip-embedded-search-paths
           --source "$RUNNER_TEMP/owned-native-source" --sha "$SOURCE_SHA" --tree "$SOURCE_TREE"
           --request "$GITHUB_WORKSPACE/control/.ci/native-artifact-request.json"
           --request-sha256 "$REQUEST_SHA256"

@@ -31,9 +31,46 @@ const FAILURE_MEMBERS: &[(&str, u64)] = &[
     ("cargo-process-closure.json", MAX_METADATA_BYTES),
     ("build-failure.json", MAX_METADATA_BYTES),
     ("build-command-failure.json", MAX_METADATA_BYTES),
+    ("build-receipt.json", 16 * 1024 * 1024),
     ("producer-admission.json", MAX_METADATA_BYTES),
     ("package-command-failure.json", MAX_METADATA_BYTES),
 ];
+
+#[cfg(all(test, target_os = "linux"))]
+mod build_receipt_failure_export_regression {
+    use super::*;
+
+    #[test]
+    fn successful_build_receipt_remains_whitelisted_when_packaging_fails() {
+        let temporary = tempfile::tempdir().unwrap();
+        let path = temporary.path().join("build-receipt.json");
+        let output = temporary.path().join("failure-export");
+        fs::create_dir(&output).unwrap();
+        let bytes = b"{\"state\":\"ACTUAL_BUILD_SUCCESS_NOT_RUNTIME_ACCEPTANCE\"}\n";
+        super::super::create_file(&path, bytes).unwrap();
+        let before = digest_file(&path, 1024).unwrap();
+        let (index, (_, cap)) = FAILURE_MEMBERS
+            .iter()
+            .enumerate()
+            .find(|(_, (name, _))| *name == "build-receipt.json")
+            .unwrap();
+        let member = failure_member(&path, &output, index, *cap).unwrap();
+        assert!(!member.observed_absent && member.complete_original_bytes_exported);
+        assert_eq!(member.original_digest, Some(before.0.clone()));
+        assert_eq!(member.original_physical13, Some(before.1.clone()));
+        assert_eq!(member.exported_ranges.len(), 1);
+        let (name, offset, count, digest) = &member.exported_ranges[0];
+        assert_eq!((*offset, *count), (0, bytes.len() as u64));
+        assert_eq!(
+            super::super::read_bounded(&output.join(name), 1024)
+                .unwrap()
+                .0,
+            bytes
+        );
+        assert_eq!(*digest, before.0);
+        assert_eq!(digest_file(&path, 1024).unwrap(), before);
+    }
+}
 
 /// Construct a fresh exact source directory from authenticated Git objects.
 /// The first workflow tool is bootstrap-only; its build is not exported or

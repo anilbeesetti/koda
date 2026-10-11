@@ -55,6 +55,8 @@ pub enum NativeArtifactCommand {
     Build(package::BuildArgs),
     /// Bind the successful build, ELF, source and dependencies and split its payload.
     Package(package::PackageArgs),
+    /// Explicitly transform owned ELF copies before verifying their delivered loader closure.
+    PackageWithLoaderPolicy(package::PackageWithLoaderPolicyArgs),
     /// Check bounded metadata and actual supplied GitHub sizes, without downloading.
     Admission(AdmissionArgs),
     /// Authenticate a bounded GitHub ZIP and unpack only literal declared members.
@@ -76,6 +78,9 @@ pub fn run(command: NativeArtifactCommand) -> Result<()> {
         NativeArtifactCommand::Verify(args) => verify(args),
         NativeArtifactCommand::Build(args) => package::build(args),
         NativeArtifactCommand::Package(args) => package::package(args),
+        NativeArtifactCommand::PackageWithLoaderPolicy(args) => {
+            package::package_with_loader_policy(args)
+        }
         NativeArtifactCommand::Admission(args) => admission(args),
         NativeArtifactCommand::UnpackGithubZip(args) => transport::unpack(args),
         NativeArtifactCommand::Extract(args) => package::extract(args),

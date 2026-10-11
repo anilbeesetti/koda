@@ -26,6 +26,7 @@ use super::{
 
 mod bounded_tar;
 pub(super) mod elf;
+mod loader_policy;
 mod producer;
 
 const MAX_BINARY_BYTES: u64 = 4 * 1024 * 1024 * 1024;
@@ -77,6 +78,16 @@ pub struct PackageArgs {
     /// New directory containing runtime, manifests, archive and ordered pieces.
     #[arg(long)]
     output_dir: PathBuf,
+}
+
+/// Separate command keeps relocation opt-in: ordinary `package` still refuses
+/// embedded search paths and existing PackageArgs callers retain their contract.
+#[derive(Args)]
+pub struct PackageWithLoaderPolicyArgs {
+    #[command(flatten)]
+    package: PackageArgs,
+    #[arg(long, value_enum)]
+    loader_policy: loader_policy::LoaderPolicy,
 }
 
 #[derive(Args)]
@@ -2559,6 +2570,8 @@ struct NativeEvidence {
     copied_binary_before_loader: Physical13,
     copied_binary_after_loader: Physical13,
     copied_identity_role: &'static str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    loader_policy: Option<loader_policy::Evidence>,
     original_binary_before_loader: Physical13,
     original_binary_after_loader: Physical13,
     official_loader_list: String,
@@ -2836,7 +2849,34 @@ pub(super) fn package(args: PackageArgs) -> Result<()> {
     result
 }
 
+pub(super) fn package_with_loader_policy(args: PackageWithLoaderPolicyArgs) -> Result<()> {
+    let output = args.package.output_dir.clone();
+    let mut owned = false;
+    let result = package_inner_with_policy(args.package, &mut owned, Some(args.loader_policy));
+    preserve_failure(&output, owned, "package-command-failure.json", &result)?;
+    result
+}
+
+fn require_default_loader_policy(path: &Path, facts: &elf::ElfEvidence) -> Result<()> {
+    ensure!(
+        facts.rpath.is_none() && facts.runpath.is_none(),
+        "relocating an ELF with RPATH/RUNPATH requires an explicit loader policy: {} RPATH {:?}, RUNPATH {:?}",
+        path.display(),
+        facts.rpath,
+        facts.runpath
+    );
+    Ok(())
+}
+
 fn package_inner(args: PackageArgs, owned: &mut bool) -> Result<()> {
+    package_inner_with_policy(args, owned, None)
+}
+
+fn package_inner_with_policy(
+    args: PackageArgs,
+    owned: &mut bool,
+    loader_policy: Option<loader_policy::LoaderPolicy>,
+) -> Result<()> {
     let request = request_input(&args.request, &args.request_sha256, Some(&args.source))?;
     let build: BuildReceipt = authenticated_json(
         &args.build_receipt,
@@ -2934,22 +2974,40 @@ fn package_inner(args: PackageArgs, owned: &mut bool) -> Result<()> {
     let mut elf_budget = elf::MetadataBudget::new();
     let preliminary_binary_elf =
         elf::inspect_file_with_budget(binary_source.try_clone()?, &mut elf_budget)?;
-    ensure!(
-        preliminary_binary_elf.rpath.is_none() && preliminary_binary_elf.runpath.is_none(),
-        "relocating an ELF with RPATH/RUNPATH requires an explicit loader policy"
-    );
-    let (_, planned_dependencies) =
-        plan_dependencies(&binary_source, &preliminary_binary_elf, &mut elf_budget)?;
+    let planned_dependencies = if loader_policy.is_some() {
+        // Static discovery never passes the original unknown embedded paths to
+        // the loader. Full producer admission still precedes every payload copy.
+        loader_policy::plan_dependencies(&preliminary_binary_elf, &mut elf_budget).with_context(
+            || {
+                format!(
+                    "static loader-policy closure for {} RPATH {:?}, RUNPATH {:?}",
+                    build.binary.path.display(),
+                    preliminary_binary_elf.rpath,
+                    preliminary_binary_elf.runpath
+                )
+            },
+        )?
+    } else {
+        require_default_loader_policy(&build.binary.path, &preliminary_binary_elf)?;
+        plan_dependencies(&binary_source, &preliminary_binary_elf, &mut elf_budget)?.1
+    };
     let (after_loader_digest, original_binary_after_loader) =
         descriptor_digest(&binary_source, MAX_BINARY_BYTES)?;
     ensure!(
         after_loader_digest == source_digest,
         "original binary changed during official loader resolution"
     );
-    require_loader_inverse(
-        &original_binary_before_loader,
-        &original_binary_after_loader,
-    )?;
+    if loader_policy.is_some() {
+        ensure!(
+            original_binary_before_loader == original_binary_after_loader,
+            "policy original executable full13 changed during static admission"
+        );
+    } else {
+        require_loader_inverse(
+            &original_binary_before_loader,
+            &original_binary_after_loader,
+        )?;
+    }
     ensure!(
         original_binary_after_loader == physical(&fs::symlink_metadata(&build.binary.path)?)?,
         "original binary pathname changed during admission"
@@ -3005,33 +3063,48 @@ fn package_inner(args: PackageArgs, owned: &mut bool) -> Result<()> {
     reconstruct_git_with_plan(&args.source, &source_destination, &git_plan)?;
     let executable_destination = source_destination.join("target/debug/koda");
     ensure_parents(&executable_destination)?;
-    let mut binary_copy_source = binary_source.try_clone()?;
-    binary_copy_source.seek(SeekFrom::Start(0))?;
-    copy_verified_descriptor(
-        binary_copy_source,
-        &executable_destination,
-        &build.binary.digest,
-        0o555,
-    )?;
-    let copied_binary = open_noatime(&executable_destination, false)?;
+    let (copied_binary, binary_elf, main_transformation) = if loader_policy.is_some() {
+        let copied = loader_policy::copy(
+            &binary_source,
+            &build.binary.path,
+            &executable_destination,
+            &build.binary.digest,
+            &preliminary_binary_elf,
+            &mut elf_budget,
+        )?;
+        (copied.file, copied.elf, Some(copied.transformation))
+    } else {
+        let mut binary_copy_source = binary_source.try_clone()?;
+        binary_copy_source.seek(SeekFrom::Start(0))?;
+        copy_verified_descriptor(
+            binary_copy_source,
+            &executable_destination,
+            &build.binary.digest,
+            0o555,
+        )?;
+        let copied = open_noatime(&executable_destination, false)?;
+        let facts = elf::inspect_file_with_budget(copied.try_clone()?, &mut elf_budget)?;
+        ensure!(
+            facts == preliminary_binary_elf,
+            "actual copied ELF differs from admitted build bytes"
+        );
+        (copied, facts, None)
+    };
     let (copied_binary_digest, copied_binary_before_loader) =
         descriptor_digest(&copied_binary, MAX_BINARY_BYTES)?;
-    ensure!(
-        copied_binary_digest == build.binary.digest,
-        "packaged executable digest differs"
-    );
-    let binary_elf = elf::inspect_file_with_budget(copied_binary.try_clone()?, &mut elf_budget)?;
-    ensure!(
-        binary_elf == preliminary_binary_elf,
-        "actual copied ELF differs from admitted build bytes"
-    );
+    if loader_policy.is_none() {
+        ensure!(
+            copied_binary_digest == build.binary.digest,
+            "packaged executable digest differs"
+        );
+        verify_copied_resolution(
+            &copied_binary,
+            &binary_elf,
+            &planned_dependencies,
+            &mut elf_budget,
+        )?;
+    }
     drop(preliminary_binary_elf);
-    verify_copied_resolution(
-        &copied_binary,
-        &binary_elf,
-        &planned_dependencies,
-        &mut elf_budget,
-    )?;
     let (copied_after_digest, copied_binary_after_loader) =
         descriptor_digest(&copied_binary, MAX_BINARY_BYTES)?;
     require_loader_inverse(&copied_binary_before_loader, &copied_binary_after_loader)?;
@@ -3041,20 +3114,81 @@ fn package_inner(args: PackageArgs, owned: &mut bool) -> Result<()> {
                 == physical(&fs::symlink_metadata(&executable_destination)?)?,
         "copied executable loader/ELF identity inverse differs"
     );
-    set_mode(&executable_destination, 0o755)?;
-    let dependencies = deliver_dependencies_with_budget(
-        &planned_dependencies,
-        &runtime.join("lib"),
-        &mut elf_budget,
-    )?;
+    if loader_policy.is_none() {
+        set_mode(&executable_destination, 0o755)?;
+    }
+    let (dependencies, delivered_policy_plans, library_transformations) = if loader_policy.is_some()
+    {
+        let delivered =
+            loader_policy::deliver(&planned_dependencies, &runtime.join("lib"), &mut elf_budget)?;
+        (
+            delivered.dependencies,
+            Some(delivered.plans),
+            delivered.transformations,
+        )
+    } else {
+        (
+            deliver_dependencies_with_budget(
+                &planned_dependencies,
+                &runtime.join("lib"),
+                &mut elf_budget,
+            )?,
+            None,
+            Vec::new(),
+        )
+    };
     let bound_loader_probe = verify_bound_loader_with_budget(
         &copied_binary,
         &binary_elf,
-        &planned_dependencies,
+        delivered_policy_plans
+            .as_deref()
+            .unwrap_or(&planned_dependencies),
         &runtime.join("lib"),
         &args.output_dir.join("loader-fd-probe"),
         &mut elf_budget,
     )?;
+    let (copied_binary_before_loader, copied_binary_after_loader) = if loader_policy.is_some() {
+        ensure!(
+            bound_loader_probe.binary_digest == copied_binary_digest
+                && descriptor_digest(&copied_binary, MAX_BINARY_BYTES)?
+                    == (
+                        copied_binary_digest.clone(),
+                        bound_loader_probe.binary_after_loader.clone()
+                    )
+                && bound_loader_probe.binary_after_loader
+                    == physical(&fs::symlink_metadata(&executable_destination)?)?,
+            "policy transformed executable/bound-loader complete inverse differs"
+        );
+        (
+            bound_loader_probe.binary_before_loader.clone(),
+            bound_loader_probe.binary_after_loader.clone(),
+        )
+    } else {
+        (copied_binary_before_loader, copied_binary_after_loader)
+    };
+    let loader_policy_evidence = if let Some(main) = main_transformation {
+        loader_policy::sources_after_loader(&planned_dependencies, &bound_loader_probe)?;
+        ensure!(
+            descriptor_digest(&binary_source, MAX_BINARY_BYTES)?
+                == (source_digest.clone(), original_binary_before_loader.clone())
+                && original_binary_before_loader
+                    == physical(&fs::symlink_metadata(&build.binary.path)?)?,
+            "policy original build output changed during delivered loader verification"
+        );
+        Some(loader_policy::Evidence {
+            policy: loader_policy::LoaderPolicy::StripEmbeddedSearchPaths,
+            main,
+            libraries: library_transformations,
+            discovery: "static DT_NEEDED closure in /lib/x86_64-linux-gnu, /usr/lib/x86_64-linux-gnu, /lib64, /usr/lib64, /lib, /usr/lib; root-owned non-writable paths; no embedded build paths or loader cache",
+            dependency_evidence_role: "dependencies bind original system digest/full13/ELF; transformations and bound_loader_probe bind delivered copies; delivered ELF is exactly original ELF with RPATH/RUNPATH absent",
+            launch_requirement: "launch with LD_LIBRARY_PATH set to the admitted runtime/lib; host-library identity, dlopen requirements and native resource admission remain independent gates",
+            original_input_loader_invoked: false,
+            constructors_entered_during_packaging: false,
+            runtime_acceptance_credit: 0,
+        })
+    } else {
+        None
+    };
     copy_verified(
         &admission_path,
         &runtime.join("evidence/producer-admission.json"),
@@ -3104,7 +3238,12 @@ fn package_inner(args: PackageArgs, owned: &mut bool) -> Result<()> {
         copied_binary_digest,
         copied_binary_before_loader,
         copied_binary_after_loader,
-        copied_identity_role: "full13 during read-only 0555 ELF/loader inspection; explicit final packaging permission restoration to 0755 is authenticated by payload manifest",
+        copied_identity_role: if loader_policy_evidence.is_some() {
+            "owned creator-FD transformation followed by full13 during final 0755 read-only ELF/loader inspection; original and delivered digests separately bound"
+        } else {
+            "full13 during read-only 0555 ELF/loader inspection; explicit final packaging permission restoration to 0755 is authenticated by payload manifest"
+        },
+        loader_policy: loader_policy_evidence,
         original_binary_before_loader,
         original_binary_after_loader,
         official_loader_list: bound_loader_probe.actual_stdout.clone(),
