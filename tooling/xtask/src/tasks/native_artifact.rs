@@ -61,6 +61,8 @@ pub enum NativeArtifactCommand {
     UnpackGithubZip(transport::UnpackZipArgs),
     /// Authenticate ordered raw pieces and extract only the declared confined payload.
     Extract(package::ExtractArgs),
+    /// Construct a new exact checkout; never initialize links in a borrowed source.
+    PrepareBootstrapCheckout(bootstrap::PrepareCheckoutArgs),
     /// Export the remotely built controller tool and independently inspectable bootstrap evidence.
     ExportBootstrap(bootstrap::ExportArgs),
     /// Export bounded failure evidence without granting build, test or native acceptance.
@@ -77,6 +79,7 @@ pub fn run(command: NativeArtifactCommand) -> Result<()> {
         NativeArtifactCommand::Admission(args) => admission(args),
         NativeArtifactCommand::UnpackGithubZip(args) => transport::unpack(args),
         NativeArtifactCommand::Extract(args) => package::extract(args),
+        NativeArtifactCommand::PrepareBootstrapCheckout(args) => bootstrap::prepare_checkout(args),
         NativeArtifactCommand::ExportBootstrap(args) => bootstrap::export(args),
         NativeArtifactCommand::ExportFailureEvidence(args) => bootstrap::export_failure(args),
     }

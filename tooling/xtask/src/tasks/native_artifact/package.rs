@@ -915,6 +915,763 @@ fn ensure_parents(path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// A creation boundary we can enforce with ordinary Linux permissions:
+/// the retained parent is owned by this effective user and is not writable by
+/// group/other users. Privileged or arbitrary same-user interference is outside
+/// this single-job constructor's trust model. Linux mkdirat does not return an
+/// inode FD, so we do not claim an atomic mkdir-to-FD guarantee against those
+/// actors. Descendant writes are still confined to retained descriptors when
+/// public pathnames are replaced; a changed path prevents final admission.
+#[cfg(target_os = "linux")]
+struct TrustedCreationParent {
+    file: File,
+    path: PathBuf,
+    identity: Physical13,
+}
+
+#[cfg(target_os = "linux")]
+fn same_created_directory(expected: &Physical13, actual: &Physical13) -> bool {
+    // Directories are mutable during creation. These are ownership fields,
+    // not an exception to any frozen full13 source observation.
+    expected.dev == actual.dev
+        && expected.ino == actual.ino
+        && expected.mode == actual.mode
+        && expected.uid == actual.uid
+        && expected.gid == actual.gid
+}
+
+#[cfg(target_os = "linux")]
+fn require_creation_parent(file: &File) -> Result<Physical13> {
+    let metadata = file.metadata()?;
+    let identity = physical(&metadata)?;
+    // SAFETY: geteuid has no arguments and does not change process credentials.
+    let effective_uid = unsafe { libc::geteuid() };
+    ensure!(
+        metadata.is_dir() && identity.uid == effective_uid && identity.mode & 0o022 == 0,
+        "checkout creation parent must be effective-user-owned and not group/other writable"
+    );
+    Ok(identity)
+}
+
+#[cfg(target_os = "linux")]
+fn open_directory_at(parent: &File, name: &std::ffi::CStr) -> Result<File> {
+    use std::os::fd::{AsRawFd as _, FromRawFd as _};
+    // SAFETY: live retained parent FD and terminated single-component name;
+    // O_NOFOLLOW refuses symlink replacement and the returned FD is owned.
+    let fd = unsafe {
+        libc::openat(
+            parent.as_raw_fd(),
+            name.as_ptr(),
+            libc::O_RDONLY
+                | libc::O_NOATIME
+                | libc::O_NOFOLLOW
+                | libc::O_DIRECTORY
+                | libc::O_CLOEXEC,
+        )
+    };
+    ensure!(
+        fd >= 0,
+        "confined directory open failed: {}",
+        std::io::Error::last_os_error()
+    );
+    // SAFETY: successful openat transferred a new descriptor.
+    Ok(unsafe { File::from_raw_fd(fd) })
+}
+
+#[cfg(target_os = "linux")]
+fn open_ancestor_directory_at(parent: std::os::fd::RawFd, name: &std::ffi::CStr) -> Result<File> {
+    use std::os::fd::FromRawFd as _;
+    // System ancestors can belong to another UID. O_PATH grants a directory
+    // capability without reading it, changing atime, or requiring CAP_FOWNER.
+    // O_DIRECTORY with O_NOFOLLOW refuses symlink components rather than
+    // returning their inode. This helper is separate from readable owned
+    // descendants and from the unchanged strict borrowed-source reader.
+    // SAFETY: AT_FDCWD or a live retained directory FD and a terminated name.
+    let fd = unsafe {
+        libc::openat(
+            parent,
+            name.as_ptr(),
+            libc::O_PATH | libc::O_DIRECTORY | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+        )
+    };
+    ensure!(
+        fd >= 0,
+        "confined ancestor capability open failed: {}",
+        std::io::Error::last_os_error()
+    );
+    // SAFETY: successful openat transferred a new descriptor.
+    Ok(unsafe { File::from_raw_fd(fd) })
+}
+
+#[cfg(target_os = "linux")]
+fn open_absolute_directory(path: &Path) -> Result<File> {
+    use std::{os::fd::AsRawFd as _, os::unix::ffi::OsStrExt as _, path::Component};
+    ensure!(path.is_absolute(), "creation parent must be absolute");
+    let mut file = open_ancestor_directory_at(libc::AT_FDCWD, &std::ffi::CString::new("/")?)?;
+    for component in path.components() {
+        match component {
+            Component::RootDir => {}
+            Component::Normal(name) => {
+                file = open_ancestor_directory_at(
+                    file.as_raw_fd(),
+                    &std::ffi::CString::new(name.as_bytes())?,
+                )?;
+            }
+            _ => bail!("creation parent has an unconfined component"),
+        }
+    }
+    Ok(file)
+}
+
+#[cfg(target_os = "linux")]
+impl TrustedCreationParent {
+    fn open(path: &Path) -> Result<Self> {
+        let file = open_absolute_directory(path)?;
+        let identity = require_creation_parent(&file)?;
+        Ok(Self {
+            file,
+            path: path.to_owned(),
+            identity,
+        })
+    }
+
+    fn require_current(&self) -> Result<()> {
+        let descriptor = require_creation_parent(&self.file)?;
+        let pathname = require_creation_parent(&open_absolute_directory(&self.path)?)?;
+        ensure!(
+            same_created_directory(&self.identity, &descriptor)
+                && same_created_directory(&self.identity, &pathname),
+            "trusted checkout creation parent was replaced"
+        );
+        Ok(())
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn create_directory_at(parent: &File, name: &std::ffi::CStr) -> Result<File> {
+    use std::os::fd::AsRawFd as _;
+    require_creation_parent(parent)?;
+    // SAFETY: retained protected directory and terminated single-component name.
+    // Existing names are refused; no existing directory becomes a capability.
+    let result = unsafe { libc::mkdirat(parent.as_raw_fd(), name.as_ptr(), 0o700) };
+    ensure!(
+        result == 0,
+        "owned checkout directory must be new: {}",
+        std::io::Error::last_os_error()
+    );
+    let file = open_directory_at(parent, name)?;
+    let created = require_creation_parent(&file)?;
+    ensure!(
+        created.mode & 0o777 == 0o700,
+        "new checkout directory is not private"
+    );
+    Ok(file)
+}
+
+#[cfg(target_os = "linux")]
+fn create_file_at(parent: &File, name: &std::ffi::CStr) -> Result<File> {
+    use std::os::fd::{AsRawFd as _, FromRawFd as _};
+    require_creation_parent(parent)?;
+    // SAFETY: retained protected directory and terminated component; O_EXCL
+    // refuses existing files/links and O_NOFOLLOW prevents target following.
+    let fd = unsafe {
+        libc::openat(
+            parent.as_raw_fd(),
+            name.as_ptr(),
+            libc::O_WRONLY | libc::O_CREAT | libc::O_EXCL | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+            0o600,
+        )
+    };
+    ensure!(
+        fd >= 0,
+        "owned file creation failed: {}",
+        std::io::Error::last_os_error()
+    );
+    // SAFETY: successful openat transferred a newly owned descriptor.
+    Ok(unsafe { File::from_raw_fd(fd) })
+}
+
+#[cfg(target_os = "linux")]
+fn open_link_at(parent: &File, name: &std::ffi::CStr) -> Result<File> {
+    use std::os::fd::{AsRawFd as _, FromRawFd as _};
+    // SAFETY: retained directory and terminated component; O_PATH/O_NOFOLLOW
+    // returns the link inode, without following a target.
+    let fd = unsafe {
+        libc::openat(
+            parent.as_raw_fd(),
+            name.as_ptr(),
+            libc::O_PATH | libc::O_NOFOLLOW | libc::O_CLOEXEC,
+        )
+    };
+    ensure!(
+        fd >= 0,
+        "owned link open failed: {}",
+        std::io::Error::last_os_error()
+    );
+    // SAFETY: successful openat transferred a newly owned descriptor.
+    Ok(unsafe { File::from_raw_fd(fd) })
+}
+
+#[cfg(target_os = "linux")]
+fn descriptor_path(file: &File) -> PathBuf {
+    use std::os::fd::AsRawFd as _;
+    // The parent process retains this descriptor throughout every child wait.
+    // A trailing dot permits the unchanged materialized observer's final
+    // O_DIRECTORY/O_NOFOLLOW open while resolving beneath this retained root.
+    PathBuf::from(format!(
+        "/proc/{}/fd/{}/.",
+        std::process::id(),
+        file.as_raw_fd()
+    ))
+}
+
+#[cfg(target_os = "linux")]
+struct OwnedCheckout {
+    source: SourceArgs,
+    root: File,
+    created_root: Physical13,
+    parent: TrustedCreationParent,
+    name: std::ffi::CString,
+    created_directories: BTreeMap<String, Physical13>,
+}
+
+#[cfg(target_os = "linux")]
+impl OwnedCheckout {
+    fn create(source: &SourceArgs, destination: &Path) -> Result<Self> {
+        let parent =
+            TrustedCreationParent::open(destination.parent().context("checkout parent absent")?)?;
+        Self::create_beneath(source, destination, parent)
+    }
+
+    fn create_beneath(
+        source: &SourceArgs,
+        destination: &Path,
+        parent: TrustedCreationParent,
+    ) -> Result<Self> {
+        use std::os::unix::ffi::OsStrExt as _;
+        ensure!(
+            destination.parent() == Some(parent.path.as_path()),
+            "checkout parent capability differs"
+        );
+        parent.require_current()?;
+        let name = std::ffi::CString::new(
+            destination
+                .file_name()
+                .context("checkout name absent")?
+                .as_bytes(),
+        )?;
+        let root = create_directory_at(&parent.file, &name)?;
+        let created_root = physical(&root.metadata()?)?;
+        let checkout = Self {
+            source: SourceArgs {
+                source: destination.to_owned(),
+                sha: source.sha.clone(),
+                tree: source.tree.clone(),
+            },
+            root,
+            created_root,
+            parent,
+            name,
+            created_directories: BTreeMap::new(),
+        };
+        checkout.require_owned_path()?;
+        Ok(checkout)
+    }
+
+    fn require_owned_path(&self) -> Result<()> {
+        self.parent.require_current()?;
+        let descriptor = physical(&self.root.metadata()?)?;
+        let pathname = physical(&open_directory_at(&self.parent.file, &self.name)?.metadata()?)?;
+        ensure!(
+            same_created_directory(&self.created_root, &descriptor)
+                && same_created_directory(&self.created_root, &pathname),
+            "newly created checkout root was replaced"
+        );
+        Ok(())
+    }
+
+    fn directory(&mut self, path: &str) -> Result<File> {
+        if !path.is_empty() {
+            payload_relative(path)?;
+        }
+        let mut directory = self.root.try_clone()?;
+        ensure!(
+            same_created_directory(&self.created_root, &physical(&directory.metadata()?)?),
+            "retained checkout root changed ownership"
+        );
+        let mut prefix = String::new();
+        for part in path.split('/').filter(|part| !part.is_empty()) {
+            if !prefix.is_empty() {
+                prefix.push('/');
+            }
+            prefix.push_str(part);
+            let name = std::ffi::CString::new(part)?;
+            let child = match self.created_directories.get(&prefix).cloned() {
+                Some(expected) => {
+                    let child = open_directory_at(&directory, &name)?;
+                    ensure!(
+                        same_created_directory(&expected, &physical(&child.metadata()?)?),
+                        "owned descendant directory was replaced: {prefix}"
+                    );
+                    child
+                }
+                None => {
+                    ensure!(
+                        self.created_directories.len() < MAX_PAYLOAD_ENTRIES,
+                        "owned directory capability budget exhausted before creation"
+                    );
+                    let child = create_directory_at(&directory, &name)?;
+                    self.created_directories
+                        .insert(prefix.clone(), physical(&child.metadata()?)?);
+                    child
+                }
+            };
+            directory = child;
+        }
+        Ok(directory)
+    }
+
+    fn parent_for(&mut self, path: &str) -> Result<(File, std::ffi::CString)> {
+        payload_relative(path)?;
+        let (parent, leaf) = path.rsplit_once('/').unwrap_or(("", path));
+        Ok((self.directory(parent)?, std::ffi::CString::new(leaf)?))
+    }
+
+    fn new_file(&mut self, path: &str) -> Result<File> {
+        let (parent, name) = self.parent_for(path)?;
+        create_file_at(&parent, &name)
+    }
+
+    fn write_file(&mut self, path: &str, bytes: &[u8], mode: u32) -> Result<()> {
+        use std::os::unix::fs::PermissionsExt as _;
+        let mut file = self.new_file(path)?;
+        file.write_all(bytes)?;
+        file.sync_all()?;
+        file.set_permissions(fs::Permissions::from_mode(mode))?;
+        Ok(())
+    }
+
+    fn create_link(&mut self, path: &str, target: &str) -> Result<()> {
+        use std::os::fd::AsRawFd as _;
+        let (parent, name) = self.parent_for(path)?;
+        require_creation_parent(&parent)?;
+        let target_text = std::ffi::CString::new(target)?;
+        // SAFETY: terminated target/name and a retained protected parent FD;
+        // symlinkat creates a new name and refuses an existing inode.
+        let result =
+            unsafe { libc::symlinkat(target_text.as_ptr(), parent.as_raw_fd(), name.as_ptr()) };
+        ensure!(
+            result == 0,
+            "owned symlink creation failed: {}",
+            std::io::Error::last_os_error()
+        );
+        let file = open_link_at(&parent, &name)?;
+        ensure!(
+            file.metadata()?.file_type().is_symlink(),
+            "newly created link changed type"
+        );
+        // Only this freshly created link receives its creation readback. A
+        // borrowed inode is never warmed, and the frozen inverse remains all13.
+        let initialized_bytes = link_bytes(&file)?;
+        ensure!(
+            initialized_bytes == target.as_bytes(),
+            "created link target differs"
+        );
+        let initialized = physical(&file.metadata()?)?;
+        let again = open_link_at(&parent, &name)?;
+        let path_before = physical(&again.metadata()?)?;
+        ensure!(
+            initialized == path_before,
+            "created link was replaced before strict readback"
+        );
+        let strict_bytes = link_bytes(&again)?;
+        let descriptor_after = physical(&file.metadata()?)?;
+        let path_after = physical(&again.metadata()?)?;
+        let named_after = physical(&open_link_at(&parent, &name)?.metadata()?)?;
+        ensure!(
+            strict_bytes == initialized_bytes
+                && initialized == descriptor_after
+                && initialized == path_after
+                && initialized == named_after,
+            "created link initialization inverse differs: descriptor fields {:?}, path fields {:?}, named fields {:?}",
+            initialized.changed_fields(&descriptor_after),
+            initialized.changed_fields(&path_after),
+            initialized.changed_fields(&named_after)
+        );
+        Ok(())
+    }
+
+    fn descriptor_source(&self) -> SourceArgs {
+        SourceArgs {
+            source: descriptor_path(&self.root),
+            sha: self.source.sha.clone(),
+            tree: self.source.tree.clone(),
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn owned_git_output(root: &File, git: &File, args: &[&str], maximum: u64) -> Result<Vec<u8>> {
+    use std::os::unix::ffi::OsStrExt as _;
+    let root_path = descriptor_path(root);
+    let git_path = descriptor_path(git);
+    let mut command = Command::new("git");
+    command
+        .arg("--git-dir")
+        .arg(&git_path)
+        .arg("--work-tree")
+        .arg(&root_path)
+        .args(args)
+        .current_dir(&root_path)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit());
+    // Index/object/config environment overrides must never redirect a write to
+    // a borrowed repository. This changes only this owned child environment.
+    for (name, _) in std::env::vars_os() {
+        if name.as_bytes().starts_with(b"GIT_") {
+            command.env_remove(name);
+        }
+    }
+    command
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .env("GIT_OPTIONAL_LOCKS", "0")
+        .env("GIT_NO_REPLACE_OBJECTS", "1");
+    let mut child = OwnedChild::spawn(&mut command, Duration::from_secs(300))?;
+    let result: Result<Vec<u8>> = (|| {
+        let mut output = Vec::new();
+        let mut stdout = child.stdout()?;
+        (&mut stdout).take(maximum + 1).read_to_end(&mut output)?;
+        ensure!(
+            output.len() as u64 <= maximum,
+            "owned Git output exceeds its budget"
+        );
+        Ok(output)
+    })();
+    let receipt = child.finish(result.is_err())?;
+    receipt.require_closed()?;
+    let output = result?;
+    receipt.require_success()?;
+    Ok(output)
+}
+
+#[cfg(target_os = "linux")]
+fn reconstruct_owned_git(
+    source: &SourceArgs,
+    checkout: &mut OwnedCheckout,
+    plan: &producer::GitPlan,
+) -> Result<()> {
+    checkout.directory(".git/objects")?;
+    checkout.directory(".git/refs")?;
+    checkout.write_file(".git/HEAD", format!("{}\n", source.sha).as_bytes(), 0o644)?;
+    checkout.write_file(
+        ".git/shallow",
+        format!("{}\n", source.sha).as_bytes(),
+        0o644,
+    )?;
+    checkout.write_file(".git/config", b"[core]\nrepositoryformatversion = 0\nfilemode = true\nbare = false\nlogallrefupdates = false\n", 0o644)?;
+    let mut batch = GitBatch::new(&source.source)?;
+    let mut total = 0_u64;
+    let mut compressed = 0_u64;
+    for (oid, kind) in &plan.objects {
+        let bytes = batch.object(oid, kind)?;
+        total = total
+            .checked_add(bytes.len() as u64)
+            .context("Git reconstruction size overflow")?;
+        ensure!(
+            total <= super::MAX_SOURCE_BYTES + super::MAX_TREE_BYTES,
+            "Git reconstruction byte budget exhausted"
+        );
+        let header = format!("{kind} {}\0", bytes.len());
+        let cap = producer::compression_bound(bytes.len() as u64 + header.len() as u64)?;
+        let output = checkout.new_file(&format!(".git/objects/{}/{}", &oid[..2], &oid[2..]))?;
+        let limited = producer::LimitedWriter::new(output, cap);
+        let mut encoder = ZlibEncoder::new(limited, Compression::fast());
+        encoder.write_all(header.as_bytes())?;
+        encoder.write_all(&bytes)?;
+        let output = encoder.finish()?.into_inner();
+        output.sync_all()?;
+        compressed = compressed
+            .checked_add(output.metadata()?.len())
+            .context("Git compressed total overflow")?;
+        ensure!(
+            compressed <= plan.compressed_upper_bytes,
+            "Git compressed plan exhausted before further writes"
+        );
+    }
+    batch.finish()?;
+    let git = checkout.directory(".git")?;
+    owned_git_output(&checkout.root, &git, &["read-tree", &source.sha], 1024)?;
+    let head = owned_git_output(&checkout.root, &git, &["rev-parse", "HEAD^{tree}"], 1024)?;
+    ensure!(
+        std::str::from_utf8(&head)?.trim() == source.tree,
+        "reconstructed Git tree differs"
+    );
+    Ok(())
+}
+
+#[derive(Debug, Serialize)]
+pub(super) struct OwnedCheckoutReceipt {
+    schema_version: u32,
+    creation_trust_policy: &'static str,
+    descendant_mutations_use_retained_descriptors: bool,
+    #[cfg(target_os = "linux")]
+    #[serde(skip)]
+    retained_parent: File,
+    #[cfg(target_os = "linux")]
+    #[serde(skip)]
+    retained_root: File,
+    #[cfg(target_os = "linux")]
+    #[serde(skip)]
+    creation_parent: Physical13,
+    state: &'static str,
+    source_commit: String,
+    source_tree: String,
+    constructed_directory: PathBuf,
+    constructed_root_after_initialization: Physical13,
+    canonical_manifest: FileDigest,
+    tracked_entries: usize,
+    initialized_new_symlinks: usize,
+    strict_materialized_entries: usize,
+    complete_source_full13_inverses_equal: bool,
+    required_bytes_before_creation: u64,
+    required_inodes_before_creation: u64,
+    original_filesystem_floor_bytes: u64,
+    borrowed_materialized_source_was_not_initialized: bool,
+    first_constructor_tool_is_unaccepted: bool,
+    runtime_test_or_reference_credit: u32,
+    closure: &'static str,
+}
+
+#[cfg(target_os = "linux")]
+pub(super) fn prepare_owned_checkout(
+    source: &SourceArgs,
+    destination: &Path,
+) -> Result<OwnedCheckoutReceipt> {
+    use std::path::Component;
+    let absolute_confined = |path: &Path| {
+        path.is_absolute()
+            && path
+                .components()
+                .all(|part| matches!(part, Component::RootDir | Component::Normal(_)))
+    };
+    ensure!(
+        absolute_confined(&source.source)
+            && absolute_confined(destination)
+            && !destination.starts_with(&source.source)
+            && !source.source.starts_with(destination),
+        "new checkout must be a separate confined absolute directory"
+    );
+    // Fail before object scans for an already borrowed path. The later atomic
+    // create remains the authoritative gate if another creator races this check.
+    match fs::symlink_metadata(destination) {
+        Ok(_) => bail!("owned checkout directory must be new"),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error.into()),
+    }
+    let parent = destination.parent().context("checkout parent absent")?;
+    let (manifest, object_observation) = observe(source, Authentication::GitObjects)?;
+    let git = producer::git_plan(source)?;
+    let (block, available, available_inodes) = super::filesystem_space(parent)?;
+    ensure!(
+        block > 0 && block <= 1024 * 1024,
+        "invalid checkout block size"
+    );
+    let mut directories = BTreeSet::from([
+        String::new(),
+        ".git".to_owned(),
+        ".git/objects".to_owned(),
+        ".git/refs".to_owned(),
+    ]);
+    let mut bodies = 0_u64;
+    let mut index_upper = 64 * 1024_u64;
+    for entry in &manifest.entries {
+        bodies = bodies
+            .checked_add(entry.bytes)
+            .context("checkout source size overflow")?;
+        index_upper = index_upper
+            .checked_add(entry.path.len() as u64 + 256)
+            .context("checkout index bound overflow")?;
+        let mut ancestor = Path::new(&entry.path).parent();
+        while let Some(path) = ancestor.filter(|path| !path.as_os_str().is_empty()) {
+            directories.insert(
+                path.to_str()
+                    .context("checkout parent is not UTF-8")?
+                    .to_owned(),
+            );
+            ancestor = path.parent();
+        }
+    }
+    for oid in git.objects.keys() {
+        directories.insert(format!(".git/objects/{}", &oid[..2]));
+    }
+    let required_inodes = (manifest.entries.len() as u64)
+        .checked_add(git.objects.len() as u64)
+        .and_then(|n| n.checked_add(directories.len() as u64))
+        .and_then(|n| n.checked_add(37))
+        .context("checkout inode bound overflow")?;
+    ensure!(
+        required_inodes <= MAX_PAYLOAD_ENTRIES as u64,
+        "checkout inode bound exceeds the existing payload entry budget"
+    );
+    let required_bytes = required_inodes
+        .checked_mul(block)
+        .and_then(|n| n.checked_add(bodies))
+        .and_then(|n| n.checked_add(git.compressed_upper_bytes))
+        .and_then(|n| n.checked_add(index_upper))
+        .and_then(|n| n.checked_add(MAX_METADATA_BYTES))
+        .and_then(|n| n.checked_add(64 * 1024 * 1024))
+        .and_then(|n| n.checked_add(super::ORIGINAL_FLOOR))
+        .context("checkout disk preflight overflow")?;
+    ensure!(
+        available >= required_bytes && available_inodes >= required_inodes,
+        "owned checkout disk/inode reserve does not fit before creation"
+    );
+    let mut checkout = OwnedCheckout::create(source, destination)?;
+    let mut batch = GitBatch::new(&source.source)?;
+    // Every tracked inode is created here. Immutable Git objects supply bytes;
+    // no borrowed working-tree symlink is read, warmed, replaced or relabeled.
+    for entry in &manifest.entries {
+        if entry.mode == "120000" {
+            continue;
+        }
+        let bytes = batch.object(&entry.git_blob, "blob")?;
+        ensure!(
+            bytes.len() as u64 == entry.bytes && sha256(&bytes) == entry.sha256,
+            "constructed regular source differs from its canonical Git object"
+        );
+        checkout.write_file(
+            &entry.path,
+            &bytes,
+            if entry.mode == "100755" { 0o755 } else { 0o644 },
+        )?;
+    }
+    batch.finish()?;
+    let mut initialized_new_symlinks = 0;
+    for entry in &manifest.entries {
+        if entry.mode != "120000" {
+            continue;
+        }
+        checkout.create_link(
+            &entry.path,
+            entry
+                .link_target
+                .as_deref()
+                .context("owned link target absent")?,
+        )?;
+        initialized_new_symlinks += 1;
+    }
+    checkout.require_owned_path()?;
+    reconstruct_owned_git(source, &mut checkout, &git)?;
+    checkout.require_owned_path()?;
+    let (actual_manifest, observation) =
+        observe(&checkout.descriptor_source(), Authentication::Materialized)?;
+    checkout.require_owned_path()?;
+    ensure!(
+        actual_manifest == manifest
+            && observation.canonical_manifest == object_observation.canonical_manifest
+            && observation.full_physical_noatime_inverses_equal
+            && observation.physically_materialized_entries == manifest.entries.len(),
+        "owned materialized checkout differs from exact immutable Git source"
+    );
+    let constructed_root_after_initialization = physical(&checkout.root.metadata()?)?;
+    ensure!(
+        constructed_root_after_initialization
+            == physical(&open_directory_at(&checkout.parent.file, &checkout.name)?.metadata()?)?,
+        "owned checkout complete final root inverse differs"
+    );
+    Ok(OwnedCheckoutReceipt {
+        schema_version: 1,
+        creation_trust_policy: "effective-user-owned parent without group/other write; same-user and privileged interference excluded",
+        descendant_mutations_use_retained_descriptors: true,
+        retained_parent: checkout.parent.file.try_clone()?,
+        retained_root: checkout.root.try_clone()?,
+        creation_parent: checkout.parent.identity.clone(),
+        state: "RUST_CONSTRUCTED_NEW_EXACT_CHECKOUT_NOT_BOOTSTRAP_OR_NATIVE_ACCEPTANCE",
+        source_commit: source.sha.clone(),
+        source_tree: source.tree.clone(),
+        constructed_directory: destination.to_owned(),
+        constructed_root_after_initialization,
+        canonical_manifest: observation.canonical_manifest,
+        tracked_entries: manifest.entries.len(),
+        initialized_new_symlinks,
+        strict_materialized_entries: observation.physically_materialized_entries,
+        complete_source_full13_inverses_equal: observation.full_physical_noatime_inverses_equal,
+        required_bytes_before_creation: required_bytes,
+        required_inodes_before_creation: required_inodes,
+        original_filesystem_floor_bytes: super::ORIGINAL_FLOOR,
+        borrowed_materialized_source_was_not_initialized: true,
+        first_constructor_tool_is_unaccepted: true,
+        runtime_test_or_reference_credit: 0,
+        closure: "CLOSED0",
+    })
+}
+
+#[cfg(not(target_os = "linux"))]
+pub(super) fn prepare_owned_checkout(_: &SourceArgs, _: &Path) -> Result<OwnedCheckoutReceipt> {
+    bail!("owned descriptor-relative checkout creation requires Linux")
+}
+
+impl OwnedCheckoutReceipt {
+    pub(super) fn write_new_receipt(&self, path: &Path) -> Result<()> {
+        #[cfg(target_os = "linux")]
+        {
+            use std::os::unix::ffi::OsStrExt as _;
+            ensure!(
+                path.parent() == self.constructed_directory.parent(),
+                "receipt parent capability differs"
+            );
+            let verify = || -> Result<()> {
+                let named_parent =
+                    open_absolute_directory(path.parent().context("receipt parent absent")?)?;
+                ensure!(
+                    same_created_directory(
+                        &self.creation_parent,
+                        &require_creation_parent(&self.retained_parent)?
+                    ) && same_created_directory(
+                        &self.creation_parent,
+                        &require_creation_parent(&named_parent)?
+                    ),
+                    "receipt creation parent was replaced"
+                );
+                let root_name = std::ffi::CString::new(
+                    self.constructed_directory
+                        .file_name()
+                        .context("checkout root name absent")?
+                        .as_bytes(),
+                )?;
+                ensure!(
+                    self.constructed_root_after_initialization
+                        == physical(&self.retained_root.metadata()?)?
+                        && self.constructed_root_after_initialization
+                            == physical(
+                                &open_directory_at(&self.retained_parent, &root_name)?
+                                    .metadata()?
+                            )?,
+                    "frozen owned checkout root changed before receipt admission"
+                );
+                Ok(())
+            };
+            let bytes = super::canonical(self, MAX_METADATA_BYTES)?;
+            verify()?;
+            let name = std::ffi::CString::new(
+                path.file_name().context("receipt name absent")?.as_bytes(),
+            )?;
+            let mut output = create_file_at(&self.retained_parent, &name)?;
+            output.write_all(&bytes)?;
+            output.sync_all()?;
+            verify()?;
+            Ok(())
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            let _ = path;
+            bail!("owned descriptor-relative receipt creation requires Linux")
+        }
+    }
+}
+
 fn copy_source(source: &SourceArgs, manifest: &SourceManifest, destination: &Path) -> Result<()> {
     fs::create_dir(destination)?;
     let root = open_noatime(&source.source, true)?;
@@ -3396,6 +4153,406 @@ mod owned_symlink_initialization_regression {
         }
         assert_eq!(
             physical(&fs::metadata(&target_path).unwrap()).unwrap(),
+            target_before
+        );
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod owned_checkout_lifecycle_regression {
+    use super::*;
+
+    fn cold_fixture_link(source: &SourceArgs) -> Physical13 {
+        use std::os::unix::ffi::OsStrExt as _;
+        let path = source.source.join("AGENTS.md");
+        // This fixture owns its new link. An old timestamp establishes the
+        // cold-link precondition before capture; no observed timestamp is restored.
+        fs::remove_file(&path).unwrap();
+        std::os::unix::fs::symlink("README.md", &path).unwrap();
+        let path_bytes = std::ffi::CString::new(path.as_os_str().as_bytes()).unwrap();
+        let timestamps = [
+            libc::timespec {
+                tv_sec: 1,
+                tv_nsec: 0,
+            },
+            libc::timespec {
+                tv_sec: 2,
+                tv_nsec: 0,
+            },
+        ];
+        // SAFETY: terminated owned fixture path and two initialized timespecs;
+        // AT_SYMLINK_NOFOLLOW initializes the test link, never its target.
+        let result = unsafe {
+            libc::utimensat(
+                libc::AT_FDCWD,
+                path_bytes.as_ptr(),
+                timestamps.as_ptr(),
+                libc::AT_SYMLINK_NOFOLLOW,
+            )
+        };
+        assert_eq!(result, 0);
+        physical(&fs::symlink_metadata(path).unwrap()).unwrap()
+    }
+
+    #[test]
+    fn constructor_owns_fresh_exact_modes_and_links_without_initializing_borrowed_source() {
+        let (_borrowed, source) = super::super::tests::fixture();
+        let cold_before = cold_fixture_link(&source);
+        let (expected, _) = observe(&source, Authentication::GitObjects).unwrap();
+        let staging = tempfile::tempdir().unwrap();
+        let destination = staging.path().join("new-checkout");
+        let receipt = prepare_owned_checkout(&source, &destination).unwrap();
+        assert_eq!(
+            physical(&fs::symlink_metadata(source.source.join("AGENTS.md")).unwrap()).unwrap(),
+            cold_before
+        );
+        assert_eq!(receipt.source_commit, source.sha);
+        assert_eq!(receipt.source_tree, source.tree);
+        assert_eq!(receipt.initialized_new_symlinks, 1);
+        assert_eq!(receipt.strict_materialized_entries, expected.entries.len());
+        assert!(receipt.complete_source_full13_inverses_equal);
+        assert!(receipt.borrowed_materialized_source_was_not_initialized);
+        assert!(receipt.first_constructor_tool_is_unaccepted);
+        assert_eq!(receipt.runtime_test_or_reference_credit, 0);
+        assert_eq!(
+            receipt.original_filesystem_floor_bytes,
+            super::super::ORIGINAL_FLOOR
+        );
+        let owned = SourceArgs {
+            source: destination.clone(),
+            sha: source.sha.clone(),
+            tree: source.tree.clone(),
+        };
+        let initialized_link =
+            physical(&fs::symlink_metadata(destination.join("AGENTS.md")).unwrap()).unwrap();
+        let (actual, observation) = observe(&owned, Authentication::Materialized).unwrap();
+        assert_eq!(actual, expected);
+        assert!(observation.full_physical_noatime_inverses_equal);
+        assert_eq!(observation.runtime_test_or_reference_credit, 0);
+        assert_eq!(
+            physical(&fs::symlink_metadata(destination.join("AGENTS.md")).unwrap()).unwrap(),
+            initialized_link
+        );
+        assert_eq!(
+            actual
+                .entries
+                .iter()
+                .find(|e| e.path == "script")
+                .unwrap()
+                .mode,
+            "100755"
+        );
+        assert_eq!(
+            actual
+                .entries
+                .iter()
+                .find(|e| e.path == "empty")
+                .unwrap()
+                .bytes,
+            0
+        );
+        assert_eq!(
+            actual
+                .entries
+                .iter()
+                .find(|e| e.path == "AGENTS.md")
+                .unwrap()
+                .mode,
+            "120000"
+        );
+        assert_eq!(
+            physical(&fs::symlink_metadata(source.source.join("AGENTS.md")).unwrap()).unwrap(),
+            cold_before
+        );
+        assert!(!destination.join(".git/hooks").exists());
+        assert!(!destination.join(".git/objects/info/alternates").exists());
+    }
+
+    #[test]
+    fn borrowed_cold_source_still_fails_the_complete_physical_atime_inverse() {
+        let (_borrowed, source) = super::super::tests::fixture();
+        let cold_before = cold_fixture_link(&source);
+        let error = match observe(&source, Authentication::Materialized) {
+            Ok(_) => panic!("cold borrowed symlink must not be silently initialized"),
+            Err(error) => error,
+        };
+        let message = format!("{error:#}");
+        assert!(message.contains("physical input changed during read for AGENTS.md"));
+        assert!(message.contains("atime_ns"));
+        let after =
+            physical(&fs::symlink_metadata(source.source.join("AGENTS.md")).unwrap()).unwrap();
+        assert_eq!(cold_before.changed_fields(&after), vec!["atime_ns"]);
+    }
+
+    #[test]
+    fn constructor_refuses_existing_directories_and_symlinks_without_relabeling_them() {
+        let (_borrowed, source) = super::super::tests::fixture();
+        let cold_before = cold_fixture_link(&source);
+        let staging = tempfile::tempdir().unwrap();
+        let directory = staging.path().join("existing");
+        fs::create_dir(&directory).unwrap();
+        create_file(
+            &directory.join("sentinel"),
+            b"existing directory is borrowed",
+        )
+        .unwrap();
+        let before = physical(&fs::symlink_metadata(&directory).unwrap()).unwrap();
+        let error = prepare_owned_checkout(&source, &directory).unwrap_err();
+        assert!(format!("{error:#}").contains("owned checkout directory must be new"));
+        assert_eq!(
+            physical(&fs::symlink_metadata(&directory).unwrap()).unwrap(),
+            before
+        );
+        assert!(!directory.join(".git").exists());
+        let link = staging.path().join("existing-link");
+        std::os::unix::fs::symlink(&source.source, &link).unwrap();
+        let link_before = physical(&fs::symlink_metadata(&link).unwrap()).unwrap();
+        assert!(prepare_owned_checkout(&source, &link).is_err());
+        assert_eq!(
+            physical(&fs::symlink_metadata(&link).unwrap()).unwrap(),
+            link_before
+        );
+        assert_eq!(
+            physical(&fs::symlink_metadata(source.source.join("AGENTS.md")).unwrap()).unwrap(),
+            cold_before
+        );
+    }
+
+    #[test]
+    fn retained_creator_capability_rejects_replaced_root_instead_of_claiming_existing_path() {
+        let (_borrowed, source) = super::super::tests::fixture();
+        let staging = tempfile::tempdir().unwrap();
+        let path = staging.path().join("checkout");
+        let owned = OwnedCheckout::create(&source, &path).unwrap();
+        owned.require_owned_path().unwrap();
+        fs::rename(&path, staging.path().join("retained-original")).unwrap();
+        fs::create_dir(&path).unwrap();
+        let replacement = physical(&fs::symlink_metadata(&path).unwrap()).unwrap();
+        assert_ne!(replacement.ino, owned.created_root.ino);
+        let error = owned.require_owned_path().unwrap_err();
+        assert!(format!("{error:#}").contains("newly created checkout root was replaced"));
+        assert_eq!(
+            physical(&fs::symlink_metadata(&path).unwrap()).unwrap(),
+            replacement
+        );
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod owned_checkout_descriptor_boundary_regression {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt as _;
+
+    #[test]
+    fn writable_creation_parent_is_refused_before_any_new_directory_or_inode_claim() {
+        let (_source_holder, source) = super::super::tests::fixture();
+        let staging = tempfile::tempdir().unwrap();
+        let parent = staging.path().join("unsafe-parent");
+        fs::create_dir(&parent).unwrap();
+        for mode in [0o770, 0o777] {
+            fs::set_permissions(&parent, fs::Permissions::from_mode(mode)).unwrap();
+            let before = physical(&fs::symlink_metadata(&parent).unwrap()).unwrap();
+            let destination = parent.join("new-root");
+            let error = match OwnedCheckout::create(&source, &destination) {
+                Ok(_) => panic!("a writable parent cannot authorize new-root ownership"),
+                Err(error) => error,
+            };
+            assert!(format!("{error:#}").contains("not group/other writable"));
+            assert!(!destination.exists());
+            assert_eq!(
+                physical(&fs::symlink_metadata(&parent).unwrap()).unwrap(),
+                before
+            );
+        }
+    }
+
+    #[test]
+    fn parent_replacement_after_capability_capture_cannot_redirect_root_creation() {
+        let (_source_holder, source) = super::super::tests::fixture();
+        let staging = tempfile::tempdir().unwrap();
+        let parent_path = staging.path().join("trusted-parent");
+        fs::create_dir(&parent_path).unwrap();
+        fs::set_permissions(&parent_path, fs::Permissions::from_mode(0o700)).unwrap();
+        let parent = TrustedCreationParent::open(&parent_path).unwrap();
+        let destination = parent_path.join("new-root");
+        fs::rename(&parent_path, staging.path().join("retained-parent")).unwrap();
+        fs::create_dir(&parent_path).unwrap();
+        let replacement = physical(&fs::symlink_metadata(&parent_path).unwrap()).unwrap();
+        let error = match OwnedCheckout::create_beneath(&source, &destination, parent) {
+            Ok(_) => panic!("a replaced parent pathname must not be admitted"),
+            Err(error) => error,
+        };
+        assert!(format!("{error:#}").contains("trusted checkout creation parent was replaced"));
+        assert!(!destination.exists());
+        assert!(!staging.path().join("retained-parent/new-root").exists());
+        assert_eq!(
+            physical(&fs::symlink_metadata(&parent_path).unwrap()).unwrap(),
+            replacement
+        );
+    }
+
+    #[test]
+    fn root_replacement_between_parent_capture_and_file_write_keeps_borrowed_tree_untouched() {
+        let (_source_holder, source) = super::super::tests::fixture();
+        let staging = tempfile::tempdir().unwrap();
+        let path = staging.path().join("checkout");
+        let mut owned = OwnedCheckout::create(&source, &path).unwrap();
+        owned.require_owned_path().unwrap();
+        let (captured, leaf) = owned.parent_for("output.rs").unwrap();
+        let retained = staging.path().join("retained-original");
+        fs::rename(&path, &retained).unwrap();
+        fs::create_dir(&path).unwrap();
+        let sentinel = path.join("sentinel");
+        create_file(&sentinel, b"borrowed sentinel").unwrap();
+        let replacement_before = physical(&fs::symlink_metadata(&path).unwrap()).unwrap();
+        let sentinel_before = physical(&fs::symlink_metadata(&sentinel).unwrap()).unwrap();
+        // A deliberate same-user test actor inserts the old check/write race.
+        // The write itself uses the previously captured directory descriptor.
+        let mut output = create_file_at(&captured, &leaf).unwrap();
+        output
+            .write_all(b"created inode remains under the retained root")
+            .unwrap();
+        output.sync_all().unwrap();
+        drop(output);
+        assert!(retained.join("output.rs").is_file());
+        assert!(!path.join("output.rs").exists());
+        assert!(owned.require_owned_path().is_err());
+        assert_eq!(
+            physical(&fs::symlink_metadata(&path).unwrap()).unwrap(),
+            replacement_before
+        );
+        assert_eq!(
+            physical(&fs::symlink_metadata(&sentinel).unwrap()).unwrap(),
+            sentinel_before
+        );
+    }
+
+    #[test]
+    fn descendant_replacement_cannot_redirect_captured_writes_or_be_adopted_for_later_writes() {
+        let (_source_holder, source) = super::super::tests::fixture();
+        let staging = tempfile::tempdir().unwrap();
+        let path = staging.path().join("checkout");
+        let mut owned = OwnedCheckout::create(&source, &path).unwrap();
+        let (captured, leaf) = owned.parent_for("src/output.rs").unwrap();
+        fs::rename(path.join("src"), path.join("retained-src")).unwrap();
+        fs::create_dir(path.join("src")).unwrap();
+        let borrowed_before = physical(&fs::symlink_metadata(path.join("src")).unwrap()).unwrap();
+        let mut output = create_file_at(&captured, &leaf).unwrap();
+        output.write_all(b"retained descendant output").unwrap();
+        output.sync_all().unwrap();
+        drop(output);
+        assert!(path.join("retained-src/output.rs").is_file());
+        assert!(!path.join("src/output.rs").exists());
+        let error = owned
+            .write_file("src/later.rs", b"must be refused", 0o644)
+            .unwrap_err();
+        assert!(format!("{error:#}").contains("owned descendant directory was replaced"));
+        assert!(!path.join("src/later.rs").exists());
+        assert_eq!(
+            physical(&fs::symlink_metadata(path.join("src")).unwrap()).unwrap(),
+            borrowed_before
+        );
+    }
+
+    #[test]
+    fn replaced_receipt_parent_is_refused_without_creating_a_file_in_the_borrowed_parent() {
+        let (_source_holder, source) = super::super::tests::fixture();
+        let staging = tempfile::tempdir().unwrap();
+        let parent = staging.path().join("parent");
+        fs::create_dir(&parent).unwrap();
+        fs::set_permissions(&parent, fs::Permissions::from_mode(0o700)).unwrap();
+        let receipt = prepare_owned_checkout(&source, &parent.join("checkout")).unwrap();
+        fs::rename(&parent, staging.path().join("retained-parent")).unwrap();
+        fs::create_dir(&parent).unwrap();
+        let before = physical(&fs::symlink_metadata(&parent).unwrap()).unwrap();
+        let output = parent.join("receipt.json");
+        let error = receipt.write_new_receipt(&output).unwrap_err();
+        assert!(format!("{error:#}").contains("receipt creation parent was replaced"));
+        assert!(!output.exists());
+        assert_eq!(
+            physical(&fs::symlink_metadata(&parent).unwrap()).unwrap(),
+            before
+        );
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod ancestor_directory_capability_regression {
+    use super::*;
+    use std::os::{fd::AsRawFd as _, unix::fs::PermissionsExt as _};
+
+    fn descriptor_flags(file: &File) -> i32 {
+        // SAFETY: F_GETFL only queries the live descriptor; it changes no flags.
+        let flags = unsafe { libc::fcntl(file.as_raw_fd(), libc::F_GETFL) };
+        assert!(flags >= 0);
+        flags
+    }
+
+    #[test]
+    fn system_ancestors_use_path_capabilities_and_owned_descendants_remain_readable() {
+        // This must work with a normal runner UID that does not own "/".
+        // Checking O_PATH also detects the old privileged-only approach when
+        // the test runner happens to own the root or possess CAP_FOWNER.
+        let root = open_absolute_directory(Path::new("/")).unwrap();
+        let flags = descriptor_flags(&root);
+        assert_ne!(flags & libc::O_PATH, 0);
+        assert_ne!(flags & libc::O_DIRECTORY, 0);
+        assert_ne!(flags & libc::O_NOFOLLOW, 0);
+        assert_eq!(flags & libc::O_NOATIME, 0);
+        assert!(root.metadata().unwrap().is_dir());
+        let temporary = tempfile::tempdir().unwrap();
+        let parent_path = temporary.path().canonicalize().unwrap();
+        let parent = TrustedCreationParent::open(&parent_path).unwrap();
+        assert_ne!(descriptor_flags(&parent.file) & libc::O_PATH, 0);
+        parent.require_current().unwrap();
+        let source = SourceArgs {
+            source: parent_path.join("borrowed-source-not-read"),
+            sha: "0".repeat(40),
+            tree: "1".repeat(40),
+        };
+        let destination = parent_path.join("new-checkout");
+        let mut owned = OwnedCheckout::create_beneath(&source, &destination, parent).unwrap();
+        assert_eq!(descriptor_flags(&owned.root) & libc::O_PATH, 0);
+        assert_ne!(descriptor_flags(&owned.root) & libc::O_NOATIME, 0);
+        owned.root.sync_all().unwrap();
+        owned
+            .write_file("src/output.rs", b"retained owned write", 0o644)
+            .unwrap();
+        owned.require_owned_path().unwrap();
+        assert_eq!(
+            fs::read(destination.join("src/output.rs")).unwrap(),
+            b"retained owned write"
+        );
+        assert_eq!(
+            fs::metadata(destination.join("src/output.rs"))
+                .unwrap()
+                .permissions()
+                .mode()
+                & 0o777,
+            0o644
+        );
+    }
+
+    #[test]
+    fn path_capability_traversal_refuses_symlink_ancestors_without_reading_the_link() {
+        let temporary = tempfile::tempdir().unwrap();
+        let parent = temporary.path().canonicalize().unwrap();
+        let target = parent.join("target");
+        fs::create_dir(&target).unwrap();
+        fs::create_dir(target.join("nested")).unwrap();
+        let link = parent.join("alias");
+        std::os::unix::fs::symlink(&target, &link).unwrap();
+        let link_before = physical(&fs::symlink_metadata(&link).unwrap()).unwrap();
+        let target_before = physical(&fs::symlink_metadata(&target).unwrap()).unwrap();
+        assert!(open_absolute_directory(&link).is_err());
+        assert!(open_absolute_directory(&link.join("nested")).is_err());
+        assert!(TrustedCreationParent::open(&link).is_err());
+        assert_eq!(
+            physical(&fs::symlink_metadata(&link).unwrap()).unwrap(),
+            link_before
+        );
+        assert_eq!(
+            physical(&fs::symlink_metadata(&target).unwrap()).unwrap(),
             target_before
         );
     }

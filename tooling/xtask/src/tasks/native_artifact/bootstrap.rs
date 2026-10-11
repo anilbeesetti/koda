@@ -35,6 +35,29 @@ const FAILURE_MEMBERS: &[(&str, u64)] = &[
     ("package-command-failure.json", MAX_METADATA_BYTES),
 ];
 
+/// The first tool only constructs a new source directory. Its build is not
+/// exported or accepted; the workflow recompiles the export candidate here.
+#[derive(Args)]
+pub struct PrepareCheckoutArgs {
+    #[command(flatten)]
+    source: SourceArgs,
+    #[arg(long)]
+    output_dir: PathBuf,
+    #[arg(long)]
+    receipt: PathBuf,
+}
+
+pub(super) fn prepare_checkout(args: PrepareCheckoutArgs) -> Result<()> {
+    ensure!(
+        args.receipt.is_absolute()
+            && args.receipt.parent() == args.output_dir.parent()
+            && args.receipt != args.output_dir,
+        "checkout receipt must be a new sibling outside the constructed checkout"
+    );
+    let receipt = super::package::prepare_owned_checkout(&args.source, &args.output_dir)?;
+    receipt.write_new_receipt(&args.receipt)
+}
+
 #[derive(Args)]
 pub struct ExportArgs {
     #[command(flatten)]
@@ -1005,5 +1028,119 @@ mod compile_closure_regressions {
             physical(&fs::symlink_metadata(&log).unwrap()).unwrap(),
             before
         );
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod constructed_checkout_compile_binding_regression {
+    use super::*;
+
+    #[test]
+    fn exported_compile_inputs_require_actual_constructed_roots_and_reject_initial_constructor_roots()
+     {
+        let (_borrowed, mut source) = super::super::tests::fixture();
+        for (path, bytes) in [
+            ("Cargo.toml", b"[workspace]\n".as_slice()),
+            ("Cargo.lock", b"version = 4\n".as_slice()),
+            (
+                "rust-toolchain.toml",
+                b"[toolchain]\nchannel = \"stable\"\n".as_slice(),
+            ),
+            (
+                "tooling/xtask/Cargo.toml",
+                b"[package]\nname = \"xtask\"\n".as_slice(),
+            ),
+            ("tooling/xtask/src/main.rs", b"fn main() {}\n".as_slice()),
+        ] {
+            let path = source.source.join(path);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            super::super::create_file(&path, bytes).unwrap();
+        }
+        command(Some(&source.source), "git", &["add", "--all"], 4096).unwrap();
+        command(
+            Some(&source.source),
+            "git",
+            &[
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "commit",
+                "-q",
+                "--no-gpg-sign",
+                "-m",
+                "bootstrap fixture",
+            ],
+            4096,
+        )
+        .unwrap();
+        source.sha = String::from_utf8(
+            command(Some(&source.source), "git", &["rev-parse", "HEAD"], 1024).unwrap(),
+        )
+        .unwrap()
+        .trim()
+        .to_owned();
+        source.tree = String::from_utf8(
+            command(
+                Some(&source.source),
+                "git",
+                &["rev-parse", "HEAD^{tree}"],
+                1024,
+            )
+            .unwrap(),
+        )
+        .unwrap()
+        .trim()
+        .to_owned();
+        let staging = tempfile::tempdir().unwrap();
+        let constructed = staging.path().join("constructed-controller");
+        super::super::package::prepare_owned_checkout(&source, &constructed).unwrap();
+        let owned_source = SourceArgs {
+            source: constructed.clone(),
+            sha: source.sha.clone(),
+            tree: source.tree.clone(),
+        };
+        let (manifest, _) = observe(&owned_source, Authentication::Materialized).unwrap();
+        let executable = staging.path().join("target/debug/xtask");
+        for (label, compiler_root, expected_admission) in [
+            ("initial-constructor", source.source.as_path(), false),
+            ("constructed-controller", constructed.as_path(), true),
+        ] {
+            let directory = compiler_root.join("tooling/xtask");
+            let package_url = url::Url::from_directory_path(&directory).unwrap();
+            let artifact = serde_json::json!({
+                "reason": "compiler-artifact", "package_id": format!("path+{package_url}#xtask@0.1.0"),
+                "target": {"name": "xtask"}, "profile": {"test": false, "debuginfo": 0, "opt_level": "s"},
+                "executable": executable, "features": [],
+            });
+            let finish = serde_json::json!({"reason": "build-finished", "success": true});
+            let log = staging.path().join(format!("{label}.jsonl"));
+            super::super::create_file(&log, format!("{artifact}\n{finish}\n").as_bytes()).unwrap();
+            let evidence = compile_evidence(&log, &executable).unwrap();
+            require_export_profile(&evidence).unwrap();
+            let result = compile_inputs(
+                &manifest,
+                &evidence.actual_local_package_directories,
+                &constructed,
+            );
+            assert_eq!(result.is_ok(), expected_admission, "{label}");
+            if let Ok((roots, inputs)) = result {
+                assert_eq!(roots, vec!["tooling/xtask".to_owned()]);
+                assert!(
+                    inputs
+                        .iter()
+                        .any(|input| input.path == "tooling/xtask/src/main.rs")
+                );
+                assert!(inputs.iter().any(|input| input.path == "Cargo.lock"));
+                assert_eq!(
+                    inputs
+                        .iter()
+                        .find(|input| input.path == "tooling/xtask/src/main.rs")
+                        .unwrap()
+                        .sha256,
+                    super::super::sha256(b"fn main() {}\n")
+                );
+            }
+        }
     }
 }

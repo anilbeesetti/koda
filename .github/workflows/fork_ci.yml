@@ -514,9 +514,34 @@ jobs:
         if: steps.sources.outputs.cache-matched-key != ''
         working-directory: bootstrap-control
         run: python3 script/ci-source-cache restore --cache-dir ../.ci-cache/cargo-sources
-      - name: Compile independent Rust controller provenance tool
-        id: bootstrap_compile
+      - name: Compile unaccepted Rust checkout constructor only
+        id: constructor_compile
         working-directory: bootstrap-control
+        run: |
+          set +e
+          cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics | head -c 4194304 > "$RUNNER_TEMP/native-independent-constructor-build.jsonl"
+          actual_status=("${PIPESTATUS[@]}")
+          set -e
+          printf '{"actual_cargo_exit":%s,"actual_capture_exit":%s,"maximum_log_bytes":4194304}\n' "${actual_status[0]}" "${actual_status[1]}" > "$RUNNER_TEMP/native-independent-constructor-compile-exits.json"
+          test "${actual_status[0]}" -eq 0
+          test "${actual_status[1]}" -eq 0
+      - name: Bind independent bootstrap controller tree
+        id: bootstrap_tree
+        working-directory: bootstrap-control
+        run: printf 'tree=%s\n' "$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+      - name: Construct new exact controller source with Rust
+        id: bootstrap_checkout
+        env:
+          CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+          CONTROLLER_TREE: ${{ steps.bootstrap_tree.outputs.tree }}
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact prepare-bootstrap-checkout
+          --source "$GITHUB_WORKSPACE/bootstrap-control" --sha "$CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
+          --output-dir "$RUNNER_TEMP/owned-independent-bootstrap-controller"
+          --receipt "$RUNNER_TEMP/owned-independent-bootstrap-checkout.json"
+      - name: Compile export-candidate tool in the Rust-constructed exact checkout
+        id: bootstrap_compile
+        working-directory: ${{ runner.temp }}/owned-independent-bootstrap-controller
         run: |
           set +e
           cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics | head -c 4194304 > "$RUNNER_TEMP/native-independent-bootstrap-build.jsonl"
@@ -525,10 +550,6 @@ jobs:
           printf '{"actual_cargo_exit":%s,"actual_capture_exit":%s,"maximum_log_bytes":4194304}\n' "${actual_status[0]}" "${actual_status[1]}" > "$RUNNER_TEMP/native-independent-bootstrap-compile-exits.json"
           test "${actual_status[0]}" -eq 0
           test "${actual_status[1]}" -eq 0
-      - name: Bind independent bootstrap controller tree
-        id: bootstrap_tree
-        working-directory: bootstrap-control
-        run: printf 'tree=%s\n' "$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
       - name: Export request-independent controller bootstrap with Rust
         id: bootstrap_export
         env:
@@ -536,7 +557,7 @@ jobs:
           CONTROLLER_TREE: ${{ steps.bootstrap_tree.outputs.tree }}
         run: >-
           "$CARGO_TARGET_DIR/debug/xtask" native-artifact export-bootstrap
-          --source "$GITHUB_WORKSPACE/bootstrap-control" --sha "$CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
+          --source "$RUNNER_TEMP/owned-independent-bootstrap-controller" --sha "$CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
           --cargo-build-log "$RUNNER_TEMP/native-independent-bootstrap-build.jsonl"
           --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
           --output-dir "$RUNNER_TEMP/native-independent-controller-bootstrap"
@@ -557,12 +578,14 @@ jobs:
         if: always()
         env:
           CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+          ACTUAL_CONSTRUCTOR_COMPILE: ${{ steps.constructor_compile.outcome }}
+          ACTUAL_CHECKOUT: ${{ steps.bootstrap_checkout.outcome }}
           ACTUAL_COMPILE: ${{ steps.bootstrap_compile.outcome }}
           ACTUAL_EXPORT: ${{ steps.bootstrap_export.outcome }}
           ACTUAL_UPLOAD: ${{ steps.bootstrap_upload.outcome }}
         run: |
           mkdir "$RUNNER_TEMP/native-independent-bootstrap-boundary"
-          printf '{"state":"ACTUAL_REQUEST_INDEPENDENT_BOOTSTRAP_BOUNDARY_ZERO_ACCEPTANCE","controller_sha":"%s","run_id":"%s","run_attempt":"%s","compile_outcome":"%s","export_outcome":"%s","upload_outcome":"%s","native_request_required":false,"acceptance_credit":0}\n' "$CONTROLLER_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$ACTUAL_COMPILE" "$ACTUAL_EXPORT" "$ACTUAL_UPLOAD" > "$RUNNER_TEMP/native-independent-bootstrap-boundary/outcome.json"
+          printf '{"state":"ACTUAL_REQUEST_INDEPENDENT_BOOTSTRAP_BOUNDARY_ZERO_ACCEPTANCE","controller_sha":"%s","run_id":"%s","run_attempt":"%s","constructor_compile_outcome":"%s","owned_checkout_outcome":"%s","compile_outcome":"%s","export_outcome":"%s","upload_outcome":"%s","native_request_required":false,"acceptance_credit":0}\n' "$CONTROLLER_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$ACTUAL_CONSTRUCTOR_COMPILE" "$ACTUAL_CHECKOUT" "$ACTUAL_COMPILE" "$ACTUAL_EXPORT" "$ACTUAL_UPLOAD" > "$RUNNER_TEMP/native-independent-bootstrap-boundary/outcome.json"
       - name: Always upload bounded independent bootstrap compile failure evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -570,6 +593,9 @@ jobs:
           name: independent-native-bootstrap-diagnostics-${{ github.event.pull_request.head.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/native-independent-bootstrap-boundary/outcome.json
+            ${{ runner.temp }}/native-independent-constructor-build.jsonl
+            ${{ runner.temp }}/native-independent-constructor-compile-exits.json
+            ${{ runner.temp }}/owned-independent-bootstrap-checkout.json
             ${{ runner.temp }}/native-independent-bootstrap-build.jsonl
             ${{ runner.temp }}/native-independent-bootstrap-compile-exits.json
           if-no-files-found: error
@@ -633,10 +659,38 @@ jobs:
         if: steps.presence.outputs.exists == 'true' && steps.sources.outputs.cache-matched-key != ''
         working-directory: control
         run: python3 script/ci-source-cache restore --cache-dir ../.ci-cache/cargo-sources
-      - name: Compile only the Rust provenance tool
-        id: bootstrap_compile
+      - name: Compile unaccepted Rust checkout constructor only
+        id: constructor_compile
         if: steps.presence.outputs.exists == 'true'
         working-directory: control
+        run: |
+          set +e
+          cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics | head -c 4194304 > "$RUNNER_TEMP/native-controller-constructor-build.jsonl"
+          actual_status=("${PIPESTATUS[@]}")
+          set -e
+          printf '{"actual_cargo_exit":%s,"actual_capture_exit":%s,"maximum_log_bytes":4194304}\n' "${actual_status[0]}" "${actual_status[1]}" > "$RUNNER_TEMP/native-controller-constructor-compile-exits.json"
+          test "${actual_status[0]}" -eq 0
+          test "${actual_status[1]}" -eq 0
+      - name: Bind exact controller tree
+        if: steps.presence.outputs.exists == 'true'
+        id: bootstrap_tree
+        working-directory: control
+        run: printf 'tree=%s\n' "$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
+      - name: Construct new exact controller source with Rust
+        if: steps.presence.outputs.exists == 'true'
+        id: bootstrap_checkout
+        env:
+          CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
+          CONTROLLER_TREE: ${{ steps.bootstrap_tree.outputs.tree }}
+        run: >-
+          "$CARGO_TARGET_DIR/debug/xtask" native-artifact prepare-bootstrap-checkout
+          --source "$GITHUB_WORKSPACE/control" --sha "$CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
+          --output-dir "$RUNNER_TEMP/owned-request-bootstrap-controller"
+          --receipt "$RUNNER_TEMP/owned-request-bootstrap-checkout.json"
+      - name: Compile export-candidate tool in the Rust-constructed exact checkout
+        if: steps.presence.outputs.exists == 'true'
+        id: bootstrap_compile
+        working-directory: ${{ runner.temp }}/owned-request-bootstrap-controller
         run: |
           set +e
           cargo build --locked -p xtask --bin xtask --message-format=json-render-diagnostics | head -c 4194304 > "$RUNNER_TEMP/native-controller-bootstrap-build.jsonl"
@@ -645,11 +699,6 @@ jobs:
           printf '{"actual_cargo_exit":%s,"actual_capture_exit":%s,"maximum_log_bytes":4194304}\n' "${actual_status[0]}" "${actual_status[1]}" > "$RUNNER_TEMP/native-controller-bootstrap-compile-exits.json"
           test "${actual_status[0]}" -eq 0
           test "${actual_status[1]}" -eq 0
-      - name: Bind exact controller tree
-        if: steps.presence.outputs.exists == 'true'
-        id: bootstrap_tree
-        working-directory: control
-        run: printf 'tree=%s\n' "$(git rev-parse 'HEAD^{tree}')" >> "$GITHUB_OUTPUT"
       - name: Export bounded remotely compiled controller bootstrap with Rust
         if: steps.presence.outputs.exists == 'true'
         id: bootstrap_export
@@ -658,7 +707,7 @@ jobs:
           CONTROLLER_TREE: ${{ steps.bootstrap_tree.outputs.tree }}
         run: >-
           "$CARGO_TARGET_DIR/debug/xtask" native-artifact export-bootstrap
-          --source "$GITHUB_WORKSPACE/control" --sha "$CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
+          --source "$RUNNER_TEMP/owned-request-bootstrap-controller" --sha "$CONTROLLER_SHA" --tree "$CONTROLLER_TREE"
           --cargo-build-log "$RUNNER_TEMP/native-controller-bootstrap-build.jsonl"
           --run-id "$GITHUB_RUN_ID" --run-attempt "$GITHUB_RUN_ATTEMPT"
           --output-dir "$RUNNER_TEMP/native-controller-bootstrap"
@@ -689,12 +738,14 @@ jobs:
       - name: Retain actual controller bootstrap boundary outcome
         if: always() && steps.presence.outputs.exists == 'true'
         env:
+          ACTUAL_CONSTRUCTOR_COMPILE: ${{ steps.constructor_compile.outcome }}
+          ACTUAL_CHECKOUT: ${{ steps.bootstrap_checkout.outcome }}
           ACTUAL_COMPILE: ${{ steps.bootstrap_compile.outcome }}
           ACTUAL_EXPORT: ${{ steps.bootstrap_export.outcome }}
           CONTROLLER_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           mkdir "$RUNNER_TEMP/native-bootstrap-boundary"
-          printf '{"state":"ACTUAL_BOOTSTRAP_BOUNDARY_ZERO_ACCEPTANCE","controller_sha":"%s","run_id":"%s","run_attempt":"%s","compile_outcome":"%s","export_outcome":"%s","acceptance_credit":0}\n' "$CONTROLLER_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$ACTUAL_COMPILE" "$ACTUAL_EXPORT" > "$RUNNER_TEMP/native-bootstrap-boundary/outcome.json"
+          printf '{"state":"ACTUAL_BOOTSTRAP_BOUNDARY_ZERO_ACCEPTANCE","controller_sha":"%s","run_id":"%s","run_attempt":"%s","constructor_compile_outcome":"%s","owned_checkout_outcome":"%s","compile_outcome":"%s","export_outcome":"%s","acceptance_credit":0}\n' "$CONTROLLER_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$ACTUAL_CONSTRUCTOR_COMPILE" "$ACTUAL_CHECKOUT" "$ACTUAL_COMPILE" "$ACTUAL_EXPORT" > "$RUNNER_TEMP/native-bootstrap-boundary/outcome.json"
       - name: Always upload bounded actual controller compile failure evidence
         if: always() && steps.presence.outputs.exists == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -702,6 +753,9 @@ jobs:
           name: native-controller-diagnostics-${{ github.event.pull_request.head.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             ${{ runner.temp }}/native-bootstrap-boundary/outcome.json
+            ${{ runner.temp }}/native-controller-constructor-build.jsonl
+            ${{ runner.temp }}/native-controller-constructor-compile-exits.json
+            ${{ runner.temp }}/owned-request-bootstrap-checkout.json
             ${{ runner.temp }}/native-controller-bootstrap-build.jsonl
             ${{ runner.temp }}/native-controller-bootstrap-compile-exits.json
           if-no-files-found: error
